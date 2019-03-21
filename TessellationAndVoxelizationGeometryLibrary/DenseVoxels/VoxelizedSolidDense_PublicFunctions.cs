@@ -147,6 +147,7 @@ namespace TVGL.DenseVoxels
             var ts = (TessellatedSolid)TS.TransformToNewSolid(transformationMatrix);
             return new VoxelizedSolidDense(ts, Discretization);
 
+            #region Doesn't work
             //var xLim = VoxelsPerSide[0] - 1;
             //var yLim = VoxelsPerSide[1] - 1;
             //var zLim = VoxelsPerSide[2] - 1;
@@ -320,6 +321,7 @@ namespace TVGL.DenseVoxels
 
             //vs.UpdateProperties();
             //return vs;
+            #endregion
         }
 
         /// <summary>
@@ -334,6 +336,67 @@ namespace TVGL.DenseVoxels
         public static VoxelizedSolidDense Copy(VoxelizedSolidDense vs)
         {
             return new VoxelizedSolidDense(vs);
+        }
+        #endregion
+
+        #region Cut Voxel Solids
+        // If vd is negative, the negative side solid is in position one of return tuple
+        // If vd is positive, the positive side solid is in position one of return tuple
+        // cutBefore is the zero-based index of voxel-plane to cut before
+        // i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
+        // 0 < cutBefore < VoxelsPerSide[cut direction]
+        public (VoxelizedSolidDense, VoxelizedSolidDense) CutSolid(VoxelDirections vd, int cutBefore)
+        {
+            var cutDir = Math.Abs((int) vd) - 1;
+            if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
+                throw new ArgumentOutOfRangeException();
+
+            var voxelsPerSide1 = VoxelsPerSide.ToArray();
+            voxelsPerSide1[cutDir] = cutBefore;
+            var voxels1 = new byte[voxelsPerSide1[0], voxelsPerSide1[1], voxelsPerSide1[2]];
+
+            Parallel.For(0, voxelsPerSide1[0], i =>
+            {
+                for (var j = 0; j < voxelsPerSide1[1]; j++)
+                for (var k = 0; k < voxelsPerSide1[2]; k++)
+                {
+                    voxels1[i, j, k] = Voxels[i, j, k];
+                }
+            });
+
+            var bounds1 = new double[2][];
+            bounds1[0] = (double[]) Bounds[0].Clone();
+            bounds1[1] = (double[]) Bounds[1].Clone();
+            bounds1[1][cutDir] = bounds1[0][cutDir] + (voxelsPerSide1[cutDir] * VoxelSideLength);
+
+            var vs1 = new VoxelizedSolidDense(voxels1, Discretization, voxelsPerSide1, VoxelSideLength, bounds1);
+            var voxelsPerSide2 = VoxelsPerSide.ToArray();
+            voxelsPerSide2[cutDir] = VoxelsPerSide[cutDir] - cutBefore;
+            var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
+
+            Parallel.For(0, voxelsPerSide2[0], i =>
+            {
+                for (var j = 0; j < voxelsPerSide2[1]; j++)
+                for (var k = 0; k < voxelsPerSide2[2]; k++)
+                {
+                    if (cutDir == 0)
+                        voxels2[i, j, k] = Voxels[i + cutBefore, j, k];
+                    else if (cutDir == 1)
+                        voxels2[i, j, k] = Voxels[i, j + cutBefore, k];
+                    else
+                        voxels2[i, j, k] = Voxels[i, j, k + cutBefore];
+                    }
+            });
+
+            var bounds2 = new double[2][];
+            bounds2[0] = (double[])Bounds[0].Clone();
+            bounds2[1] = (double[])Bounds[1].Clone();
+            bounds2[0][cutDir] = bounds1[1][cutDir];
+
+            var vs2 = new VoxelizedSolidDense(voxels2, Discretization, voxelsPerSide2, VoxelSideLength, bounds2);
+            var cutSign = Math.Sign((int)vd);
+            var voxelSolids = cutSign == -1 ? (vs1, vs2) : (vs2, vs1);
+            return voxelSolids;
         }
         #endregion
 
