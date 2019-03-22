@@ -339,13 +339,13 @@ namespace TVGL.DenseVoxels
         }
         #endregion
 
-        #region Cut Voxel Solids
+        #region Slice Voxel Solids
         // If vd is negative, the negative side solid is in position one of return tuple
         // If vd is positive, the positive side solid is in position one of return tuple
         // cutBefore is the zero-based index of voxel-plane to cut before
         // i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
         // 0 < cutBefore < VoxelsPerSide[cut direction]
-        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlat(VoxelDirections vd, int cutBefore)
+        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlatAndResizeVoxelArrays(VoxelDirections vd, int cutBefore)
         {
             var cutDir = Math.Abs((int) vd) - 1;
             if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
@@ -397,6 +397,90 @@ namespace TVGL.DenseVoxels
             var cutSign = Math.Sign((int)vd);
             var voxelSolids = cutSign == -1 ? (vs1, vs2) : (vs2, vs1);
             return voxelSolids;
+        }
+
+        // If vd is negative, the negative side solid is in position one of return tuple
+        // If vd is positive, the positive side solid is in position one of return tuple
+        // cutBefore is the zero-based index of voxel-plane to cut before
+        // i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
+        // 0 < cutBefore < VoxelsPerSide[cut direction]
+        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlat(VoxelDirections vd, int cutBefore)
+        {
+            var cutDir = Math.Abs((int)vd) - 1;
+            if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
+                throw new ArgumentOutOfRangeException();
+
+            var cutSign = Math.Sign((int)vd);
+            var vs1 = (VoxelizedSolidDense)Copy();
+            var vs2 = (VoxelizedSolidDense)Copy();
+
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 0; k < VoxelsPerSide[2]; k++)
+                {
+                    if (cutSign == 1)
+                        switch (cutDir)
+                        {
+                            case 0:
+                            {
+                                if (i < cutBefore)
+                                    vs1.Voxels[i, j, k] = 0;
+                                else
+                                    vs2.Voxels[i, j, k] = 0;
+                                break;
+                            }
+                            case 1:
+                            {
+                                if (j < cutBefore)
+                                    vs1.Voxels[i, j, k] = 0;
+                                else
+                                    vs2.Voxels[i, j, k] = 0;
+                                break;
+                            }
+                            case 2:
+                            {
+                                if (k < cutBefore)
+                                    vs1.Voxels[i, j, k] = 0;
+                                else
+                                    vs2.Voxels[i, j, k] = 0;
+                                break;
+                            }
+                        }
+                    else
+                        switch (cutDir)
+                        {
+                            case 0:
+                            {
+                                if (i < cutBefore)
+                                    vs2.Voxels[i, j, k] = 0;
+                                else
+                                    vs1.Voxels[i, j, k] = 0;
+                                break;
+                            }
+                            case 1:
+                            {
+                                if (j < cutBefore)
+                                    vs2.Voxels[i, j, k] = 0;
+                                else
+                                    vs1.Voxels[i, j, k] = 0;
+                                break;
+                            }
+                            case 2:
+                            {
+                                if (k < cutBefore)
+                                    vs2.Voxels[i, j, k] = 0;
+                                else
+                                    vs1.Voxels[i, j, k] = 0;
+                                break;
+                            }
+                        }
+                    }
+            });
+
+            vs1.UpdateProperties();
+            vs2.UpdateProperties();
+            return (vs1, vs2);
         }
 
         // Solid on positive side of flat is in position one of return tuple
