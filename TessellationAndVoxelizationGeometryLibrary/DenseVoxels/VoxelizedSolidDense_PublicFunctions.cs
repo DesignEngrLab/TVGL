@@ -403,27 +403,222 @@ namespace TVGL.DenseVoxels
         // Voxels exactly on the plane are assigned to the positive side
         public (VoxelizedSolidDense, VoxelizedSolidDense) CutSolid(Flat plane)
         {
-            var vs1 = (VoxelizedSolidDense) Copy();
-            var vs2 = (VoxelizedSolidDense) Copy();
+            if (!GetPlaneBoundsInSolid(Bounds, plane, out var inters))
+                throw new ArgumentOutOfRangeException();
+
+            var xMin = Bounds[1][0];
+            var xMax = Bounds[0][0];
+            var yMin = Bounds[1][1];
+            var yMax = Bounds[0][1];
+            var zMin = Bounds[1][2];
+            var zMax = Bounds[0][2];
+
+            foreach (var intersection in inters)
+            {
+                xMin = Math.Min(xMin, intersection[0]);
+                xMax = Math.Max(xMax, intersection[0]);
+                yMin = Math.Min(yMin, intersection[1]);
+                yMax = Math.Max(yMax, intersection[1]);
+                zMin = Math.Min(zMin, intersection[2]);
+                zMax = Math.Max(zMax, intersection[2]);
+            }
+
+            var pn = plane.Normal;
+            var pp = plane.ClosestPointToOrigin;
+
+            var bounds1 = new double[2][];
+            bounds1[0] = (double[])Bounds[0].Clone();
+            bounds1[1] = (double[])Bounds[1].Clone();
+
+            var bounds2 = new double[2][];
+            bounds2[0] = (double[])Bounds[0].Clone();
+            bounds2[1] = (double[])Bounds[1].Clone();
+
+            switch (Math.Sign(pn[0]))
+            {
+                case 1:
+                {
+                    bounds1[0][0] = xMin;
+                    bounds1[1][0] = Bounds[1][0];
+                    bounds2[0][0] = Bounds[0][0];
+                    bounds2[1][0] = xMax;
+                    break;
+                }
+                case -1:
+                {
+                    bounds1[0][0] = Bounds[0][0];
+                    bounds1[1][0] = xMax;
+                    bounds2[0][0] = xMin;
+                    bounds2[1][0] = Bounds[1][0];
+                    break;
+                }
+                default:
+                {
+                    bounds1[0][0] = Bounds[0][0];
+                    bounds1[1][0] = Bounds[1][0];
+                    bounds2[0][0] = Bounds[0][0];
+                    bounds2[1][0] = Bounds[1][0];
+                    break;
+                }
+            }
+
+            switch (Math.Sign(pn[1]))
+            {
+                case 1:
+                {
+                    bounds1[0][1] = yMin;
+                    bounds1[1][1] = Bounds[1][1];
+                    bounds2[0][1] = Bounds[0][1];
+                    bounds2[1][1] = yMax;
+                    break;
+                }
+                case -1:
+                {
+                    bounds1[0][1] = Bounds[0][1];
+                    bounds1[1][1] = yMax;
+                    bounds2[0][1] = yMin;
+                    bounds2[1][1] = Bounds[1][1];
+                    break;
+                }
+                default:
+                {
+                    bounds1[0][1] = Bounds[0][1];
+                    bounds1[1][1] = Bounds[1][1];
+                    bounds2[0][1] = Bounds[0][1];
+                    bounds2[1][1] = Bounds[1][1];
+                    break;
+                }
+            }
+
+            switch (Math.Sign(pn[2]))
+            {
+                case 1:
+                {
+                    bounds1[0][2] = zMin;
+                    bounds1[1][2] = Bounds[1][2];
+                    bounds2[0][2] = Bounds[0][2];
+                    bounds2[1][2] = zMax;
+                    break;
+                }
+                case -1:
+                {
+                    bounds1[0][2] = Bounds[0][2];
+                    bounds1[1][2] = zMax;
+                    bounds2[0][2] = zMin;
+                    bounds2[1][2] = Bounds[1][2];
+                    break;
+                }
+                default:
+                {
+                    bounds1[0][2] = Bounds[0][2];
+                    bounds1[1][2] = Bounds[1][2];
+                    bounds2[0][2] = Bounds[0][2];
+                    bounds2[1][2] = Bounds[1][2];
+                    break;
+                }
+            }
+
+            var voxelsPerSide1 = VoxelsPerSide.ToArray();
+            var voxelsPerSide2 = VoxelsPerSide.ToArray();
+
+            for (var i = 0; i < 3; i++)
+            {
+                voxelsPerSide1[0] = (int) Math.Round((bounds1[1][0] - bounds1[0][0]) / VoxelSideLength);
+                voxelsPerSide1[1] = (int) Math.Round((bounds1[1][1] - bounds1[0][1]) / VoxelSideLength);
+                voxelsPerSide1[2] = (int) Math.Round((bounds1[1][2] - bounds1[0][2]) / VoxelSideLength);
+
+                voxelsPerSide2[0] = (int) Math.Ceiling((bounds2[1][0] - bounds2[0][0]) / VoxelSideLength);
+                voxelsPerSide2[1] = (int) Math.Ceiling((bounds2[1][1] - bounds2[0][1]) / VoxelSideLength);
+                voxelsPerSide2[2] = (int) Math.Ceiling((bounds2[1][2] - bounds2[0][2]) / VoxelSideLength);
+            }
+
+            var xOff1 = Math.Sign(pn[0]) == 1 ? VoxelsPerSide[0] - voxelsPerSide1[0] : 0;
+            var yOff1 = Math.Sign(pn[1]) == 1 ? VoxelsPerSide[1] - voxelsPerSide1[1] : 0;
+            var zOff1 = Math.Sign(pn[2]) == 1 ? VoxelsPerSide[2] - voxelsPerSide1[2] : 0;
+
+            var xOff2 = Math.Sign(pn[0]) == -1 ? VoxelsPerSide[0] - voxelsPerSide2[0] : 0;
+            var yOff2 = Math.Sign(pn[1]) == -1 ? VoxelsPerSide[1] - voxelsPerSide2[1] : 0;
+            var zOff2 = Math.Sign(pn[2]) == -1 ? VoxelsPerSide[2] - voxelsPerSide2[2] : 0;
+
+            var voxels1 = new byte[voxelsPerSide1[0], voxelsPerSide1[1], voxelsPerSide1[2]];
+            var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
+
+            var xOff = Offset[0];
+            var yOff = Offset[1];
+            var zOff = Offset[2];
 
             Parallel.For(0, VoxelsPerSide[0], i =>
             {
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                 {
-                    var x = Offset[0] + i * VoxelSideLength;
-                    var y = Offset[1] + j * VoxelSideLength;
-                    var z = Offset[2] + k * VoxelSideLength;
-                    var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, plane.Normal,
-                        plane.ClosestPointToOrigin);
+                    var x = xOff + i * VoxelSideLength;
+                    var y = yOff + j * VoxelSideLength;
+                    var z = zOff + k * VoxelSideLength;
+                    var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, pn, pp);
                     if (d < 0)
-                        vs1.Voxels[i, j, k] = 0;
+                        voxels2[i - xOff2, j - yOff2, k - zOff2] = Voxels[i, j, k];
                     else
-                        vs2.Voxels[i, j, k] = 0;
+                        voxels1[i - xOff1, j - yOff1, k - zOff1] = Voxels[i, j, k];
                 }
             });
 
+            var vs1 = new VoxelizedSolidDense(voxels1, Discretization, voxelsPerSide1, VoxelSideLength, bounds1);
+            var vs2 = new VoxelizedSolidDense(voxels2, Discretization, voxelsPerSide2, VoxelSideLength, bounds2);
             return (vs1, vs2);
+        }
+
+        private static bool GetPlaneBoundsInSolid(double[][] bds, Flat plane, out List<double[]> intersections)
+        {
+            var pn = plane.Normal;
+            var pd = plane.DistanceToOrigin;
+
+            var vertices = new List<double[]>
+            {
+                new[] {bds[0][0], bds[0][1], bds[0][2]},
+                new[] {bds[1][0], bds[0][1], bds[0][2]},
+                new[] {bds[0][0], bds[1][1], bds[0][2]},
+                new[] {bds[0][0], bds[0][1], bds[1][2]},
+                new[] {bds[1][0], bds[1][1], bds[0][2]},
+                new[] {bds[1][0], bds[0][1], bds[1][2]},
+                new[] {bds[0][0], bds[1][1], bds[1][2]},
+                new[] {bds[1][0], bds[1][1], bds[1][2]}
+            };
+
+            var dirs = new List<double[]>
+            {
+                new[] {1.0, 0, 0},
+                new[] {0, 1.0, 0},
+                new[] {0, 0, 1.0},
+            };
+
+            var rays = new List<int[]>
+            {
+                new[] {0, 0},
+                new[] {0, 1},
+                new[] {0, 2},
+                new[] {1, 1},
+                new[] {1, 2},
+                new[] {2, 0},
+                new[] {2, 2},
+                new[] {3, 0},
+                new[] {3, 1},
+                new[] {4, 2},
+                new[] {5, 1},
+                new[] {6, 0},
+            };
+
+            intersections = new List<double[]>();
+
+            foreach (var ray in rays)
+            {
+                var inter = MiscFunctions.PointOnPlaneFromRay(pn, pd, vertices[ray[0]], dirs[ray[1]], out var dist);
+                if (!(inter is null) && dist >= 0 && inter[0] <= bds[1][0] && inter[1] <= bds[1][1] &&
+                    inter[2] <= bds[1][2])
+                    intersections.Add(inter);
+            }
+
+            return intersections.Count > 2;
         }
         #endregion
 
