@@ -406,115 +406,65 @@ namespace TVGL.DenseVoxels
             if (!GetPlaneBoundsInSolid(Bounds, plane, out var inters))
                 throw new ArgumentOutOfRangeException();
 
-            var xMin = Bounds[1][0];
-            var xMax = Bounds[0][0];
-            var yMin = Bounds[1][1];
-            var yMax = Bounds[0][1];
-            var zMin = Bounds[1][2];
-            var zMax = Bounds[0][2];
+            var mins = new []
+            {
+                new[] {Bounds[1][0], Bounds[1][1], Bounds[1][2]},
+                new[] {Bounds[0][0], Bounds[0][1], Bounds[0][2]}
+            };
 
             foreach (var intersection in inters)
             {
-                xMin = Math.Min(xMin, intersection[0]);
-                xMax = Math.Max(xMax, intersection[0]);
-                yMin = Math.Min(yMin, intersection[1]);
-                yMax = Math.Max(yMax, intersection[1]);
-                zMin = Math.Min(zMin, intersection[2]);
-                zMax = Math.Max(zMax, intersection[2]);
+                mins[0][0] = Math.Min(mins[0][0], intersection[0]);
+                mins[1][0] = Math.Max(mins[1][0], intersection[0]);
+                mins[0][1] = Math.Min(mins[0][1], intersection[1]);
+                mins[1][1] = Math.Max(mins[1][1], intersection[1]);
+                mins[0][2] = Math.Min(mins[0][2], intersection[2]);
+                mins[1][2] = Math.Max(mins[1][2], intersection[2]);
             }
-
+            
             var pn = plane.Normal;
             var pp = plane.ClosestPointToOrigin;
 
-            var bounds1 = new double[2][];
-            bounds1[0] = (double[])Bounds[0].Clone();
-            bounds1[1] = (double[])Bounds[1].Clone();
-
-            var bounds2 = new double[2][];
-            bounds2[0] = (double[])Bounds[0].Clone();
-            bounds2[1] = (double[])Bounds[1].Clone();
-
-            switch (Math.Sign(pn[0]))
+            var bounds1 = new[]
             {
-                case 1:
-                {
-                    bounds1[0][0] = xMin;
-                    bounds1[1][0] = Bounds[1][0];
-                    bounds2[0][0] = Bounds[0][0];
-                    bounds2[1][0] = xMax;
-                    break;
-                }
-                case -1:
-                {
-                    bounds1[0][0] = Bounds[0][0];
-                    bounds1[1][0] = xMax;
-                    bounds2[0][0] = xMin;
-                    bounds2[1][0] = Bounds[1][0];
-                    break;
-                }
-                default:
-                {
-                    bounds1[0][0] = Bounds[0][0];
-                    bounds1[1][0] = Bounds[1][0];
-                    bounds2[0][0] = Bounds[0][0];
-                    bounds2[1][0] = Bounds[1][0];
-                    break;
-                }
-            }
+                Bounds[0].ToArray(),
+                Bounds[1].ToArray()
+            };
 
-            switch (Math.Sign(pn[1]))
+            var bounds2 = new[]
             {
-                case 1:
-                {
-                    bounds1[0][1] = yMin;
-                    bounds1[1][1] = Bounds[1][1];
-                    bounds2[0][1] = Bounds[0][1];
-                    bounds2[1][1] = yMax;
-                    break;
-                }
-                case -1:
-                {
-                    bounds1[0][1] = Bounds[0][1];
-                    bounds1[1][1] = yMax;
-                    bounds2[0][1] = yMin;
-                    bounds2[1][1] = Bounds[1][1];
-                    break;
-                }
-                default:
-                {
-                    bounds1[0][1] = Bounds[0][1];
-                    bounds1[1][1] = Bounds[1][1];
-                    bounds2[0][1] = Bounds[0][1];
-                    bounds2[1][1] = Bounds[1][1];
-                    break;
-                }
-            }
+                Bounds[0].ToArray(),
+                Bounds[1].ToArray()
+            };
 
-            switch (Math.Sign(pn[2]))
+            for (var i = 0; i < 3; i++)
             {
-                case 1:
+                switch (Math.Sign(pn[i]))
                 {
-                    bounds1[0][2] = zMin;
-                    bounds1[1][2] = Bounds[1][2];
-                    bounds2[0][2] = Bounds[0][2];
-                    bounds2[1][2] = zMax;
-                    break;
-                }
-                case -1:
-                {
-                    bounds1[0][2] = Bounds[0][2];
-                    bounds1[1][2] = zMax;
-                    bounds2[0][2] = zMin;
-                    bounds2[1][2] = Bounds[1][2];
-                    break;
-                }
-                default:
-                {
-                    bounds1[0][2] = Bounds[0][2];
-                    bounds1[1][2] = Bounds[1][2];
-                    bounds2[0][2] = Bounds[0][2];
-                    bounds2[1][2] = Bounds[1][2];
-                    break;
+                    case 1:
+                    {
+                        bounds1[0][i] = mins[0][i];
+                        bounds1[1][i] = Bounds[1][i];
+                        bounds2[0][i] = Bounds[0][i];
+                        bounds2[1][i] = mins[1][i];
+                        break;
+                    }
+                    case -1:
+                    {
+                        bounds1[0][i] = Bounds[0][i];
+                        bounds1[1][i] = mins[1][i];
+                        bounds2[0][i] = mins[0][i];
+                        bounds2[1][i] = Bounds[1][i];
+                        break;
+                    }
+                    default:
+                    {
+                        bounds1[0][i] = Bounds[0][i];
+                        bounds1[1][i] = Bounds[1][i];
+                        bounds2[0][i] = Bounds[0][i];
+                        bounds2[1][i] = Bounds[1][i];
+                        break;
+                    }
                 }
             }
 
@@ -532,13 +482,13 @@ namespace TVGL.DenseVoxels
                 voxelsPerSide2[2] = (int) Math.Ceiling((bounds2[1][2] - bounds2[0][2]) / VoxelSideLength);
             }
 
-            var xOff1 = Math.Sign(pn[0]) == 1 ? VoxelsPerSide[0] - voxelsPerSide1[0] : 0;
-            var yOff1 = Math.Sign(pn[1]) == 1 ? VoxelsPerSide[1] - voxelsPerSide1[1] : 0;
-            var zOff1 = Math.Sign(pn[2]) == 1 ? VoxelsPerSide[2] - voxelsPerSide1[2] : 0;
+            var xOff1 = Math.Sign(pn[0]) == 1 ? Math.Max(VoxelsPerSide[0] - voxelsPerSide1[0], 0) : 0;
+            var yOff1 = Math.Sign(pn[1]) == 1 ? Math.Max(VoxelsPerSide[1] - voxelsPerSide1[1], 0) : 0;
+            var zOff1 = Math.Sign(pn[2]) == 1 ? Math.Max(VoxelsPerSide[2] - voxelsPerSide1[2], 0) : 0;
 
-            var xOff2 = Math.Sign(pn[0]) == -1 ? VoxelsPerSide[0] - voxelsPerSide2[0] : 0;
-            var yOff2 = Math.Sign(pn[1]) == -1 ? VoxelsPerSide[1] - voxelsPerSide2[1] : 0;
-            var zOff2 = Math.Sign(pn[2]) == -1 ? VoxelsPerSide[2] - voxelsPerSide2[2] : 0;
+            var xOff2 = Math.Sign(pn[0]) == -1 ? Math.Max(VoxelsPerSide[0] - voxelsPerSide2[0], 0) : 0;
+            var yOff2 = Math.Sign(pn[1]) == -1 ? Math.Max(VoxelsPerSide[1] - voxelsPerSide2[1], 0) : 0;
+            var zOff2 = Math.Sign(pn[2]) == -1 ? Math.Max(VoxelsPerSide[2] - voxelsPerSide2[2], 0) : 0;
 
             var voxels1 = new byte[voxelsPerSide1[0], voxelsPerSide1[1], voxelsPerSide1[2]];
             var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
@@ -552,9 +502,9 @@ namespace TVGL.DenseVoxels
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                 {
-                    var x = xOff + i * VoxelSideLength;
-                    var y = yOff + j * VoxelSideLength;
-                    var z = zOff + k * VoxelSideLength;
+                    var x = xOff + (i + .5) * VoxelSideLength;
+                    var y = yOff + (j + .5) * VoxelSideLength;
+                    var z = zOff + (k + .5) * VoxelSideLength;
                     var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, pn, pp);
                     if (d < 0)
                         voxels2[i - xOff2, j - yOff2, k - zOff2] = Voxels[i, j, k];
