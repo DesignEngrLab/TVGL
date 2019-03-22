@@ -345,7 +345,7 @@ namespace TVGL.DenseVoxels
         // cutBefore is the zero-based index of voxel-plane to cut before
         // i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
         // 0 < cutBefore < VoxelsPerSide[cut direction]
-        public (VoxelizedSolidDense, VoxelizedSolidDense) CutSolid(VoxelDirections vd, int cutBefore)
+        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlat(VoxelDirections vd, int cutBefore)
         {
             var cutDir = Math.Abs((int) vd) - 1;
             if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
@@ -401,7 +401,42 @@ namespace TVGL.DenseVoxels
 
         // Solid on positive side of flat is in position one of return tuple
         // Voxels exactly on the plane are assigned to the positive side
-        public (VoxelizedSolidDense, VoxelizedSolidDense) CutSolid(Flat plane)
+        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlat(Flat plane)
+        {
+            var vs1 = (VoxelizedSolidDense) Copy();
+            var vs2 = (VoxelizedSolidDense) Copy();
+
+            var pn = plane.Normal;
+            var pp = plane.ClosestPointToOrigin;
+
+            var xOff = Offset[0];
+            var yOff = Offset[1];
+            var zOff = Offset[2];
+
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 0; k < VoxelsPerSide[2]; k++)
+                {
+                    var x = xOff + (i + .5) * VoxelSideLength;
+                    var y = yOff + (j + .5) * VoxelSideLength;
+                    var z = zOff + (k + .5) * VoxelSideLength;
+                    var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, pn, pp);
+                    if (d < 0)
+                        vs1.Voxels[i, j, k] = 0;
+                    else
+                        vs2.Voxels[i, j, k] = 0;
+                }
+            });
+
+            vs1.UpdateProperties();
+            vs2.UpdateProperties();
+            return (vs1, vs2);
+        }
+
+        // Solid on positive side of flat is in position one of return tuple
+        // Voxels exactly on the plane are assigned to the positive side
+        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlatAndResizeVoxelArrays(Flat plane)
         {
             if (!GetPlaneBoundsInSolid(Bounds, plane, out var inters))
                 throw new ArgumentOutOfRangeException();
