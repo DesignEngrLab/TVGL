@@ -38,6 +38,7 @@ namespace TVGL.DenseVoxels
         public readonly int Discretization;
         public int[] VoxelsPerSide;
         public double VoxelSideLength { get; internal set; }
+        public double[] TessToVoxSpace { get; }
         private readonly double[] Dimensions;
         public double[] Offset => Bounds[0];
         public int Count { get; internal set; }
@@ -66,6 +67,7 @@ namespace TVGL.DenseVoxels
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
+            TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
             SolidColor = new Color(Constants.DefaultColor);
             Count = value == 0 ? 0 : VoxelsPerSide[0] * VoxelsPerSide[1] * VoxelsPerSide[2];
             UpdateProperties();
@@ -80,6 +82,7 @@ namespace TVGL.DenseVoxels
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
+            TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
             SolidColor = new Color(Constants.DefaultColor);
             UpdateProperties();
         }
@@ -92,6 +95,7 @@ namespace TVGL.DenseVoxels
             VoxelSideLength = vs.VoxelSideLength;
             Dimensions = vs.Dimensions.ToArray();
             Bounds = vs.Bounds.ToArray();
+            TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
             SolidColor = new Color(Constants.DefaultColor);
             Volume = vs.Volume;
             SurfaceArea = vs.SurfaceArea;
@@ -124,6 +128,7 @@ namespace TVGL.DenseVoxels
             //var longestSide = Dimensions.Max();
             VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
             VoxelsPerSide = Dimensions.Select(d => (int) Math.Round(d / VoxelSideLength)).ToArray();
+            TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
 
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
 
@@ -136,8 +141,13 @@ namespace TVGL.DenseVoxels
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
-            var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
-                VoxelSideLength / 2 - Bounds[1][2], zLim, VoxelSideLength);
+
+            var xInitOff = Bounds[0][0] + (VoxelSideLength / 2) + ((Dimensions[0] - (xLim * VoxelSideLength)) / 2);
+            var yInitOff = Bounds[0][1] + (VoxelSideLength / 2) + ((Dimensions[1] - (yLim * VoxelSideLength)) / 2);
+            var zInitOff = (VoxelSideLength / 2) + ((Dimensions[2] - (zLim * VoxelSideLength)) / 2) - Bounds[1][2];
+
+            var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts,
+                VoxelSideLength / 2 - Bounds[1][2]/*zInitOff*/, zLim, VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
             
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
@@ -147,12 +157,12 @@ namespace TVGL.DenseVoxels
             //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                    slices[zLim - 1 - k].Select(p => new PolygonLight(p)), Bounds[0][0],
+                    slices[zLim - 1 - k].Select(p => new PolygonLight(p)), Bounds[0][0]/*xInitOff*/,
                     VoxelSideLength, xLim); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    var i = (int) Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
+                    var i = (int) Math.Floor((intersections.Key - Bounds[0][0]/*xInitOff*/) / VoxelSideLength); // - 1;
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
@@ -161,9 +171,9 @@ namespace TVGL.DenseVoxels
                         //Floor/Floor seems to be okay
                         //Floor/ceiling with the yLim check also works
                         //Could reverse this to add more voxels
-                        var sp = (int) Math.Floor((intersectValues[m] - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        var sp = (int) Math.Floor((intersectValues[m] - Bounds[0][1]/*yInitOff*/) / VoxelSideLength); // - 1;
                         if (sp == -1) sp = 0;
-                        var ep = (int) Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        var ep = (int) Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]/*yInitOff*/) / VoxelSideLength); // - 1;
                         if (ep >= yLim) ep = yLim;
 
                         for (var j = sp; j < ep; j++)
