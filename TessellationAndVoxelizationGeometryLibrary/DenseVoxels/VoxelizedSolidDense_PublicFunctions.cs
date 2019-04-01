@@ -340,64 +340,64 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Slice Voxel Solids
-        // If vd is negative, the negative side solid is in position one of return tuple
-        // If vd is positive, the positive side solid is in position one of return tuple
-        // cutBefore is the zero-based index of voxel-plane to cut before
-        // i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
-        // 0 < cutBefore < VoxelsPerSide[cut direction]
-        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlatAndResizeVoxelArrays(VoxelDirections vd, int cutBefore)
-        {
-            var cutDir = Math.Abs((int) vd) - 1;
-            if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
-                throw new ArgumentOutOfRangeException();
+        //// If vd is negative, the negative side solid is in position one of return tuple
+        //// If vd is positive, the positive side solid is in position one of return tuple
+        //// cutBefore is the zero-based index of voxel-plane to cut before
+        //// i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
+        //// 0 < cutBefore < VoxelsPerSide[cut direction]
+        //public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlatAndResizeVoxelArrays(VoxelDirections vd, int cutBefore)
+        //{
+        //    var cutDir = Math.Abs((int) vd) - 1;
+        //    if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
+        //        throw new ArgumentOutOfRangeException();
 
-            var voxelsPerSide1 = VoxelsPerSide.ToArray();
-            voxelsPerSide1[cutDir] = cutBefore;
-            var voxels1 = new byte[voxelsPerSide1[0], voxelsPerSide1[1], voxelsPerSide1[2]];
+        //    var voxelsPerSide1 = VoxelsPerSide.ToArray();
+        //    voxelsPerSide1[cutDir] = cutBefore;
+        //    var voxels1 = new byte[voxelsPerSide1[0], voxelsPerSide1[1], voxelsPerSide1[2]];
 
-            Parallel.For(0, voxelsPerSide1[0], i =>
-            {
-                for (var j = 0; j < voxelsPerSide1[1]; j++)
-                for (var k = 0; k < voxelsPerSide1[2]; k++)
-                {
-                    voxels1[i, j, k] = Voxels[i, j, k];
-                }
-            });
+        //    Parallel.For(0, voxelsPerSide1[0], i =>
+        //    {
+        //        for (var j = 0; j < voxelsPerSide1[1]; j++)
+        //        for (var k = 0; k < voxelsPerSide1[2]; k++)
+        //        {
+        //            voxels1[i, j, k] = Voxels[i, j, k];
+        //        }
+        //    });
 
-            var bounds1 = new double[2][];
-            bounds1[0] = (double[]) Bounds[0].Clone();
-            bounds1[1] = (double[]) Bounds[1].Clone();
-            bounds1[1][cutDir] = bounds1[0][cutDir] + voxelsPerSide1[cutDir] * VoxelSideLength;
-            var vs1 = new VoxelizedSolidDense(voxels1, Discretization, voxelsPerSide1, VoxelSideLength, bounds1);
+        //    var bounds1 = new double[2][];
+        //    bounds1[0] = (double[]) Bounds[0].Clone();
+        //    bounds1[1] = (double[]) Bounds[1].Clone();
+        //    bounds1[1][cutDir] = bounds1[0][cutDir] + voxelsPerSide1[cutDir] * VoxelSideLength;
+        //    var vs1 = new VoxelizedSolidDense(voxels1, Discretization, voxelsPerSide1, VoxelSideLength, bounds1);
 
-            var voxelsPerSide2 = VoxelsPerSide.ToArray();
-            voxelsPerSide2[cutDir] = VoxelsPerSide[cutDir] - cutBefore;
-            var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
+        //    var voxelsPerSide2 = VoxelsPerSide.ToArray();
+        //    voxelsPerSide2[cutDir] = VoxelsPerSide[cutDir] - cutBefore;
+        //    var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
 
-            Parallel.For(0, voxelsPerSide2[0], i =>
-            {
-                for (var j = 0; j < voxelsPerSide2[1]; j++)
-                for (var k = 0; k < voxelsPerSide2[2]; k++)
-                {
-                    if (cutDir == 0)
-                        voxels2[i, j, k] = Voxels[i + cutBefore, j, k];
-                    else if (cutDir == 1)
-                        voxels2[i, j, k] = Voxels[i, j + cutBefore, k];
-                    else
-                        voxels2[i, j, k] = Voxels[i, j, k + cutBefore];
-                    }
-            });
+        //    Parallel.For(0, voxelsPerSide2[0], i =>
+        //    {
+        //        for (var j = 0; j < voxelsPerSide2[1]; j++)
+        //        for (var k = 0; k < voxelsPerSide2[2]; k++)
+        //        {
+        //            if (cutDir == 0)
+        //                voxels2[i, j, k] = Voxels[i + cutBefore, j, k];
+        //            else if (cutDir == 1)
+        //                voxels2[i, j, k] = Voxels[i, j + cutBefore, k];
+        //            else
+        //                voxels2[i, j, k] = Voxels[i, j, k + cutBefore];
+        //            }
+        //    });
 
-            var bounds2 = new double[2][];
-            bounds2[0] = (double[])Bounds[0].Clone();
-            bounds2[1] = (double[])Bounds[1].Clone();
-            bounds2[0][cutDir] = bounds1[1][cutDir];
-            var vs2 = new VoxelizedSolidDense(voxels2, Discretization, voxelsPerSide2, VoxelSideLength, bounds2);
+        //    var bounds2 = new double[2][];
+        //    bounds2[0] = (double[])Bounds[0].Clone();
+        //    bounds2[1] = (double[])Bounds[1].Clone();
+        //    bounds2[0][cutDir] = bounds1[1][cutDir];
+        //    var vs2 = new VoxelizedSolidDense(voxels2, Discretization, voxelsPerSide2, VoxelSideLength, bounds2);
 
-            var cutSign = Math.Sign((int)vd);
-            var voxelSolids = cutSign == -1 ? (vs1, vs2) : (vs2, vs1);
-            return voxelSolids;
-        }
+        //    var cutSign = Math.Sign((int)vd);
+        //    var voxelSolids = cutSign == -1 ? (vs1, vs2) : (vs2, vs1);
+        //    return voxelSolids;
+        //}
 
         // If vd is negative, the negative side solid is in position one of return tuple
         // If vd is positive, the positive side solid is in position one of return tuple
@@ -518,124 +518,124 @@ namespace TVGL.DenseVoxels
             return (vs1, vs2);
         }
 
-        // Solid on positive side of flat is in position one of return tuple
-        // Voxels exactly on the plane are assigned to the positive side
-        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlatAndResizeVoxelArrays(Flat plane)
-        {
-            if (!GetPlaneBoundsInSolid(Bounds, plane, out var inters))
-                throw new ArgumentOutOfRangeException();
+        //// Solid on positive side of flat is in position one of return tuple
+        //// Voxels exactly on the plane are assigned to the positive side
+        //public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlatAndResizeVoxelArrays(Flat plane)
+        //{
+        //    if (!GetPlaneBoundsInSolid(Bounds, plane, out var inters))
+        //        throw new ArgumentOutOfRangeException();
 
-            var mins = new []
-            {
-                new[] {Bounds[1][0], Bounds[1][1], Bounds[1][2]},
-                new[] {Bounds[0][0], Bounds[0][1], Bounds[0][2]}
-            };
+        //    var mins = new []
+        //    {
+        //        new[] {Bounds[1][0], Bounds[1][1], Bounds[1][2]},
+        //        new[] {Bounds[0][0], Bounds[0][1], Bounds[0][2]}
+        //    };
 
-            foreach (var intersection in inters)
-            {
-                mins[0][0] = Math.Min(mins[0][0], intersection[0]);
-                mins[1][0] = Math.Max(mins[1][0], intersection[0]);
-                mins[0][1] = Math.Min(mins[0][1], intersection[1]);
-                mins[1][1] = Math.Max(mins[1][1], intersection[1]);
-                mins[0][2] = Math.Min(mins[0][2], intersection[2]);
-                mins[1][2] = Math.Max(mins[1][2], intersection[2]);
-            }
+        //    foreach (var intersection in inters)
+        //    {
+        //        mins[0][0] = Math.Min(mins[0][0], intersection[0]);
+        //        mins[1][0] = Math.Max(mins[1][0], intersection[0]);
+        //        mins[0][1] = Math.Min(mins[0][1], intersection[1]);
+        //        mins[1][1] = Math.Max(mins[1][1], intersection[1]);
+        //        mins[0][2] = Math.Min(mins[0][2], intersection[2]);
+        //        mins[1][2] = Math.Max(mins[1][2], intersection[2]);
+        //    }
             
-            var pn = plane.Normal;
-            var pp = plane.ClosestPointToOrigin;
+        //    var pn = plane.Normal;
+        //    var pp = plane.ClosestPointToOrigin;
 
-            var bounds1 = new[]
-            {
-                Bounds[0].ToArray(),
-                Bounds[1].ToArray()
-            };
+        //    var bounds1 = new[]
+        //    {
+        //        Bounds[0].ToArray(),
+        //        Bounds[1].ToArray()
+        //    };
 
-            var bounds2 = new[]
-            {
-                Bounds[0].ToArray(),
-                Bounds[1].ToArray()
-            };
+        //    var bounds2 = new[]
+        //    {
+        //        Bounds[0].ToArray(),
+        //        Bounds[1].ToArray()
+        //    };
 
-            for (var i = 0; i < 3; i++)
-            {
-                switch (Math.Sign(pn[i]))
-                {
-                    case 1:
-                    {
-                        bounds1[0][i] = mins[0][i];
-                        bounds1[1][i] = Bounds[1][i];
-                        bounds2[0][i] = Bounds[0][i];
-                        bounds2[1][i] = mins[1][i];
-                        break;
-                    }
-                    case -1:
-                    {
-                        bounds1[0][i] = Bounds[0][i];
-                        bounds1[1][i] = mins[1][i];
-                        bounds2[0][i] = mins[0][i];
-                        bounds2[1][i] = Bounds[1][i];
-                        break;
-                    }
-                    default:
-                    {
-                        bounds1[0][i] = Bounds[0][i];
-                        bounds1[1][i] = Bounds[1][i];
-                        bounds2[0][i] = Bounds[0][i];
-                        bounds2[1][i] = Bounds[1][i];
-                        break;
-                    }
-                }
-            }
+        //    for (var i = 0; i < 3; i++)
+        //    {
+        //        switch (Math.Sign(pn[i]))
+        //        {
+        //            case 1:
+        //            {
+        //                bounds1[0][i] = mins[0][i];
+        //                bounds1[1][i] = Bounds[1][i];
+        //                bounds2[0][i] = Bounds[0][i];
+        //                bounds2[1][i] = mins[1][i];
+        //                break;
+        //            }
+        //            case -1:
+        //            {
+        //                bounds1[0][i] = Bounds[0][i];
+        //                bounds1[1][i] = mins[1][i];
+        //                bounds2[0][i] = mins[0][i];
+        //                bounds2[1][i] = Bounds[1][i];
+        //                break;
+        //            }
+        //            default:
+        //            {
+        //                bounds1[0][i] = Bounds[0][i];
+        //                bounds1[1][i] = Bounds[1][i];
+        //                bounds2[0][i] = Bounds[0][i];
+        //                bounds2[1][i] = Bounds[1][i];
+        //                break;
+        //            }
+        //        }
+        //    }
 
-            var voxelsPerSide1 = VoxelsPerSide.ToArray();
-            var voxelsPerSide2 = VoxelsPerSide.ToArray();
+        //    var voxelsPerSide1 = VoxelsPerSide.ToArray();
+        //    var voxelsPerSide2 = VoxelsPerSide.ToArray();
 
-            for (var i = 0; i < 3; i++)
-            {
-                voxelsPerSide1[0] = (int) Math.Round((bounds1[1][0] - bounds1[0][0]) / VoxelSideLength);
-                voxelsPerSide1[1] = (int) Math.Round((bounds1[1][1] - bounds1[0][1]) / VoxelSideLength);
-                voxelsPerSide1[2] = (int) Math.Round((bounds1[1][2] - bounds1[0][2]) / VoxelSideLength);
+        //    for (var i = 0; i < 3; i++)
+        //    {
+        //        voxelsPerSide1[0] = (int) Math.Round((bounds1[1][0] - bounds1[0][0]) / VoxelSideLength);
+        //        voxelsPerSide1[1] = (int) Math.Round((bounds1[1][1] - bounds1[0][1]) / VoxelSideLength);
+        //        voxelsPerSide1[2] = (int) Math.Round((bounds1[1][2] - bounds1[0][2]) / VoxelSideLength);
 
-                voxelsPerSide2[0] = (int) Math.Ceiling((bounds2[1][0] - bounds2[0][0]) / VoxelSideLength);
-                voxelsPerSide2[1] = (int) Math.Ceiling((bounds2[1][1] - bounds2[0][1]) / VoxelSideLength);
-                voxelsPerSide2[2] = (int) Math.Ceiling((bounds2[1][2] - bounds2[0][2]) / VoxelSideLength);
-            }
+        //        voxelsPerSide2[0] = (int) Math.Ceiling((bounds2[1][0] - bounds2[0][0]) / VoxelSideLength);
+        //        voxelsPerSide2[1] = (int) Math.Ceiling((bounds2[1][1] - bounds2[0][1]) / VoxelSideLength);
+        //        voxelsPerSide2[2] = (int) Math.Ceiling((bounds2[1][2] - bounds2[0][2]) / VoxelSideLength);
+        //    }
 
-            var xOff1 = Math.Sign(pn[0]) == 1 ? Math.Max(VoxelsPerSide[0] - voxelsPerSide1[0], 0) : 0;
-            var yOff1 = Math.Sign(pn[1]) == 1 ? Math.Max(VoxelsPerSide[1] - voxelsPerSide1[1], 0) : 0;
-            var zOff1 = Math.Sign(pn[2]) == 1 ? Math.Max(VoxelsPerSide[2] - voxelsPerSide1[2], 0) : 0;
+        //    var xOff1 = Math.Sign(pn[0]) == 1 ? Math.Max(VoxelsPerSide[0] - voxelsPerSide1[0], 0) : 0;
+        //    var yOff1 = Math.Sign(pn[1]) == 1 ? Math.Max(VoxelsPerSide[1] - voxelsPerSide1[1], 0) : 0;
+        //    var zOff1 = Math.Sign(pn[2]) == 1 ? Math.Max(VoxelsPerSide[2] - voxelsPerSide1[2], 0) : 0;
 
-            var xOff2 = Math.Sign(pn[0]) == -1 ? Math.Max(VoxelsPerSide[0] - voxelsPerSide2[0], 0) : 0;
-            var yOff2 = Math.Sign(pn[1]) == -1 ? Math.Max(VoxelsPerSide[1] - voxelsPerSide2[1], 0) : 0;
-            var zOff2 = Math.Sign(pn[2]) == -1 ? Math.Max(VoxelsPerSide[2] - voxelsPerSide2[2], 0) : 0;
+        //    var xOff2 = Math.Sign(pn[0]) == -1 ? Math.Max(VoxelsPerSide[0] - voxelsPerSide2[0], 0) : 0;
+        //    var yOff2 = Math.Sign(pn[1]) == -1 ? Math.Max(VoxelsPerSide[1] - voxelsPerSide2[1], 0) : 0;
+        //    var zOff2 = Math.Sign(pn[2]) == -1 ? Math.Max(VoxelsPerSide[2] - voxelsPerSide2[2], 0) : 0;
 
-            var voxels1 = new byte[voxelsPerSide1[0], voxelsPerSide1[1], voxelsPerSide1[2]];
-            var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
+        //    var voxels1 = new byte[voxelsPerSide1[0], voxelsPerSide1[1], voxelsPerSide1[2]];
+        //    var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
 
-            var xOff = Offset[0];
-            var yOff = Offset[1];
-            var zOff = Offset[2];
+        //    var xOff = Offset[0];
+        //    var yOff = Offset[1];
+        //    var zOff = Offset[2];
 
-            Parallel.For(0, VoxelsPerSide[0], i =>
-            {
-                for (var j = 0; j < VoxelsPerSide[1]; j++)
-                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                {
-                    var x = xOff + (i + .5) * VoxelSideLength;
-                    var y = yOff + (j + .5) * VoxelSideLength;
-                    var z = zOff + (k + .5) * VoxelSideLength;
-                    var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, pn, pp);
-                    if (d < 0)
-                        voxels2[i - xOff2, j - yOff2, k - zOff2] = Voxels[i, j, k];
-                    else
-                        voxels1[i - xOff1, j - yOff1, k - zOff1] = Voxels[i, j, k];
-                }
-            });
+        //    Parallel.For(0, VoxelsPerSide[0], i =>
+        //    {
+        //        for (var j = 0; j < VoxelsPerSide[1]; j++)
+        //        for (var k = 0; k < VoxelsPerSide[2]; k++)
+        //        {
+        //            var x = xOff + (i + .5) * VoxelSideLength;
+        //            var y = yOff + (j + .5) * VoxelSideLength;
+        //            var z = zOff + (k + .5) * VoxelSideLength;
+        //            var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, pn, pp);
+        //            if (d < 0)
+        //                voxels2[i - xOff2, j - yOff2, k - zOff2] = Voxels[i, j, k];
+        //            else
+        //                voxels1[i - xOff1, j - yOff1, k - zOff1] = Voxels[i, j, k];
+        //        }
+        //    });
 
-            var vs1 = new VoxelizedSolidDense(voxels1, Discretization, voxelsPerSide1, VoxelSideLength, bounds1);
-            var vs2 = new VoxelizedSolidDense(voxels2, Discretization, voxelsPerSide2, VoxelSideLength, bounds2);
-            return (vs1, vs2);
-        }
+        //    var vs1 = new VoxelizedSolidDense(voxels1, Discretization, voxelsPerSide1, VoxelSideLength, bounds1);
+        //    var vs2 = new VoxelizedSolidDense(voxels2, Discretization, voxelsPerSide2, VoxelSideLength, bounds2);
+        //    return (vs1, vs2);
+        //}
 
         private static bool GetPlaneBoundsInSolid(double[][] bds, Flat plane, out List<double[]> intersections)
         {
