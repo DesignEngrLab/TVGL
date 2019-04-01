@@ -37,6 +37,7 @@ namespace TVGL.DenseVoxels
         public byte[,,] Voxels;
         public readonly int Discretization;
         public int[] VoxelsPerSide;
+        public int[][] VoxelBounds { get; set; }
         public double VoxelSideLength { get; internal set; }
         public double[] TessToVoxSpace { get; }
         private readonly double[] Dimensions;

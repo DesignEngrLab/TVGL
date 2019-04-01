@@ -80,16 +80,38 @@ namespace TVGL.DenseVoxels
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
+
+            var xMin = xLim;
+            var yMin = yLim;
+            var zMin = zLim;
+            var xMax = 0;
+            var yMax = 0;
+            var zMax = 0;
+            
             Parallel.For(0, xLim, i =>
             {
                 var counter = 0;
                 for (var j = 0; j < yLim; j++)
                 for (var k = 0; k < zLim; k++)
                     if (Voxels[i, j, k] != 0)
+                    {
                         counter++;
+                        if (i < xMin) xMin = i;
+                        if (j < yMin) yMin = j;
+                        if (k < zMin) zMin = k;
+                        if (i > xMax) xMax = i;
+                        if (j > yMax) yMax = j;
+                        if (k > zMax) zMax = k;
+                    }
                 count.TryAdd(i, counter);
             });
+
             Count = count.Values.Sum();
+            VoxelBounds = new[]
+            {
+                new[] {xMin, yMin, zMin},
+                new[] {xMax, yMax, zMax}
+            };
         }
 
         private void SetVolume()
@@ -692,9 +714,31 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Boolean functions
-        public VoxelizedSolidDense CreateBoundingSolid()
+        public VoxelizedSolidDense CreateBoundingSolid(bool useVoxelBounds = false)
         {
-            return new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds, 1);
+            if (!useVoxelBounds)
+                return new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds, 1);
+
+            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+            Parallel.For(VoxelBounds[0][0], VoxelBounds[1][0] + 1, i =>
+            {
+                for (var j = VoxelBounds[0][1]; j <= VoxelBounds[1][1]; j++)
+                for (var k = VoxelBounds[0][2]; k <= VoxelBounds[1][2]; k++)
+                {
+                    vs.Voxels[i, j, k] = 1;
+                }
+            });
+
+            var l = VoxelBounds[1][0] - VoxelBounds[0][0] + 1;
+            var w = VoxelBounds[1][1] - VoxelBounds[0][1] + 1;
+            var h = VoxelBounds[1][2] - VoxelBounds[0][2] + 1;
+
+            vs.Count = l * w * h;
+            vs.VoxelBounds = new[] {VoxelBounds[0].ToArray(), VoxelBounds[1].ToArray()};
+            vs.SetVolume();
+            vs.SurfaceArea = 2 * ((l * w) + (l * h) + (w * h)) * Math.Pow(VoxelSideLength, 2);
+
+            return vs;
         }
 
         // NOT A
