@@ -81,9 +81,9 @@ namespace TVGL.DenseVoxels
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
 
-            var xMin = xLim;
-            var yMin = yLim;
-            var zMin = zLim;
+            var xMin = xLim - 1;
+            var yMin = yLim - 1;
+            var zMin = zLim - 1;
             var xMax = 0;
             var yMax = 0;
             var zMax = 0;
@@ -710,6 +710,22 @@ namespace TVGL.DenseVoxels
             }
 
             return intersections.Count > 2;
+        }
+        #endregion
+
+        #region Functions based on tessellated solid
+        public VoxelizedSolidDense[] VoxelizeSlicedSolid(TessellatedSolid[] solids)
+        {
+            var output = new List<VoxelizedSolidDense>();
+            foreach (var solid in solids)
+            {
+                var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+                vs.VoxelizeSubSolid(solid);
+                vs.UpdateProperties();
+                output.Add(vs);
+            }
+
+            return output.ToArray();
         }
         #endregion
 
