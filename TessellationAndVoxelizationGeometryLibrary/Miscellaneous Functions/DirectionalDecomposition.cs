@@ -411,9 +411,17 @@ namespace TVGL
             //Choose whichever min offset is smaller
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
             var stepIndex = 0;
+            var firstIndex = 0;
             var distanceAlongAxis = startDistance; 
             while (distanceAlongAxis < furthestDistance)
             {
+                if (distanceAlongAxis < firstDistance)
+                {
+                    stepIndex++;
+                    distanceAlongAxis += stepSize;
+                    firstIndex = stepIndex;
+                    continue;
+                }
                 stepDistances[stepIndex] = distanceAlongAxis;
                 stepIndex++;
                 distanceAlongAxis += stepSize;
@@ -422,8 +430,8 @@ namespace TVGL
             //Initialize the size of the list.
             var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
             var currentVertexIndex = 0;
-            stepIndex = 0;
-            while (stepIndex < numSteps)
+            stepIndex = firstIndex;
+            while (stepIndex < /*numSteps*/stepDistances.Count + firstIndex)
             {
                 distanceAlongAxis = stepDistances[stepIndex];
 
