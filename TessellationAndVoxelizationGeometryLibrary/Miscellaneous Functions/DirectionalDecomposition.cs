@@ -387,7 +387,7 @@ namespace TVGL
         public static List<DecompositionData> UniformDecompositionAlongZ(TessellatedSolid ts,
             double startDistance, int numSteps, double stepSize)
         {
-            var direction = new[] { 0.0, 0, -1.0 }; //+Z
+            var direction = new[] { 0.0, 0, 1.0 }; //+Z
             var sortedVertexDistanceLookup = new Dictionary<int, double>();
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.

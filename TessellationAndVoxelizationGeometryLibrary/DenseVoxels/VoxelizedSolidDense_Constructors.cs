@@ -143,12 +143,9 @@ namespace TVGL.DenseVoxels
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
 
-            //var xInitOff = Bounds[0][0] + (VoxelSideLength / 2) + ((Dimensions[0] - (xLim * VoxelSideLength)) / 2);
-            //var yInitOff = Bounds[0][1] + (VoxelSideLength / 2) + ((Dimensions[1] - (yLim * VoxelSideLength)) / 2);
-            //var zInitOff = (VoxelSideLength / 2) + ((Dimensions[2] - (zLim * VoxelSideLength)) / 2) - Bounds[1][2];
-
-            var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts,
-                VoxelSideLength / 2 - Bounds[1][2]/*zInitOff*/, zLim, VoxelSideLength);
+            var decomp =
+                DirectionalDecomposition.UniformDecompositionAlongZ(ts, Bounds[0][2] + VoxelSideLength / 2, zLim,
+                    VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
             
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
@@ -158,12 +155,12 @@ namespace TVGL.DenseVoxels
             //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                    slices[zLim - 1 - k].Select(p => new PolygonLight(p)), Bounds[0][0]/*xInitOff*/,
+                    slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
                     VoxelSideLength, xLim); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    var i = (int) Math.Floor((intersections.Key - Bounds[0][0]/*xInitOff*/) / VoxelSideLength); // - 1;
+                    var i = (int) Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
@@ -172,9 +169,9 @@ namespace TVGL.DenseVoxels
                         //Floor/Floor seems to be okay
                         //Floor/ceiling with the yLim check also works
                         //Could reverse this to add more voxels
-                        var sp = (int) Math.Floor((intersectValues[m] - Bounds[0][1]/*yInitOff*/) / VoxelSideLength); // - 1;
+                        var sp = (int) Math.Floor((intersectValues[m] - Bounds[0][1]) / VoxelSideLength); // - 1;
                         if (sp == -1) sp = 0;
-                        var ep = (int) Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]/*yInitOff*/) / VoxelSideLength); // - 1;
+                        var ep = (int) Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
                         if (ep >= yLim) ep = yLim;
 
                         for (var j = sp; j < ep; j++)
@@ -190,28 +187,25 @@ namespace TVGL.DenseVoxels
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
 
-            //var xInitOff = Bounds[0][0] + (VoxelSideLength / 2) + ((Dimensions[0] - (xLim * VoxelSideLength)) / 2);
-            //var yInitOff = Bounds[0][1] + (VoxelSideLength / 2) + ((Dimensions[1] - (yLim * VoxelSideLength)) / 2);
-            //var zInitOff = (VoxelSideLength / 2) + ((Dimensions[2] - (zLim * VoxelSideLength)) / 2) - Bounds[1][2];
-
-            var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts,
-                VoxelSideLength / 2 - Bounds[1][2]/*zInitOff*/, zLim, VoxelSideLength);
+            var decomp =
+                DirectionalDecomposition.UniformDecompositionAlongZ(ts, Bounds[0][2] + VoxelSideLength / 2, zLim,
+                    VoxelSideLength);
 
             if (decomp is null) return;
 
             Parallel.For(0, zLim, k =>
             //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
-                var slice = decomp[zLim - 1 - k];
+                var slice = decomp[k];
                 if (slice is null) return;
                 
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                    slice.Paths.Select(p => new PolygonLight(p)), Bounds[0][0]/*xInitOff*/,
+                    slice.Paths.Select(p => new PolygonLight(p)), Bounds[0][0],
                     VoxelSideLength, xLim); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    var i = (int)Math.Floor((intersections.Key - Bounds[0][0]/*xInitOff*/) / VoxelSideLength); // - 1;
+                    var i = (int)Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
@@ -220,9 +214,9 @@ namespace TVGL.DenseVoxels
                         //Floor/Floor seems to be okay
                         //Floor/ceiling with the yLim check also works
                         //Could reverse this to add more voxels
-                        var sp = (int)Math.Floor((intersectValues[m] - Bounds[0][1]/*yInitOff*/) / VoxelSideLength); // - 1;
+                        var sp = (int)Math.Floor((intersectValues[m] - Bounds[0][1]) / VoxelSideLength); // - 1;
                         if (sp == -1) sp = 0;
-                        var ep = (int)Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]/*yInitOff*/) / VoxelSideLength); // - 1;
+                        var ep = (int)Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
                         if (ep >= yLim) ep = yLim;
 
                         for (var j = sp; j < ep; j++)
