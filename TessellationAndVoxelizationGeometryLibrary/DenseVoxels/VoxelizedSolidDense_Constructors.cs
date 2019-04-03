@@ -137,16 +137,24 @@ namespace TVGL.DenseVoxels
             UpdateProperties();
         }
 
-        private void VoxelizeSolid(TessellatedSolid ts)
+        private void VoxelizeSolid(TessellatedSolid ts, bool possibleNull = false)
         {
             var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
+            //var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
 
+            var xBegin = Bounds[0][0] + VoxelSideLength / 2;
+            var yBegin = Bounds[0][1] + VoxelSideLength / 2;
+            var zBegin = Bounds[0][2] + VoxelSideLength / 2;
+
             var decomp =
-                DirectionalDecomposition.UniformDecompositionAlongZ(ts, Bounds[0][2] + VoxelSideLength / 2, zLim,
+                DirectionalDecomposition.UniformDecompositionAlongZ(ts, zBegin, zLim,
                     VoxelSideLength);
-            var slices = decomp.Select(d => d.Paths).ToList();
+
+            var slices = new List<List<List<PointLight>>>();
+            if (!possibleNull)
+                slices = decomp.Select(d => d.Paths).ToList();
+            else if (decomp is null) return;
             
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
             //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
@@ -154,70 +162,36 @@ namespace TVGL.DenseVoxels
             Parallel.For(0, zLim, k =>
             //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
-                var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                    slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
-                    VoxelSideLength, xLim); //parallel lines aligned with Y axis
-
-                foreach (var intersections in intersectionPoints)
+                List<List<PointLight>> slice;
+                if (!possibleNull)
+                    slice = slices[k];
+                else
                 {
-                    var i = (int) Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
-                    var intersectValues = intersections.Value;
-                    var n = intersectValues.Count;
-                    for (var m = 0; m < n - 1; m += 2)
-                    {
-                        //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
-                        //Floor/Floor seems to be okay
-                        //Floor/ceiling with the yLim check also works
-                        //Could reverse this to add more voxels
-                        var sp = (int) Math.Floor((intersectValues[m] - Bounds[0][1]) / VoxelSideLength); // - 1;
-                        if (sp == -1) sp = 0;
-                        var ep = (int) Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
-                        if (ep >= yLim) ep = yLim;
-
-                        for (var j = sp; j < ep; j++)
-                            Voxels[i, j, k] = 1;
-                    }
+                    var sliceNullComparison = decomp[k];
+                    if (sliceNullComparison is null) return;
+                    slice = sliceNullComparison.Paths;
                 }
-            });
-        }
 
-        private void VoxelizeSubSolid(TessellatedSolid ts)
-        {
-            var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
-            var zLim = VoxelsPerSide[2];
-
-            var decomp =
-                DirectionalDecomposition.UniformDecompositionAlongZ(ts, Bounds[0][2] + VoxelSideLength / 2, zLim,
-                    VoxelSideLength);
-
-            if (decomp is null) return;
-
-            Parallel.For(0, zLim, k =>
-            //for (var k = 0; k < VoxelsPerSide[2]; k++)
-            {
-                var slice = decomp[k];
-                if (slice is null) return;
-                
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                    slice.Paths.Select(p => new PolygonLight(p)), Bounds[0][0],
-                    VoxelSideLength, xLim); //parallel lines aligned with Y axis
+                    slice.Select(p => new PolygonLight(p)), xBegin, VoxelSideLength, xLim);
+                    //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    var i = (int)Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
+                    var i = (int) Math.Floor((intersections.Key - xBegin) / VoxelSideLength); // - 1;
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
                     {
                         //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
-                        //Floor/Floor seems to be okay
+                        //Ceiling/ceiling seems to be okay
                         //Floor/ceiling with the yLim check also works
+                        //Round/Round also seems to work
                         //Could reverse this to add more voxels
-                        var sp = (int)Math.Floor((intersectValues[m] - Bounds[0][1]) / VoxelSideLength); // - 1;
-                        if (sp == -1) sp = 0;
-                        var ep = (int)Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
-                        if (ep >= yLim) ep = yLim;
+                        var sp = (int) Math.Round((intersectValues[m] - yBegin) / VoxelSideLength); // - 1;
+                        //if (sp == -1) sp = 0;
+                        var ep = (int) Math.Round((intersectValues[m + 1] - yBegin) / VoxelSideLength); // - 1;
+                        //if (ep >= yLim) ep = yLim;
 
                         for (var j = sp; j < ep; j++)
                             Voxels[i, j, k] = 1;

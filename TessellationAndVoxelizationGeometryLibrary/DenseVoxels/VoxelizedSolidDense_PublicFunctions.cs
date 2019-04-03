@@ -720,7 +720,7 @@ namespace TVGL.DenseVoxels
             foreach (var solid in solids)
             {
                 var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
-                vs.VoxelizeSubSolid(solid);
+                vs.VoxelizeSolid(solid, true);
                 vs.UpdateProperties();
                 output.Add(vs);
             }
