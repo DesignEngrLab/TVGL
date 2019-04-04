@@ -413,7 +413,7 @@ namespace TVGL
             var stepIndex = 0;
             var firstIndex = 0;
             var distanceAlongAxis = startDistance; 
-            while (distanceAlongAxis < furthestDistance)
+            while (distanceAlongAxis <= furthestDistance)
             {
                 if (distanceAlongAxis < firstDistance)
                 {
