@@ -140,11 +140,10 @@ namespace TVGL.DenseVoxels
         private void VoxelizeSolid(TessellatedSolid ts, bool possibleNull = false)
         {
             var xLim = VoxelsPerSide[0];
-            //var yLim = VoxelsPerSide[1];
+            var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
 
             var xBegin = Bounds[0][0] + VoxelSideLength / 2;
-            var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
 
             var decomp =
@@ -178,20 +177,18 @@ namespace TVGL.DenseVoxels
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    var i = (int) Math.Floor((intersections.Key - xBegin) / VoxelSideLength); // - 1;
+                    var i = (int) Math.Floor((intersections.Key - xBegin) / VoxelSideLength);
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
                     {
                         //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
-                        //Ceiling/ceiling seems to be okay
-                        //Floor/ceiling with the yLim check also works
-                        //Round/Round also seems to work
+                        //Although other dimensions do not also do this. Everything operates with Round (effectively).
                         //Could reverse this to add more voxels
-                        var sp = (int) Math.Round((intersectValues[m] - yBegin) / VoxelSideLength); // - 1;
-                        //if (sp == -1) sp = 0;
-                        var ep = (int) Math.Round((intersectValues[m + 1] - yBegin) / VoxelSideLength); // - 1;
-                        //if (ep >= yLim) ep = yLim;
+                        var sp = (int) Math.Round((intersectValues[m] - Bounds[0][1]) / VoxelSideLength);
+                        if (sp < 0) sp = 0;
+                        var ep = (int) Math.Round((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength);
+                        if (ep > yLim) ep = yLim;
 
                         for (var j = sp; j < ep; j++)
                             Voxels[i, j, k] = 1;

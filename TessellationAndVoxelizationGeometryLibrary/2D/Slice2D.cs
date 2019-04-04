@@ -301,7 +301,7 @@ namespace TVGL._2D
             var i = 0;
             var distanceAlongDirection =
                 (Math.Ceiling((sortedPoints[0].X - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
-                lowerBound + (distanceBetweenLines / 2);
+                lowerBound;
             var numIntersectionLines = 0;
             var intersectionLines = new HashSet<Line>();
             var intersectionPoints = new Dictionary<double, List<double>>(numLines);
