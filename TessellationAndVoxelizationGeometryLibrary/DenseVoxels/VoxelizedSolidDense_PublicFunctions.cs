@@ -67,6 +67,27 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Set/update properties
+
+        public void UpdateBoundingProperties()
+        {
+            if (VoxelBounds is null)
+            {
+                Count = VoxelsPerSide[0] * VoxelsPerSide[1] * VoxelsPerSide[2];
+                SetVolume();
+                SurfaceArea =
+                    2 * ((VoxelsPerSide[0] * VoxelsPerSide[1]) + (VoxelsPerSide[0] * VoxelsPerSide[2]) +
+                         (VoxelsPerSide[1] * VoxelsPerSide[2])) * Math.Pow(VoxelSideLength, 2);
+                return;
+            }
+
+            var l = VoxelBounds[1][0] - VoxelBounds[0][0] + 1;
+            var w = VoxelBounds[1][1] - VoxelBounds[0][1] + 1;
+            var h = VoxelBounds[1][2] - VoxelBounds[0][2] + 1;
+
+            Count = l * w * h;
+            SetVolume();
+            SurfaceArea = 2 * ((l * w) + (l * h) + (w * h)) * Math.Pow(VoxelSideLength, 2);
+        }
         public void UpdateProperties()
         {
             SetCount();
@@ -134,6 +155,7 @@ namespace TVGL.DenseVoxels
                         neighborCount += NumNeighbors(i, j, k, xLim, yLim, zLim);
                 neighbors.TryAdd(i, neighborCount);
             });
+
             SurfaceArea = 6 * (Count - neighbors.Values.Sum(x => x / 6)) * Math.Pow(VoxelSideLength, 2);
         }
         #endregion
@@ -745,15 +767,8 @@ namespace TVGL.DenseVoxels
                 }
             });
 
-            var l = VoxelBounds[1][0] - VoxelBounds[0][0] + 1;
-            var w = VoxelBounds[1][1] - VoxelBounds[0][1] + 1;
-            var h = VoxelBounds[1][2] - VoxelBounds[0][2] + 1;
-
-            vs.Count = l * w * h;
-            vs.VoxelBounds = new[] {VoxelBounds[0].ToArray(), VoxelBounds[1].ToArray()};
-            vs.SetVolume();
-            vs.SurfaceArea = 2 * ((l * w) + (l * h) + (w * h)) * Math.Pow(VoxelSideLength, 2);
-
+            vs.VoxelBounds = new[] { VoxelBounds[0].ToArray(), VoxelBounds[1].ToArray() };
+            UpdateBoundingProperties();
             return vs;
         }
 
@@ -768,6 +783,7 @@ namespace TVGL.DenseVoxels
                     if (Voxels[i, j, k] == 0)
                         vs.Voxels[i, j, k] = 1;
             });
+
             vs.UpdateProperties();
             return vs;
         }
@@ -794,6 +810,7 @@ namespace TVGL.DenseVoxels
                     vs.Voxels[i, j, k] = voxel;
                 }
             });
+
             vs.UpdateProperties();
             return vs;
         }
@@ -817,6 +834,7 @@ namespace TVGL.DenseVoxels
                     vs.Voxels[i, j, k] = voxel;
                 }
             });
+
             vs.UpdateProperties();
             return vs;
         }
@@ -835,6 +853,7 @@ namespace TVGL.DenseVoxels
                     if (subtrahends.Any(solid => solid.Voxels[i, j, k] != 0))
                         vs.Voxels[i, j, k] = 0;
             });
+
             vs.UpdateProperties();
             return vs;
         }

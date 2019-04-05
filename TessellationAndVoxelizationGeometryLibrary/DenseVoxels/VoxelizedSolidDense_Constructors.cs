@@ -55,6 +55,9 @@ namespace TVGL.DenseVoxels
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
+            Count = 0;
+            SurfaceArea = 0;
+            Volume = 0;
             if (value != 0)
             {
                 Parallel.For(0, xLim, m =>
@@ -63,6 +66,8 @@ namespace TVGL.DenseVoxels
                     for (var o = 0; o < zLim; o++)
                         Voxels[m, n, o] = value;
                 });
+                UpdateBoundingProperties();
+
             }
             Discretization = discretization;
             VoxelSideLength = voxelSideLength;
@@ -70,8 +75,6 @@ namespace TVGL.DenseVoxels
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
             TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
             SolidColor = new Color(Constants.DefaultColor);
-            Count = value == 0 ? 0 : VoxelsPerSide[0] * VoxelsPerSide[1] * VoxelsPerSide[2];
-            UpdateProperties();
         }
 
         public VoxelizedSolidDense(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
