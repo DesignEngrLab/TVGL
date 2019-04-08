@@ -768,7 +768,7 @@ namespace TVGL.DenseVoxels
             });
 
             vs.VoxelBounds = new[] { VoxelBounds[0].ToArray(), VoxelBounds[1].ToArray() };
-            UpdateBoundingProperties();
+            vs.UpdateBoundingProperties();
             return vs;
         }
 
@@ -830,7 +830,7 @@ namespace TVGL.DenseVoxels
                     var voxel = Voxels[i, j, k];
                     if (voxel == 0) continue;
                     foreach (var vox in solids)
-                    voxel = (byte) (voxel & vox.Voxels[i, j, k]);
+                        voxel = (byte) (voxel & vox.Voxels[i, j, k]);
                     vs.Voxels[i, j, k] = voxel;
                 }
             });

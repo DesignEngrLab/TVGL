@@ -140,7 +140,7 @@ namespace TVGL.DenseVoxels
             UpdateProperties();
         }
 
-        private void VoxelizeSolid(TessellatedSolid ts, bool possibleNull = false)
+        private void VoxelizeSolid(TessellatedSolid ts, bool possibleNullSlices = false)
         {
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
@@ -154,7 +154,7 @@ namespace TVGL.DenseVoxels
                     VoxelSideLength);
 
             var slices = new List<List<List<PointLight>>>();
-            if (!possibleNull)
+            if (!possibleNullSlices)
                 slices = decomp.Select(d => d.Paths).ToList();
             else if (decomp is null) return;
             
@@ -165,7 +165,7 @@ namespace TVGL.DenseVoxels
             //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
                 List<List<PointLight>> slice;
-                if (!possibleNull)
+                if (!possibleNullSlices)
                     slice = slices[k];
                 else
                 {
