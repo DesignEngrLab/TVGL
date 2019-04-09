@@ -148,20 +148,27 @@ namespace TVGLPresenterDX
             //stopwatch.Restart();
             //var vs = new VoxelizedSolid(ts, res);
             //stopwatch.Stop();
-            //Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
+            Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var vs_dense = new VoxelizedSolidDense(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
 
+            //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
+            //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
+            //Presenter.ShowAndHang(vs_cut.Item1, vs_cut.Item2);
+
+            var vs_cut2 = vs_dense.SliceOnFlat(VoxelDirections.XNegative, 87);
+            vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
+            Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
 
             //Console.WriteLine(ts.SurfaceArea);
             //Console.WriteLine(vs_dense.SurfaceArea);
             //Console.WriteLine();
 
             //Console.WriteLine(ts.Volume);
-            ////Console.WriteLine(vs.Volume);
+            //Console.WriteLine(vs.Volume);
             //Console.WriteLine(vs_dense.Volume);
 
             //Presenter.ShowAndHang(vs_dense);
@@ -184,12 +191,13 @@ namespace TVGLPresenterDX
             //Console.WriteLine("Original erosion: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var erd_dense = bb_dense.ErodeToNewSolid(vs_dense, new[] {-1, -2, -3.0}, 0D, 20, "ball");
+            var erd_dense = bb_dense.ErodeToNewSolid(vs_dense, new[] { 0, .471, -.882 }, 0, 0, "flat");
             stopwatch.Stop();
             Console.WriteLine("Dense erosion   : {0}", stopwatch.Elapsed);
+            erd_dense.SolidColor = new Color(KnownColors.Magenta);
 
             //Presenter.ShowAndHang(erd);
-            Presenter.ShowAndHang(erd_dense);
+            Presenter.ShowAndHang(erd_dense, vs_dense);
 
 
             //stopwatch.Restart();
