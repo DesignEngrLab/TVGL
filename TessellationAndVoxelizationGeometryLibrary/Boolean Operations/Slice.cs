@@ -29,9 +29,10 @@ namespace TVGL.Boolean_Operations
         /// <param name="setIntersectionGroups">Determines whether to output the intersections (2D cross sections and other info)</param>
         /// <param name="undoPlaneOffset">Determines whether to construct new faces exactly on the cutting plane</param>
         public static void OnInfiniteFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> solids, bool setIntersectionGroups = false, bool undoPlaneOffset = false)
+            out List<TessellatedSolid> solids, out ContactData contactData, bool setIntersectionGroups = false,
+            bool undoPlaneOffset = false)
         {
-            if (!GetContactData(ts, plane, out var contactData, setIntersectionGroups, undoPlaneOffset:undoPlaneOffset))
+            if (!GetContactData(ts, plane, out contactData, setIntersectionGroups, undoPlaneOffset:undoPlaneOffset))
             {
                 solids = new List<TessellatedSolid>();
                 Debug.WriteLine("CuttingPlane does not cut through the given solid.");
