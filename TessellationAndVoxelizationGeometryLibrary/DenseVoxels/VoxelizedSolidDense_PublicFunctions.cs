@@ -140,17 +140,27 @@ namespace TVGL.DenseVoxels
             Volume = Count * Math.Pow(VoxelSideLength, 3);
         }
 
-        private void SetSurfaceArea()
+        public void SetSurfaceArea()
         {
             var neighbors = new ConcurrentDictionary<int, int>();
+
+            var xMin = VoxelBounds?[0][0] ?? 0;
+            var xMax = VoxelBounds?[1][0] + 1 ?? VoxelsPerSide[0];
             var xLim = VoxelsPerSide[0];
+
+            var yMin = VoxelBounds?[0][1] ?? 0;
+            var yMax = VoxelBounds?[1][1] + 1 ?? VoxelsPerSide[1];
             var yLim = VoxelsPerSide[1];
+
+            var zMin = VoxelBounds?[0][2] ?? 0;
+            var zMax = VoxelBounds?[1][2] + 1 ?? VoxelsPerSide[2];
             var zLim = VoxelsPerSide[2];
-            Parallel.For(0, xLim, i =>
+
+            Parallel.For(xMin, xMax, i =>
             {
                 var neighborCount = 0;
-                for (var j = 0; j < yLim; j++)
-                for (var k = 0; k < zLim; k++)
+                for (var j = yMin; j < yMax; j++)
+                for (var k = zMin; k < zMax; k++)
                     if (Voxels[i, j, k] != 0)
                         neighborCount += NumNeighbors(i, j, k, xLim, yLim, zLim);
                 neighbors.TryAdd(i, neighborCount);
@@ -819,18 +829,28 @@ namespace TVGL.DenseVoxels
         public VoxelizedSolidDense IntersectToNewSolid(params VoxelizedSolidDense[] solids)
         {
             var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
-            var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
-            var zLim = VoxelsPerSide[2];
-            Parallel.For(0, xLim, i =>
+
+            var xMin = VoxelBounds?[0][0] ?? 0;
+            var xMax = VoxelBounds?[1][0] + 1 ?? VoxelsPerSide[0];
+
+            var yMin = VoxelBounds?[0][1] ?? 0;
+            var yMax = VoxelBounds?[1][1] + 1 ?? VoxelsPerSide[1];
+
+            var zMin = VoxelBounds?[0][2] ?? 0;
+            var zMax = VoxelBounds?[1][2] + 1 ?? VoxelsPerSide[2];
+
+            Parallel.For(xMin, xMax, i =>
             {
-                for (var j = 0; j < yLim; j++)
-                for (var k = 0; k < zLim; k++)
+                for (var j = yMin; j < yMax; j++)
+                for (var k = zMin; k < zMax; k++)
                 {
                     var voxel = Voxels[i, j, k];
                     if (voxel == 0) continue;
                     foreach (var vox in solids)
+                    {
                         voxel = (byte) (voxel & vox.Voxels[i, j, k]);
+                        if (voxel == 0) break;
+                    }
                     vs.Voxels[i, j, k] = voxel;
                 }
             });
@@ -843,15 +863,26 @@ namespace TVGL.DenseVoxels
         public VoxelizedSolidDense SubtractToNewSolid(params VoxelizedSolidDense[] subtrahends)
         {
             var vs = (VoxelizedSolidDense)Copy();
-            var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
-            var zLim = VoxelsPerSide[2];
-            Parallel.For(0, xLim, i =>
+
+            var xMin = VoxelBounds?[0][0] ?? 0;
+            var xMax = VoxelBounds?[1][0] + 1 ?? VoxelsPerSide[0];
+
+            var yMin = VoxelBounds?[0][1] ?? 0;
+            var yMax = VoxelBounds?[1][1] + 1 ?? VoxelsPerSide[1];
+
+            var zMin = VoxelBounds?[0][2] ?? 0;
+            var zMax = VoxelBounds?[1][2] + 1 ?? VoxelsPerSide[2];
+
+            Parallel.For(xMin, xMax, i =>
             {
-                for (var j = 0; j < yLim; j++)
-                for (var k = 0; k < zLim; k++)
-                    if (subtrahends.Any(solid => solid.Voxels[i, j, k] != 0))
+                for (var j = yMin; j < yMax; j++)
+                for (var k = zMin; k < zMax; k++)
+                {
+                    var j1 = j;
+                    var k1 = k;
+                    if (subtrahends.Any(solid => solid.Voxels[i, j1, k1] != 0))
                         vs.Voxels[i, j, k] = 0;
+                }
             });
 
             vs.UpdateProperties();
@@ -958,18 +989,36 @@ namespace TVGL.DenseVoxels
             var dirX = dir[0];
             var dirY = dir[1];
             var dirZ = dir[2];
+
             var signX = (byte) (Math.Sign(dirX) + 1);
             var signY = (byte) (Math.Sign(dirY) + 1);
             var signZ = (byte) (Math.Sign(dirZ) + 1);
+
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
+
+            var lims = new[]
+            {
+                new[]
+                {
+                    Math.Min(VoxelBounds?[0][0] ?? 0, designedSolid.VoxelBounds?[0][0] ?? 0),
+                    Math.Min(VoxelBounds?[0][1] ?? 0, designedSolid.VoxelBounds?[0][1] ?? 0),
+                    Math.Min(VoxelBounds?[0][2] ?? 0, designedSolid.VoxelBounds?[0][2] ?? 0)
+                },
+                new[]
+                {
+                    Math.Max(VoxelBounds?[1][0] + 1 ?? xLim, designedSolid.VoxelBounds?[1][0] + 1 ?? xLim),
+                    Math.Max(VoxelBounds?[1][1] + 1 ?? yLim, designedSolid.VoxelBounds?[1][1] + 1 ?? yLim),
+                    Math.Max(VoxelBounds?[1][2] + 1 ?? zLim, designedSolid.VoxelBounds?[1][2] + 1 ?? zLim)
+                }
+            };
 
             tLimit = tLimit <= 0 ? VoxelsPerSide.norm2() : tLimit / VoxelSideLength;
             toolDia = toolDia <= 0 ? 0 : toolDia;
             var mLimit = tLimit + VoxelsPerSide.norm2();
             var mask = CreateProjectionMask(dir, mLimit);
-            var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, toolDia);
+            var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, toolDia, lims);
             var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
 
             Parallel.ForEach(starts, vox =>
@@ -991,27 +1040,28 @@ namespace TVGL.DenseVoxels
         }
 
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurfaces(double dirX, double dirY, double dirZ,
-            double toolDia)
+            double toolDia, IReadOnlyList<int[]> lims)
         {
             var voxels = new HashSet<int[]>(new SameCoordinates());
             var directions = GetVoxelDirections(dirX, dirY, dirZ);
             foreach (var direction in directions)
             {
-                var voxel = GetAllVoxelsOnBoundingSurface(direction, toolDia);
+                var voxel = GetAllVoxelsOnBoundingSurface(direction, toolDia, lims);
                 foreach (var vox in voxel)
                     voxels.Add(vox);
             }
             return voxels;
         }
 
-        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(VoxelDirections dir, double toolDia)
+        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(VoxelDirections dir, double toolDia,
+            IReadOnlyList<int[]> lims)
         {
             var limit = new int[3][];
             var offset = (int)Math.Ceiling(0.5 * toolDia / VoxelSideLength);
 
-            limit[0] = new[] { 0 - offset, VoxelsPerSide[0] + offset };
-            limit[1] = new[] { 0 - offset, VoxelsPerSide[1] + offset };
-            limit[2] = new[] { 0 - offset, VoxelsPerSide[2] + offset };
+            limit[0] = new[] { lims[0][0] - offset, lims[1][0] + offset };
+            limit[1] = new[] { lims[0][1] - offset, lims[1][1] + offset };
+            limit[2] = new[] { lims[0][2] - offset, lims[1][2] + offset };
 
             var ind = Math.Abs((int)dir) - 1;
             if (Math.Sign((int)dir) == 1)
