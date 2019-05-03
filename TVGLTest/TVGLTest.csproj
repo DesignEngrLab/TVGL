@@ -92,7 +92,6 @@
     <Compile Include="ExcelInterface.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Test\BooleanOperationsTest.cs" />
     <Compile Include="Test\SegmentationTest.cs" />
   </ItemGroup>
   <ItemGroup>
