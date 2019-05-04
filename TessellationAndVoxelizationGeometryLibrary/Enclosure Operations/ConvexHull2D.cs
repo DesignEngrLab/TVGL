@@ -567,7 +567,7 @@ namespace TVGL
             var newDxOut = vectorToNewPointX * edgeVectorY - vectorToNewPointY * edgeVectorX;
             if (newDxOut <= 0) return false;
             var newDxAlong = edgeVectorX * vectorToNewPointX + edgeVectorY * vectorToNewPointY;
-            int index = Array.BinarySearch(sortedKeys, 0, size, newDxAlong);
+            int index = BinarySearch(sortedKeys, size, newDxAlong);
             if (index >= 0)
             {
                 var ptOnList = sortedPoints[index];
@@ -578,21 +578,57 @@ namespace TVGL
             else
             {
                 index = ~index;
-                if (index < size)
+                if (index == 0)
                 {
                     for (int i = size; i > index; i--)
                     {
                         sortedKeys[i] = sortedKeys[i - 1];
                         sortedPoints[i] = sortedPoints[i - 1];
                     }
-                    //Array.Copy(sortedKeys, index, sortedKeys, index + 1, size - index);
-                    //Array.Copy(sortedPoints, index, sortedPoints, index + 1, size - index);
+                    sortedKeys[index] = newDxAlong;
+                    sortedPoints[index] = newPoint;
+                    size++;
                 }
-                sortedKeys[index] = newDxAlong;
-                sortedPoints[index] = newPoint;
-                size++;
+                else if (index < size)
+                {
+                    var prevPt = sortedPoints[index - 1];
+                    var nextPt = sortedPoints[index];
+                    double lX = newPointX - prevPt.X, lY = newPointY - prevPt.Y;
+                    double rX = nextPt.X - newPointX, rY = nextPt.Y - newPointY;
+                    double zValue = lX * rY - lY * rX;
+                    if (zValue >= 0)
+                    {
+                        for (int i = size; i > index; i--)
+                        {
+                            sortedKeys[i] = sortedKeys[i - 1];
+                            sortedPoints[i] = sortedPoints[i - 1];
+                        }
+                        sortedKeys[index] = newDxAlong;
+                        sortedPoints[index] = newPoint;
+                        size++;
+                    }
+                }
+                else
+                {
+                    sortedKeys[index] = newDxAlong;
+                    sortedPoints[index] = newPoint;
+                    size++;
+                }
             }
             return true;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int BinarySearch(double[] array, int length, double value)
+        {
+            var lo = 0;
+            var hi = length - 1;
+            while (lo <= hi)
+            {
+                int i = lo + ((hi - lo) >> 1);
+                if (array[i] < value) lo = i + 1;
+                else hi = i - 1;
+            }
+            return ~lo;
         }
 
     }

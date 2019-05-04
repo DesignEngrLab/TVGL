@@ -191,11 +191,11 @@ namespace TVGLPresenterDX
                 //averageTimes[n].Add(("Monotone Chain", monotoneChainAverage));
             }
             #endregion
-
+            repeat = 5;
             #region random cases
             Console.WriteLine("\n\n\n******* Random CASES ***********");
 
-            var nums = new[] { 4, 10 };
+            var nums = new[] { 3, 10 };
             for (int k = 0; k < 5; k++)
             {
                 foreach (var n in nums)
