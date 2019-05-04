@@ -105,7 +105,92 @@ namespace TVGLPresenterDX
         private static void Main(string[] args)
         {
             var averageTimes = new Dictionary<int, List<(string MethodName, double AverageTimeInMilliseconds)>>();
-            var repeat = 10;
+            var repeat = 100;
+
+            #region Edge Cases
+            Console.WriteLine("******* EDGE CASES ***********");
+            for (int k = 1; k < 8; k++)
+            {
+                averageTimes[-k] = new List<(string MethodName, double AverageTimeInMilliseconds)>();
+                var campbellTotalTime = TimeSpan.Zero;
+                var ouelletTotalTime = TimeSpan.Zero;
+                //var monotoneChainTotalTime = TimeSpan.Zero;
+                for (int i = 0; i < repeat; i++)
+                {
+                    PointLight[] points = Issues(k);
+
+                    stopwatch.Restart();
+                    var windowsPoints = points.Select(p => new System.Windows.Point(p.X, p.Y)).ToList();
+                    var ouelletConvexHull = new OuelletConvexHull.ConvexHull(windowsPoints);
+                    ouelletConvexHull.CalcConvexHull(ConvexHullThreadUsage.OnlyOne);
+                    stopwatch.Stop();
+                    ouelletTotalTime += stopwatch.Elapsed;
+                    //Console.WriteLine("{0}:{1} in {2}", n, ouelletConvexHull.GetResultsAsArrayOfPoint().Count(),
+                    //    stopwatch.Elapsed);
+
+                    stopwatch.Restart();
+                    var convexHull = MinimumEnclosure.ConvexHull2D(points);
+                    stopwatch.Stop();
+                    campbellTotalTime += stopwatch.Elapsed;
+                    //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
+                    //Console.WriteLine("{0}:{1} in {2}", n, convexHull.Count(),
+                    //    stopwatch.Elapsed);
+
+                    //var pointsAsList = points.ToList();
+                    //stopwatch.Restart();
+                    //var monotoneChainConvexHull = MinimumEnclosure.MonotoneChain(pointsAsList);
+                    //stopwatch.Stop();
+                    //monotoneChainTotalTime += stopwatch.Elapsed;
+                    //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
+                    //Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
+                    //    stopwatch.Elapsed);
+
+                    var miConvexHull = MinimumEnclosure.MIConvexHull2D(points);
+                    var p0 = new PolygonLight(miConvexHull);
+                    var p1 = new PolygonLight(convexHull);
+                    var p2 = new PolygonLight(ouelletConvexHull.GetResultsAsArrayOfPoint()
+                        .Select(p => new PointLight(p.X, p.Y)));
+                    //monotoneChainConvexHull.Reverse();
+                    //var p3 = new PolygonLight(monotoneChainConvexHull);
+                    if (!p1.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)) ||
+                        !p1.Length.IsPracticallySame(p0.Length, p0.Length * (1 - Constants.HighConfidence)))
+                    {
+                        Presenter.ShowAndHang(new List<PolygonLight> { p0, p1 });
+
+                        //foreach (var chain in hullCands)
+                        //{
+                        //    var polyLine = new PolygonLight(chain.Values.Select(c => c.Item1));
+                        //    Presenter.ShowAndHang(new List<PolygonLight> { p1, polyLine });
+                        //}
+                    }
+
+                    if (!p2.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
+                    {
+                        Presenter.ShowAndHang(new List<PolygonLight> { p0, p2 });
+                    }
+
+                    //if (!p3.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
+                    //{
+                    //    Presenter.ShowAndHang(new List<PolygonLight> { p0, p3 });
+                    //}
+                }
+
+                var campbellAverage = campbellTotalTime.TotalMilliseconds / repeat;
+                var ouelletAverage = ouelletTotalTime.TotalMilliseconds / repeat;
+                //var monotoneChainAverage = monotoneChainTotalTime.TotalMilliseconds / repeat;
+                Console.WriteLine("Case #{0}", k);
+                Console.WriteLine("1) {0} in {1} ", "Campbell", campbellAverage);
+                Console.WriteLine("2) {0} in {1} ", "Ouellet", ouelletAverage);
+                if (campbellAverage / ouelletAverage > 1)
+                    Console.WriteLine("******************* increased by {0} ", campbellAverage / ouelletAverage);
+                else Console.WriteLine("reduced by {0} ", campbellAverage / ouelletAverage);
+                //Console.WriteLine("3) {0} in {1} ", "Monotone Chain", monotoneChainAverage);
+
+                averageTimes[-k].Add(("Campbell", campbellAverage));
+                averageTimes[-k].Add(("Ouellet", ouelletAverage));
+                //averageTimes[n].Add(("Monotone Chain", monotoneChainAverage));
+            }
+            #endregion
 
             #region random cases
             Console.WriteLine("\n\n\n******* Random CASES ***********");
@@ -190,7 +275,7 @@ namespace TVGLPresenterDX
                     Console.WriteLine("1) {0} in {1} ", "Campbell", campbellAverage);
                     Console.WriteLine("2) {0} in {1} ", "Ouellet", ouelletAverage);
                     if (campbellAverage / ouelletAverage > 1)
-                        Console.WriteLine("*** increased by {0} ", campbellAverage / ouelletAverage);
+                        Console.WriteLine("******************* increased by {0} ", campbellAverage / ouelletAverage);
                     else Console.WriteLine("reduced by {0} ", campbellAverage / ouelletAverage);
                     //Console.WriteLine("3) {0} in {1} ", "Monotone Chain", monotoneChainAverage);
 
@@ -202,91 +287,6 @@ namespace TVGLPresenterDX
                 {
                     nums[n] *= 10;
                 }
-            }
-            #endregion
-
-            #region Edge Cases
-            Console.WriteLine("******* EDGE CASES ***********");
-            for (int k = 1; k < 8; k++)
-            {
-                averageTimes[-k] = new List<(string MethodName, double AverageTimeInMilliseconds)>();
-                var campbellTotalTime = TimeSpan.Zero;
-                var ouelletTotalTime = TimeSpan.Zero;
-                //var monotoneChainTotalTime = TimeSpan.Zero;
-                for (int i = 0; i < repeat; i++)
-                {
-                    PointLight[] points = Issues(k);
-
-                    stopwatch.Restart();
-                    var convexHull = MinimumEnclosure.ConvexHull2D(points);
-                    stopwatch.Stop();
-                    campbellTotalTime += stopwatch.Elapsed;
-                    //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
-                    //Console.WriteLine("{0}:{1} in {2}", n, convexHull.Count(),
-                    //    stopwatch.Elapsed);
-
-                    var windowsPoints = points.Select(p => new System.Windows.Point(p.X, p.Y)).ToList();
-                    stopwatch.Restart();
-                    var ouelletConvexHull = new OuelletConvexHull.ConvexHull(windowsPoints);
-                    ouelletConvexHull.CalcConvexHull(ConvexHullThreadUsage.OnlyOne);
-                    stopwatch.Stop();
-                    ouelletTotalTime += stopwatch.Elapsed;
-                    //Console.WriteLine("{0}:{1} in {2}", n, ouelletConvexHull.GetResultsAsArrayOfPoint().Count(),
-                    //    stopwatch.Elapsed);
-
-                    //var pointsAsList = points.ToList();
-                    //stopwatch.Restart();
-                    //var monotoneChainConvexHull = MinimumEnclosure.MonotoneChain(pointsAsList);
-                    //stopwatch.Stop();
-                    //monotoneChainTotalTime += stopwatch.Elapsed;
-                    //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
-                    //Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
-                    //    stopwatch.Elapsed);
-
-                    var miConvexHull = MinimumEnclosure.MIConvexHull2D(points);
-                    var p0 = new PolygonLight(miConvexHull);
-                    var p1 = new PolygonLight(convexHull);
-                    var p2 = new PolygonLight(ouelletConvexHull.GetResultsAsArrayOfPoint()
-                        .Select(p => new PointLight(p.X, p.Y)));
-                    //monotoneChainConvexHull.Reverse();
-                    //var p3 = new PolygonLight(monotoneChainConvexHull);
-                    if (!p1.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)) ||
-                        !p1.Length.IsPracticallySame(p0.Length, p0.Length * (1 - Constants.HighConfidence)))
-                    {
-                        Presenter.ShowAndHang(new List<PolygonLight> { p0, p1 });
-
-                        //foreach (var chain in hullCands)
-                        //{
-                        //    var polyLine = new PolygonLight(chain.Values.Select(c => c.Item1));
-                        //    Presenter.ShowAndHang(new List<PolygonLight> { p1, polyLine });
-                        //}
-                    }
-
-                    if (!p2.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
-                    {
-                        Presenter.ShowAndHang(new List<PolygonLight> { p0, p2 });
-                    }
-
-                    //if (!p3.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
-                    //{
-                    //    Presenter.ShowAndHang(new List<PolygonLight> { p0, p3 });
-                    //}
-                }
-
-                var campbellAverage = campbellTotalTime.TotalMilliseconds / repeat;
-                var ouelletAverage = ouelletTotalTime.TotalMilliseconds / repeat;
-                //var monotoneChainAverage = monotoneChainTotalTime.TotalMilliseconds / repeat;
-                Console.WriteLine("Case #{0}", k);
-                Console.WriteLine("1) {0} in {1} ", "Campbell", campbellAverage);
-                Console.WriteLine("2) {0} in {1} ", "Ouellet", ouelletAverage);
-                if (campbellAverage / ouelletAverage > 1)
-                    Console.WriteLine("*** increased by {0} ", campbellAverage / ouelletAverage);
-                else Console.WriteLine("reduced by {0} ", campbellAverage / ouelletAverage);
-                //Console.WriteLine("3) {0} in {1} ", "Monotone Chain", monotoneChainAverage);
-
-                averageTimes[-k].Add(("Campbell", campbellAverage));
-                averageTimes[-k].Add(("Ouellet", ouelletAverage));
-                //averageTimes[n].Add(("Monotone Chain", monotoneChainAverage));
             }
             #endregion
 

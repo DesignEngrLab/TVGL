@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -550,7 +551,6 @@ namespace TVGL
             }
 
             #endregion
-
             return convexHullCCW;
         }
 
@@ -558,8 +558,9 @@ namespace TVGL
         // if it errors - it is because there are two points at the same distance along. So, we then
         // check if the new point or the existing one on the list should stay. Simply keep the one that is
         // furthest from the edge vector.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AddToListAlong(PointLight[] sortedPoints, double[] sortedKeys, ref int size,
-            PointLight newPoint, double newPointX, double newPointY, double basePointX, double basePointY, double edgeVectorX, double edgeVectorY)
+                PointLight newPoint, double newPointX, double newPointY, double basePointX, double basePointY, double edgeVectorX, double edgeVectorY)
         {
             var vectorToNewPointX = newPointX - basePointX;
             var vectorToNewPointY = newPointY - basePointY;
