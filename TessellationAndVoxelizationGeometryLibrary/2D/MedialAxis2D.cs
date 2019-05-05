@@ -31,7 +31,7 @@ namespace TVGL._2D
                 var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).Select(p => new PolygonLight(p)).First();
 
                 //Delaunay Medial Axis             
-                var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
+                var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled.Select(p=>p.Position).ToList());
                 var lines = new List<List<Point>>();
                 foreach (var triangle in delaunay.Cells)
                 {

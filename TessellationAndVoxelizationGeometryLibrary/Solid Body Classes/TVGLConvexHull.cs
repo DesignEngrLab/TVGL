@@ -41,13 +41,13 @@ namespace TVGL
         public TVGLConvexHull(IList<Vertex> vertices, double tolerance)
         {
             var convexHull = ConvexHull.Create(vertices, tolerance);
-            Vertices = convexHull.Points.ToArray();
+            Vertices = convexHull.Result.Points.ToArray();
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];
             for (var i = 0; i < 3; i++)
                 checkSumMultipliers[i] = (long)Math.Pow(Constants.CubeRootOfLongMaxValue, i);
             var alreadyCreatedFaces = new HashSet<long>();
-            foreach (var cvxFace in convexHull.Faces)
+            foreach (var cvxFace in convexHull.Result.Faces)
             {
                 var faceVertices = cvxFace.Vertices;
                 var orderedIndices = faceVertices.Select(v => v.IndexInList).ToList();

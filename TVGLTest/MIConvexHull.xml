@@ -187,6 +187,16 @@
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
         </member>
+        <member name="M:MIConvexHull.ConvexHull2DAlgorithm.Create``1(System.Collections.Generic.IList{``0})">
+            <summary>
+            For 2D only: Returns the result in counter-clockwise order starting with the element with the lowest X value.
+            If there are multiple vertices with the same minimum X, then the one with the lowest Y is chosen.
+            </summary>
+            <typeparam name="TVertex">The type of the vertex.</typeparam>
+            <typeparam name="TFace">The type of the face.</typeparam>
+            <param name="points">The points.</param>
+            <returns></returns>
+        </member>
         <member name="T:MIConvexHull.DeferredFace">
             <summary>
             For deferred face addition.
@@ -397,6 +407,16 @@
             ConvexHull&lt;DefaultVertex, DefaultConvexFace&lt;DefaultVertex&gt;&gt;.
             </returns>
         </member>
+        <member name="M:MIConvexHull.ConvexHull.Create``1(System.Collections.Generic.IList{``0})">
+            <summary>
+            Creates the 2D convex hull of the input data.
+            </summary>
+            <param name="data"></param>
+            <typeparam name="TVertex"></typeparam>
+            <returns>
+            List&lt;TVertex&gt;.
+            </returns>
+        </member>
         <member name="T:MIConvexHull.ConvexHull`2">
             <summary>
             Representation of a convex hull.
@@ -428,7 +448,7 @@
             <param name="data">The data.</param>
             <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
             <returns>
-            ConvexHull&lt;TVertex, TFace&gt;.
+            ConvexHullCreationResult&lt;TVertex, TFace&gt;.
             </returns>
             <exception cref="T:System.ArgumentNullException">The supplied data is null.</exception>
             <exception cref="T:System.ArgumentNullException">data</exception>
@@ -477,7 +497,7 @@
             <summary>
             Removes the faces "covered" by the current vertex and adds the newly created ones.
             </summary>
-            <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+            <returns><c>true</c> if possible, <c>false</c> otherwise.</returns>
         </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.CommitCone">
             <summary>
@@ -557,14 +577,13 @@
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <returns>TFace[].</returns>
         </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.Return2DResultInOrder``2(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.Return2DResultInOrder``2">
             <summary>
             For 2D only: Returns the result in counter-clockwise order starting with the element with the lowest X value.
             If there are multiple vertices with the same minimum X, then the one with the lowest Y is chosen.
             </summary>
             <typeparam name="TVertex">The type of the vertex.</typeparam>
             <typeparam name="TFace">The type of the face.</typeparam>
-            <param name="data">The data.</param>
             <returns></returns>
         </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.GetConvexHull``2(System.Collections.Generic.IList{``0},System.Double)">
@@ -817,6 +836,13 @@
             </summary>
             <value>The position.</value>
         </member>
+        <member name="T:MIConvexHull.IVertex2D">
+            <summary>
+            An interface for a structure with nD position.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "P:MIConvexHull.IVertex2D.X" -->
+        <!-- Badly formed XML comment ignored for member "P:MIConvexHull.IVertex2D.Y" -->
         <member name="T:MIConvexHull.DefaultVertex">
             <summary>
             "Default" vertex.

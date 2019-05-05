@@ -65,7 +65,7 @@ namespace TVGL
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            Show(MiscFunctions.Get2DProjectionPoints(vertices, direction, false).Select(p => p.Light).ToList(), title, plot2DType, closeShape, marker);
+            Show(MiscFunctions.Get2DProjectionPoints(vertices, direction, false), title, plot2DType, closeShape, marker);
         }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace TVGL
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(MiscFunctions.Get2DProjectionPoints(vertices, direction, false).Select(p => p.Light).ToList(), title, plot2DType, closeShape,
+            ShowAndHang(MiscFunctions.Get2DProjectionPoints(vertices, direction, false), title, plot2DType, closeShape,
                 marker);
         }
 
@@ -259,7 +259,8 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             Show(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false)
+                        )
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 
@@ -277,7 +278,8 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             Show(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false)
+                        )
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 
@@ -296,7 +298,8 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             ShowAndHang(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false)
+                        )
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 
@@ -314,7 +317,8 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             ShowAndHang(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false)
+                        )
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 

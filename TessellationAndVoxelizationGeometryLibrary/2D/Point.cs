@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
 using MIConvexHull;
@@ -25,30 +26,46 @@ namespace TVGL
     ///     The Point light struct is a low memory version of the Point class. 
     /// </summary>
     [DataContract]
-    public struct PointLight: IVertex
+    public struct PointLight: IVertex2D
     {
         [DataMember] public double[] Position => new[] {X, Y};
 
-        public double X;
+        public double X { get; set; }
 
-        public double Y;
+        public double Y { get; set; }
+        public List<Vertex> References { get; set; }
 
         public PointLight(double x, double y)
         {
             X = x;
             Y = y;
+            References = null;
+        }
+        public PointLight(Vertex v, double x, double y)
+        {
+            X = x;
+            Y = y;
+            References = new List<Vertex> { v };
+        }
+        public PointLight(IEnumerable<Vertex> vertices, double x, double y)
+        {
+            X = x;
+            Y = y;
+            References = vertices.ToList();
         }
 
         public PointLight(Point point)
         {
             X = point.X;
             Y = point.Y;
+            References = point.References;
         }
 
         public PointLight(double[] position)
         {
             X = position[0];
             Y = position[1];
+            References = null;
         }
 
         public double[] Subtract(PointLight b)
@@ -67,7 +84,7 @@ namespace TVGL
     ///     these Point objects around a vertex and then providing their new position.
     /// </summary>
     [DataContract]
-    public class Point : IVertex
+    public class Point : IVertex, IVertex2D
     {
         #region Properties
 
@@ -241,7 +258,7 @@ namespace TVGL
         {
             //First, check the references. This is very fast.
             if (ReferenceEquals(a, b)) return true;
-            if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return false;
+            if (a is null || b is null) return false;
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
         }
 

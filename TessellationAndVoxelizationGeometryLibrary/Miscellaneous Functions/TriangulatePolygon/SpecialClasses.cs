@@ -141,6 +141,19 @@ namespace TVGL
             Y = currentPoint.Y;
             Z = currentPoint.Z;
         }
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Node" /> class.
+        /// </summary>
+        /// <param name="currentPoint">The current point.</param>
+        /// <param name="loopID">The loop identifier.</param>
+        internal Node(PointLight currentPoint, int loopID)
+        {
+            LoopID = loopID;
+            Point =new Point(currentPoint);
+            X = currentPoint.X;
+            Y = currentPoint.Y;
+            Z = 0;
+        }
 
         #endregion
     }

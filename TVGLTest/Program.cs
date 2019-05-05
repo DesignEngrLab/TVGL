@@ -145,34 +145,15 @@ namespace TVGLPresenterDX
                     //Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
                     //    stopwatch.Elapsed);
 
-                    var miConvexHull = MinimumEnclosure.MIConvexHull2D(points);
-                    var p0 = new PolygonLight(miConvexHull);
                     var p1 = new PolygonLight(convexHull);
                     var p2 = new PolygonLight(ouelletConvexHull.GetResultsAsArrayOfPoint()
                         .Select(p => new PointLight(p.X, p.Y)));
-                    //monotoneChainConvexHull.Reverse();
-                    //var p3 = new PolygonLight(monotoneChainConvexHull);
-                    if (!p1.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)) ||
-                        !p1.Length.IsPracticallySame(p0.Length, p0.Length * (1 - Constants.HighConfidence)))
+ 
+                    if (!p2.Area.IsPracticallySame(p1.Area, p1.Area * (1 - Constants.HighConfidence)))
                     {
-                        Presenter.ShowAndHang(new List<PolygonLight> { p0, p1 });
-
-                        //foreach (var chain in hullCands)
-                        //{
-                        //    var polyLine = new PolygonLight(chain.Values.Select(c => c.Item1));
-                        //    Presenter.ShowAndHang(new List<PolygonLight> { p1, polyLine });
-                        //}
+                        Presenter.ShowAndHang(new List<PolygonLight> { p1, p2 });
                     }
 
-                    if (!p2.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
-                    {
-                        Presenter.ShowAndHang(new List<PolygonLight> { p0, p2 });
-                    }
-
-                    //if (!p3.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
-                    //{
-                    //    Presenter.ShowAndHang(new List<PolygonLight> { p0, p3 });
-                    //}
                 }
 
                 var campbellAverage = campbellTotalTime.TotalMilliseconds / repeat;
@@ -238,28 +219,13 @@ namespace TVGLPresenterDX
                         //Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
                         //    stopwatch.Elapsed);
 
-                        var miConvexHull = MinimumEnclosure.MIConvexHull2D(points);
-                        var p0 = new PolygonLight(miConvexHull);
                         var p1 = new PolygonLight(convexHull);
                         var p2 = new PolygonLight(ouelletConvexHull.GetResultsAsArrayOfPoint()
                             .Select(p => new PointLight(p.X, p.Y)));
-                        //monotoneChainConvexHull.Reverse();
-                        //var p3 = new PolygonLight(monotoneChainConvexHull);
-                        if (!p1.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)) ||
-                            !p1.Length.IsPracticallySame(p0.Length, p0.Length * (1 - Constants.HighConfidence)))
+                        
+                        if (!p2.Area.IsPracticallySame(p1.Area, p1.Area * (1 - Constants.HighConfidence)))
                         {
-                            Presenter.ShowAndHang(new List<PolygonLight> { p0, p1 });
-
-                            //foreach (var chain in hullCands)
-                            //{
-                            //    var polyLine = new PolygonLight(chain.Values.Select(c => c.Item1));
-                            //    Presenter.ShowAndHang(new List<PolygonLight> { p1, polyLine });
-                            //}
-                        }
-
-                        if (!p2.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
-                        {
-                            Presenter.ShowAndHang(new List<PolygonLight> { p0, p2 });
+                            Presenter.ShowAndHang(new List<PolygonLight> { p1, p2 });
                         }
 
                         //if (!p3.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))

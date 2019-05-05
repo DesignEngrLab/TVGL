@@ -571,7 +571,7 @@ namespace TVGL
         /// <param name="tolerance"></param>
         /// <param name="mergeDuplicateReferences"></param>
         /// <returns></returns>
-        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
+        public static List<PointLight> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
             bool mergeDuplicateReferences = false)
         {
             var enumerable = loop as IList<Vertex> ?? loop.ToList();
@@ -628,7 +628,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction,
+        public static PointLight[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction);
@@ -643,7 +643,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateTolerance">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction, double mergeDuplicateTolerance)
+        public static PointLight[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction, double mergeDuplicateTolerance)
         {
             if (mergeDuplicateTolerance.IsNegligible()) mergeDuplicateTolerance = Constants.BaseTolerance; //Minimum allowed tolerance.
             var transform = TransformToXYPlane(direction);
@@ -659,7 +659,7 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction,
+        public static PointLight[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction,
             out double[,] backTransform,
             bool mergeDuplicateReferences = false)
         {
@@ -676,11 +676,11 @@ namespace TVGL
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>Point[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[,] transform,
+        public static PointLight[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[,] transform,
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
-            var points = new List<Point>();
-            var simpleCompareDict = new Dictionary<string, Point>();
+            var points = new List<PointLight>();
+            var simpleCompareDict = new Dictionary<string, PointLight>();
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var stringformat = "F" + numDecimalPoints;
@@ -689,7 +689,7 @@ namespace TVGL
                 var point = Get2DProjectionPoint(vertex, transform);
                 if (!mergeDuplicateReferences)
                 {
-                    points.Add(new Point(vertex, point[0], point[1]));
+                    points.Add(new PointLight(vertex, point[0], point[1]));
                 }
                 else
                 {
@@ -706,7 +706,7 @@ namespace TVGL
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Point(vertex, point[0], point[1]);
+                        var point2D = new PointLight(vertex, point[0], point[1]);
                         simpleCompareDict.Add(lookupString, point2D);
                         points.Add(point2D);
                     }
