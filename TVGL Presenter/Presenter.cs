@@ -22,6 +22,7 @@ using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
 using StarMathLib;
+using TVGL.DenseVoxels;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -726,6 +727,16 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
+        public static void ShowAndHang(VoxelizedSolidDense solid)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            Visual3D model = MakeModelVisual3D(solid);
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
         public static void ShowAndHang(VoxelizedSolid solid, int showPartialLevel)
         {
             var window = new Window3DPlot();
@@ -748,6 +759,8 @@ namespace TVGL
                     model = MakeModelVisual3D((TessellatedSolid)s);
                 else if (s is VoxelizedSolid)
                     model = MakeModelVisual3D((VoxelizedSolid)s);
+                else if (s is VoxelizedSolidDense)
+                    model = MakeModelVisual3D((VoxelizedSolidDense) s);
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
@@ -882,31 +895,6 @@ namespace TVGL
 
         private static Visual3D MakeModelVisual3D(VoxelizedSolid vs)
         {
-            var normalsTemplate = new[]
-            {
-                new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
-                new float[] {1, 0, 0}, new float[] {1, 0, 0},
-                new float[] {0, -1, 0}, new float[] {0, -1, 0},
-                new float[] {0, 1, 0}, new float[] {0, 1, 0},
-                new float[] {0, 0, -1}, new float[] {0, 0, -1},
-                new float[] {0, 0, 1}, new float[] {0, 0, 1}
-            };
-
-            var coordOffsets = new[]
-            {
-                new[]{ new float[] {0, 0, 0}, new float[] { 0, 0, 1}, new float[] {0, 1, 0}},
-                new[]{ new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
-                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
-                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
-                new[]{ new float[] {0, 0, 0}, new float[] { 1, 0, 0}, new float[] {0, 0, 1}},
-                new[]{ new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
-                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
-                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
-                new[]{ new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
-                new[]{new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
-                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
-                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
-            };
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
             var lowestLevel = (int)vs.VoxelSideLengths.Length - 1;
@@ -960,33 +948,59 @@ namespace TVGL
             };
         }
 
+        private static Visual3D MakeModelVisual3D(VoxelizedSolidDense vs)
+        {
+            var positions = new Point3DCollection();
+            var normals = new Vector3DCollection();
+            var s = vs.VoxelSideLength;
+
+            for (var i = 0; i < vs.VoxelsPerSide[0]; i++)
+                for (var j = 0; j < vs.VoxelsPerSide[1]; j++)
+                    for (var k = 0; k < vs.VoxelsPerSide[2]; k++)
+                    {
+                        if (vs.Voxels[i, j, k] == 0) continue;
+                        if (!vs.GetNeighbors(i, j, k, out var neighbors)) continue;
+
+                        var x = i * s + vs.Offset[0];
+                        var y = j * s + vs.Offset[1];
+                        var z = k * s + vs.Offset[2];
+                        for (var m = 0; m < 12; m++)
+                        {
+                            if (neighbors[m / 2] != null) continue;
+                            for (var n = 0; n < 3; n++)
+                            {
+                                positions.Add(new Point3D(x + coordOffsets[m][n][0] * s, y + coordOffsets[m][n][1] * s,
+                                    z + coordOffsets[m][n][2] * s));
+                                normals.Add(new Vector3D(normalsTemplate[m][0], normalsTemplate[m][1],
+                                    normalsTemplate[m][2]));
+                            }
+                        }
+                    }
+
+            return new ModelVisual3D
+            {
+                Content =
+                         new GeometryModel3D
+                         {
+                             Geometry = new MeshGeometry3D
+                             {
+                                 Positions = positions,
+                                 Normals = normals
+                             },
+                             Material = MaterialHelper.CreateMaterial(
+                                 new System.Windows.Media.Color
+                                 {
+                                     A = vs.SolidColor.A,
+                                     B = vs.SolidColor.B,
+                                     G = vs.SolidColor.G,
+                                     R = vs.SolidColor.R
+                                 })
+                         }
+            };
+        }
+
         private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, int showPartialLevel)
         {
-            var normalsTemplate = new[]
-            {
-                new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
-                new float[] {1, 0, 0}, new float[] {1, 0, 0},
-                new float[] {0, -1, 0}, new float[] {0, -1, 0},
-                new float[] {0, 1, 0}, new float[] {0, 1, 0},
-                new float[] {0, 0, -1}, new float[] {0, 0, -1},
-                new float[] {0, 0, 1}, new float[] {0, 0, 1}
-            };
-
-            var coordOffsets = new[]
-            {
-                new[] {new float[] {0, 0, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 0}},
-                new[] {new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
-                new[] {new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
-                new[] {new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
-                new[] {new float[] {0, 0, 0}, new float[] {1, 0, 0}, new float[] {0, 0, 1}},
-                new[] {new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
-                new[] {new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
-                new[] {new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
-                new[] {new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
-                new[] {new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
-                new[] {new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
-                new[] {new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
-            };
             var fullPositions = new Point3DCollection();
             var fullNormals = new Vector3DCollection();
             var partialInPositions = new Point3DCollection();
@@ -1300,5 +1314,31 @@ namespace TVGL
                 "#6A3A4C"
             };
         }
+
+        static readonly float[][] normalsTemplate =
+        {
+            new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
+            new float[] {1, 0, 0}, new float[] {1, 0, 0},
+            new float[] {0, -1, 0}, new float[] {0, -1, 0},
+            new float[] {0, 1, 0}, new float[] {0, 1, 0},
+            new float[] {0, 0, -1}, new float[] {0, 0, -1},
+            new float[] {0, 0, 1}, new float[] {0, 0, 1}
+        };
+
+        static readonly float[][][] coordOffsets =
+        {
+            new[]{ new float[] {0, 0, 0}, new float[] { 0, 0, 1}, new float[] {0, 1, 0}},
+            new[]{ new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
+            new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
+            new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
+            new[]{ new float[] {0, 0, 0}, new float[] { 1, 0, 0}, new float[] {0, 0, 1}},
+            new[]{ new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
+            new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
+            new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
+            new[]{ new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
+            new[]{new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
+            new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
+            new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
+        };
     }
 }

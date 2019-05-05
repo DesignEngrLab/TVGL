@@ -71,7 +71,7 @@ namespace TVGL
 
         private static IEnumerable<Tuple<Vertex, double>> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
         {
-            var vertexDistances = new List<Tuple<Vertex, double>>();
+            var vertexDistances = new List<Tuple<Vertex, double>>(vertices.Count());
             //Accuracy to the 15th decimal place
             var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
             var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal)+1)));
@@ -90,29 +90,80 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double[] direction, IList<Point> points,
-               out List<Tuple<Point, double>> sortedPoints)
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
+               out List<(Point, double)> sortedPoints)
         {
-            //Get integer values for every vertex as distance along direction
-            //Split positive and negative numbers into seperate lists. 0 is 
-            //considered positive.
-            //This is an O(n) preprocessing step
-            var pointDistances = new List<Tuple<Point, double>>();
+            var pointDistances = GetPointDistances(directionX, directionY, points);
+            sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted points along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
+               out List<Point> sortedPoints)
+        {
+            var pointDistances = GetPointDistances(directionX, directionY, points);
+            sortedPoints = pointDistances.OrderBy(point => point.Item2).Select(p => p.Item1).ToList();
+        }
+
+        private static IEnumerable<(Point, double)> GetPointDistances(double directionX, double directionY, IEnumerable<Point> points)
+        {
+            var pointDistances = new List<(Point, double)>(points.Count());
             //Accuracy to the 15th decimal place
             var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
             var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
             foreach (var point in points)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(direction[0]*point.X + direction[1] * point.Y, tolerance); //2D dot product
-                pointDistances.Add(new Tuple<Point, double>(point, d));
+                var d = Math.Round(directionX * point.X + directionY * point.Y, tolerance); //2D dot product
+                pointDistances.Add((point, d));
             }
-
-            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
-            //tolerance as the "isNeglible" star math function 
-            sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
+            return pointDistances;
         }
 
+        /// <summary>
+        ///     Returns a list of sorted PointLights along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="PointLights"></param>
+        /// <param name="sortedPointLights"></param>
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<PointLight> PointLights,
+               out List<(PointLight, double)> sortedPointLights, int numDecimals)
+        {
+            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
+            sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).ToList();
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted PointLights along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="PointLights"></param>
+        /// <param name="sortedPointLights"></param>
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<PointLight> PointLights,
+               out List<PointLight> sortedPointLights, int numDecimals)
+        {
+            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
+            sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).Select(p => p.Item1).ToList();
+        }
+
+        private static IEnumerable<(PointLight, double)> GetPointLightDistances(double directionX, double directionY,
+            IEnumerable<PointLight> PointLights, int numDecimals)
+        {
+            var PointLightDistances = new List<(PointLight, double)>(PointLights.Count());
+            //Accuracy to the 15th decimal place
+            foreach (var PointLight in PointLights)
+            {
+                //Get distance along the search direction with accuracy to the 15th decimal place
+                var d = Math.Round(directionX * PointLight.X + directionY * PointLight.Y, numDecimals); //2D dot product
+                PointLightDistances.Add((PointLight, d));
+            }
+            return PointLightDistances;
+        }
         #endregion
 
         #region Perimeter
@@ -1893,17 +1944,35 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Point PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
         {
-            var d1 = normalOfPlane[0] * line.ToPoint.X + normalOfPlane[1] * line.ToPoint.Y; //2D Dot product
-            var d2 = normalOfPlane[0] * line.FromPoint.X + normalOfPlane[1] * line.FromPoint.Y;  //For a point, Position[2] = 0.0
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
+            return new Point(x, y);
+        }
+
+        /// <summary>
+        ///     Finds the point on the plane made by a line intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane. Can be 2D or 3D. </param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="line"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static PointLight PointLightOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
+        {
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
+            return new PointLight(x, y);
+        }
+
+        public static void PointLightOnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane, 
+            double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
+        {
+            var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product
+            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position[2] = 0.0
             var fraction = (d1 - distOfPlane) / (d1 - d2);
-            var position2D = new double[2];
-            for (var i = 0; i < 2; i++)
-            {
-                position2D[i] = line.FromPoint.Position[i] * fraction + line.ToPoint.Position[i] * (1 - fraction);
-                if (double.IsNaN(position2D[i]))
-                    throw new Exception("This should never occur. Prevent this from happening");
-            }
-            return new Point(position2D[0], position2D[1]);
+            x = fromPointX * fraction + toPointX * (1 - fraction);
+            y = fromPointY * fraction + toPointY * (1 - fraction);
         }
 
         /// <summary>

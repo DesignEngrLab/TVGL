@@ -372,6 +372,163 @@ namespace TVGL
 
             return outputData;
         }
+
+        /// <summary>
+        /// Returns the decomposition data found from each slice of the decomposition along the Z direction. 
+        /// This function does not use Projection to 2D, instead it just ignores the Z value of the vertices.
+        /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
+        /// will all be interior to the part.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="startDistance"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<DecompositionData> UniformDecompositionAlongZ(TessellatedSolid ts,
+            double startDistance, int numSteps, double stepSize)
+        {
+            var direction = new[] { 0.0, 0, 1.0 }; //+Z
+            var sortedVertexDistanceLookup = new Dictionary<int, double>();
+
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
+            //Create a distance lookup dictionary based on the vertex indices
+            sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
+
+            var edgeListDictionary = new Dictionary<int, Edge>();
+            var firstDistance = sortedVertices.First().Item2;
+            var furthestDistance = sortedVertices.Last().Item2;
+            var length = furthestDistance - firstDistance;
+            //var numSteps = (int)((furthestDistance - startDistance) / stepSize) + 1;
+  
+            var inputEdgeLoops = new List<List<Edge>>();
+
+            //This is a list of all the step indices matched with its distance along the axis.
+            //This may be different that just multiplying the step index by the step size, because
+            //minor adjustments occur to avoid cutting through vertices.
+            var stepDistances = new Dictionary<int, double>(numSteps);
+        
+            //Choose whichever min offset is smaller
+            var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
+            var stepIndex = 0;
+            var firstIndex = 0;
+            var distanceAlongAxis = startDistance; 
+            while (distanceAlongAxis <= furthestDistance)
+            {
+                if (distanceAlongAxis < firstDistance)
+                {
+                    stepIndex++;
+                    distanceAlongAxis += stepSize;
+                    firstIndex = stepIndex;
+                    continue;
+                }
+                stepDistances[stepIndex] = distanceAlongAxis;
+                stepIndex++;
+                distanceAlongAxis += stepSize;
+            } 
+
+            //Initialize the size of the list.
+            var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
+            var currentVertexIndex = 0;
+            stepIndex = firstIndex;
+            while (stepIndex < /*numSteps*/stepDistances.Count + firstIndex)
+            {
+                distanceAlongAxis = stepDistances[stepIndex];
+
+                //Update vertex/edge list up until distanceAlongAxis
+                for (var i = currentVertexIndex; i < sortedVertices.Count; i++)
+                {
+                    //Update the current vertex index so that this vertex is not visited again
+                    //unless it causes the break ( > distanceAlongAxis), then it will start the 
+                    //the next iteration.
+                    currentVertexIndex = i;
+                    var element = sortedVertices[i];
+                    var vertex = element.Item1;
+                    var vertexDistanceAlong = element.Item2;
+                    //If a vertex is too close to the current distance, move it forward by the min offset.
+                    //Update the edge list with this vertex.
+                    if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
+                    {
+                        //Move the distance enough so that this vertex is now less than 
+                        distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
+                    }
+                    //Else, Break after we get to a vertex that is further than the distance along axis
+                    if (vertexDistanceAlong > distanceAlongAxis)
+                    {
+                        //consider this vertex again next iteration
+                        break;
+                    }
+
+                    //Else, it is less than the distance along. Update the edge list
+                    //Add the passed vertices to a list so that they can be removed from the sorted vertices
+
+                    //Update the edge dictionary that is used to determine the 3D loops.
+                    foreach (var edge in vertex.Edges)
+                    {
+                        //Reset the input edge loops since we have added an edge
+                        inputEdgeLoops = new List<List<Edge>>();
+
+                        //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
+                        //and the second removes it from the list.
+                        if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                        {
+                            edgeListDictionary.Remove(edge.IndexInList);
+                        }
+                        else
+                        {
+                            edgeListDictionary.Add(edge.IndexInList, edge);
+                        }
+                    }
+                }
+
+                //Check to make sure that the minor shifts in the distance in the for loop above 
+                //Did not move the distance beyond the furthest distance
+                if (distanceAlongAxis > furthestDistance || !edgeListDictionary.Any()) break;
+                //Make the slice
+                var counter = 0;
+                var current3DLoops = new List<List<Vertex>>();
+                var successfull = true;
+                var cuttingPlane = new Flat(distanceAlongAxis, direction);
+                do
+                {
+                    try
+                    {
+                        current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out var outputEdgeLoops,
+                            inputEdgeLoops);
+
+                        //Use the same output edge loops for outer while loop, since the edge list does not change.
+                        //If there is an error, it will occur before this loop.
+                        inputEdgeLoops = outputEdgeLoops;
+                    }
+                    catch
+                    {
+                        counter++;
+                        distanceAlongAxis += minOffset;
+                        successfull = false;
+                    }
+                } while (!successfull && counter < 4);
+
+
+                if (successfull)
+                {
+                    //Get a list of 2D paths from the 3D loops
+                    var currentPaths = new List<List<PointLight>>();
+                    foreach (var loop in current3DLoops)
+                    {
+                        currentPaths.Add(loop.Select(v => new PointLight(v.X, v.Y)).ToList());
+                    };
+                    //Add the data to the output
+                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, distanceAlongAxis);
+                }
+                else
+                {
+                    Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
+                }
+                stepDistances[stepIndex] = distanceAlongAxis; //Update to the adjusted value.
+                stepIndex++;
+            }
+            return outputData;
+        }
         #endregion
 
         #region Additive Volume
