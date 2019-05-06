@@ -337,19 +337,18 @@ namespace TVGL
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
             foreach (var line in polygon.PathLines)
             {
-                var v1 = line.ToPoint.Position.subtract(line.FromPoint.Position, 2);
+                var v1 = line.ToPoint-line.FromPoint;
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
                 if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
                     continue;
 
                 //Figure out how far the center point is away from the line
-                var d = MiscFunctions.DistancePointToLine(centerPoint.Position, line.FromPoint.Position, v1, out var pointOnLine);
+                var d = MiscFunctions.DistancePointToLine(centerPoint, line.FromPoint, v1, out var pointOnLine);
                 if (d > shortestDistance) continue;
 
                 //Now we need to figure out if the lines intersect
-                var tempPoint = new Point(pointOnLine[0], pointOnLine[1]);
-                var tempLine = new Line(centerPoint, tempPoint, false);
+                var tempLine = new Line(centerPoint, pointOnLine, false);
                 if (!MiscFunctions.LineLineIntersection(line, tempLine, out _)) continue;
                 //if(intersectionPoint != tempPoint) throw new Exception("Error in implementation. This should always be true.");
                 shortestDistance = d;
@@ -359,7 +358,7 @@ namespace TVGL
             //   The shortest distance determines the diameter of the inner circle.
             foreach (var point in polygon.Path)
             {
-                var d = MiscFunctions.DistancePointToPoint(point.Position, centerPoint.Position);
+                var d = MiscFunctions.DistancePointToPoint(point, centerPoint);
                 if (d < shortestDistance) shortestDistance = d;
             }
 

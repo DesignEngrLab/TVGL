@@ -113,7 +113,7 @@ namespace TVGL
         {
             FromPoint = fromPoint;
             ToPoint= toPoint;
-            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position, ToPoint.Position);
+            Length = MiscFunctions.DistancePointToPoint(FromPoint, ToPoint);
             IsHorizontal = false;
             IsVertical = false;
             dY = ToPoint.Y - FromPoint.Y;

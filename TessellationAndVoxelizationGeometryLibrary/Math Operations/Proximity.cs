@@ -168,14 +168,14 @@ namespace TVGL.MathOperations
                 }
             }
         }
-        
+
         /// <summary>
         /// Gets the closest point on the line segment from the given point (p). 
         /// </summary>
         /// <param name="line"></param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public static double[] ClosestPointOnLineSegmentToPoint(Line line, PointLight p)
+        public static PointLight ClosestPointOnLineSegmentToPoint(Line line, PointLight p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
             //the line.FromPoint
@@ -183,9 +183,9 @@ namespace TVGL.MathOperations
             //(1) If the distance is <= 0, the infinite line intersection is outside the line segment interval, on the FromPoint side.
             //(2) If the distance is >= the line.Length, the infinite line intersection is outside the line segment interval, on the ToPoint side.
             //(3) Otherwise, the infinite line intersection is inside the line segment interval.
-            var fromPoint = line.FromPoint.Position;
-            var lineVector = line.ToPoint.Position.subtract(line.FromPoint.Position, 2);
-            var distanceToSegment = p.Position.subtract(fromPoint, 2).dotProduct(lineVector, 2) / line.Length;
+            var fromPoint = line.FromPoint.Light;
+            var lineVector = line.ToPoint - line.FromPoint;
+            var distanceToSegment = (p - fromPoint).dotProduct(lineVector) / line.Length;
 
             if (distanceToSegment <= 0.0)
             {
@@ -193,16 +193,11 @@ namespace TVGL.MathOperations
             }
             if (distanceToSegment >= line.Length)
             {
-                return line.ToPoint.Position;
+                return line.ToPoint.Light;
             }
             distanceToSegment = distanceToSegment / line.Length;
-            return fromPoint.add(lineVector.multiply(distanceToSegment), 2);
-
-            //var t = (lineVector[0] * (p[0] - fromPoint[0]) + lineVector[1] * (p[1] - fromPoint[1]))
-            //           / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);
-            //var pointOnInfiniteLine = new[] { fromPoint[0] + lineVector[0] * t, fromPoint[1] + lineVector[1] * t };
-            //var ap2 = MiscFunctions.SquareDistancePointToPoint(pointOnInfiniteLine, fromPoint);
-            //var bp2 = MiscFunctions.SquareDistancePointToPoint(pointOnInfiniteLine, line.ToPoint.Position2D);
+            return new PointLight(fromPoint.X + lineVector[0] * distanceToSegment,
+                fromPoint.Y + lineVector[1] * distanceToSegment);
         }
     }
 }

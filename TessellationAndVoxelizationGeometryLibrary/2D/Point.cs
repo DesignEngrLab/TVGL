@@ -26,9 +26,8 @@ namespace TVGL
     ///     The Point light struct is a low memory version of the Point class. 
     /// </summary>
     [DataContract]
-    public struct PointLight: IVertex2D
+    public struct PointLight : IVertex2D
     {
-        [DataMember] public double[] Position => new[] {X, Y};
 
         public double X { get; set; }
 
@@ -70,12 +69,12 @@ namespace TVGL
 
         public double[] Subtract(PointLight b)
         {
-            return new[] {X - b.X, Y - b.Y};
+            return new[] { X - b.X, Y - b.Y };
         }
 
         //Note: This equality operator CANNOT use references, since this is a struct.
         public static bool operator ==(PointLight a, PointLight b)
-        {   
+        {
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
         }
 
@@ -83,6 +82,16 @@ namespace TVGL
         {
             return !(a == b);
         }
+        public static double[] operator -(PointLight a, PointLight b)
+        {
+            return new[] { a.X - b.X, a.Y - b.Y };
+        }
+        public static double[] operator +(PointLight a, PointLight b)
+        {
+            return new[] { a.X + b.X, a.Y + b.Y };
+        }
+
+
     }
 
     /// <summary>
@@ -135,14 +144,7 @@ namespace TVGL
         /// </summary>
         /// Cannot serialize lines yet. Not sure if circular reference will cause issues.
         public IList<Line> Lines { get; set; }
-        
-        /// <summary>
-        ///     Gets or sets the coordinates or position as an array of 2 elements (X, Y).
-        /// </summary>
-        /// <value>The coordinates or position.</value>
-        [DataMember]
-        public double[] Position => Light.Position;
-        
+
         [DataMember]
         public PointLight Light { get; set; }
 
@@ -185,7 +187,7 @@ namespace TVGL
         public Point(double x, double y)
             : this(null, x, y, 0.0)
         {
-            if(double.IsNaN(x) || double.IsNaN(y)) throw new Exception("Must be a number");
+            if (double.IsNaN(x) || double.IsNaN(y)) throw new Exception("Must be a number");
         }
 
         /// <inheritdoc />
@@ -236,12 +238,6 @@ namespace TVGL
         #endregion
 
         #region Public Methods
-        /// <summary>
-        ///     this point
-        /// </summary>
-        /// <param name="index">The index.</param>
-        /// <returns>System.Double.</returns>
-        public double this[int index] => Position[index];
 
         /// <summary>
         /// Gets whether points are equal
@@ -272,6 +268,24 @@ namespace TVGL
         {
             return !(a == b);
         }
+
+        public static double[] operator -(Point a, Point b)
+        {
+            return new[] { a.X - b.X, a.Y - b.Y };
+        }
+        public static double[] operator +(Point a, Point b)
+        {
+            return new[] { a.X + b.X, a.Y + b.Y };
+        }
+        public static double[] operator -(Point a, double[] b)
+        {
+            return new[] { a.X - b[0], a.Y - b[1] };
+        }
+        public static double[] operator +(Point a, double[] b)
+        {
+            return new[] { a.X + b[0], a.Y + b[1] };
+        }
+
 
         /// <summary>
         /// Checks if this intPoint is equal to the given object.

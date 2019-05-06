@@ -239,7 +239,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var point in points)
             {
-                var distance = direction2D.dotProduct(point.Position, 2);
+                var distance = direction2D.dotProduct(point);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomPoints.Add(point);
                 else if (distance < minD)
@@ -279,7 +279,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var point in points)
             {
-                var distance = direction2D.dotProduct(point.Position, 2);
+                var distance = direction2D.dotProduct(point);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomPoints.Add(point);
                 else if (distance < minD)
@@ -684,7 +684,7 @@ namespace TVGL
                 {
                     pointsOnSides[i] = new List<PointLight>();
                     var dir = i % 2 == 0 ? angleVector1 : angleVector2;
-                    var distance = cvxPoints[extremeIndices[i]].Position.dotProduct(dir, 2);
+                    var distance = cvxPoints[extremeIndices[i]].dotProduct(dir);
                     if (i % 2 == 0) //D1
                     {
                         if (distance > d1Max) d1Max = distance;
@@ -704,7 +704,7 @@ namespace TVGL
                             pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
                         }
                         prevIndex = extremeIndices[i] == 0 ? numCvxPoints - 1 : extremeIndices[i] - 1;
-                    } while (distance.IsPracticallySame(cvxPoints[prevIndex].Position.dotProduct(dir, 2),
+                    } while (distance.IsPracticallySame(cvxPoints[prevIndex].dotProduct(dir),
                         Constants.BaseTolerance));
                 }
 
