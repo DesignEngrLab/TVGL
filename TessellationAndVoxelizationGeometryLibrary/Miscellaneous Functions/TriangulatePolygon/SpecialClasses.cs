@@ -66,11 +66,6 @@ namespace TVGL
         /// <value>The y.</value>
         public double Y { get; }
 
-        /// <summary>
-        ///     Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
-        /// </summary>
-        /// <value>The z.</value>
-        public double Z { get; private set; }
 
         /// <summary>
         ///     Gets the line that starts at this node.
@@ -125,7 +120,6 @@ namespace TVGL
             Point = currentPoint;
             X = currentPoint.X;
             Y = currentPoint.Y;
-            Z = currentPoint.Z;
         }
 
         /// <summary>
@@ -139,7 +133,6 @@ namespace TVGL
             Point = currentPoint;
             X = currentPoint.X;
             Y = currentPoint.Y;
-            Z = currentPoint.Z;
         }
         /// <summary>
         ///     Initializes a new instance of the <see cref="Node" /> class.
@@ -152,7 +145,6 @@ namespace TVGL
             Point =new Point(currentPoint);
             X = currentPoint.X;
             Y = currentPoint.Y;
-            Z = 0;
         }
 
         #endregion

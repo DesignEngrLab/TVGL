@@ -95,7 +95,7 @@ namespace TVGL
     ///     these Point objects around a vertex and then providing their new position.
     /// </summary>
     [DataContract]
-    public class Point : IVertex, IVertex2D
+    public class Point : IVertex2D
     {
         #region Properties
 
@@ -110,14 +110,6 @@ namespace TVGL
         /// </summary>
         /// <value>The y.</value>
         public double Y => Light.Y;
-
-        /// <summary>
-        /// Gets or sets the z coordinate, which is mostly ignored. 
-        /// It is initialized as 0.0 and accessed here or with Position3D
-        /// </summary>
-        /// <value>The z.</value>
-        [DataMember]
-        public double Z { get; set; } = 0.0;
 
         /// <summary>
         ///     Gets or sets the references.
@@ -143,13 +135,7 @@ namespace TVGL
         /// </summary>
         /// Cannot serialize lines yet. Not sure if circular reference will cause issues.
         public IList<Line> Lines { get; set; }
-
-        /// <summary>
-        ///     Gets the coordinates or position as an array of 3 elements (X, Y, Z).
-        /// </summary>
-        /// <value>The coordinates or position.</value>
-        public double[] Position3D => new[] { X, Y, Z };
-
+        
         /// <summary>
         ///     Gets or sets the coordinates or position as an array of 2 elements (X, Y).
         /// </summary>
@@ -220,7 +206,6 @@ namespace TVGL
         public Point(Point point)
         {
             Light = new PointLight(point.X, point.Y);
-            Z = point.Z;
             Lines = new List<Line>(point.Lines);
             References = new List<Vertex>(point.References);
         }
@@ -235,7 +220,6 @@ namespace TVGL
         public Point(Vertex vertex, double x, double y, double z)
         {
             Light = new PointLight(x, y);
-            Z = z;
             Lines = new List<Line>();
             References = new List<Vertex>();
             if (vertex == null) return;
