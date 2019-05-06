@@ -90,6 +90,14 @@ namespace TVGL
         {
             return new[] { a.X + b.X, a.Y + b.Y };
         }
+        public static double[] operator -(PointLight a, double[] b)
+        {
+            return new[] { a.X - b[0], a.Y - b[1] };
+        }
+        public static double[] operator +(PointLight a, double[] b)
+        {
+            return new[] { a.X + b[0], a.Y + b[1] };
+        }
 
 
     }
