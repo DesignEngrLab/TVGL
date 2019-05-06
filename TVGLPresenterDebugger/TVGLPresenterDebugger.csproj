@@ -147,6 +147,12 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs">
       <Link>TVGL\Constants.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\DenseVoxels\VoxelizedSolidDense_Constructors.cs">
+      <Link>TVGL\Dense Voxels\VoxelizedSolidDense_Constructors.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\DenseVoxels\VoxelizedSolidDense_PublicFunctions.cs">
+      <Link>TVGL\Dense Voxels\VoxelizedSolidDense_PublicFunctions.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull2D.cs">
       <Link>TVGL\Enclosure Operations\ConvexHull2D.cs</Link>
     </Compile>
