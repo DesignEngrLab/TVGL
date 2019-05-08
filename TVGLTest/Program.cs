@@ -4,9 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
+using TVGL.Boolean_Operations;
 using TVGL.DenseVoxels;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
+using TVGL._2D;
 
 namespace TVGLPresenterDX
 {
@@ -117,7 +119,7 @@ namespace TVGLPresenterDX
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
-                TestVoxelization(ts);
+                TestSlice(ts);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -139,6 +141,23 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Completed.");
             Console.ReadKey();
+        }
+
+        public static void TestSlice(TessellatedSolid ts, Flat flat = null)
+        {
+            if (!(flat is null))
+                Slice.OnInfiniteFlat(ts, flat, out var solids, out var contactData);
+            else
+            {
+                Slice.OnInfiniteFlat(ts, new Flat((ts.XMax + ts.XMin) / 2, new[] {1.0, 0, 0}), out var solidsX,
+                    out var contactDataX);
+
+                Slice.OnInfiniteFlat(ts, new Flat((ts.YMax + ts.YMin) / 2, new[] { 0, 1.0, 0 }), out var solidsY,
+                    out var contactDataY);
+
+                Slice.OnInfiniteFlat(ts, new Flat((ts.ZMax + ts.ZMin) / 2, new[] { 0, 0, 1.0 }), out var solidsZ,
+                    out var contactDataZ);
+            }
         }
 
         public static void TestVoxelization(TessellatedSolid ts)
