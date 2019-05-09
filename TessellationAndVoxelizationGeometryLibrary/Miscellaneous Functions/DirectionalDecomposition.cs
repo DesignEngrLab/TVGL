@@ -119,7 +119,7 @@ namespace TVGL
             CenterEndsOutside,
 
             //The last distance along the given direction
-            FurthestAlong,        
+            FurthestAlong,
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace TVGL
             var firstDistance = sortedVertices.First().Item2;
             var furthestDistance = sortedVertices.Last().Item2;
             var length = furthestDistance - firstDistance;
-          
+
             var currentVertexIndex = 0;
             var inputEdgeLoops = new List<List<Edge>>();
 
@@ -164,7 +164,7 @@ namespace TVGL
             //Choose whichever min offset is smaller
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
             var div = length / stepSize;
-            var t = (int) (length / stepSize);
+            var t = (int)(length / stepSize);
             var numSteps = t + 1; //Round up to nearest integer (or down and then add 1)
             var remainder = length - t * stepSize;
             if (remainder.IsPracticallySame(stepSize, minOffset))
@@ -190,15 +190,15 @@ namespace TVGL
                     addToEnd = true;
                     break;
                 case SnapType.CenterAllInside: //Subtract the remainder, split between the top and bottom.
-                    topRemainder = - remainder / 2; //move inward (negative)
-                    bottomRemainder = - remainder / 2; //move inward (negative)
+                    topRemainder = -remainder / 2; //move inward (negative)
+                    bottomRemainder = -remainder / 2; //move inward (negative)
                     addToStart = true;
                     addToEnd = true;
                     break;
                 case SnapType.CenterEndsOutside: //Add (stepsize - remainder) split between the top and bottom. 
                     topRemainder = (stepSize - remainder) / 2; //move outward (positive)
                     bottomRemainder = (stepSize - remainder) / 2; //move outward (positive)
-                    numSteps ++; //Add the normal +1 cross section caused by centering and adding the remainder
+                    numSteps++; //Add the normal +1 cross section caused by centering and adding the remainder
                     addToStart = true;
                     addToEnd = true;
                     break;
@@ -220,7 +220,7 @@ namespace TVGL
                 distanceAlongAxis += stepSize;
             }
             if (!(distanceAlongAxis - stepSize).IsPracticallySame(furthestDistance + bottomRemainder, 0.0001))
-            {    
+            {
                 stepDistances.Add(numSteps, distanceAlongAxis);
                 numSteps++;
                 //throw new Exception(); //positive moves inward, negative outward     
@@ -233,7 +233,7 @@ namespace TVGL
             //making the final stepIndex correct for use in a later function.
             var stepIndex = addToStart ? 1 : 0;
             //Stop at -1 if adding additional cross sections, because there is one item at the end of the list we want to skip.
-            var n = addToEnd ? numSteps - 1: numSteps;
+            var n = addToEnd ? numSteps - 1 : numSteps;
             while (stepIndex < n)
             {
                 distanceAlongAxis = stepDistances[stepIndex];
@@ -400,19 +400,19 @@ namespace TVGL
             var furthestDistance = sortedVertices.Last().Item2;
             var length = furthestDistance - firstDistance;
             //var numSteps = (int)((furthestDistance - startDistance) / stepSize) + 1;
-  
+
             var inputEdgeLoops = new List<List<Edge>>();
 
             //This is a list of all the step indices matched with its distance along the axis.
             //This may be different that just multiplying the step index by the step size, because
             //minor adjustments occur to avoid cutting through vertices.
             var stepDistances = new Dictionary<int, double>(numSteps);
-        
+
             //Choose whichever min offset is smaller
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
             var stepIndex = 0;
             var firstIndex = 0;
-            var distanceAlongAxis = startDistance; 
+            var distanceAlongAxis = startDistance;
             while (distanceAlongAxis <= furthestDistance)
             {
                 if (distanceAlongAxis < firstDistance)
@@ -425,7 +425,7 @@ namespace TVGL
                 stepDistances[stepIndex] = distanceAlongAxis;
                 stepIndex++;
                 distanceAlongAxis += stepSize;
-            } 
+            }
 
             //Initialize the size of the list.
             var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
@@ -486,14 +486,13 @@ namespace TVGL
                 if (distanceAlongAxis > furthestDistance || !edgeListDictionary.Any()) break;
                 //Make the slice
                 var counter = 0;
-                var current3DLoops = new List<List<Vertex>>();
+                var current3DLoops = new List<List<PointLight>>();
                 var successfull = true;
-                var cuttingPlane = new Flat(distanceAlongAxis, direction);
                 do
                 {
                     try
                     {
-                        current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out var outputEdgeLoops,
+                        current3DLoops = GetZLoops(edgeListDictionary, distanceAlongAxis, out var outputEdgeLoops,
                             inputEdgeLoops);
 
                         //Use the same output edge loops for outer while loop, since the edge list does not change.
@@ -511,14 +510,8 @@ namespace TVGL
 
                 if (successfull)
                 {
-                    //Get a list of 2D paths from the 3D loops
-                    var currentPaths = new List<List<PointLight>>();
-                    foreach (var loop in current3DLoops)
-                    {
-                        currentPaths.Add(loop.Select(v => new PointLight(v.X, v.Y)).ToList());
-                    };
                     //Add the data to the output
-                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, distanceAlongAxis);
+                    outputData[stepIndex] = new DecompositionData(current3DLoops, null, distanceAlongAxis);
                 }
                 else
                 {
@@ -542,7 +535,7 @@ namespace TVGL
         /// <param name="outputData"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static double AdditiveVolume(List<DecompositionData> decompData, double layerHeight, 
+        public static double AdditiveVolume(List<DecompositionData> decompData, double layerHeight,
             double scanningAccuracy, out List<DecompositionData> outputData)
         {
             outputData = new List<DecompositionData>();
@@ -688,7 +681,7 @@ namespace TVGL
             //This creates a cross section that is dependent on 4 offset crossSections (or three layers).
             //This assumes that cross sections were added to the top and bottom of decomp data.    
             //This also assumes that the extrusion will be done from the cross section along the build direction.
-            
+
             //Add the first and second cross section
             //var onePrior = offsetCrossSections[1]; 
             //outputData.Add(new DecompositionData(onePrior.Select(p => p.Path), previousDistance));
@@ -707,18 +700,18 @@ namespace TVGL
                 additiveVolume += currentVolume;
             }
             var union = offsetCrossSections[1];
-            for (var i = 0; i < n - 1; i++) 
+            for (var i = 0; i < n - 1; i++)
             {
-                var distance = decompData[i].DistanceAlongDirection; 
+                var distance = decompData[i].DistanceAlongDirection;
                 var deltaX = Math.Abs(distance - decompData[i + 1].DistanceAlongDirection);
-                var current = offsetCrossSections[i];  
+                var current = offsetCrossSections[i];
                 try
                 {
                     //Union with next two and the prior one
                     if (i > 0) union = PolygonOperations.Union(current, offsetCrossSections[i - 1]); //if not the first layer
                     if (i < n - 1) union = PolygonOperations.Union(union, offsetCrossSections[i + 1]); //if not the final layer
-                    if (i < n - 2) union = PolygonOperations.Union(union, offsetCrossSections[i + 2]); 
-                    currentVolume = Math.Abs(union.Sum(p => p.Area)) * deltaX; 
+                    if (i < n - 2) union = PolygonOperations.Union(union, offsetCrossSections[i + 2]);
+                    currentVolume = Math.Abs(union.Sum(p => p.Area)) * deltaX;
                     ////Set the additive information. Instead of using the current path area, use the max between this one & below it.
                     ////If the part was cut at this index, the furthest cross section would be at i.
                     ////Therefore, the additive shape from i-1 to i should be based on the union of i-1 and i.
@@ -736,21 +729,21 @@ namespace TVGL
                     var onePrior = new List<PolygonLight>(outputData.Last().Paths.Select(p => new PolygonLight(p)));
                     currentVolume = Math.Abs(onePrior.Sum(p => p.Area)) * deltaX; //volume between onePrior and current   
                 }
-             
+
                 //if (i != 1)
                 //{
-                    outputData.Add(new DecompositionData(union.Select(p => p.Path), distance));
-                    additiveVolume += currentVolume;
-                    //if (i == n - 1)
-                    //{
-                    //    //Add the final layer
-                    //    outputData.Add(new DecompositionData(onePriorUnion.Select(p => p.Path), distance));
-                    //    additiveVolume += currentVolume;
-                    //}
+                outputData.Add(new DecompositionData(union.Select(p => p.Path), distance));
+                additiveVolume += currentVolume;
+                //if (i == n - 1)
+                //{
+                //    //Add the final layer
+                //    outputData.Add(new DecompositionData(onePriorUnion.Select(p => p.Path), distance));
+                //    additiveVolume += currentVolume;
                 //}
-                 
+                //}
+
                 //Update the values for the next iteration.
-               // previousDistance = distance;
+                // previousDistance = distance;
                 //Two prior is now done. One prior becomes the prior and the current becomes onePrior
                 //oPrior = onePriorUnion;
                 //priorVolume = currentVolume;
@@ -916,7 +909,7 @@ namespace TVGL
                 var edges = new List<long>();
                 for (var i = 0; i < 3; i++)
                 {
-                    var j = (i == 2) ? 0: i + 1;
+                    var j = (i == 2) ? 0 : i + 1;
                     var v1 = face.Vertices[i];
                     var v2 = face.Vertices[j];
                     var newEdge = Edge.GetEdgeChecksum(v1, v2);
@@ -939,7 +932,7 @@ namespace TVGL
             //ToDo: could change value to an array once debugged
             foreach (var edgeFaceSet in edgeFaces.Values)
             {
-                if(edgeFaceSet.Count != 2) throw new Exception("Error in setting edge-face lookup dictionary");
+                if (edgeFaceSet.Count != 2) throw new Exception("Error in setting edge-face lookup dictionary");
             }
 
             var edgeList = new HashSet<long>();
@@ -974,7 +967,7 @@ namespace TVGL
 
                     var cuttingPlane = new Flat(distance2, direction);
                     var inputEdgeLoops = new List<List<long>>();
-                    var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup, 
+                    var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup,
                         ref maxVertexIndex);
                     return loops; //May return null if line intersections are not valid
                 }
@@ -1018,7 +1011,7 @@ namespace TVGL
             /// <summary>
             /// The convex hull for each slice. Optional parameter that is only set when SetConvexHull() is called.
             /// </summary>
-            public IEnumerable<PointLight> ConvexHull; 
+            public IEnumerable<PointLight> ConvexHull;
 
             /// <summary>
             /// A list of the paths that make up the slice of the solid at this distance along this direction
@@ -1039,7 +1032,8 @@ namespace TVGL
             public DecompositionData(IEnumerable<List<PointLight>> paths, IEnumerable<List<Vertex>> vertices, double distanceAlongDirection)
             {
                 Paths = new List<List<PointLight>>(paths);
-                Vertices = new List<List<Vertex>>(vertices);
+                if (vertices != null)
+                    Vertices = new List<List<Vertex>>(vertices);
                 DistanceAlongDirection = distanceAlongDirection;
             }
 
@@ -1152,7 +1146,7 @@ namespace TVGL
             /// <param name="stepIndex"></param>
             /// <param name="path2D"></param>
             /// <param name="distanceAlongSearchDirection"></param>
-            public PolygonDataGroup(List<PointLight> path2D, List<Vertex> intersectionVertices, 
+            public PolygonDataGroup(List<PointLight> path2D, List<Vertex> intersectionVertices,
                 List<Edge> edgeLoop, double area, int indexInCrossSection, int stepIndex, double distanceAlongSearchDirection)
             {
                 Path2D = path2D;
@@ -1219,7 +1213,7 @@ namespace TVGL
         /// <param name="orderedForcedSteps"></param>
         /// <returns></returns>
         public static List<DirectionalSegment> UniformDirectionalSegmentation(TessellatedSolid ts, double[] direction,
-            double stepSize, out Dictionary<int, double> stepDistances, 
+            double stepSize, out Dictionary<int, double> stepDistances,
             out Dictionary<int, double> sortedVertexDistanceLookup, List<double> orderedForcedSteps = null)
         {
             //Reset all the arbitrary edge references and vertex references to -1, since they may have been set in another method
@@ -1277,7 +1271,7 @@ namespace TVGL
             var furthestDistance = sortedVertices.Last().Item2;
             var distanceAlongAxis = firstDistance;
             var currentVertexIndex = 0;
-            
+
             //Start the step index at -1, so that the increment can be at the start of the while loop, 
             //making the final stepIndex correct for use in a later function.
             var stepIndex = -1;
@@ -1299,7 +1293,7 @@ namespace TVGL
                     }
                 }
                 numberOfForcedDistances = cleanOrderedForcedSteps.Count;
-                forcedDistanceIndex ++;
+                forcedDistanceIndex++;
             }
             var priorNonForcedDistanceAlongAxis = distanceAlongAxis;
             while (distanceAlongAxis < furthestDistance - stepSize)
@@ -1390,7 +1384,7 @@ namespace TVGL
 
                     stepDistances.Add(stepIndex, distanceAlongAxis);
 
-                    foreach(var vertex in inStepVertices)
+                    foreach (var vertex in inStepVertices)
                     {
                         referenceVerticesByStepIndex.Add(vertex.IndexInList, stepIndex);
                     }
@@ -1465,7 +1459,7 @@ namespace TVGL
 
             foreach (var segment in allDirectionalSegments)
             {
-                if(segment.Value.CrossSectionPathDictionary.Count == 0) throw new Exception("A segment must have cross sections");
+                if (segment.Value.CrossSectionPathDictionary.Count == 0) throw new Exception("A segment must have cross sections");
                 //if(segment.Value.StartStepIndexAlongSearchDirection == segment.Value.EndStepIndexAlongSearchDirection) throw new Exception("This segment has zero thickness");
             }
 
@@ -1879,7 +1873,7 @@ namespace TVGL
                 //Don't remove from the unusedInStepVertices list until we are done collecting
                 //All the edges that belong to this segment. Otherwise, we will be missing some
                 //of the edges between in step vertices.
-                var newSegmentIndex = allDirectionalSegments.Any()? allDirectionalSegments.Keys.Max() + 1 : 0;
+                var newSegmentIndex = allDirectionalSegments.Any() ? allDirectionalSegments.Keys.Max() + 1 : 0;
                 usedInStepVertices.Add(startVertex);
                 var verticesToConsider = new Stack<Vertex>();
                 verticesToConsider.Push(startVertex);
@@ -2315,7 +2309,7 @@ namespace TVGL
             /// <summary>
             /// Gets the start distance of this segment along the search direction
             /// </summary>
-            public double StartDistanceAlongSearchDirection => 
+            public double StartDistanceAlongSearchDirection =>
                 CrossSectionPathDictionary[StartStepIndexAlongSearchDirection].First().DistanceAlongSearchDirection;
 
             /// <summary>
@@ -2329,7 +2323,7 @@ namespace TVGL
             /// <summary>
             /// Gets the end distance of this segment along the search direction
             /// </summary>
-            public double EndDistanceAlongSearchDirection => 
+            public double EndDistanceAlongSearchDirection =>
                 CrossSectionPathDictionary[EndStepIndexAlongSearchDirection].First().DistanceAlongSearchDirection;
 
             /// <summary>
@@ -2724,12 +2718,12 @@ namespace TVGL
             {
                 var tempEdges = CurrentEdges.Where(edge => edge.To.ReferenceIndex == -1 || edge.From.ReferenceIndex == -1).ToList();
                 CurrentEdges = new HashSet<Edge>(tempEdges);
-            }  
+            }
 
             /// <summary>
             /// Sets the ReferenceVerticesByStepIndex. Do this when finished if the data is needed.
             /// </summary>
-            public void SetReferenceVerticesByStepIndex(Dictionary<int, int> vertexStepIndexReference )
+            public void SetReferenceVerticesByStepIndex(Dictionary<int, int> vertexStepIndexReference)
             {
                 ReferenceVerticesByStepIndex = new Dictionary<int, List<Vertex>>();
                 if (!IsFinished) throw new Exception("Segment must be finished first");
@@ -2742,7 +2736,7 @@ namespace TVGL
                     }
                     else
                     {
-                        ReferenceVerticesByStepIndex.Add(vertexStepIndex, new List<Vertex>() {vertex});
+                        ReferenceVerticesByStepIndex.Add(vertexStepIndex, new List<Vertex>() { vertex });
                     }
                 }
             }
@@ -2752,7 +2746,7 @@ namespace TVGL
             /// Reverses the direction and all associated dictionaries. It is assumed that the steps are to be 
             /// ordered along the reversed direction. The total number of steps along the direction must be given.
             /// </summary>
-            public void Reverse(int maxStepIndex,  Dictionary<int, double> stepDistances)
+            public void Reverse(int maxStepIndex, Dictionary<int, double> stepDistances)
             {
                 ForwardDirection = ForwardDirection.multiply(-1);
                 var tempSegmentsSet = ForwardAdjoinedDirectionalSegments;
@@ -2845,7 +2839,7 @@ namespace TVGL
                 foreach (var startEdge in edges)
                 {
                     if (!unusedEdges.Contains(startEdge)) continue;
-                    unusedEdges.Remove(startEdge); 
+                    unusedEdges.Remove(startEdge);
                     var loop = new List<Vertex>();
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
                         cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
@@ -2915,9 +2909,110 @@ namespace TVGL
             outputEdgeLoops = edgeLoops;
             return loops;
         }
+        private static List<List<PointLight>> GetZLoops(Dictionary<int, Edge> edgeListDictionary, double distToPlane,
+            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops)
+        {
+            var edgeLoops = new List<List<Edge>>();
+            var loops = new List<List<PointLight>>();
+            if (intputEdgeLoops.Any())
+            {
+                edgeLoops = intputEdgeLoops; //Note that edge loops should all be ordered correctly
+                foreach (var edgeLoop in edgeLoops)
+                {
+                    var loop = new List<PointLight>();
+                    foreach (var edge in edgeLoop)
+                    {
+                        var vertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(distToPlane,
+                        edge.To, edge.From);
+                        loop.Add(vertex);
+                    }
+                    loops.Add(loop);
+                }
+            }
+            else
+            {
+                //Build an edge list that we can modify, without ruining the original
+                //After comparing hashset versus dictionary (with known keys)
+                //Hashset was slighlty faster during creation and enumeration, 
+                //but even more slighlty slower at removing. Overall, Hashset 
+                //was about 17% faster than a dictionary.
+                var edges = new List<Edge>(edgeListDictionary.Values);
+                var unusedEdges = new HashSet<Edge>(edges);
+                foreach (var startEdge in edges)
+                {
+                    if (!unusedEdges.Contains(startEdge)) continue;
+                    unusedEdges.Remove(startEdge);
+                    var loop = new List<PointLight>();
+                    var intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(distToPlane, startEdge.To, startEdge.From);
+                    loop.Add(intersectVertex);
+                    var edgeLoop = new List<Edge> { startEdge };
+                    var startFace = startEdge.OwnedFace;
+                    var currentFace = startFace;
+                    var previousFace = startFace; //This will be set again before its used.
+                    var endFace = startEdge.OtherFace;
+                    var nextEdgeFound = false;
+                    Edge nextEdge = null;
+                    var correctDirection = 0.0;
+                    var reverseDirection = 0.0;
+                    do
+                    {
+                        //Get the next edge
+                        foreach (var edge in currentFace.Edges)
+                        {
+                            if (!unusedEdges.Contains(edge)) continue;
+                            if (edge.OtherFace == currentFace)
+                            {
+                                previousFace = edge.OtherFace;
+                                currentFace = edge.OwnedFace;
+                                nextEdgeFound = true;
+                                nextEdge = edge;
+                                break;
+                            }
+                            if (edge.OwnedFace == currentFace)
+                            {
+                                previousFace = edge.OwnedFace;
+                                currentFace = edge.OtherFace;
+                                nextEdgeFound = true;
+                                nextEdge = edge;
+                                break;
+                            }
+                        }
+                        if (nextEdgeFound)
+                        {
+                            //For the first set of edges, check to make sure this list is going in the proper direction
+                            intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(distToPlane,
+                                nextEdge.To, nextEdge.From);
+                            //Add the edge as a reference for the vertex, so we can get the faces later
+                            var vector = intersectVertex - loop.Last();
+                            //Use the previous face, since that is the one that contains both of the edges that are in use.
+                            var dot = -previousFace.Normal[1] * vector[0] + previousFace.Normal[0] * vector[1];
+                            //var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector, 3);
+                            loop.Add(intersectVertex);
+                            edgeLoop.Add(nextEdge);
+                            unusedEdges.Remove(nextEdge);
+                            //Note that removing at an index is FASTER than removing a object.
+                            if (Math.Sign(dot) >= 0) correctDirection += dot;
+                            else reverseDirection += (-dot);
+                        }
+                        else throw new Exception("Loop did not complete");
+                    } while (currentFace != endFace);
+
+                    //if (reverseDirection > 2 && correctDirection > 2) throw new Exception("Area Decomp Loop Finding needs additional work.");
+                    if (reverseDirection > correctDirection)
+                    {
+                        loop.Reverse();
+                        edgeLoop.Reverse();
+                    }
+                    loops.Add(loop);
+                    edgeLoops.Add(edgeLoop);
+                }
+            }
+            outputEdgeLoops = edgeLoops;
+            return loops;
+        }
         private static List<List<Vertex>> GetLoops(HashSet<long> edgeList, Flat cuttingPlane,
           out List<List<long>> outputEdgeLoops, List<List<long>> intputEdgeLoops, Dictionary<int, Vertex> vertexLookup,
-            Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup, 
+            Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup,
             Dictionary<PolygonalFace, List<long>> faceEdgeLookup, ref int maxVertexIndex)
         {
             outputEdgeLoops = new List<List<long>>();
@@ -2937,7 +3032,7 @@ namespace TVGL
                             vertexLookup[vertex1], vertexLookup[vertex2]);
                         maxVertexIndex++;
                         vertexLookup.Add(maxVertexIndex, newVertex);
-                        vertexEdgeLoopup.Add(maxVertexIndex, new List<long>{edge});
+                        vertexEdgeLoopup.Add(maxVertexIndex, new List<long> { edge });
                         loop.Add(newVertex);
                     }
                     loops.Add(loop);
@@ -2955,7 +3050,7 @@ namespace TVGL
                 foreach (var startEdge in edges)
                 {
                     if (!unusedEdges.Contains(startEdge)) continue;
-                    unusedEdges.Remove(startEdge); 
+                    unusedEdges.Remove(startEdge);
                     var loop = new List<Vertex>();
                     var (vertex1, vertex2) = Edge.GetVertexIndices(startEdge);
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,

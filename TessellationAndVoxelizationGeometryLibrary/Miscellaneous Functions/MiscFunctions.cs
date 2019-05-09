@@ -1929,6 +1929,25 @@ namespace TVGL
         {
             return new Vertex(PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1.Position, point2.Position));
         }
+        /// <summary>
+        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static PointLight PointLightOnZPlaneFromIntersectingLine(double distOfPlane, Vertex point1,
+            Vertex point2)
+        {
+            var fromFactor = (distOfPlane - point1.Z) / (point2.Z - point1.Z);
+            var toFactor =1-fromFactor;
+
+            return new PointLight(fromFactor*point1.X+toFactor*point2.X,
+                fromFactor * point1.Y + toFactor * point2.Y);
+        }
 
         /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting

@@ -157,12 +157,12 @@ namespace TVGL.DenseVoxels
             if (!possibleNullSlices)
                 slices = decomp.Select(d => d.Paths).ToList();
             else if (decomp is null) return;
-            
+
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
             //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
-            Parallel.For(0, zLim, k =>
-            //for (var k = 0; k < VoxelsPerSide[2]; k++)
+            //Parallel.For(0, zLim, k =>
+            for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
                 List<List<PointLight>> slice;
                 if (!possibleNullSlices)
@@ -176,11 +176,12 @@ namespace TVGL.DenseVoxels
 
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
                     slice.Select(p => new PolygonLight(p)), xBegin, VoxelSideLength, xLim);
-                    //parallel lines aligned with Y axis
-
+                //parallel lines aligned with Y axis
+                var inverseVoxelSideLength = 1 / VoxelSideLength;
+                // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
                 foreach (var intersections in intersectionPoints)
                 {
-                    var i = (int) Math.Floor((intersections.Key - xBegin) / VoxelSideLength);
+                    var i = (int) Math.Floor((intersections.Key - xBegin) * inverseVoxelSideLength);
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
@@ -188,16 +189,16 @@ namespace TVGL.DenseVoxels
                         //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
                         //Although other dimensions do not also do this. Everything operates with Round (effectively).
                         //Could reverse this to add more voxels
-                        var sp = (int) Math.Round((intersectValues[m] - Bounds[0][1]) / VoxelSideLength);
+                        var sp = (int) Math.Round((intersectValues[m] - Bounds[0][1]) * inverseVoxelSideLength);
                         if (sp < 0) sp = 0;
-                        var ep = (int) Math.Round((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength);
+                        var ep = (int) Math.Round((intersectValues[m + 1] - Bounds[0][1]) * inverseVoxelSideLength);
                         if (ep > yLim) ep = yLim;
 
                         for (var j = sp; j < ep; j++)
                             Voxels[i, j, k] = 1;
                     }
                 }
-            });
+            } //);
         }
     }
 }
