@@ -24,6 +24,7 @@ using TVGL.Boolean_Operations;
 using TVGL.Enclosure_Operations;
 using TVGL.Voxelization;
 using TVGL._2D;
+using System.Runtime.CompilerServices;
 
 namespace TVGL.DenseVoxels
 {
@@ -34,7 +35,41 @@ namespace TVGL.DenseVoxels
     public partial class VoxelizedSolidDense : Solid
     {
         #region Properties
-        public byte[,,] Voxels;
+        public byte this[int x, int y, int z]
+        {
+            get
+            {
+                //var result = GetVoxel(x, y, z);
+                //if (result != Voxels[x, y, z]) Console.WriteLine("NOT SAME");
+                return Voxels[x, y, z];
+            }
+            set { Voxels[x, y, z] = value; }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private byte GetVoxel(int x, int y, int z)
+        {
+            var yStartIndex = ySofZ[z];
+            var numYLines = ySofZ[z + 1] - 1 - yStartIndex;
+            if (numYLines <= 0) return 0;//there are no voxels at this value of z
+            var yStart = yStartsAndXIndices[yStartIndex];
+            if (y < yStart) return 0;  //queried y is lower than the start for this z-slice's y range
+            if (y >= yStart + numYLines) return 0; //queried y is greater than the end for this z-slice's y range
+            var xStartIndex = yStartsAndXIndices[y - yStart + 1];
+            var xEndIndex = yStartsAndXIndices[y - yStart + 2] - 1; //the start of the next one minus one is the greatest
+            var xStart = xRanges[xStartIndex];
+            if (x < xStart) return 0; //queried x is lower than the start for this x-range for this y-line at this z-slice
+            var xStop = xRanges[xEndIndex];
+            if (x > xStop) return 0;  //queried x is greater than the end of this x-range for this y-line at this z-slice
+            for (int i = xStartIndex + 1; i < xEndIndex; i += 2)
+                if (x > xRanges[i] && x < xRanges[i + 1]) return 0; // this is actually checking the gap between xRanges
+            //otherwise, we're in an x-range for this y-line at this z-slice
+            return 1;
+        }
+
+        byte[,,] Voxels;
+        int[] ySofZ;
+        List<int> yStartsAndXIndices;
+        List<int> xRanges;
         public readonly int Discretization;
         public int[] VoxelsPerSide;
         public int[][] VoxelBounds { get; set; }
@@ -50,7 +85,7 @@ namespace TVGL.DenseVoxels
         public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength,
             IEnumerable<double[]> bounds, byte value = 0)
         {
-            VoxelsPerSide = (int[]) voxelsPerSide.Clone();
+            VoxelsPerSide = (int[])voxelsPerSide.Clone();
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
@@ -63,8 +98,8 @@ namespace TVGL.DenseVoxels
                 Parallel.For(0, xLim, m =>
                 {
                     for (var n = 0; n < yLim; n++)
-                    for (var o = 0; o < zLim; o++)
-                        Voxels[m, n, o] = value;
+                        for (var o = 0; o < zLim; o++)
+                            Voxels[m, n, o] = value;
                 });
                 UpdateBoundingProperties();
 
@@ -93,7 +128,7 @@ namespace TVGL.DenseVoxels
 
         public VoxelizedSolidDense(VoxelizedSolidDense vs)
         {
-            Voxels = (byte[,,]) vs.Voxels.Clone();
+            Voxels = (byte[,,])vs.Voxels.Clone();
             Discretization = vs.Discretization;
             VoxelsPerSide = vs.VoxelsPerSide.ToArray();
             VoxelSideLength = vs.VoxelSideLength;
@@ -118,8 +153,8 @@ namespace TVGL.DenseVoxels
 
             if (bounds != null)
             {
-                Bounds[0] = (double[]) bounds[0].Clone();
-                Bounds[1] = (double[]) bounds[1].Clone();
+                Bounds[0] = (double[])bounds[0].Clone();
+                Bounds[1] = (double[])bounds[1].Clone();
             }
             else
             {
@@ -131,7 +166,7 @@ namespace TVGL.DenseVoxels
 
             //var longestSide = Dimensions.Max();
             VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
-            VoxelsPerSide = Dimensions.Select(d => (int) Math.Round(d / VoxelSideLength)).ToArray();
+            VoxelsPerSide = Dimensions.Select(d => (int)Math.Round(d / VoxelSideLength)).ToArray();
             TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
 
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
@@ -145,60 +180,103 @@ namespace TVGL.DenseVoxels
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
-
-            var xBegin = Bounds[0][0] + VoxelSideLength / 2;
+            ySofZ = new int[zLim + 1];
+            yStartsAndXIndices = new List<int>();
+            xRanges = new List<int> { 0 };
+            var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
+            var decomp = UniformDecompositionAlongZ(ts, zBegin, zLim, VoxelSideLength);
+            var inverseVoxelSideLength = 1 / VoxelSideLength;
 
-            var decomp =
-                DirectionalDecomposition.UniformDecompositionAlongZ(ts, zBegin, zLim,
-                    VoxelSideLength);
-
-            var slices = new List<List<List<PointLight>>>();
-            if (!possibleNullSlices)
-                slices = decomp.Select(d => d.Paths).ToList();
-            else if (decomp is null) return;
-
-            //var crossSections = decomp.Select(d => d.Vertices).ToList();
-            //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
-
-            //Parallel.For(0, zLim, k =>
-            for (var k = 0; k < VoxelsPerSide[2]; k++)
+            for (var k = 0; k < zLim; k++)
             {
-                List<List<PointLight>> slice;
-                if (!possibleNullSlices)
-                    slice = slices[k];
-                else
+                var loops = decomp[k];
+                if (!loops.Any())
                 {
-                    var sliceNullComparison = decomp[k];
-                    if (sliceNullComparison is null) return;
-                    slice = sliceNullComparison.Paths;
+                    ySofZ[k + 1] = ySofZ[k];
+                    continue;
                 }
-
-                var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                    slice.Select(p => new PolygonLight(p)), xBegin, VoxelSideLength, xLim);
-                //parallel lines aligned with Y axis
-                var inverseVoxelSideLength = 1 / VoxelSideLength;
-                // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
-                foreach (var intersections in intersectionPoints)
+                var sortedPoints = loops.SelectMany(loop => loop).OrderBy(p => p.Y).ToList();
+                var yStartIndex = (int)((sortedPoints.First().Y - yBegin) * inverseVoxelSideLength);
+                var numYlines = (int)((sortedPoints.Last().Y - yBegin) * inverseVoxelSideLength) + 1 - yStartIndex;
+                ySofZ[k + 1] = ySofZ[k] + numYlines + 1;
+                yStartsAndXIndices.Add(yStartIndex);
+                for (int i = 0; i < numYlines; i++)
                 {
-                    var i = (int) Math.Floor((intersections.Key - xBegin) * inverseVoxelSideLength);
-                    var intersectValues = intersections.Value;
-                    var n = intersectValues.Count;
-                    for (var m = 0; m < n - 1; m += 2)
+                    var yIntercept = (yStartIndex + i) * VoxelSideLength + (VoxelSideLength / 2.0);
+                    yStartsAndXIndices.Add(xRanges.Count);
+                    var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
+                        slice.Select(p => new PolygonLight(p)), yBegin, VoxelSideLength, yLim);
+                    //parallel lines aligned with Y axis
+                    var numYSections = 1;
+                    var lastKey = -2;
+                    // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
+                    foreach (var intersections in intersectionPoints)
                     {
-                        //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
-                        //Although other dimensions do not also do this. Everything operates with Round (effectively).
-                        //Could reverse this to add more voxels
-                        var sp = (int) Math.Round((intersectValues[m] - Bounds[0][1]) * inverseVoxelSideLength);
-                        if (sp < 0) sp = 0;
-                        var ep = (int) Math.Round((intersectValues[m + 1] - Bounds[0][1]) * inverseVoxelSideLength);
-                        if (ep > yLim) ep = yLim;
+                        var j = (int)Math.Floor((intersections.Key - yBegin) * inverseVoxelSideLength);
+                        if (j - lastKey > 1)
+                        {
 
-                        for (var j = sp; j < ep; j++)
-                            Voxels[i, j, k] = 1;
+                            numYSections++;
+                        }
+                        lastKey = j;
+                        var intersectValues = intersections.Value;
+                        yStartsAndXIndices.Add(intersectValues.Count);
+
+                        var n = intersectValues.Count;
+                        yStartsAndXIndices.Add(j);
+
+                        for (var m = 0; m < n - 1; m += 2)
+                        {
+                            //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
+                            //Although other dimensions do not also do this. Everything operates with Round (effectively).
+                            //Could reverse this to add more voxels
+                            var sp = (int)Math.Round((intersectValues[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                            if (sp < 0) sp = 0;
+                            var ep = (int)Math.Round((intersectValues[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                            if (ep > xLim) ep = xLim;
+                            xRanges.Add(sp);
+                            xRanges.Add(ep);
+                            for (var i = sp; i < ep; i++)
+                                Voxels[i, j, k] = 1;
+                        }
+                    }
+                    ySofZ[k + 1] = ySofZ[k] + numYSections + 1;
+                } //);
+                ySofZ[VoxelsPerSide[2]] = yStartsAndXIndices.Count; //add the last one
+            }
+        }
+
+        static List<List<PointLight>>[] UniformDecompositionAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
+        {
+            List<List<PointLight>>[] loopsAlongZ = new List<List<PointLight>>[numSteps];
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
+            var currentEdges = new HashSet<Edge>();
+            var nextDistance = sortedVertices.First().Z;
+            var vIndex = 0;
+            for (int step = 0; step < numSteps; step++)
+            {
+                var z = startDistance + step * stepSize;
+                var thisVertex = sortedVertices[vIndex];
+                var needToOffset = false;
+                while (thisVertex.Z <= z)
+                {
+                    if (thisVertex.Z == z) needToOffset = true;
+                    foreach (var edge in thisVertex.Edges)
+                    {
+                        if (currentEdges.Contains(edge)) currentEdges.Remove(edge);
+                        else currentEdges.Add(edge);
+                        vIndex++;
                     }
                 }
-            } //);
+                if (needToOffset)
+                    z += (z + Math.Min(stepSize / 2, sortedVertices[vIndex + 1].Z)) / 2;
+                if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
+                else loopsAlongZ[step] = new List<List<PointLight>>();
+            }
+            return loopsAlongZ;
         }
+
     }
 }

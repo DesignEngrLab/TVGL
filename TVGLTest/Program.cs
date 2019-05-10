@@ -154,7 +154,7 @@ namespace TVGLPresenterDX
             var vs_dense = new VoxelizedSolidDense(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
-
+            Console.ReadKey();
             //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
             //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
             //Presenter.ShowAndHang(vs_cut.Item1, vs_cut.Item2);

@@ -373,155 +373,7 @@ namespace TVGL
             return outputData;
         }
 
-        /// <summary>
-        /// Returns the decomposition data found from each slice of the decomposition along the Z direction. 
-        /// This function does not use Projection to 2D, instead it just ignores the Z value of the vertices.
-        /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
-        /// will all be interior to the part.
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="direction"></param>
-        /// <param name="startDistance"></param>
-        /// <param name="stepSize"></param>
-        /// <returns></returns>
-        public static List<DecompositionData> UniformDecompositionAlongZ(TessellatedSolid ts,
-            double startDistance, int numSteps, double stepSize)
-        {
-            var direction = new[] { 0.0, 0, 1.0 }; //+Z
-            var sortedVertexDistanceLookup = new Dictionary<int, double>();
-
-            //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
-            //Create a distance lookup dictionary based on the vertex indices
-            sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
-
-            var edgeListDictionary = new Dictionary<int, Edge>();
-            var firstDistance = sortedVertices.First().Item2;
-            var furthestDistance = sortedVertices.Last().Item2;
-            var length = furthestDistance - firstDistance;
-            //var numSteps = (int)((furthestDistance - startDistance) / stepSize) + 1;
-
-            var inputEdgeLoops = new List<List<Edge>>();
-
-            //This is a list of all the step indices matched with its distance along the axis.
-            //This may be different that just multiplying the step index by the step size, because
-            //minor adjustments occur to avoid cutting through vertices.
-            var stepDistances = new Dictionary<int, double>(numSteps);
-
-            //Choose whichever min offset is smaller
-            var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
-            var stepIndex = 0;
-            var firstIndex = 0;
-            var distanceAlongAxis = startDistance;
-            while (distanceAlongAxis <= furthestDistance)
-            {
-                if (distanceAlongAxis < firstDistance)
-                {
-                    stepIndex++;
-                    distanceAlongAxis += stepSize;
-                    firstIndex = stepIndex;
-                    continue;
-                }
-                stepDistances[stepIndex] = distanceAlongAxis;
-                stepIndex++;
-                distanceAlongAxis += stepSize;
-            }
-
-            //Initialize the size of the list.
-            var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
-            var currentVertexIndex = 0;
-            stepIndex = firstIndex;
-            while (stepIndex < /*numSteps*/stepDistances.Count + firstIndex)
-            {
-                distanceAlongAxis = stepDistances[stepIndex];
-
-                //Update vertex/edge list up until distanceAlongAxis
-                for (var i = currentVertexIndex; i < sortedVertices.Count; i++)
-                {
-                    //Update the current vertex index so that this vertex is not visited again
-                    //unless it causes the break ( > distanceAlongAxis), then it will start the 
-                    //the next iteration.
-                    currentVertexIndex = i;
-                    var element = sortedVertices[i];
-                    var vertex = element.Item1;
-                    var vertexDistanceAlong = element.Item2;
-                    //If a vertex is too close to the current distance, move it forward by the min offset.
-                    //Update the edge list with this vertex.
-                    if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
-                    {
-                        //Move the distance enough so that this vertex is now less than 
-                        distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
-                    }
-                    //Else, Break after we get to a vertex that is further than the distance along axis
-                    if (vertexDistanceAlong > distanceAlongAxis)
-                    {
-                        //consider this vertex again next iteration
-                        break;
-                    }
-
-                    //Else, it is less than the distance along. Update the edge list
-                    //Add the passed vertices to a list so that they can be removed from the sorted vertices
-
-                    //Update the edge dictionary that is used to determine the 3D loops.
-                    foreach (var edge in vertex.Edges)
-                    {
-                        //Reset the input edge loops since we have added an edge
-                        inputEdgeLoops = new List<List<Edge>>();
-
-                        //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
-                        //and the second removes it from the list.
-                        if (edgeListDictionary.ContainsKey(edge.IndexInList))
-                        {
-                            edgeListDictionary.Remove(edge.IndexInList);
-                        }
-                        else
-                        {
-                            edgeListDictionary.Add(edge.IndexInList, edge);
-                        }
-                    }
-                }
-
-                //Check to make sure that the minor shifts in the distance in the for loop above 
-                //Did not move the distance beyond the furthest distance
-                if (distanceAlongAxis > furthestDistance || !edgeListDictionary.Any()) break;
-                //Make the slice
-                var counter = 0;
-                var current3DLoops = new List<List<PointLight>>();
-                var successfull = true;
-                do
-                {
-                    try
-                    {
-                        current3DLoops = GetZLoops(edgeListDictionary, distanceAlongAxis, out var outputEdgeLoops,
-                            inputEdgeLoops);
-
-                        //Use the same output edge loops for outer while loop, since the edge list does not change.
-                        //If there is an error, it will occur before this loop.
-                        inputEdgeLoops = outputEdgeLoops;
-                    }
-                    catch
-                    {
-                        counter++;
-                        distanceAlongAxis += minOffset;
-                        successfull = false;
-                    }
-                } while (!successfull && counter < 4);
-
-
-                if (successfull)
-                {
-                    //Add the data to the output
-                    outputData[stepIndex] = new DecompositionData(current3DLoops, null, distanceAlongAxis);
-                }
-                else
-                {
-                    Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
-                }
-                stepDistances[stepIndex] = distanceAlongAxis; //Update to the adjusted value.
-                stepIndex++;
-            }
-            return outputData;
-        }
+ 
         #endregion
 
         #region Additive Volume
@@ -2909,107 +2761,50 @@ namespace TVGL
             outputEdgeLoops = edgeLoops;
             return loops;
         }
-        private static List<List<PointLight>> GetZLoops(Dictionary<int, Edge> edgeListDictionary, double distToPlane,
-            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops)
+        private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
-            var edgeLoops = new List<List<Edge>>();
             var loops = new List<List<PointLight>>();
-            if (intputEdgeLoops.Any())
-            {
-                edgeLoops = intputEdgeLoops; //Note that edge loops should all be ordered correctly
-                foreach (var edgeLoop in edgeLoops)
-                {
-                    var loop = new List<PointLight>();
-                    foreach (var edge in edgeLoop)
-                    {
-                        var vertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(distToPlane,
-                        edge.To, edge.From);
-                        loop.Add(vertex);
-                    }
-                    loops.Add(loop);
-                }
-            }
-            else
-            {
-                //Build an edge list that we can modify, without ruining the original
-                //After comparing hashset versus dictionary (with known keys)
-                //Hashset was slighlty faster during creation and enumeration, 
-                //but even more slighlty slower at removing. Overall, Hashset 
-                //was about 17% faster than a dictionary.
-                var edges = new List<Edge>(edgeListDictionary.Values);
-                var unusedEdges = new HashSet<Edge>(edges);
-                foreach (var startEdge in edges)
-                {
-                    if (!unusedEdges.Contains(startEdge)) continue;
-                    unusedEdges.Remove(startEdge);
-                    var loop = new List<PointLight>();
-                    var intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(distToPlane, startEdge.To, startEdge.From);
-                    loop.Add(intersectVertex);
-                    var edgeLoop = new List<Edge> { startEdge };
-                    var startFace = startEdge.OwnedFace;
-                    var currentFace = startFace;
-                    var previousFace = startFace; //This will be set again before its used.
-                    var endFace = startEdge.OtherFace;
-                    var nextEdgeFound = false;
-                    Edge nextEdge = null;
-                    var correctDirection = 0.0;
-                    var reverseDirection = 0.0;
-                    do
-                    {
-                        //Get the next edge
-                        foreach (var edge in currentFace.Edges)
-                        {
-                            if (!unusedEdges.Contains(edge)) continue;
-                            if (edge.OtherFace == currentFace)
-                            {
-                                previousFace = edge.OtherFace;
-                                currentFace = edge.OwnedFace;
-                                nextEdgeFound = true;
-                                nextEdge = edge;
-                                break;
-                            }
-                            if (edge.OwnedFace == currentFace)
-                            {
-                                previousFace = edge.OwnedFace;
-                                currentFace = edge.OtherFace;
-                                nextEdgeFound = true;
-                                nextEdge = edge;
-                                break;
-                            }
-                        }
-                        if (nextEdgeFound)
-                        {
-                            //For the first set of edges, check to make sure this list is going in the proper direction
-                            intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(distToPlane,
-                                nextEdge.To, nextEdge.From);
-                            //Add the edge as a reference for the vertex, so we can get the faces later
-                            var vector = intersectVertex - loop.Last();
-                            //Use the previous face, since that is the one that contains both of the edges that are in use.
-                            var dot = -previousFace.Normal[1] * vector[0] + previousFace.Normal[0] * vector[1];
-                            //var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector, 3);
-                            loop.Add(intersectVertex);
-                            edgeLoop.Add(nextEdge);
-                            unusedEdges.Remove(nextEdge);
-                            //Note that removing at an index is FASTER than removing a object.
-                            if (Math.Sign(dot) >= 0) correctDirection += dot;
-                            else reverseDirection += (-dot);
-                        }
-                        else throw new Exception("Loop did not complete");
-                    } while (currentFace != endFace);
 
-                    //if (reverseDirection > 2 && correctDirection > 2) throw new Exception("Area Decomp Loop Finding needs additional work.");
-                    if (reverseDirection > correctDirection)
+            var unusedEdges = new HashSet<Edge>(penetratingEdges);
+            while (unusedEdges.Any())
+            {
+                var firstEdgeInLoop = unusedEdges.First();
+                var finishedLoop = false;
+                var currentEdge = firstEdgeInLoop;
+                do
+                {
+                    unusedEdges.Remove(currentEdge);
+                    var loop = new List<PointLight>();
+                    var intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From, currentEdge.To);
+                    loop.Add(intersectVertex);
+                    var nextFace = (currentEdge.From.Z < ZOfPlane) ? currentEdge.OtherFace : currentEdge.OwnedFace;
+                    Edge nextEdge = null;
+                    foreach (var whichEdge in nextFace.Edges)
                     {
-                        loop.Reverse();
-                        edgeLoop.Reverse();
+                        if (currentEdge == whichEdge) continue;
+                        if (whichEdge == firstEdgeInLoop)
+                        {
+                            finishedLoop = true;
+                            loops.Add(loop);
+                            break;
+                        }
+                        else if (!unusedEdges.Contains(whichEdge))
+                        {
+                            nextEdge = whichEdge;
+                            break;
+                        }
                     }
-                    loops.Add(loop);
-                    edgeLoops.Add(edgeLoop);
-                }
+                    if (nextEdge == null)
+                    {
+                        Debug.WriteLine("Incomplete loop.");
+                        loops.Add(loop);
+                    }
+                    else currentEdge = nextEdge;
+                } while (!finishedLoop);
             }
-            outputEdgeLoops = edgeLoops;
             return loops;
         }
+
         private static List<List<Vertex>> GetLoops(HashSet<long> edgeList, Flat cuttingPlane,
           out List<List<long>> outputEdgeLoops, List<List<long>> intputEdgeLoops, Dictionary<int, Vertex> vertexLookup,
             Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup,

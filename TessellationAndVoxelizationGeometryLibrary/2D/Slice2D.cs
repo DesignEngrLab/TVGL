@@ -291,13 +291,13 @@ namespace TVGL._2D
             //    shapeForDebugging.Add(polygon.Path);//PolygonOperations.SimplifyFuzzy(
             //}
 
-     
+
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
             //Also, get the sorted points
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true)); 
+            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
             var allPoints = polygons.SelectMany(poly => poly.Path);
             var sortedPoints = allPoints.OrderBy(p => p.X).ToList();
-            
+
             var i = 0;
             var distanceAlongDirection =
                 (Math.Ceiling((sortedPoints[0].X - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
@@ -311,16 +311,70 @@ namespace TVGL._2D
 
                 while (pointDistance > distanceAlongDirection)
                 {
-                    if(numIntersectionLines > 0)
+                    if (numIntersectionLines > 0)
                     {
-                        intersectionPoints.Add(distanceAlongDirection, 
+                        intersectionPoints.Add(distanceAlongDirection,
                             GetYIntersectionsSortedAlongY(intersectionLines, distanceAlongDirection).ToList());
                         //Presenter.ShowAndHang(shapeForDebugging);
                     }
 
                     //Update the distance along
                     i++;
-                    distanceAlongDirection += distanceBetweenLines;          
+                    distanceAlongDirection += distanceBetweenLines;
+                }
+
+                //Update the intersection lines
+                foreach (var line in point.Lines)
+                {
+                    if (intersectionLines.Contains(line))
+                    {
+                        intersectionLines.Remove(line);
+                        numIntersectionLines--;
+                    }
+                    else
+                    {
+                        intersectionLines.Add(line);
+                        numIntersectionLines++;
+                    }
+                }
+            }
+
+            //Presenter.ShowAndHang(intersectionPoints);
+            return intersectionPoints;
+        }
+
+        public static Dictionary<double, List<double>> IntersectionPointsAtUniformDistancesAlongY(
+            IEnumerable<PolygonLight> shape, double lowerBound, double distanceBetweenLines, int numLines)
+        {
+            //Set the lines in all the polygons. These are needed for Slice.OnLine()
+            //Also, get the sorted points
+            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
+            var allPoints = polygons.SelectMany(poly => poly.Path);
+            var sortedPoints = allPoints.OrderBy(p => p.X).ToList();
+
+            var i = 0;
+            var distanceAlongDirection =
+                (Math.Ceiling((sortedPoints[1].X - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
+                lowerBound;
+            var numIntersectionLines = 0;
+            var intersectionLines = new HashSet<Line>();
+            var intersectionPoints = new Dictionary<double, List<double>>(numLines);
+            foreach (var point in sortedPoints)
+            {
+                var pointDistance = point.Y;
+
+                while (pointDistance > distanceAlongDirection)
+                {
+                    if (numIntersectionLines > 0)
+                    {
+                        intersectionPoints.Add(distanceAlongDirection,
+                            GetXIntersectionsSortedAlongX(intersectionLines, distanceAlongDirection).ToList());
+                        //Presenter.ShowAndHang(shapeForDebugging);
+                    }
+
+                    //Update the distance along
+                    i++;
+                    distanceAlongDirection += distanceBetweenLines;
                 }
 
                 //Update the intersection lines
@@ -352,6 +406,20 @@ namespace TVGL._2D
             foreach (var line in intersectionLines)
             {
                 intersectionPoints.Add(line.YGivenX(x));
+                refIndex++;
+            }
+            return intersectionPoints.OrderBy(p => p).ToArray();
+        }
+
+        private static double[] GetXIntersectionsSortedAlongX(HashSet<Line> intersectionLines, double y)
+        {
+            var n = intersectionLines.Count;
+            var intersectionPoints = new List<double>(n);
+            //Any line that is left in line hash, must be an intersection line.
+            var refIndex = 0;
+            foreach (var line in intersectionLines)
+            {
+                intersectionPoints.Add(line.XGivenY(y));
                 refIndex++;
             }
             return intersectionPoints.OrderBy(p => p).ToArray();

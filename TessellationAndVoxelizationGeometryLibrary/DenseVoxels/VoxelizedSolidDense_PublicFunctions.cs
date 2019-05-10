@@ -20,48 +20,48 @@ namespace TVGL.DenseVoxels
         public bool GetNeighbors(int i, int j, int k, out int[][] neighbors)
         {
             neighbors = new int[][] { null, null, null, null, null, null };
-            if (i + 1 != VoxelsPerSide[0] && Voxels[i + 1, j, k] != 0) neighbors[1] = new[] { i + 1, j, k };
-            if (j + 1 != VoxelsPerSide[1] && Voxels[i, j + 1, k] != 0) neighbors[3] = new[] { i, j + 1, k };
-            if (k + 1 != VoxelsPerSide[2] && Voxels[i, j, k + 1] != 0) neighbors[5] = new[] { i, j, k + 1 };
-            if (i != 0 && Voxels[i - 1, j, k] != 0) neighbors[0] = new[] { i - 1, j, k };
-            if (j != 0 && Voxels[i, j - 1, k] != 0) neighbors[2] = new[] { i, j - 1, k };
-            if (k != 0 && Voxels[i, j, k - 1] != 0) neighbors[4] = new[] { i, j, k - 1 };
+            if (i + 1 != VoxelsPerSide[0] && this[i + 1, j, k] != 0) neighbors[1] = new[] { i + 1, j, k };
+            if (j + 1 != VoxelsPerSide[1] && this[i, j + 1, k] != 0) neighbors[3] = new[] { i, j + 1, k };
+            if (k + 1 != VoxelsPerSide[2] && this[i, j, k + 1] != 0) neighbors[5] = new[] { i, j, k + 1 };
+            if (i != 0 && this[i - 1, j, k] != 0) neighbors[0] = new[] { i - 1, j, k };
+            if (j != 0 && this[i, j - 1, k] != 0) neighbors[2] = new[] { i, j - 1, k };
+            if (k != 0 && this[i, j, k - 1] != 0) neighbors[4] = new[] { i, j, k - 1 };
             return neighbors.Any(a => a is null);
         }
 
         public bool GetNeighbors(int i, int j, int k, int xLim, int yLim, int zLim, out int[][] neighbors)
         {
             neighbors = new int[][] { null, null, null, null, null, null };
-            if (i + 1 != xLim && Voxels[i + 1, j, k] != 0) neighbors[1] = new[] { i + 1, j, k };
-            if (j + 1 != yLim && Voxels[i, j + 1, k] != 0) neighbors[3] = new[] { i, j + 1, k };
-            if (k + 1 != zLim && Voxels[i, j, k + 1] != 0) neighbors[5] = new[] { i, j, k + 1 };
-            if (i != 0 && Voxels[i - 1, j, k] != 0) neighbors[0] = new[] { i - 1, j, k };
-            if (j != 0 && Voxels[i, j - 1, k] != 0) neighbors[2] = new[] { i, j - 1, k };
-            if (k != 0 && Voxels[i, j, k - 1] != 0) neighbors[4] = new[] { i, j, k - 1 };
+            if (i + 1 != xLim && this[i + 1, j, k] != 0) neighbors[1] = new[] { i + 1, j, k };
+            if (j + 1 != yLim && this[i, j + 1, k] != 0) neighbors[3] = new[] { i, j + 1, k };
+            if (k + 1 != zLim && this[i, j, k + 1] != 0) neighbors[5] = new[] { i, j, k + 1 };
+            if (i != 0 && this[i - 1, j, k] != 0) neighbors[0] = new[] { i - 1, j, k };
+            if (j != 0 && this[i, j - 1, k] != 0) neighbors[2] = new[] { i, j - 1, k };
+            if (k != 0 && this[i, j, k - 1] != 0) neighbors[4] = new[] { i, j, k - 1 };
             return neighbors.Any(a => a is null);
         }
 
         public int NumNeighbors(int i, int j, int k)
         {
             var neighbors = 0;
-            if (i + 1 != VoxelsPerSide[0] && Voxels[i + 1, j, k] != 0) neighbors++;
-            if (j + 1 != VoxelsPerSide[1] && Voxels[i, j + 1, k] != 0) neighbors++;
-            if (k + 1 != VoxelsPerSide[2] && Voxels[i, j, k + 1] != 0) neighbors++;
-            if (i != 0 && Voxels[i - 1, j, k] != 0) neighbors++;
-            if (j != 0 && Voxels[i, j - 1, k] != 0) neighbors++;
-            if (k != 0 && Voxels[i, j, k - 1] != 0) neighbors++;
+            if (i + 1 != VoxelsPerSide[0] && this[i + 1, j, k] != 0) neighbors++;
+            if (j + 1 != VoxelsPerSide[1] && this[i, j + 1, k] != 0) neighbors++;
+            if (k + 1 != VoxelsPerSide[2] && this[i, j, k + 1] != 0) neighbors++;
+            if (i != 0 && this[i - 1, j, k] != 0) neighbors++;
+            if (j != 0 && this[i, j - 1, k] != 0) neighbors++;
+            if (k != 0 && this[i, j, k - 1] != 0) neighbors++;
             return neighbors;
         }
 
         public int NumNeighbors(int i, int j, int k, int xLim, int yLim, int zLim)
         {
             var neighbors = 0;
-            if (i + 1 != xLim && Voxels[i + 1, j, k] != 0) neighbors++;
-            if (j + 1 != yLim && Voxels[i, j + 1, k] != 0) neighbors++;
-            if (k + 1 != zLim && Voxels[i, j, k + 1] != 0) neighbors++;
-            if (i != 0 && Voxels[i - 1, j, k] != 0) neighbors++;
-            if (j != 0 && Voxels[i, j - 1, k] != 0) neighbors++;
-            if (k != 0 && Voxels[i, j, k - 1] != 0) neighbors++;
+            if (i + 1 != xLim && this[i + 1, j, k] != 0) neighbors++;
+            if (j + 1 != yLim && this[i, j + 1, k] != 0) neighbors++;
+            if (k + 1 != zLim && this[i, j, k + 1] != 0) neighbors++;
+            if (i != 0 && this[i - 1, j, k] != 0) neighbors++;
+            if (j != 0 && this[i, j - 1, k] != 0) neighbors++;
+            if (k != 0 && this[i, j, k - 1] != 0) neighbors++;
             return neighbors;
         }
         #endregion
@@ -114,7 +114,7 @@ namespace TVGL.DenseVoxels
                 var counter = 0;
                 for (var j = 0; j < yLim; j++)
                 for (var k = 0; k < zLim; k++)
-                    if (Voxels[i, j, k] != 0)
+                    if (this[i, j, k] != 0)
                     {
                         counter++;
                         if (i < xMin) xMin = i;
@@ -161,7 +161,7 @@ namespace TVGL.DenseVoxels
                 var neighborCount = 0;
                 for (var j = yMin; j < yMax; j++)
                 for (var k = zMin; k < zMax; k++)
-                    if (Voxels[i, j, k] != 0)
+                    if (this[i, j, k] != 0)
                         neighborCount += NumNeighbors(i, j, k, xLim, yLim, zLim);
                 neighbors.TryAdd(i, neighborCount);
             });
@@ -246,7 +246,7 @@ namespace TVGL.DenseVoxels
             //    for (var j = 0; j <= yLim; j++)
             //        for (var k = 0; k <= zLim; k++)
             //        {
-            //            if (Voxels[i, j, k] == 0) continue;
+            //            if (this[i, j, k] == 0) continue;
             //
             //            var newIJK = transformationMatrix.multiply(new[] { i, j, k, 1 }, 4, 4)
             //                .Select(a => (int)Math.Ceiling(a)).ToArray();
@@ -255,7 +255,7 @@ namespace TVGL.DenseVoxels
             //
             //            if (!GetNeighbors(i, j, k, xLim + 1, yLim + 1, zLim + 1, out var neighbors))
             //            {
-            //                vs.Voxels[newIJK[0] + xOff, newIJK[1] + yOff, newIJK[2] + zOff] = 1;
+            //                vs.this[newIJK[0] + xOff, newIJK[1] + yOff, newIJK[2] + zOff] = 1;
             //                continue;
             //            }
             //
@@ -314,7 +314,7 @@ namespace TVGL.DenseVoxels
             //            }
             //
             //            foreach (var vox in voxels)
-            //                vs.Voxels[vox[0] + xOff, vox[1] + yOff, vox[2] + zOff] = 1;
+            //                vs.this[vox[0] + xOff, vox[1] + yOff, vox[2] + zOff] = 1;
             //        }
             //});
 
@@ -362,14 +362,14 @@ namespace TVGL.DenseVoxels
             //    for (var j = 0; j <= yLim; j++)
             //    for (var k = 0; k <= zLim; k++)
             //    {
-            //        if (Voxels[i, j, k] == 0) continue;
+            //        if (this[i, j, k] == 0) continue;
             //
             //        var newIJK = transformationMatrix.multiply(new[] {i, j, k, 1}, 4, 4)
             //            .Select(a => (int) Math.Ceiling(a)).ToArray();
             //        if (newIJK[0] > xMax || newIJK[1] > yMax || newIJK[2] > zMax)
             //            throw new NotImplementedException();
             //
-            //        vs.Voxels[newIJK[0] + xOff, newIJK[1] + yOff, newIJK[2] + zOff] = 1;
+            //        vs.this[newIJK[0] + xOff, newIJK[1] + yOff, newIJK[2] + zOff] = 1;
             //    }
             //});
 
@@ -414,7 +414,7 @@ namespace TVGL.DenseVoxels
         //        for (var j = 0; j < voxelsPerSide1[1]; j++)
         //        for (var k = 0; k < voxelsPerSide1[2]; k++)
         //        {
-        //            voxels1[i, j, k] = Voxels[i, j, k];
+        //            voxels1[i, j, k] = this[i, j, k];
         //        }
         //    });
 
@@ -434,11 +434,11 @@ namespace TVGL.DenseVoxels
         //        for (var k = 0; k < voxelsPerSide2[2]; k++)
         //        {
         //            if (cutDir == 0)
-        //                voxels2[i, j, k] = Voxels[i + cutBefore, j, k];
+        //                voxels2[i, j, k] = this[i + cutBefore, j, k];
         //            else if (cutDir == 1)
-        //                voxels2[i, j, k] = Voxels[i, j + cutBefore, k];
+        //                voxels2[i, j, k] = this[i, j + cutBefore, k];
         //            else
-        //                voxels2[i, j, k] = Voxels[i, j, k + cutBefore];
+        //                voxels2[i, j, k] = this[i, j, k + cutBefore];
         //            }
         //    });
 
@@ -479,25 +479,25 @@ namespace TVGL.DenseVoxels
                             case 0:
                             {
                                 if (i < cutBefore)
-                                    vs1.Voxels[i, j, k] = 0;
+                                    vs1[i, j, k] = 0;
                                 else
-                                    vs2.Voxels[i, j, k] = 0;
+                                    vs2[i, j, k] = 0;
                                 break;
                             }
                             case 1:
                             {
                                 if (j < cutBefore)
-                                    vs1.Voxels[i, j, k] = 0;
+                                    vs1[i, j, k] = 0;
                                 else
-                                    vs2.Voxels[i, j, k] = 0;
+                                    vs2[i, j, k] = 0;
                                 break;
                             }
                             case 2:
                             {
                                 if (k < cutBefore)
-                                    vs1.Voxels[i, j, k] = 0;
+                                    vs1[i, j, k] = 0;
                                 else
-                                    vs2.Voxels[i, j, k] = 0;
+                                    vs2[i, j, k] = 0;
                                 break;
                             }
                         }
@@ -507,25 +507,25 @@ namespace TVGL.DenseVoxels
                             case 0:
                             {
                                 if (i < cutBefore)
-                                    vs2.Voxels[i, j, k] = 0;
+                                    vs2[i, j, k] = 0;
                                 else
-                                    vs1.Voxels[i, j, k] = 0;
+                                    vs1[i, j, k] = 0;
                                 break;
                             }
                             case 1:
                             {
                                 if (j < cutBefore)
-                                    vs2.Voxels[i, j, k] = 0;
+                                    vs2[i, j, k] = 0;
                                 else
-                                    vs1.Voxels[i, j, k] = 0;
+                                    vs1[i, j, k] = 0;
                                 break;
                             }
                             case 2:
                             {
                                 if (k < cutBefore)
-                                    vs2.Voxels[i, j, k] = 0;
+                                    vs2[i, j, k] = 0;
                                 else
-                                    vs1.Voxels[i, j, k] = 0;
+                                    vs1[i, j, k] = 0;
                                 break;
                             }
                         }
@@ -561,9 +561,9 @@ namespace TVGL.DenseVoxels
                     var z = zOff + (k + .5) * VoxelSideLength;
                     var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, pn, pp);
                     if (d < 0)
-                        vs1.Voxels[i, j, k] = 0;
+                        vs1[i, j, k] = 0;
                     else
-                        vs2.Voxels[i, j, k] = 0;
+                        vs2[i, j, k] = 0;
                 }
             });
 
@@ -773,7 +773,7 @@ namespace TVGL.DenseVoxels
                 for (var j = VoxelBounds[0][1]; j <= VoxelBounds[1][1]; j++)
                 for (var k = VoxelBounds[0][2]; k <= VoxelBounds[1][2]; k++)
                 {
-                    vs.Voxels[i, j, k] = 1;
+                    vs[i, j, k] = 1;
                 }
             });
 
@@ -790,8 +790,8 @@ namespace TVGL.DenseVoxels
             {
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
                 for (var k = 0; k < VoxelsPerSide[2]; k++)
-                    if (Voxels[i, j, k] == 0)
-                        vs.Voxels[i, j, k] = 1;
+                    if (this[i, j, k] == 0)
+                        vs[i, j, k] = 1;
             });
 
             vs.UpdateProperties();
@@ -810,14 +810,14 @@ namespace TVGL.DenseVoxels
                 for (var j = 0; j < yLim; j++)
                 for (var k = 0; k < zLim; k++)
                 {
-                    var voxel = Voxels[i, j, k];
+                    var voxel = this[i, j, k];
                     if (voxel != 0) continue;
                     foreach (var vox in solids)
                     {
-                        voxel = (byte)(voxel | vox.Voxels[i, j, k]);
+                        voxel = (byte)(voxel | vox[i, j, k]);
                         if (voxel != 0) break;
                     }
-                    vs.Voxels[i, j, k] = voxel;
+                    vs[i, j, k] = voxel;
                 }
             });
 
@@ -844,14 +844,14 @@ namespace TVGL.DenseVoxels
                 for (var j = yMin; j < yMax; j++)
                 for (var k = zMin; k < zMax; k++)
                 {
-                    var voxel = Voxels[i, j, k];
+                    var voxel = this[i, j, k];
                     if (voxel == 0) continue;
                     foreach (var vox in solids)
                     {
-                        voxel = (byte) (voxel & vox.Voxels[i, j, k]);
+                        voxel = (byte) (voxel & vox[i, j, k]);
                         if (voxel == 0) break;
                     }
-                    vs.Voxels[i, j, k] = voxel;
+                    vs[i, j, k] = voxel;
                 }
             });
 
@@ -880,8 +880,8 @@ namespace TVGL.DenseVoxels
                 {
                     var j1 = j;
                     var k1 = k;
-                    if (subtrahends.Any(solid => solid.Voxels[i, j1, k1] != 0))
-                        vs.Voxels[i, j, k] = 0;
+                    if (subtrahends.Any(solid => solid[i, j1, k1] != 0))
+                        vs[i, j, k] = 0;
                 }
             });
 
@@ -945,10 +945,10 @@ namespace TVGL.DenseVoxels
 
                         if (fillAll)
                         {
-                            vs.Voxels[i, j, k] = 1;
+                            vs[i, j, k] = 1;
                             continue;
                         }
-                        if (vs.Voxels[i, j, k] != 0)
+                        if (vs[i, j, k] != 0)
                             fillAll = true;
                     }
 
@@ -1150,7 +1150,7 @@ namespace TVGL.DenseVoxels
                     succeeds = false;
 
                     //Return if you've hit the as-designed part
-                    if (designedSolid.Voxels[coordX, coordY, coordZ] != 0)
+                    if (designedSolid[coordX, coordY, coordZ] != 0)
                         return;
                 }
 
@@ -1166,7 +1166,7 @@ namespace TVGL.DenseVoxels
                     var coordZ = voxCoord[2] + zTShift;
                     if (outOfBounds && (coordX < 0 || coordY < 0 || coordZ < 0 || coordX >= xLim || coordY >= yLim ||
                                         coordZ >= zLim)) continue;
-                    Voxels[coordX, coordY, coordZ] = 0;
+                    this[coordX, coordY, coordZ] = 0;
                 }
             }
         }

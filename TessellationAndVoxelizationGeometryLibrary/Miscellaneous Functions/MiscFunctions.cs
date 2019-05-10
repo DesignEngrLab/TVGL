@@ -1943,9 +1943,9 @@ namespace TVGL
             Vertex point2)
         {
             var fromFactor = (distOfPlane - point1.Z) / (point2.Z - point1.Z);
-            var toFactor =1-fromFactor;
+            var toFactor = 1 - fromFactor;
 
-            return new PointLight(fromFactor*point1.X+toFactor*point2.X,
+            return new PointLight(fromFactor * point1.X + toFactor * point2.X,
                 fromFactor * point1.Y + toFactor * point2.Y);
         }
 
