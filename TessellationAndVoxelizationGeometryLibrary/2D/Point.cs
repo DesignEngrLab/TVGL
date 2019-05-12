@@ -203,8 +203,10 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
         /// </summary>
         public Point(PointLight p)
-            : this(null, p.X, p.Y, 0.0)
         {
+            Light = new PointLight(p.X, p.Y);
+            Lines = new List<Line>();
+            References = new List<Vertex>(p.References);
         }
 
         /// <summary>
