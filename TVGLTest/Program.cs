@@ -118,8 +118,8 @@ namespace TVGLPresenterDX
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
-                //TestVoxelization(ts);
-                TestSlice(ts);
+                TestVoxelization(ts);
+                //TestSlice(ts);
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
                 //ts[0].SetToOriginAndSquare(out var backTransform);
@@ -163,12 +163,13 @@ namespace TVGLPresenterDX
             //stopwatch.Restart();
             //var vs = new VoxelizedSolid(ts, res);
             //stopwatch.Stop();
-            Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
+            //Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var vs_dense = new VoxelizedSolidDense(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(vs_dense);
             Console.ReadKey();
             //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
             //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);

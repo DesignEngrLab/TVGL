@@ -16,6 +16,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using MIConvexHull;
@@ -196,17 +197,18 @@ namespace TVGL.DenseVoxels
                     ySofZ[k + 1] = ySofZ[k];
                     continue;
                 }
+
                 var sortedPoints = loops.SelectMany(loop => loop).OrderBy(p => p.Y).ToList();
                 var yStartIndex = (int)((sortedPoints.First().Y - yBegin) * inverseVoxelSideLength);
                 var numYlines = (int)((sortedPoints.Last().Y - yBegin) * inverseVoxelSideLength) + 1 - yStartIndex;
                 ySofZ[k + 1] = ySofZ[k] + numYlines + 1;
                 yStartsAndXIndices.Add(yStartIndex);
-                for (int i = 0; i < numYlines; i++)
+                for (var q = 0; q < numYlines; q++)
                 {
-                    var yIntercept = (yStartIndex + i) * VoxelSideLength + (VoxelSideLength / 2.0);
+                    var yIntercept = (yStartIndex + q) * VoxelSideLength + (VoxelSideLength / 2.0);
                     yStartsAndXIndices.Add(xRanges.Count);
                     var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                        slice.Select(p => new PolygonLight(p)), yBegin, VoxelSideLength, yLim);
+                        loops.Select(p => new PolygonLight(p)), yBegin, VoxelSideLength, yLim);
                     //parallel lines aligned with Y axis
                     var numYSections = 1;
                     var lastKey = -2;
@@ -219,6 +221,7 @@ namespace TVGL.DenseVoxels
 
                             numYSections++;
                         }
+
                         lastKey = j;
                         var intersectValues = intersections.Value;
                         yStartsAndXIndices.Add(intersectValues.Count);
@@ -241,13 +244,15 @@ namespace TVGL.DenseVoxels
                                 Voxels[i, j, k] = 1;
                         }
                     }
+
                     ySofZ[k + 1] = ySofZ[k] + numYSections + 1;
                 } //);
+
                 ySofZ[VoxelsPerSide[2]] = yStartsAndXIndices.Count; //add the last one
             }
         }
 
-        static List<List<PointLight>>[] UniformDecompositionAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
+        private static List<List<PointLight>>[] UniformDecompositionAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
         {
             List<List<PointLight>>[] loopsAlongZ = new List<List<PointLight>>[numSteps];
             //First, sort the vertices along the given axis. Duplicate distances are not important.
@@ -255,7 +260,7 @@ namespace TVGL.DenseVoxels
             var currentEdges = new HashSet<Edge>();
             var nextDistance = sortedVertices.First().Z;
             var vIndex = 0;
-            for (int step = 0; step < numSteps; step++)
+            for (var step = 0; step < numSteps; step++)
             {
                 var z = startDistance + step * stepSize;
                 var thisVertex = sortedVertices[vIndex];
@@ -266,17 +271,70 @@ namespace TVGL.DenseVoxels
                     foreach (var edge in thisVertex.Edges)
                     {
                         if (currentEdges.Contains(edge)) currentEdges.Remove(edge);
-                        else currentEdges.Add(edge);
-                        vIndex++;
+                        else currentEdges.Add(edge); 
                     }
+
+                    vIndex++;
+                    thisVertex = sortedVertices[vIndex];
                 }
+
                 if (needToOffset)
                     z += (z + Math.Min(stepSize / 2, sortedVertices[vIndex + 1].Z)) / 2;
-                if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
+
+                if (currentEdges.Any())
+                {
+                    //------------- GetZLoops() --------------//
+                    var loops = new List<List<PointLight>>();
+
+                    var unusedEdges = new HashSet<Edge>(currentEdges);
+                    while (unusedEdges.Any())
+                    {
+                        var firstEdgeInLoop = unusedEdges.First();
+                        var finishedLoop = false;
+                        var currentEdge = unusedEdges.First();
+                        var loop = new List<PointLight>();
+                        do
+                        {
+                            unusedEdges.Remove(currentEdge);
+                            var intersectVertex =
+                                MiscFunctions.PointLightOnZPlaneFromIntersectingLine(z, currentEdge.From,
+                                    currentEdge.To);
+                            loop.Add(intersectVertex);
+                            var nextFace = (currentEdge.From.Z < z) ? currentEdge.OtherFace : currentEdge.OwnedFace;
+                            Edge nextEdge = null;
+                            foreach (var whichEdge in nextFace.Edges)
+                            {
+                                if (currentEdge == whichEdge) continue;
+                                if (whichEdge == firstEdgeInLoop)
+                                {
+                                    finishedLoop = true;
+                                    loops.Add(loop);
+                                    break;
+                                }
+                                else if (unusedEdges.Contains(whichEdge))
+                                {
+                                    nextEdge = whichEdge;
+                                    break;
+                                }
+                            }
+
+                            if (nextEdge == null && !finishedLoop)
+                            {
+                                Debug.WriteLine("Incomplete loop.");
+                                loops.Add(loop);
+                                finishedLoop = true;
+                            }
+                            else currentEdge = nextEdge;
+                        } while (!finishedLoop);
+                    }
+
+                    //----------------------------------------//
+                    loopsAlongZ[step] = loops;
+                }
                 else loopsAlongZ[step] = new List<List<PointLight>>();
             }
+
             return loopsAlongZ;
         }
-
     }
 }
