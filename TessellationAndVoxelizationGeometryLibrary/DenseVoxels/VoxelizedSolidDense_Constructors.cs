@@ -39,13 +39,13 @@ namespace TVGL.DenseVoxels
         {
             get
             {
-                //var result = GetVoxel(x, y, z);
-                //if (result != Voxels[x, y, z]) Console.WriteLine("NOT SAME");
+                var result = GetVoxel(x, y, z);
+                if (result != Voxels[x, y, z]) Console.WriteLine("NOT SAME");
                 return Voxels[x, y, z];
             }
             set { Voxels[x, y, z] = value; }
         }
-   /*     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte GetVoxel(int x, int y, int z)
         {
             var yStartIndex = ySofZ[z];
@@ -65,12 +65,12 @@ namespace TVGL.DenseVoxels
             //otherwise, we're in an x-range for this y-line at this z-slice
             return 1;
         }
-        */
+        
 
         byte[,,] Voxels;
-        //int[] ySofZ;
-        //List<int> yStartsAndXIndices;
-        //List<int> xRanges;
+        int[] ySofZ;
+        List<int> yStartsAndXIndices;
+        List<int> xRanges;
         public readonly int Discretization;
         public int[] VoxelsPerSide;
         public int[][] VoxelBounds { get; set; }
@@ -181,26 +181,26 @@ namespace TVGL.DenseVoxels
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
-            //ySofZ = new int[zLim + 1];
-            //yStartsAndXIndices = new List<int>();
-            //xRanges = new List<int> { 0 };
+            ySofZ = new int[zLim + 1];
+            yStartsAndXIndices = new List<int>();
+            xRanges = new List<int> { 0 };
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
             var decomp = AllSlicesAlongZ(ts, zBegin, zLim, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
-            Parallel.For(0, zLim, k =>
-            //for (var k = 0; k < zLim; k++)
+            //Parallel.For(0, zLim, k =>
+            for (var k = 0; k < zLim; k++)
             {
                 var loops = decomp[k];
                 if (loops.Any())
                 {
                     var intersections = AllPolygonIntersectionPointsAlongY(loops, yBegin, yLim, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
-                    //yStartsAndXIndices.Add(yStartIndex);
+                    yStartsAndXIndices.Add(yStartIndex);
                     for (int j = 0; j < numYlines; j++)
                     {
-                        //yStartsAndXIndices.Add(xRanges.Count);
+                        yStartsAndXIndices.Add(xRanges.Count);
                         var intersectionPoints = intersections[j];
                         var numXRangesOnThisLine = intersectionPoints.Length;
                         for (var m = 0; m < numXRangesOnThisLine; m += 2)
@@ -212,15 +212,15 @@ namespace TVGL.DenseVoxels
                             if (sp < 0) sp = 0;
                             var ep = (int)Math.Round((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (ep > xLim) ep = xLim;
-                            //xRanges.Add(sp);
-                            //xRanges.Add(ep);
+                            xRanges.Add(sp);
+                            xRanges.Add(ep);
                             for (var i = sp; i < ep; i++)
                                 Voxels[i, yStartIndex + j, k] = 1;
                         }
                     }
                 }
-                //ySofZ[k + 1] = yStartsAndXIndices.Count;
-            }   );
+                ySofZ[k + 1] = yStartsAndXIndices.Count;
+            }   //);
         }
         private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
