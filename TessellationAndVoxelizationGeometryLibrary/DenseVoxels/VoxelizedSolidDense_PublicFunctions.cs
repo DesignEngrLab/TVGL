@@ -108,24 +108,25 @@ namespace TVGL.DenseVoxels
             var xMax = 0;
             var yMax = 0;
             var zMax = 0;
-            
-            Parallel.For(0, xLim, i =>
+
+            // Parallel.For(0, xLim, i =>
+            for (int i = 0; i < xLim; i++)
             {
                 var counter = 0;
                 for (var j = 0; j < yLim; j++)
-                for (var k = 0; k < zLim; k++)
-                    if (this[i, j, k] != 0)
-                    {
-                        counter++;
-                        if (i < xMin) xMin = i;
-                        if (j < yMin) yMin = j;
-                        if (k < zMin) zMin = k;
-                        if (i > xMax) xMax = i;
-                        if (j > yMax) yMax = j;
-                        if (k > zMax) zMax = k;
-                    }
+                    for (var k = 0; k < zLim; k++)
+                        if (this[i, j, k] != 0)
+                        {
+                            counter++;
+                            if (i < xMin) xMin = i;
+                            if (j < yMin) yMin = j;
+                            if (k < zMin) zMin = k;
+                            if (i > xMax) xMax = i;
+                            if (j > yMax) yMax = j;
+                            if (k > zMax) zMax = k;
+                        }
                 count.TryAdd(i, counter);
-            });
+            }  //);
 
             Count = count.Values.Sum();
             VoxelBounds = new[]
@@ -160,9 +161,9 @@ namespace TVGL.DenseVoxels
             {
                 var neighborCount = 0;
                 for (var j = yMin; j < yMax; j++)
-                for (var k = zMin; k < zMax; k++)
-                    if (this[i, j, k] != 0)
-                        neighborCount += NumNeighbors(i, j, k, xLim, yLim, zLim);
+                    for (var k = zMin; k < zMax; k++)
+                        if (this[i, j, k] != 0)
+                            neighborCount += NumNeighbors(i, j, k, xLim, yLim, zLim);
                 neighbors.TryAdd(i, neighborCount);
             });
 
@@ -471,64 +472,64 @@ namespace TVGL.DenseVoxels
             Parallel.For(0, VoxelsPerSide[0], i =>
             {
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
-                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                {
-                    if (cutSign == 1)
-                        switch (cutDir)
-                        {
-                            case 0:
+                    for (var k = 0; k < VoxelsPerSide[2]; k++)
+                    {
+                        if (cutSign == 1)
+                            switch (cutDir)
                             {
-                                if (i < cutBefore)
-                                    vs1[i, j, k] = 0;
-                                else
-                                    vs2[i, j, k] = 0;
-                                break;
+                                case 0:
+                                    {
+                                        if (i < cutBefore)
+                                            vs1[i, j, k] = 0;
+                                        else
+                                            vs2[i, j, k] = 0;
+                                        break;
+                                    }
+                                case 1:
+                                    {
+                                        if (j < cutBefore)
+                                            vs1[i, j, k] = 0;
+                                        else
+                                            vs2[i, j, k] = 0;
+                                        break;
+                                    }
+                                case 2:
+                                    {
+                                        if (k < cutBefore)
+                                            vs1[i, j, k] = 0;
+                                        else
+                                            vs2[i, j, k] = 0;
+                                        break;
+                                    }
                             }
-                            case 1:
+                        else
+                            switch (cutDir)
                             {
-                                if (j < cutBefore)
-                                    vs1[i, j, k] = 0;
-                                else
-                                    vs2[i, j, k] = 0;
-                                break;
+                                case 0:
+                                    {
+                                        if (i < cutBefore)
+                                            vs2[i, j, k] = 0;
+                                        else
+                                            vs1[i, j, k] = 0;
+                                        break;
+                                    }
+                                case 1:
+                                    {
+                                        if (j < cutBefore)
+                                            vs2[i, j, k] = 0;
+                                        else
+                                            vs1[i, j, k] = 0;
+                                        break;
+                                    }
+                                case 2:
+                                    {
+                                        if (k < cutBefore)
+                                            vs2[i, j, k] = 0;
+                                        else
+                                            vs1[i, j, k] = 0;
+                                        break;
+                                    }
                             }
-                            case 2:
-                            {
-                                if (k < cutBefore)
-                                    vs1[i, j, k] = 0;
-                                else
-                                    vs2[i, j, k] = 0;
-                                break;
-                            }
-                        }
-                    else
-                        switch (cutDir)
-                        {
-                            case 0:
-                            {
-                                if (i < cutBefore)
-                                    vs2[i, j, k] = 0;
-                                else
-                                    vs1[i, j, k] = 0;
-                                break;
-                            }
-                            case 1:
-                            {
-                                if (j < cutBefore)
-                                    vs2[i, j, k] = 0;
-                                else
-                                    vs1[i, j, k] = 0;
-                                break;
-                            }
-                            case 2:
-                            {
-                                if (k < cutBefore)
-                                    vs2[i, j, k] = 0;
-                                else
-                                    vs1[i, j, k] = 0;
-                                break;
-                            }
-                        }
                     }
             });
 
@@ -541,8 +542,8 @@ namespace TVGL.DenseVoxels
         // Voxels exactly on the plane are assigned to the positive side
         public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlat(Flat plane)
         {
-            var vs1 = (VoxelizedSolidDense) Copy();
-            var vs2 = (VoxelizedSolidDense) Copy();
+            var vs1 = (VoxelizedSolidDense)Copy();
+            var vs2 = (VoxelizedSolidDense)Copy();
 
             var pn = plane.Normal;
             var pp = plane.ClosestPointToOrigin;
@@ -554,17 +555,17 @@ namespace TVGL.DenseVoxels
             Parallel.For(0, VoxelsPerSide[0], i =>
             {
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
-                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                {
-                    var x = xOff + (i + .5) * VoxelSideLength;
-                    var y = yOff + (j + .5) * VoxelSideLength;
-                    var z = zOff + (k + .5) * VoxelSideLength;
-                    var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, pn, pp);
-                    if (d < 0)
-                        vs1[i, j, k] = 0;
-                    else
-                        vs2[i, j, k] = 0;
-                }
+                    for (var k = 0; k < VoxelsPerSide[2]; k++)
+                    {
+                        var x = xOff + (i + .5) * VoxelSideLength;
+                        var y = yOff + (j + .5) * VoxelSideLength;
+                        var z = zOff + (k + .5) * VoxelSideLength;
+                        var d = MiscFunctions.DistancePointToPlane(new[] { x, y, z }, pn, pp);
+                        if (d < 0)
+                            vs1[i, j, k] = 0;
+                        else
+                            vs2[i, j, k] = 0;
+                    }
             });
 
             vs1.UpdateProperties();
@@ -594,7 +595,7 @@ namespace TVGL.DenseVoxels
         //        mins[0][2] = Math.Min(mins[0][2], intersection[2]);
         //        mins[1][2] = Math.Max(mins[1][2], intersection[2]);
         //    }
-            
+
         //    var pn = plane.Normal;
         //    var pp = plane.ClosestPointToOrigin;
 
@@ -771,10 +772,10 @@ namespace TVGL.DenseVoxels
             Parallel.For(VoxelBounds[0][0], VoxelBounds[1][0] + 1, i =>
             {
                 for (var j = VoxelBounds[0][1]; j <= VoxelBounds[1][1]; j++)
-                for (var k = VoxelBounds[0][2]; k <= VoxelBounds[1][2]; k++)
-                {
-                    vs[i, j, k] = 1;
-                }
+                    for (var k = VoxelBounds[0][2]; k <= VoxelBounds[1][2]; k++)
+                    {
+                        vs[i, j, k] = 1;
+                    }
             });
 
             vs.VoxelBounds = new[] { VoxelBounds[0].ToArray(), VoxelBounds[1].ToArray() };
@@ -789,9 +790,9 @@ namespace TVGL.DenseVoxels
             Parallel.For(0, VoxelsPerSide[0], i =>
             {
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
-                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                    if (this[i, j, k] == 0)
-                        vs[i, j, k] = 1;
+                    for (var k = 0; k < VoxelsPerSide[2]; k++)
+                        if (this[i, j, k] == 0)
+                            vs[i, j, k] = 1;
             });
 
             vs.UpdateProperties();
@@ -808,17 +809,17 @@ namespace TVGL.DenseVoxels
             Parallel.For(0, xLim, i =>
             {
                 for (var j = 0; j < yLim; j++)
-                for (var k = 0; k < zLim; k++)
-                {
-                    var voxel = this[i, j, k];
-                    if (voxel != 0) continue;
-                    foreach (var vox in solids)
+                    for (var k = 0; k < zLim; k++)
                     {
-                        voxel = (byte)(voxel | vox[i, j, k]);
-                        if (voxel != 0) break;
+                        var voxel = this[i, j, k];
+                        if (voxel != 0) continue;
+                        foreach (var vox in solids)
+                        {
+                            voxel = (byte)(voxel | vox[i, j, k]);
+                            if (voxel != 0) break;
+                        }
+                        vs[i, j, k] = voxel;
                     }
-                    vs[i, j, k] = voxel;
-                }
             });
 
             vs.UpdateProperties();
@@ -842,17 +843,17 @@ namespace TVGL.DenseVoxels
             Parallel.For(xMin, xMax, i =>
             {
                 for (var j = yMin; j < yMax; j++)
-                for (var k = zMin; k < zMax; k++)
-                {
-                    var voxel = this[i, j, k];
-                    if (voxel == 0) continue;
-                    foreach (var vox in solids)
+                    for (var k = zMin; k < zMax; k++)
                     {
-                        voxel = (byte) (voxel & vox[i, j, k]);
-                        if (voxel == 0) break;
+                        var voxel = this[i, j, k];
+                        if (voxel == 0) continue;
+                        foreach (var vox in solids)
+                        {
+                            voxel = (byte)(voxel & vox[i, j, k]);
+                            if (voxel == 0) break;
+                        }
+                        vs[i, j, k] = voxel;
                     }
-                    vs[i, j, k] = voxel;
-                }
             });
 
             vs.UpdateProperties();
@@ -876,13 +877,13 @@ namespace TVGL.DenseVoxels
             Parallel.For(xMin, xMax, i =>
             {
                 for (var j = yMin; j < yMax; j++)
-                for (var k = zMin; k < zMax; k++)
-                {
-                    var j1 = j;
-                    var k1 = k;
-                    if (subtrahends.Any(solid => solid[i, j1, k1] != 0))
-                        vs[i, j, k] = 0;
-                }
+                    for (var k = zMin; k < zMax; k++)
+                    {
+                        var j1 = j;
+                        var k1 = k;
+                        if (subtrahends.Any(solid => solid[i, j1, k1] != 0))
+                            vs[i, j, k] = 0;
+                    }
             });
 
             vs.UpdateProperties();
@@ -895,7 +896,7 @@ namespace TVGL.DenseVoxels
         {
             var vs = (VoxelizedSolidDense)Copy();
 
-            var draftDir = (int) vd;
+            var draftDir = (int)vd;
             var draftIndex = Math.Abs(draftDir) - 1;
             var planeIndices = new int[2];
             var ii = 0;
@@ -964,7 +965,7 @@ namespace TVGL.DenseVoxels
         public VoxelizedSolidDense ErodeToNewSolid(VoxelizedSolidDense designedSolid, double[] dir,
             double tLimit = 0, double toolDia = 0, params string[] toolOptions)
         {
-            var copy = (VoxelizedSolidDense) Copy();
+            var copy = (VoxelizedSolidDense)Copy();
             copy.ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, toolOptions);
             copy.UpdateProperties();
             return copy;
@@ -975,8 +976,8 @@ namespace TVGL.DenseVoxels
         {
             var copy = (VoxelizedSolidDense)Copy();
 
-            var tDir = new[] {.0, .0, .0};
-            tDir[Math.Abs((int) dir) - 1] = Math.Sign((int) dir);
+            var tDir = new[] { .0, .0, .0 };
+            tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
 
             copy.ErodeVoxelSolid(designedSolid, tDir.normalize(3), tLimit, toolDia, toolOptions);
             copy.UpdateProperties();
@@ -990,9 +991,9 @@ namespace TVGL.DenseVoxels
             var dirY = dir[1];
             var dirZ = dir[2];
 
-            var signX = (byte) (Math.Sign(dirX) + 1);
-            var signY = (byte) (Math.Sign(dirY) + 1);
-            var signZ = (byte) (Math.Sign(dirZ) + 1);
+            var signX = (byte)(Math.Sign(dirX) + 1);
+            var signY = (byte)(Math.Sign(dirY) + 1);
+            var signZ = (byte)(Math.Sign(dirZ) + 1);
 
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
@@ -1074,12 +1075,12 @@ namespace TVGL.DenseVoxels
             var m = 0;
 
             for (var i = limit[0][0]; i < limit[0][1]; i++)
-            for (var j = limit[1][0]; j < limit[1][1]; j++)
-            for (var k = limit[2][0]; k < limit[2][1]; k++)
-            {
-                voxels[m] = new[] { i, j, k };
-                m++;
-            }
+                for (var j = limit[1][0]; j < limit[1][1]; j++)
+                    for (var k = limit[2][0]; k < limit[2][1]; k++)
+                    {
+                        voxels[m] = new[] { i, j, k };
+                        m++;
+                    }
 
             return voxels;
         }
@@ -1088,7 +1089,7 @@ namespace TVGL.DenseVoxels
             byte signZ, int xLim, int yLim, int zLim, int[][] sliceMask = null, int[] start = null)
         {
             start = start ?? mask[0].ToArray();
-            sliceMask = sliceMask ?? new[] {mask[0].ToArray()};
+            sliceMask = sliceMask ?? new[] { mask[0].ToArray() };
             //var sliceMaskCount = sliceMask.Length;
             var xMask = mask[0][0];
             var yMask = mask[0][1];
@@ -1231,7 +1232,7 @@ namespace TVGL.DenseVoxels
         //           k < 0 || k >= zLim;
         //}
         #endregion
-        
+
         private static int[][] GetVoxelsWithinCircle(double[] center, double[] dir, double radius, bool edge = false)
         {
             var voxels = new HashSet<int[]>(new SameCoordinates());
@@ -1242,8 +1243,8 @@ namespace TVGL.DenseVoxels
                     radii.Add(i);
             radii.Add(radius);
             var a = Math.Abs(dir[0]) < 1e-5
-                ? new[] {.0, -dir[2], dir[1]}.normalize(3)
-                : new[] {dir[1], -dir[0], 0}.normalize(3);
+                ? new[] { .0, -dir[2], dir[1] }.normalize(3)
+                : new[] { dir[1], -dir[0], 0 }.normalize(3);
             var b = a.crossProduct(dir);
 
             foreach (var r in radii)
@@ -1263,7 +1264,7 @@ namespace TVGL.DenseVoxels
 
         private static int[][] GetVoxelsOnCone(int[] center, double[] dir, double radius, double angle)
         {
-            var voxels = new HashSet<int[]>(new[] {center.ToArray()}, new SameCoordinates());
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
             var a = angle * (Math.PI / 180) / 2;
             var l = radius / Math.Sin(a);
@@ -1290,7 +1291,7 @@ namespace TVGL.DenseVoxels
 
         private static int[][] GetVoxelsOnHemisphere(int[] center, double[] dir, double radius)
         {
-            var voxels = new HashSet<int[]>(new[] {center.ToArray()}, new SameCoordinates());
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
             var centerDouble = new double[] { center[0], center[1], center[2] };
 
@@ -1313,7 +1314,7 @@ namespace TVGL.DenseVoxels
 
         private int[][] ThickenMask(int[] vox, double[] dir, double toolDia, params string[] toolOptions)
         {
-            if (toolDia <= 0) return new[] {vox};
+            if (toolDia <= 0) return new[] { vox };
 
             var radius = 0.5 * toolDia / VoxelSideLength;
             toolOptions = toolOptions.Length == 0 ? new[] { "flat" } : toolOptions;

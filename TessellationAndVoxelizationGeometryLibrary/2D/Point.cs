@@ -206,7 +206,8 @@ namespace TVGL
         {
             Light = new PointLight(p.X, p.Y);
             Lines = new List<Line>();
-            References = new List<Vertex>(p.References);
+            if (p.References != null)
+                References = new List<Vertex>(p.References);
         }
 
         /// <summary>

@@ -208,8 +208,8 @@ namespace TVGL._2D
                         //Each intersection point corresponds to an intersection offset point. This point
                         //is equal to the current point + the offsetAtLine added along the search direction.
                         var position = returnFurtherThanSlice
-                            ? intersectionPoint-(direction2D.multiply(offsetAtLine))
-                            : intersectionPoint+(direction2D.multiply(offsetAtLine));
+                            ? intersectionPoint - (direction2D.multiply(offsetAtLine))
+                            : intersectionPoint + (direction2D.multiply(offsetAtLine));
 
                         var intersectionOffsetPoint = new Point(position[0], position[1]);
                         path.Add(intersectionOffsetPoint.Light);
@@ -217,8 +217,8 @@ namespace TVGL._2D
 
                         //(3) the offset point of the next intersection point
                         position = returnFurtherThanSlice
-                            ? pairedIntersectionPoint-(direction2D.multiply(offsetAtLine))
-                            : pairedIntersectionPoint+(direction2D.multiply(offsetAtLine));
+                            ? pairedIntersectionPoint - (direction2D.multiply(offsetAtLine))
+                            : pairedIntersectionPoint + (direction2D.multiply(offsetAtLine));
                         var pairedIntersectionOffsetPoint = new Point(position[0], position[1]);
                         path.Add(pairedIntersectionOffsetPoint.Light);
                         sortedIntersectionPoints.Add(pairedIntersectionOffsetPoint);
@@ -350,11 +350,11 @@ namespace TVGL._2D
             //Also, get the sorted points
             var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
             var allPoints = polygons.SelectMany(poly => poly.Path);
-            var sortedPoints = allPoints.OrderBy(p => p.X).ToList();
+            var sortedPoints = allPoints.OrderBy(p => p.Y).ToList();
 
             var i = 0;
             var distanceAlongDirection =
-                (Math.Ceiling((sortedPoints[1].X - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
+                (Math.Ceiling((sortedPoints[1].Y - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
                 lowerBound;
             var numIntersectionLines = 0;
             var intersectionLines = new HashSet<Line>();
@@ -392,7 +392,6 @@ namespace TVGL._2D
                     }
                 }
             }
-
             //Presenter.ShowAndHang(intersectionPoints);
             return intersectionPoints;
         }
@@ -401,7 +400,6 @@ namespace TVGL._2D
         {
             var n = intersectionLines.Count;
             var intersectionPoints = new List<double>(n);
-            //Any line that is left in line hash, must be an intersection line.
             var refIndex = 0;
             foreach (var line in intersectionLines)
             {
@@ -415,7 +413,6 @@ namespace TVGL._2D
         {
             var n = intersectionLines.Count;
             var intersectionPoints = new List<double>(n);
-            //Any line that is left in line hash, must be an intersection line.
             var refIndex = 0;
             foreach (var line in intersectionLines)
             {

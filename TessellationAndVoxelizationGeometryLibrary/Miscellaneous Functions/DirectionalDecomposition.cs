@@ -2761,50 +2761,7 @@ namespace TVGL
             outputEdgeLoops = edgeLoops;
             return loops;
         }
-        private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
-        {
-            var loops = new List<List<PointLight>>();
-
-            var unusedEdges = new HashSet<Edge>(penetratingEdges);
-            while (unusedEdges.Any())
-            {
-                var firstEdgeInLoop = unusedEdges.First();
-                var finishedLoop = false;
-                var currentEdge = firstEdgeInLoop;
-                do
-                {
-                    unusedEdges.Remove(currentEdge);
-                    var loop = new List<PointLight>();
-                    var intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From, currentEdge.To);
-                    loop.Add(intersectVertex);
-                    var nextFace = (currentEdge.From.Z < ZOfPlane) ? currentEdge.OtherFace : currentEdge.OwnedFace;
-                    Edge nextEdge = null;
-                    foreach (var whichEdge in nextFace.Edges)
-                    {
-                        if (currentEdge == whichEdge) continue;
-                        if (whichEdge == firstEdgeInLoop)
-                        {
-                            finishedLoop = true;
-                            loops.Add(loop);
-                            break;
-                        }
-                        else if (!unusedEdges.Contains(whichEdge))
-                        {
-                            nextEdge = whichEdge;
-                            break;
-                        }
-                    }
-                    if (nextEdge == null)
-                    {
-                        Debug.WriteLine("Incomplete loop.");
-                        loops.Add(loop);
-                    }
-                    else currentEdge = nextEdge;
-                } while (!finishedLoop);
-            }
-            return loops;
-        }
-
+   
         private static List<List<Vertex>> GetLoops(HashSet<long> edgeList, Flat cuttingPlane,
           out List<List<long>> outputEdgeLoops, List<List<long>> intputEdgeLoops, Dictionary<int, Vertex> vertexLookup,
             Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup,
