@@ -51,26 +51,31 @@ namespace TVGL.DenseVoxels
             var yStartIndex = ySofZ[z];
             var numYLines = ySofZ[z + 1] - 1 - yStartIndex;
             if (numYLines <= 0) return 0;//there are no voxels at this value of z
-            var yStart = yStartsAndXIndices[yStartIndex];
-            if (y < yStart) return 0;  //queried y is lower than the start for this z-slice's y range
-            if (y >= yStart + numYLines) return 0; //queried y is greater than the end for this z-slice's y range
-            var xStartIndex = yStartsAndXIndices[y - yStart + 1];
-            var xEndIndex = yStartsAndXIndices[y - yStart + 2] - 1; //the start of the next one minus one is the greatest
+            var yOffset = yStartsAndXIndices[yStartIndex];
+            if (y < yOffset) return 0;  //queried y is lower than the start for this z-slice's y range
+            if (y >= yOffset + numYLines) return 0; //queried y is greater than the end for this z-slice's y range
+            var yLineIndex = yStartIndex + y - yOffset + 1;
+            var xStartIndex = yStartsAndXIndices[yLineIndex];
+            var xEndIndex = (y == yOffset + numYLines - 1) // if its the last line for this z-slice, 
+                ? yStartsAndXIndices[yLineIndex + 2]  //then step over the next yOffset to get to the beginning of the next xRange
+                : yStartsAndXIndices[yLineIndex + 1]; // else its just the next one minus one 
+            if (xStartIndex == xEndIndex) return 0;
             var xStart = xRanges[xStartIndex];
             if (x < xStart) return 0; //queried x is lower than the start for this x-range for this y-line at this z-slice
-            var xStop = xRanges[xEndIndex];
+            var xStop = xRanges[xEndIndex-1];
             if (x > xStop) return 0;  //queried x is greater than the end of this x-range for this y-line at this z-slice
-            for (int i = xStartIndex + 1; i < xEndIndex; i += 2)
+            for (int i = xStartIndex + 1; i < xEndIndex-1; i += 2)
                 if (x > xRanges[i] && x < xRanges[i + 1]) return 0; // this is actually checking the gap between xRanges
             //otherwise, we're in an x-range for this y-line at this z-slice
             return 1;
         }
-        
+
 
         byte[,,] Voxels;
         int[] ySofZ;
         List<int> yStartsAndXIndices;
         List<int> xRanges;
+        int xRangesCount;
         public readonly int Discretization;
         public int[] VoxelsPerSide;
         public int[][] VoxelBounds { get; set; }
@@ -182,8 +187,8 @@ namespace TVGL.DenseVoxels
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
             ySofZ = new int[zLim + 1];
-            yStartsAndXIndices = new List<int>();
-            xRanges = new List<int>(); // { 0 };
+            yStartsAndXIndices = new List<int>();  // { 0 };
+            xRanges = new List<int>();
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
             var decomp = AllSlicesAlongZ(ts, zBegin, zLim, VoxelSideLength);
@@ -200,27 +205,29 @@ namespace TVGL.DenseVoxels
                     yStartsAndXIndices.Add(yStartIndex);
                     for (int j = 0; j < numYlines; j++)
                     {
-                        yStartsAndXIndices.Add(xRanges.Count);
                         var intersectionPoints = intersections[j];
                         var numXRangesOnThisLine = intersectionPoints.Length;
+                        yStartsAndXIndices.Add(xRanges.Count);
                         for (var m = 0; m < numXRangesOnThisLine; m += 2)
                         {
                             //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
                             //Although other dimensions do not also do this. Everything operates with Round (effectively).
                             //Could reverse this to add more voxels
-                            var sp = (int)Math.Round((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                            var sp = (int)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (sp < 0) sp = 0;
-                            var ep = (int)Math.Round((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                            var ep = (int)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (ep > xLim) ep = xLim;
                             xRanges.Add(sp);
                             xRanges.Add(ep);
-                            for (var i = sp; i < ep; i++)
+                            for (var i = sp; i <= ep; i++)  // the range is inclusive
                                 Voxels[i, yStartIndex + j, k] = 1;
                         }
                     }
                 }
                 ySofZ[k + 1] = yStartsAndXIndices.Count;
             }   //);
+            yStartsAndXIndices.Add(-1);
+            yStartsAndXIndices.Add(xRanges.Count);
         }
         private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
