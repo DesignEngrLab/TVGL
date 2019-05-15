@@ -183,7 +183,7 @@ namespace TVGL.DenseVoxels
             var zLim = VoxelsPerSide[2];
             ySofZ = new int[zLim + 1];
             yStartsAndXIndices = new List<int>();
-            xRanges = new List<int> { 0 };
+            xRanges = new List<int>(); // { 0 };
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
             var decomp = AllSlicesAlongZ(ts, zBegin, zLim, VoxelSideLength);

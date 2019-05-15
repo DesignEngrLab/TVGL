@@ -158,7 +158,7 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 8;
+            var res = 3;
 
             //stopwatch.Restart();
             //var vs = new VoxelizedSolid(ts, res);
