@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace TVGL.Voxelization
     /// <summary>
     /// Class VoxelizedSolidDense.
     /// </summary>
-    public partial class VoxelizedSolid
+    public partial class VoxelizedSolid : IEnumerable<int[]>
     {
         #region Getting Neighbors
         public bool GetNeighbors(int i, int j, int k, out int[][] neighbors)
@@ -1406,6 +1407,75 @@ namespace TVGL.Voxelization
             var sortedIntersections = new SortedSet<double>(intersections).ToArray();
             return sortedIntersections;
         }
+
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new VoxelEnumerator(this);
+        }
+
+        public IEnumerator<int[]> GetEnumerator()
+        {
+            return new VoxelEnumerator(this);
+
+        }
         #endregion
     }
+    public class VoxelEnumerator : IEnumerator<int[]>
+    {
+        VoxelizedSolid vs;
+        int[] currentVoxelPosition = new int[3];
+        int xIndex;
+        int yIndex;
+        int zIndex;
+        int xLim;
+        int yLim;
+        int zLim;
+        public VoxelEnumerator(VoxelizedSolid vs)
+        {
+            this.vs = vs;
+            this.xLim = vs.VoxelsPerSide[0];
+            this.yLim = vs.VoxelsPerSide[1];
+            this.zLim = vs.VoxelsPerSide[2];
+        }
+
+        public object Current => currentVoxelPosition;
+
+        int[] IEnumerator<int[]>.Current => currentVoxelPosition;
+
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool MoveNext()
+        {
+            do
+            {
+                xIndex++;
+                if (xIndex == xLim)
+                {
+                    xIndex = 0;
+                    yIndex++;
+                    if (yIndex == yLim)
+                    {
+                        yIndex = 0;
+                        zIndex++;
+                        if (zIndex == zLim) return false;
+                    }
+                }
+            } while (vs[xIndex, yIndex, zIndex] == 0);
+            currentVoxelPosition[0] = xIndex;
+            currentVoxelPosition[1] = yIndex;
+            currentVoxelPosition[2] = zIndex;
+            return true;
+        }
+
+        public void Reset()
+        {
+            xIndex = yIndex = zIndex = 0;
+        }
+    }
+
 }

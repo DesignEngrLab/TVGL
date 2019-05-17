@@ -39,6 +39,16 @@ namespace TVGL.Voxelization
             }
             set { Voxels[x, y, z] = value; }
         }
+        public byte this[int[] index]
+        {
+            get
+            {
+                //var result = GetVoxel(x, y, z);
+                //if (result != Voxels[x, y, z]) Console.WriteLine("NOT SAME");
+                return Voxels[index[0], index[1], index[2]];
+            }
+            set { Voxels[index[0], index[1], index[2]] = value; }
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte GetVoxel(int x, int y, int z)
         {
