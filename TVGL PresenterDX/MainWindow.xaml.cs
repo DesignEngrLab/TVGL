@@ -116,34 +116,31 @@ namespace TVGLPresenterDX
             };
             var positions = new Vector3Collection();
             var normals = new Vector3Collection();
-            var lowestLevel = (int)vs.VoxelSideLengths.Length - 1;
-            foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
-                                           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
-            {
-                if (v.Role == VoxelRoleTypes.Partial && v.Level < lowestLevel) continue;
-                var neighbors = vs.GetNeighbors(v).ToList();
-                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || (n.Role == VoxelRoleTypes.Partial
-                                                                                       && v.Level == lowestLevel))))
-                    continue;
+           
+            var s = (float)vs.VoxelSideLength;
 
-                var x = (float)v.BottomCoordinate[0];
-                var y = (float)v.BottomCoordinate[1];
-                var z = (float)v.BottomCoordinate[2];
-                var s = (float)v.SideLength;
-                for (int i = 0; i < 12; i++)
-                {
-                    //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
-                    if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
-                                                     || (neighbors[i / 2].Role == VoxelRoleTypes.Partial && v.Level == lowestLevel))) continue;
-                    for (int j = 0; j < 3; j++)
+            for (var i = 0; i < vs.VoxelsPerSide[0]; i++)
+                for (var j = 0; j < vs.VoxelsPerSide[1]; j++)
+                    for (var k = 0; k < vs.VoxelsPerSide[2]; k++)
                     {
-                        positions.Add(new Vector3(x + coordOffsets[i][j][0] * s,
-                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
-                        normals.Add(new Vector3(normalsTemplate[i][0], normalsTemplate[i][1], normalsTemplate[i][2]));
-                    }
-                }
-            }
+                        if (vs[i, j, k] == 0) continue;
+                        if (!vs.GetNeighbors(i, j, k, out var neighbors)) continue;
 
+                        var x = i * s + (float)vs.Offset[0];
+                        var y = j * s + (float)vs.Offset[1];
+                        var z = k * s + (float)vs.Offset[2];
+                        for (var m = 0; m < 12; m++)
+                        {
+                            if (neighbors[m / 2] != null) continue;
+                            for (var n = 0; n < 3; n++)
+                            {
+                                positions.Add(new Vector3(x + (coordOffsets[m][n][0] * s), y + coordOffsets[m][n][1] * s,
+                                    z + coordOffsets[m][n][2] * s));
+                                normals.Add(new Vector3(normalsTemplate[m][0], normalsTemplate[m][1],
+                                    normalsTemplate[m][2]));
+                            }
+                        }
+                    }
             return new MeshGeometryModel3D
             {
                 Material = new PhongMaterial()

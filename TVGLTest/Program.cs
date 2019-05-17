@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using TVGL;
 using TVGL.Boolean_Operations;
-using TVGL.DenseVoxels;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
 
@@ -158,7 +157,7 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 3;
+            var res = 8;
 
             //stopwatch.Restart();
             //var vs = new VoxelizedSolid(ts, res);
@@ -166,14 +165,14 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var vs_dense = new VoxelizedSolidDense(ts, res);
+            var vs_dense = new VoxelizedSolid(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
             //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
             //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
             //Presenter.ShowAndHang(vs_cut.Item1, vs_cut.Item2);
 
-            var vs_cut2 = vs_dense.SliceOnFlat(VoxelDirections.XNegative, 87);
+            var vs_cut2 = vs_dense.SliceOnFlat(CartesianDirections.XNegative, 87);
             vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
             Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
 

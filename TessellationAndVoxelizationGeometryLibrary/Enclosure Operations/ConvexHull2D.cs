@@ -49,7 +49,7 @@ namespace TVGL
             return 0.5 * totalArea;
         }
 
-        public static IEnumerable<PointLight> ConvexHull2D(IList<PointLight> points) 
+        public static List<PointLight> ConvexHull2D(IList<PointLight> points) 
         {
             return MIConvexHull.ConvexHull.Create(points);
         }

@@ -336,6 +336,77 @@ namespace TVGL
     }
 
     /// <summary>
+    /// CartesianDirections: just the six cardinal directions for the voxelized box around the solid
+    /// </summary>
+    public enum CartesianDirections
+    {
+        /// <summary>
+        /// <summary>
+        /// Enum VoxelDirections
+        /// </summary>
+        /// Negative X Direction
+        /// </summary>
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        XNegative = -1,
+
+        /// <summary>
+        /// Negative Y Direction
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        YNegative = -2,
+
+        /// <summary>
+        /// Negative Z Direction
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        ZNegative = -3,
+
+        /// <summary>
+        /// Positive X Direction
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        XPositive = 1,
+
+        /// <summary>
+        /// Positive Y Direction
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        YPositive = 2,
+
+        /// <summary>
+        /// Positive Z Direction
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z positive
+        /// </summary>
+        ZPositive = 3
+    }
+    /// <summary>
     ///     A comparer for optimization that can be used for either
     ///     minimization or maximization.
     /// </summary>

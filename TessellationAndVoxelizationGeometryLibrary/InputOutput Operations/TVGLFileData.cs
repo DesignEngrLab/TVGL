@@ -160,9 +160,8 @@ namespace TVGL.IOFunctions
         #endregion
         #region that match with VoxelizedSolid
 
-        public int[] BitLevelDistribution;
         public string[] Voxels { get; set; }
-
+        public int[] VoxelsPerSide { get; set; }
         #endregion
 
 
@@ -372,17 +371,9 @@ namespace TVGL.IOFunctions
                 YMin = vs.YMin,
                 ZMax = vs.ZMax,
                 ZMin = vs.ZMin,
-                BitLevelDistribution = (int[])vs.bitLevelDistribution.Clone()
             };
-            result.Voxels = new string[vs.bitLevelDistribution.Length];
-
-            for (int i = 0; i < vs.NumberOfLevels; i++)
-            {
-                var byteArray = (vs.Voxels(i, true)
-                    .SelectMany(v => BitConverter.GetBytes(v.ID))).ToArray();
-                result.Voxels[i] = BitConverter.ToString(byteArray).Replace("-","");  
-            }
-
+            result.Voxels = vs.GetVoxelsAsStringArrays();
+            result.VoxelsPerSide = vs.VoxelsPerSide;
             result.Colors = vs.SolidColor.ToString();
             result.Comments.AddRange(vs.Comments);
             if (vs._inertiaTensor != null)

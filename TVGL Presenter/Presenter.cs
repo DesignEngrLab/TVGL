@@ -22,7 +22,6 @@ using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
 using StarMathLib;
-using TVGL.DenseVoxels;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -717,6 +716,7 @@ namespace TVGL
             ShowAndHang(solids.ToList());
         }
 
+
         public static void ShowAndHang(VoxelizedSolid solid)
         {
             var window = new Window3DPlot();
@@ -727,26 +727,7 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
-        public static void ShowAndHang(VoxelizedSolidDense solid)
-        {
-            var window = new Window3DPlot();
-            var models = new List<Visual3D>();
-            Visual3D model = MakeModelVisual3D(solid);
-            models.Add(model);
-            window.view1.Children.Add(model);
-            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
-            window.ShowDialog();
-        }
-        public static void ShowAndHang(VoxelizedSolid solid, int showPartialLevel)
-        {
-            var window = new Window3DPlot();
-            var models = new List<Visual3D>();
-            Visual3D model = MakeModelVisual3D(solid, showPartialLevel);
-            models.Add(model);
-            window.view1.Children.Add(model);
-            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
-            window.ShowDialog();
-        }
+
 
         public static void ShowAndHang(IList<Solid> solids)
         {
@@ -758,9 +739,7 @@ namespace TVGL
                 if (s is TessellatedSolid)
                     model = MakeModelVisual3D((TessellatedSolid)s);
                 else if (s is VoxelizedSolid)
-                    model = MakeModelVisual3D((VoxelizedSolid)s);
-                else if (s is VoxelizedSolidDense)
-                    model = MakeModelVisual3D((VoxelizedSolidDense) s);
+                    model = MakeModelVisual3D((VoxelizedSolid) s);
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
@@ -897,61 +876,6 @@ namespace TVGL
         {
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
-            var lowestLevel = (int)vs.VoxelSideLengths.Length - 1;
-            foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
-                                           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
-            {
-                if (v.Role == VoxelRoleTypes.Partial && v.Level < lowestLevel) continue;
-                var neighbors = vs.GetNeighbors(v).ToList();
-                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || (n.Role == VoxelRoleTypes.Partial
-                                                                                       && v.Level == lowestLevel))))
-                    continue;
-
-                var x = (float)v.BottomCoordinate[0];
-                var y = (float)v.BottomCoordinate[1];
-                var z = (float)v.BottomCoordinate[2];
-                var s = (float)v.SideLength;
-                for (int i = 0; i < 12; i++)
-                {
-                    //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
-                    if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
-                                                     || (neighbors[i / 2].Role == VoxelRoleTypes.Partial && v.Level == lowestLevel))) continue;
-                    for (int j = 0; j < 3; j++)
-                    {
-                        positions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
-                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
-                        normals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1], normalsTemplate[i][2]));
-                    }
-                }
-            }
-
-            return new ModelVisual3D
-            {
-                Content =
-                         new GeometryModel3D
-                         {
-                             Geometry = new MeshGeometry3D
-                             {
-                                 Positions = positions,
-                                 // TriangleIndices = new Int32Collection(triIndices),
-                                 Normals = normals
-                             },
-                             Material = MaterialHelper.CreateMaterial(
-                                 new System.Windows.Media.Color
-                                 {
-                                     A = vs.SolidColor.A,
-                                     B = vs.SolidColor.B,
-                                     G = vs.SolidColor.G,
-                                     R = vs.SolidColor.R
-                                 })
-                         }
-            };
-        }
-
-        private static Visual3D MakeModelVisual3D(VoxelizedSolidDense vs)
-        {
-            var positions = new Point3DCollection();
-            var normals = new Vector3DCollection();
             var s = vs.VoxelSideLength;
 
             for (var i = 0; i < vs.VoxelsPerSide[0]; i++)
@@ -996,136 +920,6 @@ namespace TVGL
                                      R = vs.SolidColor.R
                                  })
                          }
-            };
-        }
-
-        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, int showPartialLevel)
-        {
-            var fullPositions = new Point3DCollection();
-            var fullNormals = new Vector3DCollection();
-            var partialInPositions = new Point3DCollection();
-            var partialInNormals = new Vector3DCollection();
-            var partialOutPositions = new Point3DCollection();
-            var partialOutNormals = new Vector3DCollection();
-            foreach (var v in vs.Voxels(VoxelRoleTypes.Partial))
-            {
-                if (v.Level != showPartialLevel ) continue;
-                var x = (float) v.BottomCoordinate[0];
-                var y = (float) v.BottomCoordinate[1];
-                var z = (float) v.BottomCoordinate[2];
-                var s = (float) v.SideLength;
-
-                for (int i = 0; i < 12; i++)
-                {
-                    for (int j = 0; j < 3; j++)
-                    {
-                        if (v.BtmCoordIsInside)
-                        {
-                            partialInPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
-                                y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
-                            partialInNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
-                                normalsTemplate[i][2]));
-                        }
-                        else
-                        {
-                            partialOutPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
-                                y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
-                            partialOutNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
-                                normalsTemplate[i][2]));
-                        }
-                    }
-                }
-            }
-            
-
-            foreach (var v in vs.Voxels(VoxelRoleTypes.Full)) 
-            {
-                //if (v.Level == 0 || v.Level == lowestLevel) continue;
-              
-                var x = (float) v.BottomCoordinate[0];
-                var y = (float) v.BottomCoordinate[1];
-                var z = (float) v.BottomCoordinate[2];
-                var s = (float) v.SideLength;
-                for (int i = 0; i < 12; i++)
-                {
-                    for (int j = 0; j < 3; j++)
-                    {
-                        fullPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
-                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
-                        fullNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
-                            normalsTemplate[i][2]));
-                    }
-                }
-            }
-
-            return new ModelVisual3D
-            {
-                Children =
-                {
-                    new ModelVisual3D
-                    {
-                        Content =
-                            new GeometryModel3D
-                            {
-                                Geometry = new MeshGeometry3D
-                                {
-                                    Positions = fullPositions,
-                                    // TriangleIndices = new Int32Collection(triIndices),
-                                    Normals = fullNormals
-                                },
-                                Material = MaterialHelper.CreateMaterial(
-                                    new System.Windows.Media.Color
-                                    {
-                                        A = vs.SolidColor.A,
-                                        B = vs.SolidColor.B,
-                                        G = vs.SolidColor.G,
-                                        R = vs.SolidColor.R
-                                    })
-                            }
-                    },
-                    new ModelVisual3D
-                    {
-                        Content =
-                            new GeometryModel3D
-                            {
-                                Geometry = new MeshGeometry3D
-                                {
-                                    Positions = partialInPositions,
-                                    // TriangleIndices = new Int32Collection(triIndices),
-                                    Normals = partialInNormals
-                                },
-                                Material = MaterialHelper.CreateMaterial(
-                                    new System.Windows.Media.Color
-                                    {
-                                        A = 64,
-                                        B = 64,
-                                        G = 255,
-                                        R = 33
-                                    })
-                            }
-                    },
-                    new ModelVisual3D
-                    {
-                        Content =
-                            new GeometryModel3D
-                            {
-                                Geometry = new MeshGeometry3D
-                                {
-                                    Positions = partialOutPositions,
-                                    // TriangleIndices = new Int32Collection(triIndices),
-                                    Normals = partialOutNormals
-                                },
-                                Material = MaterialHelper.CreateMaterial(
-                                    new System.Windows.Media.Color
-                                    {
-                                        A = 64,
-                                        B = 64,
-                                        G = 33,
-                                        R = 255
-                                    })
-                            }
-                    }
-                }
             };
         }
 

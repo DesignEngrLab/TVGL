@@ -2,19 +2,16 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 using StarMathLib;
-using TVGL.Voxelization;
 
-namespace TVGL.DenseVoxels
+namespace TVGL.Voxelization
 {
     /// <inheritdoc />
     /// <summary>
     /// Class VoxelizedSolidDense.
     /// </summary>
-    public partial class VoxelizedSolidDense
+    public partial class VoxelizedSolid
     {
         #region Getting Neighbors
         public bool GetNeighbors(int i, int j, int k, out int[][] neighbors)
@@ -200,7 +197,7 @@ namespace TVGL.DenseVoxels
             if (TS is null)
                 throw new NotImplementedException();
             var ts = (TessellatedSolid)TS.TransformToNewSolid(transformationMatrix);
-            return new VoxelizedSolidDense(ts, Discretization);
+            return new VoxelizedSolid(ts, Discretization);
 
             #region Doesn't work
             //var xLim = VoxelsPerSide[0] - 1;
@@ -385,12 +382,12 @@ namespace TVGL.DenseVoxels
         /// <returns>Solid.</returns>
         public override Solid Copy()
         {
-            return new VoxelizedSolidDense(this);
+            return new VoxelizedSolid(this);
         }
 
-        public static VoxelizedSolidDense Copy(VoxelizedSolidDense vs)
+        public static VoxelizedSolid Copy(VoxelizedSolid vs)
         {
-            return new VoxelizedSolidDense(vs);
+            return new VoxelizedSolid(vs);
         }
         #endregion
 
@@ -459,15 +456,15 @@ namespace TVGL.DenseVoxels
         // cutBefore is the zero-based index of voxel-plane to cut before
         // i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
         // 0 < cutBefore < VoxelsPerSide[cut direction]
-        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlat(VoxelDirections vd, int cutBefore)
+        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(CartesianDirections vd, int cutBefore)
         {
             var cutDir = Math.Abs((int)vd) - 1;
             if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
                 throw new ArgumentOutOfRangeException();
 
             var cutSign = Math.Sign((int)vd);
-            var vs1 = (VoxelizedSolidDense)Copy();
-            var vs2 = (VoxelizedSolidDense)Copy();
+            var vs1 = (VoxelizedSolid)Copy();
+            var vs2 = (VoxelizedSolid)Copy();
 
             Parallel.For(0, VoxelsPerSide[0], i =>
             {
@@ -540,10 +537,10 @@ namespace TVGL.DenseVoxels
 
         // Solid on positive side of flat is in position one of return tuple
         // Voxels exactly on the plane are assigned to the positive side
-        public (VoxelizedSolidDense, VoxelizedSolidDense) SliceOnFlat(Flat plane)
+        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(Flat plane)
         {
-            var vs1 = (VoxelizedSolidDense)Copy();
-            var vs2 = (VoxelizedSolidDense)Copy();
+            var vs1 = (VoxelizedSolid)Copy();
+            var vs2 = (VoxelizedSolid)Copy();
 
             var pn = plane.Normal;
             var pp = plane.ClosestPointToOrigin;
@@ -747,12 +744,12 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Functions based on tessellated solid
-        public VoxelizedSolidDense[] VoxelizeSlicedSolid(TessellatedSolid[] solids)
+        public VoxelizedSolid[] VoxelizeSlicedSolid(TessellatedSolid[] solids)
         {
-            var output = new List<VoxelizedSolidDense>();
+            var output = new List<VoxelizedSolid>();
             foreach (var solid in solids)
             {
-                var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+                var vs = new VoxelizedSolid(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
                 vs.VoxelizeSolid(solid, true);
                 vs.UpdateProperties();
                 output.Add(vs);
@@ -763,12 +760,12 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Boolean functions
-        public VoxelizedSolidDense CreateBoundingSolid(bool useVoxelBounds = false)
+        public VoxelizedSolid CreateBoundingSolid(bool useVoxelBounds = false)
         {
             if (!useVoxelBounds)
-                return new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds, 1);
+                return new VoxelizedSolid(VoxelsPerSide, Discretization, VoxelSideLength, Bounds, 1);
 
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+            var vs = new VoxelizedSolid(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
             Parallel.For(VoxelBounds[0][0], VoxelBounds[1][0] + 1, i =>
             {
                 for (var j = VoxelBounds[0][1]; j <= VoxelBounds[1][1]; j++)
@@ -784,9 +781,9 @@ namespace TVGL.DenseVoxels
         }
 
         // NOT A
-        public VoxelizedSolidDense InvertToNewSolid()
+        public VoxelizedSolid InvertToNewSolid()
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+            var vs = new VoxelizedSolid(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
             Parallel.For(0, VoxelsPerSide[0], i =>
             {
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
@@ -800,9 +797,9 @@ namespace TVGL.DenseVoxels
         }
 
         // A OR B
-        public VoxelizedSolidDense UnionToNewSolid(params VoxelizedSolidDense[] solids)
+        public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)
         {
-            var vs = (VoxelizedSolidDense)Copy();
+            var vs = (VoxelizedSolid)Copy();
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
@@ -827,9 +824,9 @@ namespace TVGL.DenseVoxels
         }
 
         // A AND B
-        public VoxelizedSolidDense IntersectToNewSolid(params VoxelizedSolidDense[] solids)
+        public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+            var vs = new VoxelizedSolid(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
 
             var xMin = VoxelBounds?[0][0] ?? 0;
             var xMax = VoxelBounds?[1][0] + 1 ?? VoxelsPerSide[0];
@@ -861,9 +858,9 @@ namespace TVGL.DenseVoxels
         }
 
         // A AND (NOT B)
-        public VoxelizedSolidDense SubtractToNewSolid(params VoxelizedSolidDense[] subtrahends)
+        public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)
         {
-            var vs = (VoxelizedSolidDense)Copy();
+            var vs = (VoxelizedSolid)Copy();
 
             var xMin = VoxelBounds?[0][0] ?? 0;
             var xMax = VoxelBounds?[1][0] + 1 ?? VoxelsPerSide[0];
@@ -892,9 +889,9 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Draft in VoxelDirection
-        public VoxelizedSolidDense DraftToNewSolid(VoxelDirections vd)
+        public VoxelizedSolid DraftToNewSolid(CartesianDirections vd)
         {
-            var vs = (VoxelizedSolidDense)Copy();
+            var vs = (VoxelizedSolid)Copy();
 
             var draftDir = (int)vd;
             var draftIndex = Math.Abs(draftDir) - 1;
@@ -962,19 +959,19 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Voxel erosion
-        public VoxelizedSolidDense ErodeToNewSolid(VoxelizedSolidDense designedSolid, double[] dir,
+        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit = 0, double toolDia = 0, params string[] toolOptions)
         {
-            var copy = (VoxelizedSolidDense)Copy();
+            var copy = (VoxelizedSolid)Copy();
             copy.ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, toolOptions);
             copy.UpdateProperties();
             return copy;
         }
 
-        public VoxelizedSolidDense ErodeToNewSolid(VoxelizedSolidDense designedSolid, VoxelDirections dir,
+        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, CartesianDirections dir,
             double tLimit = 0, double toolDia = 0, params string[] toolOptions)
         {
-            var copy = (VoxelizedSolidDense)Copy();
+            var copy = (VoxelizedSolid)Copy();
 
             var tDir = new[] { .0, .0, .0 };
             tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
@@ -984,7 +981,7 @@ namespace TVGL.DenseVoxels
             return copy;
         }
 
-        private void ErodeVoxelSolid(VoxelizedSolidDense designedSolid, double[] dir,
+        private void ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit, double toolDia, params string[] toolOptions)
         {
             var dirX = dir[0];
@@ -1028,14 +1025,14 @@ namespace TVGL.DenseVoxels
             //    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
         }
 
-        private static IEnumerable<VoxelDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
+        private static IEnumerable<CartesianDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
         {
-            var dirs = new List<VoxelDirections>();
+            var dirs = new List<CartesianDirections>();
             var signedDir = new[] { Math.Sign(dirX), Math.Sign(dirY), Math.Sign(dirZ) };
             for (var i = 0; i < 3; i++)
             {
                 if (signedDir[i] == 0) continue;
-                dirs.Add((VoxelDirections)((i + 1) * -1 * signedDir[i]));
+                dirs.Add((CartesianDirections)((i + 1) * -1 * signedDir[i]));
             }
             return dirs.ToArray();
         }
@@ -1054,7 +1051,7 @@ namespace TVGL.DenseVoxels
             return voxels;
         }
 
-        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(VoxelDirections dir, double toolDia,
+        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(CartesianDirections dir, double toolDia,
             IReadOnlyList<int[]> lims)
         {
             var limit = new int[3][];
@@ -1085,7 +1082,7 @@ namespace TVGL.DenseVoxels
             return voxels;
         }
 
-        private void ErodeMask(VoxelizedSolidDense designedSolid, int[][] mask, byte signX, byte signY,
+        private void ErodeMask(VoxelizedSolid designedSolid, int[][] mask, byte signX, byte signY,
             byte signZ, int xLim, int yLim, int zLim, int[][] sliceMask = null, int[] start = null)
         {
             start = start ?? mask[0].ToArray();

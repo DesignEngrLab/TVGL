@@ -12,35 +12,29 @@
 // <summary></summary>
 // ***********************************************************************
 
+using StarMathLib;
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using MIConvexHull;
-using StarMathLib;
-using TVGL.Boolean_Operations;
-using TVGL.Enclosure_Operations;
-using TVGL.Voxelization;
-using TVGL._2D;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using TVGL.IOFunctions;
 
-namespace TVGL.DenseVoxels
+namespace TVGL.Voxelization
 {
     /// <inheritdoc />
     /// <summary>
     /// Class VoxelizedSolidDense.
     /// </summary>
-    public partial class VoxelizedSolidDense : Solid
+    public partial class VoxelizedSolid : Solid
     {
         #region Properties
         public byte this[int x, int y, int z]
         {
             get
             {
-                var result = GetVoxel(x, y, z);
-                if (result != Voxels[x, y, z]) Console.WriteLine("NOT SAME");
+                //var result = GetVoxel(x, y, z);
+                //if (result != Voxels[x, y, z]) Console.WriteLine("NOT SAME");
                 return Voxels[x, y, z];
             }
             set { Voxels[x, y, z] = value; }
@@ -48,8 +42,8 @@ namespace TVGL.DenseVoxels
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte GetVoxel(int x, int y, int z)
         {
-            var yStartIndex = ySofZ[z];
-            var numYLines = ySofZ[z + 1] - 1 - yStartIndex;
+            var yStartIndex = zSlices[z];
+            var numYLines = zSlices[z + 1] - 1 - yStartIndex;
             if (numYLines <= 0) return 0;//there are no voxels at this value of z
             var yOffset = yStartsAndXIndices[yStartIndex];
             if (y < yOffset) return 0;  //queried y is lower than the start for this z-slice's y range
@@ -62,9 +56,9 @@ namespace TVGL.DenseVoxels
             if (xStartIndex == xEndIndex) return 0;
             var xStart = xRanges[xStartIndex];
             if (x < xStart) return 0; //queried x is lower than the start for this x-range for this y-line at this z-slice
-            var xStop = xRanges[xEndIndex-1];
+            var xStop = xRanges[xEndIndex - 1];
             if (x > xStop) return 0;  //queried x is greater than the end of this x-range for this y-line at this z-slice
-            for (int i = xStartIndex + 1; i < xEndIndex-1; i += 2)
+            for (int i = xStartIndex + 1; i < xEndIndex - 1; i += 2)
                 if (x > xRanges[i] && x < xRanges[i + 1]) return 0; // this is actually checking the gap between xRanges
             //otherwise, we're in an x-range for this y-line at this z-slice
             return 1;
@@ -72,10 +66,9 @@ namespace TVGL.DenseVoxels
 
 
         byte[,,] Voxels;
-        int[] ySofZ;
+        int[] zSlices;
         List<int> yStartsAndXIndices;
         List<int> xRanges;
-        int xRangesCount;
         public readonly int Discretization;
         public int[] VoxelsPerSide;
         public int[][] VoxelBounds { get; set; }
@@ -88,7 +81,7 @@ namespace TVGL.DenseVoxels
 
         #endregion
 
-        public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength,
+        public VoxelizedSolid(int[] voxelsPerSide, int discretization, double voxelSideLength,
             IEnumerable<double[]> bounds, byte value = 0)
         {
             VoxelsPerSide = (int[])voxelsPerSide.Clone();
@@ -118,7 +111,7 @@ namespace TVGL.DenseVoxels
             SolidColor = new Color(Constants.DefaultColor);
         }
 
-        public VoxelizedSolidDense(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
+        public VoxelizedSolid(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
             IEnumerable<double[]> bounds)
         {
             Voxels = (byte[,,])voxels.Clone();
@@ -132,7 +125,7 @@ namespace TVGL.DenseVoxels
             UpdateProperties();
         }
 
-        public VoxelizedSolidDense(VoxelizedSolidDense vs)
+        public VoxelizedSolid(VoxelizedSolid vs)
         {
             Voxels = (byte[,,])vs.Voxels.Clone();
             Discretization = vs.Discretization;
@@ -147,7 +140,7 @@ namespace TVGL.DenseVoxels
             Count = vs.Count;
         }
 
-        public VoxelizedSolidDense(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
+        public VoxelizedSolid(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
         {
             TS = ts;
             Discretization = discretization;
@@ -181,12 +174,16 @@ namespace TVGL.DenseVoxels
             UpdateProperties();
         }
 
+        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
+        {
+        }
+
         private void VoxelizeSolid(TessellatedSolid ts, bool possibleNullSlices = false)
         {
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
-            ySofZ = new int[zLim + 1];
+            zSlices = new int[zLim + 1];
             yStartsAndXIndices = new List<int>();  // { 0 };
             xRanges = new List<int>();
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
@@ -216,7 +213,7 @@ namespace TVGL.DenseVoxels
                             var sp = (int)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (sp < 0) sp = 0;
                             var ep = (int)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
-                            if (ep > xLim) ep = xLim;
+                            if (ep >= xLim) ep = xLim-1;
                             xRanges.Add(sp);
                             xRanges.Add(ep);
                             for (var i = sp; i <= ep; i++)  // the range is inclusive
@@ -224,7 +221,7 @@ namespace TVGL.DenseVoxels
                         }
                     }
                 }
-                ySofZ[k + 1] = yStartsAndXIndices.Count;
+                zSlices[k + 1] = yStartsAndXIndices.Count;
             }   //);
             yStartsAndXIndices.Add(-1);
             yStartsAndXIndices.Add(xRanges.Count);
@@ -305,6 +302,18 @@ namespace TVGL.DenseVoxels
             return loopsAlongZ;
         }
 
+        internal string[] GetVoxelsAsStringArrays()
+        {
+            var zSlicesBitArray = zSlices.SelectMany(slice => BitConverter.GetBytes(slice)).ToArray();
+            var yStartsBitArray = yStartsAndXIndices.SelectMany(yStart => BitConverter.GetBytes(yStart)).ToArray();
+            var xRangeBitArray = xRanges.SelectMany(xRange => BitConverter.GetBytes(xRange)).ToArray();
+
+            return new[]{
+                BitConverter.ToString(zSlicesBitArray).Replace("-", ""),
+                BitConverter.ToString(yStartsBitArray).Replace("-", ""),
+                BitConverter.ToString(xRangeBitArray).Replace("-", "") };
+        }
+
         internal static List<double[]> AllPolygonIntersectionPointsAlongY(List<List<PointLight>> loops, double start, int numSteps, double stepSize,
             out int firstIntersectingIndex)
         {
@@ -349,5 +358,9 @@ namespace TVGL.DenseVoxels
             return intersections;
         }
 
+       public TessellatedSolid ConvertToTessellatedSolid(Color color)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

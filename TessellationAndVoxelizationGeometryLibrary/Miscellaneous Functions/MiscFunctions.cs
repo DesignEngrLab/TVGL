@@ -2089,7 +2089,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, VoxelDirections direction,
+        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, CartesianDirections direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             var newPoint = (double[])point3D.Clone();
@@ -2098,14 +2098,14 @@ namespace TVGL
             var n = face.Normal;
             switch (direction)
             {
-                case VoxelDirections.XNegative:
-                case VoxelDirections.XPositive:
+                case CartesianDirections.XNegative:
+                case CartesianDirections.XPositive:
                     if (face.Normal[0].IsNegligible()) return null;
                     newPoint = new[] { (d - n[1] * point3D[1] - n[2] * point3D[2]) / n[0], point3D[1], point3D[2] };
                     signedDistance = (Math.Sign((int)direction)) * (newPoint[0] - point3D[0]);
                     break;
-                case VoxelDirections.YNegative:
-                case VoxelDirections.YPositive:
+                case CartesianDirections.YNegative:
+                case CartesianDirections.YPositive:
                     if (face.Normal[1].IsNegligible()) return null;
                     newPoint = new[] { point3D[0], (d - n[0] * point3D[0] - n[2] * point3D[2]) / n[1], point3D[2] };
                     signedDistance = (Math.Sign((int)direction)) * (newPoint[1] - point3D[1]);

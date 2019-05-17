@@ -167,14 +167,14 @@
     <Resource Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.Standard\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
-      <Project>{b73a4731-ff89-4a3d-b803-14b016196c4a}</Project>
-      <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="MIConvexHull.xml" />
     <Content Include="x64\d3dcompiler_47.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
+      <Project>{859a90c2-4b36-4486-9279-ef9df02c0c9b}</Project>
+      <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
