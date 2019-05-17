@@ -28,7 +28,7 @@ namespace TVGL
         ///     Edges that are used by more than two faces
         /// </summary>
         /// <value>The overused edges.</value>
-        public List<Tuple<Edge, List<PolygonalFace>>> OverusedEdges { get; internal set; }
+        public List<(Edge, List<PolygonalFace>)> OverusedEdges { get; internal set; }
 
         /// <summary>
         ///     Edges that only have one face
@@ -82,37 +82,37 @@ namespace TVGL
         ///     Edges that do not link back to faces that link to them
         /// </summary>
         /// <value>The edges that do not link back to face.</value>
-        public List<Tuple<PolygonalFace, Edge>> EdgesThatDoNotLinkBackToFace { get; internal set; }
+        public List<(PolygonalFace, Edge)> EdgesThatDoNotLinkBackToFace { get; internal set; }
 
         /// <summary>
         ///     Edges that do not link back to vertices that link to them
         /// </summary>
         /// <value>The edges that do not link back to vertex.</value>
-        public List<Tuple<Vertex, Edge>> EdgesThatDoNotLinkBackToVertex { get; internal set; }
+        public List<(Vertex, Edge)> EdgesThatDoNotLinkBackToVertex { get; internal set; }
 
         /// <summary>
         ///     Vertices that do not link back to faces that link to them
         /// </summary>
         /// <value>The verts that do not link back to face.</value>
-        public List<Tuple<PolygonalFace, Vertex>> VertsThatDoNotLinkBackToFace { get; internal set; }
+        public List<(PolygonalFace, Vertex)> VertsThatDoNotLinkBackToFace { get; internal set; }
 
         /// <summary>
         ///     Vertices that do not link back to edges that link to them
         /// </summary>
         /// <value>The verts that do not link back to edge.</value>
-        public List<Tuple<Edge, Vertex>> VertsThatDoNotLinkBackToEdge { get; internal set; }
+        public List<(Edge, Vertex)> VertsThatDoNotLinkBackToEdge { get; internal set; }
 
         /// <summary>
         ///     Faces that do not link back to edges that link to them
         /// </summary>
         /// <value>The faces that do not link back to edge.</value>
-        public List<Tuple<Edge, PolygonalFace>> FacesThatDoNotLinkBackToEdge { get; internal set; }
+        public List<(Edge, PolygonalFace)> FacesThatDoNotLinkBackToEdge { get; internal set; }
 
         /// <summary>
         ///     Faces that do not link back to vertices that link to them
         /// </summary>
         /// <value>The faces that do not link back to vertex.</value>
-        public List<Tuple<Vertex, PolygonalFace>> FacesThatDoNotLinkBackToVertex { get; internal set; }
+        public List<(Vertex, PolygonalFace)> FacesThatDoNotLinkBackToVertex { get; internal set; }
 
         /// <summary>
         ///     Edges with bad angles

@@ -36,7 +36,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="sortedVertices">The sorted vertices.</param>
         public static void SortAlongDirection(double[] direction, IEnumerable<Vertex> vertices,
-            out List<Tuple<Vertex, double>> sortedVertices)
+            out List<(Vertex, double)> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
@@ -69,9 +69,9 @@ namespace TVGL
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<Tuple<Vertex, double>> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
+        private static IEnumerable<(Vertex, double)> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
         {
-            var vertexDistances = new List<Tuple<Vertex, double>>(vertices.Count());
+            var vertexDistances = new List<(Vertex, double)>(vertices.Count());
             //Accuracy to the 15th decimal place
             var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
             var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal) + 1)));
@@ -79,7 +79,7 @@ namespace TVGL
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place to match StarMath
                 var d = Math.Round(direction.dotProduct(vertex.Position, 3), tolerance);
-                vertexDistances.Add(new Tuple<Vertex, double>(vertex, d));
+                vertexDistances.Add((vertex, d));
             }
             return vertexDistances;
         }

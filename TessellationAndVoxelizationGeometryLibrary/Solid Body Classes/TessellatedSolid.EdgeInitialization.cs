@@ -30,11 +30,11 @@ namespace TVGL
     ///     find some
     ///     error with the file. Here we attempt to patch those up..
     /// </remarks>
-    public partial class TessellatedSolid:Solid
+    public partial class TessellatedSolid : Solid
     {
         private void MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices)
         {
-            List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges;
+            List<(Edge, List<PolygonalFace>)> overDefinedEdges;
             List<Edge> singleSidedEdges, moreSingleSidedEdges;
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
@@ -97,13 +97,13 @@ namespace TVGL
         /// <param name="overDefinedEdges">The over defined edges.</param>
         /// <param name="partlyDefinedEdges">The partly defined edges.</param>
         /// <returns>List&lt;Tuple&lt;Edge, List&lt;PolygonalFace&gt;&gt;&gt;.</returns>
-        internal static List<Tuple<Edge, List<PolygonalFace>>> DefineEdgesFromFaces(IList<PolygonalFace> faces,
+        internal static List<(Edge, List<PolygonalFace>)> DefineEdgesFromFaces(IList<PolygonalFace> faces,
             bool doublyLinkToVertices,
-            out List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges, out List<Edge> partlyDefinedEdges)
+            out List<(Edge, List<PolygonalFace>)> overDefinedEdges, out List<Edge> partlyDefinedEdges)
         {
             var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
-            var alreadyDefinedEdges = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
-            var overDefinedEdgesDictionary = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
+            var alreadyDefinedEdges = new Dictionary<long, (Edge, List<PolygonalFace>)>();
+            var overDefinedEdgesDictionary = new Dictionary<long, (Edge, List<PolygonalFace>)>();
             foreach (var face in faces)
             {
                 var lastIndex = face.Vertices.Count - 1;
@@ -133,8 +133,7 @@ namespace TVGL
                         // found a match to a partlyDefinedEdge. Great! I hope it doesn't turn out
                         // to be overDefined
                         var edge = partlyDefinedEdgeDictionary[checksum];
-                        alreadyDefinedEdges.Add(checksum, new Tuple<Edge, List<PolygonalFace>>(edge,
-                            new List<PolygonalFace> { edge.OwnedFace, face }));
+                        alreadyDefinedEdges.Add(checksum, (edge, new List<PolygonalFace> { edge.OwnedFace, face }));
                         partlyDefinedEdgeDictionary.Remove(checksum);
                     }
                     else // this edge doesn't already exist, so create and add to partlyDefinedEdge dictionary
@@ -157,11 +156,11 @@ namespace TVGL
         /// <param name="moreSingleSidedEdges">The more single sided edges.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;
         /// TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
-        private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> TeaseApartOverUsedEdges(
-            List<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary,
+        private static IEnumerable<(Edge, List<PolygonalFace>)> TeaseApartOverUsedEdges(
+            List<(Edge, List<PolygonalFace>)> overUsedEdgesDictionary,
             out List<Edge> moreSingleSidedEdges)
         {
-            var newListOfGoodEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
+            var newListOfGoodEdges = new List<(Edge, List<PolygonalFace>)>();
             foreach (var entry in overUsedEdgesDictionary)
             {
                 var edge = entry.Item1;
@@ -196,12 +195,10 @@ namespace TVGL
                         numFailedTries = 0;
                         candidateFaces.Remove(bestMatch);
                         if (FaceShouldBeOwnedFace(edge, refFace))
-                            newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                new Edge(edge.From, edge.To, refFace, bestMatch, false, edge.EdgeReference),
+                            newListOfGoodEdges.Add((new Edge(edge.From, edge.To, refFace, bestMatch, false, edge.EdgeReference),
                                 new List<PolygonalFace> { refFace, bestMatch }));
                         else
-                            newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                new Edge(edge.From, edge.To, bestMatch, refFace, false, edge.EdgeReference),
+                            newListOfGoodEdges.Add((new Edge(edge.From, edge.To, bestMatch, refFace, false, edge.EdgeReference),
                                 new List<PolygonalFace> { bestMatch, refFace }));
                     }
                     else
@@ -239,7 +236,7 @@ namespace TVGL
 
 
 
-        private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> MatchUpRemainingSingleSidedEdge(
+        private static IEnumerable<(Edge, List<PolygonalFace>)> MatchUpRemainingSingleSidedEdge(
             List<Edge> singleSidedEdges, out HashSet<Edge> borderEdges, out List<Vertex> removedVertices)
         {
             borderEdges = new HashSet<Edge>(singleSidedEdges);
@@ -258,7 +255,7 @@ namespace TVGL
                         scoresAndPairs.Add(score, new[] { i, j });
                 }
             // basically, we go through from best match to worst until the MaxAllowableEdgeSimilarityScore is exceeded.
-            var completedEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
+            var completedEdges = new List<(Edge, List<PolygonalFace>)>();
             var alreadyMatchedIndices = new HashSet<int>();
             foreach (var score in scoresAndPairs)
             {
@@ -273,8 +270,7 @@ namespace TVGL
                     continue;
                 borderEdges.Remove(keepEdge);
                 borderEdges.Remove(removeEdge);
-                completedEdges.Add(new Tuple<Edge, List<PolygonalFace>>(keepEdge,
-                    new List<PolygonalFace> { keepEdge.OwnedFace, removeEdge.OwnedFace }));
+                completedEdges.Add((keepEdge, new List<PolygonalFace> { keepEdge.OwnedFace, removeEdge.OwnedFace }));
                 keepEdge.DoublyLinkVertices();
                 keptVerticesList.Add(keepEdge.From);
                 removedVertices.Add(removeEdge.To);
@@ -331,12 +327,12 @@ namespace TVGL
         }
 
 
-        internal static List<Tuple<List<Edge>, double[]>> OrganizeIntoLoops(List<Edge> singleSidedEdges,
+        internal static List<(List<Edge>, double[])> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
             remainingEdges = new List<Edge>(singleSidedEdges);
             var attempts = 0;
-            var listOfLoops = new List<Tuple<List<Edge>, double[]>>();
+            var listOfLoops = new List<(List<Edge>, double[])>();
             while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
             {
                 var loop = new List<Edge>();
@@ -390,7 +386,7 @@ namespace TVGL
                 if (successful && loop.Count > 2)
                 {
                     //Average the normals from all the owned faces.
-                    listOfLoops.Add(new Tuple<List<Edge>, double[]>(loop, normal));
+                    listOfLoops.Add((loop, normal));
                     attempts = 0;
                 }
                 else
@@ -402,11 +398,11 @@ namespace TVGL
             return listOfLoops;
         }
 
-        private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> CreateMissingEdgesAndFaces(
-            List<Tuple<List<Edge>, double[]>> loops,
+        private static IEnumerable<(Edge, List<PolygonalFace>)> CreateMissingEdgesAndFaces(
+            List<(List<Edge>, double[])> loops,
             out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
         {
-            var completedEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
+            var completedEdges = new List<(Edge, List<PolygonalFace>)>();
             newFaces = new List<PolygonalFace>();
             remainingEdges = new List<Edge>();
             foreach (var tuple in loops)
@@ -418,8 +414,7 @@ namespace TVGL
                 {
                     var newFace = new PolygonalFace(edges.Select(e => e.To), normal);
                     foreach (var edge in edges)
-                        completedEdges.Add(new Tuple<Edge, List<PolygonalFace>>(edge,
-                            new List<PolygonalFace> { edge.OwnedFace, newFace }));
+                        completedEdges.Add((edge, new List<PolygonalFace> { edge.OwnedFace, newFace }));
                     newFaces.Add(newFace);
                 }
                 //Else, use the triangulate function
@@ -462,8 +457,7 @@ namespace TVGL
                                 {
                                     //Finish creating edge.
                                     var edge = edgeDic[checksum];
-                                    completedEdges.Add(new Tuple<Edge, List<PolygonalFace>>(edge,
-                                        new List<PolygonalFace> { edge.OwnedFace, newFace }));
+                                    completedEdges.Add((edge, new List<PolygonalFace> { edge.OwnedFace, newFace }));
                                     edgeDic.Remove(checksum);
                                 }
                                 else

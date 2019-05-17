@@ -22,7 +22,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<PointLight>> Slow(IList<PolygonalFace> faces, double[] normal, double minAngle = 0.1,
             double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
-        {     
+        {
             var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180);
 
             //Get the positive faces (defined as face normal along same direction as the silhoutte normal).
@@ -203,8 +203,8 @@ namespace TVGL
             //This is helpful when the polygon is nearly self-intersecting. 
             //Then offset back out.  
 
-            solution = PolygonOperations.SimplifyFuzzy(solution, Math.Min(scale/1000, Constants.LineLengthMinimum ), 
-                Math.Min(angleTolerance/1000, Constants.LineSlopeTolerance));
+            solution = PolygonOperations.SimplifyFuzzy(solution, Math.Min(scale / 1000, Constants.LineLengthMinimum),
+                Math.Min(angleTolerance / 1000, Constants.LineSlopeTolerance));
             var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
             offsetPolygons = EliminateOverhangPolygons(offsetPolygons, projectedFacePolygons);
             var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
@@ -321,7 +321,7 @@ namespace TVGL
                         count++;
                     }
                     if (count == 1000)
-                    {                    
+                    {
                         //Presenter.ShowAndHang(negativePaths);
                         throw new Exception("Not able to find a point inside polygon");
                     }
@@ -348,7 +348,7 @@ namespace TVGL
             double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, List<PointLight>> projectedFacePolygons)
         {
             originalSolid.HasUniformColor = false;
-            
+
             var red = new Color(KnownColors.Red);
             var allPaths = new List<List<PointLight>>();
             foreach (var surface in surfaces)
@@ -382,10 +382,7 @@ namespace TVGL
                     var loop = new List<Vertex> { startVertex };
 
                     var nextVertex = startEdge.To;
-                    var edgeLoop = new List<Tuple<Edge, Vertex, Vertex>>
-                    {
-                        new Tuple<Edge, Vertex, Vertex>(startEdge, startVertex, nextVertex)
-                    };
+                    var edgeLoop = new List<(Edge, Vertex, Vertex)> { (startEdge, startVertex, nextVertex) };
                     assignedEdges.Add(startEdge);
 
                     //Initialize the current vertex and edge
@@ -486,7 +483,7 @@ namespace TVGL
                         loop.Add(vertex);
                         //Get the next vertex                    
                         nextVertex = currentEdge.OtherVertex(vertex);
-                        edgeLoop.Add(new Tuple<Edge, Vertex, Vertex>(currentEdge, vertex, nextVertex));
+                        edgeLoop.Add((currentEdge, vertex, nextVertex));
                         assignedEdges.Add(currentEdge);
                     }
 

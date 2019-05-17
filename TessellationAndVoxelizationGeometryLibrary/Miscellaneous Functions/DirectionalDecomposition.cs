@@ -49,7 +49,7 @@ namespace TVGL
                 stepSize = minOffset * 2 + ts.SameTolerance;
             }
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(axis, ts.Vertices.ToList(), out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(axis, ts.Vertices.ToList(), out List<(Vertex, double)> sortedVertices);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
             var previousDistanceAlongAxis = sortedVertices[0].Item2; //This value can be negative
@@ -148,7 +148,7 @@ namespace TVGL
 
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<(Vertex, double)> sortedVertices);
             //Create a distance lookup dictionary based on the vertex indices
             sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
 
@@ -637,7 +637,7 @@ namespace TVGL
         public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices.ToList(), out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, ts.Vertices.ToList(), out List<(Vertex, double)> sortedVertices);
             if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
                 distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
             {
@@ -735,7 +735,7 @@ namespace TVGL
         public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(PolygonalFace[] faces, Vertex[] vertices, double tolerance, double[] direction, double distance)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, vertices.ToList(), out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, vertices.ToList(), out List<(Vertex, double)> sortedVertices);
             if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
                 distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
             {
@@ -1101,7 +1101,7 @@ namespace TVGL
 
             //First, sort the vertices along the given axis. Duplicate distances are not important because they
             //will all be handled at the same step/distance.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<(Vertex, double)> sortedVertices);
             //Create a distance lookup dictionary based on the vertex indices
             sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
             //A dictionary used to find the step index for each vertex. The key is the vertex index in list. The value is the step index.
