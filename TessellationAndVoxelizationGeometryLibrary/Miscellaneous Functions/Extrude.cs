@@ -117,7 +117,8 @@ namespace TVGL
                 var j = 0;
                 foreach (var path in paths)
                 {
-                    var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y)).ToArray();
+                    var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y, true)).ToArray();
+                    var area = new PolygonLight(path).Area;
                     points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
                     foreach (var point in pathAsPoints)
@@ -167,7 +168,7 @@ namespace TVGL
                     var j = 0;
                     foreach (var path in paths)
                     {
-                        var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y)).ToArray();
+                        var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y, true)).ToArray();
                         points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
                         foreach (var point in pathAsPoints)
