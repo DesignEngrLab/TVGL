@@ -102,7 +102,7 @@ namespace TVGL
         /// like Polygon.IsRectangular
         /// </summary>
         public const double LowConfidence = 0.68;
-        
+
 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
@@ -189,37 +189,37 @@ namespace TVGL
         /// <summary>
         /// the unspecified state
         /// </summary>
-        unspecified = -1,
+        unspecified = 0,
         /// <summary>
         ///     The millimeter
         /// </summary>
-        millimeter,
+        millimeter = 11,
 
         /// <summary>
         ///     The micron
         /// </summary>
-        micron,
+        micron = 8,
 
 
         /// <summary>
         ///     The centimeter
         /// </summary>
-        centimeter,
+        centimeter = 1,
 
         /// <summary>
         ///     The inch
         /// </summary>
-        inch,
+        inch = 4,
 
         /// <summary>
         ///     The foot
         /// </summary>
-        foot,
+        foot = 3,
 
         /// <summary>
         ///     The meter
         /// </summary>
-        meter
+        meter = 6
     }
 
 
