@@ -442,7 +442,8 @@ namespace TVGL
             faceToVertexIndices = new List<int[]>();
             var listOfVertices = new List<double[]>();
             var simpleCompareDict = new Dictionary<string, int>();
-            var stringformat = "F" + numDecimalPoints;
+            //We used fixed-point to be able to specify the number of decimal places. 
+            var stringFormat = "F" + numDecimalPoints;
             //in order to reduce compare times we use a string comparer and dictionary
             foreach (var t in vertsPerFace)
             {
@@ -455,9 +456,12 @@ namespace TVGL
                     vertex[0] = Math.Round(vertex[0], numDecimalPoints);
                     vertex[1] = Math.Round(vertex[1], numDecimalPoints);
                     vertex[2] = Math.Round(vertex[2], numDecimalPoints);
-                    var lookupString = vertex[0].ToString(stringformat) + "|"
-                                       + vertex[1].ToString(stringformat) + "|"
-                                       + vertex[2].ToString(stringformat) + "|";
+                    //Since negative zero and positive zero are both the same and can mess up the sign on the string,
+                    //we need to check if negligible, and force to "0" if it is. Note: there is no need to have the extra 8 zeros in this case.
+                    var xString = vertex[0].IsNegligible(SameTolerance) ? "0" : vertex[0].ToString(stringFormat);
+                    var yString = vertex[1].IsNegligible(SameTolerance) ? "0" : vertex[1].ToString(stringFormat);
+                    var zString = vertex[2].IsNegligible(SameTolerance) ? "0" : vertex[2].ToString(stringFormat);
+                    var lookupString = xString + "|" + yString + "|" + zString;
                     if (simpleCompareDict.ContainsKey(lookupString))
                         /* if it's in the dictionary, simply put the location in the locationIndices */
                         locationIndices.Add(simpleCompareDict[lookupString]);
@@ -489,7 +493,8 @@ namespace TVGL
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var listOfVertices = new List<double[]>();
             var simpleCompareDict = new Dictionary<string, int>();
-            var stringformat = "F" + numDecimalPoints;
+            //We used fixed-point to be able to specify the number of decimal places. 
+            var stringFormat = "F" + numDecimalPoints;
             //in order to reduce compare times we use a string comparer and dictionary
             foreach (var faceToVertexIndex in faceToVertexIndices)
             {
@@ -503,9 +508,12 @@ namespace TVGL
                     vertex[0] = Math.Round(vertex[0], numDecimalPoints);
                     vertex[1] = Math.Round(vertex[1], numDecimalPoints);
                     vertex[2] = Math.Round(vertex[2], numDecimalPoints);
-                    var lookupString = vertex[0].ToString(stringformat) + "|"
-                                       + vertex[1].ToString(stringformat) + "|"
-                                       + vertex[2].ToString(stringformat) + "|";
+                    //Since negative zero and positive zero are both the same and can mess up the sign on the string,
+                    //we need to check if negligible, and force to "0" if it is. Note: there is no need to have the extra 8 zeros in this case.
+                    var xString = vertex[0].IsNegligible(SameTolerance) ? "0" : vertex[0].ToString(stringFormat);
+                    var yString = vertex[1].IsNegligible(SameTolerance) ? "0" : vertex[1].ToString(stringFormat);
+                    var zString = vertex[2].IsNegligible(SameTolerance) ? "0" : vertex[2].ToString(stringFormat);
+                    var lookupString = xString + "|" + yString + "|" + zString;
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
                         // if it's in the dictionary, update the faceToVertexIndex
