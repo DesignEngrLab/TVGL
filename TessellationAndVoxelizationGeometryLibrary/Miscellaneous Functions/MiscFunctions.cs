@@ -739,7 +739,10 @@ namespace TVGL
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
                         /* if it's in the dictionary, Add reference and move to the next vertex */
-                        simpleCompareDict[lookupString].References.Add(vertex);
+                        if (simpleCompareDict[lookupString].References != null)
+                        {
+                            simpleCompareDict[lookupString].References.Add(vertex);
+                        }
                     }
                     else
                     {

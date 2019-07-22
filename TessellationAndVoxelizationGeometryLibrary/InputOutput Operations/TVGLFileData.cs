@@ -29,7 +29,7 @@ namespace TVGL.IOFunctions
     /// Class TVGLFileData.
     /// </summary>
     /// <seealso cref="TVGL.IOFunctions.IO" />
-    [XmlType("TessellatedSolid")]
+    [XmlType("TVGLSolid")]
 #if help
     internal class TVGLFileData : IO
 #else

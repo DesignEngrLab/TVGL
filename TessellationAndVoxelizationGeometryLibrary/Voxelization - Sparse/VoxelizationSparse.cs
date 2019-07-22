@@ -6,7 +6,7 @@
 // Last Modified By : Alan Grier
 // Last Modified On : 02-18-2019
 // ***********************************************************************
-// <copyright file="VoxelizedSolidDense_Constructors.cs" company="Design Engineering Lab">
+// <copyright file="VoxelizedSparseDense_Constructors.cs" company="Design Engineering Lab">
 //     Copyright ©  2019
 // </copyright>
 // <summary></summary>
@@ -24,31 +24,200 @@ namespace TVGL.Voxelization
 {
     /// <inheritdoc />
     /// <summary>
-    /// Class VoxelizedSolidDense.
+    /// Class VoxelizedSparseDense.
     /// </summary>
-    public partial class VoxelizedSolid : Solid
+    public partial class VoxelizedSparse : Solid
     {
         #region Properties
         public byte this[int x, int y, int z]
         {
             get
             {
-                return Voxels[x, y, z];
+                return GetVoxel(x, y, z);
             }
-            set { Voxels[x, y, z] = value; }
+            set
+            {
+                if (value == 0) RemoveVoxel(x, y, z);
+                else AddVoxel(x, y, z);
+            }
         }
+
+
         public byte this[int[] index]
         {
             get
             {
-                return Voxels[index[0], index[1], index[2]];
+                return GetVoxel(index[0], index[1], index[2]);
             }
-            set { Voxels[index[0], index[1], index[2]] = value; }
+            set
+            {
+                if (value == 0) RemoveVoxel(index[0], index[1], index[2]);
+                AddVoxel(index[0], index[1], index[2]);
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private byte GetVoxel(int x, int y, int z)
+        {
+            var yStartIndex = zSlices[z];
+            if (zSlices[z + 1] == yStartIndex) return 0;
+            var numYLines = zSlices[z + 1] - 1 - yStartIndex;
+            if (numYLines <= 0) return 0;//there are no voxels at this value of z
+            var yOffset = yOffsetsAndXIndices[yStartIndex];
+            if (y < yOffset) return 0;  //queried y is lower than the start for this z-slice's y range
+            if (y >= yOffset + numYLines) return 0; //queried y is greater than the end for this z-slice's y range
+            var yLineIndex = yStartIndex + y - yOffset + 1;
+            var xStartIndex = yOffsetsAndXIndices[yLineIndex];
+            var xEndIndex = (y == yOffset + numYLines - 1) // if its the last line for this z-slice, 
+                ? yOffsetsAndXIndices[yLineIndex + 2]  //then step over the next yOffset to get to the beginning of the next xRange
+                : yOffsetsAndXIndices[yLineIndex + 1]; // else its just the next one minus one 
+            if (xStartIndex == xEndIndex) return 0;  //then there is no xRange for this y-Line
+            var xStart = xRanges[xStartIndex];
+            if (x < xStart) return 0; //queried x is lower than the start for this x-range for this y-line at this z-slice
+            var xStop = xRanges[xEndIndex - 1];
+            if (x > xStop) return 0;  //queried x is greater than the end of this x-range for this y-line at this z-slice
+            for (int i = xStartIndex + 1; i < xEndIndex - 1; i += 2)
+                if (x > xRanges[i] && x < xRanges[i + 1]) return 0; // this is actually checking the gap between xRanges
+            //otherwise, we're in an x-range for this y-line at this z-slice
+            return 1;
+        }
+        private void RemoveVoxel(int x, int y, int z)
+        {
+            var yStartIndex = zSlices[z];
+            var numYLines = zSlices[z + 1] - 1 - yStartIndex;
+            if (numYLines <= 0) return;//there are no voxels at this value of z
+            var yOffset = yOffsetsAndXIndices[yStartIndex];
+            if (y < yOffset) return;  //queried y is lower than the start for this z-slice's y range
+            if (y >= yOffset + numYLines) return; //queried y is greater than the end for this z-slice's y range
+            var yLineIndex = yStartIndex + y - yOffset + 1;
+            var xStartIndex = yOffsetsAndXIndices[yLineIndex];
+            var xEndIndex = (y == yOffset + numYLines - 1) // if its the last line for this z-slice, 
+                ? yOffsetsAndXIndices[yLineIndex + 2]  //then step over the next yOffset to get to the beginning of the next xRange
+                : yOffsetsAndXIndices[yLineIndex + 1]; // else its just the next one minus one 
+            if (xStartIndex == xEndIndex) return;
+
+            for (int i = xStartIndex; i < xEndIndex; i += 2)
+            {
+                var xStart = xRanges[i];
+                var xEnd = xRanges[i + 1];
+                if (x < xStart) ; //queried x is lower than the start for this x-range for this y-line at this z-slice
+                else if (x == xStart)
+                {
+                    if (xStart == xEnd)
+                    {
+                        xRanges.RemoveAt(i);
+                        xRanges.RemoveAt(i);
+                        //need to delete the range
+                        DecrementRangesInRemainder(yLineIndex, yStartIndex, z);
+                    }
+                    else
+                    {
+                        xRanges[i]++;
+                        return;
+                    }
+                }
+                else if (x == xEnd)
+                {
+                    xRanges[i + 1]--;
+                    return;
+                }
+                else if (x > xEnd) continue;  //go to the next xRange
+                //otherwise we need to alter this range, which means inserting a new upperbound and lower bound into
+                // the xRange, and then incrementing yOffsetsAndXIndices
+                else
+                {
+                    xRanges.Insert(i, x + 1);
+                    xRanges.Insert(i, x - 1);
+                    // with these additions need to increment all the remaining values in yOffsetsAndXIndices
+                    // but not the ones corresponding to the yOffset
+                    IncrementRangesInRemainder(yLineIndex, yStartIndex, z);
+                }
+            }
+        }
+
+        private void DecrementRangesInRemainder(int yLineIndex, int yStartIndex, int z)
+        {
+            if (yLineIndex - yStartIndex == 1 && zSlices[z + 1] - yLineIndex == 1)
+            {
+                //delete from
+            }
+            for (int i = z + 1; i < VoxelsPerSide[2]; i++)
+            {
+
+            }
+        }
+
+        private void IncrementRangesInRemainder(int yLineIndex, int yStartIndex, int z)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void AddVoxel(int x, int y, int z)
+        {
+            var yStartIndex = zSlices[z];
+            var numYLines = zSlices[z + 1] - 1 - yStartIndex;
+            var yOffset = yOffsetsAndXIndices[yStartIndex];
+            var yLineIndex = yStartIndex + y - yOffset + 1;
+            if (numYLines <= 0)
+            {
+
+                //need to add a y-Line to this z
+                // xRanges.Insert(i, x + 1);
+                // xRanges.Insert(i, x - 1);
+                // with these additions need to increment all the remaining values in yOffsetsAndXIndices
+                // but not the ones corresponding to the yOffset
+                IncrementRangesInRemainder(yLineIndex, yStartIndex, z);
+            }
+            if (y < yOffset) return;  //queried y is lower than the start for this z-slice's y range
+            if (y >= yOffset + numYLines) return; //queried y is greater than the end for this z-slice's y range
+            var xStartIndex = yOffsetsAndXIndices[yLineIndex];
+            var xEndIndex = (y == yOffset + numYLines - 1) // if its the last line for this z-slice, 
+                ? yOffsetsAndXIndices[yLineIndex + 2]  //then step over the next yOffset to get to the beginning of the next xRange
+                : yOffsetsAndXIndices[yLineIndex + 1]; // else its just the next one minus one 
+            if (xStartIndex == xEndIndex) return;
+
+            for (int i = xStartIndex; i < xEndIndex; i += 2)
+            {
+                var xStart = xRanges[i];
+                var xEnd = xRanges[i + 1];
+                if (x < xStart) ; //queried x is lower than the start for this x-range for this y-line at this z-slice
+                else if (x == xStart)
+                {
+                    if (xStart == xEnd)
+                    {
+                        xRanges.RemoveAt(i);
+                        xRanges.RemoveAt(i);
+                        //need to delete the range
+                        DecrementRangesInRemainder(yLineIndex,yStartIndex, z);
+                    }
+                    else
+                    {
+                        xRanges[i]++;
+                        return;
+                    }
+                }
+                else if (x == xEnd)
+                {
+                    xRanges[i + 1]--;
+                    return;
+                }
+                else if (x > xEnd) continue;  //go to the next xRange
+                //otherwise we need to alter this range, which means inserting a new upperbound and lower bound into
+                // the xRange, and then incrementing yOffsetsAndXIndices
+                else
+                {
+                    xRanges.Insert(i, x + 1);
+                    xRanges.Insert(i, x - 1);
+                    // with these additions need to increment all the remaining values in yOffsetsAndXIndices
+                    // but not the ones corresponding to the yOffset
+                    IncrementRangesInRemainder(yLineIndex, yStartIndex, z);
+                }
+            }
         }
 
 
-        byte[,,] Voxels;
-     
+        int[] zSlices;
+        List<int> yOffsetsAndXIndices;
+        List<int> xRanges; //inclusive!
         public readonly int Discretization;
         public int[] VoxelsPerSide;
         public int[][] VoxelBounds { get; set; }
@@ -56,30 +225,36 @@ namespace TVGL.Voxelization
         public double[] TessToVoxSpace { get; }
         private readonly double[] Dimensions;
         public double[] Offset => Bounds[0];
-        public int Count { get; internal set; }
+        public int NumVoxels { get; internal set; }
         public TessellatedSolid TS { get; set; }
 
         #endregion
 
-        public VoxelizedSolid(int[] voxelsPerSide, int discretization, double voxelSideLength,
+        public VoxelizedSparse(int[] voxelsPerSide, int discretization, double voxelSideLength,
             IEnumerable<double[]> bounds, byte value = 0)
         {
             VoxelsPerSide = (int[])voxelsPerSide.Clone();
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
-            Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
-            Count = 0;
+            NumVoxels = 0;
             SurfaceArea = 0;
             Volume = 0;
             if (value != 0)
             {
-                Parallel.For(0, xLim, m =>
+                zSlices = new int[zLim + 1];
+                var yArray = new int[zLim * (1 + yLim)];
+                var xArray = new int[2 * yLim * zLim];
+                for (int i = 0; i <= zLim; i++)
                 {
-                    for (var n = 0; n < yLim; n++)
-                        for (var o = 0; o < zLim; o++)
-                            Voxels[m, n, o] = value;
-                });
+                    zSlices[i + 1] = zSlices[i] + 1 + yLim;
+                    for (int j = 0; j < yLim; j++)
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                yOffsetsAndXIndices = yArray.ToList();
+                xRanges = xArray.ToList();
                 UpdateBoundingProperties();
 
             }
@@ -91,10 +266,9 @@ namespace TVGL.Voxelization
             SolidColor = new Color(Constants.DefaultColor);
         }
 
-        public VoxelizedSolid(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
+        public VoxelizedSparse(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
             IEnumerable<double[]> bounds)
         {
-            Voxels = (byte[,,])voxels.Clone();
             Discretization = discretization;
             VoxelsPerSide = voxelsPerSide;
             VoxelSideLength = voxelSideLength;
@@ -105,22 +279,9 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
-        public VoxelizedSolid(VoxelizedSolid vs)
-        {
-            Voxels = (byte[,,])vs.Voxels.Clone();
-            Discretization = vs.Discretization;
-            VoxelsPerSide = vs.VoxelsPerSide.ToArray();
-            VoxelSideLength = vs.VoxelSideLength;
-            Dimensions = vs.Dimensions.ToArray();
-            Bounds = vs.Bounds.ToArray();
-            TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
-            SolidColor = new Color(Constants.DefaultColor);
-            Volume = vs.Volume;
-            SurfaceArea = vs.SurfaceArea;
-            Count = vs.Count;
-        }
 
-        public VoxelizedSolid(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
+
+        public VoxelizedSparse(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
         {
             TS = ts;
             Discretization = discretization;
@@ -148,38 +309,42 @@ namespace TVGL.Voxelization
             VoxelsPerSide = Dimensions.Select(d => (int)Math.Round(d / VoxelSideLength)).ToArray();
             TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
 
-            Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
 
-            VoxelizeSolid(ts);
+            FillInFromTessellation(ts);
             UpdateProperties();
         }
 
-        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
+        public VoxelizedSparse(TVGLFileData fileData, string fileName) : base(fileData, fileName)
         {
         }
 
-        private void VoxelizeSolid(TessellatedSolid ts, bool possibleNullSlices = false)
+        private void FillInFromTessellation(TessellatedSolid ts, bool possibleNullSlices = false)
         {
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
+            zSlices = new int[zLim + 1];
+            yOffsetsAndXIndices = new List<int>();  // { 0 };
+            xRanges = new List<int>();
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
             var decomp = AllSlicesAlongZ(ts, zBegin, zLim, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
-            Parallel.For(0, zLim, k =>
-            //for (var k = 0; k < zLim; k++)
+            //Parallel.For(0, zLim, k =>
+            for (var k = 0; k < zLim; k++)
             {
                 var loops = decomp[k];
                 if (loops.Any())
                 {
                     var intersections = AllPolygonIntersectionPointsAlongY(loops, yBegin, yLim, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
+                    yOffsetsAndXIndices.Add(yStartIndex);
                     for (int j = 0; j < numYlines; j++)
                     {
                         var intersectionPoints = intersections[j];
                         var numXRangesOnThisLine = intersectionPoints.Length;
+                        yOffsetsAndXIndices.Add(xRanges.Count);
                         for (var m = 0; m < numXRangesOnThisLine; m += 2)
                         {
                             //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
@@ -188,13 +353,16 @@ namespace TVGL.Voxelization
                             var sp = (int)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (sp < 0) sp = 0;
                             var ep = (int)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
-                            if (ep >= xLim) ep = xLim-1;
-                            for (var i = sp; i <= ep; i++)  // the range is inclusive
-                                Voxels[i, yStartIndex + j, k] = 1;
+                            if (ep >= xLim) ep = xLim - 1;
+                            xRanges.Add(sp);
+                            xRanges.Add(ep);
                         }
                     }
                 }
-            }   );
+                zSlices[k + 1] = yOffsetsAndXIndices.Count;
+            }   //);
+            yOffsetsAndXIndices.Add(-1);
+            yOffsetsAndXIndices.Add(xRanges.Count);
         }
         private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
@@ -274,9 +442,14 @@ namespace TVGL.Voxelization
 
         internal string[] GetVoxelsAsStringArrays()
         {
-            var vSparse = new VoxelizedSparse(Voxels,this.Discretization,this.VoxelsPerSide,this.VoxelSideLength,
-                this.Bounds);
-            return vSparse.GetVoxelsAsStringArrays();
+            var zSlicesBitArray = zSlices.SelectMany(slice => BitConverter.GetBytes(slice)).ToArray();
+            var yStartsBitArray = yOffsetsAndXIndices.SelectMany(yStart => BitConverter.GetBytes(yStart)).ToArray();
+            var xRangeBitArray = xRanges.SelectMany(xRange => BitConverter.GetBytes(xRange)).ToArray();
+
+            return new[]{
+                BitConverter.ToString(zSlicesBitArray).Replace("-", ""),
+                BitConverter.ToString(yStartsBitArray).Replace("-", ""),
+                BitConverter.ToString(xRangeBitArray).Replace("-", "") };
         }
 
         internal static List<double[]> AllPolygonIntersectionPointsAlongY(List<List<PointLight>> loops, double start, int numSteps, double stepSize,
@@ -323,7 +496,12 @@ namespace TVGL.Voxelization
             return intersections;
         }
 
-       public TessellatedSolid ConvertToTessellatedSolid(Color color)
+        public TessellatedSolid ConvertToTessellatedSolid(Color color)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Solid Copy()
         {
             throw new NotImplementedException();
         }

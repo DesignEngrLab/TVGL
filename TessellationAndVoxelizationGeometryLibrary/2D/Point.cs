@@ -34,11 +34,11 @@ namespace TVGL
         public double Y { get; set; }
         public List<Vertex> References { get; set; }
 
-        public PointLight(double x, double y)
+        public PointLight(double x, double y, bool initializeRefList = false)
         {
             X = x;
             Y = y;
-            References = null;
+            References = initializeRefList ? new List<Vertex>() : null;
         }
         public PointLight(Vertex v, double x, double y)
         {
@@ -50,7 +50,7 @@ namespace TVGL
         {
             X = x;
             Y = y;
-            References = vertices.ToList();
+            References = vertices?.ToList();
         }
 
         public PointLight(Point point)
