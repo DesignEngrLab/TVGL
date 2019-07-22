@@ -179,8 +179,8 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             if (ts.Errors.FacesThatDoNotLinkBackToVertex == null)
                 ts.Errors.FacesThatDoNotLinkBackToVertex
-                    = new List<Tuple<Vertex, PolygonalFace>> { new Tuple<Vertex, PolygonalFace>(vertex, face) };
-            else ts.Errors.FacesThatDoNotLinkBackToVertex.Add(new Tuple<Vertex, PolygonalFace>(vertex, face));
+                    = new List<(Vertex, PolygonalFace)> { (vertex, face) };
+            else ts.Errors.FacesThatDoNotLinkBackToVertex.Add((vertex, face));
         }
 
         /// <summary>
@@ -194,8 +194,8 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             if (ts.Errors.EdgesThatDoNotLinkBackToVertex == null)
                 ts.Errors.EdgesThatDoNotLinkBackToVertex
-                    = new List<Tuple<Vertex, Edge>> { new Tuple<Vertex, Edge>(vertex, edge) };
-            else ts.Errors.EdgesThatDoNotLinkBackToVertex.Add(new Tuple<Vertex, Edge>(vertex, edge));
+                    = new List<(Vertex, Edge)> { (vertex, edge) };
+            else ts.Errors.EdgesThatDoNotLinkBackToVertex.Add((vertex, edge));
         }
 
         /// <summary>
@@ -221,8 +221,8 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             if (ts.Errors.VertsThatDoNotLinkBackToEdge == null)
                 ts.Errors.VertsThatDoNotLinkBackToEdge
-                    = new List<Tuple<Edge, Vertex>> { new Tuple<Edge, Vertex>(edge, vert) };
-            else ts.Errors.VertsThatDoNotLinkBackToEdge.Add(new Tuple<Edge, Vertex>(edge, vert));
+                    = new List<(Edge, Vertex)> { (edge, vert) };
+            else ts.Errors.VertsThatDoNotLinkBackToEdge.Add((edge, vert));
         }
 
         /// <summary>
@@ -236,8 +236,8 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             if (ts.Errors.FacesThatDoNotLinkBackToEdge == null)
                 ts.Errors.FacesThatDoNotLinkBackToEdge
-                    = new List<Tuple<Edge, PolygonalFace>> { new Tuple<Edge, PolygonalFace>(edge, face) };
-            else ts.Errors.FacesThatDoNotLinkBackToEdge.Add(new Tuple<Edge, PolygonalFace>(edge, face));
+                    = new List<(Edge, PolygonalFace)> { (edge, face) };
+            else ts.Errors.FacesThatDoNotLinkBackToEdge.Add((edge, face));
         }
 
         /// <summary>
@@ -264,8 +264,8 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             if (ts.Errors.VertsThatDoNotLinkBackToFace == null)
                 ts.Errors.VertsThatDoNotLinkBackToFace
-                    = new List<Tuple<PolygonalFace, Vertex>> { new Tuple<PolygonalFace, Vertex>(face, vertex) };
-            else ts.Errors.VertsThatDoNotLinkBackToFace.Add(new Tuple<PolygonalFace, Vertex>(face, vertex));
+                    = new List<(PolygonalFace, Vertex)> { (face, vertex) };
+            else ts.Errors.VertsThatDoNotLinkBackToFace.Add((face, vertex));
         }
 
         /// <summary>
@@ -279,8 +279,8 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             if (ts.Errors.EdgesThatDoNotLinkBackToFace == null)
                 ts.Errors.EdgesThatDoNotLinkBackToFace
-                    = new List<Tuple<PolygonalFace, Edge>> { new Tuple<PolygonalFace, Edge>(face, edge) };
-            else ts.Errors.EdgesThatDoNotLinkBackToFace.Add(new Tuple<PolygonalFace, Edge>(face, edge));
+                    = new List<(PolygonalFace, Edge)> { (face, edge) };
+            else ts.Errors.EdgesThatDoNotLinkBackToFace.Add((face, edge));
         }
 
         /// <summary>
@@ -338,7 +338,7 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <param name="edgeFaceTuples">The edge face tuples.</param>
         internal static void StoreOverusedEdges(TessellatedSolid ts,
-            IEnumerable<Tuple<Edge, List<PolygonalFace>>> edgeFaceTuples)
+            IEnumerable<(Edge, List<PolygonalFace>)> edgeFaceTuples)
         {
             ts.Errors.NoErrors = false;
             ts.Errors.OverusedEdges = edgeFaceTuples.ToList();

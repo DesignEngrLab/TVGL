@@ -22,7 +22,7 @@ namespace TVGL.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace TVGL.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TVGL.Properties.Resources", typeof(Resources).Assembly);
@@ -51,12 +51,47 @@ namespace TVGL.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 0,10,10,500,,,,L,0,,Order:,,
+        ///2,10,10,504,,,,M,1,,ABN,MCM,SM
+        ///1,0,0,502,,,,H,2,,,,
+        ///1,1,0,501,,,,NoEffect,10,,,,
+        ///1,2,0,501,,,,,,,,,
+        ///1,10,1,501,,,,,,,,,
+        ///1,10,2,503,,,,,,,,,.
+        /// </summary>
+        public static string NewEdgeRules {
+            get {
+                return ResourceManager.GetString("NewEdgeRules", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 500,500,500,200,500,500,500,,,,,,,,,,,
+        ///500,500,502,201,500,500,502,,,,,,,,,,,
+        ///500,500,501,201,500,500,501,,,,,,,,,,,
+        ///500,500,503,200,500,500,1000,,,,,,,,,,,500,500,1000
+        ///500,500,504,200,500,500,1000,,,,,,,,,,,
+        ///500,502,502,202,500,502,502,,,,,,,,,,,1000,502,502
+        ///500,502,501,201,500,502,501,,,,,,,,,,,
+        ///500,502,503,201,500,502,1000,,,,,,,,,,,500,502,1000
+        ///500,502,504,201,500,502,1000,,,,,,,,,,,
+        ///500,501,501,201,500,501,501,,,,,,,,,,,1000,501,501
+        ///500,501,503,201,500,501,1000,,,,,,,,,,,500,501,1000
+        ///500,501 [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string NewFaRules {
+            get {
+                return ResourceManager.GetString("NewFaRules", resourceCulture);
             }
         }
     }

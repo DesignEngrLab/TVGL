@@ -31,7 +31,7 @@ namespace TVGL._2D
                 var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).Select(p => new PolygonLight(p)).First();
 
                 //Delaunay Medial Axis             
-                var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
+                var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled.Select(p => new[] { p.X, p.Y }).ToList());
                 var lines = new List<List<Point>>();
                 foreach (var triangle in delaunay.Cells)
                 {
@@ -70,9 +70,9 @@ namespace TVGL._2D
                             //of the short edge.
                             //If 
                             //Order the points, such that the larger edge is not included
-                            var d0 = edge1Center.Position.subtract(edge2Center.Position).norm2();
-                            var d1 = edge2Center.Position.subtract(edge3Center.Position).norm2();
-                            var d2 = edge3Center.Position.subtract(edge1Center.Position).norm2();
+                            var d0 = (edge1Center - edge2Center).norm2();
+                            var d1 = (edge2Center - edge3Center).norm2();
+                            var d2 = (edge3Center - edge1Center).norm2();
                             var ds = new List<double>() { d0, d1, d2 };
                             ds.Sort();
                             if (ds[0] - ds[1] > ds[1] - ds[2])
@@ -102,18 +102,15 @@ namespace TVGL._2D
                                 //Create a new center point on the shortest line and set three point sets
                                 if (d0 < d1 && d0 < d2)
                                 {
-                                    newPoint = new Point(
-                                        edge1Center.Position.add(edge2Center.Position).divide(2, 2));
+                                    newPoint = new Point((edge1Center + edge2Center).divide(2.0, 2));
                                 }
                                 else if (d1 < d2)
                                 {
-                                    newPoint = new Point(
-                                        edge2Center.Position.add(edge3Center.Position).divide(2, 2));
+                                    newPoint = new Point((edge2Center + edge3Center).divide(2.0, 2));
                                 }
                                 else
                                 {
-                                    newPoint = new Point(
-                                        edge3Center.Position.add(edge1Center.Position).divide(2, 2));
+                                    newPoint = new Point((edge3Center + edge1Center).divide(2.0, 2));
                                 }
 
                                 lines.Add(new List<Point> { edge1Center, newPoint });
@@ -138,7 +135,7 @@ namespace TVGL._2D
                     {
                         var sameLineCount = 0;
                         var l2 = lines[k];
-                        if(MiscFunctions.DistancePointToPoint(l1[0], l2[0]).IsNegligible(mergerTolerance))
+                        if (MiscFunctions.DistancePointToPoint(l1[0], l2[0]).IsNegligible(mergerTolerance))
                         {
                             l2[0] = l1[0];
                             sameLineCount++;
@@ -233,8 +230,8 @@ namespace TVGL._2D
                             var p2 = branch[branch.Count - 2];
                             for (var j = 0; j < branches.Count; j++)
                             {
-                                if (branches[j][0].Position.subtract(p1.Position).norm2().IsNegligible(0.0001) &&
-                                    branches[j][1].Position.subtract(p2.Position).norm2().IsNegligible(0.0001))
+                                if ((branches[j][0] - p1).norm2().IsNegligible(0.0001) &&
+                                   (branches[j][1] - p2).norm2().IsNegligible(0.0001))
                                 {
                                     branches.RemoveAt(j);
                                     break;
@@ -280,6 +277,6 @@ namespace TVGL._2D
             }
             return allBranches;
         }
-       
+
     }
 }

@@ -61,8 +61,8 @@
       <HintPath>..\packages\HelixToolkit.Wpf.2015.1.715\lib\net45\HelixToolkit.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="MIConvexHull, Version=1.0.17.1019, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\netstandard1.0\MIConvexHull.dll</HintPath>
+    <Reference Include="MIConvexHull, Version=1.1.19.504, Culture=neutral, PublicKeyToken=2644b6f8be52c998, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.1.19.504\lib\netstandard1.0\MIConvexHull.dll</HintPath>
     </Reference>
     <Reference Include="OxyPlot, Version=1.0.0.0, Culture=neutral, PublicKeyToken=638079a8f0bd61e9, processorArchitecture=MSIL">
       <HintPath>..\packages\OxyPlot.Core.1.0.0\lib\net45\OxyPlot.dll</HintPath>
@@ -291,35 +291,17 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelBinSet.cs">
-      <Link>TVGL\Voxelization\VoxelBinSet.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization - Sparse\VoxelizationSparse.cs">
+      <Link>TVGL\Voxelization - Sparse\VoxelizationSparse.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelClass.cs">
-      <Link>TVGL\Voxelization\VoxelClass.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization - Sparse\VoxelizationSparse_PublicFunctions.cs">
+      <Link>TVGL\Voxelization - Sparse\VoxelizationSparse_PublicFunctions.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelComparer.cs">
-      <Link>TVGL\Voxelization\VoxelComparer.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidDense_Constructors.cs">
+      <Link>TVGL\Voxelization\VoxelizedSolidDense_Constructors.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelConstantsAndEnumerators.cs">
-      <Link>TVGL\Voxelization\VoxelConstantsAndEnumerators.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelHashSet.cs">
-      <Link>TVGL\Voxelization\VoxelHashSet.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
-      <Link>TVGL\Voxelization\VoxelizedSolid.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidfromTessellatedSolid.cs">
-      <Link>TVGL\Voxelization\VoxelizedSolidfromTessellatedSolid.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs">
-      <Link>TVGL\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_PublicFunctions.cs">
-      <Link>TVGL\Voxelization\VoxelizedSolid_PublicFunctions.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_to_TessellatedSolid.cs">
-      <Link>TVGL\Voxelization\VoxelizedSolid_to_TessellatedSolid.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidDense_PublicFunctions.cs">
+      <Link>TVGL\Voxelization\VoxelizedSolidDense_PublicFunctions.cs</Link>
     </Compile>
     <Compile Include="..\TVGL Presenter\Presenter.cs">
       <Link>Presenter\Presenter.cs</Link>

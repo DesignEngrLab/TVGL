@@ -16,7 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using StarMathLib;
+using System.Runtime.CompilerServices;
+using MIConvexHull;
 
 namespace TVGL
 {
@@ -39,79 +40,18 @@ namespace TVGL
                 var point2 = convexHullPoints2D[i];
                 var point3 = convexHullPoints2D[i + 1];
                 //Reference: <http://www.mathopenref.com/coordtrianglearea.html>
-                var triangleArea = 0.5 *
-                                   Math.Abs(point1.X * (point2.Y - point3.Y) + point2.X * (point3.Y - point1.Y) +
-                                            point3.X * (point1.Y - point2.Y));
-                totalArea = totalArea + triangleArea;
+                var triangleArea =
+                    Math.Abs(point1.X * (point2.Y - point3.Y) + point2.X * (point3.Y - point1.Y) +
+                             point3.X * (point1.Y - point2.Y));
+                totalArea += triangleArea;
             }
-            return totalArea;
+
+            return 0.5 * totalArea;
         }
 
-        /// <summary>
-        /// Returns the 2D convex hull for given list of points. 
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>
-        /// List&lt;Point&gt;.
-        /// </returns>
-        public static Point[] ConvexHull2D(IList<Point> points, double tolerance = Constants.BaseTolerance	)
+        public static List<PointLight> ConvexHull2D(IList<PointLight> points) 
         {
-            //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
-            var numPoints = points.Count;
-            var cvxPoints = new Point[numPoints];
-            try
-            {
-                if (double.IsNaN(tolerance))
-                    cvxPoints = (Point[]) MIConvexHull.ConvexHull.Create(points).Points;
-                else cvxPoints = (Point[]) MIConvexHull.ConvexHull.Create(points, tolerance).Points;
-            }
-            catch
-            {
-                Debug.WriteLine("ConvexHull2D failed on first iteration");
-                try
-                {
-                   cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points, 0.01).Points;
-                }
-                catch
-                {
-                    throw new Exception("ConvexHull2D failed on second attempt");
-                }
-            }
-            
-            return cvxPoints;
-        }
-
-        /// <summary>
-        /// Returns the 2D convex hull for given list of points. 
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>
-        /// List&lt;Point&gt;.
-        /// </returns>
-        public static IEnumerable<PointLight> ConvexHull2D(IList<PointLight> points, double tolerance = Constants.BaseTolerance)
-        {
-            //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
-            PointLight[] cvxPoints;
-            try
-            {
-                if (double.IsNaN(tolerance))
-                    return MIConvexHull.ConvexHull.Create(points).Points;
-                return MIConvexHull.ConvexHull.Create(points, tolerance).Points;
-            }
-            catch
-            {
-                Debug.WriteLine("ConvexHull2D failed on first iteration");
-                try
-                {
-                    return MIConvexHull.ConvexHull.Create(points, 0.01).Points;
-                }
-                catch
-                {
-                    throw new Exception("ConvexHull2D failed on second attempt");
-                }
-            }
+            return MIConvexHull.ConvexHull.Create(points);
         }
     }
 }

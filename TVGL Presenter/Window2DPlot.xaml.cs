@@ -326,12 +326,7 @@ namespace TVGL
 
         private List<double[]> PointsToDouble(IList<PointLight> points)
         {
-            var doubleArray = new List<double[]>();
-            for(var i = 0; i < points.Count(); i++)
-            {
-                doubleArray.Add(points[i].Position);
-            }
-            return doubleArray;
+            return points.Select(p => new[] {p.X, p.Y}).ToList();
         }
 
         

@@ -27,10 +27,12 @@ namespace TVGL.Boolean_Operations
         /// <param name="plane">The plane.</param>
         /// <param name="solids">The resulting solids </param>
         /// <param name="setIntersectionGroups">Determines whether to output the intersections (2D cross sections and other info)</param>
+        /// <param name="undoPlaneOffset">Determines whether to construct new faces exactly on the cutting plane</param>
         public static void OnInfiniteFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> solids, bool setIntersectionGroups = false)
+            out List<TessellatedSolid> solids, out ContactData contactData, bool setIntersectionGroups = false,
+            bool undoPlaneOffset = false)
         {
-            if (!GetContactData(ts, plane, out var contactData, setIntersectionGroups))
+            if (!GetContactData(ts, plane, out contactData, setIntersectionGroups, undoPlaneOffset:undoPlaneOffset))
             {
                 solids = new List<TessellatedSolid>();
                 Debug.WriteLine("CuttingPlane does not cut through the given solid.");
@@ -119,8 +121,9 @@ namespace TVGL.Boolean_Operations
         /// <param name="contactData"></param>
         /// <param name="setIntersectionGroups"></param>
         /// <param name="loopsToIgnore"></param>
+        /// <param name="undoPlaneOffset"></param>
         public static bool GetContactData(TessellatedSolid ts, Flat plane, out ContactData contactData, bool setIntersectionGroups,
-            ICollection<int> loopsToIgnore = null)
+            ICollection<int> loopsToIgnore = null, bool undoPlaneOffset = false)
         {
             #region Get the loops
             //1. Offset positive and get the positive faces.
@@ -135,9 +138,9 @@ namespace TVGL.Boolean_Operations
                 return false; //This plane does not slice through the solid, or an error occured from the plane shift
             }
             DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal),
-                out var positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift, loopsToIgnore);
+                out var positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift, loopsToIgnore, undoPlaneOffset);
             DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal),
-                out var negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift, loopsToIgnore);
+                out var negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift, loopsToIgnore, undoPlaneOffset);
             #endregion
 
             var groupOfLoops = GroupLoops(positiveSideLoops, negativeSideLoops, plane, setIntersectionGroups,
@@ -455,8 +458,9 @@ namespace TVGL.Boolean_Operations
 
         ///Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the 
         /// halves of the straddle faces that are on this side.
-        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<Loop> loops, int isPositiveSide, 
-            IList<double> distancesToPlane, double planeOffset = double.NaN, ICollection<int> loopsToIgnore = null)
+        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<Loop> loops, int isPositiveSide,
+            IList<double> distancesToPlane, double planeOffset = double.NaN, ICollection<int> loopsToIgnore = null,
+            bool undoPlaneOffset = false)
         {
             loops = new List<Loop>();
 
@@ -490,7 +494,9 @@ namespace TVGL.Boolean_Operations
                 {
                     offSideVertex = toDistance > 0 ? edge.To : edge.From;
                 }
-                straddleEdges.Add(new StraddleEdge(edge, plane, offSideVertex));
+                straddleEdges.Add(undoPlaneOffset
+                    ? new StraddleEdge(edge, plane, offSideVertex, planeOffset)
+                    : new StraddleEdge(edge, plane, offSideVertex));
                 straddleEdgesDict.Add(edge.IndexInList, edge);
             }
 
@@ -854,7 +860,7 @@ namespace TVGL.Boolean_Operations
             /// </summary>
             public PolygonalFace OtherFace;
 
-            internal StraddleEdge(Edge edge, Flat plane, Vertex offSideVertex)
+            internal StraddleEdge(Edge edge, Flat plane, Vertex offSideVertex, double planeOffset = 0D)
             {
                 OwnedFace = edge.OwnedFace;
                 OtherFace = edge.OtherFace;
@@ -862,7 +868,8 @@ namespace TVGL.Boolean_Operations
                 OffSideVertex = offSideVertex;
                 OriginalOffSideVertex = offSideVertex;
                 OnSideVertex = Edge.OtherVertex(OffSideVertex);
-                IntersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.To, edge.From);
+                IntersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
+                    plane.DistanceToOrigin - planeOffset, edge.To, edge.From);
                 if (IntersectVertex == null) throw new Exception("Cannot Be Null");
             }
 

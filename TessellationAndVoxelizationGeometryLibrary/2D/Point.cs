@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
 using MIConvexHull;
@@ -25,29 +26,80 @@ namespace TVGL
     ///     The Point light struct is a low memory version of the Point class. 
     /// </summary>
     [DataContract]
-    public struct PointLight: IVertex
+    public struct PointLight : IVertex2D
     {
-        [DataMember]
-        public double[] Position { get; set; }
 
-        public double X => Position[0];
+        public double X { get; set; }
 
-        public double Y => Position[1];
+        public double Y { get; set; }
+        public List<Vertex> References { get; set; }
 
-        public PointLight(double x, double y)
+        public PointLight(double x, double y, bool initializeRefList = false)
         {
-            Position = new []{x , y};
+            X = x;
+            Y = y;
+            References = initializeRefList ? new List<Vertex>() : null;
+        }
+        public PointLight(Vertex v, double x, double y)
+        {
+            X = x;
+            Y = y;
+            References = new List<Vertex> { v };
+        }
+        public PointLight(IEnumerable<Vertex> vertices, double x, double y)
+        {
+            X = x;
+            Y = y;
+            References = vertices?.ToList();
         }
 
         public PointLight(Point point)
         {
-            Position = new[] { point.X, point.Y };
+            X = point.X;
+            Y = point.Y;
+            References = point.References;
         }
 
         public PointLight(double[] position)
         {
-            Position = new[] { position[0], position[1] };
+            X = position[0];
+            Y = position[1];
+            References = null;
         }
+
+        public double[] Subtract(PointLight b)
+        {
+            return new[] { X - b.X, Y - b.Y };
+        }
+
+        //Note: This equality operator CANNOT use references, since this is a struct.
+        public static bool operator ==(PointLight a, PointLight b)
+        {
+            return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
+        }
+
+        public static bool operator !=(PointLight a, PointLight b)
+        {
+            return !(a == b);
+        }
+        public static double[] operator -(PointLight a, PointLight b)
+        {
+            return new[] { a.X - b.X, a.Y - b.Y };
+        }
+        public static double[] operator +(PointLight a, PointLight b)
+        {
+            return new[] { a.X + b.X, a.Y + b.Y };
+        }
+        public static double[] operator -(PointLight a, double[] b)
+        {
+            return new[] { a.X - b[0], a.Y - b[1] };
+        }
+        public static double[] operator +(PointLight a, double[] b)
+        {
+            return new[] { a.X + b[0], a.Y + b[1] };
+        }
+
+
     }
 
     /// <summary>
@@ -60,7 +112,7 @@ namespace TVGL
     ///     these Point objects around a vertex and then providing their new position.
     /// </summary>
     [DataContract]
-    public class Point : IVertex
+    public class Point : IVertex2D
     {
         #region Properties
 
@@ -75,14 +127,6 @@ namespace TVGL
         /// </summary>
         /// <value>The y.</value>
         public double Y => Light.Y;
-
-        /// <summary>
-        /// Gets or sets the z coordinate, which is mostly ignored. 
-        /// It is initialized as 0.0 and accessed here or with Position3D
-        /// </summary>
-        /// <value>The z.</value>
-        [DataMember]
-        public double Z { get; set; } = 0.0;
 
         /// <summary>
         ///     Gets or sets the references.
@@ -109,19 +153,6 @@ namespace TVGL
         /// Cannot serialize lines yet. Not sure if circular reference will cause issues.
         public IList<Line> Lines { get; set; }
 
-        /// <summary>
-        ///     Gets the coordinates or position as an array of 3 elements (X, Y, Z).
-        /// </summary>
-        /// <value>The coordinates or position.</value>
-        public double[] Position3D => new[] { X, Y, Z };
-
-        /// <summary>
-        ///     Gets or sets the coordinates or position as an array of 2 elements (X, Y).
-        /// </summary>
-        /// <value>The coordinates or position.</value>
-        [DataMember]
-        public double[] Position => Light.Position;
-        
         [DataMember]
         public PointLight Light { get; set; }
 
@@ -164,7 +195,7 @@ namespace TVGL
         public Point(double x, double y)
             : this(null, x, y, 0.0)
         {
-            if(double.IsNaN(x) || double.IsNaN(y)) throw new Exception("Must be a number");
+            if (double.IsNaN(x) || double.IsNaN(y)) throw new Exception("Must be a number");
         }
 
         /// <inheritdoc />
@@ -172,8 +203,11 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
         /// </summary>
         public Point(PointLight p)
-            : this(null, p.X, p.Y, 0.0)
         {
+            Light = new PointLight(p.X, p.Y);
+            Lines = new List<Line>();
+            if (p.References != null)
+                References = new List<Vertex>(p.References);
         }
 
         /// <summary>
@@ -185,7 +219,6 @@ namespace TVGL
         public Point(Point point)
         {
             Light = new PointLight(point.X, point.Y);
-            Z = point.Z;
             Lines = new List<Line>(point.Lines);
             References = new List<Vertex>(point.References);
         }
@@ -200,7 +233,6 @@ namespace TVGL
         public Point(Vertex vertex, double x, double y, double z)
         {
             Light = new PointLight(x, y);
-            Z = z;
             Lines = new List<Line>();
             References = new List<Vertex>();
             if (vertex == null) return;
@@ -217,12 +249,6 @@ namespace TVGL
         #endregion
 
         #region Public Methods
-        /// <summary>
-        ///     this point
-        /// </summary>
-        /// <param name="index">The index.</param>
-        /// <returns>System.Double.</returns>
-        public double this[int index] => Position[index];
 
         /// <summary>
         /// Gets whether points are equal
@@ -234,7 +260,7 @@ namespace TVGL
         {
             //First, check the references. This is very fast.
             if (ReferenceEquals(a, b)) return true;
-            if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return false;
+            if (a is null || b is null) return false;
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
         }
 
@@ -253,6 +279,24 @@ namespace TVGL
         {
             return !(a == b);
         }
+
+        public static double[] operator -(Point a, Point b)
+        {
+            return new[] { a.X - b.X, a.Y - b.Y };
+        }
+        public static double[] operator +(Point a, Point b)
+        {
+            return new[] { a.X + b.X, a.Y + b.Y };
+        }
+        public static double[] operator -(Point a, double[] b)
+        {
+            return new[] { a.X - b[0], a.Y - b[1] };
+        }
+        public static double[] operator +(Point a, double[] b)
+        {
+            return new[] { a.X + b[0], a.Y + b[1] };
+        }
+
 
         /// <summary>
         /// Checks if this intPoint is equal to the given object.

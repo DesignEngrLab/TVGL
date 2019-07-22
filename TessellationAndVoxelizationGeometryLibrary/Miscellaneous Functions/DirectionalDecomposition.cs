@@ -49,7 +49,7 @@ namespace TVGL
                 stepSize = minOffset * 2 + ts.SameTolerance;
             }
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(axis, ts.Vertices.ToList(), out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(axis, ts.Vertices.ToList(), out List<(Vertex, double)> sortedVertices);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
             var previousDistanceAlongAxis = sortedVertices[0].Item2; //This value can be negative
@@ -106,6 +106,22 @@ namespace TVGL
         #endregion
 
         #region Uniform Directional Decomposition
+
+        public enum SnapType
+        {
+            //The first distance along the given direction
+            ClosestAlong,
+
+            //All cross sections are within the given solid.
+            CenterAllInside,
+
+            //Adds a cross section to the top and bottom
+            CenterEndsOutside,
+
+            //The last distance along the given direction
+            FurthestAlong,
+        }
+
         /// <summary>
         /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
         /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
@@ -121,7 +137,7 @@ namespace TVGL
         public static List<DecompositionData> UniformDecomposition(TessellatedSolid ts, double[] direction,
         double stepSize, out Dictionary<int, double> stepDistances,
         out Dictionary<int, double> sortedVertexDistanceLookup,
-        bool addCrossSectionAtStartAndEnd)
+        SnapType snapTo, bool addCrossSectionAtStartAndEndForCenterSnap = false)
         {
             sortedVertexDistanceLookup = new Dictionary<int, double>();
 
@@ -130,10 +146,9 @@ namespace TVGL
             //minor adjustments occur to avoid cutting through vertices.
             stepDistances = new Dictionary<int, double>();
 
-         
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<(Vertex, double)> sortedVertices);
             //Create a distance lookup dictionary based on the vertex indices
             sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
 
@@ -141,44 +156,84 @@ namespace TVGL
             var firstDistance = sortedVertices.First().Item2;
             var furthestDistance = sortedVertices.Last().Item2;
             var length = furthestDistance - firstDistance;
-          
+
             var currentVertexIndex = 0;
             var inputEdgeLoops = new List<List<Edge>>();
 
 
             //Choose whichever min offset is smaller
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
-            var remainder = (length % stepSize); 
-            //If the remainder is less than the minOffset, set it equal to the step size.
-            //This is to avoid the issue of missing the last cutting plane. 
-            if (remainder.IsNegligible(minOffset * 2)) remainder += stepSize;
-            //Shift the first distance. At minimum, d = f + minOffset. At maxium, d = f + stepSize / 2.
-            //The last step distance should be equally spaced from the furthest distance.
-            var distanceAlongAxis = firstDistance + remainder / 2; //Shift the step indices toward the center of the part, if not exact.
-            var stepIndex = addCrossSectionAtStartAndEnd ? 1 : 0;
-            do
+            var div = length / stepSize;
+            var t = (int)(length / stepSize);
+            var numSteps = t + 1; //Round up to nearest integer (or down and then add 1)
+            var remainder = length - t * stepSize;
+            if (remainder.IsPracticallySame(stepSize, minOffset))
             {
-                stepDistances.Add(stepIndex, distanceAlongAxis);
-                stepIndex++;
-                distanceAlongAxis += stepSize;
-                if(distanceAlongAxis > furthestDistance) throw new Exception("Error in implementation of directional decomposition steps");
-            } while (!distanceAlongAxis.IsPracticallySame(furthestDistance - remainder / 2, minOffset));
-            if (addCrossSectionAtStartAndEnd)
-            {
-                stepDistances[0] = firstDistance + remainder / 2 - stepSize;
-                stepDistances[stepDistances.Count] = furthestDistance - remainder / 2 + stepSize;
+                remainder = 0.0;
+                numSteps++;
             }
-            var numSteps = stepDistances.Count;
-            if (numSteps < 4) return null; //Steps will not be accurate if too few. 
+
+            ////If the remainder is less than the minOffset, set it equal to the step size.
+            ////This is to avoid the issue of missing the last cutting plane. 
+            //if (remainder.IsNegligible(minOffset * 2)) remainder += stepSize;
+
+            double topRemainder;
+            double bottomRemainder;
+            bool addToStart = false;
+            bool addToEnd = false;
+            switch (snapTo)
+            {
+                case SnapType.ClosestAlong:
+                    topRemainder = 0.0;
+                    bottomRemainder = stepSize - remainder; //move outward (positive)
+                    numSteps++; //one cross section will be outside the part
+                    addToEnd = true;
+                    break;
+                case SnapType.CenterAllInside: //Subtract the remainder, split between the top and bottom.
+                    topRemainder = -remainder / 2; //move inward (negative)
+                    bottomRemainder = -remainder / 2; //move inward (negative)
+                    addToStart = true;
+                    addToEnd = true;
+                    break;
+                case SnapType.CenterEndsOutside: //Add (stepsize - remainder) split between the top and bottom. 
+                    topRemainder = (stepSize - remainder) / 2; //move outward (positive)
+                    bottomRemainder = (stepSize - remainder) / 2; //move outward (positive)
+                    numSteps++; //Add the normal +1 cross section caused by centering and adding the remainder
+                    addToStart = true;
+                    addToEnd = true;
+                    break;
+                case SnapType.FurthestAlong:
+                    topRemainder = stepSize - remainder; //move outward (positive)
+                    bottomRemainder = 0.0;
+                    numSteps++; //one cross section will be outside the part
+                    addToStart = true;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(snapTo), snapTo, null);
+            }
+
+            if (numSteps < 2) return null; //Steps will not be accurate if too few. 
+            var distanceAlongAxis = firstDistance - topRemainder; //positive moves inward, negative outward      
+            for (var i = 0; i < numSteps; i++)
+            {
+                stepDistances.Add(i, distanceAlongAxis);
+                distanceAlongAxis += stepSize;
+            }
+            if (!(distanceAlongAxis - stepSize).IsPracticallySame(furthestDistance + bottomRemainder, 0.0001))
+            {
+                stepDistances.Add(numSteps, distanceAlongAxis);
+                numSteps++;
+                //throw new Exception(); //positive moves inward, negative outward     
+            }
 
             //Initialize the size of the list.
             var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
 
             //Start the step index at +1, so that the increment can be at the start of the while loop, 
             //making the final stepIndex correct for use in a later function.
-            stepIndex = addCrossSectionAtStartAndEnd ? 1 : 0;
+            var stepIndex = addToStart ? 1 : 0;
             //Stop at -1 if adding additional cross sections, because there is one item at the end of the list we want to skip.
-            var n = addCrossSectionAtStartAndEnd ? numSteps - 1: numSteps;
+            var n = addToEnd ? numSteps - 1 : numSteps;
             while (stepIndex < n)
             {
                 distanceAlongAxis = stepDistances[stepIndex];
@@ -197,8 +252,16 @@ namespace TVGL
                     //Update the edge list with this vertex.
                     if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
                     {
-                        //Move the distance enough so that this vertex is now less than 
-                        distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
+                        if (stepIndex == n - 1)
+                        {
+                            //Move backward
+                            distanceAlongAxis = vertexDistanceAlong - minOffset * 1.1;
+                        }
+                        else
+                        {
+                            //Move the distance enough so that this vertex is now less than 
+                            distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
+                        }
                     }
                     //Else, Break after we get to a vertex that is further than the distance along axis
                     if (vertexDistanceAlong > distanceAlongAxis)
@@ -276,22 +339,18 @@ namespace TVGL
                     }
 
                     //Add the data to the output
-                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, distanceAlongAxis);
+                    //Use the original distance value for this index.
+                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, stepDistances[stepIndex]);
                 }
                 else
                 {
                     Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
                 }
-
-                stepDistances[stepIndex] = distanceAlongAxis; //Update to the adjusted value.
                 stepIndex++;
             }
 
-            // ReSharper disable once InvertIf, since it is more readible this way.
-            if (addCrossSectionAtStartAndEnd)
+            if (addToStart)
             {
-                //Add the first and last cross sections. 
-                //Note, these may not be great fits if step size is large
                 var firstCrossSection = new List<List<Vertex>>();
                 foreach (var path in outputData[1].Paths)
                 {
@@ -299,6 +358,9 @@ namespace TVGL
                         direction, firstDistance));
                 }
                 outputData[0] = new DecompositionData(outputData[1].Paths, firstCrossSection, stepDistances[0]);
+            }
+            if (addToEnd)
+            {
                 var lastCrossSection = new List<List<Vertex>>();
                 foreach (var path in outputData[numSteps - 2].Paths)
                 {
@@ -310,6 +372,8 @@ namespace TVGL
 
             return outputData;
         }
+
+ 
         #endregion
 
         #region Additive Volume
@@ -323,7 +387,7 @@ namespace TVGL
         /// <param name="outputData"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static double AdditiveVolume(List<DecompositionData> decompData, double layerHeight, 
+        public static double AdditiveVolume(List<DecompositionData> decompData, double layerHeight,
             double scanningAccuracy, out List<DecompositionData> outputData)
         {
             outputData = new List<DecompositionData>();
@@ -369,14 +433,6 @@ namespace TVGL
                         }
                         else
                         {
-                            ////Debug Mode
-                            //var previousData = outputData.Last();
-                            //outputData = new List<DecompositionData>() { previousData, new DecompositionData( currentPaths, distance )};
-                            //return 0.0;
-
-                            //Run mode: Use previous path
-                            Debug.WriteLine("Union failed and not similar");
-                            //
                             currentPaths = outputData.Last().Paths;
                         }
                     }
@@ -439,6 +495,116 @@ namespace TVGL
             }
             return additiveVolume;
         }
+
+        /// <summary>
+        /// Gets the additive volume given a list of decomposition data
+        /// </summary>
+        /// <param name="decompData"></param>
+        /// <param name="layerHeight"></param>
+        /// <param name="scanningAccuracy"></param>
+        /// <param name="outputData"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static double AdditiveVolumeWithoutSupport(List<DecompositionData> decompData, double layerHeight,
+            double scanningAccuracy, out List<DecompositionData> outputData)
+        {
+            var n = decompData.Count;
+            var offsetCrossSections = new List<PolygonLight>[n];
+            //Offset all paths 
+            for (var i = 0; i < n; i++)
+            {
+                var currentCrossSection = decompData[i].Paths;
+                //Offset if the additive accuracy is significant
+                var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentCrossSection);
+                var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentCrossSection, scanningAccuracy) : currentCrossSection;
+                var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
+                //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
+                var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
+                var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
+                if (areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
+                if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05))
+                    throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
+                offsetCrossSections[i] = new List<PolygonLight>(simpleOffset.Select(p => new PolygonLight(p)));
+            };
+
+            outputData = new List<DecompositionData>();
+
+            //Foreach cross section, union it with the next two cross sections and the prior one to ensure the surfaces are covered.
+            //This creates a cross section that is dependent on 4 offset crossSections (or three layers).
+            //This assumes that cross sections were added to the top and bottom of decomp data.    
+            //This also assumes that the extrusion will be done from the cross section along the build direction.
+
+            //Add the first and second cross section
+            //var onePrior = offsetCrossSections[1]; 
+            //outputData.Add(new DecompositionData(onePrior.Select(p => p.Path), previousDistance));
+            //previousDistance += layerHeight;
+            var additiveVolume = 0.0;// Math.Abs(onePrior.Sum(p => p.Area)) * layerHeight;
+            //var twoPrior = PolygonOperations.Union(offsetCrossSections[0], offsetCrossSections[2]);
+            //outputData.Add(new DecompositionData(twoPrior.Select(p => p.Path), previousDistance));
+            //additiveVolume += Math.Abs(twoPrior.Sum(p => p.Area)) * layerHeight;
+            //var priorVolume = 0.0;
+
+            double currentVolume;
+            if (true) //Add extra top layer
+            {
+                outputData.Add(new DecompositionData(offsetCrossSections[0].Select(p => p.Path), decompData[0].DistanceAlongDirection - layerHeight));
+                currentVolume = Math.Abs(offsetCrossSections[0].Sum(p => p.Area)) * layerHeight;
+                additiveVolume += currentVolume;
+            }
+            var union = offsetCrossSections[1];
+            for (var i = 0; i < n - 1; i++)
+            {
+                var distance = decompData[i].DistanceAlongDirection;
+                var deltaX = Math.Abs(distance - decompData[i + 1].DistanceAlongDirection);
+                var current = offsetCrossSections[i];
+                try
+                {
+                    //Union with next two and the prior one
+                    if (i > 0) union = PolygonOperations.Union(current, offsetCrossSections[i - 1]); //if not the first layer
+                    if (i < n - 1) union = PolygonOperations.Union(union, offsetCrossSections[i + 1]); //if not the final layer
+                    if (i < n - 2) union = PolygonOperations.Union(union, offsetCrossSections[i + 2]);
+                    currentVolume = Math.Abs(union.Sum(p => p.Area)) * deltaX;
+                    ////Set the additive information. Instead of using the current path area, use the max between this one & below it.
+                    ////If the part was cut at this index, the furthest cross section would be at i.
+                    ////Therefore, the additive shape from i-1 to i should be based on the union of i-1 and i.
+                    ////Once we area past this index, the union 
+                    ////Since we are at i and want the volume below it, we want to update the prior two cross sections / volumes
+                    //onePriorUnion = PolygonOperations.Union(onePriorCrossSection, current);
+                    //currentVolume = Math.Abs(onePrior.Sum(p => p.Area)) * deltaX; //volume between onePrior and current
+                    //twoPrior = PolygonOperations.Union(twoPrior, current);
+                    //priorVolume = Math.Abs(twoPrior.Sum(p => p.Area)) * deltaX; //volume between twoPrior and onePrior               
+                }
+                catch
+                {
+                    //They are probably throwing an error because they are closely overlapping.
+                    //Use the previous path
+                    var onePrior = new List<PolygonLight>(outputData.Last().Paths.Select(p => new PolygonLight(p)));
+                    currentVolume = Math.Abs(onePrior.Sum(p => p.Area)) * deltaX; //volume between onePrior and current   
+                }
+
+                //if (i != 1)
+                //{
+                outputData.Add(new DecompositionData(union.Select(p => p.Path), distance));
+                additiveVolume += currentVolume;
+                //if (i == n - 1)
+                //{
+                //    //Add the final layer
+                //    outputData.Add(new DecompositionData(onePriorUnion.Select(p => p.Path), distance));
+                //    additiveVolume += currentVolume;
+                //}
+                //}
+
+                //Update the values for the next iteration.
+                // previousDistance = distance;
+                //Two prior is now done. One prior becomes the prior and the current becomes onePrior
+                //oPrior = onePriorUnion;
+                //priorVolume = currentVolume;
+                //onePriorUnion = currentUnion;
+                //onePrior = current;
+            }
+
+            return additiveVolume;
+        }
         #endregion
 
         #region Get Cross Section at a Given Distance
@@ -471,7 +637,7 @@ namespace TVGL
         public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices.ToList(), out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, ts.Vertices.ToList(), out List<(Vertex, double)> sortedVertices);
             if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
                 distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
             {
@@ -569,7 +735,7 @@ namespace TVGL
         public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(PolygonalFace[] faces, Vertex[] vertices, double tolerance, double[] direction, double distance)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, vertices.ToList(), out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, vertices.ToList(), out List<(Vertex, double)> sortedVertices);
             if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
                 distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
             {
@@ -595,7 +761,7 @@ namespace TVGL
                 var edges = new List<long>();
                 for (var i = 0; i < 3; i++)
                 {
-                    var j = (i == 2) ? 0: i + 1;
+                    var j = (i == 2) ? 0 : i + 1;
                     var v1 = face.Vertices[i];
                     var v2 = face.Vertices[j];
                     var newEdge = Edge.GetEdgeChecksum(v1, v2);
@@ -618,7 +784,7 @@ namespace TVGL
             //ToDo: could change value to an array once debugged
             foreach (var edgeFaceSet in edgeFaces.Values)
             {
-                if(edgeFaceSet.Count != 2) throw new Exception("Error in setting edge-face lookup dictionary");
+                if (edgeFaceSet.Count != 2) throw new Exception("Error in setting edge-face lookup dictionary");
             }
 
             var edgeList = new HashSet<long>();
@@ -653,7 +819,7 @@ namespace TVGL
 
                     var cuttingPlane = new Flat(distance2, direction);
                     var inputEdgeLoops = new List<List<long>>();
-                    var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup, 
+                    var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup,
                         ref maxVertexIndex);
                     return loops; //May return null if line intersections are not valid
                 }
@@ -690,6 +856,16 @@ namespace TVGL
             public List<List<PointLight>> Paths;
 
             /// <summary>
+            /// An optional list of paths that have been offset
+            /// </summary>
+            public List<PolygonLight> OffsetPaths;
+
+            /// <summary>
+            /// The convex hull for each slice. Optional parameter that is only set when SetConvexHull() is called.
+            /// </summary>
+            public IEnumerable<PointLight> ConvexHull;
+
+            /// <summary>
             /// A list of the paths that make up the slice of the solid at this distance along this direction
             /// </summary>
             public List<List<Vertex>> Vertices;
@@ -708,7 +884,8 @@ namespace TVGL
             public DecompositionData(IEnumerable<List<PointLight>> paths, IEnumerable<List<Vertex>> vertices, double distanceAlongDirection)
             {
                 Paths = new List<List<PointLight>>(paths);
-                Vertices = new List<List<Vertex>>(vertices);
+                if (vertices != null)
+                    Vertices = new List<List<Vertex>>(vertices);
                 DistanceAlongDirection = distanceAlongDirection;
             }
 
@@ -721,6 +898,16 @@ namespace TVGL
             {
                 Paths = new List<List<PointLight>>(paths);
                 DistanceAlongDirection = distanceAlongDirection;
+            }
+
+            public void SetConvexHull()
+            {
+                ConvexHull = MinimumEnclosure.ConvexHull2D(Paths.SelectMany(s => s.Select(p => p)).ToList());
+            }
+
+            public void SetOffset(double offsetDistance)
+            {
+                OffsetPaths = PolygonOperations.OffsetSquare(Paths, offsetDistance).Select(p => new PolygonLight(p)).ToList();
             }
         }
 
@@ -811,7 +998,7 @@ namespace TVGL
             /// <param name="stepIndex"></param>
             /// <param name="path2D"></param>
             /// <param name="distanceAlongSearchDirection"></param>
-            public PolygonDataGroup(List<PointLight> path2D, List<Vertex> intersectionVertices, 
+            public PolygonDataGroup(List<PointLight> path2D, List<Vertex> intersectionVertices,
                 List<Edge> edgeLoop, double area, int indexInCrossSection, int stepIndex, double distanceAlongSearchDirection)
             {
                 Path2D = path2D;
@@ -878,7 +1065,7 @@ namespace TVGL
         /// <param name="orderedForcedSteps"></param>
         /// <returns></returns>
         public static List<DirectionalSegment> UniformDirectionalSegmentation(TessellatedSolid ts, double[] direction,
-            double stepSize, out Dictionary<int, double> stepDistances, 
+            double stepSize, out Dictionary<int, double> stepDistances,
             out Dictionary<int, double> sortedVertexDistanceLookup, List<double> orderedForcedSteps = null)
         {
             //Reset all the arbitrary edge references and vertex references to -1, since they may have been set in another method
@@ -914,7 +1101,7 @@ namespace TVGL
 
             //First, sort the vertices along the given axis. Duplicate distances are not important because they
             //will all be handled at the same step/distance.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<(Vertex, double)> sortedVertices);
             //Create a distance lookup dictionary based on the vertex indices
             sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
             //A dictionary used to find the step index for each vertex. The key is the vertex index in list. The value is the step index.
@@ -936,7 +1123,7 @@ namespace TVGL
             var furthestDistance = sortedVertices.Last().Item2;
             var distanceAlongAxis = firstDistance;
             var currentVertexIndex = 0;
-            
+
             //Start the step index at -1, so that the increment can be at the start of the while loop, 
             //making the final stepIndex correct for use in a later function.
             var stepIndex = -1;
@@ -958,7 +1145,7 @@ namespace TVGL
                     }
                 }
                 numberOfForcedDistances = cleanOrderedForcedSteps.Count;
-                forcedDistanceIndex ++;
+                forcedDistanceIndex++;
             }
             var priorNonForcedDistanceAlongAxis = distanceAlongAxis;
             while (distanceAlongAxis < furthestDistance - stepSize)
@@ -1049,7 +1236,7 @@ namespace TVGL
 
                     stepDistances.Add(stepIndex, distanceAlongAxis);
 
-                    foreach(var vertex in inStepVertices)
+                    foreach (var vertex in inStepVertices)
                     {
                         referenceVerticesByStepIndex.Add(vertex.IndexInList, stepIndex);
                     }
@@ -1124,7 +1311,7 @@ namespace TVGL
 
             foreach (var segment in allDirectionalSegments)
             {
-                if(segment.Value.CrossSectionPathDictionary.Count == 0) throw new Exception("A segment must have cross sections");
+                if (segment.Value.CrossSectionPathDictionary.Count == 0) throw new Exception("A segment must have cross sections");
                 //if(segment.Value.StartStepIndexAlongSearchDirection == segment.Value.EndStepIndexAlongSearchDirection) throw new Exception("This segment has zero thickness");
             }
 
@@ -1538,7 +1725,7 @@ namespace TVGL
                 //Don't remove from the unusedInStepVertices list until we are done collecting
                 //All the edges that belong to this segment. Otherwise, we will be missing some
                 //of the edges between in step vertices.
-                var newSegmentIndex = allDirectionalSegments.Any()? allDirectionalSegments.Keys.Max() + 1 : 0;
+                var newSegmentIndex = allDirectionalSegments.Any() ? allDirectionalSegments.Keys.Max() + 1 : 0;
                 usedInStepVertices.Add(startVertex);
                 var verticesToConsider = new Stack<Vertex>();
                 verticesToConsider.Push(startVertex);
@@ -1974,7 +2161,7 @@ namespace TVGL
             /// <summary>
             /// Gets the start distance of this segment along the search direction
             /// </summary>
-            public double StartDistanceAlongSearchDirection => 
+            public double StartDistanceAlongSearchDirection =>
                 CrossSectionPathDictionary[StartStepIndexAlongSearchDirection].First().DistanceAlongSearchDirection;
 
             /// <summary>
@@ -1988,7 +2175,7 @@ namespace TVGL
             /// <summary>
             /// Gets the end distance of this segment along the search direction
             /// </summary>
-            public double EndDistanceAlongSearchDirection => 
+            public double EndDistanceAlongSearchDirection =>
                 CrossSectionPathDictionary[EndStepIndexAlongSearchDirection].First().DistanceAlongSearchDirection;
 
             /// <summary>
@@ -2383,12 +2570,12 @@ namespace TVGL
             {
                 var tempEdges = CurrentEdges.Where(edge => edge.To.ReferenceIndex == -1 || edge.From.ReferenceIndex == -1).ToList();
                 CurrentEdges = new HashSet<Edge>(tempEdges);
-            }  
+            }
 
             /// <summary>
             /// Sets the ReferenceVerticesByStepIndex. Do this when finished if the data is needed.
             /// </summary>
-            public void SetReferenceVerticesByStepIndex(Dictionary<int, int> vertexStepIndexReference )
+            public void SetReferenceVerticesByStepIndex(Dictionary<int, int> vertexStepIndexReference)
             {
                 ReferenceVerticesByStepIndex = new Dictionary<int, List<Vertex>>();
                 if (!IsFinished) throw new Exception("Segment must be finished first");
@@ -2401,7 +2588,7 @@ namespace TVGL
                     }
                     else
                     {
-                        ReferenceVerticesByStepIndex.Add(vertexStepIndex, new List<Vertex>() {vertex});
+                        ReferenceVerticesByStepIndex.Add(vertexStepIndex, new List<Vertex>() { vertex });
                     }
                 }
             }
@@ -2411,7 +2598,7 @@ namespace TVGL
             /// Reverses the direction and all associated dictionaries. It is assumed that the steps are to be 
             /// ordered along the reversed direction. The total number of steps along the direction must be given.
             /// </summary>
-            public void Reverse(int maxStepIndex,  Dictionary<int, double> stepDistances)
+            public void Reverse(int maxStepIndex, Dictionary<int, double> stepDistances)
             {
                 ForwardDirection = ForwardDirection.multiply(-1);
                 var tempSegmentsSet = ForwardAdjoinedDirectionalSegments;
@@ -2504,7 +2691,7 @@ namespace TVGL
                 foreach (var startEdge in edges)
                 {
                     if (!unusedEdges.Contains(startEdge)) continue;
-                    unusedEdges.Remove(startEdge); 
+                    unusedEdges.Remove(startEdge);
                     var loop = new List<Vertex>();
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
                         cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
@@ -2574,9 +2761,10 @@ namespace TVGL
             outputEdgeLoops = edgeLoops;
             return loops;
         }
+   
         private static List<List<Vertex>> GetLoops(HashSet<long> edgeList, Flat cuttingPlane,
           out List<List<long>> outputEdgeLoops, List<List<long>> intputEdgeLoops, Dictionary<int, Vertex> vertexLookup,
-            Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup, 
+            Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup,
             Dictionary<PolygonalFace, List<long>> faceEdgeLookup, ref int maxVertexIndex)
         {
             outputEdgeLoops = new List<List<long>>();
@@ -2596,7 +2784,7 @@ namespace TVGL
                             vertexLookup[vertex1], vertexLookup[vertex2]);
                         maxVertexIndex++;
                         vertexLookup.Add(maxVertexIndex, newVertex);
-                        vertexEdgeLoopup.Add(maxVertexIndex, new List<long>{edge});
+                        vertexEdgeLoopup.Add(maxVertexIndex, new List<long> { edge });
                         loop.Add(newVertex);
                     }
                     loops.Add(loop);
@@ -2614,7 +2802,7 @@ namespace TVGL
                 foreach (var startEdge in edges)
                 {
                     if (!unusedEdges.Contains(startEdge)) continue;
-                    unusedEdges.Remove(startEdge); 
+                    unusedEdges.Remove(startEdge);
                     var loop = new List<Vertex>();
                     var (vertex1, vertex2) = Edge.GetVertexIndices(startEdge);
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
