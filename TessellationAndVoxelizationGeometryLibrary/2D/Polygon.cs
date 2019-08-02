@@ -1,39 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace TVGL
 {
+    [DataContract]
+    [KnownType(typeof(List<PointLight>))]
     public struct PolygonLight
     {
         /// <summary>
         /// Gets the PointLights that make up the polygon
         /// </summary>
+        [DataMember]
         public List<PointLight> Path;
 
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
+        [DataMember]
         public double Area;
 
         /// <summary>
         /// Maxiumum X value
         /// </summary>
+        [DataMember]
         public double MaxX;
 
         /// <summary>
         /// Miniumum X value
         /// </summary>
+        [DataMember]
         public double MinX;
 
         /// <summary>
         /// Maxiumum Y value
         /// </summary>
+        [DataMember]
         public double MaxY;
 
         /// <summary>
         /// Minimum Y value
         /// </summary>
+        [DataMember]
         public double MinY;
 
         public PolygonLight(Polygon polygon)
@@ -79,6 +89,24 @@ namespace TVGL
         public double Length => MiscFunctions.Perimeter(Path);
 
         public bool IsPositive => Area >= 0;
+
+        public void Serialize(string filename)
+        {
+            using (var writer = new FileStream(filename, FileMode.Create, FileAccess.Write))
+            {
+                var ser = new DataContractSerializer(typeof(PolygonLight));
+                ser.WriteObject(writer, this);
+            }
+        }
+
+        public static PolygonLight Deserialize(string filename)
+        {
+            using (var reader = new FileStream(filename, FileMode.Open, FileAccess.Read))
+            {
+                var ser = new DataContractSerializer(typeof(PolygonLight));
+                return (PolygonLight) ser.ReadObject(reader);
+            }
+        }
     }
 
     internal enum PolygonType
