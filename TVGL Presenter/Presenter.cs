@@ -875,8 +875,8 @@ namespace TVGL
                         Geometry = new MeshGeometry3D
                         {
                             Positions = new Point3DCollection(positions),
-                        // TriangleIndices = new Int32Collection(triIndices),
-                        Normals = new Vector3DCollection(normals)
+                            // TriangleIndices = new Int32Collection(triIndices),
+                            Normals = new Vector3DCollection(normals)
                         },
                         Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 189, G = 189, B = 189 })
                     }
@@ -961,24 +961,8 @@ namespace TVGL
                     var jS = j % 8;
                     for (var k = 0; k < zLim; k++)
                     {
-                        if (vs.LongDimension == 0)
-                        {
-                            if ((byte) (vs.Voxels[iB, j, k] << iS) >> 7 == 0)
-                                continue;
-                        }
-                        if (vs.LongDimension == 1)
-                        {
-                            if ((byte) (vs.Voxels[i, jB, k] << jS) >> 7 == 0)
-                                continue;
-                        }
-                        if (vs.LongDimension == 2)
-                        {
-                            var kB = k / 8;
-                            var kS = k % 8;
-                            if ((byte) (vs.Voxels[i, j, kB] << kS) >> 7 == 0)
-                                continue;
-                        }
-                        
+                        if ((byte)(vs.Voxels[iB, j, k] << iS) >> 7 == 0)
+                            continue;
                         var neighbors = vs.GetNeighbors(i, j, k, xLim, yLim, zLim).ToList();
                         if (neighbors.All(n => n != null)) continue;
 
@@ -1032,11 +1016,11 @@ namespace TVGL
             var partialOutNormals = new Vector3DCollection();
             foreach (var v in vs.Voxels(VoxelRoleTypes.Partial))
             {
-                if (v.Level != showPartialLevel ) continue;
-                var x = (float) v.BottomCoordinate[0];
-                var y = (float) v.BottomCoordinate[1];
-                var z = (float) v.BottomCoordinate[2];
-                var s = (float) v.SideLength;
+                if (v.Level != showPartialLevel) continue;
+                var x = (float)v.BottomCoordinate[0];
+                var y = (float)v.BottomCoordinate[1];
+                var z = (float)v.BottomCoordinate[2];
+                var s = (float)v.SideLength;
 
                 for (int i = 0; i < 12; i++)
                 {
@@ -1059,16 +1043,16 @@ namespace TVGL
                     }
                 }
             }
-            
 
-            foreach (var v in vs.Voxels(VoxelRoleTypes.Full)) 
+
+            foreach (var v in vs.Voxels(VoxelRoleTypes.Full))
             {
                 //if (v.Level == 0 || v.Level == lowestLevel) continue;
-              
-                var x = (float) v.BottomCoordinate[0];
-                var y = (float) v.BottomCoordinate[1];
-                var z = (float) v.BottomCoordinate[2];
-                var s = (float) v.SideLength;
+
+                var x = (float)v.BottomCoordinate[0];
+                var y = (float)v.BottomCoordinate[1];
+                var z = (float)v.BottomCoordinate[2];
+                var s = (float)v.SideLength;
                 for (int i = 0; i < 12; i++)
                 {
                     for (int j = 0; j < 3; j++)
@@ -1183,8 +1167,8 @@ namespace TVGL
                             Geometry = new MeshGeometry3D
                             {
                                 Positions = new Point3DCollection(positions),
-                            // TriangleIndices = new Int32Collection(triIndices),
-                            Normals = new Vector3DCollection(normals)
+                                // TriangleIndices = new Int32Collection(triIndices),
+                                Normals = new Vector3DCollection(normals)
                             },
                             Material = defaultMaterial
                         }

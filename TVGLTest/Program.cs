@@ -138,7 +138,7 @@ namespace TVGLPresenterDX
             }
 
             Console.WriteLine("Completed.");
-            Console.ReadKey();
+            //Console.ReadKey();
         }
 
         public static void TestVoxelization(TessellatedSolid ts)
@@ -189,7 +189,7 @@ namespace TVGLPresenterDX
             Console.WriteLine("Dense erosion   : {0}", stopwatch.Elapsed);
 
             //Presenter.ShowAndHang(erd);
-            Presenter.ShowAndHang(erd_dense);
+            //Presenter.ShowAndHang(erd_dense);
 
 
             //stopwatch.Restart();
