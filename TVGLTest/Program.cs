@@ -138,12 +138,12 @@ namespace TVGLPresenterDX
             }
 
             Console.WriteLine("Completed.");
-            Console.ReadKey();
+          //  Console.ReadKey();
         }
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 1400;
+            var res = 400;
 
             Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
@@ -169,19 +169,20 @@ namespace TVGLPresenterDX
             Console.WriteLine("Dense erosion   : {0}", stopwatch.Elapsed);
             erd_dense.SolidColor = new Color(KnownColors.Magenta);
 
-            //Presenter.ShowAndHang(erd);
-            //Presenter.ShowAndHang(erd_dense, vs_dense);
+            Presenter.ShowAndHang(erd_dense); //, vs_dense);
 
 
             stopwatch.Restart();
             var neg_dense = vs_dense.InvertToNewSolid();
             stopwatch.Stop();
             Console.WriteLine("Dense inversion   : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(neg_dense); //, vs_dense);
 
             stopwatch.Restart();
             var draft_dense = vs_dense.DraftToNewSolid(VoxelDirections.ZPositive);
             stopwatch.Stop();
             Console.WriteLine("Dense draft   : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(draft_dense); //, vs_dense);
 
 
 
@@ -190,6 +191,7 @@ namespace TVGLPresenterDX
             var intersect_dense = neg_dense.IntersectToNewSolid(draft_dense);
             stopwatch.Stop();
             Console.WriteLine("Dense intersect   : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(intersect_dense); //, vs_dense);
 
 
             var draft1_dense = vs_dense.DraftToNewSolid(VoxelDirections.YNegative);
@@ -197,13 +199,14 @@ namespace TVGLPresenterDX
             var union_dense = draft_dense.UnionToNewSolid(draft1_dense);
             stopwatch.Stop();
             Console.WriteLine("Dense union   : {0}", stopwatch.Elapsed);
-
+            Presenter.ShowAndHang(union_dense); //, vs_dense);
 
 
             stopwatch.Restart();
             var subtract_dense = draft_dense.SubtractToNewSolid(draft1_dense);
             stopwatch.Stop();
             Console.WriteLine("Dense subtract   : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(subtract_dense); //, vs_dense);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)

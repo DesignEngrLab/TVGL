@@ -36,9 +36,7 @@ namespace TVGL.DenseVoxels
         public byte[,,] Voxels;
         public readonly int[] VoxelsPerSide;
         public readonly int[] BytesPerSide;
-        public readonly int BytesOnLongSide;
         public double VoxelSideLength { get; internal set; }
-        public double ByteSideLength => VoxelSideLength * 8;
         private readonly double[] Dimensions;
         public double[][] Bounds { get; protected set; }
         public double[] Offset => Bounds[0];
@@ -74,13 +72,17 @@ namespace TVGL.DenseVoxels
          * by (V % 8) and then right shifting that same byte by 7, where V is voxel coordinate. This
          * isolates the corresponding bit for the queried voxel, and the value of that byte will be
          * one (1) if it exists, and zero (0) if it doesn't.
+         * 
+         * note that for speed, the integer divide, x / 8, is replaced with x >> 3
+         * and the remainder x % 8 is replaced with x & 7 (which is the same thing, if you think about it).
          ***************************************************/
         public VoxelizedSolidDense(int[] voxelsPerSide, double voxelSideLength,
             IEnumerable<double[]> bounds, bool empty = false)
         {
             VoxelsPerSide = (int[])voxelsPerSide.Clone();
-            BytesOnLongSide = VoxelsPerSide[0] / 8;
-            BytesPerSide = new[] { BytesOnLongSide, VoxelsPerSide[1], VoxelsPerSide[2] };
+            var bytesInX = VoxelsPerSide[0] >> 3;
+            if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
+            BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
@@ -107,8 +109,9 @@ namespace TVGL.DenseVoxels
         {
             Voxels = (byte[,,])voxels.Clone();
             VoxelsPerSide = new[] { voxels.GetLength(0), voxels.GetLength(1), voxels.GetLength(2) };
-            BytesOnLongSide = VoxelsPerSide[0] / 8;
-            BytesPerSide = new[] { BytesOnLongSide, VoxelsPerSide[1], VoxelsPerSide[2] };
+            var bytesInX = VoxelsPerSide[0] >> 3;
+            if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
+            BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
@@ -121,7 +124,6 @@ namespace TVGL.DenseVoxels
             Voxels = (byte[,,])vs.Voxels.Clone();
             VoxelsPerSide = vs.VoxelsPerSide.ToArray();
             BytesPerSide = vs.BytesPerSide.ToArray();
-            BytesOnLongSide = vs.BytesOnLongSide;
             VoxelSideLength = vs.VoxelSideLength;
             Dimensions = vs.Dimensions.ToArray();
             Bounds = vs.Bounds.ToArray();
@@ -153,10 +155,11 @@ namespace TVGL.DenseVoxels
             VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
 
             VoxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
-            BytesOnLongSide = (int)Math.Ceiling(VoxelsPerSide[0] / 8.0);
+            var bytesInX = VoxelsPerSide[0] >> 3;
+            if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
 
 
-            BytesPerSide = new[] { BytesOnLongSide, VoxelsPerSide[1], VoxelsPerSide[2] };
+            BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
 
             Voxels = new byte[BytesPerSide[0], BytesPerSide[1], BytesPerSide[2]];
 
@@ -182,14 +185,14 @@ namespace TVGL.DenseVoxels
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
                     slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
                     VoxelSideLength, xLim); //parallel lines aligned with Y axis
-                var kB = k / 8;
-                var kS = 7 - (k % 8);
+                var kB = k >> 3;
+                var kS = 7 - (k & 7);
 
                 foreach (var intersections in intersectionPoints)
                 {
                     var i = (int)Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
-                    var iB = i / 8;
-                    var iS = 7 - (i % 8);
+                    var iB = i >> 3;
+                    var iS = 7 - (i & 7);
 
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
