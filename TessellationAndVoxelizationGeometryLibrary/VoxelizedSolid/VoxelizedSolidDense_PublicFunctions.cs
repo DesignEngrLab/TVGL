@@ -2,18 +2,15 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 using StarMathLib;
-using TVGL.Voxelization;
 
-namespace TVGL.DenseVoxels
+namespace TVGL.Voxelization
 {
     /// <summary>
-    /// Class VoxelizedSolidDense.
+    /// Class VoxelizedSolid.
     /// </summary>
-    public partial class VoxelizedSolidDense
+    public partial class VoxelizedSolid
     {
         #region Getting Neighbors
         //Neighbors functions use VoxelsPerSide
@@ -86,15 +83,7 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Set/update properties
-        public void UpdateProperties()
-        {
-            SetCount();
-            SetVolume();
-            SetSurfaceArea();
-        }
-
-        //Count uses BytesPerSide
-        private void SetCount()
+        public void UpdatePropertiesDense()
         {
             var count = new ConcurrentDictionary<int, int>();
             var xLim = BytesPerSide[0];
@@ -106,7 +95,7 @@ namespace TVGL.DenseVoxels
                 for (var j = 0; j < yLim; j++)
                     for (var k = 0; k < zLim; k++)
                     {
-                        var val = Voxels[i, j, k];
+                        var val = Dense[i, j, k];
                         if (val != 0)
                             counter += CountSetBits(val);
                     }
@@ -115,20 +104,10 @@ namespace TVGL.DenseVoxels
             Count = 0;
             foreach (var v in count.Values)
                 Count += v;
-        }
-
-        private void SetVolume()
-        {
             Volume = Count * Math.Pow(VoxelSideLength, 3);
-        }
 
-        //Surface area uses VoxelsPerSide
-        private void SetSurfaceArea()
-        {
             var neighbors = new ConcurrentDictionary<int, int>();
-            var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
-            var zLim = VoxelsPerSide[2];
+            xLim = VoxelsPerSide[0];
             //Parallel.For(0, xLim, i =>
             for(int i=0; i< xLim; i++)
             {
@@ -155,29 +134,17 @@ namespace TVGL.DenseVoxels
         }
         #endregion
 
-        #region Copy
-        public VoxelizedSolidDense Copy()
-        {
-            return new VoxelizedSolidDense(this);
-        }
-
-        public static VoxelizedSolidDense Copy(VoxelizedSolidDense vs)
-        {
-            return new VoxelizedSolidDense(vs);
-        }
-        #endregion
-
         #region Boolean functions
         //Boolean functions use BytesPerSide
-        public VoxelizedSolidDense CreateBoundingSolid()
+        public VoxelizedSolid CreateBoundingSolid()
         {
-            return new VoxelizedSolidDense(VoxelsPerSide, VoxelSideLength, Bounds);
+            return new VoxelizedSolid(VoxelsPerSide, VoxelSideLength, Bounds);
         }
 
         // NOT A
-        public VoxelizedSolidDense InvertToNewSolid()
+        public VoxelizedSolid InvertToNewSolid()
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, VoxelSideLength, Bounds, true);
+            var vs = new VoxelizedSolid(VoxelsPerSide, VoxelSideLength, Bounds, true);
             var xLim = BytesPerSide[0];
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
@@ -185,17 +152,17 @@ namespace TVGL.DenseVoxels
             {
                 for (var j = 0; j < yLim; j++)
                     for (var k = 0; k < zLim; k++)
-                        if (Voxels[i, j, k] != byte.MaxValue)
-                            vs.Voxels[i, j, k] = (byte)~Voxels[i, j, k];
+                        if (Dense[i, j, k] != byte.MaxValue)
+                            vs.Dense[i, j, k] = (byte)~Dense[i, j, k];
             });
-            vs.UpdateProperties();
+            vs.UpdatePropertiesDense();
             return vs;
         }
 
         // A OR B
-        public VoxelizedSolidDense UnionToNewSolid(params VoxelizedSolidDense[] solids)
+        public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)
         {
-            var vs = Copy();
+            var vs = (VoxelizedSolid)Copy();
             var xLim = BytesPerSide[0];
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
@@ -204,24 +171,24 @@ namespace TVGL.DenseVoxels
                 for (var j = 0; j < yLim; j++)
                     for (var k = 0; k < zLim; k++)
                     {
-                        var voxel = Voxels[i, j, k];
+                        var voxel = Dense[i, j, k];
                         if (voxel == byte.MaxValue) continue;
                         foreach (var vox in solids)
                         {
-                            voxel = (byte)(voxel | vox.Voxels[i, j, k]);
+                            voxel = (byte)(voxel | vox.Dense[i, j, k]);
                             if (voxel == byte.MaxValue) break;
                         }
-                        vs.Voxels[i, j, k] = voxel;
+                        vs.Dense[i, j, k] = voxel;
                     }
             });
-            vs.UpdateProperties();
+            vs.UpdatePropertiesDense();
             return vs;
         }
 
         // A AND B
-        public VoxelizedSolidDense IntersectToNewSolid(params VoxelizedSolidDense[] solids)
+        public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, VoxelSideLength, Bounds, true);
+            var vs = new VoxelizedSolid(VoxelsPerSide, VoxelSideLength, Bounds, true);
             var xLim = BytesPerSide[0];
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
@@ -230,26 +197,26 @@ namespace TVGL.DenseVoxels
                 for (var j = 0; j < yLim; j++)
                     for (var k = 0; k < zLim; k++)
                     {
-                        var voxel = Voxels[i, j, k];
+                        var voxel = Dense[i, j, k];
                         if (voxel == 0) continue;
                         foreach (var vox in solids)
                         {
-                            voxel = (byte)(voxel & vox.Voxels[i, j, k]);
+                            voxel = (byte)(voxel & vox.Dense[i, j, k]);
                             if (voxel == 0) break;
                         }
 
                         if (voxel == 0) continue;
-                        vs.Voxels[i, j, k] = voxel;
+                        vs.Dense[i, j, k] = voxel;
                     }
             });
-            vs.UpdateProperties();
+            vs.UpdatePropertiesDense();
             return vs;
         }
 
         // A AND (NOT B)
-        public VoxelizedSolidDense SubtractToNewSolid(params VoxelizedSolidDense[] subtrahends)
+        public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)
         {
-            var vs = Copy();
+            var vs = (VoxelizedSolid)Copy();
             var xLim = BytesPerSide[0];
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
@@ -258,24 +225,24 @@ namespace TVGL.DenseVoxels
                 for (var j = 0; j < yLim; j++)
                     for (var k = 0; k < zLim; k++)
                     {
-                        var voxel = Voxels[i, j, k];
+                        var voxel = Dense[i, j, k];
                         if (voxel == 0b0) continue;
                         foreach (var vox in subtrahends)
                         {
-                            voxel = (byte)(voxel & (byte)~vox.Voxels[i, j, k]);
+                            voxel = (byte)(voxel & (byte)~vox.Dense[i, j, k]);
                             if (voxel == 0) break;
                         }
 
-                        vs.Voxels[i, j, k] = voxel;
+                        vs.Dense[i, j, k] = voxel;
                     }
             });
-            vs.UpdateProperties();
+            vs.UpdatePropertiesDense();
             return vs;
         }
         #endregion
 
         #region Draft in VoxelDirection
-        public VoxelizedSolidDense DraftToNewSolid(VoxelDirections vd)
+        public VoxelizedSolid DraftToNewSolid(CartesianDirections vd)
         {
 
             var draftDir = (int)vd;
@@ -295,7 +262,7 @@ namespace TVGL.DenseVoxels
 
             if (draftIndex == 0)
                 return DraftOnXDimension(draftDir, mLim, nLim, pLim);
-            var vs = Copy();
+            var vs = (VoxelizedSolid)Copy();
 
             Parallel.For(0, mLim, m =>
             {
@@ -346,13 +313,13 @@ namespace TVGL.DenseVoxels
                 }
             });
 
-            vs.UpdateProperties();
+            vs.UpdatePropertiesDense();
             return vs;
         }
 
-        public VoxelizedSolidDense DraftOnXDimension(int draftDir, int mLim, int nLim, int pLim)
+        public VoxelizedSolid DraftOnXDimension(int draftDir, int mLim, int nLim, int pLim)
         {
-            var vs = Copy();
+            var vs = (VoxelizedSolid)Copy();
 
             Parallel.For(0, mLim, m =>
             {
@@ -374,7 +341,7 @@ namespace TVGL.DenseVoxels
                                 fillByte = true;
                         }
                         if (fillByte)
-                            vs.Voxels[qB, m, n] = byte.MaxValue;
+                            vs.Dense[qB, m, n] = byte.MaxValue;
                         else if (fillAll)
                         {
                             if (!GetVoxel(qB, m, n, qS))
@@ -386,36 +353,36 @@ namespace TVGL.DenseVoxels
                 }
             });
 
-            vs.UpdateProperties();
+            vs.UpdatePropertiesDense();
             return vs;
         }
 
         #endregion
 
         #region Voxel erosion
-        public VoxelizedSolidDense ErodeToNewSolid(VoxelizedSolidDense designedSolid, double[] dir,
+        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit = 0, double toolDia = 0, params string[] toolOptions)
         {
-            var copy = Copy();
+            var copy = (VoxelizedSolid)Copy();
             copy.ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, toolOptions);
-            copy.UpdateProperties();
+            copy.UpdatePropertiesDense();
             return copy;
         }
 
-        public VoxelizedSolidDense ErodeToNewSolid(VoxelizedSolidDense designedSolid, VoxelDirections dir,
+        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, CartesianDirections dir,
             double tLimit = 0, double toolDia = 0, params string[] toolOptions)
         {
-            var copy = Copy();
+            var copy = (VoxelizedSolid)Copy();
 
             var tDir = new[] { .0, .0, .0 };
             tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
 
             copy.ErodeVoxelSolid(designedSolid, tDir.normalize(3), tLimit, toolDia, toolOptions);
-            copy.UpdateProperties();
+            copy.UpdatePropertiesDense();
             return copy;
         }
 
-        private void ErodeVoxelSolid(VoxelizedSolidDense designedSolid, double[] dir,
+        private void ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit, double toolDia, params string[] toolOptions)
         {
             var dirX = dir[0];
@@ -440,14 +407,14 @@ namespace TVGL.DenseVoxels
             //    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
         }
 
-        private static IEnumerable<VoxelDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
+        private static IEnumerable<CartesianDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
         {
-            var dirs = new List<VoxelDirections>();
+            var dirs = new List<CartesianDirections>();
             var signedDir = new[] { Math.Sign(dirX), Math.Sign(dirY), Math.Sign(dirZ) };
             for (var i = 0; i < 3; i++)
             {
                 if (signedDir[i] == 0) continue;
-                dirs.Add((VoxelDirections)((i + 1) * -1 * signedDir[i]));
+                dirs.Add((CartesianDirections)((i + 1) * -1 * signedDir[i]));
             }
             return dirs.ToArray();
         }
@@ -466,7 +433,7 @@ namespace TVGL.DenseVoxels
             return voxels;
         }
 
-        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(VoxelDirections dir, double toolDia)
+        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(CartesianDirections dir, double toolDia)
         {
             var limit = new int[3][];
             var offset = (int)Math.Ceiling(0.5 * toolDia / VoxelSideLength);
@@ -496,7 +463,7 @@ namespace TVGL.DenseVoxels
             return voxels;
         }
 
-        private void ErodeMask(VoxelizedSolidDense designedSolid, int[][] mask, byte signX, byte signY,
+        private void ErodeMask(VoxelizedSolid designedSolid, int[][] mask, byte signX, byte signY,
             byte signZ, int xLim, int yLim, int zLim, int[][] sliceMask, int[] start)
         {
             //var sliceMaskCount = sliceMask.Length;
@@ -593,10 +560,10 @@ namespace TVGL.DenseVoxels
         {
             var bitPosition = xCoord & 7;
             var xByteCoord = xCoord >> 3;
-            var oldValue = GetVoxel(xByteCoord, yCoord, zCoord, bitPosition); // ((byte)(Voxels[coord, yCoord, zCoord] << shift) >> 7 != 0);
+            var oldValue = GetVoxel(xByteCoord, yCoord, zCoord, bitPosition); // ((byte)(Dense[coord, yCoord, zCoord] << shift) >> 7 != 0);
             if (oldValue == value) return;
-            if (value) Voxels[xByteCoord, yCoord, zCoord] += (byte)(1 << (7 - bitPosition));
-            else Voxels[xByteCoord, yCoord, zCoord] -= (byte)(1 << (7 - bitPosition));
+            if (value) Dense[xByteCoord, yCoord, zCoord] += (byte)(1 << (7 - bitPosition));
+            else Dense[xByteCoord, yCoord, zCoord] -= (byte)(1 << (7 - bitPosition));
 
         }
         /// <summary>
@@ -619,7 +586,7 @@ namespace TVGL.DenseVoxels
         /// <param name="bitPosition">The bit position.</param>
         public void TurnVoxelOn(int xByteCoord, int yCoord, int zCoord, int bitPosition)
         {
-            Voxels[xByteCoord, yCoord, zCoord] += (byte)(1 << (7 - bitPosition));
+            Dense[xByteCoord, yCoord, zCoord] += (byte)(1 << (7 - bitPosition));
         }
         /// <summary>
         /// Turns the voxel off ONLY if you know that it is already ON.
@@ -641,7 +608,7 @@ namespace TVGL.DenseVoxels
         /// <param name="bitPosition">The bit position.</param>
         public void TurnVoxelOff(int xByteCoord, int yCoord, int zCoord, int bitPosition)
         {
-            Voxels[xByteCoord, yCoord, zCoord] -= (byte)(1 << (7 - bitPosition));
+            Dense[xByteCoord, yCoord, zCoord] -= (byte)(1 << (7 - bitPosition));
         }
 
         /// <summary>
@@ -655,7 +622,7 @@ namespace TVGL.DenseVoxels
         {
             var shift = xCoord & 7;
             var xByteCoord = xCoord >> 3;
-            return GetVoxel(Voxels[xByteCoord, yCoord, zCoord], shift);
+            return GetVoxel(Dense[xByteCoord, yCoord, zCoord], shift);
         }
         /// <summary>
         /// Gets the voxel.
@@ -667,7 +634,7 @@ namespace TVGL.DenseVoxels
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         bool GetVoxel(int xByteCoord, int yCoord, int zCoord, int bitPosition)
         {
-            return GetVoxel(Voxels[xByteCoord, yCoord, zCoord], bitPosition);
+            return GetVoxel(Dense[xByteCoord, yCoord, zCoord], bitPosition);
         }
         /// <summary>
         /// Gets the voxel.
@@ -701,70 +668,9 @@ namespace TVGL.DenseVoxels
             }
             return bits;
         }
-
-
-
-        private class SameCoordinates : EqualityComparer<int[]>
-        {
-            public override bool Equals(int[] a1, int[] a2)
-            {
-                if (a1 == null && a2 == null)
-                    return true;
-                if (a1 == null || a2 == null)
-                    return false;
-                return (a1[0] == a2[0] &&
-                        a1[1] == a2[1] &&
-                        a1[2] == a2[2]);
-            }
-            public override int GetHashCode(int[] ax)
-            {
-                if (ax is null) return 0;
-                var hCode = ax[0] + (ax[1] << 10) + (ax[2] << 20);
-                return hCode.GetHashCode();
-            }
-        }
-
-        #region Functions to check if within bounds 
-        //private static bool SucceedsBounds(int i, int j, int k, double dirX, double dirY, double dirZ, int xLim, int yLim,
-        //    int zLim)
-        //{
-        //    if (dirX < 0 && i < 0) return true;
-        //    if (dirX > 0 && i >= xLim) return true;
-        //    if (dirX == 0 && (i < 0 || i >= xLim)) return true;
-
-        //    if (dirY < 0 && j < 0) return true;
-        //    if (dirY > 0 && j >= yLim) return true;
-        //    if (dirY == 0 && (j < 0 || j >= yLim)) return true;
-
-        //    if (dirZ < 0 && k < 0) return true;
-        //    if (dirZ > 0 && k >= zLim) return true;
-        //    return dirZ == 0 && (k < 0 || k >= zLim);
-        //}
-
-        //private static bool PrecedesBounds(int i, int j, int k, double dirX, double dirY, double dirZ, int xLim, int yLim,
-        //    int zLim)
-        //{
-        //    if (dirX < 0 && i >= xLim) return true;
-        //    if (dirX > 0 && i < 0) return true;
-        //    if (dirX == 0 && (i >= xLim || i < 0)) return true;
-
-        //    if (dirY < 0 && j >= yLim) return true;
-        //    if (dirY > 0 && j < 0) return true;
-        //    if (dirY == 0 && (j >= yLim || j < 0)) return true;
-
-        //    if (dirZ < 0 && k >= zLim) return true;
-        //    if (dirZ > 0 && k < 0) return true;
-        //    return dirZ == 0 && (k >= zLim || k < 0);
-        //}
-
-        //private static bool OutsideBounds(int i, int j, int k, int xLim, int yLim, int zLim)
-        //{
-        //    return i < 0 || i >= xLim ||
-        //           j < 0 || j >= yLim ||
-        //           k < 0 || k >= zLim;
-        //}
         #endregion
 
+        #region Functions for Dilation (3D Offsetting)
         private static int[][] GetVoxelsWithinCircle(double[] center, double[] dir, double radius, bool edge = false)
         {
             var voxels = new HashSet<int[]>(new SameCoordinates());

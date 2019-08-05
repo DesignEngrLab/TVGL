@@ -891,7 +891,7 @@ namespace TVGL
                     var jS = j % 8;
                     for (var k = 0; k < zLim; k++)
                     {
-                        if ((byte)(vs.Voxels[iB, j, k] << iS) >> 7 == 0)
+                        if ((byte)(vs.Dense[iB, j, k] << iS) >> 7 == 0)
                             continue;
 
                         var neighbors = vs.GetNeighbors(i, j, k, xLim, yLim, zLim).ToList();

@@ -118,7 +118,7 @@ namespace TVGLPresenterDX
                 };
                 //Presenter.ShowAndHang(ts);
                 TestVoxelization(ts);
-                TestSlice(ts);
+                //TestSlice(ts);
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
                 //ts[0].SetToOriginAndSquare(out var backTransform);
@@ -199,7 +199,7 @@ namespace TVGLPresenterDX
             Presenter.ShowAndHang(neg_dense); //, vs_dense);
 
             stopwatch.Restart();
-            var draft_dense = vs_dense.DraftToNewSolid(VoxelDirections.ZPositive);
+            var draft_dense = vs_dense.DraftToNewSolid(CartesianDirections.ZPositive);
             stopwatch.Stop();
             Console.WriteLine("Dense draft   : {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(draft_dense); //, vs_dense);
@@ -214,7 +214,7 @@ namespace TVGLPresenterDX
             Presenter.ShowAndHang(intersect_dense); //, vs_dense);
 
 
-            var draft1_dense = vs_dense.DraftToNewSolid(VoxelDirections.YNegative);
+            var draft1_dense = vs_dense.DraftToNewSolid(CartesianDirections.YNegative);
             stopwatch.Restart();
             var union_dense = draft_dense.UnionToNewSolid(draft1_dense);
             stopwatch.Stop();
