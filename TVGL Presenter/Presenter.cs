@@ -963,6 +963,7 @@ namespace TVGL
                     {
                         if ((byte)(vs.Voxels[iB, j, k] << iS) >> 7 == 0)
                             continue;
+
                         var neighbors = vs.GetNeighbors(i, j, k, xLim, yLim, zLim).ToList();
                         if (neighbors.All(n => n != null)) continue;
 

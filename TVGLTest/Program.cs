@@ -138,7 +138,7 @@ namespace TVGLPresenterDX
             }
 
             Console.WriteLine("Completed.");
-            //Console.ReadKey();
+            Console.ReadKey();
         }
 
         public static void TestVoxelization(TessellatedSolid ts)

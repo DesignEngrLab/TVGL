@@ -166,8 +166,7 @@ namespace TVGL.DenseVoxels
             BytesOnLongSide = VoxelsPerSide[0] / 8;
 
 
-            BytesPerSide = new[]{BytesOnLongSide , VoxelsPerSide[1],VoxelsPerSide[2]
-            };
+            BytesPerSide = new[] { BytesOnLongSide, VoxelsPerSide[1], VoxelsPerSide[2] };
 
             Voxels = new byte[BytesPerSide[0], BytesPerSide[1], BytesPerSide[2]];
 

@@ -30,34 +30,28 @@ namespace TVGL.DenseVoxels
         public int[][] GetNeighbors(int i, int j, int k, int xLim, int yLim, int zLim)
         {
             var neighbors = new int[][] { null, null, null, null, null, null };
-            if (i != 0 && IsVoxel(i - 1, j, k)) neighbors[0] = new[] { i - 1, j, k };
-            if (i + 1 != xLim && IsVoxel(i + 1, j, k)) neighbors[1] = new[] { i + 1, j, k };
-            if (j != 0 && IsVoxel(i, j - 1, k)) neighbors[2] = new[] { i, j - 1, k };
-            if (j + 1 != yLim && IsVoxel(i, j + 1, k)) neighbors[3] = new[] { i, j + 1, k };
-            if (k != 0 && IsVoxel(i, j, k - 1)) neighbors[4] = new[] { i, j, k - 1 };
-            if (k + 1 != zLim && IsVoxel(i, j + 1, k + 1)) neighbors[5] = new[] { i, j, k + 1 };
-            //var iB = i / 8;
-            //var iS = i % 8;
+            var iB = i / 8;
+            var iS = i % 8;
 
-            //if (i + 1 != xLim && IsVoxel(i + 1, j, k)
-            //{
-            //    var iS1 = iS == 7 ? 0 : iS + 1;
-            //    var iB1 = iS == 7 ? iB + 1 : iB;
-            //    if ((byte)(Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[1] = new[] { i + 1, j, k };
-            //}
+            if (i + 1 != xLim)
+            {
+                var iS1 = iS == 7 ? 0 : iS + 1;
+                var iB1 = iS == 7 ? iB + 1 : iB;
+                if ((byte)(Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[1] = new[] { i + 1, j, k };
+            }
 
-            //if (j + 1 != yLim && (byte)(Voxels[iB, j + 1, k] << iS) >> 7 != 0) neighbors[3] = new[] { i, j + 1, k };
-            //if (k + 1 != zLim && (byte)(Voxels[iB, j, k + 1] << iS) >> 7 != 0) neighbors[5] = new[] { i, j, k + 1 };
+            if (j + 1 != yLim && (byte)(Voxels[iB, j + 1, k] << iS) >> 7 != 0) neighbors[3] = new[] { i, j + 1, k };
+            if (k + 1 != zLim && (byte)(Voxels[iB, j, k + 1] << iS) >> 7 != 0) neighbors[5] = new[] { i, j, k + 1 };
 
-            //if (i != 0)
-            //{
-            //    var iS1 = iS == 0 ? 7 : iS - 1;
-            //    var iB1 = iS == 0 ? iB - 1 : iB;
-            //    if ((byte)(Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[0] = new[] { i - 1, j, k };
-            //}
+            if (i != 0)
+            {
+                var iS1 = iS == 0 ? 7 : iS - 1;
+                var iB1 = iS == 0 ? iB - 1 : iB;
+                if ((byte)(Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[0] = new[] { i - 1, j, k };
+            }
 
-            //if (j != 0 && (byte)(Voxels[iB, j - 1, k] << iS) >> 7 != 0) neighbors[2] = new[] { i, j - 1, k };
-            //if (k != 0 && (byte)(Voxels[iB, j, k - 1] << iS) >> 7 != 0) neighbors[4] = new[] { i, j, k - 1 };
+            if (j != 0 && (byte)(Voxels[iB, j - 1, k] << iS) >> 7 != 0) neighbors[2] = new[] { i, j - 1, k };
+            if (k != 0 && (byte)(Voxels[iB, j, k - 1] << iS) >> 7 != 0) neighbors[4] = new[] { i, j, k - 1 };
             return neighbors;
         }
 
@@ -304,7 +298,7 @@ namespace TVGL.DenseVoxels
             var pLim = VoxelsPerSide[draftIndex];
 
             if (draftIndex == 0)
-                return DraftOnLongDimension(draftDir, draftIndex, mLim, nLim, pLim);
+                return DraftOnLongDimension(draftDir, 0, mLim, nLim, pLim);
             var vs = Copy();
 
             Parallel.For(0, mLim, m =>
@@ -543,10 +537,10 @@ namespace TVGL.DenseVoxels
         }
 
         private void ErodeMask(VoxelizedSolidDense designedSolid, int[][] mask, byte signX, byte signY,
-            byte signZ, int xLim, int yLim, int zLim, int[][] sliceMask, int[] start)
+            byte signZ, int xLim, int yLim, int zLim, int[][] sliceMask = null, int[] start = null)
         {
-            //start = start ?? mask[0].ToArray();
-            //sliceMask = sliceMask ?? new[] { mask[0].ToArray() };
+            start = start ?? mask[0].ToArray();
+            sliceMask = sliceMask ?? new[] { mask[0].ToArray() };
             //var sliceMaskCount = sliceMask.Length;
             var xMask = mask[0][0];
             var yMask = mask[0][1];
@@ -606,9 +600,12 @@ namespace TVGL.DenseVoxels
                         continue;
                     }
                     succeeds = false;
-                    if (designedSolid.IsVoxel(coordX, coordY, coordZ)) return;
+                    if (designedSolid.GetVoxel(coordX, coordY, coordZ)) return;
                     //Return if you've hit the as-designed part
-
+                    //var shift = coordX % 8;
+                    //var coord = coordX / 8;
+                    //if ((byte)(designedSolid.Voxels[coord, coordY, coordZ] << shift) >> 7 != 0)
+                    //    return;
                 }
 
                 if (!insidePart && precedes) continue;
@@ -623,57 +620,35 @@ namespace TVGL.DenseVoxels
                     var coordZ = voxCoord[2] + zTShift;
                     if (outOfBounds && (coordX < 0 || coordY < 0 || coordZ < 0 || coordX >= xLim || coordY >= yLim ||
                                         coordZ >= zLim)) continue;
-                    ChangeVoxel(false, coordX, coordY, coordZ);
+                    SetVoxel(false, coordX, coordY, coordZ);
                 }
             }
         }
-        public void ChangeVoxel(bool value, int xCoord, int yCoord, int zCoord)
+
+        public void SetVoxel(bool value, int xCoord, int yCoord, int zCoord)
         {
-            var oldValue = IsVoxel(xCoord, yCoord, zCoord);
+            var shift = xCoord % 8;
+            var coord = xCoord >> 3;
+            var oldValue = ((byte)(Voxels[coord, yCoord, zCoord] << shift) >> 7 != 0);
             if (oldValue == value) return;
-            if (value) TurnVoxelOn(xCoord, yCoord, zCoord);
-            else TurnVoxelOff(xCoord, yCoord, zCoord);
+            if (value) Voxels[coord, yCoord, zCoord] += (byte)(1 << (7 - shift));
+            else Voxels[coord, yCoord, zCoord] -= (byte)(1 << (7 - shift));
+
         }
         public void TurnVoxelOn(int xCoord, int yCoord, int zCoord)
         {
             var i = xCoord % 8;
             var coord = xCoord >> 3;
-            switch (i)
-            {
-                case 0: Voxels[coord, yCoord, zCoord] += 0b10000000; break;
-                case 1: Voxels[coord, yCoord, zCoord] += 0b01000000; break;
-                case 2: Voxels[coord, yCoord, zCoord] += 0b00100000; break;
-                case 3: Voxels[coord, yCoord, zCoord] += 0b00010000; break;
-                case 4: Voxels[coord, yCoord, zCoord] += 0b00001000; break;
-                case 5: Voxels[coord, yCoord, zCoord] += 0b00000100; break;
-                case 6: Voxels[coord, yCoord, zCoord] += 0b00000010; break;
-                case 7: Voxels[coord, yCoord, zCoord] += 0b00000001; break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-                    break;
-            }
+            Voxels[coord, yCoord, zCoord] += (byte)(1 << (7 - i));
         }
         public void TurnVoxelOff(int xCoord, int yCoord, int zCoord)
         {
             var i = xCoord % 8;
             var coord = xCoord >> 3;
-            switch (i)
-            {
-                case 0: Voxels[coord, yCoord, zCoord] -= 0b10000000; break;
-                case 1: Voxels[coord, yCoord, zCoord] -= 0b01000000; break;
-                case 2: Voxels[coord, yCoord, zCoord] -= 0b00100000; break;
-                case 3: Voxels[coord, yCoord, zCoord] -= 0b00010000; break;
-                case 4: Voxels[coord, yCoord, zCoord] -= 0b00001000; break;
-                case 5: Voxels[coord, yCoord, zCoord] -= 0b00000100; break;
-                case 6: Voxels[coord, yCoord, zCoord] -= 0b00000010; break;
-                case 7: Voxels[coord, yCoord, zCoord] -= 0b00000001; break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-                    break;
-            }
+            Voxels[coord, yCoord, zCoord] -= (byte)(1 << (7 - i));
         }
 
-        public bool IsVoxel(int xCoord, int yCoord, int zCoord)
+        public bool GetVoxel(int xCoord, int yCoord, int zCoord)
         {
             var shift = xCoord % 8;
             var coord = xCoord >> 3;
@@ -681,17 +656,20 @@ namespace TVGL.DenseVoxels
         }
         bool IsBitTrue(byte b, int i)
         {
-            byte a = 0b0;
-            if (i == 0) a = 0b1;
-            else if (i == 1) a = 0b01;
-            else if (i == 2) a = 0b001;
-            else if (i == 3) a = 0b0001;
-            else if (i == 4) a = 0b00001;
-            else if (i == 5) a = 0b000001;
-            else if (i == 6) a = 0b0000001;
-            else if (i == 7) a = 0b00000001; ;
-            return (b & a) != 0;
+            return ((byte)(b << i) >> 7 != 0);
+            //    byte a = 0b0;
+            //if (i == 0) a = 0b1;
+            //else if (i == 1) a = 0b01;
+            //else if (i == 2) a = 0b001;
+            //else if (i == 3) a = 0b0001;
+            //else if (i == 4) a = 0b00001;
+            //else if (i == 5) a = 0b000001;
+            //else if (i == 6) a = 0b0000001;
+            //else if (i == 7) a = 0b00000001; ;
+            //return (b & a) != 0;
         }
+
+
 
         private class SameCoordinates : EqualityComparer<int[]>
         {
