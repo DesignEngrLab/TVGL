@@ -150,7 +150,7 @@ namespace TVGLPresenterDX
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
-            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
+            var vs1xpos = vs1.DraftToNewSolid(CartesianDirections.XPositive);
             //Presenter.ShowAndHang(vs1xpos);
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
@@ -158,7 +158,7 @@ namespace TVGLPresenterDX
             //IO.Save(vs1xposts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Negative...");
-            var vs1xneg = vs1.ExtrudeToNewSolid(VoxelDirections.XNegative);
+            var vs1xneg = vs1.DraftToNewSolid(CartesianDirections.XNegative);
             //Presenter.ShowAndHang(vs1xneg);
             //var vs1xnegts = vs1xneg.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
@@ -166,7 +166,7 @@ namespace TVGLPresenterDX
             //IO.Save(vs1xnegts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in Y Positive...");
-            var vs1ypos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
+            var vs1ypos = vs1.DraftToNewSolid(CartesianDirections.YPositive);
             //Presenter.ShowAndHang(vs1ypos);
             //var vs1yposts = vs1ypos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
@@ -174,7 +174,7 @@ namespace TVGLPresenterDX
             //IO.Save(vs1yposts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in Y Negative...");
-            var vs1yneg = vs1.ExtrudeToNewSolid(VoxelDirections.YNegative);
+            var vs1yneg = vs1.DraftToNewSolid(CartesianDirections.YNegative);
             //Presenter.ShowAndHang(vs1yneg);
             ////var vs1ynegts = vs1yneg.ConvertToTessellatedSolid(color);
             ////Console.WriteLine("Saving Solid...");
@@ -182,7 +182,7 @@ namespace TVGLPresenterDX
             ////IO.Save(vs1ynegts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in Z Positive...");
-            var vs1zpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+            var vs1zpos = vs1.DraftToNewSolid(CartesianDirections.ZPositive);
             //Presenter.ShowAndHang(vs1zpos);
             ////var vs1zposts = vs1zpos.ConvertToTessellatedSolid(color);
             ////Console.WriteLine("Saving Solid...");
@@ -190,7 +190,7 @@ namespace TVGLPresenterDX
             ////IO.Save(vs1zposts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in Z Negative...");
-            var vs1zneg = vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative);
+            var vs1zneg = vs1.DraftToNewSolid(CartesianDirections.ZNegative);
             //Presenter.ShowAndHang(vs1zneg);
             //var vs1znegts = vs1zneg.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");

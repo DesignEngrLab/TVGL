@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.DenseVoxels;
+using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
 
@@ -118,7 +118,7 @@ namespace TVGLPresenterDX
                 };
                 //Presenter.ShowAndHang(ts);
                 TestVoxelization(ts);
-
+                TestSlice(ts);
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
                 //ts[0].SetToOriginAndSquare(out var backTransform);
@@ -141,6 +141,20 @@ namespace TVGLPresenterDX
           //  Console.ReadKey();
         }
 
+        public static void TestSlice(TessellatedSolid ts, Flat flat = null)
+        {
+            if (!(flat is null))
+                Slice.OnInfiniteFlat(ts, flat, out var solids, out var contactData);
+            else
+            {
+                Slice.OnInfiniteFlat(ts, new Flat((ts.XMax + ts.XMin) / 2, new[] { 1.0, 0, 0 }), out var solidsX,
+                    out var contactDataX);
+                Slice.OnInfiniteFlat(ts, new Flat((ts.YMax + ts.YMin) / 2, new[] { 0, 1.0, 0 }), out var solidsY,
+    out var contactDataY);
+                Slice.OnInfiniteFlat(ts, new Flat((ts.ZMax + ts.ZMin) / 2, new[] { 0, 0, 1.0 }), out var solidsZ,
+    out var contactDataZ);
+            }
+        }
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var res = 400;
@@ -148,10 +162,16 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var vs_dense = new VoxelizedSolidDense(ts, res);
+            var vs_dense = new VoxelizedSolid(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
+            //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
+            //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
+            //Presenter.ShowAndHang(vs_cut.Item1, vs_cut.Item2);
 
+            var vs_cut2 = vs_dense.SliceOnFlat(CartesianDirections.XNegative, 87);
+            vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
+            Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
 
             //var vs_cut2 = vs_dense.SliceOnFlat(VoxelDirections.XNegative, 87);
             //vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);

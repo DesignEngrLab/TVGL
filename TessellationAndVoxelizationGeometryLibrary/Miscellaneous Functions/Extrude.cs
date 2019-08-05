@@ -83,7 +83,7 @@ namespace TVGL
                     //entire extrude distance.
                     if (midPlane)
                     {
-                        var midPlaneVertexPosition = vertexPosition.add(extrudeDirection.multiply(-distance/2), 3);
+                        var midPlaneVertexPosition = vertexPosition.add(extrudeDirection.multiply(-distance / 2), 3);
                         cleanLoop.Add(new Vertex(midPlaneVertexPosition, i));
                     }
                     else cleanLoop.Add(new Vertex(vertexPosition, i));
@@ -95,9 +95,9 @@ namespace TVGL
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
-            var backTransform = new double[,] {};
+            var backTransform = new double[,] { };
             var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
-            List<Point[]> points2D;
+            List<PointLight[]> points2D;
             List<Vertex[]> triangles;
             try
             {
@@ -113,11 +113,12 @@ namespace TVGL
                 //This also means we need to recreate cleanLoops
                 //Also, give the vertices indices.
                 cleanLoops = new List<List<Vertex>>();
-                points2D = new List<Point[]>();
+                points2D = new List<PointLight[]>();
                 var j = 0;
                 foreach (var path in paths)
                 {
-                    var pathAsPoints = path.Select(p => new Point(p)).ToArray();
+                    var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y, true)).ToArray();
+                    var area = new PolygonLight(path).Area;
                     points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
                     foreach (var point in pathAsPoints)
@@ -155,19 +156,19 @@ namespace TVGL
 
                     //Do some polygon functions to clean up issues and try again
                     paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-                    paths = PolygonOperations.OffsetRound(paths, distance/1000);
-                    paths = PolygonOperations.OffsetRound(paths, -distance/1000);
+                    paths = PolygonOperations.OffsetRound(paths, distance / 1000);
+                    paths = PolygonOperations.OffsetRound(paths, -distance / 1000);
                     paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
 
                     //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                     //This also means we need to recreate cleanLoops
                     //Also, give the vertices indices.
                     cleanLoops = new List<List<Vertex>>();
-                    points2D = new List<Point[]>();
+                    points2D = new List<PointLight[]>();
                     var j = 0;
                     foreach (var path in paths)
                     {
-                        var pathAsPoints = path.Select(p => new Point(p)).ToArray();
+                        var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y, true)).ToArray();
                         points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
                         foreach (var point in pathAsPoints)
@@ -202,7 +203,7 @@ namespace TVGL
                     return null;
                 }
             }
-            
+
             //Second, build up the a set of duplicate vertices
             var vertices = new HashSet<Vertex>();
             foreach (var vertex in cleanLoops.SelectMany(loop => loop))
@@ -268,7 +269,7 @@ namespace TVGL
                         }
                     }
                 }
-                if(firstFace == null) throw new Exception("Did not find face with both the vertices");
+                if (firstFace == null) throw new Exception("Did not find face with both the vertices");
 
 
                 if (firstFace.NextVertexCCW(v1) == v2)

@@ -74,8 +74,8 @@
     <Reference Include="HelixToolkit.Wpf.SharpDX, Version=1.0.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
       <HintPath>..\packages\HelixToolkit.Wpf.SharpDX.1.0.0\lib\net45\HelixToolkit.Wpf.SharpDX.dll</HintPath>
     </Reference>
-    <Reference Include="MIConvexHull, Version=1.0.17.1019, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\netstandard1.0\MIConvexHull.dll</HintPath>
+    <Reference Include="MIConvexHull, Version=1.1.19.504, Culture=neutral, PublicKeyToken=2644b6f8be52c998, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.1.19.504\lib\netstandard1.0\MIConvexHull.dll</HintPath>
     </Reference>
     <Reference Include="PropertyTools, Version=2.0.1.0, Culture=neutral, PublicKeyToken=ea0c9f2b460934d0, processorArchitecture=MSIL">
       <HintPath>..\packages\PropertyTools.Wpf.2.0.1\lib\net45\PropertyTools.dll</HintPath>
@@ -164,17 +164,17 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="MIConvexHull.xml" />
     <Resource Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.Standard\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
-      <Project>{b73a4731-ff89-4a3d-b803-14b016196c4a}</Project>
-      <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>
-    </ProjectReference>
+    <Resource Include="MIConvexHull.xml" />
+    <Content Include="x64\d3dcompiler_47.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="x64\d3dcompiler_47.dll" />
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
+      <Project>{859a90c2-4b36-4486-9279-ef9df02c0c9b}</Project>
+      <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

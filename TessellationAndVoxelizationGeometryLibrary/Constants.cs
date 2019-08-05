@@ -102,7 +102,7 @@ namespace TVGL
         /// like Polygon.IsRectangular
         /// </summary>
         public const double LowConfidence = 0.68;
-        
+
 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
@@ -159,6 +159,25 @@ namespace TVGL
             }
             return -1;
         }
+
+        public static double dotProduct(this Point a, double[] b)
+        {
+            return a.X * b[0] + a.Y * b[1];
+        }
+        public static double dotProduct(this double[] b, Point a)
+        {
+            return a.X * b[0] + a.Y * b[1];
+        }
+
+        public static double dotProduct(this PointLight a, double[] b)
+        {
+            return a.X * b[0] + a.Y * b[1];
+        }
+        public static double dotProduct(this double[] b, PointLight a)
+        {
+            return a.X * b[0] + a.Y * b[1];
+        }
+
     }
 
 
@@ -170,37 +189,37 @@ namespace TVGL
         /// <summary>
         /// the unspecified state
         /// </summary>
-        unspecified = -1,
+        unspecified = 0,
         /// <summary>
         ///     The millimeter
         /// </summary>
-        millimeter,
+        millimeter = 11,
 
         /// <summary>
         ///     The micron
         /// </summary>
-        micron,
+        micron = 8,
 
 
         /// <summary>
         ///     The centimeter
         /// </summary>
-        centimeter,
+        centimeter = 1,
 
         /// <summary>
         ///     The inch
         /// </summary>
-        inch,
+        inch = 4,
 
         /// <summary>
         ///     The foot
         /// </summary>
-        foot,
+        foot = 3,
 
         /// <summary>
         ///     The meter
         /// </summary>
-        meter
+        meter = 6
     }
 
 
@@ -316,6 +335,77 @@ namespace TVGL
         Opacity
     }
 
+    /// <summary>
+    /// CartesianDirections: just the six cardinal directions for the voxelized box around the solid
+    /// </summary>
+    public enum CartesianDirections
+    {
+        /// <summary>
+        /// <summary>
+        /// Enum VoxelDirections
+        /// </summary>
+        /// Negative X Direction
+        /// </summary>
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        XNegative = -1,
+
+        /// <summary>
+        /// Negative Y Direction
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        YNegative = -2,
+
+        /// <summary>
+        /// Negative Z Direction
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        ZNegative = -3,
+
+        /// <summary>
+        /// Positive X Direction
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        XPositive = 1,
+
+        /// <summary>
+        /// Positive Y Direction
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        YPositive = 2,
+
+        /// <summary>
+        /// Positive Z Direction
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z positive
+        /// </summary>
+        ZPositive = 3
+    }
     /// <summary>
     ///     A comparer for optimization that can be used for either
     ///     minimization or maximization.

@@ -102,7 +102,7 @@ namespace TVGL
             {
                 var p1 = editPath[i];
                 var p2 = editPath[i + 1];
-                length += MiscFunctions.DistancePointToPoint(p1.Position, p2.Position);
+                length += MiscFunctions.DistancePointToPoint(p1, p2);
             }
             return length;
         }
@@ -332,11 +332,11 @@ namespace TVGL
                 if (length > edgeLength)
                 {
                     var n = (int) (length / edgeLength);
-                    var vector = next.Position.subtract(current.Position, 2).normalize().multiply(edgeLength);
+                    var vector = (next-current).normalize().multiply(edgeLength);
                     newPath.Add(current);
                     for (var p = 0; p < n; p++)
                     {
-                        current = new PointLight(current.Position.add(vector));
+                        current = new PointLight(new []{current.X+vector[0],current.Y+vector[1]});
                         newPath.Add(current);
                     }
                 }
@@ -1389,10 +1389,10 @@ namespace TVGL
                 {
                     //Get the minimum signed angle between the two vectors 
                     var minAngle = double.PositiveInfinity;
-                    var v1 = currentSweepEvent.Point.Position.subtract(currentSweepEvent.OtherEvent.Point.Position, 2);
+                    var v1 = currentSweepEvent.Point-currentSweepEvent.OtherEvent.Point;
                     foreach (var neighbor in neighbors)
                     {
-                        var v2 = neighbor.OtherEvent.Point.Position.subtract(neighbor.Point.Position, 2);
+                        var v2 = neighbor.OtherEvent.Point-neighbor.Point;
                         var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(v1, v2);
                         if(angle < 0 || angle > 2*Math.PI) throw new Exception("Error in my assumption of output from above function");
                         if (angle < minAngle)
@@ -2046,7 +2046,7 @@ namespace TVGL
                 }
             }
             MinimumEnclosure.GetLengthAndExtremePoints(direction2D, points, out var bottomPoints, out _);
-            var distanceFromOriginToClosestPoint = bottomPoints[0].Position.dotProduct(direction2D, 2);
+            var distanceFromOriginToClosestPoint = bottomPoints[0].dotProduct(direction2D);
             foreach (var polygon in shape)
             {
                 var newPath = new PathAsLight();
@@ -2054,9 +2054,8 @@ namespace TVGL
                 {
                     //Get the distance to the point along direction2D
                     //Then subtract 2X the distance along direction2D
-                    var d = point.Position.dotProduct(direction2D, 2) - distanceFromOriginToClosestPoint;
-                    var newPosition = point.Position.subtract(direction2D.multiply(2 * d), 2);
-                    newPath.Add(new PointLight(newPosition[0], newPosition[1]));
+                    var d = point.dotProduct(direction2D) - distanceFromOriginToClosestPoint;
+                    newPath.Add(new PointLight(point.X - direction2D[0] * 2 * d, point.Y - direction2D[1] * 2 * d));
                 }
                 //Reverse the new path so that it retains the same CW/CCW direction of the original
                 newPath.Reverse();

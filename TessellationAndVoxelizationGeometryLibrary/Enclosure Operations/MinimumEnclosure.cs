@@ -43,6 +43,7 @@ namespace TVGL
         /// <param name="setCornerPoints"></param>
         /// <param name="setPointsOnSide"></param>
         /// <returns>BoundingRectangle.</returns>
+        /*
         public static BoundingRectangle BoundingRectangle(IList<Point> points, bool pointsAreConvexHull = false,
             bool setCornerPoints = true, bool setPointsOnSide = true)
         {
@@ -53,7 +54,7 @@ namespace TVGL
         {
             return RotatingCalipers2DMethod(polygon.Path, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
         }
-
+        */
         public static BoundingRectangle BoundingRectangle(List<PointLight> polygon, bool pointsAreConvexHull = false,
             bool setCornerPoints = true, bool setPointsOnSide = true)
         {
@@ -238,7 +239,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var point in points)
             {
-                var distance = direction2D.dotProduct(point.Position, 2);
+                var distance = direction2D.dotProduct(point);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomPoints.Add(point);
                 else if (distance < minD)
@@ -278,7 +279,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var point in points)
             {
-                var distance = direction2D.dotProduct(point.Position, 2);
+                var distance = direction2D.dotProduct(point);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomPoints.Add(point);
                 else if (distance < minD)
@@ -318,6 +319,7 @@ namespace TVGL
         /// <exception cref="Exception">
         ///     Area should never be negligilbe unless data is messed up.
         /// </exception>
+        /*
         private static BoundingRectangle RotatingCalipers2DMethod(IList<Point> points, bool pointsAreConvexHull = false,
             bool setCornerPoints = true, bool setPointsOnSide = true)
         {
@@ -328,7 +330,7 @@ namespace TVGL
             //Only set it as the convex hull if it contains more than three points.
             var cvxPointsSimple = PolygonOperations.SimplifyFuzzy(cvxPoints);
             if (cvxPointsSimple.Count >= 3) cvxPoints = cvxPointsSimple;
-            /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point */
+            // the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point 
             //First, check to make sure the given convex hull has the min x-value at 0.
             var minX = cvxPoints[0].X;
             var numCvxPoints = cvxPoints.Count;
@@ -376,7 +378,7 @@ namespace TVGL
                 while (extremeIndices[3] > 0 && cvxPoints[extremeIndices[3]].Y <= cvxPoints[extremeIndices[3] - 1].Y)
                     extremeIndices[3]--;
             }
-            /* at this point, the max-Y point has been established. Next we walk backwards in the list until we hit the max-X point */
+            // at this point, the max-Y point has been established. Next we walk backwards in the list until we hit the max-X point 
             // extremeIndices[2] => max-X, with min Y for ties
             extremeIndices[2] = extremeIndices[3] == 0 ? cvxPoints.Count - 1 : extremeIndices[3];
             while (extremeIndices[2] > 0 && cvxPoints[extremeIndices[2]].X <= cvxPoints[extremeIndices[2] - 1].X)
@@ -513,6 +515,7 @@ namespace TVGL
 
             return bestRectangle;
         }
+        */
 
         /// <summary>
         ///     Rotating the calipers 2D method. Convex hull must be a counter clockwise loop.
@@ -681,7 +684,7 @@ namespace TVGL
                 {
                     pointsOnSides[i] = new List<PointLight>();
                     var dir = i % 2 == 0 ? angleVector1 : angleVector2;
-                    var distance = cvxPoints[extremeIndices[i]].Position.dotProduct(dir, 2);
+                    var distance = cvxPoints[extremeIndices[i]].dotProduct(dir);
                     if (i % 2 == 0) //D1
                     {
                         if (distance > d1Max) d1Max = distance;
@@ -701,7 +704,7 @@ namespace TVGL
                             pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
                         }
                         prevIndex = extremeIndices[i] == 0 ? numCvxPoints - 1 : extremeIndices[i] - 1;
-                    } while (distance.IsPracticallySame(cvxPoints[prevIndex].Position.dotProduct(dir, 2),
+                    } while (distance.IsPracticallySame(cvxPoints[prevIndex].dotProduct(dir),
                         Constants.BaseTolerance));
                 }
 
@@ -821,8 +824,7 @@ namespace TVGL
         {
             var direction0 = boxData.Direction = boxData.Direction.normalize(3);
             var height = direction0.dotProduct(boxData.RotatorEdge.From.Position.subtract(boxData.BackVertex.Position, 3), 3);
-            double[,] backTransform;
-            var points = MiscFunctions.Get2DProjectionPoints(boxData.OrthVertices, direction0, out backTransform, false);
+            var points = MiscFunctions.Get2DProjectionPoints(boxData.OrthVertices, direction0, out var backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
             //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
