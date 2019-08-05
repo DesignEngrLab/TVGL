@@ -34,7 +34,6 @@ namespace TVGL.DenseVoxels
     {
         #region Properties
         public byte[,,] Voxels;
-        public readonly int Discretization;
         public readonly int[] VoxelsPerSide;
         public readonly int[] BytesPerSide;
         public readonly int BytesOnLongSide;
@@ -76,10 +75,9 @@ namespace TVGL.DenseVoxels
          * isolates the corresponding bit for the queried voxel, and the value of that byte will be
          * one (1) if it exists, and zero (0) if it doesn't.
          ***************************************************/
-        public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength,
+        public VoxelizedSolidDense(int[] voxelsPerSide, double voxelSideLength,
             IEnumerable<double[]> bounds, bool empty = false)
         {
-            Discretization = discretization;
             VoxelsPerSide = (int[])voxelsPerSide.Clone();
             BytesOnLongSide = VoxelsPerSide[0] / 8;
             BytesPerSide = new[] { BytesOnLongSide, VoxelsPerSide[1], VoxelsPerSide[2] };
@@ -105,12 +103,10 @@ namespace TVGL.DenseVoxels
             UpdateProperties();
         }
 
-        public VoxelizedSolidDense(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
-            IEnumerable<double[]> bounds)
+        public VoxelizedSolidDense(byte[,,] voxels, double voxelSideLength, IEnumerable<double[]> bounds = null)
         {
             Voxels = (byte[,,])voxels.Clone();
-            Discretization = discretization;
-            VoxelsPerSide = voxelsPerSide;
+            VoxelsPerSide = new[] { voxels.GetLength(0), voxels.GetLength(1), voxels.GetLength(2) };
             BytesOnLongSide = VoxelsPerSide[0] / 8;
             BytesPerSide = new[] { BytesOnLongSide, VoxelsPerSide[1], VoxelsPerSide[2] };
             VoxelSideLength = voxelSideLength;
@@ -123,7 +119,6 @@ namespace TVGL.DenseVoxels
         public VoxelizedSolidDense(VoxelizedSolidDense vs)
         {
             Voxels = (byte[,,])vs.Voxels.Clone();
-            Discretization = vs.Discretization;
             VoxelsPerSide = vs.VoxelsPerSide.ToArray();
             BytesPerSide = vs.BytesPerSide.ToArray();
             BytesOnLongSide = vs.BytesOnLongSide;
@@ -136,14 +131,9 @@ namespace TVGL.DenseVoxels
             Count = vs.Count;
         }
 
-        public VoxelizedSolidDense(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
+        public VoxelizedSolidDense(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<double[]> bounds = null)
         {
-            Discretization = discretization;
             SolidColor = new Color(Constants.DefaultColor);
-            if (discretization < 3)
-                throw new ArgumentException("Discretization must be greater than or equal to 3.");
-            var voxelsOnLongSide = Math.Pow(2, Discretization);
-
             Bounds = new double[2][];
             Dimensions = new double[3];
 
@@ -154,16 +144,16 @@ namespace TVGL.DenseVoxels
             }
             else
             {
-                Bounds[0] = ts.Bounds[0];
-                Bounds[1] = ts.Bounds[1];
+                Bounds[0] = (double[])ts.Bounds[0].Clone();
+                Bounds[1] = (double[])ts.Bounds[1].Clone();
             }
             for (var i = 0; i < 3; i++)
                 Dimensions[i] = Bounds[1][i] - Bounds[0][i];
 
-            VoxelSideLength = Dimensions[0] / voxelsOnLongSide;
+            VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
 
-            VoxelsPerSide = Dimensions.Select(d => (int)Math.Round(d / VoxelSideLength)).ToArray();
-            BytesOnLongSide = VoxelsPerSide[0] / 8;
+            VoxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
+            BytesOnLongSide = (int)Math.Ceiling(VoxelsPerSide[0] / 8.0);
 
 
             BytesPerSide = new[] { BytesOnLongSide, VoxelsPerSide[1], VoxelsPerSide[2] };
