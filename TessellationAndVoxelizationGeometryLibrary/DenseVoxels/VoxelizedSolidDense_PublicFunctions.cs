@@ -122,7 +122,9 @@ namespace TVGL.DenseVoxels
                     }
                 count.TryAdd(i, counter);
             });
-            Count = count.Values.Sum();
+            Count = 0;
+            foreach (var v in count.Values)
+                Count += v;
         }
 
         private void SetVolume()
@@ -156,7 +158,10 @@ namespace TVGL.DenseVoxels
                 }
                 neighbors.TryAdd(i, neighborCount);
             });
-            SurfaceArea = 6 * (Count - neighbors.Values.Sum(x => x / 6)) * Math.Pow(VoxelSideLength, 2);
+            long totalNeighbors = 0;
+            foreach (var v in neighbors.Values)
+                totalNeighbors += v;
+            SurfaceArea = 6 * (Count - totalNeighbors / 6) * Math.Pow(VoxelSideLength, 2);
         }
         #endregion
 

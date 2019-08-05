@@ -143,7 +143,7 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 10;
+            var res = 11;
 
             Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 

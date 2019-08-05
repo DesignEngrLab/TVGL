@@ -46,7 +46,7 @@ namespace TVGL.DenseVoxels
         public Color SolidColor { get; set; }
         public double Volume { get; internal set; }
         public double SurfaceArea { get; internal set; }
-        public int Count { get; internal set; }
+        public long Count { get; internal set; }
         #endregion
 
         /****************************************************
