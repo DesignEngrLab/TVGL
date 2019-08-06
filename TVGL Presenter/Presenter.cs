@@ -739,7 +739,7 @@ namespace TVGL
                 if (s is TessellatedSolid)
                     model = MakeModelVisual3D((TessellatedSolid)s);
                 else if (s is VoxelizedSolid)
-                    model = MakeModelVisual3D((VoxelizedSolid) s);
+                    model = MakeModelVisual3D((VoxelizedSolid)s);
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
@@ -891,10 +891,9 @@ namespace TVGL
                     var jS = j % 8;
                     for (var k = 0; k < zLim; k++)
                     {
-                        if ((byte)(vs.Dense[iB, j, k] << iS) >> 7 == 0)
-                            continue;
+                        if (!vs.GetVoxelDense(iB, j, k, iS)) continue;
 
-                        var neighbors = vs.GetNeighbors(i, j, k, xLim, yLim, zLim).ToList();
+                        var neighbors = vs.GetNeighborsDense(i, j, k, xLim, yLim, zLim).ToList();
                         if (neighbors.All(n => n != null)) continue;
 
                         var x = i * s + vs.Offset[0];

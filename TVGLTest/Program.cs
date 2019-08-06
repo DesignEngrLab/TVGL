@@ -162,14 +162,14 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var vs_dense = new VoxelizedSolid(ts, res);
+            var vs = new VoxelizedSolid(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
             //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
             //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
-            //Presenter.ShowAndHang(vs_cut.Item1, vs_cut.Item2);
+            Presenter.ShowAndHang(vs);
 
-            var vs_cut2 = vs_dense.SliceOnFlat(CartesianDirections.XNegative, 87);
+            var vs_cut2 = vs.SliceOnFlat(CartesianDirections.XNegative, 87);
             vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
             Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
 
@@ -179,12 +179,12 @@ namespace TVGLPresenterDX
 
 
             stopwatch.Restart();
-            var bb_dense = vs_dense.CreateBoundingSolid();
+            var bb_dense = vs.CreateBoundingSolid();
             stopwatch.Stop();
             Console.WriteLine("Dense bounding solid   : {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var erd_dense = bb_dense.ErodeToNewSolid(vs_dense, new[] { 0, .471, -.882 }, 0, 0, "flat");
+            var erd_dense = bb_dense.ErodeToNewSolid(vs, new[] { 0, .471, -.882 }, 0, 0, "flat");
             stopwatch.Stop();
             Console.WriteLine("Dense erosion   : {0}", stopwatch.Elapsed);
             erd_dense.SolidColor = new Color(KnownColors.Magenta);
@@ -193,13 +193,13 @@ namespace TVGLPresenterDX
 
 
             stopwatch.Restart();
-            var neg_dense = vs_dense.InvertToNewSolid();
+            var neg_dense = vs.InvertToNewSolid();
             stopwatch.Stop();
             Console.WriteLine("Dense inversion   : {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(neg_dense); //, vs_dense);
 
             stopwatch.Restart();
-            var draft_dense = vs_dense.DraftToNewSolid(CartesianDirections.ZPositive);
+            var draft_dense = vs.DraftToNewSolid(CartesianDirections.ZPositive);
             stopwatch.Stop();
             Console.WriteLine("Dense draft   : {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(draft_dense); //, vs_dense);
@@ -214,7 +214,7 @@ namespace TVGLPresenterDX
             Presenter.ShowAndHang(intersect_dense); //, vs_dense);
 
 
-            var draft1_dense = vs_dense.DraftToNewSolid(CartesianDirections.YNegative);
+            var draft1_dense = vs.DraftToNewSolid(CartesianDirections.YNegative);
             stopwatch.Restart();
             var union_dense = draft_dense.UnionToNewSolid(draft1_dense);
             stopwatch.Stop();

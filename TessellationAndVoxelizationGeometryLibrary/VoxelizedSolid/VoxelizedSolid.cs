@@ -30,9 +30,9 @@ namespace TVGL.Voxelization
     {
         #region Properties
         #region Sparse Representation
-        int[] zSlices;
-        List<int> yOffsetsAndXIndices;
-        List<int> xRanges; //inclusive!
+        internal int[] zSlices;
+        internal List<int> yOffsetsAndXIndices;
+        internal List<int> xRanges; //inclusive!
         /// <summary>
         /// Gets or sets a value indicating whether the sparse encoding is current.
         /// </summary>
@@ -58,6 +58,26 @@ namespace TVGL.Voxelization
         public double[] Offset => Bounds[0];
 
         #endregion
+
+        #region Public Methods that Branch
+        public bool GetVoxel(int xCoord, int yCoord, int zCoord)
+        {
+            if (DenseIsCurrent) return GetVoxelDense(xCoord, yCoord, zCoord);
+            return GetVoxelSparse(xCoord, yCoord, zCoord);
+        }
+        public void SetVoxel(bool value, int xCoord, int yCoord, int zCoord)
+        {
+            if (DenseIsCurrent) SetVoxelDense(value, xCoord, yCoord, zCoord);
+            else SetVoxelSparse(value, xCoord, yCoord, zCoord);
+        }
+        public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
+        {
+            if (DenseIsCurrent) neighbors = GetNeighborsDense(xCoord, yCoord, zCoord);
+            else neighbors = GetNeighborsSparse(xCoord, yCoord, zCoord);
+            return !neighbors.Any(n => n != null);
+        }
+        #endregion
+
 
         #region Constructors
         /// <summary>
@@ -178,7 +198,7 @@ namespace TVGL.Voxelization
             var xLim = xRanges.Max() + 1;
             var zLim = zSlices.Length - 1;
             var yLim = 0;
-            for (int i = 0; i <= zLim; i++)
+            for (int i = 0; i < zLim; i++)
             {
                 var yStartIndex = zSlices[i];
                 var yOffset = yOffsetsAndXIndices[yStartIndex];
@@ -204,7 +224,7 @@ namespace TVGL.Voxelization
                 " voxelized solid as input must have an up-to-date sparse representation.");
             if (vs.DenseIsCurrent)
             {
-                Dense = (byte[,,])Dense.Clone();
+                Dense = (byte[,,])vs.Dense.Clone();
                 var bytesInX = VoxelsPerSide[0] >> 3;
                 if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
                 BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
@@ -235,9 +255,10 @@ namespace TVGL.Voxelization
             VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
             VoxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
             FillInFromTessellation(ts);
-            UpdatePropertiesSparse();
+            //UpdatePropertiesSparse();  //temporary until this function is fixed and made more efficient
             SparseIsCurrent = true;
             DenseIsCurrent = false;
+            UpdateDenseFromSparse();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
@@ -263,9 +284,10 @@ namespace TVGL.Voxelization
             VoxelSideLength = voxelSideLength;
             VoxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
             FillInFromTessellation(ts);
-            UpdatePropertiesSparse();
+            //UpdatePropertiesSparse();  //temporary until this function is fixed and made more efficient
             SparseIsCurrent = true;
             DenseIsCurrent = false;
+            UpdateDenseFromSparse();
         }
         #region Fill In From Tessellation Functions
         private void FillInFromTessellation(TessellatedSolid ts, bool possibleNullSlices = false)
@@ -444,7 +466,8 @@ namespace TVGL.Voxelization
             if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
             BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
             Dense = new byte[bytesInX, VoxelsPerSide[1], VoxelsPerSide[2]];
-            Parallel.For(0, VoxelsPerSide[2], k =>
+            for (int k = 0; k < VoxelsPerSide[2]; k++)
+            //Parallel.For(0, VoxelsPerSide[2], k =>
             {
                 var yStartIndex = zSlices[k];
                 var yOffset = yOffsetsAndXIndices[yStartIndex];
@@ -460,13 +483,14 @@ namespace TVGL.Voxelization
                     }
                     yOffset++;
                 }
-            });
+            } //);
             DenseIsCurrent = true;
         }
 
         private void AddVoxelRangeToDense(int xBegin, int xEnd, int yCoord, int zCoord)
         {
             var xByte = xBegin >> 3;
+            var xByteEnd = xEnd >> 3;
             var bitPostion = xBegin & 7;
             switch (bitPostion)
             {
@@ -479,21 +503,21 @@ namespace TVGL.Voxelization
                 case 6: Dense[xByte, yCoord, zCoord] += 0b00000011; break;
                 default: Dense[xByte, yCoord, zCoord] += 0b00000001; break;
             }
-            while (((++xByte)<<3) <=xEnd)
+            while (++xByte < xByteEnd)
                 Dense[xByte, yCoord, zCoord] = 0b11111111;
             bitPostion = xEnd & 7;
             switch (bitPostion)
             {
-                case 1: Dense[xByte, yCoord, zCoord] = 0b1; break;
-                case 2: Dense[xByte, yCoord, zCoord] = 0b11; break;
-                case 3: Dense[xByte, yCoord, zCoord] = 0b111; break;
-                case 4: Dense[xByte, yCoord, zCoord] = 0b1111; break;
-                case 5: Dense[xByte, yCoord, zCoord] = 0b11111; break;
-                case 6: Dense[xByte, yCoord, zCoord] = 0b111111; break;
-                case 7: Dense[xByte, yCoord, zCoord] = 0b1111111; break;
-                default:  break;
+                case 1: Dense[xByte, yCoord, zCoord] = 0b10000000; break;
+                case 2: Dense[xByte, yCoord, zCoord] = 0b11000000; break;
+                case 3: Dense[xByte, yCoord, zCoord] = 0b11100000; break;
+                case 4: Dense[xByte, yCoord, zCoord] = 0b11110000; break;
+                case 5: Dense[xByte, yCoord, zCoord] = 0b11111000; break;
+                case 6: Dense[xByte, yCoord, zCoord] = 0b11111100; break;
+                case 7: Dense[xByte, yCoord, zCoord] = 0b11111110; break;
+                default: break;
             }
-  }
+        }
 
         public void UpdateSparseFromDense()
         {

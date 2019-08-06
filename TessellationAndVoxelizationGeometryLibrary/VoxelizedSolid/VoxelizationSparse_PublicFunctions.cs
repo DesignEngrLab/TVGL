@@ -17,30 +17,40 @@ namespace TVGL.Voxelization
     {
         #region Basic Functions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private byte GetVoxelSparse(int x, int y, int z)
+        private bool GetVoxelSparse(int x, int y, int z)
         {
             var yStartIndex = zSlices[z];
-            if (zSlices[z + 1] == yStartIndex) return 0;
+            if (zSlices[z + 1] == yStartIndex) return false;
             var numYLines = zSlices[z + 1] - 1 - yStartIndex;
-            if (numYLines <= 0) return 0;//there are no voxels at this value of z
+            if (numYLines <= 0) return false;//there are no voxels at this value of z
             var yOffset = yOffsetsAndXIndices[yStartIndex];
-            if (y < yOffset) return 0;  //queried y is lower than the start for this z-slice's y range
-            if (y >= yOffset + numYLines) return 0; //queried y is greater than the end for this z-slice's y range
+            if (y < yOffset) return false;  //queried y is lower than the start for this z-slice's y range
+            if (y >= yOffset + numYLines) return false; //queried y is greater than the end for this z-slice's y range
             var yLineIndex = yStartIndex + y - yOffset + 1;
             var xStartIndex = yOffsetsAndXIndices[yLineIndex];
             var xEndIndex = (y == yOffset + numYLines - 1) // if its the last line for this z-slice, 
                 ? yOffsetsAndXIndices[yLineIndex + 2]  //then step over the next yOffset to get to the beginning of the next xRange
                 : yOffsetsAndXIndices[yLineIndex + 1]; // else its just the next one minus one 
-            if (xStartIndex == xEndIndex) return 0;  //then there is no xRange for this y-Line
+            if (xStartIndex == xEndIndex) return false;  //then there is no xRange for this y-Line
             var xStart = xRanges[xStartIndex];
-            if (x < xStart) return 0; //queried x is lower than the start for this x-range for this y-line at this z-slice
+            if (x < xStart) return false; //queried x is lower than the start for this x-range for this y-line at this z-slice
             var xStop = xRanges[xEndIndex - 1];
-            if (x > xStop) return 0;  //queried x is greater than the end of this x-range for this y-line at this z-slice
+            if (x > xStop) return false;  //queried x is greater than the end of this x-range for this y-line at this z-slice
             for (int i = xStartIndex + 1; i < xEndIndex - 1; i += 2)
-                if (x > xRanges[i] && x < xRanges[i + 1]) return 0; // this is actually checking the gap between xRanges
+                if (x > xRanges[i] && x < xRanges[i + 1]) return false; // this is actually checking the gap between xRanges
             //otherwise, we're in an x-range for this y-line at this z-slice
-            return 1;
+            return true;
         }
+        public void SetVoxelSparse(bool value, int xCoord, int yCoord, int zCoord)
+        {
+            var oldValue = GetVoxelSparse(xCoord, yCoord, zCoord);
+            if (oldValue == value) return;
+            if (value) AddVoxelSparse(xCoord, yCoord, zCoord);
+            else RemoveVoxelSparse(xCoord, yCoord, zCoord);
+        }
+
+
+
         private void RemoveVoxelSparse(int x, int y, int z)
         {
             var yStartIndex = zSlices[z];
@@ -212,9 +222,52 @@ namespace TVGL.Voxelization
                 new[] { xMin, yMin, zMin },
                 new[] { xMax, yMax, zMax },
             };
-            var numNeighbors = this.Sum(v => NumNeighbors(v[0], v[1], v[2]));
+            var numNeighbors = 0;
+            //var numNeighbors = this.Sum(v => NumNeighborsSparse(v[0], v[1], v[2]));
             SurfaceArea = (6 * Count - numNeighbors) * Math.Pow(VoxelSideLength, 2);
         }
+
+
+        #region Getting Neighbors
+        //Neighbors functions use VoxelsPerSide
+        public int[][] GetNeighborsSparse(int xCoord, int yCoord, int zCoord)
+        {
+            return GetNeighborsSparse(xCoord, yCoord, zCoord, VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]);
+        }
+
+        public int NumNeighborsSparse(int xCoord, int yCoord, int zCoord)
+        {
+            return NumNeighborsSparse(xCoord, yCoord, zCoord, VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]);
+        }
+
+        public int[][] GetNeighborsSparse(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
+        {
+            var neighbors = new int[][] { null, null, null, null, null, null };
+
+            if (xCoord != 0 && GetVoxelSparse(xCoord - 1, yCoord, zCoord)) neighbors[0] = new[] { xCoord - 1, yCoord, zCoord };
+            if (xCoord + 1 != xLim && GetVoxelSparse(xCoord + 1, yCoord, zCoord)) neighbors[1] = new[] { xCoord + 1, yCoord, zCoord };
+            if (yCoord != 0 && GetVoxelSparse(xCoord, yCoord - 1, zCoord)) neighbors[2] = new[] { xCoord, yCoord - 1, zCoord };
+            if (yCoord + 1 != yLim && GetVoxelSparse(xCoord, yCoord + 1, zCoord)) neighbors[3] = new[] { xCoord, yCoord + 1, zCoord };
+            if (zCoord != 0 && GetVoxelSparse(xCoord, yCoord, zCoord - 1)) neighbors[4] = new[] { xCoord, yCoord, zCoord - 1 };
+            if (zCoord + 1 != zLim && GetVoxelSparse(xCoord, yCoord, zCoord + 1)) neighbors[5] = new[] { xCoord, yCoord, zCoord + 1 };
+
+            return neighbors;
+        }
+        public int NumNeighborsSparse(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
+        {
+            var neighbors = 0;
+
+            if (xCoord != 0 && GetVoxelSparse(xCoord - 1, yCoord, zCoord)) neighbors++;
+            if (xCoord + 1 != xLim && GetVoxelSparse(xCoord + 1, yCoord, zCoord)) neighbors++;
+            if (yCoord != 0 && GetVoxelSparse(xCoord, yCoord - 1, zCoord)) neighbors++;
+            if (yCoord + 1 != yLim && GetVoxelSparse(xCoord, yCoord + 1, zCoord)) neighbors++;
+            if (zCoord != 0 && GetVoxelSparse(xCoord, yCoord, zCoord - 1)) neighbors++;
+            if (zCoord + 1 != zLim && GetVoxelSparse(xCoord, yCoord, zCoord + 1)) neighbors++;
+            return neighbors;
+        }
+        #endregion
+
+
         #endregion
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -227,52 +280,71 @@ namespace TVGL.Voxelization
             return new VoxelSparseEnumerator(this);
 
         }
-  
+
     }
     public class VoxelSparseEnumerator : IEnumerator<int[]>
     {
         VoxelizedSolid vs;
-        int[] currentVoxelPosition = new int[3];
-        int xValue;
-        int yLineIndex;
-        int zSliceIndex;
-        int xEndRange;
-        int xLim;
-        int yLim;
-        int zLim;
+        int x, y, z;
+        int xLineEnd, numYLines, zEnd;
+        int xIndex, yIndex;
+        int xRangesLength;
+
         public VoxelSparseEnumerator(VoxelizedSolid vs)
         {
             this.vs = vs;
-            this.xLim = vs.VoxelsPerSide[0];
-            this.yLim = vs.VoxelsPerSide[1];
-            this.zLim = vs.VoxelsPerSide[2];
+            Reset();
         }
 
-        public object Current => currentVoxelPosition;
+        public object Current => new[] { x, y, z };
 
-        int[] IEnumerator<int[]>.Current => currentVoxelPosition;
+        int[] IEnumerator<int[]>.Current => new[] { z, y, z };
 
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+          //Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public bool MoveNext()
         {
-            if (++xValue>xEndRange)
+            x++;
+            if (x > xLineEnd)
             {
-                throw new NotImplementedException();
+                xIndex++;
+                if (xIndex >= xRangesLength) return false;
+                x = vs.xRanges[xIndex];
+                if (xIndex == vs.yOffsetsAndXIndices[yIndex + 1])
+                {
+                    numYLines--;
+                    y++;
+                }
+                if (numYLines == 0)
+                {
+                    z++;
+                    if (z == zEnd) return false;
+
+                    var yStartIndex = vs.zSlices[z];
+                    y = vs.yOffsetsAndXIndices[yStartIndex];
+                    numYLines = vs.zSlices[z + 1] - 1 - yStartIndex;
+                }
             }
-            currentVoxelPosition[0] = xValue;
-            currentVoxelPosition[1] = yLineIndex;
-            currentVoxelPosition[2] = zSliceIndex;
             return true;
         }
 
         public void Reset()
         {
-            xValue = yLineIndex = zSliceIndex = 0;
+            this.z = vs.VoxelBounds[0][2];
+            this.zEnd = vs.VoxelBounds[1][2];
+            var yStartIndex = vs.zSlices[z];
+            y = vs.yOffsetsAndXIndices[yStartIndex];
+            numYLines = vs.zSlices[z + 1] - 1 - yStartIndex;
+
+            xIndex = 0;
+            this.x = vs.xRanges[0];
+            this.xLineEnd = vs.xRanges[1];
+            xRangesLength = vs.xRanges.Count;
         }
     }
 
