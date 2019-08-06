@@ -123,27 +123,32 @@ namespace TVGL.Voxelization
                 var xLim = VoxelsPerSide[0];
                 var yLim = VoxelsPerSide[1];
                 var zLim = VoxelsPerSide[2];
+                /*** bug: something's not working here. You need a clear description of this sparse approach!
                 zSlices = new int[zLim + 1];
                 var yArray = new int[zLim * (1 + yLim)];
                 var xArray = new int[2 * yLim * zLim];
-                for (int i = 0; i <= zLim; i++)
+                for (int i = 1; i <= zLim; i++)
                 {
-                    var yStart = zSlices[i] + 1 + yLim;
-                    zSlices[i + 1] = yStart;
+                    var yStart = zSlices[i-1] + 1 + yLim;
+                    zSlices[i] = yStart;
                     yArray[yStart] = 0;
                     for (int j = 0; j < yLim; j++)
                     {
-                        yArray[yStart + 2 * j + 1] = 2 * yLim * i + j;
-                        xRanges[2 * yLim * i + 2 * j] = 0;
-                        xRanges[2 * yLim * i + 2 * j + 1] = xLim - 1;
+                        yArray[yStart + j + 1] = 2 * yLim * i + j;
+                        //bug: something not right with y
+                        xArray[2 * yLim * i + 2 * j] = 0;
+                        xArray[2 * yLim * i + 2 * j + 1] = xLim - 1;
                     }
                 }
+                
                 yOffsetsAndXIndices = yArray.ToList();
                 xRanges = xArray.ToList();
+               */
                 Count = xLim * yLim * zLim;
                 SurfaceArea = 2 * (xLim * yLim + zLim * yLim + xLim * zLim);
             }
-            SparseIsCurrent = DenseIsCurrent = true;
+            SparseIsCurrent = false;
+            DenseIsCurrent = true;
         }
 
         /// <summary>
@@ -217,17 +222,22 @@ namespace TVGL.Voxelization
         /// <param name="vs">The vs.</param>
         /// <exception cref="ArgumentException">The voxelized solid constructor receiving another" +
         ///                 " voxelized solid as input must have an up-to-date sparse representation.</exception>
-        public VoxelizedSolid(VoxelizedSolid vs) : this(vs.zSlices, vs.yOffsetsAndXIndices, vs.xRanges,
-                vs.VoxelSideLength, vs.Bounds)
+        public VoxelizedSolid(VoxelizedSolid vs)
+        //: this(vs.zSlices, vs.yOffsetsAndXIndices, vs.xRanges, vs.VoxelSideLength, vs.Bounds)
         {
-            if (!vs.SparseIsCurrent) throw new ArgumentException("The voxelized solid constructor receiving another" +
-                " voxelized solid as input must have an up-to-date sparse representation.");
+            // if (!vs.SparseIsCurrent) throw new ArgumentException("The voxelized solid constructor receiving another" +
+            //    " voxelized solid as input must have an up-to-date sparse representation.");
             if (vs.DenseIsCurrent)
             {
+                VoxelSideLength = vs.VoxelSideLength;
+                Bounds = new double[2][];
+                Bounds[0] = (double[])vs.Bounds.First().Clone();
+                Bounds[1] = (double[])vs.Bounds.Last().Clone();
+                Dimensions = Bounds[1].subtract(Bounds[0], 3);
+                SolidColor = vs.SolidColor;
                 Dense = (byte[,,])vs.Dense.Clone();
-                var bytesInX = VoxelsPerSide[0] >> 3;
-                if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
-                BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
+                VoxelsPerSide = (int[])vs.VoxelsPerSide.Clone();
+                BytesPerSide = (int[])vs.BytesPerSide.Clone();
                 this.DenseIsCurrent = true;
             }
         }
