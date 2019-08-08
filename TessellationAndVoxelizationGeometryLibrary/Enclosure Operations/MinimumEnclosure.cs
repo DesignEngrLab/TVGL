@@ -729,9 +729,32 @@ namespace TVGL
 
             if (bestRectangle.Area.IsNegligible())
             {
+                //Check if the convex hull is correct
+                var polygon = new Polygon(cvxPoints.Select(p => new Point(p)));
+                var convexHullError = !polygon.Area.IsGreaterThanNonNegligible(); //It must have an area greater than zero
+                if (!convexHullError)
+                {
+                    polygon.SetPathLines();
+                    var firstLine = polygon.PathLines.Last();
+                    for (var i = 0; i < polygon.PathLines.Count; i++)
+                    {
+                        var secondLine = polygon.PathLines[i];
+                        //Check the cross product between the two lines. It must be positive, if it is convex.
+                        var cross = firstLine.dX * secondLine.dY - firstLine.dY * secondLine.dX;
+                        if (cross < 0)
+                        {
+                            convexHullError = true;
+                            break;
+                        }
+                        firstLine = secondLine;
+                    }
+                }
+  
                 var polyLight = new PolygonLight(points);
                 var date = DateTime.Now.ToString("MM.dd.yy_HH.mm");
                 polyLight.Serialize("ConvexHullError_" + date + ".PolyLight");
+                var cvxHullLight = new PolygonLight(polygon);
+                cvxHullLight.Serialize("ConvexHull_" + date + ".PolyLight");
                 throw new Exception("Area should never be negligible unless data is messed up.");
             }
 
