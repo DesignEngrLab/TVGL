@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -403,6 +404,24 @@ namespace TVGL
                 return 0;
             }
             return currentLineIndex + 1;
+        }
+
+        public bool IsConvex()
+        {
+            if (!Area.IsGreaterThanNonNegligible()) return false; //It must have an area greater than zero
+            if(PathLines == null) SetPathLines();
+            var firstLine = PathLines.Last();
+            foreach (var secondLine in PathLines)
+            {
+                var cross = firstLine.dX * secondLine.dY - firstLine.dY * secondLine.dX;
+                if (secondLine.Length.IsNegligible(0.0000001)) continue;// without updating the first line             
+                if (cross < 0)
+                {
+                    return false;
+                }
+                firstLine = secondLine;
+            }
+            return true;
         }
     }
 }

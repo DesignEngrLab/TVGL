@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using StarMathLib;
@@ -729,24 +730,30 @@ namespace TVGL
 
             if (bestRectangle.Area.IsNegligible())
             {
-                //Check if the convex hull is correct
                 var polygon = new Polygon(cvxPoints.Select(p => new Point(p)));
-                var convexHullError = !polygon.Area.IsGreaterThanNonNegligible(); //It must have an area greater than zero
-                if (!convexHullError)
+                if (!polygon.IsConvex())
                 {
-                    polygon.SetPathLines();
-                    var firstLine = polygon.PathLines.Last();
-                    for (var i = 0; i < polygon.PathLines.Count; i++)
+                    var c = 0;
+                    var random = new Random(1);//Use a specific random generator to make this repeatable
+                    var pointCount = points.Count;
+                    while (pointCount > 10 && c < 10) //Ten points would be ideal
                     {
-                        var secondLine = polygon.PathLines[i];
-                        //Check the cross product between the two lines. It must be positive, if it is convex.
-                        var cross = firstLine.dX * secondLine.dY - firstLine.dY * secondLine.dX;
-                        if (cross < 0)
+                        //Remove a random point
+                        var max = pointCount - 1;
+                        var index = random.Next(0, max);
+                        var point = points[index];
+                        points.RemoveAt(index);
+
+                        //Check if it is still invalid
+                        var newConvexHull = ConvexHull2D(points).ToList();
+                        polygon = new Polygon(newConvexHull.Select(p => new Point(p)));
+                        if (polygon.IsConvex())
                         {
-                            convexHullError = true;
-                            break;
+                            //Don't remove the point
+                            c++;
+                            points.Insert(index, point);
                         }
-                        firstLine = secondLine;
+                        else pointCount--;
                     }
                 }
   

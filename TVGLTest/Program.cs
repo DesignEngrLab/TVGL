@@ -167,9 +167,13 @@ namespace TVGLPresenterDX
                 Console.WriteLine("Attempting: " + filename);
                 if (!File.Exists(filename)) continue;
                 var polyLight = PolygonLight.Deserialize(filename);
-                Presenter.ShowAndHang(polyLight.Path, "Convex Hull Error", Plot2DType.Points);
                 var cxvHull = MinimumEnclosure.ConvexHull2D(polyLight.Path);
-                Presenter.ShowAndHang(cxvHull);
+                var polygon = new Polygon(cxvHull.Select(p => new Point(p)));
+                if (!polygon.IsConvex())
+                {
+                    Presenter.ShowAndHang(polyLight.Path, "Convex Hull Error", Plot2DType.Points);
+                    Presenter.ShowAndHang(cxvHull);
+                }
             }
 
             Console.WriteLine("Completed.");
