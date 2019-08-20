@@ -51,7 +51,7 @@ namespace TVGL
 
         public static List<PointLight> ConvexHull2D(IList<PointLight> points) 
         {
-            return MIConvexHull.ConvexHull.Create(points);
+            return MIConvexHull.ConvexHull.Create2D(points).Result.ToList();
         }
     }
 }
