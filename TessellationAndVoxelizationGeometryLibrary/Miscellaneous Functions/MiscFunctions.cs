@@ -1990,7 +1990,7 @@ namespace TVGL
         public static Point PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
         {
             PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
-                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
+                line.ToPoint.X, line.ToPoint.Y, out var x, out var y);
             return new Point(x, y);
         }
 
