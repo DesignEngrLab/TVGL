@@ -250,6 +250,7 @@ namespace TVGL
                 var vertex = copyElements ? vertices[i].Copy() : vertices[i];
                 vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
+                vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
                 Vertices[i] = vertex;
                 simpleCompareDict.Add(vertices[i], vertex);
             }
