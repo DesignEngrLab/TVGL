@@ -412,7 +412,7 @@ namespace TVGL
                 var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
                 var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
                 if (areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
-                if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05)) throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
+                if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05)) throw new Exception("Simplify Fuzzy Altered the Geometry more than 5% of the area");
 
                 //Union this new set of polygons with the previous set.
                 if (previousPolygons.Any()) //If not the first iteration
@@ -424,8 +424,8 @@ namespace TVGL
                     }
                     catch
                     {
-                        var testArea1 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
-                        var testArea2 = previousPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                        var testArea1 = simpleOffset.Sum(MiscFunctions.AreaOfPolygon);
+                        var testArea2 = previousPolygons.Sum(MiscFunctions.AreaOfPolygon);
                         if (testArea1.IsPracticallySame(testArea2, 0.01))
                         {
                             currentPaths = simpleOffset;
@@ -439,7 +439,7 @@ namespace TVGL
                 }
 
                 //Get the area of this layer
-                var area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                var area = currentPaths.Sum(MiscFunctions.AreaOfPolygon);
                 if (area < 0)
                 {
                     //Rather than throwing an exception, just assume the polygons were the wrong direction      
@@ -451,7 +451,7 @@ namespace TVGL
                 if (i == 0)
                 {
                     outputData.Add(new DecompositionData(simpleOffset, distance));
-                    var area2 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                    var area2 = simpleOffset.Sum(MiscFunctions.AreaOfPolygon);
                     if (area2 < 0)
                     {
                         //Rather than throwing an exception, just assume the polygons were the wrong direction      
@@ -622,7 +622,7 @@ namespace TVGL
             //Get a list of 2D paths from the 3D loops
             //Get 2D projections does not reorder list if the cutting plane direction is negative
             //So we need to do this ourselves. 
-            //Return null if crossSection3D is null (uses null propogation "?")
+            //Return null if crossSection3D is null (uses null propagation "?")
             var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop, direction, out _, ts.SameTolerance)).ToList();
             return crossSection?.Select(p => new PolygonLight(p)).ToList();
         }
@@ -654,7 +654,7 @@ namespace TVGL
 
                 if (currentVertexDistance.IsPracticallySame(distance, ts.SameTolerance) || currentVertexDistance > distance)
                 {
-                    //Determine cross sectional area for section as close to given distance as possitible (after previous vertex, but before current vertex)
+                    //Determine cross sectional area for section as close to given distance as possible (after previous vertex, but before current vertex)
                     //But not actually on the current vertex
                     double distance2;
                     if (currentVertexDistance.IsPracticallySame(distance))
@@ -671,7 +671,7 @@ namespace TVGL
                     }
                     else
                     {
-                        //There was a significant enough gap betwwen points to use the exact distance
+                        //There was a significant enough gap between points to use the exact distance
                         distance2 = distance;
                     }
 
@@ -716,7 +716,7 @@ namespace TVGL
             //Get a list of 2D paths from the 3D loops
             //Get 2D projections does not reorder list if the cutting plane direction is negative
             //So we need to do this ourselves. 
-            //Return null if crossSection3D is null (uses null propogation "?")
+            //Return null if crossSection3D is null (uses null propagation "?")
             var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop, direction, out _, tolerance)).ToList();
             var polygons = crossSection?.Select(p => new PolygonLight(p)).ToList();
             if (polygons?.Sum(a => a.Area) < 0.0) Debug.WriteLine("Cross section should not have a negative area");
@@ -745,7 +745,7 @@ namespace TVGL
 
             var vertexLookup = new Dictionary<int, Vertex>();
             //initialize the vertex to edge dictionary
-            var vertexEdges = new Dictionary<int, List<long>>(); //Key = vertex index, Value = List<edge checksums>
+            var vertexEdges = new Dictionary<int, List<long>>(); //Key = vertex index, Value = List<edge checkSums>
             foreach (var vertex in vertices)
             {
                 vertexEdges.Add(vertex.IndexInList, new List<long>());
@@ -754,37 +754,32 @@ namespace TVGL
             int maxVertexIndex = vertexLookup.Keys.Max();
             //The easiest way to build the lookup dictionaries is to create edges for all the faces
             //Duplicate edges will be an issue, since edges are longs and are stored in a hashset
-            var edgeFaces = new Dictionary<long, List<PolygonalFace>>(); //Key = edge checksum, Value = face 1 , face 2. Owned/Other is not known.
-            var faceEdgeLookup = new Dictionary<PolygonalFace, List<long>>();
+            var edgeFaces = new Dictionary<long, PolygonalFace[]>(); //Key = edge checksum, Value = face 1 , face 2. Owned/Other is not known.
+            var faceEdgeLookup = new Dictionary<PolygonalFace, long[]>(faces.Length);
             foreach (var face in faces)
             {
-                var edges = new List<long>();
+                var edges = new long[3];
                 for (var i = 0; i < 3; i++)
                 {
                     var j = (i == 2) ? 0 : i + 1;
                     var v1 = face.Vertices[i];
                     var v2 = face.Vertices[j];
                     var newEdge = Edge.GetEdgeChecksum(v1, v2);
-                    edges.Add(newEdge);
+                    edges[i] = newEdge;
                     if (edgeFaces.ContainsKey(newEdge))
                     {
                         //Add the face to the edge. The vertices are already attached to the edge.
-                        edgeFaces[newEdge].Add(face);
+                        edgeFaces[newEdge][1] = face;
                     }
                     else
                     {
                         //Add the face to the edge and the edge to the vertices
-                        edgeFaces[newEdge] = new List<PolygonalFace> { face };
+                        edgeFaces[newEdge] = new []{ face, null };
                         vertexEdges[v1.IndexInList].Add(newEdge);
                         vertexEdges[v2.IndexInList].Add(newEdge);
                     }
                 }
                 faceEdgeLookup[face] = edges;
-            }
-            //ToDo: could change value to an array once debugged
-            foreach (var edgeFaceSet in edgeFaces.Values)
-            {
-                if (edgeFaceSet.Count != 2) throw new Exception("Error in setting edge-face lookup dictionary");
             }
 
             var edgeList = new HashSet<long>();
@@ -813,7 +808,7 @@ namespace TVGL
                     }
                     else
                     {
-                        //There was a significant enough gap betwwen points to use the exact distance
+                        //There was a significant enough gap between points to use the exact distance
                         distance2 = distance;
                     }
 
@@ -843,11 +838,11 @@ namespace TVGL
         }
         #endregion
 
-        #region Local Classes
-        /// <summary>
-        /// The Decomposition Data Class used to store information from A Directional Decomposition.
-        /// 
-        /// </summary>
+            #region Local Classes
+            /// <summary>
+            /// The Decomposition Data Class used to store information from A Directional Decomposition.
+            /// 
+            /// </summary>
         public class DecompositionData
         {
             /// <summary>
@@ -968,7 +963,7 @@ namespace TVGL
                 {
                     _segmentIndex = value;
                     //when you set the segment index, set all the edge references as well.
-                    //Don't set the vertex references of the eges, since some are not yet visited
+                    //Don't set the vertex references of the edges, since some are not yet visited
                     //and need to retain their unset (-1) reference value;
                     foreach (var edge in EdgeLoop)
                     {
@@ -1054,7 +1049,7 @@ namespace TVGL
         #region Uniform Directional Segmentation
         /// <summary>
         /// Returns the Directional Segments found from decomposing a solid along a given direction. 
-        /// This data is used in other methods. Optional parameter "orderedforcedSteps" adds in steps at the 
+        /// This data is used in other methods. Optional parameter "orderedForcedSteps" adds in steps at the 
         /// given distances, but it must be ordered.
         /// </summary>
         /// <param name="ts"></param>
@@ -1065,8 +1060,9 @@ namespace TVGL
         /// <param name="orderedForcedSteps"></param>
         /// <returns></returns>
         public static List<DirectionalSegment> UniformDirectionalSegmentation(TessellatedSolid ts, double[] direction,
-            double stepSize, out Dictionary<int, double> stepDistances,
-            out Dictionary<int, double> sortedVertexDistanceLookup, List<double> orderedForcedSteps = null)
+            double stepSize,  out Dictionary<int, double> stepDistances,
+            out Dictionary<int, double> sortedVertexDistanceLookup,
+            out SegmentationData error, List<double> orderedForcedSteps = null)
         {
             //Reset all the arbitrary edge references and vertex references to -1, since they may have been set in another method
             foreach (var vertex in ts.Vertices)
@@ -1231,8 +1227,13 @@ namespace TVGL
                         ref inputEdgeLoops, minOffset, stepIndex);
                     //if (segmentationData != null) outputData.Add(segmentationData);
 
-                    UpdateSegments(segmentationData, inStepVertices, sortedVertexDistanceLookup, direction,
-                        allDirectionalSegments);
+                    if (!UpdateSegments(segmentationData, inStepVertices, sortedVertexDistanceLookup, direction,
+                        allDirectionalSegments))
+                    {
+                        //Not Successful.
+                        error = segmentationData;
+                        return new List<DirectionalSegment>();
+                    }
 
                     stepDistances.Add(stepIndex, distanceAlongAxis);
 
@@ -1315,6 +1316,7 @@ namespace TVGL
                 //if(segment.Value.StartStepIndexAlongSearchDirection == segment.Value.EndStepIndexAlongSearchDirection) throw new Exception("This segment has zero thickness");
             }
 
+            error = null;
             return allDirectionalSegments.Values.ToList();
         }
 
@@ -1328,7 +1330,7 @@ namespace TVGL
         /// <param name="vertexDistanceLookup"></param>
         /// <param name="searchDirection"></param>
         /// <param name="allDirectionalSegments"></param>
-        private static void UpdateSegments(SegmentationData segmentationData, HashSet<Vertex> inStepVertices,
+        private static bool UpdateSegments(SegmentationData segmentationData, HashSet<Vertex> inStepVertices,
             Dictionary<int, double> vertexDistanceLookup, double[] searchDirection,
             Dictionary<int, DirectionalSegment> allDirectionalSegments)
         {
@@ -1349,7 +1351,7 @@ namespace TVGL
                             segments. Each blind hole or pocket can only belong to one segment.
 
             Segment Case 5: [New Segment] If a positive polygon's edge loop does NOT belongs to any segments, then it is the start of
-                            a new segement. Simply start a new segment and look through any of the unassigned negative polygons to check
+                            a new segment. Simply start a new segment and look through any of the unassigned negative polygons to check
                             if they belong to this new polygon (Do this with the same wrapping technique used earlier).
 
             Segment Case 6: [Branching] If a positive loop is added to a existing segment (>1 +loops), close that segment and start  
@@ -1359,7 +1361,7 @@ namespace TVGL
             In All Cases:   The in-step vertices and edges belong to the parent and child segments. This does repeat information, but there
                             are quite a few different cases and this is the easiest solution (other than not attaching them to any segment).
             
-            Fast Transititions: A segment starts at the index after its parent end. If this segment merges with another segment in the next
+            Fast Transitions: A segment starts at the index after its parent end. If this segment merges with another segment in the next
                                 iteration, then it will only be defined for one step (zero thickness). This may also happen if a brand new 
                                 segment (A) immediately merges with another segment (B). In this case, segment A will only be defined for the 
                                 first step index, since segment B takes over at the next step index. Otherwise, there would be multiple cross
@@ -1369,6 +1371,8 @@ namespace TVGL
                             and backward from that step to form a volume.  
             */
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
+            var firstIterationFailed = false;
+            WrappingStep2:
 
             //Get all the current segments.
             var currentSegmentsToConsider = new HashSet<DirectionalSegment>();
@@ -1401,7 +1405,7 @@ namespace TVGL
                     }
                     if (!parentFound) throw new Exception("Segment with matching edges was not found");
                 }
-                return;
+                return true;
             }
             #endregion
 
@@ -1409,7 +1413,7 @@ namespace TVGL
             //Wrap edge/vertex pairs forward for each segment until all the edges have a vertex 
             //that is further than the current distance (pointing forward). The vertex will get
             //a segment Index assigned to its ReferenceIndex. If a segment wants to use a vertex with 
-            //an existing reference index, then stop pursueing that segment and note that the two are connected.
+            //an existing reference index, then stop pursuing that segment and note that the two are connected.
             while (currentSegmentsToConsider.Any())
             {
                 var segment = currentSegmentsToConsider.First();
@@ -1475,7 +1479,7 @@ namespace TVGL
                         //        To resolve this, we need to push the other vertex onto the vertexSet and note that
                         //        this vertex has been visited. This other vertex will lead us to Case 3 if there are
                         //        connected segments.
-                        //Edge Case 2: The other vertex is further that the current distance. Update the segement's current edges
+                        //Edge Case 2: The other vertex is further that the current distance. Update the segment's current edges
                         //        and next vertices so that we can use them later to identify edge loops.
                         //Edge Case 3: The other vertex is already past and belongs to a segment. Save the edge to be 
                         //        added to the segment's edge references. If it belongs to a segment other than the
@@ -1612,7 +1616,7 @@ namespace TVGL
                     connectedSegmentsIndices.Add(segment.Index);
 
                     //Add the finished edges to the reference edges of whichever segment they belong to.
-                    //The finished edgs are not truly complete in these segments, since the in-step
+                    //The finished edges are not truly complete in these segments, since the in-step
                     //vertices will actually belong to the new segment, but this will allow for the segment's
                     //cross sections to be defined with the set of edges for its entire length.
                     foreach (var edge in finishedEdges)
@@ -1710,18 +1714,18 @@ namespace TVGL
             #region Wrapping Step 2 (Resolves Segment Cases 4 & 5): wrap unused vertices to find connected vertices, edges, and polygons 
             //If it is a positive, create a new segment.
             //If it is is a negative, use the "Intersection" polygon operation to determine which segment it belongs to.
-
             //Get all the unassigned in-step vertices.
             var unusedInStepVertices = new HashSet<Vertex>();
             foreach (var inStepVertex in inStepVertices)
             {
                 if (inStepVertex.ReferenceIndex == -1) unusedInStepVertices.Add(inStepVertex);
             }
-            //Create new segements from any unused vertices
+            //Create new segments from any unused vertices
             var usedInStepVertices = new HashSet<Vertex>();
             while (unusedInStepVertices.Any())
             {
                 var startVertex = unusedInStepVertices.First();
+
                 //Don't remove from the unusedInStepVertices list until we are done collecting
                 //All the edges that belong to this segment. Otherwise, we will be missing some
                 //of the edges between in step vertices.
@@ -1742,8 +1746,8 @@ namespace TVGL
                     var vertex = verticesToConsider.Pop();
                     foreach (var edge in vertex.Edges)
                     {
-                        currentEdges.Add(edge);
                         var otherVertex = edge.OtherVertex(vertex);
+                        currentEdges.Add(edge);
                         if (unusedInStepVertices.Contains(otherVertex))
                         {
                             usedInStepVertices.Add(otherVertex);
@@ -1802,7 +1806,7 @@ namespace TVGL
                 //There does not have to be a negative polygon, but go ahead and check
                 //There can only be one positive polygon data group, but there may be multiple negative ones.
                 //For this reason, we need to check all of them and cannot break early.
-                //We will then have a loop to remove the newly assigned data groups from the list of unnassigned ones.
+                //We will then have a loop to remove the newly assigned data groups from the list of unassigned ones.
                 var negativePolygonDataGroups = new HashSet<PolygonDataGroup>();
                 foreach (var polygonDataGroup in unassignedNegativePolygonDataGroups)
                 {
@@ -1848,7 +1852,7 @@ namespace TVGL
                             //As a hole, it cannot belong to multiple segments and cannot split or merge segments.
                             //Note: you cannot just check if a point from the dataSet is inside the positive paths, 
                             //since it the blind hole could be nested inside positive/negative pairings. (ex: a hollow rod 
-                            //down the middle of a larger hollow tube. In this case, the hollow rod is a differnt segment).
+                            //down the middle of a larger hollow tube. In this case, the hollow rod is a different segment).
                             var result = PolygonOperations.Intersection(paths, tempPolygons);
                             if (result != null && result.Any())
                             {
@@ -1919,7 +1923,12 @@ namespace TVGL
             }
             #endregion
 
-            if (unassignedPositivePolygonDataGroups.Any()) throw new Exception("At this point, only blind holes should be unassigned");
+            if (unassignedPositivePolygonDataGroups.Any())
+            {
+                Debug.WriteLine("Unassigned positive loop in directional decomposition, likely caused by too large a step size. Attempting to solve.");
+                return false;
+                throw new Exception("At this point, only blind holes should be unassigned");
+            }
 
             #region Attach SegmentationData (Finishing Touch for Segment Case 2 and Resolves Segment Case 6)      
             foreach (var polygonDataGroup in segmentationData.CrossSectionData)
@@ -1954,6 +1963,7 @@ namespace TVGL
                 }
             }
             #endregion
+            return true;
         }
 
         private static void AddConnectedSegment(DirectionalSegment otherSegment,
@@ -2008,7 +2018,7 @@ namespace TVGL
         {
             //Make the slice
             var counter = 0;
-            var successfull = false;
+            var successful = false;
             var cuttingPlane = new Flat(distanceAlongAxis, direction);
             do
             {
@@ -2043,7 +2053,7 @@ namespace TVGL
                                 MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction,
                                     out _));
 
-                    successfull = true; //Irrelevant, since we are returning now.
+                    successful = true; //Irrelevant, since we are returning now.
 
                     //Add the data to the output
                     return new SegmentationData(currentPaths.ToList(), current3DLoops, outputEdgeLoops, areas, distanceAlongAxis, stepIndex);
@@ -2053,7 +2063,7 @@ namespace TVGL
                     counter++;
                     distanceAlongAxis += minOffset;
                 }
-            } while (!successfull && counter < 4);
+            } while (!successful && counter < 4);
 
             Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
             return null;
@@ -2447,7 +2457,7 @@ namespace TVGL
                         //As a hole, it cannot belong to multiple segments and cannot split or merge segments.
                         //Note: you cannot just check if a point from the dataSet is inside the positive paths, 
                         //since it the blind hole could be nested inside positive/negative pairings. (ex: a hollow rod 
-                        //down the middle of a larger hollow tube. In this case, the hollow rod is a differnt segment).
+                        //down the middle of a larger hollow tube. In this case, the hollow rod is a different segment).
                         var positiveVersionOfHole = new List<PointLight>(negativePolygonDataGroup.Path2D);
                         positiveVersionOfHole.Reverse();
                         var result = PolygonOperations.Intersection(paths, positiveVersionOfHole);
@@ -2639,14 +2649,14 @@ namespace TVGL
         /// <param name="edgeListDictionary">The edge list dictionary.</param>
         /// <param name="cuttingPlane">The cutting plane.</param>
         /// <param name="outputEdgeLoops">The output edge loops.</param>
-        /// <param name="intputEdgeLoops">The intput edge loops.</param>
+        /// <param name="inputEdgeLoops">The input edge loops.</param>
         /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>System.Double.</returns>
         /// <exception cref="Exception">Loop did not complete</exception>
         private static double CrossSectionalArea(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane,
-            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops, bool ignoreNegativeSpace = false)
+            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> inputEdgeLoops, bool ignoreNegativeSpace = false)
         {
-            var loops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, intputEdgeLoops);
+            var loops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
             var totalArea = 0.0;
             foreach (var loop in loops)
             {
@@ -2659,13 +2669,13 @@ namespace TVGL
         }
 
         private static List<List<Vertex>> GetLoops(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane,
-            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops)
+            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> inputEdgeLoops)
         {
             var edgeLoops = new List<List<Edge>>();
             var loops = new List<List<Vertex>>();
-            if (intputEdgeLoops.Any())
+            if (inputEdgeLoops.Any())
             {
-                edgeLoops = intputEdgeLoops; //Note that edge loops should all be ordered correctly
+                edgeLoops = inputEdgeLoops; //Note that edge loops should all be ordered correctly
                 foreach (var edgeLoop in edgeLoops)
                 {
                     var loop = new List<Vertex>();
@@ -2683,8 +2693,8 @@ namespace TVGL
             {
                 //Build an edge list that we can modify, without ruining the original
                 //After comparing hashset versus dictionary (with known keys)
-                //Hashset was slighlty faster during creation and enumeration, 
-                //but even more slighlty slower at removing. Overall, Hashset 
+                //Hashset was slightly faster during creation and enumeration, 
+                //but even more slightly slower at removing. Overall, Hashset 
                 //was about 17% faster than a dictionary.
                 var edges = new List<Edge>(edgeListDictionary.Values);
                 var unusedEdges = new HashSet<Edge>(edges);
@@ -2763,16 +2773,16 @@ namespace TVGL
         }
    
         private static List<List<Vertex>> GetLoops(HashSet<long> edgeList, Flat cuttingPlane,
-          out List<List<long>> outputEdgeLoops, List<List<long>> intputEdgeLoops, Dictionary<int, Vertex> vertexLookup,
-            Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup,
-            Dictionary<PolygonalFace, List<long>> faceEdgeLookup, ref int maxVertexIndex)
+          out List<List<long>> outputEdgeLoops, List<List<long>> inputEdgeLoops, Dictionary<int, Vertex> vertexLookup,
+            Dictionary<int, List<long>> vertexEdgeLookup, Dictionary<long, PolygonalFace[]> edgeFaceLookup,
+            Dictionary<PolygonalFace, long[]> faceEdgeLookup, ref int maxVertexIndex)
         {
             outputEdgeLoops = new List<List<long>>();
             var edgeLoops = new List<List<long>>();
             var loops = new List<List<Vertex>>();
-            if (intputEdgeLoops.Any())
+            if (inputEdgeLoops.Any())
             {
-                edgeLoops = intputEdgeLoops; //Note that edge loops should all be ordered correctly
+                edgeLoops = inputEdgeLoops; //Note that edge loops should all be ordered correctly
                 foreach (var edgeLoop in edgeLoops)
                 {
                     var loop = new List<Vertex>();
@@ -2784,7 +2794,7 @@ namespace TVGL
                             vertexLookup[vertex1], vertexLookup[vertex2]);
                         maxVertexIndex++;
                         vertexLookup.Add(maxVertexIndex, newVertex);
-                        vertexEdgeLoopup.Add(maxVertexIndex, new List<long> { edge });
+                        vertexEdgeLookup.Add(maxVertexIndex, new List<long> { edge });
                         loop.Add(newVertex);
                     }
                     loops.Add(loop);
@@ -2794,8 +2804,8 @@ namespace TVGL
             {
                 //Build an edge list that we can modify, without ruining the original
                 //After comparing hashset versus dictionary (with known keys)
-                //Hashset was slighlty faster during creation and enumeration, 
-                //but even more slighlty slower at removing. Overall, Hashset 
+                //Hashset was slightly faster during creation and enumeration, 
+                //but even more slightly slower at removing. Overall, Hashset 
                 //was about 17% faster than a dictionary.
                 var edges = new List<long>(edgeList);
                 var unusedEdges = new HashSet<long>(edges);
@@ -2863,7 +2873,7 @@ namespace TVGL
                             maxVertexIndex++;
                             intersectVertex.IndexInList = maxVertexIndex;
                             vertexLookup.Add(maxVertexIndex, intersectVertex);
-                            vertexEdgeLoopup.Add(maxVertexIndex, new List<long> { nextEdge });
+                            vertexEdgeLookup.Add(maxVertexIndex, new List<long> { nextEdge });
                             loop.Add(intersectVertex);
 
                             //Note that removing at an index is FASTER than removing a object.
