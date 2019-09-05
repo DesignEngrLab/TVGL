@@ -127,14 +127,39 @@ namespace TVGL
         /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
         /// will all be interior to the part, unless addCrossSectionAtStartAndEnd = true.
         /// </summary>
-        /// <param name="ts"></param>
+        /// <param name="solid"></param>
         /// <param name="direction"></param>
         /// <param name="stepSize"></param>
         /// <param name="stepDistances"></param>
         /// <param name="sortedVertexDistanceLookup"></param>
-        /// <param name="addCrossSectionAtStartAndEnd"></param>
-        /// <returns></returns>
-        public static List<DecompositionData> UniformDecomposition(TessellatedSolid ts, double[] direction,
+        /// <param name="snapTo"></param>
+        /// <param name="addCrossSectionAtStartAndEndForCenterSnap"></param>
+        public static List<DecompositionData> UniformDecomposition(TessellatedSolid solid, double[] direction,
+        double stepSize, out Dictionary<int, double> stepDistances,
+            out Dictionary<int, double> sortedVertexDistanceLookup,
+            SnapType snapTo, bool addCrossSectionAtStartAndEndForCenterSnap = false)
+        {
+            return UniformDecomposition(new List<TessellatedSolid> {solid}, direction, stepSize, out stepDistances,
+                out sortedVertexDistanceLookup, snapTo, addCrossSectionAtStartAndEndForCenterSnap)[0];
+        }
+
+        /// <summary>
+        /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
+        /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
+        /// will all be interior to the part, unless addCrossSectionAtStartAndEnd = true.
+        /// This version supports multiple solids, with one set of stepDistances, such that the total distance along the direction
+        /// includes the vertices from all the solids. If a solid does not have a cross section at a particular distance
+        /// (i.e. starts before other solid or ends after), then it's DecompositionData will either end early or start late.
+        /// sortedVertexDistanceLookup is only created if there is just one solid (otherwise the Vertex.IndexInList will have duplicates).
+        /// </summary>
+        /// <param name="solids"></param>
+        /// <param name="direction"></param>
+        /// <param name="stepSize"></param>
+        /// <param name="stepDistances"></param>
+        /// <param name="sortedVertexDistanceLookup"></param>
+        /// <param name="snapTo"></param>
+        /// <param name="addCrossSectionAtStartAndEndForCenterSnap"></param>
+        public static Dictionary< int, List<DecompositionData>> UniformDecomposition(List<TessellatedSolid> solids, double[] direction,
         double stepSize, out Dictionary<int, double> stepDistances,
         out Dictionary<int, double> sortedVertexDistanceLookup,
         SnapType snapTo, bool addCrossSectionAtStartAndEndForCenterSnap = false)
@@ -148,21 +173,21 @@ namespace TVGL
 
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<(Vertex, double)> sortedVertices);
+            MiscFunctions.SortAlongDirection(direction, solids.SelectMany(s => s.Vertices), out List<(Vertex, double)> sortedVertices);
             //Create a distance lookup dictionary based on the vertex indices
-            sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
+            //This only works if there is just one solid
+            if(solids.Count == 1) sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
 
-            var edgeListDictionary = new Dictionary<int, Edge>();
+            var edgeListDictionary = new Dictionary<int, Dictionary<int, Edge>>();
             var firstDistance = sortedVertices.First().Item2;
             var furthestDistance = sortedVertices.Last().Item2;
             var length = furthestDistance - firstDistance;
 
             var currentVertexIndex = 0;
-            var inputEdgeLoops = new List<List<Edge>>();
-
+            var inputEdgeLoops = new Dictionary<int, List<List<Edge>>>();
 
             //Choose whichever min offset is smaller
-            var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
+            var minOffset = Math.Min(Math.Sqrt(solids[0].SameTolerance), stepSize / 1000);
             var div = length / stepSize;
             var t = (int)(length / stepSize);
             var numSteps = t + 1; //Round up to nearest integer (or down and then add 1)
@@ -227,7 +252,16 @@ namespace TVGL
             }
 
             //Initialize the size of the list.
-            var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
+            var outputData = new Dictionary<int, List<DecompositionData>>();
+
+            //Initialize the dictionaries that store info for each solid
+            for (var i = 0 ; i< solids.Count; i++)
+            {
+                outputData[i] = new List<DecompositionData>(new DecompositionData[numSteps]);
+                edgeListDictionary[i] = new Dictionary<int, Edge>();
+                inputEdgeLoops[i] = new List<List<Edge>>();
+                foreach (var v in solids[i].Vertices) v.ReferenceIndex = i;
+            }
 
             //Start the step index at +1, so that the increment can be at the start of the while loop, 
             //making the final stepIndex correct for use in a later function.
@@ -247,6 +281,7 @@ namespace TVGL
                     currentVertexIndex = i;
                     var element = sortedVertices[i];
                     var vertex = element.Item1;
+                    var solid = vertex.ReferenceIndex;
                     var vertexDistanceAlong = element.Item2;
                     //If a vertex is too close to the current distance, move it forward by the min offset.
                     //Update the edge list with this vertex.
@@ -277,97 +312,117 @@ namespace TVGL
                     foreach (var edge in vertex.Edges)
                     {
                         //Reset the input edge loops since we have added an edge
-                        inputEdgeLoops = new List<List<Edge>>();
+                        inputEdgeLoops[solid] = new List<List<Edge>>();
 
                         //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
                         //and the second removes it from the list.
-                        if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                        if (edgeListDictionary[solid].ContainsKey(edge.IndexInList))
                         {
-                            edgeListDictionary.Remove(edge.IndexInList);
+                            edgeListDictionary[solid].Remove(edge.IndexInList);
                         }
                         else
                         {
-                            edgeListDictionary.Add(edge.IndexInList, edge);
+                            edgeListDictionary[solid].Add(edge.IndexInList, edge);
                         }
                     }
                 }
 
                 //Check to make sure that the minor shifts in the distance in the for loop above 
                 //Did not move the distance beyond the furthest distance
-                if (distanceAlongAxis > furthestDistance || !edgeListDictionary.Any()) break;
-                //Make the slice
-                var counter = 0;
-                var current3DLoops = new List<List<Vertex>>();
-                var successfull = true;
-                var cuttingPlane = new Flat(distanceAlongAxis, direction);
-                do
+                if (distanceAlongAxis > furthestDistance) break;
+
+                //Update each solid
+                for (var i = 0; i < solids.Count; i++)
                 {
-                    try
+                    //Check to see if the solid has any cross sections at this depth.
+                    if(!edgeListDictionary[i].Any()) break;
+                    //Make the slice
+                    var counter = 0;
+                    var current3DLoops = new List<List<Vertex>>();
+                    var successful = true;
+                    var cuttingPlane = new Flat(distanceAlongAxis, direction);
+                    do
                     {
-                        current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out var outputEdgeLoops,
-                            inputEdgeLoops);
+                        try
+                        {
+                            current3DLoops = GetLoops(edgeListDictionary[i], cuttingPlane, out var outputEdgeLoops,
+                                inputEdgeLoops[i]);
 
-                        //Use the same output edge loops for outer while loop, since the edge list does not change.
-                        //If there is an error, it will occur before this loop.
-                        inputEdgeLoops = outputEdgeLoops;
-                    }
-                    catch
+                            //Use the same output edge loops for outer while loop, since the edge list does not change.
+                            //If there is an error, it will occur before this loop.
+                            inputEdgeLoops[i] = outputEdgeLoops;
+                        }
+                        catch
+                        {
+                            counter++;
+                            distanceAlongAxis += minOffset;
+                            successful = false;
+                        }
+                    } while (!successful && counter < 4);
+
+
+                    if (successful)
                     {
-                        counter++;
-                        distanceAlongAxis += minOffset;
-                        successfull = false;
+                        //Get a list of 2D paths from the 3D loops
+                        var currentPaths =
+                            current3DLoops.Select(
+                                cp =>
+                                    MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction,
+                                        out _));
+
+                        //Get the area of this layer
+                        var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
+                        if (area < 0)
+                        {
+                            //Rather than throwing an exception, just assume the polygons were the wrong direction      
+                            Debug.WriteLine(
+                                "Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
+                        }
+
+                        //Add the data to the output
+                        //Use the original distance value for this index.
+                        outputData[i][stepIndex] = new DecompositionData(currentPaths, current3DLoops, stepDistances[stepIndex], stepIndex);
                     }
-                } while (!successfull && counter < 4);
-
-
-                if (successfull)
-                {
-                    //Get a list of 2D paths from the 3D loops
-                    var currentPaths =
-                        current3DLoops.Select(
-                            cp =>
-                                MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction,
-                                    out _));
-
-                    //Get the area of this layer
-                    var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
-                    if (area < 0)
+                    else
                     {
-                        //Rather than throwing an exception, just assume the polygons were the wrong direction      
-                        Debug.WriteLine(
-                            "Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
+                        Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
                     }
-
-                    //Add the data to the output
-                    //Use the original distance value for this index.
-                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, stepDistances[stepIndex]);
                 }
-                else
-                {
-                    Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
-                }
+                
                 stepIndex++;
             }
 
             if (addToStart)
             {
-                var firstCrossSection = new List<List<Vertex>>();
-                foreach (var path in outputData[1].Paths)
+                for(var i = 0; i < solids.Count; i++)
                 {
-                    firstCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(path.Select(p => new Point(p)).ToList(),
-                        direction, firstDistance));
+                    var startIndex = outputData[i].First(d => d != null).StepIndex;
+                    var firstCrossSection = new List<List<Vertex>>();
+                    foreach (var path in outputData[i][startIndex].Paths)
+                    {
+                        firstCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(path.Path.Select(p => new Point(p)).ToList(),
+                            direction, stepDistances[startIndex - 1]));
+                    }
+                    outputData[i][startIndex - 1] = new DecompositionData(outputData[i][startIndex].Paths,
+                        firstCrossSection, stepDistances[startIndex - 1], startIndex - 1);
                 }
-                outputData[0] = new DecompositionData(outputData[1].Paths, firstCrossSection, stepDistances[0]);
             }
             if (addToEnd)
             {
-                var lastCrossSection = new List<List<Vertex>>();
-                foreach (var path in outputData[numSteps - 2].Paths)
+                for (var i = 0; i < solids.Count; i++)
                 {
-                    lastCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(path.Select(p => new Point(p)).ToList(),
-                        direction, firstDistance));
+                    var lastIndex = outputData[i].Last(d => d != null).StepIndex  + 1; //Add one, since we are adding to the end
+                    var lastCrossSection = new List<List<Vertex>>();
+                    foreach (var path in outputData[i][lastIndex - 1].Paths)
+                    {
+                        lastCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(
+                            path.Path.Select(p => new Point(p)).ToList(),
+                            direction, stepDistances[lastIndex]));
+                    }
+
+                    outputData[i][lastIndex] = new DecompositionData(outputData[i][lastIndex - 1].Paths, lastCrossSection,
+                        stepDistances[lastIndex], lastIndex);
                 }
-                outputData[stepIndex] = new DecompositionData(outputData[numSteps - 2].Paths, lastCrossSection, stepDistances[stepIndex]);
             }
 
             return outputData;
@@ -391,7 +446,7 @@ namespace TVGL
             double scanningAccuracy, out List<DecompositionData> outputData)
         {
             outputData = new List<DecompositionData>();
-            var previousPolygons = new List<List<PointLight>>();
+            var previousPolygons = new List<PolygonLight>();
             var previousDistance = 0.0;
             var previousArea = 0.0;
             var additiveVolume = 0.0;
@@ -405,27 +460,29 @@ namespace TVGL
                 //currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
 
                 //Offset if the additive accuracy is significant
-                var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentPaths);
-                var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, scanningAccuracy) : new List<List<PointLight>>(currentPaths);
-                var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
+                var areaPriorToOffset = currentPaths.Sum(p => p.Area);
+                var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, scanningAccuracy) : new List<PolygonLight>(currentPaths);
+                var areaAfterOffset = offsetPaths.Sum(p => p.Area);
                 //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
-                var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
-                var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
+                var simpleOffset = offsetPaths.Select(p => PolygonOperations.SimplifyFuzzy(p.Path))
+                    .Where(simplePath => simplePath.Any()).Select(p => new PolygonLight(p)).ToList();
+                var areaAfterSimplification = simpleOffset.Sum(p => p.Area);
                 if (areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
                 if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05)) throw new Exception("Simplify Fuzzy Altered the Geometry more than 5% of the area");
 
                 //Union this new set of polygons with the previous set.
                 if (previousPolygons.Any()) //If not the first iteration
                 {
-                    previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
+                    previousPolygons = previousPolygons.Select(p => PolygonOperations.SimplifyFuzzy(p.Path))
+                        .Where(simplePath => simplePath.Any()).Select(p => new PolygonLight(p)).ToList();
                     try
                     {
                         currentPaths = PolygonOperations.Union(previousPolygons, simpleOffset);
                     }
                     catch
                     {
-                        var testArea1 = simpleOffset.Sum(MiscFunctions.AreaOfPolygon);
-                        var testArea2 = previousPolygons.Sum(MiscFunctions.AreaOfPolygon);
+                        var testArea1 = simpleOffset.Sum(p => p.Area);
+                        var testArea2 = previousPolygons.Sum(p => p.Area);
                         if (testArea1.IsPracticallySame(testArea2, 0.01))
                         {
                             currentPaths = simpleOffset;
@@ -439,7 +496,7 @@ namespace TVGL
                 }
 
                 //Get the area of this layer
-                var area = currentPaths.Sum(MiscFunctions.AreaOfPolygon);
+                var area = currentPaths.Sum(p => p.Area);
                 if (area < 0)
                 {
                     //Rather than throwing an exception, just assume the polygons were the wrong direction      
@@ -451,7 +508,7 @@ namespace TVGL
                 if (i == 0)
                 {
                     outputData.Add(new DecompositionData(simpleOffset, distance));
-                    var area2 = simpleOffset.Sum(MiscFunctions.AreaOfPolygon);
+                    var area2 = simpleOffset.Sum(p => p.Area);
                     if (area2 < 0)
                     {
                         //Rather than throwing an exception, just assume the polygons were the wrong direction      
@@ -515,16 +572,17 @@ namespace TVGL
             {
                 var currentCrossSection = decompData[i].Paths;
                 //Offset if the additive accuracy is significant
-                var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentCrossSection);
+                var areaPriorToOffset = currentCrossSection.Sum(p => p.Area);
                 var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentCrossSection, scanningAccuracy) : currentCrossSection;
-                var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
+                var areaAfterOffset = offsetPaths.Sum(p => p.Area);
                 //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
-                var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
-                var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
+                var simpleOffset = offsetPaths.Select(p => PolygonOperations.SimplifyFuzzy(p.Path))
+                    .Where(simplePath => simplePath.Any()).Select(p => new PolygonLight(p)).ToList();
+                var areaAfterSimplification = simpleOffset.Sum(p => p.Area);
                 if (areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
                 if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05))
-                    throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
-                offsetCrossSections[i] = new List<PolygonLight>(simpleOffset.Select(p => new PolygonLight(p)));
+                    throw new Exception("Simplify Fuzzy Altered the Geometry more than 5% of the area");
+                offsetCrossSections[i] = new List<PolygonLight>(simpleOffset);
             };
 
             outputData = new List<DecompositionData>();
@@ -578,7 +636,7 @@ namespace TVGL
                 {
                     //They are probably throwing an error because they are closely overlapping.
                     //Use the previous path
-                    var onePrior = new List<PolygonLight>(outputData.Last().Paths.Select(p => new PolygonLight(p)));
+                    var onePrior = new List<PolygonLight>(outputData.Last().Paths);
                     currentVolume = Math.Abs(onePrior.Sum(p => p.Area)) * deltaX; //volume between onePrior and current   
                 }
 
@@ -848,7 +906,7 @@ namespace TVGL
             /// <summary>
             /// A list of the paths that make up the slice of the solid at this distance along this direction
             /// </summary>
-            public List<List<PointLight>> Paths;
+            public List<PolygonLight> Paths;
 
             /// <summary>
             /// An optional list of paths that have been offset
@@ -871,17 +929,31 @@ namespace TVGL
             public double DistanceAlongDirection;
 
             /// <summary>
+            /// The index along the direction
+            /// </summary>
+            public int StepIndex;
+
+            /// <summary>
             /// The Decomposition Data Class used to store information from A Directional Decomposition
             /// </summary>
             /// <param name="paths"></param>
             /// <param name="vertices"></param>
             /// <param name="distanceAlongDirection"></param>
-            public DecompositionData(IEnumerable<List<PointLight>> paths, IEnumerable<List<Vertex>> vertices, double distanceAlongDirection)
+            public DecompositionData(IEnumerable<List<PointLight>> paths, IEnumerable<List<Vertex>> vertices, double distanceAlongDirection, int stepIndex)
             {
-                Paths = new List<List<PointLight>>(paths);
+                Paths = new List<PolygonLight>(paths.Select(p => new PolygonLight(p)));
                 if (vertices != null)
                     Vertices = new List<List<Vertex>>(vertices);
                 DistanceAlongDirection = distanceAlongDirection;
+                StepIndex = stepIndex;
+            }
+            public DecompositionData(IEnumerable<PolygonLight> paths, IEnumerable<List<Vertex>> vertices, double distanceAlongDirection, int stepIndex)
+            {
+                Paths = new List<PolygonLight>(paths);
+                if (vertices != null)
+                    Vertices = new List<List<Vertex>>(vertices);
+                DistanceAlongDirection = distanceAlongDirection;
+                StepIndex = stepIndex;
             }
 
             /// <summary>
@@ -891,18 +963,23 @@ namespace TVGL
             /// <param name="distanceAlongDirection"></param>
             public DecompositionData(IEnumerable<List<PointLight>> paths, double distanceAlongDirection)
             {
-                Paths = new List<List<PointLight>>(paths);
+                Paths = new List<PolygonLight>(paths.Select(p => new PolygonLight(p)));
+                DistanceAlongDirection = distanceAlongDirection;
+            }
+            public DecompositionData(IEnumerable<PolygonLight> paths, double distanceAlongDirection)
+            {
+                Paths = new List<PolygonLight>(paths);
                 DistanceAlongDirection = distanceAlongDirection;
             }
 
             public void SetConvexHull()
             {
-                ConvexHull = MinimumEnclosure.ConvexHull2D(Paths.SelectMany(s => s.Select(p => p)).ToList());
+                ConvexHull = MinimumEnclosure.ConvexHull2D(Paths.SelectMany(s => s.Path.Select(p => p)).ToList());
             }
 
             public void SetOffset(double offsetDistance)
             {
-                OffsetPaths = PolygonOperations.OffsetSquare(Paths, offsetDistance).Select(p => new PolygonLight(p)).ToList();
+                OffsetPaths = PolygonOperations.OffsetSquare(Paths, offsetDistance);
             }
         }
 
