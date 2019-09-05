@@ -820,6 +820,67 @@ namespace TVGL
 
         /// <summary>
         ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices. 
+        ///     Additionally, this function will keep the loops in their original positive/negative
+        ///     orientation.
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <param name="direction"></param>
+        /// <param name="backTransform"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="mergeDuplicateReferences"></param>
+        /// <returns></returns>
+        public static List<PointLight> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<double[]> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
+            bool mergeDuplicateReferences = false)
+        {
+            var enumerable = loop as IList<double[]> ?? loop.ToList();
+            var area1 = AreaOf3DPolygon(enumerable, direction);
+            var path = Get2DProjectionPointsAsLight(enumerable, direction, out backTransform);
+            var area2 = AreaOfPolygon(path);
+            var dif = area1 - area2;
+            var successful = false;
+            var attempts = 0;
+            //Try up to three times if not successful, expanding the tolerance each time
+            while (!successful && attempts < 4)
+            {
+                //For every attempt greater than zero, expand the tolerance by taking its square root
+                if (attempts > 0) tolerance = Math.Sqrt(tolerance);
+
+                try
+                {
+                    if (dif.IsNegligible(tolerance))
+                    {
+                        successful = true;
+                    }
+                    else
+                    {
+                        if ((-area1).IsPracticallySame(area2, tolerance))
+                        {
+                            dif = area1 + area2;
+                            path.Reverse();
+                            successful = true;
+                        }
+                        else
+                        {
+                            attempts++;
+                            //throw new Exception("area mismatch during 2D projection");
+                        }
+                    }
+                }
+                catch
+                {
+                    attempts++;
+                }
+            }
+
+            if (attempts > 0 && attempts < 4) ;//Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
+            else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
+
+            return path;
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
         ///     The point z-values will be zero. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
@@ -828,6 +889,13 @@ namespace TVGL
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
         public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[] direction,
+            out double[,] backTransform,
+            bool mergeDuplicateReferences = false)
+        {
+            var transform = TransformToXYPlane(direction, out backTransform);
+            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
+        }
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<double[]> vertices, double[] direction,
             out double[,] backTransform,
             bool mergeDuplicateReferences = false)
         {
@@ -898,6 +966,54 @@ namespace TVGL
             return points;
         }
 
+        /// <summary>
+        ///     Returns an array of points projected using the given transform.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <returns>Point[].</returns>
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<double[]> vertices, double[,] transform,
+            bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
+        {
+            var points = new List<PointLight>();
+            var simpleCompareDict = new Dictionary<string, PointLight>();
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            var stringformat = "F" + numDecimalPoints;
+            foreach (var vertex in vertices)
+            {
+                var point = Get2DProjectionPoint(vertex, transform);
+                if (!mergeDuplicateReferences)
+                {
+                    points.Add(new PointLight(point[0], point[1]));
+                }
+                else
+                {
+                    point[0] = Math.Round(point[0], numDecimalPoints);
+                    point[1] = Math.Round(point[1], numDecimalPoints);
+                    var lookupString = point[0].ToString(stringformat) + "|"
+                                       + point[1].ToString(stringformat);
+                    if (simpleCompareDict.ContainsKey(lookupString))
+                    {
+                        /* if it's in the dictionary, move to the next vertex */
+                        continue;
+                    }
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                        * the position in the locationIndices. */
+                        var point2D = new PointLight(point[0], point[1]);
+                        simpleCompareDict.Add(lookupString, point2D);
+                        points.Add(point2D);
+                    }
+                }
+            }
+            return points;
+        }
+
         public static PointLight Get2DProjectionPointAsLight(Vertex vertex, double[,] transform)
         {
             var position = Get2DProjectionPoint(vertex, transform);
@@ -906,13 +1022,19 @@ namespace TVGL
 
         public static double[] Get2DProjectionPoint(Vertex vertex, double[,] transform)
         {
+            return Get2DProjectionPoint(vertex.Position, transform);
+        }
+
+        public static double[] Get2DProjectionPoint(double[] vertex, double[,] transform)
+        {
             var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
-            pointAs4[0] = vertex.Position[0];
-            pointAs4[1] = vertex.Position[1];
-            pointAs4[2] = vertex.Position[2];
+            pointAs4[0] = vertex[0];
+            pointAs4[1] = vertex[1];
+            pointAs4[2] = vertex[2];
             pointAs4 = transform.multiply(pointAs4);
             return new[] { pointAs4[0], pointAs4[1] };
         }
+
 
         /// <summary>
         ///     Returns the positions (array of 2D arrays) of the vertices as that they would be represented in
@@ -1025,8 +1147,33 @@ namespace TVGL
         {
             //Rotate axis back to the original, and then transform points along the given direction.
             //If you try to transform first, it will shift the vertices incorrectly
-            double[,] backTransform;
-            TransformToXYPlane(direction, out backTransform);
+            TransformToXYPlane(direction, out var backTransform);
+            var directionVector = direction.multiply(distanceAlongDirection);
+            var contour = new List<Vertex>();
+            foreach (var point in points)
+            {
+                var position = new[] { point.X, point.Y, 0.0, 1.0 };
+                var untransformedPosition = backTransform.multiply(position).Take(3).ToArray();
+                var vertexPosition = untransformedPosition.add(directionVector, 3);
+
+                contour.Add(new Vertex(vertexPosition));
+            }
+
+            return new List<Vertex>(contour);
+        }
+
+        /// <summary>
+        /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceAlongDirection"></param>
+        /// <returns></returns>
+        public static List<Vertex> GetVerticesFrom2DPoints(List<PointLight> points, double[] direction, double distanceAlongDirection)
+        {
+            //Rotate axis back to the original, and then transform points along the given direction.
+            //If you try to transform first, it will shift the vertices incorrectly
+            TransformToXYPlane(direction, out var backTransform);
             var directionVector = direction.multiply(distanceAlongDirection);
             var contour = new List<Vertex>();
             foreach (var point in points)
@@ -1524,6 +1671,22 @@ namespace TVGL
             }
         }
 
+        public static Flat GetPlaneFromThreePoints(double[] p1, double[] p2, double[] p3)
+        {
+            var a1 = p2[0] - p1[0];
+            var b1 = p2[1] - p1[1];
+            var c1 = p2[2] - p1[2];
+            var a2 = p3[0] - p1[0];
+            var b2 = p3[1] - p1[1];
+            var c2 = p3[2] - p1[2];
+            var a = b1 * c2 - b2 * c1;
+            var b = a2 * c1 - a1 * c2;
+            var c = a1 * b2 - b1 * a2;
+            var normal = new []{ a, b, c}.normalize();
+            var flat2 = new Flat(p1, normal);
+            return flat2;
+        }
+
         /// <summary>
         ///     Lines the intersecting two planes.
         /// </summary>
@@ -1533,7 +1696,7 @@ namespace TVGL
         /// <param name="d2">The d2.</param>
         /// <param name="directionOfLine">The direction of line.</param>
         /// <param name="pointOnLine">The point on line.</param>
-        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2,
+        public static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2,
             out double[] directionOfLine, out double[] pointOnLine)
         {
             directionOfLine = n1.crossProduct(n2).normalize(3);
@@ -1973,7 +2136,10 @@ namespace TVGL
             {
                 position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
                 if (double.IsNaN(position[i]))
-                    throw new Exception("This should never occur. The line must not be in-plane. Prevent this from happening");
+                {
+                    Debug.WriteLine("This should never occur. The line must parallel to the plane. Prevent this from happening");
+                    return null;
+                }
             }
             return position;
         }
