@@ -80,6 +80,7 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
+            ConvexHullTesting();
             //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
@@ -135,6 +136,44 @@ namespace TVGLPresenterDX
                 // Presenter.ShowAndHang(vs1);
                 //TestVoxelization(ts[0]);
                 //bounds = vs1.Bounds;
+            }
+
+            Console.WriteLine("Completed.");
+            Console.ReadKey();
+        }
+
+        private static void ConvexHullTesting()
+        {
+            var writer = new TextWriterTraceListener(Console.Out);
+            Debug.Listeners.Add(writer);
+            Message.Verbosity = VerbosityLevels.OnlyCritical;
+            DirectoryInfo dir;
+            if (Directory.Exists("../../../../TVGLTest/Convex Hull Tests"))
+            {
+                //x64
+                dir = new DirectoryInfo("../../../../TVGLTest/Convex Hull Tests");
+            }
+            else
+            {
+                //x86
+                dir = new DirectoryInfo("../../../TVGLTest/Convex Hull Tests");
+            }
+            var random = new Random();
+            var fileNames = dir.GetFiles("*").ToArray();
+            for (var i = 0; i < fileNames.Count(); i++)
+            {
+                //var filename = FileNames[i];
+                var filename = fileNames[i].FullName;
+                Console.WriteLine("Attempting: " + filename);
+                if (!File.Exists(filename)) continue;
+                var polyLight = PolygonLight.Deserialize(filename);
+                var cxvHull = MinimumEnclosure.ConvexHull2D(polyLight.Path);
+                var polygon = new Polygon(cxvHull.Select(p => new Point(p)));
+                if (!polygon.IsConvex())
+                {
+                    Presenter.ShowAndHang(polyLight.Path, "Convex Hull Error", Plot2DType.Points);
+                    Presenter.ShowAndHang(cxvHull);
+                }
             }
 
             Console.WriteLine("Completed.");

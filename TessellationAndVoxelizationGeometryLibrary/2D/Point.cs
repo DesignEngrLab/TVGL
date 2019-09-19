@@ -28,9 +28,9 @@ namespace TVGL
     [DataContract]
     public struct PointLight : IVertex2D
     {
-
+        [DataMember]
         public double X { get; set; }
-
+        [DataMember]
         public double Y { get; set; }
         public List<Vertex> References { get; set; }
 
