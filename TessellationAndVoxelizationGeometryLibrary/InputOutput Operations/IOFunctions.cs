@@ -177,6 +177,7 @@ namespace TVGL.IOFunctions
                     solid = ShellFileData.OpenSolids(s, filename)[0];
                     break;
                 case "xml":
+                case "tvgl":
                     solid = (TessellatedSolid)TVGLFileData.OpenSolids(s, filename)[0];
                     break;
                 default:
@@ -209,6 +210,7 @@ namespace TVGL.IOFunctions
                     tessellatedSolids = ShellFileData.OpenSolids(s, filename);
                     break;
                 case "xml":
+                case "tvgl":
                     tessellatedSolids = TVGLFileData.OpenSolids(s, filename).Cast<TessellatedSolid>().ToArray();
                     break;
                 default:
