@@ -164,8 +164,8 @@ namespace TVGLPresenterDX
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
-                Console.WriteLine("Attempting: " + filename);
-                if (!File.Exists(filename)) continue;
+                if (!File.Exists(filename) || !filename.EndsWith(".PolyLight")) continue;
+                Console.WriteLine("Attempting: " + filename);                
                 var polyLight = PolygonLight.Deserialize(filename);
                 var cxvHull = MinimumEnclosure.ConvexHull2D(polyLight.Path);
                 var polygon = new Polygon(cxvHull.Select(p => new Point(p)));
