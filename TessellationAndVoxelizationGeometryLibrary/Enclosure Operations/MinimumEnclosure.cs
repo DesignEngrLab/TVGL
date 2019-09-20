@@ -731,38 +731,39 @@ namespace TVGL
             if (bestRectangle.Area.IsNegligible())
             {
                 var polygon = new Polygon(cvxPoints.Select(p => new Point(p)));
+                var allPoints = new List<PointLight>(points);
                 if (!polygon.IsConvex())
                 {
                     var c = 0;
-                    var random = new Random(1);//Use a specific random generator to make this repeatable
-                    var pointCount = points.Count;
+                    var random = new Random(1);//Use a specific random generator to make this repeatable                  
+                    var pointCount = allPoints.Count;
                     while (pointCount > 10 && c < 10) //Ten points would be ideal
                     {
                         //Remove a random point
                         var max = pointCount - 1;
                         var index = random.Next(0, max);
-                        var point = points[index];
-                        points.RemoveAt(index);
+                        var point = allPoints[index];
+                        allPoints.RemoveAt(index);
 
                         //Check if it is still invalid
-                        var newConvexHull = ConvexHull2D(points).ToList();
+                        var newConvexHull = ConvexHull2D(allPoints).ToList();
                         polygon = new Polygon(newConvexHull.Select(p => new Point(p)));
                         if (polygon.IsConvex())
                         {
                             //Don't remove the point
                             c++;
-                            points.Insert(index, point);
+                           allPoints.Insert(index, point);
                         }
                         else pointCount--;
                     }
                 }
   
-                var polyLight = new PolygonLight(points);
+                var polyLight = new PolygonLight(allPoints);
                 var date = DateTime.Now.ToString("MM.dd.yy_HH.mm");
                 polyLight.Serialize("ConvexHullError_" + date + ".PolyLight");
                 var cvxHullLight = new PolygonLight(polygon);
                 cvxHullLight.Serialize("ConvexHull_" + date + ".PolyLight");
-                throw new Exception("Area should never be negligible unless data is messed up.");
+                throw new Exception("Error in Minimum Bounding Box, likely due to faulty convex hull.");
             }
 
 
