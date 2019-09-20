@@ -1754,7 +1754,7 @@ namespace TVGL
             //Now that the segments have been updated, we have additional cases to check using the 2D paths
             //example: Blind holes and a branching segment have not been captured up to this point.
             //First, we need to connect each path (polygonDataSet stores the path and the edge loop) to its segment
-            var unassignedPositivePolygonDataGroups = new List<PolygonDataGroup>();
+            var unassignedPositivePolygonDataGroups = new HashSet<PolygonDataGroup>();
             var unassignedNegativePolygonDataGroups = new HashSet<PolygonDataGroup>();
             foreach (var polygonDataGroup in segmentationData.CrossSectionData)
             {
@@ -1856,12 +1856,12 @@ namespace TVGL
 
                 //Connect the positive and negative polygon data groups for this new segment.
                 //Note: that a new segment cannot have a blind hole. (The step size must be smaller than the 
-                //smallest wall in the part to insure this). Likewise, it can only have one positive polygon.
-                PolygonDataGroup positivePolygonDataGroup = null;
-                for (var i = 0; i < unassignedPositivePolygonDataGroups.Count; i++)
-                {
-                    var polygonDataGroup = unassignedPositivePolygonDataGroups[i];
-
+                //smallest wall in the part to insure this). Likewise, it can only have one positive polygon per data group.
+                //However, to handle too large of steps, multiple positivePolygonDataGroups can be set, 
+                //as long as they have current edges.
+                var positivePolygonDataGroups = new List<PolygonDataGroup>();
+                foreach(var polygonDataGroup in unassignedPositivePolygonDataGroups)
+                { 
                     //It does not matter which edge we check, so just use the first one.
                     var edge = polygonDataGroup.EdgeLoop.First();
 
@@ -1870,14 +1870,12 @@ namespace TVGL
 
                     //Else,  Great. This is the polygon we were looking for.
                     //Go ahead and assign it the segment index.
-                    polygonDataGroup.SegmentIndex = newSegmentIndex;
-                    positivePolygonDataGroup = polygonDataGroup;
-
-                    //Remove it from the list. This would normally cause an error in for loop because
-                    //it is modifying the enumerator, but it does not matter because we are breaking 
-                    //out of the for loop.
-                    unassignedPositivePolygonDataGroups.RemoveAt(i);
-                    break;
+                    polygonDataGroup.SegmentIndex = newSegmentIndex + positivePolygonDataGroups.Count();
+                    positivePolygonDataGroups.Add(polygonDataGroup);
+                }
+                foreach (var assignedPositivePolygonDataGroup in positivePolygonDataGroups)
+                {
+                    unassignedPositivePolygonDataGroups.Remove(assignedPositivePolygonDataGroup);
                 }
 
                 //There does not have to be a negative polygon, but go ahead and check
@@ -1902,12 +1900,18 @@ namespace TVGL
                     unassignedNegativePolygonDataGroups.Remove(assignedNegativePolygonDataGroup);
                 }
 
+                if(positivePolygonDataGroups.Count > 1 && negativePolygonDataGroups.Any())
+                {
+                    throw new NotImplementedException("Not yet implemented because of lacking example (which you now have!). " +
+                        "Currently, there is no sense as to how to connect the negative polygons to the positive ones.");
+                }
+
                 #region  Segment Case 4: [Blind Hole/Pocket]
                 //Note that cannot have a blind hole or hidden pocket with a new segment, so it is okay to check where
                 //this negative polygon belongs before we finish creating the new segments.
                 //This is a blind hole or pocket, not visible from the search direction should exist for pre-existing segments
                 //Example of pockets: Aerospace Beam with search direction through side. The pockets on the opposite side are not visible.     
-                if (positivePolygonDataGroup == null)
+                if (!positivePolygonDataGroups.Any())
                 {
                     if (!negativePolygonDataGroups.Any())
                     {
@@ -1986,15 +1990,24 @@ namespace TVGL
                 //Create the new segment from the unused vertices and connect the polygon data groups to the segments
                 else
                 {
-                    var newSegment = new DirectionalSegment(newSegmentIndex,
-                        finishedEdges, newSegmentReferenceVertices, currentEdges, searchDirection);
-                    allDirectionalSegments.Add(newSegmentIndex, newSegment);
-                    //Attach the polygon data groups
-                    newSegment.AddPolygonDataGroup(positivePolygonDataGroup, false);
-                    foreach (var negativePolygonDataGroup in negativePolygonDataGroups)
+                    var c = 0;
+                    foreach(var positivePolygonDataGroup in positivePolygonDataGroups)
                     {
-                        newSegment.AddPolygonDataGroup(negativePolygonDataGroup, false);
+                        //Use the current edges unless there is more than one positive polygon, in which case, we need to make a new hashset
+                        var edges = positivePolygonDataGroups.Count == 1 ? currentEdges : new HashSet<Edge>(positivePolygonDataGroup.EdgeLoop);
+                        c += edges.Count;
+                        var newSegment = new DirectionalSegment(positivePolygonDataGroup.SegmentIndex,
+                            finishedEdges, newSegmentReferenceVertices, edges, searchDirection);
+                        allDirectionalSegments.Add(positivePolygonDataGroup.SegmentIndex, newSegment);
+                        //Attach the polygon data groups
+                        newSegment.AddPolygonDataGroup(positivePolygonDataGroup, false);
+                        foreach (var negativePolygonDataGroup in negativePolygonDataGroups)
+                        {
+                            newSegment.AddPolygonDataGroup(negativePolygonDataGroup, false);
+                        }
                     }
+                    //Check that the current edge count matches the edge loop count
+                    if (c != currentEdges.Count) throw new Exception("Current edges do not match edge loops. Need to debug further and fix");  
                 }
                 #endregion
             }

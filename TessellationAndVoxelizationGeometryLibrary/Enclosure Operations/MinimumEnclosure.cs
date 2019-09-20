@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using StarMathLib;
@@ -529,7 +530,7 @@ namespace TVGL
         /// <param name="setPointsOnSide"></param>
         /// <returns>System.Double.</returns>
         /// <exception cref="Exception">
-        ///     Area should never be negligilbe unless data is messed up.
+        ///     Area should never be negligible unless data is messed up.
         /// </exception>
         private static BoundingRectangle RotatingCalipers2DMethod(IList<PointLight> points, 
             bool pointsAreConvexHull = false, bool setCornerPoints = true, 
@@ -537,6 +538,7 @@ namespace TVGL
         {
             if (points.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
             var cvxPoints = pointsAreConvexHull ? points : ConvexHull2D(points).ToList();
+
             //Simplify the points to make sure they are the minimal convex hull
             //Only set it as the convex hull if it contains more than three points.
             var cvxPointsSimple = PolygonOperations.SimplifyFuzzy(cvxPoints);
@@ -727,7 +729,43 @@ namespace TVGL
             #endregion
 
             if (bestRectangle.Area.IsNegligible())
-                throw new Exception("Area should never be negligilbe unless data is messed up.");
+            {
+                var polygon = new Polygon(cvxPoints.Select(p => new Point(p)));
+                var allPoints = new List<PointLight>(points);
+                if (!polygon.IsConvex())
+                {
+                    var c = 0;
+                    var random = new Random(1);//Use a specific random generator to make this repeatable                  
+                    var pointCount = allPoints.Count;
+                    while (pointCount > 10 && c < 10) //Ten points would be ideal
+                    {
+                        //Remove a random point
+                        var max = pointCount - 1;
+                        var index = random.Next(0, max);
+                        var point = allPoints[index];
+                        allPoints.RemoveAt(index);
+
+                        //Check if it is still invalid
+                        var newConvexHull = ConvexHull2D(allPoints).ToList();
+                        polygon = new Polygon(newConvexHull.Select(p => new Point(p)));
+                        if (polygon.IsConvex())
+                        {
+                            //Don't remove the point
+                            c++;
+                           allPoints.Insert(index, point);
+                        }
+                        else pointCount--;
+                    }
+                }
+  
+                var polyLight = new PolygonLight(allPoints);
+                var date = DateTime.Now.ToString("MM.dd.yy_HH.mm");
+                polyLight.Serialize("ConvexHullError_" + date + ".PolyLight");
+                var cvxHullLight = new PolygonLight(polygon);
+                cvxHullLight.Serialize("ConvexHull_" + date + ".PolyLight");
+                throw new Exception("Error in Minimum Bounding Box, likely due to faulty convex hull.");
+            }
+
 
             if (setCornerPoints)
                 bestRectangle.SetCornerPoints();
