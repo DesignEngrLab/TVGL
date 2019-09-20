@@ -872,7 +872,7 @@ namespace TVGL
             : this(0xff, r, g, b)
         {
         }
-
+        public Color() { }
         /// <summary>
         /// Initializes a new instance of the <see cref="Color"/> class.
         /// </summary>
