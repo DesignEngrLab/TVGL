@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupport*").ToArray();
+            var fileNames = dir.GetFiles("*.ply").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i++)
@@ -108,33 +108,13 @@ namespace TVGLPresenterDX
                 Stream fileStream;
                 TessellatedSolid ts;
                 if (!File.Exists(filename)) continue;
-                using (fileStream = File.OpenRead(filename))
-                    IO.Open(fileStream, filename, out ts);
-                if (ts.Errors != null) continue;
-                Color color = new Color(KnownColors.AliceBlue);
-                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
-                {
-                    Af = 0.25f
-                };
-                //Presenter.ShowAndHang(ts);
-                TestVoxelization(ts);
-                TestSlice(ts);
-                // var stopWatch = new Stopwatch();
-                // Color color = new Color(KnownColors.AliceBlue);
-                //ts[0].SetToOriginAndSquare(out var backTransform);
-                //ts[0].Transform(new double[,]
-                //  {
-                //{1,0,0,-(ts[0].XMax + ts[0].XMin)/2},
-                //{0,1,0,-(ts[0].YMax+ts[0].YMin)/2},
-                //{0,0,1,-(ts[0].ZMax+ts[0].ZMin)/2},
-                //  });
-                // stopWatch.Restart();
-                //PresenterShowAndHang(ts);
-                // Console.WriteLine("Voxelizing Tesselated File " + filename);
-                //  var vs1 = new VoxelizedSolid(ts[0], VoxelDiscretization.Coarse, false);//, bounds);
-                // Presenter.ShowAndHang(vs1);
-                //TestVoxelization(ts[0]);
-                //bounds = vs1.Bounds;
+                IO.Open(filename, out ts);
+                Console.WriteLine("v={0}, f={1}", ts.NumberOfVertices, ts.NumberOfFaces);
+                IO.Save(ts, filename + ".tvgl");
+                IO.Open(filename + ".tvgl", out TessellatedSolid ts2);
+                Console.WriteLine("v={0}, f={1}", ts2.NumberOfVertices, ts2.NumberOfFaces);
+
+
             }
 
             Console.WriteLine("Completed.");
@@ -270,37 +250,6 @@ namespace TVGLPresenterDX
             //Console.WriteLine("Dense subtract   : {0}", stopwatch.Elapsed);
         }
 
-        public static void TestSegmentation(TessellatedSolid ts)
-        {
-            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
-            var startTime = DateTime.Now;
-
-            var averageNumberOfSteps = 500;
-
-            //Do the average # of slices slices for each direction on a box (l == w == h).
-            //Else, weight the average # of slices based on the average obb distance
-            var obbAverageLength = (obb.Dimensions[0] + obb.Dimensions[1] + obb.Dimensions[2]) / 3;
-            //Set step size to an even increment over the entire length of the solid
-            var stepSize = obbAverageLength / averageNumberOfSteps;
-
-            foreach (var direction in obb.Directions)
-            {
-                Dictionary<int, double> stepDistances;
-                Dictionary<int, double> sortedVertexDistanceLookup;
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
-                    stepSize, out stepDistances, out sortedVertexDistanceLookup);
-                //foreach (var segment in segments)
-                //{
-                //    var vertexLists = segment.DisplaySetup(ts);
-                //    Presenter.ShowVertexPathsWithSolid(vertexLists, new List<TessellatedSolid>() { ts });
-                //}
-            }
-
-            // var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2].multiply(-1), stepSize);
-            var totalTime = DateTime.Now - startTime;
-            Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
-            //CheckAllObjectTypes(ts, segments);
-        }
 
         private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<DirectionalDecomposition.DirectionalSegment> segments)
         {

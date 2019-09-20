@@ -94,9 +94,6 @@ namespace TVGL.IOFunctions
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
-#if net40
-            throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
-#else
             var result = new List<TessellatedSolid>();
             var archive = new ZipArchive(s);
             foreach (var modelFile in archive.Entries.Where(f => f.FullName.EndsWith(".model")))
@@ -105,7 +102,6 @@ namespace TVGL.IOFunctions
                 result.AddRange(OpenModelFile(modelStream, filename));
             }
             return result.ToArray();
-#endif
         }
 
         internal static TessellatedSolid[] OpenModelFile(Stream s, string filename)
@@ -241,9 +237,6 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-#if net40
-            throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
-#else
             ZipArchiveEntry entry;
             Stream entryStream;
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
@@ -260,7 +253,6 @@ namespace TVGL.IOFunctions
                     SaveContentTypes(entryStream);
             }
             return true;
-#endif
         }
 
         /// <summary>

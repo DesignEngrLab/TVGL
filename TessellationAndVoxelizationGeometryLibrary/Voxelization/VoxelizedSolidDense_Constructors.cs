@@ -12,11 +12,13 @@
 // <summary></summary>
 // ***********************************************************************
 
+using Newtonsoft.Json.Linq;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using TVGL.IOFunctions;
 
@@ -154,9 +156,7 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
-        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
-        {
-        }
+
 
         private void VoxelizeSolid(TessellatedSolid ts, bool possibleNullSlices = false)
         {
@@ -327,5 +327,22 @@ namespace TVGL.Voxelization
         {
             throw new NotImplementedException();
         }
+
+
+        [OnSerializing()]
+        protected  void OnSerializingMethod(StreamingContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [OnDeserialized()]
+        protected  void OnDeserializedMethod(StreamingContext context)
+        {
+            throw new NotImplementedException();
+
+
+        }
+
     }
 }
