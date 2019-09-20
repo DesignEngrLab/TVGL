@@ -182,13 +182,14 @@ namespace TVGL.IOFunctions
             var solids = new List<Solid>();
             try
             {
+                s.Position = 0;
                 var tvglDeserializer = new XmlSerializer(typeof(TVGLFileData));
                 if (tvglDeserializer.CanDeserialize(XmlReader.Create(s)))
                 {
                     s.Position = 0;
                     var streamReader = new StreamReader(s);
                     var fileData = (TVGLFileData)tvglDeserializer.Deserialize(streamReader);
-                    if (!fileData.Voxels.Any())
+                    if (fileData.Voxels == null || !fileData.Voxels.Any())
                         solids.Add(new TessellatedSolid(fileData, filename));
                     else solids.Add(new VoxelizedSolid(fileData, filename));
                 }
