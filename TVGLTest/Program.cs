@@ -327,7 +327,7 @@ namespace TVGLPresenterDX
                 Dictionary<int, double> stepDistances;
                 Dictionary<int, double> sortedVertexDistanceLookup;
                 var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
-                    stepSize, out stepDistances, out sortedVertexDistanceLookup);
+                    stepSize, out stepDistances, out sortedVertexDistanceLookup, out _);
                 //foreach (var segment in segments)
                 //{
                 //    var vertexLists = segment.DisplaySetup(ts);
