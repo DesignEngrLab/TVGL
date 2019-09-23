@@ -164,7 +164,7 @@ namespace TVGL
         [OnSerializing()]
         protected  void OnSerializingMethod(StreamingContext context)
         {
-            if (serializationData == null)
+            //if (serializationData == null)
                 serializationData = new Dictionary<string, JToken>();
             serializationData.Add("ConvexHullVertices",
                 JToken.FromObject(ConvexHull.Vertices.Select(v => v.IndexInList)));

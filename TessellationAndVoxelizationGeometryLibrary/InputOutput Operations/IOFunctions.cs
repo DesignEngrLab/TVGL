@@ -13,11 +13,13 @@
 // ***********************************************************************
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using TVGL.Voxelization;
@@ -231,7 +233,64 @@ namespace TVGL.IOFunctions
             using (var reader = new JsonTextReader(sr))
                 solids = serializer.Deserialize<VoxelizedSolid[]>(reader);
         }
-
+        public static Solid Open(string filename)
+        {
+            if (File.Exists(filename))
+                using (var fileStream = File.OpenRead(filename))
+                    return Open(fileStream, filename);
+            else throw new FileNotFoundException("The file was not found at: " + filename);
+        }
+        public static Solid Open(Stream s, string filename = "")
+        {
+            var extension = GetExtensionFromFileName(filename);
+            switch (extension)
+            {
+                case "stl":
+                    return STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
+                case "3mf":
+                    return ThreeMFFileData.OpenSolids(s, filename)[0];
+                case "model":
+                    return ThreeMFFileData.OpenModelFile(s, filename)[0];
+                case "amf":
+                    return AMFFileData.OpenSolids(s, filename)[0];
+                case "off":
+                    return OFFFileData.OpenSolid(s, filename);
+                case "ply":
+                    return PLYFileData.OpenSolid(s, filename);
+                case "shell":
+                    return ShellFileData.OpenSolids(s, filename)[0];
+                    break;
+                case "xml":
+                case "tvgl":
+                default:
+                    try
+                    {
+                        var serializer = new JsonSerializer();
+                        var sr = new StreamReader(s);
+                        using (var reader = new JsonTextReader(sr))
+                        {
+                            JObject jObject = JObject.Load(reader);
+                            var typeString = ((string)jObject["TVGLSolidType"]);
+                            if (string.IsNullOrWhiteSpace(typeString)) return null;
+                            var type = Type.GetType(typeString);
+                            if (type == null)
+                            {
+                                var assembly = Assembly.LoadFrom((string)jObject["InAssembly"]);
+                                type = assembly.GetType(typeString);
+                            }
+                            if (type == null) return null;
+                            return (Solid)JsonConvert.DeserializeObject(jObject.ToString(), type);
+                        }
+                    }
+                    catch (Exception exc)
+                    {
+                        break;
+                        //                 throw new Exception(
+                        //"Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
+                    }
+            }
+            return null;
+        }
 
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid solid)
         {
@@ -919,16 +978,7 @@ namespace TVGL.IOFunctions
                     throw new NotSupportedException(
                         "The PLY format does not support saving multiple solids to a single file.");
                 default:
-                    JsonSerializer serializer = new JsonSerializer
-                    {
-                        NullValueHandling = NullValueHandling.Ignore,
-                        DefaultValueHandling = DefaultValueHandling.Ignore,
-                        TypeNameHandling = TypeNameHandling.Auto,
-                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                    };
-                    var sw = new StreamWriter(stream);
-                    using (var writer = new JsonTextWriter(sw))
-                        serializer.Serialize(writer, solids);
+                    solids.Select(solid => Save(stream, solid, fileType));
                     return true;
             }
         }
@@ -962,16 +1012,16 @@ namespace TVGL.IOFunctions
                 case FileType.PLY_Binary:
                     return PLYFileData.SaveSolidBinary(stream, (TessellatedSolid)solid);
                 default:
-                    JsonSerializer serializer = new JsonSerializer
-                    {
-                        NullValueHandling = NullValueHandling.Ignore,
-                        DefaultValueHandling = DefaultValueHandling.Ignore,
-                        TypeNameHandling = TypeNameHandling.Auto,
-                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                    };
                     var sw = new StreamWriter(stream);
                     using (var writer = new JsonTextWriter(sw))
-                        serializer.Serialize(writer, solid);
+                    {
+                        var jObject = JObject.FromObject(solid);
+                        var solidType = solid.GetType();
+                        jObject.AddFirst(new JProperty("TVGLSolidType", solid.GetType().FullName));
+                        if (!Assembly.GetExecutingAssembly().Equals(solidType.Assembly))
+                            jObject.AddFirst(new JProperty("InAssembly", solidType.Assembly.Location));
+                        jObject.WriteTo(writer);
+                    }
                     return true;
             }
         }
