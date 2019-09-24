@@ -43,14 +43,14 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; protected set; }
+        public double[] Center { get; set; }
 
 
         /// <summary>
         ///     Gets the bounds.
         /// </summary>
         /// <value>The bounds.</value>
-        public double[][] Bounds { get; protected set; } = new double[2][];
+        public double[][] Bounds { get; set; } = new double[2][];
 
         public double XMin { get => Bounds[0][0]; protected set => Bounds[0][0] = value; }
         public double XMax { get => Bounds[1][0]; protected set => Bounds[1][0] = value; }
@@ -64,7 +64,7 @@ namespace TVGL
         ///     Gets the volume.
         /// </summary>
         /// <value>The volume.</value>
-        public double Volume { get; internal set; }
+        public double Volume { get; set; }
 
         /// <summary>
         ///     Gets and sets the mass.
@@ -76,7 +76,7 @@ namespace TVGL
         ///     Gets the surface area.
         /// </summary>
         /// <value>The surface area.</value>
-        public double SurfaceArea { get; internal set; }
+        public double SurfaceArea { get; set; }
 
         /// <summary>
         ///     The name of solid
