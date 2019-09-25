@@ -110,7 +110,7 @@ namespace TVGL
         /// </summary>
         /// <value>The convex hull.</value>
         [JsonIgnore]
-        public TVGLConvexHull ConvexHull { get; protected set; }
+        public TVGLConvexHull ConvexHull { get; set; }
 
         /// <summary>
         ///     The has uniform color
@@ -123,7 +123,7 @@ namespace TVGL
         /// </summary>
         /// <value>The inertia tensor.</value>
         [JsonIgnore]
-        public virtual double[,] InertiaTensor { get; protected set; }
+        public virtual double[,] InertiaTensor { get; set; }
         internal double[,] _inertiaTensor;
 
 
@@ -135,7 +135,7 @@ namespace TVGL
         /// <summary>
         ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
-        public List<PrimitiveSurface> Primitives { get; internal set; }
+        public List<PrimitiveSurface> Primitives { get; set; }
 
         #endregion
 
