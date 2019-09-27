@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using TVGL.IOFunctions;
 
@@ -314,10 +315,6 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
-        public VoxelizedSparse(TVGLFileData fileData, string fileName) : base(fileData, fileName)
-        {
-        }
-
         private void FillInFromTessellation(TessellatedSolid ts, bool possibleNullSlices = false)
         {
             var xLim = VoxelsPerSide[0];
@@ -504,6 +501,23 @@ namespace TVGL.Voxelization
         public override Solid Copy()
         {
             throw new NotImplementedException();
+        }
+
+
+
+        [OnSerializing()]
+        protected  void OnSerializingMethod(StreamingContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        [OnDeserialized()]
+        protected  void OnDeserializedMethod(StreamingContext context)
+        {
+            throw new NotImplementedException();
+
+
         }
     }
 }

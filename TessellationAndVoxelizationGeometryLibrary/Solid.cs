@@ -16,7 +16,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Serialization;
 using MIConvexHull;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StarMathLib;
 using TVGL.IOFunctions;
 
@@ -31,6 +34,7 @@ namespace TVGL
     ///     and
     ///     all interesting operations work on the TessellatedSolid.
     /// </remarks>
+    [JsonObject(MemberSerialization.OptOut)]
     public abstract class Solid
     {
         #region Fields and Properties
@@ -39,14 +43,14 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; protected set; }
+        public double[] Center { get; set; }
 
 
         /// <summary>
         ///     Gets the bounds.
         /// </summary>
         /// <value>The bounds.</value>
-        public double[][] Bounds { get; protected set; } = new double[2][];
+        public double[][] Bounds { get; set; } = new double[2][];
 
         public double XMin { get => Bounds[0][0]; protected set => Bounds[0][0] = value; }
         public double XMax { get => Bounds[1][0]; protected set => Bounds[1][0] = value; }
@@ -54,13 +58,13 @@ namespace TVGL
         public double YMax { get => Bounds[1][1]; protected set => Bounds[1][1] = value; }
         public double ZMin { get => Bounds[0][2]; protected set => Bounds[0][2] = value; }
         public double ZMax { get => Bounds[1][2]; protected set => Bounds[1][2] = value; }
-       
-        
+
+
         /// <summary>
         ///     Gets the volume.
         /// </summary>
         /// <value>The volume.</value>
-        public double Volume { get; internal set; }
+        public double Volume { get; set; }
 
         /// <summary>
         ///     Gets and sets the mass.
@@ -72,7 +76,7 @@ namespace TVGL
         ///     Gets the surface area.
         /// </summary>
         /// <value>The surface area.</value>
-        public double SurfaceArea { get; internal set; }
+        public double SurfaceArea { get; set; }
 
         /// <summary>
         ///     The name of solid
@@ -105,7 +109,8 @@ namespace TVGL
         ///     Gets the convex hull.
         /// </summary>
         /// <value>The convex hull.</value>
-        public TVGLConvexHull ConvexHull { get; protected set; }
+        [JsonIgnore]
+        public TVGLConvexHull ConvexHull { get; set; }
 
         /// <summary>
         ///     The has uniform color
@@ -117,7 +122,8 @@ namespace TVGL
         /// Gets or sets the inertia tensor.
         /// </summary>
         /// <value>The inertia tensor.</value>
-        public virtual double[,] InertiaTensor { get; protected set; }
+        [JsonIgnore]
+        public virtual double[,] InertiaTensor { get; set; }
         internal double[,] _inertiaTensor;
 
 
@@ -129,13 +135,13 @@ namespace TVGL
         /// <summary>
         ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
-        public  List<PrimitiveSurface> Primitives { get; internal set; }
+        public List<PrimitiveSurface> Primitives { get; set; }
 
         #endregion
 
         #region Constructor
 
-        protected Solid(UnitType units = UnitType.unspecified, string name = "", 
+        protected Solid(UnitType units = UnitType.unspecified, string name = "",
             string filename = "", List<string> comments = null, string language = "")
         {
             Name = name;
@@ -152,34 +158,6 @@ namespace TVGL
             Bounds[1] = new double[3];
         }
 
-        internal Solid(TVGLFileData fileData, string fileName) : this(fileData.Units, fileData.Name, fileName,
-                fileData.Comments, fileData.Language)
-        {
-            XMax = fileData.XMax;
-            XMin = fileData.XMin;
-            YMax = fileData.YMax;
-            YMin = fileData.YMin;
-            ZMax = fileData.ZMax;
-            ZMin = fileData.ZMin;
-            Center = fileData.Center;
-
-            string[] stringList;
-
-            if (!string.IsNullOrWhiteSpace(fileData.InertiaTensor))
-            {
-                stringList = fileData.InertiaTensor.Split(',');
-                _inertiaTensor = new double[3, 3];
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                        _inertiaTensor[i, j] = double.Parse(stringList[3 * i + j]);
-            }
-       
-            Center = fileData.Center;
-            Volume = fileData.Volume;
-            SurfaceArea = fileData.SurfaceArea;
-            }
-
-
         #endregion
 
         /// <summary>
@@ -188,7 +166,7 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public abstract void Transform(double[,] transformMatrix);
         // here's a good reference for this: http://www.cs.brandeis.edu/~cs155/Lecture_07_6.pdf
-       
+
 
         /// <summary>
         /// Gets a new solid by transforming its vertices.
@@ -198,5 +176,15 @@ namespace TVGL
         public abstract Solid TransformToNewSolid(double[,] transformationMatrix);
 
         public abstract Solid Copy();
+
+
+
+        // everything else gets stored here
+        [JsonExtensionData]
+        protected IDictionary<string, JToken> serializationData;
+
+        //protected abstract void OnSerializingMethod(StreamingContext context);
+        //protected abstract void OnDeserializedMethod(StreamingContext context);
+
     }
 }

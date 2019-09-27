@@ -138,7 +138,7 @@ namespace TVGL.IOFunctions
         /// <returns>True if the model was loaded successfully.</returns>
         internal static bool TryReadAscii(Stream stream, string filename, out List<STLFileData> stlData)
         {
-            var defaultName = GetNameFromFileName(filename) + "_";
+            var defaultName = Path.GetFileNameWithoutExtension(filename) + "_";
             var solidNum = 0;
             var reader = new StreamReader(stream);
             stlData = new List<STLFileData>();
@@ -248,7 +248,7 @@ namespace TVGL.IOFunctions
             stlSolid1.Units = InferUnitsFromComments(stlSolid1.Comments);
             stlSolid1.FileName = filename;
             if (string.IsNullOrWhiteSpace(stlSolid1.Name))
-                stlSolid1.Name = GetNameFromFileName(filename);
+                stlSolid1.Name = Path.GetFileNameWithoutExtension(filename);
             do
             {
                 var numFaces = readNumberAsInt(reader, typeof(uint),FormatEndiannessType.binary_little_endian);
@@ -405,7 +405,7 @@ namespace TVGL.IOFunctions
         {
             using (var writer = new BinaryWriter(stream, Encoding.UTF8))
             {
-                var headerString = GetNameFromFileName(solids[0].FileName);
+                var headerString = Path.GetFileNameWithoutExtension(solids[0].FileName);
                 if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
                 headerString += tvglDateMarkText;
                 if (solids[0].Units != UnitType.unspecified)
