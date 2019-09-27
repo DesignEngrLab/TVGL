@@ -346,6 +346,7 @@ namespace TVGL.IOFunctions
 
         private static FileType GetFileTypeFromExtension(string extension)
         {
+            extension = extension.Trim(' ', '.');
             switch (extension)
             {
                 case "stl": return FileType.STL_ASCII;
