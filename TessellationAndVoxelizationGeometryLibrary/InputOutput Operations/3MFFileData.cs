@@ -126,7 +126,7 @@ namespace TVGL.IOFunctions
                     }
                     threeMFData.FileName = filename;
                     var results = new List<TessellatedSolid>();
-                    threeMFData.Name = GetNameFromFileName(filename);
+                    threeMFData.Name = Path.GetFileNameWithoutExtension(filename);
                     var nameIndex =
                         threeMFData.metadata.FindIndex(
                             md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
