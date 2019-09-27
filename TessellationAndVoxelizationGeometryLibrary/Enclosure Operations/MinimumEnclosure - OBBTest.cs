@@ -37,12 +37,13 @@ namespace TVGL
         public static BoundingBox OrientedBoundingBox_Test(TessellatedSolid ts, out List<double> times,
             out List<double> volumes) //, out List<List<double[]>> volumeData2)
         {
+            var vertices = ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices;
             times = new List<double>();
             volumes = new List<double>();
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
             var now = DateTime.Now;
             Message.output("Beginning OBB Test", 2);
-            var boundingBox1 = OrientedBoundingBox(ts.ConvexHull.Vertices);
+            var boundingBox1 = OrientedBoundingBox(vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox1.Volume);
             //Message.output("Time Elapsed for PCA Approach = " ,4);
@@ -50,13 +51,13 @@ namespace TVGL
             now = DateTime.Now;
             Message.output("Beginning OBB Test", 2);
 
-            var boundingBox12 = Find_via_PCA_ApproachNR(ts.ConvexHull.Vertices);
+            var boundingBox12 = Find_via_PCA_ApproachNR(vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox12.Volume);
             //Message.output("Time Elapsed for PCA Approach = " ,4 );
             //Message.output("Volume for PCA Approach= " + boundingBox1.Volume);
             now = DateTime.Now;
-            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts.ConvexHull.Vertices);
+            var boundingBox2 = Find_via_ChanTan_AABB_Approach(vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox2.Volume);
             Message.output("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now), 4);
