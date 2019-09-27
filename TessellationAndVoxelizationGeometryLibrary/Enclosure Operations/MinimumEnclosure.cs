@@ -69,7 +69,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
-            return OrientedBoundingBox(ts.ConvexHull.Vertices);
+            return OrientedBoundingBox(ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices);
         }
 
         /// <summary>

@@ -139,7 +139,7 @@ namespace TVGL
             out Dictionary<int, double> sortedVertexDistanceLookup,
             SnapType snapTo, bool addCrossSectionAtStartAndEndForCenterSnap = false)
         {
-            return UniformDecomposition(new List<TessellatedSolid> {solid}, direction, stepSize, out stepDistances,
+            return UniformDecomposition(new List<TessellatedSolid> { solid }, direction, stepSize, out stepDistances,
                 out sortedVertexDistanceLookup, snapTo, addCrossSectionAtStartAndEndForCenterSnap)[0];
         }
 
@@ -159,7 +159,7 @@ namespace TVGL
         /// <param name="sortedVertexDistanceLookup"></param>
         /// <param name="snapTo"></param>
         /// <param name="addCrossSectionAtStartAndEndForCenterSnap"></param>
-        public static Dictionary< int, List<DecompositionData>> UniformDecomposition(List<TessellatedSolid> solids, double[] direction,
+        public static Dictionary<int, List<DecompositionData>> UniformDecomposition(List<TessellatedSolid> solids, double[] direction,
         double stepSize, out Dictionary<int, double> stepDistances,
         out Dictionary<int, double> sortedVertexDistanceLookup,
         SnapType snapTo, bool addCrossSectionAtStartAndEndForCenterSnap = false)
@@ -176,7 +176,7 @@ namespace TVGL
             MiscFunctions.SortAlongDirection(direction, solids.SelectMany(s => s.Vertices), out List<(Vertex, double)> sortedVertices);
             //Create a distance lookup dictionary based on the vertex indices
             //This only works if there is just one solid
-            if(solids.Count == 1) sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
+            if (solids.Count == 1) sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
 
             var edgeListDictionary = new Dictionary<int, Dictionary<int, Edge>>();
             var firstDistance = sortedVertices.First().Item2;
@@ -255,7 +255,7 @@ namespace TVGL
             var outputData = new Dictionary<int, List<DecompositionData>>();
 
             //Initialize the dictionaries that store info for each solid
-            for (var i = 0 ; i< solids.Count; i++)
+            for (var i = 0; i < solids.Count; i++)
             {
                 outputData[i] = new List<DecompositionData>(new DecompositionData[numSteps]);
                 edgeListDictionary[i] = new Dictionary<int, Edge>();
@@ -335,7 +335,7 @@ namespace TVGL
                 for (var i = 0; i < solids.Count; i++)
                 {
                     //Check to see if the solid has any cross sections at this depth.
-                    if(!edgeListDictionary[i].Any()) break;
+                    if (!edgeListDictionary[i].Any()) break;
                     //Make the slice
                     var counter = 0;
                     var current3DLoops = new List<List<Vertex>>();
@@ -388,13 +388,13 @@ namespace TVGL
                         Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
                     }
                 }
-                
+
                 stepIndex++;
             }
 
             if (addToStart)
             {
-                for(var i = 0; i < solids.Count; i++)
+                for (var i = 0; i < solids.Count; i++)
                 {
                     var startIndex = outputData[i].First(d => d != null).StepIndex;
                     var firstCrossSection = new List<List<Vertex>>();
@@ -411,7 +411,7 @@ namespace TVGL
             {
                 for (var i = 0; i < solids.Count; i++)
                 {
-                    var lastIndex = outputData[i].Last(d => d != null).StepIndex  + 1; //Add one, since we are adding to the end
+                    var lastIndex = outputData[i].Last(d => d != null).StepIndex + 1; //Add one, since we are adding to the end
                     var lastCrossSection = new List<List<Vertex>>();
                     foreach (var path in outputData[i][lastIndex - 1].Paths)
                     {
@@ -428,7 +428,7 @@ namespace TVGL
             return outputData;
         }
 
- 
+
         #endregion
 
         #region Additive Volume
@@ -757,32 +757,25 @@ namespace TVGL
             return null; //The function should return from the if statement inside
         }
 
-        /// <summary>
-        /// Gets the Cross Section for a given distance without using the Edge class.
-        /// </summary>
-        /// <param name="tolerance"></param>
-        /// <param name="direction"></param>
-        /// <param name="distance"></param>
-        /// <param name="faces"></param>
-        /// <param name="vertices"></param>
-        /// <returns></returns>
-        public static List<PolygonLight> GetCrossSectionAtGivenDistance(PolygonalFace[] faces, Vertex[] vertices,
-            double tolerance, double[] direction, double distance)
+        public class SectionData3D
         {
-            var crossSection3D = Get3DCrossSectionAtGivenDistance(faces, vertices, tolerance, direction, distance);
-
-            //Get a list of 2D paths from the 3D loops
-            //Get 2D projections does not reorder list if the cutting plane direction is negative
-            //So we need to do this ourselves. 
-            //Return null if crossSection3D is null (uses null propagation "?")
-            var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop, direction, out _, tolerance)).ToList();
-            var polygons = crossSection?.Select(p => new PolygonLight(p)).ToList();
-            if (polygons?.Sum(a => a.Area) < 0.0) Debug.WriteLine("Cross section should not have a negative area");
-            return polygons;
+            public List<(Vertex, double)> SortedVertices;
+            public Dictionary<int, Vertex> VertexLookup;
+            public Dictionary<int, List<long>> VertexEdges;
+            public Dictionary<long, PolygonalFace[]> EdgeFaces;
+            public Dictionary<PolygonalFace, long[]> FaceEdgeLookup;
+            public HashSet<long> EdgeList;
+            public int Index;
+            public int PreviousIndex;
+            public double[] Direction;
+            public double Tolerance;
+            public List<List<long>> InputEdgeLoops;
+            public int N;
         }
 
         /// <summary>
-        /// Gets the Cross Section for a given distance without using the Edge class.
+        /// Gets the Section 3D Data for a given distance without using the Edge class. This can be used to get
+        /// 3D cross section at a given distance multiple times, without needing to re-create it.
         /// </summary>
         /// <param name="tolerance"></param>
         /// <param name="direction"></param>
@@ -790,16 +783,10 @@ namespace TVGL
         /// <param name="faces"></param>
         /// <param name="vertices"></param>
         /// <returns></returns>
-        public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(PolygonalFace[] faces, Vertex[] vertices, double tolerance, double[] direction, double distance)
+        public static SectionData3D GetSection3dData(PolygonalFace[] faces, Vertex[] vertices, double tolerance, double[] direction)
         {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             MiscFunctions.SortAlongDirection(direction, vertices.ToList(), out List<(Vertex, double)> sortedVertices);
-            if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
-                distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
-            {
-                //Distance is out of range of this solid.
-                return null;
-            }
 
             var vertexLookup = new Dictionary<int, Vertex>();
             //initialize the vertex to edge dictionary
@@ -809,7 +796,7 @@ namespace TVGL
                 vertexEdges.Add(vertex.IndexInList, new List<long>());
                 vertexLookup.Add(vertex.IndexInList, vertex);
             }
-            int maxVertexIndex = vertexLookup.Keys.Max();
+
             //The easiest way to build the lookup dictionaries is to create edges for all the faces
             //Duplicate edges will be an issue, since edges are longs and are stored in a hashset
             var edgeFaces = new Dictionary<long, PolygonalFace[]>(); //Key = edge checksum, Value = face 1 , face 2. Owned/Other is not known.
@@ -832,7 +819,7 @@ namespace TVGL
                     else
                     {
                         //Add the face to the edge and the edge to the vertices
-                        edgeFaces[newEdge] = new []{ face, null };
+                        edgeFaces[newEdge] = new[] { face, null };
                         vertexEdges[v1.IndexInList].Add(newEdge);
                         vertexEdges[v2.IndexInList].Add(newEdge);
                     }
@@ -840,23 +827,110 @@ namespace TVGL
                 faceEdgeLookup[face] = edges;
             }
 
-            var edgeList = new HashSet<long>();
-            var previousVertexDistance = sortedVertices[0].Item2; //This value can be negative
-            foreach (var element in sortedVertices)
+            var data = new SectionData3D()
             {
-                var vertex = element.Item1;
-                var currentVertexDistance = element.Item2; //This value can be negative
+                SortedVertices = sortedVertices,
+                VertexLookup = vertexLookup,
+                VertexEdges = vertexEdges,
+                EdgeFaces = edgeFaces,
+                FaceEdgeLookup = faceEdgeLookup,
+                EdgeList = new HashSet<long>(),
+                Index = 0,
+                PreviousIndex = 0,
+                Direction = direction,
+                InputEdgeLoops = new List<List<long>>(),
+                Tolerance = tolerance,
+                N = sortedVertices.Count
+            };
+            return data;
+        }
 
-                if (currentVertexDistance.IsPracticallySame(distance, tolerance) || currentVertexDistance > distance)
+        public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(PolygonalFace[] faces, Vertex[] vertices, double tolerance, double[] direction, double distance,
+            out SectionData3D data)
+        {
+            data = GetSection3dData(faces, vertices, tolerance, direction);
+            return Get3DCrossSectionAtGivenDistance(data, distance);
+        }
+
+        /// <summary>
+        /// Gets the Cross Section for a given distance without using the Edge class.
+        /// </summary>
+        /// <param name="tolerance"></param>
+        /// <param name="direction"></param>
+        /// <param name="distance"></param>
+        /// <param name="faces"></param>
+        /// <param name="vertices"></param>
+        /// <returns></returns>
+        public static List<PolygonLight> GetCrossSectionAtGivenDistance(SectionData3D sectionData, double distance)
+        {
+            var crossSection3D = Get3DCrossSectionAtGivenDistance(sectionData, distance);
+
+            //Get a list of 2D paths from the 3D loops
+            //Get 2D projections does not reorder list if the cutting plane direction is negative
+            //So we need to do this ourselves. 
+            //Return null if crossSection3D is null (uses null propagation "?")
+            var crossSection = crossSection3D?.Select(loop =>
+                MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop, sectionData.Direction, out _, sectionData.Tolerance)).ToList();
+            var polygons = crossSection?.Select(p => new PolygonLight(p)).ToList();
+            if (polygons?.Sum(a => a.Area) < 0.0) Debug.WriteLine("Cross section should not have a negative area");
+            return polygons;
+        }
+
+        /// <summary>
+        /// This function returns the 3D cross section at a given distance. The SectionData3D class can be used to efficiently
+        /// get the cross section multiple times. 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="direction"></param>
+        /// <param name="targetDistance"></param>
+        /// <returns></returns>
+        public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(SectionData3D data, double targetDistance)
+        {
+            if (targetDistance.IsLessThanNonNegligible(data.SortedVertices.First().Item2) ||
+              targetDistance.IsGreaterThanNonNegligible(data.SortedVertices.Last().Item2))
+            {
+                //Distance is out of range of this solid.
+                return null;
+            }
+
+            //First, we need to get the current vertex distance to determine if the target distance is forward or backward from it.
+            //Then, we need to the the vertex distance directionally prior in the list (previous == -- if forward and ++ if backward)
+            var previousVertexDistance = data.SortedVertices[data.PreviousIndex].Item2;
+            var currentVertexDistance = data.SortedVertices[data.Index].Item2; 
+            var sign = targetDistance >= Math.Min(previousVertexDistance, currentVertexDistance) ? 1 : -1;
+
+            //If the sign does not match the order of the indices, then the current and previous need to be flipped
+            if (sign == data.PreviousIndex - data.Index)
+            {
+                var temp = data.Index;
+                data.Index = data.PreviousIndex;
+                data.PreviousIndex = temp;
+                previousVertexDistance = currentVertexDistance;
+            }
+
+            //This function essentially allows cross sections to slide forward or backward along the data direction.
+            //If the target distance is greater than the previous distance, step forward along the SortedVertices until a vertex distance > target distance.
+            //Else, if the target distance is less than the previous distance, step backward along the SortedVertices until a vertex distance < target distance.            
+            var start = data.Index;
+            var tolerance = data.Tolerance;
+            for (data.Index = start; sign == 1 ? data.Index < data.N : data.Index >= 0; data.Index += sign) //update both the current and previous index
+            {
+                currentVertexDistance = data.SortedVertices[data.Index].Item2;
+                
+                //Check if we are at a vertex that is beyond or at the target distance
+                if (currentVertexDistance.IsPracticallySame(targetDistance, tolerance) || 
+                    (sign == 1 ? currentVertexDistance > targetDistance : currentVertexDistance < targetDistance))
                 {
                     //Determine cross sectional area for section as close to given distance as possible (after previous vertex, but before current vertex)
                     //But not actually on the current vertex
-                    double distance2;
-                    if (currentVertexDistance.IsPracticallySame(distance))
+                    var distance2 = targetDistance;
+                    if (currentVertexDistance.IsPracticallySame(targetDistance))
                     {
-                        if (previousVertexDistance < distance - tolerance)
+                        if (sign == 1 ? previousVertexDistance < targetDistance - tolerance :
+                            previousVertexDistance > targetDistance + tolerance)
                         {
-                            distance2 = distance - tolerance;
+                            distance2 = targetDistance - tolerance * sign; //subtract tolerance for a forward sign and add if negative
                         }
                         else
                         {
@@ -864,33 +938,29 @@ namespace TVGL
                             distance2 = (previousVertexDistance + currentVertexDistance / 2);
                         }
                     }
-                    else
-                    {
-                        //There was a significant enough gap between points to use the exact distance
-                        distance2 = distance;
-                    }
-
-                    var cuttingPlane = new Flat(distance2, direction);
-                    var inputEdgeLoops = new List<List<long>>();
-                    var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup,
-                        ref maxVertexIndex);
-                    return loops; //May return null if line intersections are not valid
+                    //Else, there was a significant enough gap between points to use the exact distance.
+                    return GetLoops(data, distance2); //May return null if line intersections are not valid
                 }
-                foreach (var edge in vertexEdges[vertex.IndexInList])
+
+                var vertex = data.SortedVertices[data.Index].Item1;
+                foreach (var edge in data.VertexEdges[vertex.IndexInList])
                 {
+                    //reset the input edge loops any time the list of edges changes
+                    data.InputEdgeLoops = new List<List<long>>(); 
                     //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
                     //and the second removes it from the list.
-                    if (edgeList.Contains(edge))
+                    //Note: this allows us to move forward or backwards along edges.
+                    if (data.EdgeList.Contains(edge))
                     {
-                        edgeList.Remove(edge);
+                        data.EdgeList.Remove(edge);
                     }
                     else
                     {
-                        edgeList.Add(edge);
+                        data.EdgeList.Add(edge);
                     }
                 }
-                //Update the previous distance of the vertex checked
                 previousVertexDistance = currentVertexDistance;
+                data.PreviousIndex = data.Index;
             }
             return null; //The function should return from the if statement inside
         }
@@ -2862,29 +2932,26 @@ namespace TVGL
             return loops;
         }
    
-        private static List<List<Vertex>> GetLoops(HashSet<long> edgeList, Flat cuttingPlane,
-          out List<List<long>> outputEdgeLoops, List<List<long>> inputEdgeLoops, Dictionary<int, Vertex> vertexLookup,
-            Dictionary<int, List<long>> vertexEdgeLookup, Dictionary<long, PolygonalFace[]> edgeFaceLookup,
-            Dictionary<PolygonalFace, long[]> faceEdgeLookup, ref int maxVertexIndex)
+        private static List<List<Vertex>> GetLoops(SectionData3D data, double distance)
         {
-            outputEdgeLoops = new List<List<long>>();
+            var direction = data.Direction;
+            var vertexLookup = data.VertexLookup;
+            var edgeFaceLookup = data.EdgeFaces;
+            var faceEdgeLookup = data.FaceEdgeLookup;
+
             var edgeLoops = new List<List<long>>();
             var loops = new List<List<Vertex>>();
-            if (inputEdgeLoops.Any())
+            if (data.InputEdgeLoops.Any())
             {
-                edgeLoops = inputEdgeLoops; //Note that edge loops should all be ordered correctly
+                edgeLoops = data.InputEdgeLoops; //Note that edge loops should all be ordered correctly
                 foreach (var edgeLoop in edgeLoops)
                 {
                     var loop = new List<Vertex>();
                     foreach (var edge in edgeLoop)
                     {
                         var (vertex1, vertex2) = Edge.GetVertexIndices(edge);
-                        var newVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
-                            cuttingPlane.DistanceToOrigin,
-                            vertexLookup[vertex1], vertexLookup[vertex2]);
-                        maxVertexIndex++;
-                        vertexLookup.Add(maxVertexIndex, newVertex);
-                        vertexEdgeLookup.Add(maxVertexIndex, new List<long> { edge });
+                        var newVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(direction,
+                            distance, vertexLookup[vertex1], vertexLookup[vertex2]);
                         loop.Add(newVertex);
                     }
                     loops.Add(loop);
@@ -2897,7 +2964,7 @@ namespace TVGL
                 //Hashset was slightly faster during creation and enumeration, 
                 //but even more slightly slower at removing. Overall, Hashset 
                 //was about 17% faster than a dictionary.
-                var edges = new List<long>(edgeList);
+                var edges = new List<long>(data.EdgeList);
                 var unusedEdges = new HashSet<long>(edges);
                 foreach (var startEdge in edges)
                 {
@@ -2905,11 +2972,8 @@ namespace TVGL
                     unusedEdges.Remove(startEdge);
                     var loop = new List<Vertex>();
                     var (vertex1, vertex2) = Edge.GetVertexIndices(startEdge);
-                    var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
-                        cuttingPlane.DistanceToOrigin, vertexLookup[vertex1], vertexLookup[vertex2]);
-                    maxVertexIndex++;
-                    intersectVertex.IndexInList = maxVertexIndex;
-                    vertexLookup.Add(maxVertexIndex, intersectVertex);
+                    var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(direction,
+                        distance, vertexLookup[vertex1], vertexLookup[vertex2]);
                     loop.Add(intersectVertex);
                     var edgeLoop = new List<long> { startEdge };
                     var (ownedFace, otherFace) = Edge.GetOwnedAndOtherFace(startEdge, edgeFaceLookup[startEdge][0], edgeFaceLookup[startEdge][1]);
@@ -2949,24 +3013,18 @@ namespace TVGL
                         {
                             (vertex1, vertex2) = Edge.GetVertexIndices(nextEdge);
                             //For the first set of edges, check to make sure this list is going in the proper direction
-                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLineSegment(cuttingPlane.Normal,
-                                cuttingPlane.DistanceToOrigin, vertexLookup[vertex1], vertexLookup[vertex2]);
+                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLineSegment(direction,
+                                distance, vertexLookup[vertex1], vertexLookup[vertex2]);
                             if (intersectVertex == null) return null;
 
                             var vector = intersectVertex.Position.subtract(loop.Last().Position, 3);
                             //Use the previous face, since that is the one that contains both of the edges that are in use.
-                            var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector, 3);
+                            var dot = direction.crossProduct(previousFace.Normal).dotProduct(vector, 3);
                             if (Math.Sign(dot) >= 0) correctDirection += dot;
                             else reverseDirection += (-dot);
 
                             //Add the edge as a reference for the vertex, so we can get the faces later
-                            maxVertexIndex++;
-                            intersectVertex.IndexInList = maxVertexIndex;
-                            vertexLookup.Add(maxVertexIndex, intersectVertex);
-                            vertexEdgeLookup.Add(maxVertexIndex, new List<long> { nextEdge });
                             loop.Add(intersectVertex);
-
-                            //Note that removing at an index is FASTER than removing a object.
                             edgeLoop.Add(nextEdge);
                             unusedEdges.Remove(nextEdge);
                         }
@@ -2983,7 +3041,7 @@ namespace TVGL
                     edgeLoops.Add(edgeLoop);
                 }
             }
-            outputEdgeLoops = edgeLoops;
+            data.InputEdgeLoops = edgeLoops; //Set the input edge loops, in case we can use them again.
             return loops;
         }
         #endregion
