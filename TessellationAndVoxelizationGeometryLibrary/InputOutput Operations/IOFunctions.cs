@@ -150,29 +150,31 @@ namespace TVGL.IOFunctions
         {
             try
             {
-                var extension = Path.GetExtension(filename);
+                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
-                    case "stl":
+                    case FileType.STL_ASCII:
+                    case FileType.STL_Binary:
                         solid = STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
                         break;
-                    case "3mf":
+                    case FileType.ThreeMF:
                         solid = ThreeMFFileData.OpenSolids(s, filename)[0];
                         break;
-                    case "model":
+                    case FileType.Model3MF:
                         solid = ThreeMFFileData.OpenModelFile(s, filename)[0];
                         break;
-                    case "amf":
+                    case FileType.AMF:
                         solid = AMFFileData.OpenSolids(s, filename)[0];
                         break;
-                    case "off":
+                    case FileType.OFF:
                         solid = OFFFileData.OpenSolid(s, filename);
                         // http://en.wikipedia.org/wiki/OFF_(file_format)
                         break;
-                    case "ply":
+                    case FileType.PLY_ASCII:
+                    case FileType.PLY_Binary:
                         solid = PLYFileData.OpenSolid(s, filename);
                         break;
-                    case "shell":
+                    case FileType.SHELL:
                         solid = ShellFileData.OpenSolids(s, filename)[0];
                         break;
                     default:
@@ -193,27 +195,30 @@ namespace TVGL.IOFunctions
         {
             try
             {
-                var extension = Path.GetExtension(filename);
+                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
-                    case "stl":
+                    case FileType.STL_ASCII:
+                    case FileType.STL_Binary:
                         tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
                         break;
-                    case "3mf":
+                    case FileType.ThreeMF:
                         tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
                         break;
-                    case "model":
+                    case FileType.Model3MF:
                         tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
                         break;
-                    case "amf":
+                    case FileType.AMF:
                         tessellatedSolids = AMFFileData.OpenSolids(s, filename);
                         break;
-                    case "shell":
+                    case FileType.SHELL:
                         tessellatedSolids = ShellFileData.OpenSolids(s, filename);
                         break;
+                    case FileType.OFF:
+                    case FileType.PLY_ASCII:
+                    case FileType.PLY_Binary:
+                        throw new Exception("Attempting to open multiple solids with a "+extension.ToString()+ " file.");
                     default:
-                    case "json":
-                    case "tvgl":
                         var serializer = new JsonSerializer();
                         var sr = new StreamReader(s);
                         using (var reader = new JsonTextReader(sr))
@@ -252,22 +257,24 @@ namespace TVGL.IOFunctions
         {
             try
             {
-                var extension = Path.GetExtension(filename);
+                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
-                    case "stl":
+                    case FileType.STL_ASCII:
+                    case FileType.STL_Binary:
                         return STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
-                    case "3mf":
+                    case FileType.ThreeMF:
                         return ThreeMFFileData.OpenSolids(s, filename)[0];
-                    case "model":
+                    case FileType.Model3MF:
                         return ThreeMFFileData.OpenModelFile(s, filename)[0];
-                    case "amf":
+                    case FileType.AMF:
                         return AMFFileData.OpenSolids(s, filename)[0];
-                    case "off":
+                    case FileType.OFF:
                         return OFFFileData.OpenSolid(s, filename);
-                    case "ply":
+                    case FileType.PLY_ASCII:
+                    case FileType.PLY_Binary:
                         return PLYFileData.OpenSolid(s, filename);
-                    case "shell":
+                    case FileType.SHELL:
                         return ShellFileData.OpenSolids(s, filename)[0];
                         break;
                     default:
@@ -304,8 +311,7 @@ namespace TVGL.IOFunctions
                 writer.Flush();
             }
             stream.Position = 0;
-            var extensions = new[] { "", "STL", "STL", "3mf", "model", "amf", "off", "ply", "ply", "tvgl" };
-            var name = "data." + extensions[(int)fileType];
+            var name = "data." + GetExtensionFromFileType(fileType);
             Open(stream, name, out solid);
         }
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid[] solids)
@@ -316,9 +322,8 @@ namespace TVGL.IOFunctions
                 writer.Write(data);
                 writer.Flush();
             }
-            stream.Position = 0;
-            var extensions = new[] { "", "STL", "STL", "3mf", "model", "amf", "off", "ply", "ply", "tvgl" };
-            var name = "data." + extensions[(int)fileType];
+            stream.Position = 0; 
+            var name = "data." + GetExtensionFromFileType(fileType);
             Open(stream, name, out solids);
         }
         public static void OpenFromString(string data, FileType fileType, out VoxelizedSolid solid)
@@ -346,6 +351,7 @@ namespace TVGL.IOFunctions
 
         private static FileType GetFileTypeFromExtension(string extension)
         {
+            extension = extension.ToLower().Trim(' ', '.');
             switch (extension)
             {
                 case "stl": return FileType.STL_ASCII;
@@ -372,6 +378,7 @@ namespace TVGL.IOFunctions
                 case FileType.OFF: return "off";
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary: return "ply";
+                case FileType.SHELL: return "shell";
                 case FileType.TVGL: return "tvgl";
                 default: return "";
             }
@@ -895,9 +902,8 @@ namespace TVGL.IOFunctions
         /// <returns></returns>
         public static bool Save(IList<Solid> solids, string filename, FileType fileType = FileType.unspecified)
         {
-            var extension = Path.GetExtension(filename);
             if (fileType == FileType.unspecified)
-                fileType = GetFileTypeFromExtension(extension);
+                fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
             filename = Path.GetFileNameWithoutExtension(filename) + "." + GetExtensionFromFileType(fileType);
             using (var fileStream = File.OpenWrite(filename))
                 return Save(fileStream, solids, fileType);
@@ -911,10 +917,9 @@ namespace TVGL.IOFunctions
         /// <returns></returns>
         public static bool Save(Solid solid, string filename, FileType fileType = FileType.unspecified)
         {
-            var extension = Path.GetExtension(filename);
             if (fileType == FileType.unspecified)
-                fileType = GetFileTypeFromExtension(extension);
-            filename = Path.ChangeExtension(filename, GetExtensionFromFileType(fileType));
+                fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
+            filename = Path.GetFileNameWithoutExtension(filename) + "." + GetExtensionFromFileType(fileType);
             using (var fileStream = File.OpenWrite(filename))
                 return Save(fileStream, solid, fileType);
         }
@@ -984,6 +989,8 @@ namespace TVGL.IOFunctions
                     return PLYFileData.SaveSolidASCII(stream, (TessellatedSolid)solid);
                 case FileType.PLY_Binary:
                     return PLYFileData.SaveSolidBinary(stream, (TessellatedSolid)solid);
+                case FileType.SHELL:
+                    return ShellFileData.Save(stream, (TessellatedSolid)solid);
                 default:
                     var sw = new StreamWriter(stream);
                     using (var writer = new JsonTextWriter(sw))
