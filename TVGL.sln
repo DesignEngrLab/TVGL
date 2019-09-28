@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGLTest", "TVGLTest\TVGLTe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TessellationAndVoxelizationGeometryLibrary.Standard", "TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj", "{859A90C2-4B36-4486-9279-EF9DF02C0C9B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MIConvexHull.NET Standard", "..\MIConvexHull\MIConvexHull.NET Standard\MIConvexHull.NET Standard.csproj", "{5E329462-5808-4295-8E0B-CFF967949768}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,26 @@ Global
 		{859A90C2-4B36-4486-9279-EF9DF02C0C9B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{859A90C2-4B36-4486-9279-EF9DF02C0C9B}.Release|x64.ActiveCfg = Release|x64
 		{859A90C2-4B36-4486-9279-EF9DF02C0C9B}.Release|x64.Build.0 = Release|x64
+		{5E329462-5808-4295-8E0B-CFF967949768}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Debug|x64.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.DebugSingleThread|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.DebugSingleThread|Any CPU.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.DebugSingleThread|x64.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.DebugSingleThread|x64.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Documentation|Any CPU.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Documentation|x64.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Documentation|x64.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Nsis|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Nsis|Any CPU.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Nsis|x64.ActiveCfg = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Nsis|x64.Build.0 = Debug|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Release|x64.ActiveCfg = Release|Any CPU
+		{5E329462-5808-4295-8E0B-CFF967949768}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
