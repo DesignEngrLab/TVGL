@@ -1754,6 +1754,10 @@ namespace TVGL
                     {
                         segment.NextVertices.Add(vertex);
                     }
+                    if (!segment.NextVertices.Any())
+                    {
+                        segment.IsFinished = true;
+                    }
                 }
                 #endregion
 
