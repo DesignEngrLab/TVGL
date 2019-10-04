@@ -135,6 +135,7 @@ namespace TVGL
         /// <summary>
         ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
+        
         public List<PrimitiveSurface> Primitives { get; set; }
 
         #endregion

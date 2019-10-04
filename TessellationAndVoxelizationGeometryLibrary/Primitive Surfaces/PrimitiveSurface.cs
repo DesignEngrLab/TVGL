@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,12 +24,6 @@ namespace TVGL
     /// <summary>
     ///     Class PrimitiveSurface.
     /// </summary>
-    [XmlInclude(typeof(Flat))]
-    [XmlInclude(typeof(Cone))]
-    [XmlInclude(typeof(Cylinder))]
-    [XmlInclude(typeof(Sphere))]
-    [XmlInclude(typeof(Torus))]
-    [XmlInclude(typeof(DenseRegion))]
     public abstract class PrimitiveSurface
     {
         #region Constructors
@@ -60,26 +55,24 @@ namespace TVGL
         ///     Gets the Type of primitive surface
         /// </summary>
         /// <value>The type.</value>
-        [XmlIgnore]
         public PrimitiveSurfaceType Type { get; protected set; }
 
         /// <summary>
         ///     Gets the area.
         /// </summary>
         /// <value>The area.</value>
-        [XmlIgnore]
         public double Area { get; protected set; }
 
         /// <summary>
         ///     Gets or sets the polygonal faces.
         /// </summary>
         /// <value>The polygonal faces.</value>
-        [XmlIgnore]
+        [JsonIgnore]
         public List<PolygonalFace> Faces { get; protected set; }
 
-        public string FaceIndices
+        public int[] FaceIndices
         {
-            get { return string.Join(",", Faces.Select(f => f.IndexInList)); }
+            get { return Faces.Select(f => f.IndexInList).ToArray(); }
             set { _faceIndices = value; }
         }
 
@@ -88,12 +81,12 @@ namespace TVGL
         ///     Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        [XmlIgnore]
+        [JsonIgnore]
         public List<Vertex> Vertices { get; protected set; }
 
-        public string VertexIndices
+        public int[] VertexIndices
         {
-            get { return string.Join(",", Vertices.Select(v => v.IndexInList)); }
+            get { return Vertices.Select(v => v.IndexInList).ToArray(); }
             set { _vertexIndices = value; }
         }
 
@@ -102,7 +95,7 @@ namespace TVGL
         ///     Gets the inner edges.
         /// </summary>
         /// <value>The inner edges.</value>
-        [XmlIgnore]
+        [JsonIgnore]
         public List<Edge> InnerEdges
         {
             get
@@ -113,9 +106,9 @@ namespace TVGL
         }
 
 
-        public string InnerEdgeIndices
+        public int[] InnerEdgeIndices
         {
-            get { return string.Join(",", InnerEdges.Select(e => e.IndexInList)); }
+            get { return InnerEdges.Select(e => e.IndexInList).ToArray(); }
             set { _innerEdgeIndices = value; }
         }
 
@@ -123,7 +116,7 @@ namespace TVGL
         ///     Gets the outer edges.
         /// </summary>
         /// <value>The outer edges.</value>
-        [XmlIgnore]
+        [JsonIgnore]
         public List<Edge> OuterEdges
         {
             get
@@ -133,17 +126,17 @@ namespace TVGL
             }
         }
 
-        public string OuterEdgeIndices
+        public int[] OuterEdgeIndices
         {
-            get { return string.Join(",", OuterEdges.Select(e => e.IndexInList)); }
+            get { return OuterEdges.Select(e => e.IndexInList).ToArray(); }
             set { _outerEdgeIndices = value; }
         }
         private List<Edge> _innerEdges;
         private List<Edge> _outerEdges;
-        private string _faceIndices;
-        private string _innerEdgeIndices;
-        private string _outerEdgeIndices;
-        private string _vertexIndices;
+        private int[] _faceIndices;
+        private int[] _innerEdgeIndices;
+        private int[] _outerEdgeIndices;
+        private int[] _vertexIndices;
 
         private void DefineInnerOuterEdges()
         {
@@ -203,37 +196,23 @@ namespace TVGL
         public void CompletePostSerialization(TessellatedSolid ts)
         {
             Faces = new List<PolygonalFace>();
-            var stringList = _faceIndices.Split(',');
-            var listLength = stringList.Length;
-            for (int i = 0; i < listLength; i++)
+            foreach (var i in _faceIndices)
             {
-                var face = ts.Faces[int.Parse(stringList[i])];
+                var face=ts.Faces[i];
                 Faces.Add(face);
                 face.BelongsToPrimitive = this;
             }
-
             Vertices = new List<Vertex>();
-            stringList = _vertexIndices.Split(',');
-            listLength = stringList.Length;
-            for (int i = 0; i < listLength; i++)
-                Vertices.Add(ts.Vertices[int.Parse(stringList[i])]);
+            foreach (var i in _vertexIndices)
+                Vertices.Add(ts.Vertices[i]);
 
-            if (!string.IsNullOrWhiteSpace(_innerEdgeIndices))
-            {
-                _innerEdges = new List<Edge>();
-                stringList = _innerEdgeIndices.Split(',');
-                listLength = stringList.Length;
-                for (int i = 0; i < listLength; i++)
-                    _innerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
-            }
-            if (!string.IsNullOrWhiteSpace(_outerEdgeIndices))
-            {
-                _outerEdges = new List<Edge>();
-                stringList = _outerEdgeIndices.Split(',');
-                listLength = stringList.Length;
-                for (int i = 0; i < listLength; i++)
-                    _outerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
-            }
+            _innerEdges = new List<Edge>();
+            foreach (var i in _innerEdgeIndices)
+                _innerEdges.Add(ts.Edges[i]);
+            
+            _outerEdges = new List<Edge>();
+            foreach (var i in _outerEdgeIndices)
+                _outerEdges.Add(ts.Edges[i]);
             Area = Faces.Sum(f => f.Area);
         }
     }

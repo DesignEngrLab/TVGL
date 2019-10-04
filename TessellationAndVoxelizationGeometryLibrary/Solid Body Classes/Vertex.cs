@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
+using Newtonsoft.Json;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -109,6 +110,7 @@ namespace TVGL
         ///     Gets the x.
         /// </summary>
         /// <value>The x.</value>
+        [JsonIgnore]
         public double X
         {
             get { return Position[0]; }
@@ -118,6 +120,7 @@ namespace TVGL
         ///     Gets the y.
         /// </summary>
         /// <value>The y.</value>
+        [JsonIgnore]
         public double Y
         {
             get { return Position[1]; }
@@ -127,6 +130,7 @@ namespace TVGL
         ///     Gets the z.
         /// </summary>
         /// <value>The z.</value>
+        [JsonIgnore]
         public double Z
         {
             get { return Position[2]; }
@@ -136,18 +140,21 @@ namespace TVGL
         ///     Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
+        [JsonIgnore]
         public List<Edge> Edges { get; private set; }
 
         /// <summary>
         ///     Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
+        [JsonIgnore]
         public List<PolygonalFace> Faces { get; private set; }
 
         /// <summary>
         ///     Gets or sets an arbitrary ReferenceIndex to track vertex
         /// </summary>
         /// <value>The reference index.</value>
+        [JsonIgnore]
         public int ReferenceIndex { get; set; }
 
         #endregion

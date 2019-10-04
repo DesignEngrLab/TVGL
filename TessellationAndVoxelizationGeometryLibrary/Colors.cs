@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using Newtonsoft.Json;
 using System;
 using System.Reflection;
 
@@ -934,6 +935,7 @@ namespace TVGL
         ///     The Alpha channel as a float whose range is [0..1].
         ///     the value is allowed to be out of range
         /// </value>
+        [JsonIgnore]
         public float Af
         {
             get { return Convert(A); }
@@ -944,6 +946,7 @@ namespace TVGL
         ///     Gets or sets the rf.
         /// </summary>
         /// <value>The rf.</value>
+        [JsonIgnore]
         public float Rf
         {
             get { return Convert(R); }
@@ -954,6 +957,7 @@ namespace TVGL
         ///     Gets or sets the gf.
         /// </summary>
         /// <value>The gf.</value>
+        [JsonIgnore]
         public float Gf
         {
             get { return Convert(G); }
@@ -964,6 +968,7 @@ namespace TVGL
         ///     Gets or sets the bf.
         /// </summary>
         /// <value>The bf.</value>
+        [JsonIgnore]
         public float Bf
         {
             get { return Convert(B); }
