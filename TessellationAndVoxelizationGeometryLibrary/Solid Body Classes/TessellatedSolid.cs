@@ -161,11 +161,11 @@ namespace TVGL
             MakeFaces(faceToVertexIndices, colors);
             CompleteInitiation();
         }
-        [OnSerializing()]
-        protected  void OnSerializingMethod(StreamingContext context)
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
         {
             //if (serializationData == null)
-                serializationData = new Dictionary<string, JToken>();
+            serializationData = new Dictionary<string, JToken>();
             serializationData.Add("ConvexHullVertices",
                 JToken.FromObject(ConvexHull.Vertices.Select(v => v.IndexInList)));
             serializationData.Add("ConvexHullFaces",
@@ -181,8 +181,8 @@ namespace TVGL
         }
 
 
-        [OnDeserialized()]
-        protected  void OnDeserializedMethod(StreamingContext context)
+        [OnDeserialized]
+        protected void OnDeserializedMethod(StreamingContext context)
         {
             JArray jArray = (JArray)serializationData["VertexCoords"];
             var vertexArray = jArray.ToObject<double[]>();
@@ -220,15 +220,21 @@ namespace TVGL
             foreach (var v in Vertices)
                 v.DefineCurvature();
 
-            jArray = (JArray)serializationData["ConvexHullVertices"];
-            var cvxIndices = jArray.ToObject<int[]>();
-            var cvxVertices = new Vertex[cvxIndices.Length];
-            for (int i = 0; i < cvxIndices.Length; i++)
-                cvxVertices[i] = Vertices[cvxIndices[i]];
-            jArray = (JArray)serializationData["ConvexHullFaces"];
-            var cvxFaceIndices = jArray.ToObject<int[]>();
-
-            ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices);
+            if (serializationData.ContainsKey("ConvexHullVertices"))
+            {
+                jArray = (JArray)serializationData["ConvexHullVertices"];
+                var cvxIndices = jArray.ToObject<int[]>();
+                var cvxVertices = new Vertex[cvxIndices.Length];
+                for (int i = 0; i < cvxIndices.Length; i++)
+                    cvxVertices[i] = Vertices[cvxIndices[i]];
+                jArray = (JArray)serializationData["ConvexHullFaces"];
+                var cvxFaceIndices = jArray.ToObject<int[]>();
+                ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices);
+            }
+            else
+            {
+                ConvexHull = new TVGLConvexHull(this);
+            }
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartOfConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))

@@ -329,17 +329,17 @@ namespace TVGL.Voxelization
         }
 
 
-        [OnSerializing()]
+        [OnSerializing]
         protected  void OnSerializingMethod(StreamingContext context)
         {
-            throw new NotImplementedException();
+           // throw new NotImplementedException();
         }
 
 
-        [OnDeserialized()]
+        [OnDeserialized]
         protected  void OnDeserializedMethod(StreamingContext context)
         {
-            throw new NotImplementedException();
+           // throw new NotImplementedException();
 
 
         }

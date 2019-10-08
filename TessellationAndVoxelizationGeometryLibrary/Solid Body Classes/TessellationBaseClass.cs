@@ -31,25 +31,5 @@ namespace TVGL
         /// <value>The normal.</value>
         public double[] Normal { get; internal set; }
 
-
-        public HashSet<long> Voxels { get; protected set; }
-
-        internal void AddVoxel(long v)
-        {
-            if (Voxels == null) Voxels = new HashSet<long>();
-            lock (Voxels)
-                if (!Voxels.Contains(v))
-                    Voxels.Add(v);
-        }
-
-        public HashSet<int[]> VoxelsC { get; protected set; }
-
-        internal void AddVoxelC(int[] v)
-        {
-            if (VoxelsC == null) VoxelsC = new HashSet<int[]>();
-            lock (VoxelsC)
-                if (!VoxelsC.Contains(v))
-                    VoxelsC.Add(v);
-        }
     }
 }
