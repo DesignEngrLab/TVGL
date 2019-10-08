@@ -72,7 +72,12 @@ namespace TVGL
 
         public int[] FaceIndices
         {
-            get { return Faces.Select(f => f.IndexInList).ToArray(); }
+            get
+            {
+                if (Faces != null)
+                    return Faces.Select(f => f.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _faceIndices = value; }
         }
 
@@ -86,7 +91,12 @@ namespace TVGL
 
         public int[] VertexIndices
         {
-            get { return Vertices.Select(v => v.IndexInList).ToArray(); }
+            get
+            {
+                if (Vertices != null)
+                    return Vertices.Select(v => v.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _vertexIndices = value; }
         }
 
@@ -108,7 +118,12 @@ namespace TVGL
 
         public int[] InnerEdgeIndices
         {
-            get { return InnerEdges.Select(e => e.IndexInList).ToArray(); }
+            get
+            {
+                if (Faces != null)
+                    return InnerEdges.Select(e => e.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _innerEdgeIndices = value; }
         }
 
@@ -128,7 +143,12 @@ namespace TVGL
 
         public int[] OuterEdgeIndices
         {
-            get { return OuterEdges.Select(e => e.IndexInList).ToArray(); }
+            get
+            {
+                if (Faces != null)
+                    return OuterEdges.Select(e => e.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _outerEdgeIndices = value; }
         }
         private List<Edge> _innerEdges;
@@ -142,6 +162,7 @@ namespace TVGL
         {
             var outerEdgeHash = new HashSet<Edge>();
             var innerEdgeHash = new HashSet<Edge>();
+            if (Faces!=null)
             foreach (var face in Faces)
             {
                 foreach (var edge in face.Edges)
@@ -198,7 +219,7 @@ namespace TVGL
             Faces = new List<PolygonalFace>();
             foreach (var i in _faceIndices)
             {
-                var face=ts.Faces[i];
+                var face = ts.Faces[i];
                 Faces.Add(face);
                 face.BelongsToPrimitive = this;
             }
@@ -209,7 +230,7 @@ namespace TVGL
             _innerEdges = new List<Edge>();
             foreach (var i in _innerEdgeIndices)
                 _innerEdges.Add(ts.Edges[i]);
-            
+
             _outerEdges = new List<Edge>();
             foreach (var i in _outerEdgeIndices)
                 _outerEdges.Add(ts.Edges[i]);

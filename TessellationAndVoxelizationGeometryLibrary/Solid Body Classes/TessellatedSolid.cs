@@ -161,7 +161,7 @@ namespace TVGL
             MakeFaces(faceToVertexIndices, colors);
             CompleteInitiation();
         }
-        [OnSerializing()]
+        [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
         {
             //if (serializationData == null)
@@ -181,7 +181,7 @@ namespace TVGL
         }
 
 
-        [OnDeserialized()]
+        [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
         {
             JArray jArray = (JArray)serializationData["VertexCoords"];

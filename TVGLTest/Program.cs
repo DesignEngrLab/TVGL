@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("che.*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("Conve*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupport*").ToArray();
             //Casing = 18
             //SquareSupport = 75
@@ -112,8 +112,8 @@ namespace TVGLPresenterDX
                 using (fileStream = File.OpenRead(filename))
                     IO.Open(fileStream, filename, out ts);
                 if (ts.Errors != null) continue;
-                
-                Presenter.ShowWithConvexHull(ts);
+                if (ts.Volume > ts.ConvexHull.Volume)
+                    Presenter.ShowWithConvexHull(ts);
                 //TestVoxelization(ts);
                 //TestSlice(ts);
                 // var stopWatch = new Stopwatch();
@@ -134,7 +134,7 @@ namespace TVGLPresenterDX
                 //bounds = vs1.Bounds;
             }
             Console.WriteLine("Completed.");
-          //  Console.ReadKey();
+            //  Console.ReadKey();
         }
 
         private static void ConvexHullTesting()
@@ -160,7 +160,7 @@ namespace TVGLPresenterDX
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
                 if (!File.Exists(filename) || !filename.EndsWith(".PolyLight")) continue;
-                Console.WriteLine("Attempting: " + filename);                
+                Console.WriteLine("Attempting: " + filename);
                 var polyLight = PolygonLight.Deserialize(filename);
                 var cxvHull = MinimumEnclosure.ConvexHull2D(polyLight.Path);
                 var polygon = new Polygon(cxvHull.Select(p => new Point(p)));
