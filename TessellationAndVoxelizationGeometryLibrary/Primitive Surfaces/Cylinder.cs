@@ -94,6 +94,8 @@ namespace TVGL
         {
             if (isPositive) throw new Exception("BuildIfCylinderIsHole assumes that the faces have already been collected, " +
                 "such that the cylinder is negative");
+            IsPositive = false;
+
             //To truly be a hole, there should be two loops of vertices that form circles on either ends of the faces.
             //These are easy to capture because all the edges between them should be shared by two of the faces
             //Start by collecting the edges at either end. Each edge belongs to only two faces, so any edge that only
@@ -234,7 +236,6 @@ namespace TVGL
                 return false;
             }
             Radius = (centerCircle.Radius + centerCircle2.Radius) / 2; //Average
-            IsPositive = true;
             return true;
         }
 
