@@ -40,7 +40,7 @@ namespace TVGL
         protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
             Type = PrimitiveSurfaceType.Unknown;
-            Faces = faces.ToList();
+            Faces = new HashSet<PolygonalFace>(faces);
             foreach (var face in faces)
                 face.BelongsToPrimitive = this;
             Area = Faces.Sum(f => f.Area);
@@ -75,7 +75,7 @@ namespace TVGL
         /// </summary>
         /// <value>The polygonal faces.</value>
         [XmlIgnore]
-        public List<PolygonalFace> Faces { get; protected set; }
+        public HashSet<PolygonalFace> Faces { get; protected set; }
 
         public string FaceIndices
         {
@@ -202,7 +202,7 @@ namespace TVGL
 
         public void CompletePostSerialization(TessellatedSolid ts)
         {
-            Faces = new List<PolygonalFace>();
+            Faces = new HashSet<PolygonalFace>();
             var stringList = _faceIndices.Split(',');
             var listLength = stringList.Length;
             for (int i = 0; i < listLength; i++)
@@ -235,6 +235,77 @@ namespace TVGL
                     _outerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
             }
             Area = Faces.Sum(f => f.Area);
+        }
+
+        public HashSet<PolygonalFace> GetAdjacentFaces()
+        {
+            var adjacentFaces = new HashSet<PolygonalFace>(); //use a hash to avoid duplicates
+            foreach (var edge in OuterEdges)
+            {
+                if (Faces.Contains(edge.OwnedFace)) adjacentFaces.Add(edge.OtherFace);
+                else adjacentFaces.Add(edge.OwnedFace);
+            }
+            return adjacentFaces;
+        }
+
+        /// <summary>
+        /// Takes in a list of edges and returns their list of loops for edges and vertices 
+        /// The order of the output loops are not considered (i.e., they may be "reversed"),
+        /// since no face normal information is used.
+        /// </summary>
+        /// <param name="edges"></param>
+        /// <returns></returns>
+        public static (bool allLoopsClosed, List<List<Edge>> edgeLoops, List<List<Vertex>> vertexLoops) GetLoops(HashSet<Edge> outerEdges, bool canModifyTheInput)
+        {
+            //Use a boolean canModifyTheInput, so that we can save time creating a hashset if the user allows it to be mutated. 
+            var edges = canModifyTheInput ? outerEdges : new HashSet<Edge>(outerEdges);
+
+            //loop through the edges to form loops 
+            var allLoopsClosed = true;
+            var loops = new List<List<Vertex>>();
+            var edgeLoops = new List<List<Edge>>();
+            while (edges.Any())
+            {
+                var currentEdge = edges.First();
+                edges.Remove(currentEdge);
+                var startVertex = currentEdge.From;
+                var loop = new List<Vertex> { startVertex };
+                var edgeLoop = new List<Edge> { currentEdge };
+                bool isClosed = false;
+                var previousVertex = startVertex;
+                while (!isClosed)
+                {
+                    //The To/From order cannot be used, since it is only correct for the face the edge belongs to.
+                    //So, add whichever vertex of the edge has no already been added
+                    var currentVertex = previousVertex == currentEdge.From ? currentEdge.To : currentEdge.From;
+                    //Check if we have wrapped around to close the loop
+                    isClosed = currentVertex == startVertex;
+                    if (isClosed) continue; //Break the while loop.
+
+                    //Otherwise, add the new vertex and find the next edge
+                    loop.Add(currentVertex);
+                    var possibleEdges = currentVertex.Edges;
+                    Edge nextEdge = null;
+                    foreach (var edge in possibleEdges)
+                    {
+                        if (!edges.Contains(edge)) continue;
+                        edges.Remove(edge);
+                        nextEdge = edge;
+                        break;
+                    }
+                    if (nextEdge == null)
+                    {
+                        allLoopsClosed = false; //This loop does not close
+                        break;
+                    }
+                    edgeLoop.Add(nextEdge);
+                    previousVertex = currentVertex;
+                    currentEdge = nextEdge;
+                }
+                edgeLoops.Add(edgeLoop);
+                loops.Add(loop);
+            }
+            return (allLoopsClosed, edgeLoops, loops);
         }
     }
 }

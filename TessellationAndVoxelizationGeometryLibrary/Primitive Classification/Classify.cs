@@ -129,8 +129,8 @@ namespace TVGL
                         var del = new List<PolygonalFace>();
                         var cyl = (Cylinder)primitives[j];
                         // if the radius of the cylinder is very high, just continue;
-                        var d = DistanceBetweenTwoVertices(primitives[j].Faces[0].Vertices[0].Position,
-                            primitives[j].Faces[0].Vertices[1].Position);
+                        var d = DistanceBetweenTwoVertices(primitives[j].Faces.First().Vertices[0].Position,
+                            primitives[j].Faces.First().Vertices[1].Position);
                         if (Math.Abs(1 - (cyl.Radius - d) / (cyl.Radius)) < 0.001)
                             continue;
                         foreach (var f in primitives[i].Faces.Where(f => primitives[j].IsNewMemberOf(f)))
@@ -155,8 +155,8 @@ namespace TVGL
             var cylinders = primitives.Where(p => p is Cylinder).Cast<Cylinder>().ToList();
             foreach (var cy in cylinders)
             {
-                var d = DistanceBetweenTwoVertices(cy.Faces[0].Vertices[0].Position,
-                    cy.Faces[0].Vertices[1].Position);
+                var d = DistanceBetweenTwoVertices(cy.Faces.First().Vertices[0].Position,
+                    cy.Faces.First().Vertices[1].Position);
                 if (Math.Abs(1 - (cy.Radius - d) / (cy.Radius)) < 0.001)
                     continue;
                 foreach (var fl in flats)
@@ -187,7 +187,7 @@ namespace TVGL
 
                 if (primitive.Faces.Count == 1 && primitive.GetType() == typeof(Sphere))
                 {
-                    var face = primitive.Faces[0];
+                    var face = primitive.Faces.First();
                     var neighbors = new List<PrimitiveSurface>();
                     var catProbsOfEdges = face.Edges.Select(e => allEdgeWithScores.First(ews => ews.Edge == e).CatProb).ToList();
                     for (int j = 0; j < face.Edges.Count; j++)
@@ -266,7 +266,7 @@ namespace TVGL
                         int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out Prob);
                         if (!e.CatProb.Keys.Contains(@group))
                             e.CatProb.Add(@group, Prob);
-                        else if (e.CatProb[@group] < Prob)
+                        else if (e.     CatProb[@group] < Prob)
                             e.CatProb[@group] = Prob;
                     }
         }
@@ -854,7 +854,7 @@ namespace TVGL
             return (MiscFunctions.FacesWithDistinctNormals(faces.ToList()).Count == 1);
         }
 
-        private static bool IsReallyACone(IEnumerable<PolygonalFace> facesAll, out double[] axis, out double coneAngle)
+        public static bool IsReallyACone(IEnumerable<PolygonalFace> facesAll, out double[] axis, out double coneAngle)
         {
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;

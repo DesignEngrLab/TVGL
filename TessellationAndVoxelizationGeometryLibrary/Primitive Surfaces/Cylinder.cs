@@ -66,9 +66,9 @@ namespace TVGL
 
             /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
             var totalAxis = new double[3];
-            for (var i = 0; i < numFaces; i++)
+            foreach (var oldFace in Faces)
             {
-                var newAxis = face.Normal.crossProduct(Faces[i].Normal);
+                var newAxis = face.Normal.crossProduct(oldFace.Normal);
                 if (newAxis.dotProduct(Axis, 3) < 0)
                     newAxis.multiply(-1);
                 totalAxis = totalAxis.add(newAxis, 3);
@@ -84,6 +84,279 @@ namespace TVGL
             /**** set new Radius (by averaging in with last n values) ****/
             Radius = totalOfRadii / Vertices.Count;
             base.UpdateWith(face);
+        }
+
+        /// <summary>
+        ///     Updates the with.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        public bool BuildIfCylinderIsHole()
+        {
+            //To truly be a cylinder, there should be two loops of vertices that form circles on either ends of the faces.
+            //These are easy to capture because all the edges between them should be shared by two of the faces
+            //Start by collecting the edges at either end. Each edge belongs to only two faces, so any edge that only
+            //comes up once, must be at the edge of the cylinder (assuming it is a cylinder).
+            var edges = new HashSet<Edge>();
+            foreach (var face in Faces)
+            {
+                foreach (var edge in face.Edges)
+                {
+                    if (edges.Contains(edge))
+                    {
+                        edges.Remove(edge);
+                    }
+                    else edges.Add(edge);
+                }
+            }
+            //Now we can loop through the edges to form two loops
+            if (edges.Count < 5) return false; //5 is the minimum number of vertices to look remotely circular (8 is more likely)
+            var (allLoopsClosed, edgeLoops, loops) = GetLoops(edges, true);
+            if (loops.Count != 2) return false; //There must be two and only two loops.
+
+            Loop1 = loops[0];
+            Loop2 = loops[1];
+            EdgeLoop1 = edgeLoops[0];
+            EdgeLoop2 = edgeLoops[1];
+
+            //Next, we need to get the central axis.
+            //The ends of the cylinder could be any shape (flat, curved, angled) and the shapes
+            //on each end do not need to match. This rules out using the vertex loops to form
+            //a plane (most accurate) and creating a plane from edge midpoints (next most accurate).
+            //The next most accurate thing is to use the edge vectors to set the axis. 
+            //This is more precise than taking a bunch of cross products with the faces.
+            //And it is more universal than creating a plane from the loops, since it works 
+            //for holes that enter and exit at an angle.
+            var throughEdgeVectors = new Dictionary<Vertex, double[]>();
+            var centerPoints = new Dictionary<Vertex, double[]>();
+            //if (SmallFlats != null)
+            //{
+            //    foreach (var flat in SmallFlats)
+            //    {
+            //        foreach (var outerEdge in flat.OuterEdges)
+            //        {
+            //            if (Loop1.Contains(outerEdge.From) && Loop2.Contains(outerEdge.To))
+            //            {
+            //                pointsOnCenterPlane.Add(outerEdge.From, outerEdge.To.Position.add(outerEdge.From.Position).divide(2));
+            //            }
+            //            else if (Loop1.Contains(outerEdge.To) && Loop2.Contains(outerEdge.From))
+            //            {
+            //                pointsOnCenterPlane.Add(outerEdge.To, outerEdge.To.Position.add(outerEdge.From.Position).divide(2));
+            //            }
+            //        }
+            //    }
+            //}
+
+            throughEdgeVectors = new Dictionary<Vertex, double[]>();
+            var dotFromSharpestEdgesConnectedToVertex = new Dictionary<Vertex, double>();
+            foreach (var edge in InnerEdges)
+            {
+                //Skip those edges that are on "flat" surfaces
+                var dot = edge.OwnedFace.Normal.dotProduct(edge.OtherFace.Normal);
+                if (dot.IsPracticallySame(1.0, Constants.ErrorForFaceInSurface)) continue;
+                //This uses a for loop to remove duplicate code, to decide which vertex to check with which loop
+                for (var i = 0; i < 2; i++) 
+                {
+                    var A = i == 0 ? edge.To : edge.From;
+                    var B = i == 0 ? edge.From : edge.To;
+                    if (Loop1.Contains(A))
+                    {
+                        bool reachedEnd = Loop2.Contains(B);
+                        if (!reachedEnd)
+                        {                           
+                            //Check if this edge needs to "extended" to reach the end of the cylinder
+                            var previousEdge = edge;
+                            var previousVertex = B;
+                            while (!reachedEnd)
+                            {                          
+                                var maxDot = 0.0;
+                                Edge extensionEdge = null;
+                                foreach (var otherEdge in previousVertex.Edges.Where(e => e != previousEdge))
+                                {
+                                    //This other edge must be contained in the InnerEdges and along the same direction
+                                    if (!InnerEdges.Contains(otherEdge)) continue;
+                                    var edgeDot = Math.Abs(otherEdge.Vector.normalize().dotProduct(previousEdge.Vector.normalize()));
+                                    if (!edgeDot.IsPracticallySame(1.0, Constants.ErrorForFaceInSurface)) continue;
+                                    //Choose the edge that is most along the previous edge
+                                    if (edgeDot > maxDot)
+                                    {
+                                        maxDot = edgeDot;
+                                        extensionEdge = otherEdge;
+                                    }
+                                }
+                                if (extensionEdge == null) break; //go to the next edge
+                                if (Loop2.Contains(extensionEdge.OtherVertex(previousVertex)))
+                                {
+                                    reachedEnd = true;
+                                    B = extensionEdge.OtherVertex(previousVertex);
+                                }
+                                else
+                                {
+                                    previousVertex = extensionEdge.OtherVertex(previousVertex);
+                                    previousEdge = extensionEdge;
+                                }
+                            }                           
+                        }
+                        //If there was a vertex from the edge or edges in the second loop.
+                        if (reachedEnd) 
+                        { 
+                            if (!dotFromSharpestEdgesConnectedToVertex.ContainsKey(A))
+                            {
+                                throughEdgeVectors.Add(A, B.Position.subtract(A.Position));
+                                //centerPoints.Add(A, A.Position.add(B.Position).divide(2));
+                                dotFromSharpestEdgesConnectedToVertex.Add(A, edge.InternalAngle);
+                            }
+                            else if (dot < dotFromSharpestEdgesConnectedToVertex[A])
+                            {
+                                throughEdgeVectors[A] = B.Position.subtract(A.Position);//.divide(2);
+                                //centerPoints[A] = A.Position.add(B.Position).divide(2);
+                                dotFromSharpestEdgesConnectedToVertex[A] = dot;
+                            }
+                            break; //Go to the next edge
+                        }
+                    }
+                }
+            }
+            if (throughEdgeVectors.Count < 3) return false; 
+          
+            //Build up the center plane loop
+            var centerLoop = new List<double[]>();
+
+            var edgeVectors = new List<double[]>(throughEdgeVectors.Values);
+            var numEdges = edgeVectors.Count;
+            var axis = edgeVectors.First();
+            for (var i = 1; i < numEdges; i++)
+            {
+                var nextEdgeVector = edgeVectors[i];
+                var dot = axis.dotProduct(nextEdgeVector);
+                axis = dot < 0.0 ? axis.subtract(nextEdgeVector) : axis.add(nextEdgeVector);
+            }
+
+            //To get the center plane distance, we are going to use the furthest points along the axis
+            //and its reverse. And then set the center midway between the Loops. This approach is more
+            //generic than using through edge center points, even if we used the smallest edge, because
+            //that does not gaurantee that the center plane will be inside the cylinder.
+            //var distanceToLoop1 = MiscFunctions.M
+            //var centerPlaneDistance = 
+            //foreach (var point in Loop1)
+            //{
+            //    if (!pointsOnCenterPlane.ContainsKey(point)) continue;
+            //    centerLoop.Add(pointsOnCenterPlane[point]); 
+            //}
+
+            //Reverse the axis if necessary, so that it points from loop 1 to loop 2.
+            axis = axis.normalize();
+            var distanceToLoop1 = MinimumEnclosure.GetLengthAndExtremeVertex(axis, Loop1, out var botV, out var topV);
+            var distanceToLoop2 = MinimumEnclosure.GetLengthAndExtremeVertex(axis, Loop2, out var botV2, out var topV2);
+            if (distanceToLoop1 > distanceToLoop2) Axis = axis = axis.multiply(-1); 
+
+            //Create a center plane from three points spaced out accross the list
+            //var n1 = centerLoop.Count / 3;
+            //var centerPlane = MiscFunctions.GetPlaneFromThreePoints(centerLoop[0], centerLoop[n1], centerLoop[2 * n1]);
+            //var axis = Axis = centerPlane.Normal;
+
+            /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
+            //Since we will be taking cross products, we need to be sure not to have faces along the same normal
+            var faces = MiscFunctions.FacesWithDistinctNormals(Faces.ToList());
+            var n = faces.Count;
+
+            //Check if the loops are circular along the axis
+            var path1 = MiscFunctions.Get2DProjectionPointsAsLight(Loop1, axis, out var backTransform);
+            var poly = new PolygonLight(path1);
+            if (!PolygonOperations.IsCircular(new Polygon(poly), out var centerCircle, Constants.MediumConfidence))
+            {
+                return false;
+            }
+            var path2 = MiscFunctions.Get2DProjectionPointsAsLight(Loop2, axis, out var backTransform2);
+            var poly2 = new PolygonLight(path2);
+            if (!PolygonOperations.IsCircular(new Polygon(poly2), out var centerCircle2, Constants.MediumConfidence))
+            {
+                return false;
+            }
+            if (!centerCircle.Radius.IsPracticallySame(centerCircle2.Radius, 0.001)) { }
+            Radius = centerCircle.Radius;
+            //Anchor = MiscFunctions.GetVerticesFrom2DPoints(new List<PointLight> { centerCircle.Center }, 
+            //    centerPlane.Normal, centerPlane.DistanceToOrigin).First().Position;
+
+
+        ////Use the largest face as the "base" for all of the cross products.
+        //var largestFace = faces.First();
+        //var maxArea = largestFace.Area;
+        //foreach(var face in faces)
+        //{
+        //    if (face.Area > maxArea)
+        //    {
+        //        maxArea = face.Area;
+        //        largestFace = face;
+        //    }
+        //}
+        //faces.Remove(largestFace);
+
+        //var totalAxis = new double[3];
+        //var axisSet = false;
+        //var axis = new[] { 0.0, 0.0, 0.0 };
+        //foreach (var otherFace in faces)
+        //{
+        //    var newAxis = largestFace.Normal.crossProduct(otherFace.Normal);
+        //    if (!axisSet)
+        //    {
+        //        axis = newAxis;
+        //        axisSet = true;
+        //    }
+        //    else
+        //    {
+        //        if (newAxis.dotProduct(axis, 3) < 0) newAxis.multiply(-1);
+        //    }            
+        //    totalAxis = totalAxis.add(newAxis, 3);
+        //}
+        ////var numPrevCrossProducts = n * (n - 1) / 2;
+        ////totalAxis = totalAxis.add(axis.multiply(numPrevCrossProducts), 3);
+        ///**** set new Axis (by averaging in with last n values) ****/
+        //axis = totalAxis.divide(n).normalize(3);
+
+        //faces.Add(largestFace);
+        //var centers = new List<double[]>();
+            double[] center;
+            double t1, t2;
+            var signedDistances = new List<double>();
+            MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
+                faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
+            if (!center.Any(double.IsNaN) || center.IsNegligible())
+            {
+                //centers.Add(center);
+                signedDistances.Add(t1);
+                signedDistances.Add(t2);
+            }
+            for (var i = 1; i < n; i++)
+            {
+                MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
+                    faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
+                if (!center.Any(double.IsNaN) || center.IsNegligible())
+                {
+                    //centers.Add(center);
+                    signedDistances.Add(t1);
+                    signedDistances.Add(t2);
+                }
+            }
+            //center = new double[3];
+            //center = centers.Aggregate(center, (current, c) => current.add(c, 3));
+            //center = center.divide(centers.Count);
+            /* move center to origin plane */
+            var distBackToOrigin = -1 * axis.dotProduct(center, 3);
+            //center = center.subtract(axis.multiply(distBackToOrigin), 3);
+            /* determine is positive or negative */
+            var numNeg = signedDistances.Count(d => d < 0);
+            var numPos = signedDistances.Count(d => d > 0);
+            var isPositive = numNeg > numPos;
+            var radii = new List<double>();
+            foreach (var face in faces)
+                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToLine(v.Position, center, axis)));
+            var averageRadius = radii.Average();
+
+            Axis = axis;
+            //Anchor = center;
+            IsPositive = isPositive;
+            //Radius = averageRadius;
+            return true;
         }
 
         /// <summary>
@@ -113,6 +386,11 @@ namespace TVGL
         public bool IsPositive;
 
         /// <summary>
+        ///     Did the cylinder pass the cylinder checks?
+        /// </summary>
+        public bool IsValid;
+
+        /// <summary>
         ///     Gets the anchor.
         /// </summary>
         /// <value>The anchor.</value>
@@ -130,9 +408,31 @@ namespace TVGL
         /// <value>The radius.</value>
         public double Radius { get;  set; }
 
+        public List<Vertex> Loop1 { get; set; }
+
+        public List<Vertex> Loop2 { get; set; }
+
+        public List<Edge> EdgeLoop1 { get; set; }
+
+        public List<Edge> EdgeLoop2 { get; set; }
+
+        public HashSet<Flat> SmallFlats { get; set; }
         #endregion
 
         #region Constructors
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Cylinder" /> class.
+        /// </summary>
+        /// <param name="faces">The faces all.</param>
+        /// <param name="axis">The axis.</param>
+        public Cylinder(IEnumerable<PolygonalFace> faces, bool buildOnlyIfHole, HashSet<Flat> featureFlats = null) : base(faces)
+        {
+            if (!buildOnlyIfHole) throw new Exception("This Cylinder constructor only works when you want to find holes.");
+            Type = PrimitiveSurfaceType.Cylinder;
+            SmallFlats = featureFlats;
+            IsValid = BuildIfCylinderIsHole();
+        }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Cylinder" /> class.

@@ -151,6 +151,25 @@ namespace TVGL
             DistanceToOrigin = Normal.dotProduct(pointOnPlane, 3);
         }
 
+        public HashSet<Flat> GetAdjacentFlats(List<Flat> allFlats)
+        {
+            var adjacentFlats = new HashSet<Flat>(); //use a hash to avoid duplicates
+            var adjacentFaces = GetAdjacentFaces();
+            foreach(var flat in allFlats)
+            {
+                foreach (var face in adjacentFaces)
+                {
+                    if (flat.Faces.Contains(face))
+                    {
+                        adjacentFlats.Add(flat);
+                        break;
+                    }
+                }   
+            }
+            return adjacentFlats;
+        }
+
+
         #endregion
     }
 }
