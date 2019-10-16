@@ -2390,6 +2390,14 @@ namespace TVGL
                    SameSide(p, c, a, b, onBoundaryIsInside);
         }
 
+        public static bool IsVertexInsideTriangleFast(double[] a, double[] b, double[] c, double[] p,
+           bool onBoundaryIsInside = true)
+        {
+            return SameSideFast(p, a, b, c, onBoundaryIsInside) &&
+                   SameSideFast(p, b, a, c, onBoundaryIsInside) &&
+                   SameSideFast(p, c, a, b, onBoundaryIsInside);
+        }
+
         /// <summary>
         ///     Sames the side.
         /// </summary>
@@ -2404,6 +2412,34 @@ namespace TVGL
             var cp1 = b.subtract(a, 3).crossProduct(p1.subtract(a, 3));
             var cp2 = b.subtract(a, 3).crossProduct(p2.subtract(a, 3));
             var dot = cp1.dotProduct(cp2, 3);
+            if (dot.IsNegligible()) return onBoundaryIsInside;
+            if (Math.Abs(dot) < Constants.BaseTolerance) return onBoundaryIsInside;
+            return dot > 0.0;
+        }
+
+        internal static bool SameSideFast(double[] p1, double[] p2, double[] a, double[] b, bool onBoundaryIsInside = true)
+        {
+            var aX = a[0];
+            var aY = a[1];
+            var aZ = a[2];
+            var v1x = b[0] - aX;
+            var v1y = b[1] - aY;
+            var v1z = b[2] - aZ;
+            var v2x = p1[0] - aX;
+            var v2y = p1[1] - aY;
+            var v2z = p1[2] - aZ;
+            var v3x = p2[0] - aX;
+            var v3y = p2[1] - aY;
+            var v3z = p2[2] - aZ;
+            //The cross product split into its cofactor expansion
+            var cp1x = v1y * v2z - v1z * v2y;
+            var cp1y = v1x * v2z - v1z * v2x;
+            var cp1z = v1x * v2y - v1y * v2x;
+            var cp2x = v1y * v3z - v1z * v3y;
+            var cp2y = v1x * v3z - v1z * v3x;
+            var cp2z = v1x * v3y - v1y * v3x;
+            //a · b = ax × bx + ay × by + az × bz
+            var dot = cp1x * cp2x + cp1y * cp2y + cp1z * cp2z;
             if (dot.IsNegligible()) return onBoundaryIsInside;
             if (Math.Abs(dot) < Constants.BaseTolerance) return onBoundaryIsInside;
             return dot > 0.0;
