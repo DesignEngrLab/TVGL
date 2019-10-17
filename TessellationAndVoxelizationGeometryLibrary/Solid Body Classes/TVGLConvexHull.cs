@@ -41,6 +41,7 @@ namespace TVGL
         public TVGLConvexHull(IList<Vertex> vertices, double tolerance)
         {
             var convexHull = ConvexHull.Create(vertices, tolerance);
+            if (convexHull.Result == null) return;
             Vertices = convexHull.Result.Points.ToArray();
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];

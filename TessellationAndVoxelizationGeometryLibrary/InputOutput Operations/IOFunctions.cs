@@ -360,6 +360,7 @@ namespace TVGL.IOFunctions
                 case "amf": return FileType.AMF;
                 case "off": return FileType.OFF;
                 case "ply": return FileType.PLY_ASCII;
+                case "shell": return FileType.SHELL;
                 case "tvgl":
                 case "json": return FileType.TVGL;
                 default: return FileType.unspecified;
