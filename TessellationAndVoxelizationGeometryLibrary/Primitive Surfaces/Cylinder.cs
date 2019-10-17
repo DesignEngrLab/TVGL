@@ -198,24 +198,15 @@ namespace TVGL
                     }
                 }
             }
-            if (throughEdgeVectors.Count < 3) return false; 
-          
+            if (throughEdgeVectors.Count < 3) return false;
+
             //Estimate the axis from the sum of the through edge vectors
+            //The axis points from loop 1 to loop 2, since we always start the edge vector from Loop1
             var edgeVectors = new List<double[]>(throughEdgeVectors.Values);
             var numEdges = edgeVectors.Count;
-            var axis = edgeVectors.First();
-            for (var i = 1; i < numEdges; i++)
-            {
-                var nextEdgeVector = edgeVectors[i];
-                var dot = axis.dotProduct(nextEdgeVector);
-                axis = dot < 0.0 ? axis.subtract(nextEdgeVector) : axis.add(nextEdgeVector);
-            }
-
-            //Reverse the axis if necessary, so that it points from loop 1 to loop 2.
-            axis = axis.normalize();
-            var distanceToLoop1 = MinimumEnclosure.GetLengthAndExtremeVertex(axis, Loop1, out var botV, out var topV);
-            var distanceToLoop2 = MinimumEnclosure.GetLengthAndExtremeVertex(axis, Loop2, out var botV2, out var topV2);
-            if (distanceToLoop1 > distanceToLoop2) Axis = axis = axis.multiply(-1); 
+            var axis = new double[] { 0.0, 0.0, 0.0 };
+            foreach(var edgeVector in edgeVectors) axis = axis.add(edgeVector);
+            Axis = axis.normalize();
 
             /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
             //Since we will be taking cross products, we need to be sure not to have faces along the same normal
@@ -223,13 +214,13 @@ namespace TVGL
             var n = faces.Count;
 
             //Check if the loops are circular along the axis
-            var path1 = MiscFunctions.Get2DProjectionPointsAsLight(Loop1, axis, out var backTransform);
+            var path1 = MiscFunctions.Get2DProjectionPointsAsLight(Loop1, Axis, out var backTransform);
             var poly = new PolygonLight(path1);
             if (!PolygonOperations.IsCircular(new Polygon(poly), out var centerCircle, Constants.MediumConfidence))
             {
                 return false;
             }
-            var path2 = MiscFunctions.Get2DProjectionPointsAsLight(Loop2, axis, out var backTransform2);
+            var path2 = MiscFunctions.Get2DProjectionPointsAsLight(Loop2, Axis, out var backTransform2);
             var poly2 = new PolygonLight(path2);
             if (!PolygonOperations.IsCircular(new Polygon(poly2), out var centerCircle2, Constants.MediumConfidence))
             {
