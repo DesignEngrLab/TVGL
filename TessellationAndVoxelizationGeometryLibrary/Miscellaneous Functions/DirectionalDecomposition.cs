@@ -166,12 +166,6 @@ namespace TVGL
         {
             sortedVertexDistanceLookup = new Dictionary<int, double>();
 
-            //This is a list of all the step indices matched with its distance along the axis.
-            //This may be different that just multiplying the step index by the step size, because
-            //minor adjustments occur to avoid cutting through vertices.
-            stepDistances = new Dictionary<int, double>();
-
-
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             MiscFunctions.SortAlongDirection(direction, solids.SelectMany(s => s.Vertices), out List<(Vertex, double)> sortedVertices);
             //Create a distance lookup dictionary based on the vertex indices
@@ -181,80 +175,21 @@ namespace TVGL
             var edgeListDictionary = new Dictionary<int, Dictionary<int, Edge>>();
             var firstDistance = sortedVertices.First().Item2;
             var furthestDistance = sortedVertices.Last().Item2;
-            var length = furthestDistance - firstDistance;
-
-            var currentVertexIndex = 0;
-            var inputEdgeLoops = new Dictionary<int, List<List<Edge>>>();
 
             //Choose whichever min offset is smaller
-            var minOffset = Math.Min(Math.Sqrt(solids[0].SameTolerance), stepSize / 1000);
-            var div = length / stepSize;
-            var t = (int)(length / stepSize);
-            var numSteps = t + 1; //Round up to nearest integer (or down and then add 1)
-            var remainder = length - t * stepSize;
-            if (remainder.IsPracticallySame(stepSize, minOffset))
-            {
-                remainder = 0.0;
-                numSteps++;
-            }
+            var minOffset = Math.Min(Math.Sqrt(solids[0].SameTolerance), stepSize / 1000); //solids[0].SameTolerance
 
-            ////If the remainder is less than the minOffset, set it equal to the step size.
-            ////This is to avoid the issue of missing the last cutting plane. 
-            //if (remainder.IsNegligible(minOffset * 2)) remainder += stepSize;
-
-            double topRemainder;
-            double bottomRemainder;
-            bool addToStart = false;
-            bool addToEnd = false;
-            switch (snapTo)
-            {
-                case SnapType.ClosestAlong:
-                    topRemainder = 0.0;
-                    bottomRemainder = stepSize - remainder; //move outward (positive)
-                    numSteps++; //one cross section will be outside the part
-                    addToEnd = true;
-                    break;
-                case SnapType.CenterAllInside: //Subtract the remainder, split between the top and bottom.
-                    topRemainder = -remainder / 2; //move inward (negative)
-                    bottomRemainder = -remainder / 2; //move inward (negative)
-                    addToStart = true;
-                    addToEnd = true;
-                    break;
-                case SnapType.CenterEndsOutside: //Add (stepsize - remainder) split between the top and bottom. 
-                    topRemainder = (stepSize - remainder) / 2; //move outward (positive)
-                    bottomRemainder = (stepSize - remainder) / 2; //move outward (positive)
-                    numSteps++; //Add the normal +1 cross section caused by centering and adding the remainder
-                    addToStart = true;
-                    addToEnd = true;
-                    break;
-                case SnapType.FurthestAlong:
-                    topRemainder = stepSize - remainder; //move outward (positive)
-                    bottomRemainder = 0.0;
-                    numSteps++; //one cross section will be outside the part
-                    addToStart = true;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(snapTo), snapTo, null);
-            }
-
-            if (numSteps < 2) return null; //Steps will not be accurate if too few. 
-            var distanceAlongAxis = firstDistance - topRemainder; //positive moves inward, negative outward      
-            for (var i = 0; i < numSteps; i++)
-            {
-                stepDistances.Add(i, distanceAlongAxis);
-                distanceAlongAxis += stepSize;
-            }
-            if (!(distanceAlongAxis - stepSize).IsPracticallySame(furthestDistance + bottomRemainder, 0.0001))
-            {
-                stepDistances.Add(numSteps, distanceAlongAxis);
-                numSteps++;
-                //throw new Exception(); //positive moves inward, negative outward     
-            }
+            //This is a list of all the step indices matched with its distance along the axis.
+            //This may be different that just multiplying the step index by the step size, because
+            //minor adjustments occur to avoid cutting through vertices.
+            stepDistances = GetEvenlySpacedStepDistances(snapTo, stepSize, minOffset, firstDistance, furthestDistance, 
+                out int numSteps, out bool addToStart, out bool addToEnd);
 
             //Initialize the size of the list.
             var outputData = new Dictionary<int, List<DecompositionData>>();
 
-            //Initialize the dictionaries that store info for each solid
+            //Initialize the dictionaries that store info for each solid           
+            var inputEdgeLoops = new Dictionary<int, List<List<Edge>>>();
             for (var i = 0; i < solids.Count; i++)
             {
                 outputData[i] = new List<DecompositionData>(new DecompositionData[numSteps]);
@@ -268,6 +203,8 @@ namespace TVGL
             var stepIndex = addToStart ? 1 : 0;
             //Stop at -1 if adding additional cross sections, because there is one item at the end of the list we want to skip.
             var n = addToEnd ? numSteps - 1 : numSteps;
+            var currentVertexIndex = 0;
+            double distanceAlongAxis;
             while (stepIndex < n)
             {
                 distanceAlongAxis = stepDistances[stepIndex];
@@ -396,24 +333,117 @@ namespace TVGL
             {
                 for (var i = 0; i < solids.Count; i++)
                 {
-                    var startIndex = outputData[i].First(d => d != null).StepIndex;
-                    var firstCrossSection = new List<List<Vertex>>();
-                    foreach (var path in outputData[i][startIndex].Paths)
-                    {
-                        firstCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(path.Path.Select(p => new Point(p)).ToList(),
-                            direction, stepDistances[startIndex - 1]));
-                    }
-                    outputData[i][startIndex - 1] = new DecompositionData(outputData[i][startIndex].Paths,
-                        firstCrossSection, stepDistances[startIndex - 1], startIndex - 1);
+                    AddToStartOfDecomposition(outputData[i], direction, stepDistances);                  
                 }
             }
             if (addToEnd)
             {
                 for (var i = 0; i < solids.Count; i++)
                 {
-                    var lastIndex = outputData[i].Last(d => d != null).StepIndex + 1; //Add one, since we are adding to the end
-                    var lastCrossSection = new List<List<Vertex>>();
-                    foreach (var path in outputData[i][lastIndex - 1].Paths)
+                    AddToEndOfDecomposition(outputData[i], direction, stepDistances);
+                }
+            }
+
+            return outputData;
+        }
+
+        private static void AddToStartOfDecomposition(List<DecompositionData> outputData, double[] direction, Dictionary<int, double> stepDistances)
+        {
+            var startIndex = outputData.First(d => d != null).StepIndex;
+            var firstCrossSection = new List<List<Vertex>>();
+            foreach (var path in outputData[startIndex].Paths)
+            {
+                firstCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(path.Path.Select(p => new Point(p)).ToList(),
+                    direction, stepDistances[startIndex - 1]));
+            }
+            outputData[startIndex - 1] = new DecompositionData(outputData[startIndex].Paths,
+                firstCrossSection, stepDistances[startIndex - 1], startIndex - 1);
+        }
+
+        private static void AddToEndOfDecomposition(List<DecompositionData> outputData, double[] direction, Dictionary<int, double> stepDistances)
+        {
+            var lastIndex = outputData.Last(d => d != null).StepIndex + 1; //Add one, since we are adding to the end
+            var lastCrossSection = new List<List<Vertex>>();
+            foreach (var path in outputData[lastIndex - 1].Paths)
+            {
+                lastCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(
+                    path.Path.Select(p => new Point(p)).ToList(),
+                    direction, stepDistances[lastIndex]));
+            }
+
+            outputData[lastIndex] = new DecompositionData(outputData[lastIndex - 1].Paths, lastCrossSection,
+                stepDistances[lastIndex], lastIndex);
+        }
+
+        private static Dictionary<int, double> GetEvenlySpacedStepDistances(SnapType snapTo,  double stepSize, double minOffset,
+            double firstDistance, double furthestDistance, out int numSteps, out bool addToStart, out bool addToEnd)
+        {
+            var length = furthestDistance - firstDistance;
+            var t = (int)(length / stepSize);
+            numSteps = t + 1; //Round up to nearest integer (or down and then add 1)
+            var remainder = length - t * stepSize;
+            if (remainder.IsPracticallySame(stepSize, minOffset))
+            {
+                remainder = 0.0;
+                numSteps++;
+            }
+
+            ////If the remainder is less than the minOffset, set it equal to the step size.
+            ////This is to avoid the issue of missing the last cutting plane. 
+            //if (remainder.IsNegligible(minOffset * 2)) remainder += stepSize;
+
+            double topRemainder;
+            double bottomRemainder;
+            addToStart = false;
+            addToEnd = false;
+            switch (snapTo)
+            {
+                case SnapType.ClosestAlong:
+                    topRemainder = 0.0;
+                    bottomRemainder = stepSize - remainder; //move outward (positive)
+                    numSteps++; //one cross section will be outside the part
+                    addToEnd = true;
+                    break;
+                case SnapType.CenterAllInside: //Subtract the remainder, split between the top and bottom.
+                    topRemainder = -remainder / 2; //move inward (negative)
+                    bottomRemainder = -remainder / 2; //move inward (negative)
+                    addToStart = true;
+                    addToEnd = true;
+                    break;
+                case SnapType.CenterEndsOutside: //Add (stepsize - remainder) split between the top and bottom. 
+                    topRemainder = (stepSize - remainder) / 2; //move outward (positive)
+                    bottomRemainder = (stepSize - remainder) / 2; //move outward (positive)
+                    numSteps++; //Add the normal +1 cross section caused by centering and adding the remainder
+                    addToStart = true;
+                    addToEnd = true;
+                    break;
+                case SnapType.FurthestAlong:
+                    topRemainder = stepSize - remainder; //move outward (positive)
+                    bottomRemainder = 0.0;
+                    numSteps++; //one cross section will be outside the part
+                    addToStart = true;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(snapTo), snapTo, null);
+            }
+
+            var stepDistances = new Dictionary<int, double>();
+            if (numSteps < 2) return null; //Steps will not be accurate if too few. 
+            var distanceAlongAxis = firstDistance - topRemainder; //positive moves inward, negative outward      
+            for (var i = 0; i < numSteps; i++)
+            {
+                stepDistances.Add(i, distanceAlongAxis);
+                distanceAlongAxis += stepSize;
+            }
+            if (!(distanceAlongAxis - stepSize).IsPracticallySame(furthestDistance + bottomRemainder, 0.0001))
+            {
+                stepDistances.Add(numSteps, distanceAlongAxis);
+                numSteps++;
+                //throw new Exception(); //positive moves inward, negative outward     
+            }
+            return stepDistances;
+        }
+
                     {
                         lastCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(
                             path.Path.Select(p => new Point(p)).ToList(),
@@ -428,6 +458,19 @@ namespace TVGL
             return outputData;
         }
 
+        private static List<Vertex> GetIntersections(IEnumerable<long> edges, Dictionary<int, Vertex> vertexLookup, double[] direction, double distanceAlongAxis)
+        {
+            var intersections = new List<Vertex>();
+            foreach (var edge in edges)
+            {
+                (var v1, var v2) = Edge.GetVertexIndices(edge);
+                var vertex1 = vertexLookup[v1];
+                var vertex2 = vertexLookup[v2];
+                var intersectionVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(direction, distanceAlongAxis, vertex1, vertex2);
+                intersections.Add(intersectionVertex);
+            }
+            return intersections;
+        }
 
         #endregion
 
@@ -2950,15 +2993,7 @@ namespace TVGL
                 edgeLoops = data.InputEdgeLoops; //Note that edge loops should all be ordered correctly
                 foreach (var edgeLoop in edgeLoops)
                 {
-                    var loop = new List<Vertex>();
-                    foreach (var edge in edgeLoop)
-                    {
-                        var (vertex1, vertex2) = Edge.GetVertexIndices(edge);
-                        var newVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(direction,
-                            distance, vertexLookup[vertex1], vertexLookup[vertex2]);
-                        loop.Add(newVertex);
-                    }
-                    loops.Add(loop);
+                    loops.Add(GetIntersections(edgeLoop, vertexLookup, direction, distance));
                 }
             }
             else
