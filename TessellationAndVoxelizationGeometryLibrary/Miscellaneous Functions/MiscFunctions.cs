@@ -164,6 +164,33 @@ namespace TVGL
             }
             return PointLightDistances;
         }
+
+        public static double[] GetPerpendicularDirection(double[] direction)
+        {
+            //If any of the normal terms (X, Y, or Z) are zero, then that will be direction 2
+            if (direction[0].IsNegligible())
+            {
+                return new[] { 1.0, 0.0, 0.0 };
+            }
+            else if (direction[1].IsNegligible())
+            {
+                return new[] { 0.0, 1.0, 0.0 };
+            }
+            else if (direction[2].IsNegligible())
+            {
+                return new[] { 0.0, 0.0, 1.0 };
+            }
+            //Otherwise, 
+            else
+            {
+                //Choose two perpendicular vectors.
+                var v1 = new[] { direction[1], -direction[0], 0.0 };
+                var v2 = new[] { -direction[2], 0.0, direction[0] };
+
+                //Any linear combination of them is also perpendicular to the original vector
+                return v1.add(v2).normalize();
+            }
+        }
         #endregion
 
         #region Perimeter

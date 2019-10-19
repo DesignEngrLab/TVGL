@@ -444,18 +444,215 @@ namespace TVGL
             return stepDistances;
         }
 
-                    {
-                        lastCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(
-                            path.Path.Select(p => new Point(p)).ToList(),
-                            direction, stepDistances[lastIndex]));
-                    }
-
-                    outputData[i][lastIndex] = new DecompositionData(outputData[i][lastIndex - 1].Paths, lastCrossSection,
-                        stepDistances[lastIndex], lastIndex);
-                }
+        /// <summary>
+        /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
+        /// The slices are spaced as close to the stepSizes as possible, while avoiding vertex positions. The cross sections
+        /// will all be interior to the part, unless addCrossSectionAtStartAndEnd = true.
+        /// </summary>
+        public static List<DecompositionData> UniformDirectionalDecomposition(CrossSectionSolid ts, double stepSize, double[] direction, SnapType snapTo, 
+            out Dictionary<int, double> stepDistances)
+        {
+            var outputData = new List<DecompositionData>();
+            var perpendicular = MiscFunctions.GetPerpendicularDirection(direction);
+            var vertices = ts.Layer3D.SelectMany(s => s.Value.SelectMany(v => v)).ToList();
+            var vertexLookup = new Dictionary<int, Vertex>();
+            //initialize the vertex to edge dictionary
+            var vertexEdges = new Dictionary<int, List<long>>(); //Key = vertex index, Value = List<edge checkSums>
+            foreach (var vertex in vertices)
+            {
+                vertexEdges.Add(vertex.IndexInList, new List<long>());
+                vertexLookup.Add(vertex.IndexInList, vertex);
             }
 
-            return outputData;
+            //Sort all the vertices, the layers, and their loops along the given direction, such that we know which ones to check as we move along the direction
+            var startVerticesByLoop = new Dictionary<int, HashSet<Vertex>>();
+            var endVerticesByLoop = new Dictionary<int, HashSet<Vertex>>();
+            var loops = new Dictionary<int, List<Vertex>>();
+            var layerByLoopId = new Dictionary<int, int>(); //key == loopID, value == layer index
+            var passedVertices = new Dictionary<int, List<int>>();
+            var loopID = 0;
+            var forwardEdges = new Dictionary<Vertex, Vertex>();
+            var reverseEdges = new Dictionary<Vertex, Vertex>();
+            foreach (var layer in ts.Layer3D)
+            {
+                foreach(var loop in layer.Value)
+                {
+                    MinimumEnclosure.GetLengthAndExtremeVertices(direction, loop, out var vBottom, out var vTop);
+                    startVerticesByLoop.Add(loopID, new HashSet<Vertex>(vBottom));
+                    endVerticesByLoop.Add(loopID, new HashSet<Vertex>(vTop));
+                    var i = 0;
+                    var nLoop = loop.Count();
+                    foreach (var vertex in loop)
+                    {  
+                        vertex.ReferenceIndex = loopID;
+                        Vertex nextVertex;
+                        if (i == nLoop - 1) nextVertex = loop[0];
+                        else nextVertex = loop[i + 1];
+                        var newEdge = Edge.GetEdgeChecksum(vertex, nextVertex);
+                        vertexEdges[vertex.IndexInList].Add(newEdge);
+                        vertexEdges[nextVertex.IndexInList].Add(newEdge);
+                        //edges[i] = newEdge;
+                        
+                        if (i == 0) reverseEdges.Add(loop[nLoop - 1], vertex);
+                        else reverseEdges.Add(loop[i - 1], vertex);
+                        i++;
+                    }
+                    passedVertices.Add(loopID, new List<int>());
+                    loops.Add(loopID, loop);
+                    layerByLoopId.Add(loopID, layer.Key);
+                    loopID++;
+                }
+            }   
+
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            MiscFunctions.SortAlongDirection(direction, vertices, out List<(Vertex, double)> sortedVertices);
+            //Create a distance lookup dictionary based on the vertex indices
+            var sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
+
+            var edgeListDictionary = new Dictionary<int, Dictionary<int, Edge>>();
+            var firstDistance = sortedVertices.First().Item2;
+            var furthestDistance = sortedVertices.Last().Item2;
+
+            //Choose whichever min offset is smaller
+            var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000); //solids[0].SameTolerance
+
+            //This is a list of all the step indices matched with its distance along the axis.
+            //This may be different that just multiplying the step index by the step size, because
+            //minor adjustments occur to avoid cutting through vertices.
+            stepDistances = GetEvenlySpacedStepDistances(snapTo, stepSize, minOffset, firstDistance, furthestDistance,
+                out int numSteps, out bool addToStart, out bool addToEnd);
+
+            //Move to the next step index
+            //For all vertices that come before this step index, update the current loops/edges
+            //  Add the loop it belongs to if it is the first vertex for that loop along the given direction (there may be multiple closest vertices)
+            //  Remove the loop, if it is the furthest vertex for that loop along the given direction (there may be multiple furthest vertices)
+            //  Else, it is in the middle of the loop,
+            //      If this vertex is not adjacent to this loop's prior vertices, start two new edges.
+            //      If this vertex is adjacent to two of this loop's prior vertices, close both those edges. 
+            //      Else, it is adjacent to one of the loop's prior vertices, so update that edge.
+            //Then, get the cross section at this distance
+            //  Each current loop should have an even number of edges/intersections. We will call these intersection sets.
+            //  There may be any number of intersection sets. The set that is furthest apart will be positive, and then as they get closer
+            //  together they will transition back and forth from negative to positive. Correctly, connecting these back together is important
+            //  to getting holes in the solid. We will index these intersections set starting at 0 for the first positive set.
+            //Start the step index at +1, so that the increment can be at the start of the while loop, 
+            //making the final stepIndex correct for use in a later function.
+            var stepIndex = addToStart ? 1 : 0;
+            //Stop at -1 if adding additional cross sections, because there is one item at the end of the list we want to skip.
+            var n = addToEnd ? numSteps - 1 : numSteps;
+            double distanceAlongAxis;
+            var currentVertexIndex = 0;
+            var currentLoops = new HashSet<int>();
+            var currentEdgesByLoop = new Dictionary<int, HashSet<long>>();
+            while (stepIndex < n)
+            {
+                distanceAlongAxis = stepDistances[stepIndex];
+
+
+                //Update vertex/edge list up until distanceAlongAxis
+                for (var i = currentVertexIndex; i < sortedVertices.Count; i++)
+                {
+                    //Update the current vertex index so that this vertex is not visited again
+                    //unless it causes the break ( > distanceAlongAxis), then it will start the 
+                    //the next iteration.
+                    currentVertexIndex = i;
+                    var element = sortedVertices[i];
+                    var vertex = element.Item1;
+                    var vertexDistanceAlong = element.Item2;
+                    //If a vertex is too close to the current distance, move it forward by the min offset.
+                    //Update the edge list with this vertex.
+                    if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
+                    {
+                        if (stepIndex == n - 1)
+                        {
+                            //Move backward
+                            distanceAlongAxis = vertexDistanceAlong - minOffset * 1.1;
+                        }
+                        else
+                        {
+                            //Move the distance enough so that this vertex is now less than 
+                            distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
+                        }
+                    }
+                    //Else, Break after we get to a vertex that is further than the distance along axis
+                    if (vertexDistanceAlong > distanceAlongAxis)
+                    {
+                        //consider this vertex again next iteration
+                        break;
+                    }
+
+                    //Else, it is less than the distance along. Update the edges
+                    //Add the passed vertices to a list so that they can be removed from the sorted vertices
+                    var j = vertex.ReferenceIndex;
+                    var currentVertexEdges = vertexEdges[vertex.IndexInList]; 
+                    foreach(var edge in currentVertexEdges)
+                    {
+                        if (!currentEdgesByLoop.ContainsKey(j)) currentEdgesByLoop.Add(j, new HashSet<long>());
+                        if (currentEdgesByLoop[i].Contains(edge)) currentEdgesByLoop[i].Remove(edge);
+                        else currentEdgesByLoop[i].Add(edge);
+                    }
+                    if (startVerticesByLoop[j].Contains(vertex)) currentLoops.Add(j);
+                    if (endVerticesByLoop[j].Contains(vertex)) currentLoops.Remove(j);
+                }
+
+                //Check to make sure that the minor shifts in the distance in the for loop above 
+                //Did not move the distance beyond the furthest distance
+                if (distanceAlongAxis > furthestDistance) break;
+
+                //Get the intersection vertices for each current loop's current edges.
+                //Then, order the vertices along the pre-defined "perpendicular" direction
+                //Then, pair the outer vertices together as a set, moving inward. There should be an even number.
+                var intersectionsByLayer = new Dictionary<int, List<(int, Vertex, Vertex)>>(); //Value == list of setIndex, lowerIntersectionVertex, upperIntersectionVertex
+                foreach (var currentLoop in currentLoops)
+                {
+                    var layerIndex = layerByLoopId[currentLoop];
+                    if(!intersectionsByLayer.ContainsKey(layerIndex))
+                    {
+                        intersectionsByLayer.Add(layerIndex, new List<(int, Vertex, Vertex)>());
+                    }
+
+                    var currentLoopEdges = currentEdgesByLoop[currentLoop];
+                    var intersections = GetIntersections(currentLoopEdges, vertexLookup, direction, distanceAlongAxis);
+                    MiscFunctions.SortAlongDirection(perpendicular, intersections, out List<Vertex> sortedIntersections);
+                    if (sortedIntersections.Count % 2 != 0) throw new Exception();
+
+                    var j = 0;
+                    var numV = sortedIntersections.Count() - 1;
+                    while (j < numV / 2)
+                    {
+                        var v1 = sortedIntersections[j];
+                        var v2 = sortedIntersections[numV - 1 - j];
+                        j++;
+                        intersectionsByLayer[layerIndex].Add((j, v1, v2));
+                    }
+                }
+
+                var current3DLoops = GetCrossSection3DAtDistance(intersectionsByLayer);
+                //Get the area of this layer
+                var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
+                if (area < 0)
+                {
+                    //Rather than throwing an exception, just assume the polygons were the wrong direction      
+                    Debug.WriteLine(
+                        "Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
+                }
+
+                var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPointsAsLight(cp, direction, out _)).ToList();
+                var area2D = MiscFunctions.AreaOfPolygon(currentPaths);
+                if(area2D < 0)
+                {
+                    foreach (var path in currentPaths) path.Reverse();
+                }
+                outputData.Add(new DecompositionData(currentPaths, current3DLoops, stepDistances[stepIndex], stepIndex));
+
+                stepIndex++;
+            }
+
+            //Add a cross section to the start or end if the SnapType called for it.
+            //StepDistances was modified earlier to allow this.
+            if (addToStart) AddToStartOfDecomposition(outputData, direction, stepDistances);
+            if (addToEnd) AddToEndOfDecomposition(outputData, direction, stepDistances);         
+            return outputData; 
         }
 
         private static List<Vertex> GetIntersections(IEnumerable<long> edges, Dictionary<int, Vertex> vertexLookup, double[] direction, double distanceAlongAxis)
@@ -470,6 +667,158 @@ namespace TVGL
                 intersections.Add(intersectionVertex);
             }
             return intersections;
+        }
+
+        private static List<List<Vertex>> GetCrossSection3DAtDistance(Dictionary<int, List<(int, Vertex, Vertex)>> intersectionsByLayer)
+        {
+            //  Next, build the cross sections (If this is backward (CW vs. CCW), we will reverse all the cross sections later).
+            //  If the intersection set is positive, then connects to the positive intersection set with the same index, on the loop on the next layer   
+            //  Else it is negative, so it connects to a negative intersection set with the same index on the loop on the previous layer. 
+            //  But, if there is no adjacent loop on one (or both) side, then it should connect to the next intersection on Itself 
+            //      Case 1: a positive intersection can connect to itself.
+            //      Case 2: a positive intersection can connect to the next negative intersection INWARD.
+            //      Case 3: a negative intersection can connect to next positive interection OUTWARD
+            //  This can be handled more simply by doing the following using an arbitrary perpendicular direction to establish "up":
+            //      If positive, then insert the upper intersection vertex at the start of the loop, and then add the lower intersection vertex to the loop.
+            //      If negative, simply flip the insert and add.
+            //      This will work as long as the negative and positive loops end in different layers, but if they end in the same layer,
+            //      then they will need to be merged together to account for Case 2 & 3 stated above.
+            var positiveLoopIDs = new HashSet<int>();
+            var currentSetIndices = new HashSet<int>();
+            var crossSectionLoopsUpper = new Dictionary<int, List<Vertex>>();
+            var crossSectionLoopsLower = new Dictionary<int, List<Vertex>>();
+            var startedTogether = new Dictionary<int, int>(); //Key == positive intersection set loop ID, Value == negative intersection set loop ID
+            var endedTogether = new Dictionary<int, int>(); //Key == positive intersection set loop ID, Value == negative intersection set loop ID
+            //This next dictioanary stores the loopID for the current set indices. It may overwrite if a setIndex ends, and then starts again.
+            var currentSetIndexToLoopID = new Dictionary<int, int>(); //Key = startIndex, Value == LoopID
+            var loopID = 0; //This loopID does not correspond to the set Index.
+            foreach (var layer in intersectionsByLayer.Keys)
+            {
+                var previousLoopAddedInThisLayer = -1;
+                var setIndicesConsideredForLayer = new HashSet<int>();
+                foreach (var intersectionSet in intersectionsByLayer[layer])
+                {
+                    var setIndex = intersectionSet.Item1;
+                    var lowerIntersectionVertex = intersectionSet.Item2;
+                    var upperIntersectionVertex = intersectionSet.Item3;
+                    setIndicesConsideredForLayer.Add(setIndex);
+                    var positive = setIndex % 2 == 0;
+                    if (!currentSetIndices.Contains(setIndex))
+                    {
+                        currentSetIndices.Add(setIndex);
+                        if (positive) positiveLoopIDs.Add(loopID);
+                        currentSetIndexToLoopID[setIndex] = loopID; //overwrite if necessary
+                        crossSectionLoopsUpper.Add(loopID, new List<Vertex>());
+                        crossSectionLoopsLower.Add(loopID, new List<Vertex>());
+                        if (positive || previousLoopAddedInThisLayer == -1) previousLoopAddedInThisLayer = loopID;
+                        else //We are adding a negative loop when a positive loop was added before. Check that their loopID is adjacent.
+                        {
+                            if (loopID - previousLoopAddedInThisLayer != 1) { } //not sure if this is possible or an issue??
+                            else startedTogether.Add(previousLoopAddedInThisLayer, loopID);
+                        }
+                        loopID++;
+                    }
+
+                    // If the intersection set is positive, then insert the upper intersection vertex at the start of the loop upper,
+                    //   and then add the lower intersection vertex to the loop lower.
+                    //else if negative , then add the upper intersection vertex at the start of the loop upper,
+                    //  and then insert the lower intersection vertex to the loop lower.
+                    if (positive)
+                    {
+                        crossSectionLoopsUpper[loopID].Insert(0, upperIntersectionVertex);
+                        crossSectionLoopsLower[loopID].Add(lowerIntersectionVertex);
+                    }
+                    else
+                    {
+                        crossSectionLoopsUpper[loopID].Add(upperIntersectionVertex);
+                        crossSectionLoopsLower[loopID].Insert(0, lowerIntersectionVertex);
+                    }
+                }
+
+                //Check if we need to end any current set indices
+                var notVisited = new List<int>();
+                foreach (var setIndex in currentSetIndices)
+                {
+                    if (!setIndicesConsideredForLayer.Contains(setIndex)) notVisited.Add(setIndex);
+                }
+                foreach (var setIndex in notVisited)
+                {
+                    //Check if any adjacent set indices ended in the same layer, with a negative loop inside a positive loop.
+                    //If a negative loop, check if setIndex - 1 (it's adjacent positive loop) also ended
+                    if (setIndex % 2 != 0 && notVisited.Contains(setIndex - 1))
+                    {
+                        endedTogether.Add(currentSetIndexToLoopID[setIndex - 1], currentSetIndexToLoopID[setIndex]);
+                    }
+                    currentSetIndices.Remove(setIndex);
+                }
+            }
+
+            //  Merge/split cross sections loops if necessary.         
+            //  If started and ended together, create two seperate loops: positive loop upper -> negative loop upper && negative loop lower -> positive loop lower.
+            //  Else if ended together, create one loop: positive loop upper -> positive loop lower -> negative loop lower -> negative loop upper.
+            //  Else if started together, create one loop:  positive loop upper -> negative loop upper -> negative loop lower -> positive loop lower.
+            //  Else if negative: negative loop lower -> negative loop upper.
+            //  Else it is positive: positive loop upper -> positive loop lower.
+            var crossSections = new List<List<Vertex>>();
+            var usedLoops = new HashSet<int>();
+            foreach (var loop in crossSectionLoopsUpper.Keys)
+            {
+                if (usedLoops.Contains(loop)) continue; //we already considered this because it was paired with another loop.
+                usedLoops.Add(loop);
+                var isPositive = positiveLoopIDs.Contains(loop);
+                var startedWithAnother = startedTogether.ContainsKey(loop);
+                var endedWithAnother = endedTogether.ContainsKey(loop);
+                if (startedWithAnother && endedWithAnother)
+                {
+                    var negative = startedTogether[loop];
+                    usedLoops.Add(negative);
+                    if (negative != endedTogether[loop]) throw new NotImplementedException();
+                    //positive loop upper -> negative loop upper && negative loop lower -> positive loop lower.
+                    var crossSection1 = new List<Vertex>(crossSectionLoopsUpper[loop]);
+                    crossSection1.AddRange(crossSectionLoopsUpper[negative]);
+                    crossSections.Add(crossSection1);
+                    var crossSection2 = new List<Vertex>(crossSectionLoopsLower[negative]);
+                    crossSection2.AddRange(crossSectionLoopsLower[loop]);
+                    crossSections.Add(crossSection2);
+                }
+                //  Else if ended together, create one loop: positive loop upper -> positive loop lower -> negative loop lower -> negative loop upper.
+                else if (endedWithAnother)
+                {
+                    var negative = endedTogether[loop];
+                    usedLoops.Add(negative);
+                    var crossSection = new List<Vertex>(crossSectionLoopsUpper[loop]);
+                    crossSection.AddRange(crossSectionLoopsLower[loop]);
+                    crossSection.AddRange(crossSectionLoopsLower[negative]);
+                    crossSection.AddRange(crossSectionLoopsUpper[negative]);
+                    crossSections.Add(crossSection);
+                }
+                //Else if started together, create one loop: positive loop upper->negative loop upper -> negative loop lower->positive loop lower.
+                else if (startedWithAnother)
+                {
+                    var negative = startedTogether[loop];
+                    usedLoops.Add(negative);
+                    var crossSection = new List<Vertex>(crossSectionLoopsUpper[loop]);
+                    crossSection.AddRange(crossSectionLoopsUpper[negative]);
+                    crossSection.AddRange(crossSectionLoopsLower[negative]);
+                    crossSection.AddRange(crossSectionLoopsLower[loop]);
+                    crossSections.Add(crossSection);
+                }
+                //  Else if positive: positive loop upper -> positive loop lower.
+                else if (isPositive)
+                {
+                    var crossSection = new List<Vertex>(crossSectionLoopsUpper[loop]);
+                    crossSection.AddRange(crossSectionLoopsLower[loop]);
+                    crossSections.Add(crossSection);
+                }
+                //  Else it is negative: negative loop lower -> negative loop upper.
+                else
+                {
+                    var crossSection = new List<Vertex>(crossSectionLoopsLower[loop]);
+                    crossSection.AddRange(crossSectionLoopsUpper[loop]);
+                    crossSections.Add(crossSection);
+                }
+            }
+            return crossSections;
         }
 
         #endregion
