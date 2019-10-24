@@ -73,12 +73,7 @@ namespace TVGL
 
         public void SetAllVertices()
         {
-            var n = StepDistances.Count;
-            for (var i = 0; i < n; i++)
-            {
-                if (!Layer2D.ContainsKey(i)) continue;
-                SetVerticesByLayer(i);
-            }
+            foreach(var layer in Layer2D) SetVerticesByLayer(layer.Key);
         }
 
         public void SetVerticesByLayer(int i)
