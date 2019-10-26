@@ -2,14 +2,29 @@ using System.Collections.Generic;
 
 namespace TVGL.Voxelization
 {
-    public partial class MarchingCubes
+    public abstract class MarchingCubes
     {
+        public abstract TessellatedSolid Generate(Solid solid);
+
+        protected Dictionary<int, Vertex>[] vertexDictionaries;
+        protected double[][] EdgeVertex;
+        protected int[] WindingOrder;
+        protected MarchingCubes(bool positiveWindingOrder)
+        {
+            EdgeVertex = new double[12][];
+            WindingOrder = positiveWindingOrder ? new[] { 0, 1, 2 } : new[] { 2, 1, 0 };
+            vertexDictionaries = new[] {
+                new Dictionary<int, Vertex>(), 
+                new Dictionary<int, Vertex>(), 
+                new Dictionary<int, Vertex>() 
+            };
+        }
         /// <summary>
         /// VertexOffset lists the positions, relative to vertex0, 
         /// of each of the 8 vertices of a cube.
         /// vertexOffset[8][3]
         /// </summary>
-        private static readonly int[][] VertexOffsetTable = new int[][]
+        protected static readonly int[][] VertexOffsetTable = new int[][]
         {
             new[]{0, 0, 0},new[]{1, 0, 0},new[]{1, 1, 0},new[]{0, 1, 0},
             new[]{0, 0, 1},new[]{1, 0, 1},new[]{1, 1, 1},new[]{0, 1, 1}
@@ -26,7 +41,7 @@ namespace TVGL.Voxelization
         /// For each entry in the table, if edge #n is intersected, then bit #n is set to 1.
         /// cubeEdgeFlags[256]
         /// </summary>
-        private static readonly int[] CubeEdgeFlagsTable = new int[]
+        protected static readonly int[] CubeEdgeFlagsTable = new int[]
         {
         0x000, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c, 0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
         0x190, 0x099, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c, 0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
@@ -52,7 +67,7 @@ namespace TVGL.Voxelization
         /// of the 12 edges of the cube.
         /// edgeConnection[12][2]
         /// </summary>
-        private static readonly int[][] EdgeVertexIndexTable = new int[][]
+        protected static readonly int[][] EdgeVertexIndexTable = new int[][]
         {
             new[]{0,1}, new[]{1,2}, new[]{2,3}, new[]{3,0},
             new[]{4,5}, new[]{5,6}, new[]{6,7}, new[]{7,4},
@@ -63,7 +78,7 @@ namespace TVGL.Voxelization
         /// EdgeDirectionTable lists the direction vector (vertexFrom-vertexTo) for each edge in the cube.
         /// edgeDirection[12][3]
         /// </summary>
-        private static readonly double[][] EdgeDirectionTable = new double[][]
+        protected static readonly double[][] EdgeDirectionTable = new double[][]
         {
             new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
             new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
@@ -80,7 +95,7 @@ namespace TVGL.Voxelization
         /// and corner[1] are inside of the surface, but the rest of the cube is not.
         /// triangleConnectionTable[256][16]
         /// </summary>
-        private static readonly int[][] FaceVertexIndicesTable = new int[][]
+        protected static readonly int[][] FaceVertexIndicesTable = new int[][]
         {
             new int[0], //0
             new[]{0, 8, 3}, //1
@@ -349,7 +364,7 @@ namespace TVGL.Voxelization
         /// the number of triangles in this new array and simply find the upper limit for the for-loop.
         /// In short, this is simply the length of the inner arrays of FaceVertexIndicesTable divided by 3.
         /// </summary>
-        private static readonly int[] NumFacesTable = new int[]
+        protected static readonly int[] NumFacesTable = new int[]
         {
         0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 2,
         1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3,

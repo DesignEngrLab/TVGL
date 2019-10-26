@@ -4,16 +4,23 @@ using TVGL.Implicit;
 
 namespace TVGL.Voxelization
 {
-    public partial class MarchingCubes
+    public class MarchingCubesImplicit : MarchingCubes
     {
-        public static TessellatedSolid Generate(ImplicitSolid solid, double marchingCubeSideLength)
+        private readonly double marchingCubeSideLength;
+
+        public MarchingCubesImplicit(double marchingCubeSideLength, bool surfaceLevelIsPositive)
+            : base(surfaceLevelIsPositive)
         {
+            this.marchingCubeSideLength = marchingCubeSideLength;
+        }
+
+        public override TessellatedSolid Generate(Solid solid)
+        {
+            var implicitSolid = (ImplicitSolid)solid;
             var vertices = new List<double[]>();
             var facesAsVertexIndices = new List<int[]>();
             var Cube = new double[8];
-            EdgeVertex = new double[12][];
-            var surfaceLevel = solid.SurfaceLevel;
-            WindingOrder = (surfaceLevel > 0.0f) ? new[] { 0, 1, 2 } : new[] { 2, 1, 0 };
+            var surfaceLevel = implicitSolid.SurfaceLevel;
             var xDim = (int)Math.Ceiling((solid.XMax - solid.XMin) / marchingCubeSideLength);
             var yDim = (int)Math.Ceiling((solid.YMax - solid.ZMin) / marchingCubeSideLength);
             var zDim = (int)Math.Ceiling((solid.ZMax - solid.ZMin) / marchingCubeSideLength);
@@ -30,7 +37,7 @@ namespace TVGL.Voxelization
                         //oh wow. This is really efficient. Re-evaluate points multiple times.
                         // pretty far from a the BFS marching idea
                         for (var i = 0; i < 8; i++)
-                            Cube[i] = solid[xValue + VertexOffsetTable[i][0] * marchingCubeSideLength,
+                            Cube[i] = implicitSolid[xValue + VertexOffsetTable[i][0] * marchingCubeSideLength,
                                yValue + VertexOffsetTable[i][1] * marchingCubeSideLength,
                                zValue + VertexOffsetTable[i][2] * marchingCubeSideLength];
                         //Perform algorithm
@@ -57,7 +64,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// MakeTriangles performs the Marching Cubes algorithm on a single cube
         /// </summary>
-        private static void MakeTriangles(double x, double y, double z, double[] cube, IList<double[]> vertices,
+        private void MakeTriangles(double x, double y, double z, double[] cube, IList<double[]> vertices,
             IList<int[]> facesAsVertexIndices, double surfaceLevel)
         {
             int flagIndex = 0;

@@ -264,39 +264,44 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, bool copyElements = true,
+        public TessellatedSolid(IEnumerable<PolygonalFace> faces, IEnumerable<Vertex> vertices = null, bool copyElements = true,
             IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
+            NumberOfFaces = faces.Count();
+            NumberOfVertices = vertices.Count();
             if (vertices == null)
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             //Create a copy of the vertex and face (This is NON-Destructive!)
-            Vertices = new Vertex[vertices.Count];
+            Vertices = new Vertex[NumberOfVertices];
             var simpleCompareDict = new Dictionary<Vertex, Vertex>();
-            for (var i = 0; i < vertices.Count; i++)
+            int i = 0;
+            foreach (var origVertex in vertices)
             {
-                var vertex = copyElements ? vertices[i].Copy() : vertices[i];
+                var vertex = copyElements ? origVertex.Copy() : origVertex;
                 vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
                 vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
                 Vertices[i] = vertex;
-                simpleCompareDict.Add(vertices[i], vertex);
+                simpleCompareDict.Add(origVertex, vertex);
+                i++;
             }
 
             HasUniformColor = true;
             if (colors == null || !colors.Any())
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
-            Faces = new PolygonalFace[faces.Count];
-            for (var i = 0; i < faces.Count; i++)
+            Faces = new PolygonalFace[NumberOfFaces];
+            i = 0;
+            foreach (var origFace in faces)
             {
                 //Keep "CreatedInFunction" to help with debug
-                var face = copyElements ? faces[i].Copy() : faces[i];
+                var face = copyElements ? origFace.Copy() : origFace;
                 face.PartOfConvexHull = false;
                 face.IndexInList = i;
                 var faceVertices = new List<Vertex>();
-                foreach (var vertex in faces[i].Vertices)
+                foreach (var vertex in origFace.Vertices)
                 {
                     var newVertex = simpleCompareDict[vertex];
                     faceVertices.Add(newVertex);
@@ -311,9 +316,8 @@ namespace TVGL
                     if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
                 }
                 Faces[i] = face;
+                i++;
             }
-            NumberOfFaces = Faces.Length;
-            NumberOfVertices = Vertices.Length;
             CompleteInitiation();
         }
 
