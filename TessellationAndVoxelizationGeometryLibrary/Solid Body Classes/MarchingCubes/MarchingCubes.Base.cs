@@ -1,30 +1,123 @@
 using System.Collections.Generic;
+using System.Linq;
+using StarMathLib;
+using System;
 
-namespace TVGL.Voxelization
+namespace TVGL
 {
-    public abstract class MarchingCubes
+    public abstract class MarchingCubes<SolidT, CoordT, ValueT>
+        where SolidT : Solid
+        // where CoordT and ValueT are numbers or bool
     {
-        public abstract TessellatedSolid Generate(Solid solid);
-
-        protected Dictionary<int, Vertex>[] vertexDictionaries;
-        protected double[][] EdgeVertex;
-        protected int[] WindingOrder;
-        protected MarchingCubes(bool positiveWindingOrder)
+        #region Constructor
+        public MarchingCubes(SolidT solid, CoordT discretization) : this()
         {
-            EdgeVertex = new double[12][];
-            WindingOrder = positiveWindingOrder ? new[] { 0, 1, 2 } : new[] { 2, 1, 0 };
-            vertexDictionaries = new[] {
-                new Dictionary<int, Vertex>(), 
-                new Dictionary<int, Vertex>(), 
-                new Dictionary<int, Vertex>() 
-            };
+            this.solid = solid;
+            this.discretization = discretization;
         }
+        protected MarchingCubes()
+        {
+            EdgeVertex = new Vertex[12];
+            vertexDictionaries = new[] {
+                new Dictionary<long, Vertex>(),
+                new Dictionary<long, Vertex>(),
+                new Dictionary<long, Vertex>()
+            };
+            valueDictionary = new Dictionary<long, StoredValue>();
+            faces = new List<PolygonalFace>();
+            GridOffsetTable = new CoordT[8][];
+        }
+        #endregion
+
+        #region Fields
+        protected readonly Dictionary<long, Vertex>[] vertexDictionaries;
+        class StoredValue
+        {
+            internal ValueT Value;
+            internal int NumTimesCalled;
+        }
+
+        protected readonly SolidT solid;
+        protected readonly CoordT discretization;
+        protected readonly CoordT[][] GridOffsetTable;
+        readonly Dictionary<long, StoredValue> valueDictionary;
+        protected readonly List<PolygonalFace> faces;
+        protected readonly Vertex[] EdgeVertex;
+        protected readonly int[] WindingOrder;
+        protected int numGridX, numGridY, numGridZ;
+        int yMultiplier => numGridX;
+        protected int zMultiplier;
+        #endregion
+
+        #region Abstract Methods
+        protected abstract CoordT GetOffset(ValueT v1, ValueT v2);
+        protected abstract ValueT GetValueFromSolid(CoordT x, CoordT y, CoordT z);
+        protected abstract int FindEdgeVertices(int x, int y, int z, long identifier);
+        #endregion
+
+        #region Main Methods
+        public TessellatedSolid Generate()
+        {
+            zMultiplier = numGridX * numGridY;
+            for (var x = 0; x < numGridX - 1; x++)
+                for (var y = 0; y < numGridY - 1; y++)
+                    for (var z = 0; z < numGridZ - 1; z++)
+                    {
+                        var identifier = getIdentifier(x, y, z);
+                        var cubeType = FindEdgeVertices(x, y, z, identifier);
+                        //now the triangular faces are created that connect the vertices identified above.
+                        //based on the les that were found. There can be up to five per cube
+                        var faceVertices = new Vertex[3];
+                        for (var i = 0; i < NumFacesTable[cubeType]; i++)
+                        {
+                            for (var j = 0; j < 3; j++)
+                            {
+                                var vertexIndex = FaceVertexIndicesTable[cubeType][3 * i + j];
+                                faceVertices[j] = EdgeVertex[vertexIndex];
+                            }
+                            faces.Add(new PolygonalFace(faceVertices, true));
+                        }
+                    }
+            var comments = new List<string>(solid.Comments);
+            comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
+            return new TessellatedSolid(faces, vertexDictionaries.SelectMany(d => d.Values), false,
+                new[] { solid.SolidColor },
+                solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
+        }
+
+
+        protected long getIdentifier(int x, int y, int z)
+        {
+            return x + yMultiplier * y + zMultiplier * z;
+        }
+
+        protected ValueT GetValue(CoordT x, CoordT y, CoordT z, long identifier)
+        {
+            if (valueDictionary.ContainsKey(identifier))
+            {
+                var storedValue = valueDictionary[identifier];
+                if (storedValue.NumTimesCalled < 7)
+                    storedValue.NumTimesCalled++;
+                else valueDictionary.Remove(identifier);
+                return storedValue.Value;
+            }
+            var value = GetValueFromSolid(x, y, z);
+            valueDictionary.Add(identifier, new StoredValue
+            {
+                Value = value,
+                NumTimesCalled = 1
+            });
+            return value;
+        }
+        #endregion
+
+        #region Static Tables
         /// <summary>
         /// VertexOffset lists the positions, relative to vertex0, 
         /// of each of the 8 vertices of a cube.
         /// vertexOffset[8][3]
         /// </summary>
-        protected static readonly int[][] VertexOffsetTable = new int[][]
+        protected static readonly int[][] _unitOffsetTable = new int[][]
         {
             new[]{0, 0, 0},new[]{1, 0, 0},new[]{1, 1, 0},new[]{0, 1, 0},
             new[]{0, 0, 1},new[]{1, 0, 1},new[]{1, 1, 1},new[]{0, 1, 1}
@@ -61,7 +154,6 @@ namespace TVGL.Voxelization
         0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c, 0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x000
         };
 
-
         /// <summary>
         /// EdgeVertexIndexTable lists the index of the endpoint vertices for each 
         /// of the 12 edges of the cube.
@@ -84,8 +176,13 @@ namespace TVGL.Voxelization
             new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
             new[]{0.0, 0.0, 1.0},new[]{0.0, 0.0, 1.0},new[]{ 0.0, 0.0, 1.0},new[]{0.0,  0.0, 1.0}
         };
-
-
+        protected static readonly CartesianDirections[] directionTable = new CartesianDirections[]
+          {
+              CartesianDirections.XPositive,CartesianDirections.YPositive,CartesianDirections.XNegative,
+              CartesianDirections.YNegative, CartesianDirections.XPositive,CartesianDirections.YPositive,
+              CartesianDirections.XNegative,CartesianDirections.YNegative, CartesianDirections.ZPositive,
+              CartesianDirections.ZPositive,CartesianDirections.ZPositive,CartesianDirections.ZPositive
+          };
 
         /// <summary>
         /// For each of the possible vertex states listed in cubeEdgeFlags there is a specific triangulation
@@ -355,7 +452,6 @@ namespace TVGL.Voxelization
         new int[0]
         };
 
-
         /// <summary>
         /// The FaceVertexIndicesTable is a jagged array since the number of triangles differs from
         /// one marching cube to the next, there can be from 0 to 5 triangles. Within the for-loop to
@@ -383,7 +479,7 @@ namespace TVGL.Voxelization
         3, 4, 4, 5, 4, 5, 3, 4, 4, 5, 5, 2, 3, 4, 2, 1,
         2, 3, 3, 2, 3, 4, 2, 1, 3, 2, 4, 1, 2, 1, 1, 0
             };
-
+        #endregion
     }
 
 }

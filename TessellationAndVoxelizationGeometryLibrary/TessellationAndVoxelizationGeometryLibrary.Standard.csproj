@@ -49,9 +49,4 @@
   </ItemGroup>
 
 
-  <ItemGroup>
-    <Folder Include="Voxelization - Sparse\" />
-  </ItemGroup>
-
-
 </Project>
