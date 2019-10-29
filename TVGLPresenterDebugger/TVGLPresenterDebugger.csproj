@@ -291,17 +291,14 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization - Sparse\VoxelizationSparse.cs">
-      <Link>TVGL\Voxelization - Sparse\VoxelizationSparse.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.cs">
+      <Link>TVGL\VoxelizedSolid\VoxelizedSolid.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization - Sparse\VoxelizationSparse_PublicFunctions.cs">
-      <Link>TVGL\Voxelization - Sparse\VoxelizationSparse_PublicFunctions.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs">
+      <Link>TVGL\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidDense_Constructors.cs">
-      <Link>TVGL\Voxelization\VoxelizedSolidDense_Constructors.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidDense_PublicFunctions.cs">
-      <Link>TVGL\Voxelization\VoxelizedSolidDense_PublicFunctions.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRow.cs">
+      <Link>TVGL\VoxelizedSolid\VoxelRow.cs</Link>
     </Compile>
     <Compile Include="..\TVGL Presenter\Presenter.cs">
       <Link>Presenter\Presenter.cs</Link>

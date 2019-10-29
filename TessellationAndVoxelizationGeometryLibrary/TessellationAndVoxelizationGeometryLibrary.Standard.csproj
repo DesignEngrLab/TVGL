@@ -33,6 +33,12 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="DenseVoxels\**" />
+    <EmbeddedResource Remove="DenseVoxels\**" />
+    <None Remove="DenseVoxels\**" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.504" />
@@ -56,12 +62,6 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-
-
-
-  <ItemGroup>
-    <Folder Include="DenseVoxels\" />
   </ItemGroup>
 
 </Project>

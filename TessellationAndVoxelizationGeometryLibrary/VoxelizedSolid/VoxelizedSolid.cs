@@ -29,225 +29,48 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid : Solid
     {
         #region Properties
-        #region Sparse Representation
-        internal int[] zSlices;
-        internal List<int> yOffsetsAndXIndices;
-        internal List<int> xRanges; //inclusive!
-        /// <summary>
-        /// Gets or sets a value indicating whether the sparse encoding is current.
-        /// </summary>
-        /// <value><c>true</c> if sparse encoding is current; otherwise, <c>false</c>.</value>
-        public bool SparseIsCurrent { get; set; }
-        #endregion
-
-        #region Dense Representation
-        public byte[,,] Dense { get; private set; }
-        public int[] BytesPerSide { get; private set; }
+        internal IVoxelRow[] voxels { get; private set; }
+        public int bytesInX { get; private set; }
         /// <summary>
         /// Gets or sets a value indicating whether the dense encoding is current.
         /// </summary>
         /// <value><c>true</c> if [dense encoding is current]; otherwise, <c>false</c>.</value>
-        public bool DenseIsCurrent { get; set; }
-        #endregion
         public long Count { get; private set; }
-        public int[] VoxelsPerSide { get; private set; }
-        public int[][] VoxelBounds { get; private set; }
+        public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
+        public int[][] VoxelBounds { get; }
         public double VoxelSideLength { get; private set; }
-        public double[] TessToVoxSpace { get; private set; }
-        private double[] Dimensions { get; set; }
+        public double[] TessToVoxSpace { get; }
+        public double[] Dimensions { get; private set; }
         public double[] Offset => Bounds[0];
-
+        public int numVoxelsX { get; private set; }
+        public int numVoxelsY { get; private set; }
+        public int numVoxelsZ { get; private set; }
+        int zMultiplier => numVoxelsY;
+        public double FractionDense { get; private set; }
         #endregion
 
-        #region Public Methods that Branch
-        public bool GetVoxel(int xCoord, int yCoord, int zCoord)
-        {
-            if (DenseIsCurrent) return GetVoxelDense(xCoord, yCoord, zCoord);
-            return GetVoxelSparse(xCoord, yCoord, zCoord);
-        }
-        public void SetVoxel(bool value, int xCoord, int yCoord, int zCoord)
-        {
-            if (DenseIsCurrent) SetVoxelDense(value, xCoord, yCoord, zCoord);
-            else SetVoxelSparse(value, xCoord, yCoord, zCoord);
-        }
-        public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
-        {
-            if (DenseIsCurrent) neighbors = GetNeighborsDense(xCoord, yCoord, zCoord);
-            else neighbors = GetNeighborsSparse(xCoord, yCoord, zCoord);
-            return !neighbors.Any(n => n != null);
-        }
-        #endregion
+
 
 
         #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
-        /// </summary>
-        /// <param name="voxelsPerSide">The voxels per side.</param>
-        /// <param name="voxelSideLength">Length of the voxel side.</param>
-        /// <param name="bounds">The bounds.</param>
-        /// <param name="empty">if set to <c>true</c> [empty].</param>
-        public VoxelizedSolid(int[] voxelsPerSide, double voxelSideLength,
-            IEnumerable<double[]> bounds, bool empty = false)
-        {
-            VoxelsPerSide = (int[])voxelsPerSide.Clone();
-            var bytesInX = VoxelsPerSide[0] >> 3;
-            if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
-            BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
-            VoxelSideLength = voxelSideLength;
-            Bounds = bounds.ToArray();
-            Dimensions = Bounds[1].subtract(Bounds[0], 3);
-            TessToVoxSpace = VoxelsPerSide.multiply(VoxelSideLength, 3).EltDivide(Dimensions, 3);
-            SolidColor = new Color(Constants.DefaultColor);
+        private VoxelizedSolid() { }
 
-            Dense = new byte[BytesPerSide[0], BytesPerSide[1], BytesPerSide[2]];
-            if (empty)
-            {
-                // Sparse loop
-                zSlices = new int[VoxelsPerSide[2] + 1];
-                yOffsetsAndXIndices = new List<int> { 0, 0, 0 }; //represents: zero y-offset, zero starting x, zero end
-                xRanges = new List<int> { 0 };
-                Count = 0;
-                SurfaceArea = Volume = 0;
-            }
-            else
-            {
-                // Dense loop
-                Parallel.For(0, bytesInX, m =>
-                {
-                    for (var n = 0; n < VoxelsPerSide[1]; n++)
-                        for (var o = 0; o < VoxelsPerSide[2]; o++)
-                            Dense[m, n, o] = byte.MaxValue;
-                });
-                // Sparse loop
-                var xLim = VoxelsPerSide[0];
-                var yLim = VoxelsPerSide[1];
-                var zLim = VoxelsPerSide[2];
-                /*** bug: something's not working here. You need a clear description of this sparse approach!
-                zSlices = new int[zLim + 1];
-                var yArray = new int[zLim * (1 + yLim)];
-                var xArray = new int[2 * yLim * zLim];
-                for (int i = 1; i <= zLim; i++)
-                {
-                    var yStart = zSlices[i-1] + 1 + yLim;
-                    zSlices[i] = yStart;
-                    yArray[yStart] = 0;
-                    for (int j = 0; j < yLim; j++)
-                    {
-                        yArray[yStart + j + 1] = 2 * yLim * i + j;
-                        //bug: something not right with y
-                        xArray[2 * yLim * i + 2 * j] = 0;
-                        xArray[2 * yLim * i + 2 * j + 1] = xLim - 1;
-                    }
-                }
-                
-                yOffsetsAndXIndices = yArray.ToList();
-                xRanges = xArray.ToList();
-               */
-                Count = xLim * yLim * zLim;
-                SurfaceArea = 2 * (xLim * yLim + zLim * yLim + xLim * zLim);
-            }
-            SparseIsCurrent = false;
-            DenseIsCurrent = true;
+        public VoxelizedSolid(VoxelizedSolid vs):this()
+        {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
-        /// </summary>
-        /// <param name="voxels">The voxels.</param>
-        /// <param name="voxelSideLength">Length of the voxel side.</param>
-        /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(byte[,,] voxels, double voxelSideLength, IEnumerable<double[]> bounds = null)
+        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName) 
         {
-            VoxelSideLength = voxelSideLength;
-            Bounds = new double[2][];
-            if (bounds != null)
-            {
-                Bounds[0] = (double[])bounds.First().Clone();
-                Bounds[1] = (double[])bounds.Last().Clone();
-                Dimensions = Bounds[1].subtract(Bounds[0], 3);
-            }
-            SolidColor = new Color(Constants.DefaultColor);
-            Dense = (byte[,,])voxels.Clone();
-            VoxelsPerSide = new[] { voxels.GetLength(0), voxels.GetLength(1), voxels.GetLength(2) };
-            var bytesInX = VoxelsPerSide[0] >> 3;
-            if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
-            BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
-            UpdatePropertiesDense();
-            DenseIsCurrent = true;
-            SparseIsCurrent = false;
-        }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
-        /// </summary>
-        /// <param name="zSlices">The z slices.</param>
-        /// <param name="yOffsetsAndXIndices">The y offsets and x indices.</param>
-        /// <param name="xRanges">The x ranges.</param>
-        /// <param name="voxelSideLength">Length of the voxel side.</param>
-        /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(int[] zSlices, List<int> yOffsetsAndXIndices, List<int> xRanges,
-            double voxelSideLength, IEnumerable<double[]> bounds = null)
-        {
-            VoxelSideLength = voxelSideLength;
-            Bounds = new double[2][];
-            if (bounds != null)
-            {
-                Bounds[0] = (double[])bounds.First().Clone();
-                Bounds[1] = (double[])bounds.Last().Clone();
-                Dimensions = Bounds[1].subtract(Bounds[0], 3);
-            }
-            SolidColor = new Color(Constants.DefaultColor);
-            this.zSlices = (int[])zSlices.Clone();
-            this.yOffsetsAndXIndices = new List<int>(yOffsetsAndXIndices);
-            this.xRanges = new List<int>(xRanges);
-            var xLim = xRanges.Max() + 1;
-            var zLim = zSlices.Length - 1;
-            var yLim = 0;
-            for (int i = 0; i < zLim; i++)
-            {
-                var yStartIndex = zSlices[i];
-                var yOffset = yOffsetsAndXIndices[yStartIndex];
-                var numYLines = zSlices[i + 1] - 1 - yStartIndex;
-                if (yLim < yOffset + numYLines) yLim = yOffset + numYLines;
-            }
-            VoxelsPerSide = new[] { xLim, yLim, zLim };
-            UpdatePropertiesSparse();
-            SparseIsCurrent = true;
-            DenseIsCurrent = false;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
-        /// </summary>
-        /// <param name="vs">The vs.</param>
-        /// <exception cref="ArgumentException">The voxelized solid constructor receiving another" +
-        ///                 " voxelized solid as input must have an up-to-date sparse representation.</exception>
-        public VoxelizedSolid(VoxelizedSolid vs)
-        //: this(vs.zSlices, vs.yOffsetsAndXIndices, vs.xRanges, vs.VoxelSideLength, vs.Bounds)
-        {
-            // if (!vs.SparseIsCurrent) throw new ArgumentException("The voxelized solid constructor receiving another" +
-            //    " voxelized solid as input must have an up-to-date sparse representation.");
-            if (vs.DenseIsCurrent)
-            {
-                VoxelSideLength = vs.VoxelSideLength;
-                Bounds = new double[2][];
-                Bounds[0] = (double[])vs.Bounds.First().Clone();
-                Bounds[1] = (double[])vs.Bounds.Last().Clone();
-                Dimensions = Bounds[1].subtract(Bounds[0], 3);
-                SolidColor = vs.SolidColor;
-                Dense = (byte[,,])vs.Dense.Clone();
-                VoxelsPerSide = (int[])vs.VoxelsPerSide.Clone();
-                BytesPerSide = (int[])vs.BytesPerSide.Clone();
-                this.DenseIsCurrent = true;
-            }
-        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="voxelsOnLongSide">The voxels on long side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<double[]> bounds = null)
+        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<double[]> bounds = null):this()
         {
             Bounds = new double[2][];
             if (bounds != null)
@@ -261,14 +84,14 @@ namespace TVGL.Voxelization
                 Bounds[1] = (double[])ts.Bounds[1].Clone();
             }
             Dimensions = Bounds[1].subtract(Bounds[0]);
-            SolidColor = new Color(Constants.DefaultColor);
+            SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
             VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
-            VoxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
+            var voxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
+            numVoxelsX = voxelsPerSide[0];
+            numVoxelsY = voxelsPerSide[1];
+            numVoxelsZ = voxelsPerSide[2];
             FillInFromTessellation(ts);
-            //UpdatePropertiesSparse();  //temporary until this function is fixed and made more efficient
-            SparseIsCurrent = true;
-            DenseIsCurrent = false;
-            UpdateDenseFromSparse();
+            FractionDense = 0;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
@@ -276,7 +99,7 @@ namespace TVGL.Voxelization
         /// <param name="ts">The ts.</param>
         /// <param name="voxelSideLength">Length of the voxel side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<double[]> bounds = null)
+        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<double[]> bounds = null):this()
         {
             Bounds = new double[2][];
             if (bounds != null)
@@ -292,59 +115,55 @@ namespace TVGL.Voxelization
             Dimensions = Bounds[1].subtract(Bounds[0]);
             SolidColor = new Color(Constants.DefaultColor);
             VoxelSideLength = voxelSideLength;
-            VoxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
+            var voxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
+            numVoxelsX = voxelsPerSide[0];
+            bytesInX = numVoxelsX >> 3;
+            if ((numVoxelsX & 7) != 0) bytesInX++;
+            numVoxelsY = voxelsPerSide[1];
+            numVoxelsZ = voxelsPerSide[2];
+            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
+                voxels[i] = new VoxelRowSparse();
             FillInFromTessellation(ts);
-            //UpdatePropertiesSparse();  //temporary until this function is fixed and made more efficient
-            SparseIsCurrent = true;
-            DenseIsCurrent = false;
-            UpdateDenseFromSparse();
+            FractionDense = 0;
         }
+
         #region Fill In From Tessellation Functions
         private void FillInFromTessellation(TessellatedSolid ts, bool possibleNullSlices = false)
         {
-            var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
-            var zLim = VoxelsPerSide[2];
-            zSlices = new int[zLim + 1];
-            yOffsetsAndXIndices = new List<int>();  // { 0 };
-            xRanges = new List<int>();
+
+            //var zSlices = new int[numVoxelsZ + 1];
+            //var yOffsetsAndXIndices = new List<int>();  // { 0 };
+            //var xRanges = new List<int>();
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
-            var decomp = AllSlicesAlongZ(ts, zBegin, zLim, VoxelSideLength);
+            var decomp = AllSlicesAlongZ(ts, zBegin, numVoxelsZ, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
             //Parallel.For(0, zLim, k =>
-            for (var k = 0; k < zLim; k++)
+            for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
                 if (loops.Any())
                 {
-                    var intersections = AllPolygonIntersectionPointsAlongY(loops, yBegin, yLim, VoxelSideLength, out var yStartIndex);
+                    var intersections = AllPolygonIntersectionPointsAlongY(loops, yBegin, numVoxelsY, VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
-                    yOffsetsAndXIndices.Add(yStartIndex);
                     for (int j = 0; j < numYlines; j++)
                     {
                         var intersectionPoints = intersections[j];
                         var numXRangesOnThisLine = intersectionPoints.Length;
-                        yOffsetsAndXIndices.Add(xRanges.Count);
                         for (var m = 0; m < numXRangesOnThisLine; m += 2)
                         {
-                            //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
-                            //Although other dimensions do not also do this. Everything operates with Round (effectively).
-                            //Could reverse this to add more voxels
-                            var sp = (int)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                            var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (sp < 0) sp = 0;
-                            var ep = (int)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
-                            if (ep >= xLim) ep = xLim - 1;
-                            xRanges.Add(sp);
-                            xRanges.Add(ep);
+                            var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                            if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                            ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(sp);
+                            ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(ep);
                         }
                     }
                 }
-                zSlices[k + 1] = yOffsetsAndXIndices.Count;
             }   //);
-            yOffsetsAndXIndices.Add(-1);
-            yOffsetsAndXIndices.Add(xRanges.Count);
         }
         private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
@@ -467,91 +286,77 @@ namespace TVGL.Voxelization
         }
 
         #endregion
+
+
+        public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<double[]> bounds)
+        {
+            var fullBlock = new VoxelizedSolid();
+            fullBlock.Bounds = new double[2][];
+            fullBlock.Bounds[0] = (double[])bounds[0].Clone();
+            fullBlock.Bounds[1] = (double[])bounds[1].Clone();
+            fullBlock.Dimensions = fullBlock.Bounds[1].subtract(fullBlock.Bounds[0]);
+            fullBlock.SolidColor = new Color(Constants.DefaultColor);
+            fullBlock.VoxelSideLength = voxelSideLength;
+            var voxelsPerSide = fullBlock.Dimensions.Select(d => (int)Math.Ceiling(d / fullBlock.VoxelSideLength)).ToArray();
+            fullBlock.numVoxelsX = voxelsPerSide[0];
+            fullBlock.bytesInX = fullBlock.numVoxelsX >> 3;
+            if ((fullBlock.numVoxelsX & 7) != 0) fullBlock.bytesInX++;
+            fullBlock.numVoxelsY = voxelsPerSide[1];
+            fullBlock.numVoxelsZ = voxelsPerSide[2];
+            fullBlock.voxels = new IVoxelRow[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
+            for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
+            {
+                var fullRow = new VoxelRowSparse();
+                fullRow.indices.Add(0);
+                fullRow.indices.Add((ushort)fullBlock.numVoxelsX);
+                fullBlock.voxels[i] = fullRow;
+            }
+            return fullBlock;
+        }
+
         #endregion
 
         #region Conversion Methods
-        public void UpdateDenseFromSparse()
+        public void UpdateToAllDense()
         {
-            var bytesInX = VoxelsPerSide[0] >> 3;
-            if ((VoxelsPerSide[0] & 7) != 0) bytesInX++;
-            BytesPerSide = new[] { bytesInX, VoxelsPerSide[1], VoxelsPerSide[2] };
-            Dense = new byte[bytesInX, VoxelsPerSide[1], VoxelsPerSide[2]];
-            for (int k = 0; k < VoxelsPerSide[2]; k++)
-            //Parallel.For(0, VoxelsPerSide[2], k =>
+            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
-                var yStartIndex = zSlices[k];
-                var yOffset = yOffsetsAndXIndices[yStartIndex];
-                yStartIndex++;
-                var yEnd = zSlices[k + 1];
-                for (int j = yStartIndex; j < yEnd; j++)
-                {
-                    for (int i = yOffsetsAndXIndices[j]; i < yOffsetsAndXIndices[j + 1]; i += 2)
-                    {
-                        var xBegin = xRanges[i];
-                        var xEnd = xRanges[i + 1];
-                        AddVoxelRangeToDense(xBegin, xEnd, yOffset, k);
-                    }
-                    yOffset++;
-                }
-            } //);
-            DenseIsCurrent = true;
-        }
-
-        private void AddVoxelRangeToDense(int xBegin, int xEnd, int yCoord, int zCoord)
-        {
-            var xByte = xBegin >> 3;
-            var xByteEnd = xEnd >> 3;
-            var bitPostion = xBegin & 7;
-            switch (bitPostion)
-            {
-                case 0: Dense[xByte, yCoord, zCoord] += 0b11111111; break;
-                case 1: Dense[xByte, yCoord, zCoord] += 0b01111111; break;
-                case 2: Dense[xByte, yCoord, zCoord] += 0b00111111; break;
-                case 3: Dense[xByte, yCoord, zCoord] += 0b00011111; break;
-                case 4: Dense[xByte, yCoord, zCoord] += 0b00001111; break;
-                case 5: Dense[xByte, yCoord, zCoord] += 0b00000111; break;
-                case 6: Dense[xByte, yCoord, zCoord] += 0b00000011; break;
-                default: Dense[xByte, yCoord, zCoord] += 0b00000001; break;
+                if (voxels[i] is VoxelRowDense) continue;
+                voxels[i] = new VoxelRowDense((VoxelRowSparse)voxels[i], (ushort)bytesInX);
             }
-            while (++xByte < xByteEnd)
-                Dense[xByte, yCoord, zCoord] = 0b11111111;
-            bitPostion = xEnd & 7;
-            switch (bitPostion)
+            FractionDense = 1;
+        }
+        public void UpdateToAllSparse()
+        {
+            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
-                case 1: Dense[xByte, yCoord, zCoord] = 0b10000000; break;
-                case 2: Dense[xByte, yCoord, zCoord] = 0b11000000; break;
-                case 3: Dense[xByte, yCoord, zCoord] = 0b11100000; break;
-                case 4: Dense[xByte, yCoord, zCoord] = 0b11110000; break;
-                case 5: Dense[xByte, yCoord, zCoord] = 0b11111000; break;
-                case 6: Dense[xByte, yCoord, zCoord] = 0b11111100; break;
-                case 7: Dense[xByte, yCoord, zCoord] = 0b11111110; break;
-                default: break;
+                if (voxels[i] is VoxelRowSparse) continue;
+                voxels[i] = new VoxelRowSparse((VoxelRowDense)voxels[i]);
             }
+            FractionDense = 0;
         }
-
-        public void UpdateSparseFromDense()
-        {
-
-        }
-        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
-        {
-        }
-
 
 
         internal string[] GetVoxelsAsStringArrays()
         {
-            var zSlicesBitArray = zSlices.SelectMany(slice => BitConverter.GetBytes(slice)).ToArray();
-            var yStartsBitArray = yOffsetsAndXIndices.SelectMany(yStart => BitConverter.GetBytes(yStart)).ToArray();
-            var xRangeBitArray = xRanges.SelectMany(xRange => BitConverter.GetBytes(xRange)).ToArray();
-
-            return new[]{
-                BitConverter.ToString(zSlicesBitArray).Replace("-", ""),
-                BitConverter.ToString(yStartsBitArray).Replace("-", ""),
-                BitConverter.ToString(xRangeBitArray).Replace("-", "") };
+            UpdateToAllSparse();
+            var allRows = new List<string>();
+            for (int i = 0; i < numVoxelsY; i++)
+            {
+                for (int j = 0; j < numVoxelsZ; j++)
+                {
+                    var sparseRow = (VoxelRowSparse)voxels[i + j * zMultiplier];
+                    if (sparseRow.indices.Any())
+                    {
+                        var rowDetails = new List<ushort>(sparseRow.indices);
+                        rowDetails.Insert(0, (ushort)j);
+                        rowDetails.Insert(0, (ushort)i);
+                        allRows.Add(BitConverter.ToString(rowDetails.SelectMany(u => BitConverter.GetBytes(u)).ToArray()));
+                    }
+                }
+            }
+            return allRows.ToArray();
         }
-
-
         public TessellatedSolid ConvertToTessellatedSolid(Color color)
         {
             throw new NotImplementedException();
@@ -561,7 +366,7 @@ namespace TVGL.Voxelization
         #region Overrides of Solid abstract members
         public override Solid Copy()
         {
-            if (!SparseIsCurrent) UpdateSparseFromDense();
+            UpdateToAllSparse();
             return new VoxelizedSolid(this);
         }
 

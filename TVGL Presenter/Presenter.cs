@@ -877,23 +877,17 @@ namespace TVGL
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
             var s = vs.VoxelSideLength;
-            var xLim = vs.VoxelsPerSide[0];
-            var yLim = vs.VoxelsPerSide[1];
-            var zLim = vs.VoxelsPerSide[2];
 
-            for (var i = 0; i < xLim; i++)
+            for (var i = 0; i < vs.numVoxelsX; i++)
             {
-                var iB = i / 8;
-                var iS = i % 8;
-                for (var j = 0; j < yLim; j++)
+                for (var j = 0; j < vs.numVoxelsY; j++)
                 {
-                    var jB = j / 8;
-                    var jS = j % 8;
-                    for (var k = 0; k < zLim; k++)
+                    for (var k = 0; k < vs.numVoxelsZ; k++)
                     {
-                        if (!vs.GetVoxelDense(iB, j, k, iS)) continue;
+                        if (!vs[i, j, k]) continue;
 
-                        var neighbors = vs.GetNeighborsDense(i, j, k, xLim, yLim, zLim).ToList();
+                        var neighbors = vs.GetNeighbors(i, j, k, vs.numVoxelsX,vs.numVoxelsY,vs.numVoxelsZ)
+                            .ToList();
                         if (neighbors.All(n => n != null)) continue;
 
                         var x = i * s + vs.Offset[0];

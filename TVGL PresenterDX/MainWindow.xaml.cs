@@ -119,11 +119,11 @@ namespace TVGLPresenterDX
            
             var s = (float)vs.VoxelSideLength;
 
-            for (var i = 0; i < vs.VoxelsPerSide[0]; i++)
-                for (var j = 0; j < vs.VoxelsPerSide[1]; j++)
-                    for (var k = 0; k < vs.VoxelsPerSide[2]; k++)
+            for (var i = 0; i < vs.numVoxelsX; i++)
+                for (var j = 0; j < vs.numVoxelsY; j++)
+                    for (var k = 0; k < vs.numVoxelsZ; k++)
                     {
-                        if (!vs.GetVoxel(i, j, k)) continue;
+                        if (!vs[i, j, k]) continue;
                         
                         if (!vs.GetNeighbors(i, j, k, out var neighbors)) continue;
 

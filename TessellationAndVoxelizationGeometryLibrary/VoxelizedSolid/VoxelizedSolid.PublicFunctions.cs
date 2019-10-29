@@ -12,116 +12,90 @@ namespace TVGL.Voxelization
     /// </summary>
     public partial class VoxelizedSolid
     {
-        #region Getting Neighbors
+        #region Public Methods that Branch
+        public bool this[int xCoord, int yCoord, int zCoord]
+        {
+            get => voxels[yCoord + zMultiplier * zCoord][xCoord];
+            set => voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
+        }
         //Neighbors functions use VoxelsPerSide
-        public int[][] GetNeighborsDense(int xCoord, int yCoord, int zCoord)
+        public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
         {
-            return GetNeighborsDense(xCoord, yCoord, zCoord, VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]);
+            return GetNeighbors(xCoord, yCoord, zCoord, numVoxelsX, numVoxelsY, numVoxelsZ);
         }
 
-        public int NumNeighborsDense(int xCoord, int yCoord, int zCoord)
+        public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
         {
-            return NumNeighborsDense(xCoord, yCoord, zCoord, VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]);
+            neighbors = GetNeighbors(xCoord, yCoord, zCoord);
+            return !neighbors.Any(n => n != null);
+        }
+        public int NumNeighbors(int xCoord, int yCoord, int zCoord)
+        {
+            return NumNeighbors(xCoord, yCoord, zCoord, numVoxelsX, numVoxelsY, numVoxelsZ);
         }
 
-        public int[][] GetNeighborsDense(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
+        public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
         {
             var neighbors = new int[][] { null, null, null, null, null, null };
-            var xByteCoord = xCoord >> 3;
-            var bitPosition = xCoord & 7;
 
-            if (xCoord != 0)
-            {
-                var neighBit = bitPosition == 0 ? 7 : bitPosition - 1;
-                var neighByte = bitPosition == 0 ? xByteCoord - 1 : xByteCoord;
-                if (GetVoxelDense(neighByte, yCoord, zCoord, neighBit))
-                    neighbors[0] = new[] { xCoord - 1, yCoord, zCoord };
-            }
-            if (xCoord + 1 != xLim)
-            {
-                var neighBit = bitPosition == 7 ? 0 : bitPosition + 1;
-                var neighByte = bitPosition == 7 ? xByteCoord + 1 : xByteCoord;
-                if (GetVoxelDense(neighByte, yCoord, zCoord, neighBit))
-                    neighbors[1] = new[] { xCoord + 1, yCoord, zCoord };
-            }
+            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord);
+            if (xNeighbors.Item1)
+                neighbors[0] = new[] { xCoord - 1, yCoord, zCoord };
+            if (xNeighbors.Item2)
+                neighbors[1] = new[] { xCoord + 1, yCoord, zCoord };
 
-            if (yCoord != 0 && GetVoxelDense(xByteCoord, yCoord - 1, zCoord, bitPosition)) neighbors[2] = new[] { xCoord, yCoord - 1, zCoord };
-            if (yCoord + 1 != yLim && GetVoxelDense(xByteCoord, yCoord + 1, zCoord, bitPosition)) neighbors[3] = new[] { xCoord, yCoord + 1, zCoord };
-            if (zCoord != 0 && GetVoxelDense(xByteCoord, yCoord, zCoord - 1, bitPosition)) neighbors[4] = new[] { xCoord, yCoord, zCoord - 1 };
-            if (zCoord + 1 != zLim && GetVoxelDense(xByteCoord, yCoord, zCoord + 1, bitPosition)) neighbors[5] = new[] { xCoord, yCoord, zCoord + 1 };
+            if (yCoord != 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord])
+                neighbors[2] = new[] { xCoord, yCoord - 1, zCoord };
+            if (yCoord + 1 != yLim && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord])
+                neighbors[3] = new[] { xCoord, yCoord + 1, zCoord };
+
+            if (zCoord != 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord])
+                neighbors[4] = new[] { xCoord, yCoord, zCoord - 1 };
+            if (zCoord + 1 != zLim && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
+                neighbors[5] = new[] { xCoord, yCoord, zCoord + 1 };
 
             return neighbors;
         }
-        public int NumNeighborsDense(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
+        public int NumNeighbors(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
         {
             var neighbors = 0;
-            var xByteCoord = xCoord >> 3;
-            var bitPosition = xCoord & 7;
 
-            if (xCoord != 0)
-            {
-                var neighBit = bitPosition == 0 ? 7 : bitPosition - 1;
-                var neighByte = bitPosition == 0 ? xByteCoord - 1 : xByteCoord;
-                if (GetVoxelDense(neighByte, yCoord, zCoord, neighBit))
-                    neighbors++;
-            }
-            if (xCoord + 1 != xLim)
-            {
-                var neighBit = bitPosition == 7 ? 0 : bitPosition + 1;
-                var neighByte = bitPosition == 7 ? xByteCoord + 1 : xByteCoord;
-                if (GetVoxelDense(neighByte, yCoord, zCoord, neighBit))
-                    neighbors++;
-            }
+            var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord);
+            if (xNeighbors.Item1) neighbors++;
+            if (xNeighbors.Item2) neighbors++;
 
-            if (yCoord != 0 && GetVoxelDense(xByteCoord, yCoord - 1, zCoord, bitPosition)) neighbors++;
-            if (yCoord + 1 != yLim && GetVoxelDense(xByteCoord, yCoord + 1, zCoord, bitPosition)) neighbors++;
-            if (zCoord != 0 && GetVoxelDense(xByteCoord, yCoord, zCoord - 1, bitPosition)) neighbors++;
-            if (zCoord + 1 != zLim && GetVoxelDense(xByteCoord, yCoord, zCoord + 1, bitPosition)) neighbors++;
+            if (yCoord != 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]) neighbors++;
+            if (yCoord + 1 != yLim && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) neighbors++;
+
+            if (zCoord != 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]) neighbors++;
+            if (zCoord + 1 != zLim && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) neighbors++;
 
             return neighbors;
         }
         #endregion
 
         #region Set/update properties
-        public void UpdatePropertiesDense()
+        public void UpdateProperties()
         {
-            var count = new ConcurrentDictionary<int, int>();
-            var xLim = BytesPerSide[0];
-            var yLim = BytesPerSide[1];
-            var zLim = BytesPerSide[2];
-            Parallel.For(0, xLim, i =>
-            {
-                var counter = 0;
-                for (var j = 0; j < yLim; j++)
-                    for (var k = 0; k < zLim; k++)
-                    {
-                        var val = Dense[i, j, k];
-                        if (val != 0)
-                            counter += CountSetBitsDense(val);
-                    }
-                count.TryAdd(i, counter);
-            });
-            Count = 0;
-            foreach (var v in count.Values)
-                Count += v;
+            var count = new ConcurrentBag<int>();
+            Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
+              {
+                  count.Add(voxels[i].Count);
+              });
+            Count = count.Sum();
             Volume = Count * Math.Pow(VoxelSideLength, 3);
 
             var neighbors = new ConcurrentDictionary<int, int>();
-            xLim = VoxelsPerSide[0];
             //Parallel.For(0, xLim, i =>
-            for (int i = 0; i < xLim; i++)
+            for (int i = 0; i < numVoxelsX; i++)
             {
-                var iB = i >> 3;
-                var iS = i & 7;
                 var neighborCount = 0;
-                for (var j = 0; j < yLim; j++)
+                for (var j = 0; j < numVoxelsY; j++)
                 {
-                    var jB = j >> 3;
-                    var jS = j & 7;
-                    for (var k = 0; k < zLim; k++)
+                    for (var k = 0; k < numVoxelsZ; k++)
                     {
-                        if (!GetVoxelDense(iB, j, k, iS)) continue;
-                        var num = NumNeighborsDense(i, j, k, xLim, yLim, zLim);
+                        if (!this[i, j, k]) continue;
+                        var num = NumNeighbors(i, j, k, numVoxelsX, numVoxelsY, numVoxelsZ);
                         neighborCount += num;
                     }
                 }
@@ -138,78 +112,44 @@ namespace TVGL.Voxelization
         //Boolean functions use BytesPerSide
         public VoxelizedSolid CreateBoundingSolid()
         {
-            return new VoxelizedSolid(VoxelsPerSide, VoxelSideLength, Bounds);
+            return VoxelizedSolid.CreateFullBlock(VoxelSideLength, Bounds);
         }
 
         // NOT A
         public VoxelizedSolid InvertToNewSolid()
         {
-            var vs = new VoxelizedSolid(VoxelsPerSide, VoxelSideLength, Bounds, true);
-            var xLim = BytesPerSide[0];
-            var yLim = BytesPerSide[1];
-            var zLim = BytesPerSide[2];
-            Parallel.For(0, xLim, i =>
-            {
-                for (var j = 0; j < yLim; j++)
-                    for (var k = 0; k < zLim; k++)
-                        if (Dense[i, j, k] != byte.MaxValue)
-                            vs.Dense[i, j, k] = (byte)~Dense[i, j, k];
-            });
-            vs.UpdatePropertiesDense();
-            return vs;
+            UpdateToAllSparse();
+            var full = CreateFullBlock(VoxelSideLength, Bounds);
+            return full.SubtractToNewSolid(this);
         }
 
         // A OR B
         public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)
         {
             var vs = (VoxelizedSolid)Copy();
-            var xLim = BytesPerSide[0];
-            var yLim = BytesPerSide[1];
-            var zLim = BytesPerSide[2];
-            Parallel.For(0, xLim, i =>
-            {
-                for (var j = 0; j < yLim; j++)
-                    for (var k = 0; k < zLim; k++)
-                    {
-                        var voxel = Dense[i, j, k];
-                        if (voxel == byte.MaxValue) continue;
-                        foreach (var vox in solids)
-                        {
-                            voxel = (byte)(voxel | vox.Dense[i, j, k]);
-                            if (voxel == byte.MaxValue) break;
-                        }
-                        vs.Dense[i, j, k] = voxel;
-                    }
-            });
-            vs.UpdatePropertiesDense();
+            vs.UpdateToAllSparse();
+            foreach (var solid in solids)
+                solid.UpdateToAllSparse();
+            Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
+              {
+                  vs.voxels[i].Union(solids.Select(s => s.voxels[i]).ToArray());
+              });
+            vs.UpdateProperties();
             return vs;
         }
 
         // A AND B
         public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)
         {
-            var vs = new VoxelizedSolid(VoxelsPerSide, VoxelSideLength, Bounds, true);
-            var xLim = BytesPerSide[0];
-            var yLim = BytesPerSide[1];
-            var zLim = BytesPerSide[2];
-            Parallel.For(0, xLim, i =>
+            var vs = (VoxelizedSolid)Copy();
+            vs.UpdateToAllSparse();
+            foreach (var solid in solids)
+                solid.UpdateToAllSparse();
+            Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
             {
-                for (var j = 0; j < yLim; j++)
-                    for (var k = 0; k < zLim; k++)
-                    {
-                        var voxel = Dense[i, j, k];
-                        if (voxel == 0) continue;
-                        foreach (var vox in solids)
-                        {
-                            voxel = (byte)(voxel & vox.Dense[i, j, k]);
-                            if (voxel == 0) break;
-                        }
-
-                        if (voxel == 0) continue;
-                        vs.Dense[i, j, k] = voxel;
-                    }
+                vs.voxels[i].Intersect(solids.Select(s => s.voxels[i]).ToArray());
             });
-            vs.UpdatePropertiesDense();
+            vs.UpdateProperties();
             return vs;
         }
 
@@ -217,26 +157,14 @@ namespace TVGL.Voxelization
         public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)
         {
             var vs = (VoxelizedSolid)Copy();
-            var xLim = BytesPerSide[0];
-            var yLim = BytesPerSide[1];
-            var zLim = BytesPerSide[2];
-            Parallel.For(0, xLim, i =>
+            vs.UpdateToAllSparse();
+            foreach (var solid in subtrahends)
+                solid.UpdateToAllSparse();
+            Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
             {
-                for (var j = 0; j < yLim; j++)
-                    for (var k = 0; k < zLim; k++)
-                    {
-                        var voxel = Dense[i, j, k];
-                        if (voxel == 0b0) continue;
-                        foreach (var vox in subtrahends)
-                        {
-                            voxel = (byte)(voxel & (byte)~vox.Dense[i, j, k]);
-                            if (voxel == 0) break;
-                        }
-
-                        vs.Dense[i, j, k] = voxel;
-                    }
+                vs.voxels[i].Subtract(subtrahends.Select(s => s.voxels[i]).ToArray());
             });
-            vs.UpdatePropertiesDense();
+            vs.UpdateProperties();
             return vs;
         }
         #endregion
@@ -265,9 +193,9 @@ namespace TVGL.Voxelization
                             for (var j = 0; j < VoxelsPerSide[1]; j++)
                                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                                     if (i < cutBefore)
-                                        vs1.SetVoxelDense(false, i, j, k);
+                                        vs1[i, j, k] = false;
                                     else
-                                        vs2.SetVoxelDense(false, i, j, k);
+                                        vs2[i, j, k] = false;
                         });
                         break;
                     case 1:
@@ -276,9 +204,9 @@ namespace TVGL.Voxelization
                             for (var j = 0; j < VoxelsPerSide[1]; j++)
                                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                                     if (j < cutBefore)
-                                        vs1.SetVoxelDense(false, i, j, k);
+                                        vs1[i, j, k] = false;
                                     else
-                                        vs2.SetVoxelDense(false, i, j, k);
+                                        vs2[i, j, k] = false;
                         });
                         break;
                     case 2:
@@ -287,9 +215,9 @@ namespace TVGL.Voxelization
                             for (var j = 0; j < VoxelsPerSide[1]; j++)
                                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                                     if (k < cutBefore)
-                                        vs1.SetVoxelDense(false, i, j, k);
+                                        vs1[i, j, k] = false;
                                     else
-                                        vs2.SetVoxelDense(false, i, j, k);
+                                        vs2[i, j, k] = false;
                         });
                         break;
                 }
@@ -302,9 +230,9 @@ namespace TVGL.Voxelization
                             for (var j = 0; j < VoxelsPerSide[1]; j++)
                                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                                     if (i < cutBefore)
-                                        vs2.SetVoxelDense(false, i, j, k);
+                                        vs2[i, j, k] = false;
                                     else
-                                        vs1.SetVoxelDense(false, i, j, k);
+                                        vs1[i, j, k] = false;
                         });
                         break;
                     case 1:
@@ -313,9 +241,9 @@ namespace TVGL.Voxelization
                             for (var j = 0; j < VoxelsPerSide[1]; j++)
                                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                                     if (j < cutBefore)
-                                        vs2.SetVoxelDense(false, i, j, k);
+                                        vs2[i, j, k] = false;
                                     else
-                                        vs1.SetVoxelDense(false, i, j, k);
+                                        vs1[i, j, k] = false;
                         });
                         break;
                     case 2:
@@ -324,14 +252,14 @@ namespace TVGL.Voxelization
                             for (var j = 0; j < VoxelsPerSide[1]; j++)
                                 for (var k = 0; k < VoxelsPerSide[2]; k++)
                                     if (k < cutBefore)
-                                        vs2.SetVoxelDense(false, i, j, k);
+                                        vs2[i, j, k] = false;
                                     else
-                                        vs1.SetVoxelDense(false, i, j, k);
+                                        vs1[i, j, k] = false;
                         });
                         break;
                 }
-            vs1.UpdatePropertiesDense();
-            vs2.UpdatePropertiesDense();
+            vs1.UpdateProperties();
+            vs2.UpdateProperties();
             return (vs1, vs2);
         }
 
@@ -359,14 +287,14 @@ namespace TVGL.Voxelization
                         var z = zOff + (k + .5) * VoxelSideLength;
                         var d = MiscFunctions.DistancePointToPlane(new[] { x, y, z }, pn, pp);
                         if (d < 0)
-                            vs1.SetVoxelDense(false, i, j, k);
+                            vs1[i, j, k] = false;
                         else
-                            vs2.SetVoxelDense(false, i, j, k);
+                            vs2[i, j, k] = false;
                     }
             });
 
-            vs1.UpdatePropertiesDense();
-            vs2.UpdatePropertiesDense();
+            vs1.UpdateProperties();
+            vs2.UpdateProperties();
             return (vs1, vs2);
         }
 
@@ -547,8 +475,8 @@ namespace TVGL.Voxelization
         public VoxelizedSolid DraftToNewSolid(CartesianDirections vd)
         {
 
-            var draftDir = (int)vd;
-            var draftIndex = Math.Abs(draftDir) - 1;
+            var draftDir = Math.Sign((int)vd);
+            var draftIndex = Math.Abs((int)vd) - 1;
             var planeIndices = new int[2];
             var ii = 0;
             for (var i = 0; i < 3; i++)
@@ -563,7 +491,11 @@ namespace TVGL.Voxelization
             var pLim = VoxelsPerSide[draftIndex];
 
             if (draftIndex == 0)
-                return DraftOnXDimension(draftDir, mLim, nLim, pLim);
+            {
+                if (draftDir > 0)
+                    return DraftInPositiveX();
+                else return DraftInNegativeX();
+            }
             var vs = (VoxelizedSolid)Copy();
 
             Parallel.For(0, mLim, m =>
@@ -605,57 +537,53 @@ namespace TVGL.Voxelization
 
                         if (fillAll)
                         {
-                            if (!GetVoxelDense(i, j, k, shift))   //if the voxel is off, turn it on
-                                TurnVoxelOnDense(i, j, k, shift);
+                            this[i, j, k] = true;
                             continue;
                         }
-                        if (!fillAll && GetVoxelDense(i, j, k, shift)) fillAll = true;
+                        if (!fillAll && this[i, j, k]) fillAll = true;
                     }
 
                 }
             });
 
-            vs.UpdatePropertiesDense();
+            vs.UpdateProperties();
             return vs;
         }
 
-        public VoxelizedSolid DraftOnXDimension(int draftDir, int mLim, int nLim, int pLim)
+        public VoxelizedSolid DraftInPositiveX()
         {
             var vs = (VoxelizedSolid)Copy();
-
-            Parallel.For(0, mLim, m =>
+            vs.UpdateToAllSparse();
+            Parallel.For(0, numVoxelsY * numVoxelsZ, m =>
             {
-                for (var n = 0; n < nLim; n++)
+                var rowIndices = ((VoxelRowSparse)vs.voxels[m]).indices;
+                if (rowIndices.Any())
                 {
-                    var fillAll = false;
-                    var fillByte = false;
-
-                    for (var p = 0; p < pLim; p++)
-                    {
-                        var q = draftDir > 0 ? p : pLim - 1 - p;
-
-                        var qB = q >> 3;
-                        var qS = q & 7;
-                        if (!fillByte && fillAll)
-                        {
-                            var fillByteComparator = draftDir > 0 ? 0 : 7;
-                            if (qS == fillByteComparator)
-                                fillByte = true;
-                        }
-                        if (fillByte)
-                            vs.Dense[qB, m, n] = byte.MaxValue;
-                        else if (fillAll)
-                        {
-                            if (!GetVoxelDense(qB, m, n, qS))
-                                TurnVoxelOnDense(qB, m, n, qS);
-                        }
-                        else if (!fillAll && GetVoxelDense(qB, m, n, qS))
-                            fillAll = true;
-                    }
+                    var start = rowIndices[0];
+                    rowIndices.Clear();
+                    rowIndices.Add(start);
+                    rowIndices.Add((ushort)numVoxelsX);
                 }
             });
-
-            vs.UpdatePropertiesDense();
+            vs.UpdateProperties();
+            return vs;
+        }
+        public VoxelizedSolid DraftInNegativeX()
+        {
+            var vs = (VoxelizedSolid)Copy();
+            vs.UpdateToAllSparse();
+            Parallel.For(0, numVoxelsY * numVoxelsZ, m =>
+            {
+                var rowIndices = ((VoxelRowSparse)vs.voxels[m]).indices;
+                if (rowIndices.Any())
+                {
+                    var end = rowIndices.Last();
+                    rowIndices.Clear();
+                    rowIndices.Add(0);
+                    rowIndices.Add(end);
+                }
+            });
+            vs.UpdateProperties();
             return vs;
         }
 
@@ -667,7 +595,7 @@ namespace TVGL.Voxelization
         {
             var copy = (VoxelizedSolid)Copy();
             copy.ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, toolOptions);
-            copy.UpdatePropertiesDense();
+            copy.UpdateProperties();
             return copy;
         }
 
@@ -680,7 +608,7 @@ namespace TVGL.Voxelization
             tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
 
             copy.ErodeVoxelSolid(designedSolid, tDir.normalize(3), tLimit, toolDia, toolOptions);
-            copy.UpdatePropertiesDense();
+            copy.UpdateProperties();
             return copy;
         }
 
@@ -827,7 +755,7 @@ namespace TVGL.Voxelization
                         continue;
                     }
                     succeeds = false;
-                    if (designedSolid.GetVoxelDense(coordX, coordY, coordZ)) return;
+                    if (designedSolid[coordX, coordY, coordZ]) return;
                 }
 
                 if (!insidePart && precedes) continue;
@@ -842,7 +770,7 @@ namespace TVGL.Voxelization
                     var coordZ = voxCoord[2] + zTShift;
                     if (outOfBounds && (coordX < 0 || coordY < 0 || coordZ < 0 || coordX >= xLim || coordY >= yLim ||
                                         coordZ >= zLim)) continue;
-                    SetVoxelDense(false, coordX, coordY, coordZ);
+                    this[coordX, coordY, coordZ] = false;
                 }
             }
         }
@@ -850,126 +778,6 @@ namespace TVGL.Voxelization
 
         #region Basic Voxel Flipping/Reading Functions
 
-        /// <summary>
-        /// Sets the voxel to true or false. If you already know it's state,
-        /// then it is better to use TurnVoxelOn or TurnVoxelOff.
-        /// </summary>
-        /// <param name="value">if set to <c>true</c> [value].</param>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        public void SetVoxelDense(bool value, int xCoord, int yCoord, int zCoord)
-        {
-            var bitPosition = xCoord & 7;
-            var xByteCoord = xCoord >> 3;
-            var oldValue = GetVoxelDense(xByteCoord, yCoord, zCoord, bitPosition); // ((byte)(Dense[coord, yCoord, zCoord] << shift) >> 7 != 0);
-            if (oldValue == value) return;
-            if (value) Dense[xByteCoord, yCoord, zCoord] += (byte)(1 << (7 - bitPosition));
-            else Dense[xByteCoord, yCoord, zCoord] -= (byte)(1 << (7 - bitPosition));
-
-        }
-        /// <summary>
-        /// Turns the voxel on ONLY if you know that it is already OFF/
-        /// </summary>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        public void TurnVoxelOnDense(int xCoord, int yCoord, int zCoord)
-        {
-            TurnVoxelOnDense(xCoord >> 3, yCoord, zCoord, xCoord & 7);
-        }
-
-        /// <summary>
-        /// Turns the voxel on ONLY if you know that it is already OFF/
-        /// </summary>
-        /// <param name="xByteCoord">The x byte coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <param name="bitPosition">The bit position.</param>
-        public void TurnVoxelOnDense(int xByteCoord, int yCoord, int zCoord, int bitPosition)
-        {
-            Dense[xByteCoord, yCoord, zCoord] += (byte)(1 << (7 - bitPosition));
-        }
-        /// <summary>
-        /// Turns the voxel off ONLY if you know that it is already ON.
-        /// </summary>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        public void TurnVoxelOffDense(int xCoord, int yCoord, int zCoord)
-        {
-            TurnVoxelOffDense(xCoord >> 3, yCoord, zCoord, xCoord & 7);
-        }
-
-        /// <summary>
-        /// Turns the voxel off ONLY if you know that it is already ON.
-        /// </summary>
-        /// <param name="xByteCoord">The x byte coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <param name="bitPosition">The bit position.</param>
-        public void TurnVoxelOffDense(int xByteCoord, int yCoord, int zCoord, int bitPosition)
-        {
-            Dense[xByteCoord, yCoord, zCoord] -= (byte)(1 << (7 - bitPosition));
-        }
-
-        /// <summary>
-        /// Gets the voxel.
-        /// </summary>
-        /// <param name="xCoord">The x coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool GetVoxelDense(int xCoord, int yCoord, int zCoord)
-        {
-            var shift = xCoord & 7;
-            var xByteCoord = xCoord >> 3;
-            return GetVoxelDense(Dense[xByteCoord, yCoord, zCoord], shift);
-        }
-        /// <summary>
-        /// Gets the voxel.
-        /// </summary>
-        /// <param name="xByteCoord">The x byte coord.</param>
-        /// <param name="yCoord">The y coord.</param>
-        /// <param name="zCoord">The z coord.</param>
-        /// <param name="bitPosition">The bit position.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public bool GetVoxelDense(int xByteCoord, int yCoord, int zCoord, int bitPosition)
-        {
-            return GetVoxelDense(Dense[xByteCoord, yCoord, zCoord], bitPosition);
-        }
-        /// <summary>
-        /// Gets the voxel.
-        /// </summary>
-        /// <param name="b">The b.</param>
-        /// <param name="bitPosition">The bit position.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        bool GetVoxelDense(byte b, int bitPosition)
-        {
-            return (byte)(b << bitPosition) >> 7 != 0;
-            // this previous line looks hacky but it is faster than the following conditional
-            // if guess the reason is that simplicity of execution even though shifting would 
-            // seem to do more constructing.
-            //if (bitPosition == 0) return (b & 0b1) != 0;
-            //else if (bitPosition == 1) return (b & 0b01) != 0;
-            //else if (bitPosition == 2) return (b & 0b001) != 0;
-            //else if (bitPosition == 3) return (b & 0b0001) != 0;
-            //else if (bitPosition == 4) return (b & 0b00001) != 0;
-            //else if (bitPosition == 5) return (b & 0b000001) != 0;
-            //else if (bitPosition == 6) return (b & 0b0000001) != 0;
-            //return (b & 0b00000001) != 0;
-        }
-
-        private static int CountSetBitsDense(byte val)
-        {
-            var bits = 0;
-            while (val > 0)
-            {
-                bits += val & 1;
-                val = (byte)(val >> 1);
-            }
-            return bits;
-        }
         #endregion
 
         #region Functions for Dilation (3D Offsetting)
@@ -1149,6 +957,7 @@ namespace TVGL.Voxelization
             var sortedIntersections = new SortedSet<double>(intersections).ToArray();
             return sortedIntersections;
         }
+
         #endregion
     }
 }
