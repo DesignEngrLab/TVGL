@@ -886,8 +886,7 @@ namespace TVGL
                     {
                         if (!vs[i, j, k]) continue;
 
-                        var neighbors = vs.GetNeighbors(i, j, k, vs.numVoxelsX,vs.numVoxelsY,vs.numVoxelsZ)
-                            .ToList();
+                        var neighbors = vs.GetNeighbors(i, j, k).ToList();
                         if (neighbors.All(n => n != null)) continue;
 
                         var x = i * s + vs.Offset[0];
@@ -921,7 +920,7 @@ namespace TVGL
                              Material = MaterialHelper.CreateMaterial(
                                  new System.Windows.Media.Color
                                  {
-                                     A = vs.SolidColor.A,
+                                     A = 255, //vs.SolidColor.A,
                                      B = vs.SolidColor.B,
                                      G = vs.SolidColor.G,
                                      R = vs.SolidColor.R

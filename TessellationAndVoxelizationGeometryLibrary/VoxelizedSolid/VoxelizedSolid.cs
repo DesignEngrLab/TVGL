@@ -55,12 +55,14 @@ namespace TVGL.Voxelization
         #region Constructors
         private VoxelizedSolid() { }
 
-        public VoxelizedSolid(VoxelizedSolid vs):this()
+        public VoxelizedSolid(VoxelizedSolid vs) : this()
         {
+            UpdateProperties();
         }
 
-        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName) 
+        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
         {
+            UpdateProperties();
         }
 
 
@@ -70,7 +72,7 @@ namespace TVGL.Voxelization
         /// <param name="ts">The ts.</param>
         /// <param name="voxelsOnLongSide">The voxels on long side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<double[]> bounds = null):this()
+        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<double[]> bounds = null) : this()
         {
             Bounds = new double[2][];
             if (bounds != null)
@@ -90,8 +92,12 @@ namespace TVGL.Voxelization
             numVoxelsX = voxelsPerSide[0];
             numVoxelsY = voxelsPerSide[1];
             numVoxelsZ = voxelsPerSide[2];
+            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
+                voxels[i] = new VoxelRowSparse(true);
             FillInFromTessellation(ts);
             FractionDense = 0;
+            UpdateProperties();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
@@ -99,7 +105,7 @@ namespace TVGL.Voxelization
         /// <param name="ts">The ts.</param>
         /// <param name="voxelSideLength">Length of the voxel side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<double[]> bounds = null):this()
+        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<double[]> bounds = null) : this()
         {
             Bounds = new double[2][];
             if (bounds != null)
@@ -126,15 +132,12 @@ namespace TVGL.Voxelization
                 voxels[i] = new VoxelRowSparse();
             FillInFromTessellation(ts);
             FractionDense = 0;
+            UpdateProperties();
         }
 
         #region Fill In From Tessellation Functions
         private void FillInFromTessellation(TessellatedSolid ts, bool possibleNullSlices = false)
         {
-
-            //var zSlices = new int[numVoxelsZ + 1];
-            //var yOffsetsAndXIndices = new List<int>();  // { 0 };
-            //var xRanges = new List<int>();
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
             var decomp = AllSlicesAlongZ(ts, zBegin, numVoxelsZ, VoxelSideLength);
@@ -231,6 +234,7 @@ namespace TVGL.Voxelization
                         else currentEdges.Add(edge);
                     }
                     vIndex++;
+                    if (vIndex == sortedVertices.Length) break;
                     thisVertex = sortedVertices[vIndex];
                 }
                 if (needToOffset)
@@ -311,6 +315,7 @@ namespace TVGL.Voxelization
                 fullRow.indices.Add((ushort)fullBlock.numVoxelsX);
                 fullBlock.voxels[i] = fullRow;
             }
+            fullBlock.UpdateProperties();
             return fullBlock;
         }
 

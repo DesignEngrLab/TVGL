@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace TVGL.Voxelization
@@ -31,7 +32,7 @@ namespace TVGL.Voxelization
             }
         }
 
-        internal VoxelRowSparse(bool dummy = false)
+        internal VoxelRowSparse(bool constructIndices = false)
         {
             indices = new List<ushort>();
         }
@@ -64,17 +65,16 @@ namespace TVGL.Voxelization
         {
             var count = indices.Count;
             if (count == 0 || index < indices[0] || index > indices[count - 1]) return false;
-            var lo = 0;
-            var hi = count - 1;
-            while (lo < hi)
-            {
-                if (index <= indices[lo + 1] || index >= indices[hi - 1]) return true;
-                var mid = lo + ((hi - lo) >> 1);
-                if (index < mid)
-                    hi = mid - 1;
-                else lo = mid;
-            }
-            return false;
+            var i = BinarySearch(indices, count, index);
+            if (i >= 0) //then index is a value in this list - either a lower or upper range
+                return true;
+            else return (~i & 0b1) != 0;
+            //{
+            //    i = ~i;
+            //    if ((i & 0b1) == 0) //even means top of range in this case - and it's less so index is outside, but neighbors could be inside
+            //        return (index - 1 <= indices[i - 1], index + 1 >= indices[i]);
+            //    else //odd so comfortably in a range. there is only one result
+            //        return (true, true);
         }
         public (bool, bool) GetNeighbors(int index)
         {
@@ -85,32 +85,40 @@ namespace TVGL.Voxelization
                 var upperNeighber = GetValue(index + 1);
                 return (false, upperNeighber);
             }
-            var lowerNeighbor = false;
-            index--;
-            #region this is basically GetValue above but instead of return's we set lowerNeighbor
-            var lo = 0;
-            var hi = count - 1;
-            if (index > indices[hi]) return (false, false);
-            if (index >= indices[0])
+            var i = BinarySearch(indices, count, index);
+            if (i >= 0) //then index is a value in this list - either a lower or upper range
             {
-                while (lo < hi)
-                {
-                    if (index <= indices[lo + 1] || index >= indices[hi - 1])
-                    {
-                        lowerNeighbor = true;
-                        break;
-                    }
-                    var mid = lo + ((hi - lo) >> 1);
-                    if (index < mid)
-                        hi = mid - 1;
-                    else lo = mid;
-                }
+                if ((i & 0b1) != 0) //odd means top of range
+                    return (index - 1 >= indices[i - 1], false);
+                else //even bottom of the range
+                    return (false, index + 1 <= indices[i + 1]);
             }
-            index += 2;
-            return (lowerNeighbor, index >= indices[lo] && index <= indices[lo + 1]);
-            #endregion
+            else
+            {
+                i = ~i;
+                if ((i & 0b1) == 0) //even means top of range in this case - and it's less so index is outside, but neighbors could be inside
+                    return (index - 1 <= indices[i - 1], index + 1 >= indices[i]);
+                else //odd so comfortably in a range. there is only one result
+                    return (true, true);
+            }
         }
-
+        // This binary search is modified/simplified from Array.BinarySearch
+        // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int BinarySearch(IList<ushort> array, int length, double value)
+        {
+            var lo = 0;
+            var hi = length - 1;
+            while (lo <= hi)
+            {
+                int i = lo + ((hi - lo) >> 1);
+                var c = array[i];
+                if (c == value) return i;
+                if (c < value) lo = i + 1;
+                else hi = i - 1;
+            }
+            return ~lo;
+        }
         void TurnOn(ushort value)
         {
             var lo = 0;

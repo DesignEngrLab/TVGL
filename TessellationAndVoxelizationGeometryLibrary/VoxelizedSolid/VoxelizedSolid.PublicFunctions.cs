@@ -84,7 +84,7 @@ namespace TVGL.Voxelization
               });
             Count = count.Sum();
             Volume = Count * Math.Pow(VoxelSideLength, 3);
-
+            /*
             var neighbors = new ConcurrentDictionary<int, int>();
             //Parallel.For(0, xLim, i =>
             for (int i = 0; i < numVoxelsX; i++)
@@ -105,6 +105,7 @@ namespace TVGL.Voxelization
             foreach (var v in neighbors.Values)
                 totalNeighbors += v;
             SurfaceArea = 6 * (Count - totalNeighbors / 6) * Math.Pow(VoxelSideLength, 2);
+            */
         }
         #endregion
 
