@@ -157,7 +157,7 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 2000;
+            var res = 200;
 
             Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
@@ -167,11 +167,11 @@ namespace TVGLPresenterDX
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
             //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
             //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
-            Presenter.ShowAndHang(vs);
+           // Presenter.ShowAndHang(vs);
 
             var vs_cut2 = vs.SliceOnFlat(CartesianDirections.XNegative, 87);
             vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
-            Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
+          //  Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
 
             //var vs_cut2 = vs_dense.SliceOnFlat(VoxelDirections.XNegative, 87);
             //vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
@@ -179,17 +179,17 @@ namespace TVGLPresenterDX
 
 
             stopwatch.Restart();
-            var bb_dense = vs.CreateBoundingSolid();
+            var fullBlock = VoxelizedSolid.CreateFullBlock(vs);
             stopwatch.Stop();
             Console.WriteLine("Dense bounding solid   : {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var erd_dense = bb_dense.ErodeToNewSolid(vs, new[] { 0, .471, -.882 }, 0, 0, "flat");
+            var erd_dense = fullBlock.ErodeToNewSolid(vs, new[] { 0, .471, -.882 }, 0, 0, "flat");
             stopwatch.Stop();
             Console.WriteLine("Dense erosion   : {0}", stopwatch.Elapsed);
             erd_dense.SolidColor = new Color(KnownColors.Magenta);
 
-            Presenter.ShowAndHang(erd_dense); //, vs_dense);
+          //  Presenter.ShowAndHang(erd_dense); //, vs_dense);
 
 
             stopwatch.Restart();

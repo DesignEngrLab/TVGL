@@ -16,7 +16,12 @@ namespace TVGL.Voxelization
         public bool this[int xCoord, int yCoord, int zCoord]
         {
             get => voxels[yCoord + zMultiplier * zCoord][xCoord];
-            set => voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
+            set
+            {
+                var voxelRowToChange = voxels[yCoord + zMultiplier * zCoord];
+                lock(voxelRowToChange)
+                    voxelRowToChange[xCoord] = value;
+            }
         }
         //Neighbors functions use VoxelsPerSide
         public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
@@ -110,12 +115,6 @@ namespace TVGL.Voxelization
         #endregion
 
         #region Boolean functions
-        //Boolean functions use BytesPerSide
-        public VoxelizedSolid CreateBoundingSolid()
-        {
-            return VoxelizedSolid.CreateFullBlock(VoxelSideLength, Bounds);
-        }
-
         // NOT A
         public VoxelizedSolid InvertToNewSolid()
         {

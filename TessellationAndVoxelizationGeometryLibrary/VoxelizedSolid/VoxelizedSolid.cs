@@ -57,6 +57,20 @@ namespace TVGL.Voxelization
 
         public VoxelizedSolid(VoxelizedSolid vs) : this()
         {
+            Bounds = new double[2][];
+                Bounds[0] = (double[])vs.Bounds[0].Clone();
+                Bounds[1] = (double[])vs.Bounds[1].Clone();
+            Dimensions = Bounds[1].subtract(Bounds[0]);
+            SolidColor = new Color(vs.SolidColor.A, vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B);
+            VoxelSideLength = vs.VoxelSideLength;
+            numVoxelsX = vs.numVoxelsX;
+            bytesInX = vs.bytesInX;
+            numVoxelsY = vs.numVoxelsY;
+            numVoxelsZ = vs.numVoxelsZ;
+            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
+                voxels[i] = new VoxelRowSparse(vs.voxels[i]);
+            FractionDense = 0;
             UpdateProperties();
         }
 
@@ -143,8 +157,8 @@ namespace TVGL.Voxelization
             var decomp = AllSlicesAlongZ(ts, zBegin, numVoxelsZ, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
-            //Parallel.For(0, zLim, k =>
-            for (var k = 0; k < numVoxelsZ; k++)
+            Parallel.For(0, numVoxelsZ, k =>
+            //for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
                 if (loops.Any())
@@ -166,7 +180,7 @@ namespace TVGL.Voxelization
                         }
                     }
                 }
-            }   //);
+            } );
         }
         private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
@@ -292,6 +306,10 @@ namespace TVGL.Voxelization
         #endregion
 
 
+        public static VoxelizedSolid CreateFullBlock(VoxelizedSolid vs)
+        { 
+            return CreateFullBlock(vs.VoxelSideLength, vs.Bounds);
+        }
         public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<double[]> bounds)
         {
             var fullBlock = new VoxelizedSolid();
@@ -310,7 +328,7 @@ namespace TVGL.Voxelization
             fullBlock.voxels = new IVoxelRow[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
             for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
             {
-                var fullRow = new VoxelRowSparse();
+                var fullRow = new VoxelRowSparse(false);
                 fullRow.indices.Add(0);
                 fullRow.indices.Add((ushort)fullBlock.numVoxelsX);
                 fullBlock.voxels[i] = fullRow;
