@@ -6,9 +6,9 @@ using System.Text;
 
 namespace TVGL.Voxelization
 {
-    internal struct VoxelRowSparse : IVoxelRow
+    public struct VoxelRowSparse : IVoxelRow
     {
-        internal readonly List<ushort> indices;
+        public readonly List<ushort> indices;
 
         public int Count
         {
@@ -23,7 +23,7 @@ namespace TVGL.Voxelization
 
         //because "structs cannot contain explicit parameterless constructors", I'm forced
         //to add the dummy input
-        internal VoxelRowSparse(bool dummy)
+        public VoxelRowSparse(bool dummy)
         {
             indices = new List<ushort>();
         }
@@ -121,7 +121,6 @@ namespace TVGL.Voxelization
             }
             // the value was not found on this, so set that bool then return lo, which is actually
             // the array value just larger than it
-            if (lo < length && array[lo] < value) Console.WriteLine("not lower");
             valueExists = false;
             return lo;
         }
@@ -200,44 +199,65 @@ namespace TVGL.Voxelization
                 indices.Clear();
                 var thisIndex = 0;
                 var otherIndex = 0;
-                var thisIsLower = true;
-                var otherIsLower = true;
-                int lastAdded = -1;
-                while (thisIndex < thisLength && otherIndex < otherLength)
+                bool thisIsLower = false;
+                var otherIsLower = false;
+                var updateThis = true;
+                var updateOther = true;
+                var thisEnded = false;
+                var otherEnded = false;
+                int lastAdded = 0;
+                ushort otherValue = 0;
+                ushort thisValue = 0;
+                while (!thisEnded || !otherEnded)
                 {
-                    var thisValue = indices[thisIndex];
-                    var otherValue = (ushort)(otherIndices[otherIndex] + offset);
-                    if (thisValue < lastAdded)
+                    if (!thisEnded && (updateThis || thisValue < lastAdded))
                     {
                         thisIndex++;
+                        if (thisIndex == thisLength)
+                        {
+                            thisEnded = true;
+                            thisIndex--;
+                        }
+                        else thisValue = thisIndices[thisIndex];
                         thisIsLower = !thisIsLower;
+                        updateThis = false;
                     }
-                    else if (otherValue < lastAdded)
+                    else if (!otherEnded && (updateOther || otherValue < lastAdded))
                     {
                         otherIndex++;
+                        if (otherIndex == otherLength)
+                        {
+                            otherEnded = true;
+                            otherIndex--;
+                        }
+                        else otherValue = (ushort)(otherIndices[otherIndex] + offset);
+                        updateOther = false;
                         otherIsLower = !otherIsLower;
                     }
                     else if (thisIsLower && otherIsLower)
-                    {
+                    {   // if both lists are at lower range values then simply take the lower
+                        // being careful that this could extend the range
                         if (thisValue <= otherValue)
                         {
-                            if (thisValue == lastAdded)
+                            if (thisValue == lastAdded && lastAdded > 0)
                                 indices.RemoveAt(indices.Count - 1);
                             else
                             {
                                 indices.Add(thisValue);
                                 lastAdded = thisValue;
                             }
+                            updateThis = true;
                         }
                         else
                         {
-                            if (otherValue == lastAdded)
+                            if (otherValue == lastAdded && lastAdded > 0)
                                 indices.RemoveAt(indices.Count - 1);
                             else
                             {
                                 indices.Add(otherValue);
                                 lastAdded = otherValue;
                             }
+                            updateOther = true;
                         }
                     }
                     else if (!thisIsLower && otherIsLower)
@@ -246,12 +266,9 @@ namespace TVGL.Voxelization
                         {
                             indices.Add(thisValue);
                             lastAdded = thisValue;
+                            updateThis = true;
                         }
-                        else
-                        {
-                            otherIndex++;
-                            otherIsLower = false;
-                        }
+                        else updateOther = true; //the other value is less than, so it is ignored. move to next useful other value
                     }
                     else if (thisIsLower && !otherIsLower)
                     {
@@ -259,12 +276,10 @@ namespace TVGL.Voxelization
                         {
                             indices.Add(otherValue);
                             lastAdded = otherValue;
+                            otherIndex++;
+                            otherIsLower = true;
                         }
-                        else
-                        {
-                            thisIndex++;
-                            thisIsLower = false;
-                        }
+                        else updateThis = true;
                     }
                     else //then both are upper
                     {
@@ -272,15 +287,13 @@ namespace TVGL.Voxelization
                         {
                             indices.Add(thisValue);
                             lastAdded = thisValue;
-                            thisIndex++;
-                            thisIsLower = true;
+                            updateThis = true;
                         }
                         else
                         {
                             indices.Add(otherValue);
                             lastAdded = otherValue;
-                            otherIndex++;
-                            otherIsLower = true;
+                            updateOther = true;
                         }
                     }
                 }
@@ -334,33 +347,23 @@ namespace TVGL.Voxelization
                     }
                     else if (!thisIsLower && otherIsLower)
                     {
-                        if (thisValue < otherValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                        }
-                        else
-                        {
-                            otherIndex++;
-                            otherIsLower = false;
-                        }
-                    }
-                    else if (thisIsLower && !otherIsLower)
-                    {
-                        if (otherValue < thisValue)
+                        if (thisValue >= otherValue)
                         {
                             indices.Add(otherValue);
                             lastAdded = otherValue;
                         }
-                        else
+                    }
+                    else if (thisIsLower && !otherIsLower)
+                    {
+                        if (otherValue >= thisValue)
                         {
-                            thisIndex++;
-                            thisIsLower = false;
+                            indices.Add(thisValue);
+                            lastAdded = thisValue;
                         }
                     }
                     else //then both are upper
                     {
-                        if (thisValue >= otherValue)
+                        if (thisValue <= otherValue)
                         {
                             indices.Add(thisValue);
                             lastAdded = thisValue;
@@ -380,44 +383,81 @@ namespace TVGL.Voxelization
         }
         public void Subtract(IVoxelRow[] subtrahends, int offset = 0)
         {
-            foreach (var subtrahend in subtrahends)
+            for (int i = 0; i < subtrahends.Length; i++)
             {
-                if (subtrahend is VoxelRowSparse)
+                IVoxelRow other = subtrahends[i];
+                if (other is VoxelRowDense) other = new VoxelRowSparse(other);
+                var otherIndices = ((VoxelRowSparse)other).indices;
+                var otherLength = otherIndices.Count;
+                if (!otherIndices.Any()) continue;
+                var thisIndices = new List<ushort>(indices);
+                var thisLength = thisIndices.Count;
+                indices.Clear();
+                var thisIndex = 0;
+                var otherIndex = 0;
+                var thisIsLower = true;
+                var otherIsLower = true;
+                int lastAdded = -1;
+                while (thisIndex < thisLength && otherIndex < otherLength)
                 {
-                    var subtrahendIndices = ((VoxelRowSparse)subtrahend).indices;
-                    if (!subtrahendIndices.Any()) continue;
-                    var thisIndices = new List<ushort>(indices);
-                    indices.Clear();
-                    var thisReadIndex = 0;
-                    var thisOtherIndex = 0;
-                    var max = -1;
-                    var findingBeginningOfRange = true;
-                    while (thisReadIndex < indices.Count || thisOtherIndex < subtrahendIndices.Count)
+                    var thisValue = indices[thisIndex];
+                    var otherValue = (ushort)(otherIndices[otherIndex] + offset);
+                    if (thisValue < lastAdded)
                     {
-                        if (thisReadIndex == indices.Count) thisReadIndex -= 2;
-                        var thisLo = indices[thisReadIndex];
-                        var thisHi = indices[thisReadIndex + 1];
-                        if (thisOtherIndex == subtrahendIndices.Count) thisOtherIndex -= 2;
-                        var otherLo = (ushort)(subtrahendIndices[thisOtherIndex] + offset);
-                        var otherHi = (ushort)(subtrahendIndices[thisOtherIndex + 1] + offset);
-                        if (thisLo > max && thisLo < otherLo)
-                        {
-                            max = indices[thisWriteIndex++] = thisLo;
-                            continue;
-                        }
-                        if (otherLo > max && otherLo < thisLo)
-                        {
-                            max = indices[thisWriteIndex++] = otherLo;
-                            continue;
-                        }
-                        if (thisHi >= max && thisHi <= otherLo)
-                            max = indices[thisWriteIndex++] = thisHi;
-                        else if (otherLo >= max && otherHi < thisHi)
-                            max = indices[thisWriteIndex++] = (ushort)(otherHi - 1);
-                        thisReadIndex += 2;
-                        thisOtherIndex += 2;
+                        thisIndex++;
+                        thisIsLower = !thisIsLower;
                     }
-                    while (indices.Count > thisWriteIndex + 1) indices.RemoveAt(thisWriteIndex + 1);
+                    else if (otherValue < lastAdded)
+                    {
+                        otherIndex++;
+                        otherIsLower = !otherIsLower;
+                    }
+                    else if (thisIsLower && otherIsLower)
+                    {
+                        if (thisValue >= otherValue)
+                        {
+                            indices.Add(thisValue);
+                            lastAdded = thisValue;
+                        }
+                        else
+                        {
+                            indices.Add(otherValue);
+                            lastAdded = otherValue;
+                        }
+                    }
+                    else if (!thisIsLower && otherIsLower)
+                    {
+                        if (thisValue >= otherValue)
+                        {
+                            indices.Add(otherValue);
+                            lastAdded = otherValue;
+                        }
+                    }
+                    else if (thisIsLower && !otherIsLower)
+                    {
+                        if (otherValue >= thisValue)
+                        {
+                            indices.Add(thisValue);
+                            lastAdded = thisValue;
+                        }
+                    }
+                    else //then both are upper
+                    {
+                        if (thisValue <= otherValue)
+                        {
+                            indices.Add(thisValue);
+                            lastAdded = thisValue;
+                            thisIndex++;
+                            thisIsLower = true;
+                        }
+                        else
+                        {
+                            indices.Add(otherValue);
+                            lastAdded = otherValue;
+                            otherIndex++;
+                            otherIsLower = true;
+                        }
+                    }
                 }
             }
         }

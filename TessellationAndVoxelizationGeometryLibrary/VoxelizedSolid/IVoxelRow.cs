@@ -6,7 +6,7 @@ using System.Text;
 
 namespace TVGL.Voxelization
 {
-    internal interface IVoxelRow
+    public interface IVoxelRow
     {
         bool this[int index] { get; set; }
         int Count { get; }

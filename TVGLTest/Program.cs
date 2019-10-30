@@ -80,6 +80,22 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
+            var r = new Random(1);
+            var len = 100;
+            var thisRow = new VoxelRowSparse(true);
+            var otherRow = new VoxelRowSparse(true);
+            for (int i = 0; i < len; i++)
+            {
+                if (r.NextDouble() > 0.96) thisRow.indices.Add((ushort)i);
+                if (r.NextDouble() > 0.96) otherRow.indices.Add((ushort)i);
+            }
+            if (thisRow.indices.Count % 2 != 0) thisRow.indices.RemoveAt(thisRow.indices.Count - 1);
+            if (otherRow.indices.Count % 2 != 0) otherRow.indices.RemoveAt(otherRow.indices.Count - 1);
+            thisRow.Union(new IVoxelRow[] { otherRow });
+            thisRow.Intersect(new IVoxelRow[] { otherRow });
+            thisRow.Subtract(new IVoxelRow[] { otherRow });
+
+
             //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
