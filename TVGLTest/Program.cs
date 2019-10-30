@@ -80,21 +80,34 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
-            var r = new Random(1);
+            var r = new Random(2);
             var len = 100;
-            var thisRow = new VoxelRowSparse(true);
-            var otherRow = new VoxelRowSparse(true);
-            for (int i = 0; i < len; i++)
+            for (int k = 0; k < 20; k++)
             {
-                if (r.NextDouble() > 0.96) thisRow.indices.Add((ushort)i);
-                if (r.NextDouble() > 0.96) otherRow.indices.Add((ushort)i);
-            }
-            if (thisRow.indices.Count % 2 != 0) thisRow.indices.RemoveAt(thisRow.indices.Count - 1);
-            if (otherRow.indices.Count % 2 != 0) otherRow.indices.RemoveAt(otherRow.indices.Count - 1);
-            thisRow.Union(new IVoxelRow[] { otherRow });
-            thisRow.Intersect(new IVoxelRow[] { otherRow });
-            thisRow.Subtract(new IVoxelRow[] { otherRow });
+                Console.WriteLine("Trial {0}", k);
 
+                var thisSparse = new VoxelRowSparse(true);
+                var otherSparse = new VoxelRowSparse(true);
+                for (int i = 0; i < len; i++)
+                {
+                    if (r.NextDouble() > 0.96) thisSparse.indices.Add((ushort)i);
+                    if (r.NextDouble() > 0.96) otherSparse.indices.Add((ushort)i);
+                }
+                if (thisSparse.indices.Count % 2 != 0) thisSparse.indices.RemoveAt(thisSparse.indices.Count - 1);
+                if (otherSparse.indices.Count % 2 != 0) otherSparse.indices.RemoveAt(otherSparse.indices.Count - 1);
+                var thisDense = new VoxelRowDense(thisSparse, (ushort)((len >> 3) + 1));
+                var otherDense = new VoxelRowDense(otherSparse, (ushort)((len >> 3) + 1));
+
+                //thisDense.Union(new IVoxelRow[] { otherDense });
+                //thisSparse.Union(new IVoxelRow[] { otherSparse });
+                var newSparse = new VoxelRowSparse(thisDense);
+                for (int i = 0; i < thisSparse.indices.Count; i++)
+                {
+                    if (thisSparse.indices[i] != newSparse.indices[i])
+                        Console.WriteLine("this: {0}; other: {1}", thisSparse.indices[i], newSparse.indices[i]);
+                }
+            }
+            Console.ReadKey();
 
             //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);

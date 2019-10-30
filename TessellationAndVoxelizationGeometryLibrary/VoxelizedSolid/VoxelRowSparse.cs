@@ -27,7 +27,7 @@ namespace TVGL.Voxelization
         {
             indices = new List<ushort>();
         }
-        internal VoxelRowSparse(IVoxelRow row)
+        public VoxelRowSparse(IVoxelRow row)
         {
             if (row is VoxelRowSparse)
             {
@@ -44,15 +44,17 @@ namespace TVGL.Voxelization
                     var currentByte = thisByte;
                     for (int j = 0; j < 8; j++)
                     {
-                        var currentVal = (currentByte & 0b1) != 0;
-                        if (currentVal == lastVal) continue;
-                        lastVal = currentVal;
-                        if (currentVal) //then just started a new row of on voxels
-                            indices.Add(i);
-                        else //then just started a new row of off voxels.
-                             //note that since the limits are inclusive, we record the previous one
-                            indices.Add((ushort)(i - 1));
-                        currentByte >>= 1;
+                        var currentVal = (currentByte & 0b10000000) != 0;
+                        if (currentVal != lastVal)
+                        {
+                            lastVal = currentVal;
+                            //if (currentVal) //then just started a new row of on voxels
+                                indices.Add(i);
+                            //else //then just started a new row of off voxels.
+                                 //note that since the limits are inclusive, we record the previous one
+                                //indices.Add((ushort)(i - 1));
+                        }
+                        currentByte <<= 1;
                         i++;
                     }
                 }
@@ -106,10 +108,10 @@ namespace TVGL.Voxelization
         // This binary search is modified/simplified from Array.BinarySearch
         // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int BinarySearch(IList<ushort> array, int length, double value, out bool valueExists)
+        private static int BinarySearch(IList<ushort> array, int length, double value, out bool valueExists, int lowerBound = 0)
         {
             valueExists = true;
-            var lo = 0;
+            var lo = lowerBound;
             var hi = length - 1;
             while (lo <= hi)
             {
@@ -193,113 +195,19 @@ namespace TVGL.Voxelization
                 if (other is VoxelRowDense) other = new VoxelRowSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
-                if (!otherIndices.Any()) continue;
-                var thisIndices = new List<ushort>(indices);
-                var thisLength = thisIndices.Count;
-                indices.Clear();
-                var thisIndex = 0;
-                var otherIndex = 0;
-                bool thisIsLower = false;
-                var otherIsLower = false;
-                var updateThis = true;
-                var updateOther = true;
-                var thisEnded = false;
-                var otherEnded = false;
-                int lastAdded = 0;
-                ushort otherValue = 0;
-                ushort thisValue = 0;
-                while (!thisEnded || !otherEnded)
+                var lowerBound = 0;
+                for (int j = 0; j < otherLength; j += 2)
                 {
-                    if (!thisEnded && (updateThis || thisValue < lastAdded))
-                    {
-                        thisIndex++;
-                        if (thisIndex == thisLength)
-                        {
-                            thisEnded = true;
-                            thisIndex--;
-                        }
-                        else thisValue = thisIndices[thisIndex];
-                        thisIsLower = !thisIsLower;
-                        updateThis = false;
-                    }
-                    else if (!otherEnded && (updateOther || otherValue < lastAdded))
-                    {
-                        otherIndex++;
-                        if (otherIndex == otherLength)
-                        {
-                            otherEnded = true;
-                            otherIndex--;
-                        }
-                        else otherValue = (ushort)(otherIndices[otherIndex] + offset);
-                        updateOther = false;
-                        otherIsLower = !otherIsLower;
-                    }
-                    else if (thisIsLower && otherIsLower)
-                    {   // if both lists are at lower range values then simply take the lower
-                        // being careful that this could extend the range
-                        if (thisValue <= otherValue)
-                        {
-                            if (thisValue == lastAdded && lastAdded > 0)
-                                indices.RemoveAt(indices.Count - 1);
-                            else
-                            {
-                                indices.Add(thisValue);
-                                lastAdded = thisValue;
-                            }
-                            updateThis = true;
-                        }
-                        else
-                        {
-                            if (otherValue == lastAdded && lastAdded > 0)
-                                indices.RemoveAt(indices.Count - 1);
-                            else
-                            {
-                                indices.Add(otherValue);
-                                lastAdded = otherValue;
-                            }
-                            updateOther = true;
-                        }
-                    }
-                    else if (!thisIsLower && otherIsLower)
-                    {
-                        if (thisValue < otherValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                            updateThis = true;
-                        }
-                        else updateOther = true; //the other value is less than, so it is ignored. move to next useful other value
-                    }
-                    else if (thisIsLower && !otherIsLower)
-                    {
-                        if (otherValue < thisValue)
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                            otherIndex++;
-                            otherIsLower = true;
-                        }
-                        else updateThis = true;
-                    }
-                    else //then both are upper
-                    {
-                        if (thisValue >= otherValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                            updateThis = true;
-                        }
-                        else
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                            updateOther = true;
-                        }
-                    }
+                    var lo = otherIndices[j];
+                    var hi = otherIndices[j + 1];
+                    var loIndex = BinarySearch(indices, indices.Count, lo, out _, lowerBound);
+                    lowerBound = loIndex;
+                    var hiIndex = BinarySearch(indices, indices.Count, hi, out _, lowerBound);
+                    lowerBound = hiIndex;
+                    TurnOnRange(lo, loIndex, hi, hiIndex);
                 }
             }
         }
-
 
         public void Intersect(IVoxelRow[] others, int offset = 0)
         {
@@ -309,197 +217,118 @@ namespace TVGL.Voxelization
                 if (other is VoxelRowDense) other = new VoxelRowSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
-                if (!otherIndices.Any()) continue;
-                var thisIndices = new List<ushort>(indices);
-                var thisLength = thisIndices.Count;
-                indices.Clear();
-                var thisIndex = 0;
-                var otherIndex = 0;
-                var thisIsLower = true;
-                var otherIsLower = true;
-                int lastAdded = -1;
-                while (thisIndex < thisLength && otherIndex < otherLength)
+                var lowerBound = 0;
+                var upperBound = indices.Count - 1;
+                for (int j = 0; j < otherLength; j += 2)
                 {
-                    var thisValue = indices[thisIndex];
-                    var otherValue = (ushort)(otherIndices[otherIndex] + offset);
-                    if (thisValue < lastAdded)
-                    {
-                        thisIndex++;
-                        thisIsLower = !thisIsLower;
-                    }
-                    else if (otherValue < lastAdded)
-                    {
-                        otherIndex++;
-                        otherIsLower = !otherIsLower;
-                    }
-                    else if (thisIsLower && otherIsLower)
-                    {
-                        if (thisValue >= otherValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                        }
-                        else
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                        }
-                    }
-                    else if (!thisIsLower && otherIsLower)
-                    {
-                        if (thisValue >= otherValue)
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                        }
-                    }
-                    else if (thisIsLower && !otherIsLower)
-                    {
-                        if (otherValue >= thisValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                        }
-                    }
-                    else //then both are upper
-                    {
-                        if (thisValue <= otherValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                            thisIndex++;
-                            thisIsLower = true;
-                        }
-                        else
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                            otherIndex++;
-                            otherIsLower = true;
-                        }
-                    }
-                }
-            }
-        }
-        public void Subtract(IVoxelRow[] subtrahends, int offset = 0)
-        {
-            for (int i = 0; i < subtrahends.Length; i++)
-            {
-                IVoxelRow other = subtrahends[i];
-                if (other is VoxelRowDense) other = new VoxelRowSparse(other);
-                var otherIndices = ((VoxelRowSparse)other).indices;
-                var otherLength = otherIndices.Count;
-                if (!otherIndices.Any()) continue;
-                var thisIndices = new List<ushort>(indices);
-                var thisLength = thisIndices.Count;
-                indices.Clear();
-                var thisIndex = 0;
-                var otherIndex = 0;
-                var thisIsLower = true;
-                var otherIsLower = true;
-                int lastAdded = -1;
-                while (thisIndex < thisLength && otherIndex < otherLength)
-                {
-                    var thisValue = indices[thisIndex];
-                    var otherValue = (ushort)(otherIndices[otherIndex] + offset);
-                    if (thisValue < lastAdded)
-                    {
-                        thisIndex++;
-                        thisIsLower = !thisIsLower;
-                    }
-                    else if (otherValue < lastAdded)
-                    {
-                        otherIndex++;
-                        otherIsLower = !otherIsLower;
-                    }
-                    else if (thisIsLower && otherIsLower)
-                    {
-                        if (thisValue >= otherValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                        }
-                        else
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                        }
-                    }
-                    else if (!thisIsLower && otherIsLower)
-                    {
-                        if (thisValue >= otherValue)
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                        }
-                    }
-                    else if (thisIsLower && !otherIsLower)
-                    {
-                        if (otherValue >= thisValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                        }
-                    }
-                    else //then both are upper
-                    {
-                        if (thisValue <= otherValue)
-                        {
-                            indices.Add(thisValue);
-                            lastAdded = thisValue;
-                            thisIndex++;
-                            thisIsLower = true;
-                        }
-                        else
-                        {
-                            indices.Add(otherValue);
-                            lastAdded = otherValue;
-                            otherIndex++;
-                            otherIsLower = true;
-                        }
-                    }
+                    var lo = otherIndices[j];
+                    var hi = otherIndices[j + 1];
+                    var loIndex = BinarySearch(indices, upperBound, lo, out _, lowerBound);
+                    lowerBound = loIndex;
+                    var hiIndex = BinarySearch(indices, upperBound, hi, out _, lowerBound);
+                    lowerBound = hiIndex;
+                    TurnOnRange(lo, loIndex, hi, hiIndex);
                 }
             }
         }
 
-        public void TurnOnRange(int lo, int hi)
+        public void Subtract(IVoxelRow[] subtrahends, int offset = 0)
         {
-            var ulo = (ushort)lo;
-            var uhi = (ushort)hi;
-            if (ulo == uhi)
+            for (int i = 0; i < subtrahends.Length; i++)
             {
-                TurnOn(ulo);
+                IVoxelRow subtrahend = subtrahends[i];
+                if (subtrahend is VoxelRowDense) subtrahend = new VoxelRowSparse(subtrahend);
+                var otherIndices = ((VoxelRowSparse)subtrahend).indices;
+                var otherLength = otherIndices.Count;
+                var lowerBound = 0;
+                var upperBound = indices.Count - 1;
+                for (int j = 0; j < otherLength; j += 2)
+                {
+                    var lo = otherIndices[j];
+                    var hi = otherIndices[j + 1];
+                    var loIndex = BinarySearch(indices, upperBound, lo, out _, lowerBound);
+                    lowerBound = loIndex;
+                    var hiIndex = BinarySearch(indices, upperBound, hi, out _, lowerBound);
+                    lowerBound = hiIndex;
+                    TurnOffRange(lo, loIndex, hi, hiIndex);
+                }
+            }
+        }
+        public void TurnOnRange(ushort lo, ushort hi)
+        {
+            if (lo == hi)
+            {
+                TurnOn(lo);
                 return;
             }
             var count = indices.Count;
             if (count == 0)
             {   //since there are no voxels add this one a a lone lower and upper range.
-                indices.Add(ulo);
-                indices.Add(uhi);
+                indices.Add(lo);
+                indices.Add(hi);
                 return;
             }
-            var loIndex = BinarySearch(indices, count, lo, out var loExists);
-            var hiIndex = BinarySearch(indices, count, hi, out var hiExists);
-            if (loIndex == hiIndex)
-            {
-                indices.Insert(loIndex, uhi);
-                indices.Insert(loIndex, ulo);
-                return;
-            }
+            var loIndex = BinarySearch(indices, count, lo, out _);
+            var hiIndex = BinarySearch(indices, count, hi, out _);
+            TurnOnRange(lo, loIndex, hi, hiIndex);
+        }
+
+        private void TurnOnRange(ushort lo, int loIndex, ushort hi, int hiIndex)
+        {
             for (int i = loIndex; i < hiIndex; i++)
                 indices.RemoveAt(loIndex);
-            /*** this is too hard to figure out right now and it's not being used. So, 
-             * I'm stopping until a use case arrives.
-            if (loExists && (i & 0b1) == 0) //even means bottom of range and it's less 
-            {
-                if 
-            }
-            */
-
+            if ((hiIndex & 0b1) == 0) indices.Insert(loIndex, hi);
+            if ((loIndex & 0b1) == 0)
+                indices.Insert(loIndex, lo);
         }
-        public void TurnOffRange(int lo, int hi)
+
+        public void TurnOffRange(ushort lo, ushort hi)
         {
-            throw new NotImplementedException();
+            var count = indices.Count;
+            if (count == 0) return;
+            if (lo == hi)
+            {
+                TurnOff(lo);
+                return;
+            }
+            var loIndex = BinarySearch(indices, count, lo--, out _);
+            var hiIndex = BinarySearch(indices, count, hi++, out _);
+            TurnOffRange(lo, loIndex, hi, hiIndex);
+        }
+
+        private void TurnOffRange(ushort lo, int loIndex, ushort hi, int hiIndex)
+        {
+            for (int i = loIndex; i < hiIndex; i++)
+                indices.RemoveAt(loIndex);
+            if ((hiIndex & 0b1) == 0) indices.Insert(loIndex, hi);
+            if ((loIndex & 0b1) != 0)
+                indices.Insert(loIndex, lo);
+        }
+        public void IntersectRange(ushort lo, ushort hi)
+        {
+            if (lo == hi)
+            {
+                TurnOn(lo);
+                return;
+            }
+            var count = indices.Count;
+            if (count == 0)
+            {   //since there are no voxels add this one a a lone lower and upper range.
+                indices.Add(lo);
+                indices.Add(hi);
+                return;
+            }
+            var loIndex = BinarySearch(indices, count, lo, out _);
+            var hiIndex = BinarySearch(indices, count, hi, out _);
+            IntersectRange(lo, loIndex, hi, hiIndex);
+        }
+
+        private void IntersectRange(ushort lo, int loIndex, ushort hi, int hiIndex)
+        {
+            for (int i = loIndex; i < hiIndex; i++)
+                indices.RemoveAt(loIndex);
+            if ((hiIndex & 0b1) == 0) indices.Insert(loIndex, hi);
+            if ((loIndex & 0b1) == 0) indices.Insert(loIndex, lo);
         }
     }
 }

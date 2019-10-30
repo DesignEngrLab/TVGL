@@ -6,7 +6,7 @@ using System.Text;
 
 namespace TVGL.Voxelization
 {
-    internal struct VoxelRowDense : IVoxelRow
+    public struct VoxelRowDense : IVoxelRow
     {
         internal readonly byte[] values;
         readonly int numBytes;
@@ -15,7 +15,7 @@ namespace TVGL.Voxelization
             this.numBytes = numBytes;
             values = new byte[numBytes];
         }
-        internal VoxelRowDense(IVoxelRow row, ushort numBytes) : this(numBytes)
+        public VoxelRowDense(IVoxelRow row, ushort numBytes) : this(numBytes)
         {
             if (row is VoxelRowSparse)
             {
@@ -108,7 +108,7 @@ namespace TVGL.Voxelization
             }
         }
 
-        public void TurnOnRange(int lo, int hi)
+        public void TurnOnRange(ushort lo, ushort hi)
         {
             var xByte = lo >> 3;
             var xByteEnd = hi >> 3;
@@ -139,7 +139,7 @@ namespace TVGL.Voxelization
                 default: break;
             }
         }
-        public void TurnOffRange(int lo, int hi)
+        public void TurnOffRange(ushort lo, ushort hi)
         {
             var xByte = lo >> 3;
             var xByteEnd = hi >> 3;
@@ -196,7 +196,7 @@ namespace TVGL.Voxelization
                 }
             }
         }
-        void IntersectRange(int lo, int hi)
+       public void IntersectRange(ushort lo, ushort hi)
         {
             var xByte = lo >> 3;
             var xByteEnd = hi >> 3;
