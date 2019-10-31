@@ -1,21 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace TVGL.Voxelization
 {
-    public struct VoxelRowDense : IVoxelRow
+    /// <summary>
+    /// VoxelRowDense represents the dense array of bits for this line of voxels
+    /// </summary>
+    /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
+    internal struct VoxelRowDense : IVoxelRow
     {
+        /// <summary>
+        /// The values is the byte array where each bit corresponds to whether or not
+        /// a voxel is on or off
+        /// </summary>
         internal readonly byte[] values;
         readonly int numBytes;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelRowDense"/> struct.
+        /// </summary>
+        /// <param name="numBytes">The number bytes.</param>
         internal VoxelRowDense(ushort numBytes)
         {
             this.numBytes = numBytes;
             values = new byte[numBytes];
         }
-        public VoxelRowDense(IVoxelRow row, ushort numBytes) : this(numBytes)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelRowDense"/> struct.
+        /// This is typically used to copy an existing dense row, or convert from 
+        /// a sparse row.
+        /// </summary>
+        /// <param name="row">The row.</param>
+        /// <param name="numBytes">The number bytes.</param>
+        internal VoxelRowDense(IVoxelRow row, ushort numBytes) : this(numBytes)
         {
             if (row is VoxelRowSparse)
             {
@@ -30,22 +46,43 @@ namespace TVGL.Voxelization
             }
         }
 
-        public bool this[int index]
+        /// <summary>
+        /// Gets or sets the <see cref="System.Boolean"/> at the specified xCoord.
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Boolean"/>.
+        /// </value>
+        /// <param name="index">The xCoord.</param>
+        /// <returns></returns>
+        public bool this[int xCoord]
         {
-            get => GetValue(index);
-            set { if (value) TurnOn(index); else TurnOff(index); }
+            get => GetValue(xCoord >> 3, xCoord & 7);
+            set
+            {
+                if (value) TurnOn(xCoord >> 3, xCoord & 7);
+                else TurnOff(xCoord >> 3, xCoord & 7);
+            }
         }
 
-        bool GetValue(int xCoord)
-        { return GetValue(xCoord >> 3, xCoord & 7); }
+        /// <summary>
+        /// Gets the value.
+        /// </summary>
+        /// <param name="byteCoord">The byte coord.</param>
+        /// <param name="bitPosition">The bit position.</param>
+        /// <returns></returns>
         bool GetValue(int byteCoord, int bitPosition)
         {
             return (values[byteCoord] & (0b1 << bitPosition)) != 0;
         }
-        public (bool, bool) GetNeighbors(int index)
+        /// <summary>
+        /// Gets the lower-x neighbor and the upper-x neighbor for the one at xCoord.
+        /// </summary>
+        /// <param name="xCoord"></param>
+        /// <returns></returns>
+        public (bool, bool) GetNeighbors(int xCoord)
         {
-            var bytePos = index >> 3;
-            var bitPos = index & 7;
+            var bytePos = xCoord >> 3;
+            var bitPos = xCoord & 7;
             var lowerNeighbor = (bitPos == 0)
                  ? (bytePos > 0)
                      ? GetValue(bytePos - 1, 7) : false
@@ -57,14 +94,23 @@ namespace TVGL.Voxelization
                 : GetValue(bytePos, bitPos + 1);
             return (lowerNeighbor, upperNeighbor);
         }
-        void TurnOn(int xCoord)
-        { TurnOn(xCoord >> 3, xCoord & 7); }
+
+
+        /// <summary>
+        /// Turns the on.
+        /// </summary>
+        /// <param name="byteCoord">The byte coord.</param>
+        /// <param name="bitPosition">The bit position.</param>
         void TurnOn(int byteCoord, int bitPosition)
         {
             values[byteCoord] |= (byte)(0b1 << bitPosition);
         }
-        void TurnOff(int xCoord)
-        { TurnOff(xCoord >> 3, xCoord & 7); }
+
+        /// <summary>
+        /// Turns the off.
+        /// </summary>
+        /// <param name="byteCoord">The byte coord.</param>
+        /// <param name="bitPosition">The bit position.</param>
         void TurnOff(int byteCoord, int bitPosition)
         {
             if (bitPosition == 0) values[byteCoord] &= 0b11111110;
@@ -76,6 +122,12 @@ namespace TVGL.Voxelization
             else if (bitPosition == 6) values[byteCoord] &= 0b10111111;
             else values[byteCoord] &= 0b01111111;
         }
+        /// <summary>
+        /// Gets the number of voxels in this row.
+        /// </summary>
+        /// <value>
+        /// The count.
+        /// </value>
         public int Count
         {
             get
@@ -97,6 +149,11 @@ namespace TVGL.Voxelization
             }
         }
 
+        /// <summary>
+        /// Turns all the voxels within the range to on/true.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="hi">The hi.</param>
         public void TurnOnRange(ushort lo, ushort hi)
         {
             var startByte = lo >> 3;
@@ -118,6 +175,11 @@ namespace TVGL.Voxelization
             values[startByte] |= hiMask;
         }
 
+        /// <summary>
+        /// Turns all the voxels within the range to off/false.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="hi">The hi.</param>
         public void TurnOffRange(ushort lo, ushort hi)
         {
             var startByte = lo >> 3;
@@ -139,13 +201,20 @@ namespace TVGL.Voxelization
             values[startByte] &= hiMask;
         }
 
+        /// <summary>
+        /// Intersects the specified other rows with this row.
+        /// </summary>
+        /// <param name="others">The others.</param>
+        /// <param name="offset">The offset.</param>
+        /// <exception cref="ArgumentException">Intersect of Dense Voxels currently" +
+        ///                   " does not support an offset.</exception>
         public void Intersect(IVoxelRow[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Intersect of Dense Voxels currently" +
                   " does not support an offset.");
             else Intersect(others);
         }
-        public void Intersect(IVoxelRow[] others)
+        internal void Intersect(IVoxelRow[] others)
         {
             foreach (var item in others)
             {
@@ -165,13 +234,20 @@ namespace TVGL.Voxelization
             }
         }
 
+        /// <summary>
+        /// Subtracts the specified subtrahend rows from this row.
+        /// </summary>
+        /// <param name="subtrahends">The subtrahends.</param>
+        /// <param name="offset">The offset.</param>
+        /// <exception cref="ArgumentException">Subtract of Dense Voxels currently" +
+        ///                   " does not support an offset.</exception>
         public void Subtract(IVoxelRow[] subtrahends, int offset)
         {
             if (offset != 0) throw new ArgumentException("Subtract of Dense Voxels currently" +
                   " does not support an offset.");
             else Union(subtrahends);
         }
-        public void Subtract(IVoxelRow[] subtrahends)
+        internal void Subtract(IVoxelRow[] subtrahends)
         {
             foreach (var item in subtrahends)
             {
@@ -191,13 +267,20 @@ namespace TVGL.Voxelization
             }
         }
 
+        /// <summary>
+        /// Unions the specified other rows with this row.
+        /// </summary>
+        /// <param name="others">The others.</param>
+        /// <param name="offset">The offset.</param>
+        /// <exception cref="ArgumentException">Union of Dense Voxels currently" +
+        ///                   " does not support an offset.</exception>
         public void Union(IVoxelRow[] others, int offset)
         {
             if (offset != 0) throw new ArgumentException("Union of Dense Voxels currently" +
                   " does not support an offset.");
             else Union(others);
         }
-        public void Union(IVoxelRow[] others)
+        internal void Union(IVoxelRow[] others)
         {
             foreach (var item in others)
             {

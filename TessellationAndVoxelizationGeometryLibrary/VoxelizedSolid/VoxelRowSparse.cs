@@ -6,10 +6,26 @@ using System.Text;
 
 namespace TVGL.Voxelization
 {
-    public struct VoxelRowSparse : IVoxelRow
+    /// <summary>
+    /// VoxelRowSparse represents a sparse array of bits for this line of voxels
+    /// </summary>
+    /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
+    internal struct VoxelRowSparse : IVoxelRow
     {
-        public readonly List<ushort> indices;
+        /// <summary>
+        /// The indices are pairs of ranges of on-voxels, where the lo value is the position
+        /// of the first voxel in a row. These are always at the even positions in the List.
+        /// The odd positions are the ends of each range and these values are excluded from 
+        /// the range. They are the first off-voxel.
+        /// </summary>
+        internal readonly List<ushort> indices;
 
+        /// <summary>
+        /// Gets the number of voxels in this row.
+        /// </summary>
+        /// <value>
+        /// The count.
+        /// </value>
         public int Count
         {
             get
@@ -23,11 +39,21 @@ namespace TVGL.Voxelization
 
         //because "structs cannot contain explicit parameterless constructors", I'm forced
         //to add the dummy input
-        public VoxelRowSparse(bool dummy)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelRowSparse"/> struct.
+        /// because "structs cannot contain explicit parameterless constructors", 
+        /// We are forced to add the dummy input.
+        /// </summary>
+        /// <param name="dummy">if set to <c>true</c> [dummy].</param>
+        internal VoxelRowSparse(bool dummy)
         {
             indices = new List<ushort>();
         }
-        public VoxelRowSparse(IVoxelRow row)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelRowSparse"/> struct.
+        /// </summary>
+        /// <param name="row">The row.</param>
+        internal VoxelRowSparse(IVoxelRow row)
         {
             if (row is VoxelRowSparse)
             {
@@ -57,6 +83,14 @@ namespace TVGL.Voxelization
                 if (lastVal) indices.Add(i);
             }
         }
+        /// <summary>
+        /// Gets or sets the <see cref="System.Boolean"/> at the specified index.
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Boolean"/>.
+        /// </value>
+        /// <param name="index">The index.</param>
+        /// <returns></returns>
         public bool this[int index]
         {
             get => GetValue(index);
@@ -76,31 +110,36 @@ namespace TVGL.Voxelization
             BinarySearch(indices, count, index, out var _, out var voxelIsOn);
             return voxelIsOn;
         }
-        public (bool, bool) GetNeighbors(int index)
+        /// <summary>
+        /// Gets the lower-x neighbor and the upper-x neighbor for the one at xCoord.
+        /// </summary>
+        /// <param name="xCoord"></param>
+        /// <returns></returns>
+        public (bool, bool) GetNeighbors(int xCoord)
         {
             var count = indices.Count;
             if (count == 0) return (false, false);
-            if (index == 0)
+            if (xCoord == 0)
             {
-                var upperNeighber = GetValue(index + 1);
+                var upperNeighber = GetValue(xCoord + 1);
                 return (false, upperNeighber);
             }
-            var i = BinarySearch(indices, count, index, out var valueExists, out var voxelIsOn);
+            var i = BinarySearch(indices, count, xCoord, out var valueExists, out var voxelIsOn);
             if (voxelIsOn) //then index is a value in this list - either a lower or upper range
             {
                 if (valueExists) //then must be at the beginning of the range and the previous voxel is off, but this could
                                  //a lone voxel, so need to check next.
-                    return (false, index + 1 < indices[i + 1]);
+                    return (false, xCoord + 1 < indices[i + 1]);
                 else //the current is on and not the beginning of the range, but this next could be off
-                    return (true, index + 1 < indices[i]);
+                    return (true, xCoord + 1 < indices[i]);
             }
             else //the current voxel is off
             {
                 if (valueExists) //then current is end of range which means previous is on, current is off, but next could be 
                     //start of new range 
-                    return (true, index + 1 == indices[i + 1]);
+                    return (true, xCoord + 1 == indices[i + 1]);
                 else  //but neighbors could be inside
-                    return (false, index + 1 == indices[i]);
+                    return (false, xCoord + 1 == indices[i]);
             }
         }
         // This binary search is modified/simplified from Array.BinarySearch
@@ -170,6 +209,11 @@ namespace TVGL.Voxelization
             }
         }
 
+        /// <summary>
+        /// Unions the specified other rows with this row.
+        /// </summary>
+        /// <param name="others">The others.</param>
+        /// <param name="offset">The offset.</param>
         public void Union(IVoxelRow[] others, int offset = 0)
         {
             for (int i = 0; i < others.Length; i++)
@@ -183,6 +227,11 @@ namespace TVGL.Voxelization
                     TurnOnRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
             }
         }
+        /// <summary>
+        /// Intersects the specified other rows with this row.
+        /// </summary>
+        /// <param name="others">The others.</param>
+        /// <param name="offset">The offset.</param>
         public void Intersect(IVoxelRow[] others, int offset = 0)
         {
             for (int i = 0; i < others.Length; i++)
@@ -204,6 +253,11 @@ namespace TVGL.Voxelization
             }
         }
 
+        /// <summary>
+        /// Subtracts the specified subtrahend rows from this row.
+        /// </summary>
+        /// <param name="subtrahends">The subtrahends.</param>
+        /// <param name="offset">The offset.</param>
         public void Subtract(IVoxelRow[] subtrahends, int offset = 0)
         {
             for (int i = 0; i < subtrahends.Length; i++)
@@ -217,6 +271,11 @@ namespace TVGL.Voxelization
                     TurnOffRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
             }
         }
+        /// <summary>
+        /// Turns all the voxels within the range to on/true.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="hi">The hi.</param>
         public void TurnOnRange(ushort lo, ushort hi)
         {
             var dummy = 0;
@@ -266,6 +325,11 @@ namespace TVGL.Voxelization
             }
         }
 
+        /// <summary>
+        /// Turns all the voxels within the range to off/false.
+        /// </summary>
+        /// <param name="lo">The lo.</param>
+        /// <param name="hi">The hi.</param>
         public void TurnOffRange(ushort lo, ushort hi)
         {
             var dummy = 0;
