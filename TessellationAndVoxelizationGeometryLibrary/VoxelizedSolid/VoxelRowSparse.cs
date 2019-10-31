@@ -16,7 +16,7 @@ namespace TVGL.Voxelization
             {
                 var sum = 0;
                 for (int i = 0; i < indices.Count - 1; i += 2)
-                    sum += 1 + indices[i + 1] - indices[i];
+                    sum += indices[i + 1] - indices[i];
                 return sum;
             }
         }
@@ -48,23 +48,24 @@ namespace TVGL.Voxelization
                         if (currentVal != lastVal)
                         {
                             lastVal = currentVal;
-                            //if (currentVal) //then just started a new row of on voxels
-                                indices.Add(i);
-                            //else //then just started a new row of off voxels.
-                                 //note that since the limits are inclusive, we record the previous one
-                                //indices.Add((ushort)(i - 1));
+                            indices.Add(i);
                         }
                         currentByte <<= 1;
                         i++;
                     }
                 }
-                if (denseRow[i]) indices.Add(i);
+                if (lastVal) indices.Add(i);
             }
         }
         public bool this[int index]
         {
             get => GetValue(index);
-            set { if (value) TurnOn((ushort)index); else TurnOff((ushort)index); }
+            set
+            {
+                var dummy = 0;
+                if (value) TurnOn((ushort)index, ref dummy);
+                else TurnOff((ushort)index, ref dummy);
+            }
         }
 
 
@@ -72,12 +73,8 @@ namespace TVGL.Voxelization
         {
             var count = indices.Count;
             if (count == 0 || index < indices[0] || index > indices[count - 1]) return false;
-            var i = BinarySearch(indices, count, index, out var valueExists);
-            if (valueExists) //then index is a value in this list - either a lower or upper range
-                             //but since ranges are inclusive, then it is clearly 'on'/true
-                return true;
-            else return (i & 0b1) != 0; //if i is odd, then that corresponds to the top of the range
-                                        //which means index is less than a top and greater than a bottom. 
+            BinarySearch(indices, count, index, out var _, out var voxelIsOn);
+            return voxelIsOn;
         }
         public (bool, bool) GetNeighbors(int index)
         {
@@ -88,27 +85,28 @@ namespace TVGL.Voxelization
                 var upperNeighber = GetValue(index + 1);
                 return (false, upperNeighber);
             }
-            var i = BinarySearch(indices, count, index, out var valueExists);
-            if (valueExists) //then index is a value in this list - either a lower or upper range
+            var i = BinarySearch(indices, count, index, out var valueExists, out var voxelIsOn);
+            if (voxelIsOn) //then index is a value in this list - either a lower or upper range
             {
-                if ((i & 0b1) != 0) //odd means top of range, but bottom? need to check if a lone voxel
-                    return (index - 1 >= indices[i - 1], false);
-                else //even bottom of the range, check upper neighbor is in range or is it a lone voxel
-                    return (false, index + 1 <= indices[i + 1]);
+                if (valueExists) //then must be at the beginning of the range and the previous voxel is off, but this could
+                                 //a lone voxel, so need to check next.
+                    return (false, index + 1 < indices[i + 1]);
+                else //the current is on and not the beginning of the range, but this next could be off
+                    return (true, index + 1 < indices[i]);
             }
-            else
+            else //the current voxel is off
             {
-                if ((i & 0b1) == 0) //even means bottom of range and it's less so index is outside, 
-                                    //but neighbors could be inside
-                    return (index - 1 <= indices[i - 1], index + 1 >= indices[i]);
-                else //odd so comfortably in a range. there is only one result
-                    return (true, true);
+                if (valueExists) //then current is end of range which means previous is on, current is off, but next could be 
+                    //start of new range 
+                    return (true, index + 1 == indices[i + 1]);
+                else  //but neighbors could be inside
+                    return (false, index + 1 == indices[i]);
             }
         }
         // This binary search is modified/simplified from Array.BinarySearch
         // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int BinarySearch(IList<ushort> array, int length, double value, out bool valueExists, int lowerBound = 0)
+        private static int BinarySearch(IList<ushort> array, int length, double value, out bool valueExists, out bool voxelIsOn, int lowerBound = 0)
         {
             valueExists = true;
             var lo = lowerBound;
@@ -117,73 +115,58 @@ namespace TVGL.Voxelization
             {
                 int i = lo + ((hi - lo) >> 1);
                 var c = array[i];
-                if (c == value) return i; //note the '=='. the value exists in the list, so return
+                if (c == value)
+                {
+                    voxelIsOn = (i & 0b1) == 0;
+                    return i; //note the '=='. the value exists in the list, so return
+                }
                 if (c < value) lo = i + 1;
                 else hi = i - 1;
             }
             // the value was not found on this, so set that bool then return lo, which is actually
             // the array value just larger than it
             valueExists = false;
+            voxelIsOn = (lo & 0b1) != 0;
             return lo;
         }
-        void TurnOn(ushort value)
+
+        void TurnOn(ushort value, ref int index)
         {
             var count = indices.Count;
             if (count == 0)
             {   //since there are no voxels add this one a a lone lower and upper range.
                 indices.Add(value);
-                indices.Add(value);
+                indices.Add((ushort)(value + 1));
+                index = 1;
                 return;
             }
-            var i = BinarySearch(indices, count, value, out var valueExists);
-            if (valueExists) return; //if value exists there is nothing to do
-            if ((i & 0b1) == 0) //even means bottom of range and it's less 
-                                //so index is outside. we need to add it twice since it 
-                                //is both the beginning and end of its range - however it
-                                //could be adding to the previous or next range.
+            index = BinarySearch(indices, count, value, out var valueExists, out var voxelIsOn);
+            if (voxelIsOn) return; //it's already on
+            if (valueExists) indices[index]++;
+            else
             {
-                if (value + 1 == indices[i])
-                    indices[i]--;
-                else if (value - 1 == indices[i - 1])
-                    indices[i - 1]++;
-                else
-                {
-                    indices.Insert(i, value);
-                    indices.Insert(i, value);
-                }
+                indices.Insert(index, (ushort)(value + 1));
+                indices.Insert(index, value);
+                index++;
             }
         }
-        void TurnOff(ushort value)
+
+        void TurnOff(ushort value, ref int index)
         {
             var count = indices.Count;
-            if (count == 0) return; //nothing to do. there are no voxels anyway
-            var i = BinarySearch(indices, count, value, out var valueExists);
-            if (valueExists) // i is positive when the value is on the list
+            if (count == 0)
             {
-                if ((i & 0b1) == 0) // even means bottom of a range
-                {
-                    if (indices[i] == indices[i + 1]) //if its a lone voxel, then need to remove range
-                    {
-                        indices.RemoveAt(i);
-                        indices.RemoveAt(i);
-                    }
-                    else indices[i]++; //otherwise move up bottom by one
-                }
-                else //top of the range
-                {
-                    if (indices[i] == indices[i - 1]) //if its a lone voxel, then need to remove range
-                    {
-                        indices.RemoveAt(i - 1);
-                        indices.RemoveAt(i - 1);
-                    }
-                    else indices[i]--; //otherwise move down the top of range by one
-                }
+                index = 0;
+                return; //nothing to do. there are no voxels anyway
             }
-            else if ((i & 0b1) != 0) //odd means top of range so comfortable within a string of on voxels 
-                                     //need to make a hole...given inclusive range, this one is a little unintuitive
+            index = BinarySearch(indices, count, value, out var valueExists, out var voxelIsOn);
+            if (!voxelIsOn) return; //it's already off
+            if (valueExists) indices[index]++;
+            else
             {
-                indices.Insert(i, (ushort)(value + 1));
-                indices.Insert(i, (ushort)(value - 1));
+                indices.Insert(index, (ushort)(value + 1));
+                indices.Insert(index, value);
+                index++;
             }
         }
 
@@ -195,20 +178,11 @@ namespace TVGL.Voxelization
                 if (other is VoxelRowDense) other = new VoxelRowSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
-                var lowerBound = 0;
+                var indexLowerBound = 0;
                 for (int j = 0; j < otherLength; j += 2)
-                {
-                    var lo = otherIndices[j];
-                    var hi = otherIndices[j + 1];
-                    var loIndex = BinarySearch(indices, indices.Count, lo, out _, lowerBound);
-                    lowerBound = loIndex;
-                    var hiIndex = BinarySearch(indices, indices.Count, hi, out _, lowerBound);
-                    lowerBound = hiIndex;
-                    TurnOnRange(lo, loIndex, hi, hiIndex);
-                }
+                    TurnOnRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
             }
         }
-
         public void Intersect(IVoxelRow[] others, int offset = 0)
         {
             for (int i = 0; i < others.Length; i++)
@@ -217,18 +191,9 @@ namespace TVGL.Voxelization
                 if (other is VoxelRowDense) other = new VoxelRowSparse(other);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
-                var lowerBound = 0;
-                var upperBound = indices.Count - 1;
+                var indexLowerBound = 0;
                 for (int j = 0; j < otherLength; j += 2)
-                {
-                    var lo = otherIndices[j];
-                    var hi = otherIndices[j + 1];
-                    var loIndex = BinarySearch(indices, upperBound, lo, out _, lowerBound);
-                    lowerBound = loIndex;
-                    var hiIndex = BinarySearch(indices, upperBound, hi, out _, lowerBound);
-                    lowerBound = hiIndex;
-                    TurnOnRange(lo, loIndex, hi, hiIndex);
-                }
+                    TurnOnRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
             }
         }
 
@@ -240,95 +205,67 @@ namespace TVGL.Voxelization
                 if (subtrahend is VoxelRowDense) subtrahend = new VoxelRowSparse(subtrahend);
                 var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                 var otherLength = otherIndices.Count;
-                var lowerBound = 0;
-                var upperBound = indices.Count - 1;
+                var indexLowerBound = 0;
                 for (int j = 0; j < otherLength; j += 2)
-                {
-                    var lo = otherIndices[j];
-                    var hi = otherIndices[j + 1];
-                    var loIndex = BinarySearch(indices, upperBound, lo, out _, lowerBound);
-                    lowerBound = loIndex;
-                    var hiIndex = BinarySearch(indices, upperBound, hi, out _, lowerBound);
-                    lowerBound = hiIndex;
-                    TurnOffRange(lo, loIndex, hi, hiIndex);
-                }
+                    TurnOffRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
             }
         }
         public void TurnOnRange(ushort lo, ushort hi)
         {
-            if (lo == hi)
-            {
-                TurnOn(lo);
-                return;
-            }
+            var dummy = 0;
+            TurnOnRange(lo, hi, ref dummy);
+        }
+        private void TurnOnRange(ushort lo, ushort hi, ref int indexLowerBound)
+        {
             var count = indices.Count;
             if (count == 0)
             {   //since there are no voxels add this one a a lone lower and upper range.
                 indices.Add(lo);
                 indices.Add(hi);
+                indexLowerBound = 1;
                 return;
             }
-            var loIndex = BinarySearch(indices, count, lo, out _);
-            var hiIndex = BinarySearch(indices, count, hi, out _);
-            TurnOnRange(lo, loIndex, hi, hiIndex);
+            var loIndex = BinarySearch(indices, indices.Count, lo, out var loValueExists, out var loVoxelIsOn, indexLowerBound);
+            indexLowerBound = loIndex;
+            var hiIndex = BinarySearch(indices, indices.Count, hi, out var hiValueExists, out var hiVoxelIsOn, indexLowerBound);
+            indexLowerBound = hiIndex;
+            TurnOnRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn);
         }
-
-        private void TurnOnRange(ushort lo, int loIndex, ushort hi, int hiIndex)
+        private void TurnOnRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex, bool hiValueExists, bool hiVoxelIsOn)
         {
+            //if (loValueExists && loVoxelIsOn) loIndex++;
+            if (hiValueExists && !hiVoxelIsOn) hiIndex++;
             for (int i = loIndex; i < hiIndex; i++)
                 indices.RemoveAt(loIndex);
-            if ((hiIndex & 0b1) == 0) indices.Insert(loIndex, hi);
-            if ((loIndex & 0b1) == 0)
-                indices.Insert(loIndex, lo);
+            if (!hiVoxelIsOn) indices.Insert(loIndex, hi);
+            if (!loVoxelIsOn) indices.Insert(loIndex, lo);
         }
 
         public void TurnOffRange(ushort lo, ushort hi)
         {
+            var dummy = 0;
+            TurnOffRange(lo, hi, ref dummy);
+        }
+
+        private void TurnOffRange(ushort lo, ushort hi, ref int indexLowerBound)
+        {
             var count = indices.Count;
             if (count == 0) return;
-            if (lo == hi)
-            {
-                TurnOff(lo);
-                return;
-            }
-            var loIndex = BinarySearch(indices, count, lo--, out _);
-            var hiIndex = BinarySearch(indices, count, hi++, out _);
-            TurnOffRange(lo, loIndex, hi, hiIndex);
+            var loIndex = BinarySearch(indices, indices.Count, lo, out var loValueExists, out var loVoxelIsOn, indexLowerBound);
+            indexLowerBound = loIndex;
+            var hiIndex = BinarySearch(indices, indices.Count, hi, out var hiValueExists, out var hiVoxelIsOn, indexLowerBound);
+            indexLowerBound = hiIndex;
+            TurnOffRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn);
         }
 
-        private void TurnOffRange(ushort lo, int loIndex, ushort hi, int hiIndex)
+        private void TurnOffRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex, bool hiValueExists, bool hiVoxelIsOn)
         {
+            if (loValueExists && !loVoxelIsOn) loIndex++;
+            if (hiValueExists && hiVoxelIsOn) hiIndex--;
             for (int i = loIndex; i < hiIndex; i++)
                 indices.RemoveAt(loIndex);
-            if ((hiIndex & 0b1) == 0) indices.Insert(loIndex, hi);
-            if ((loIndex & 0b1) != 0)
-                indices.Insert(loIndex, lo);
-        }
-        public void IntersectRange(ushort lo, ushort hi)
-        {
-            if (lo == hi)
-            {
-                TurnOn(lo);
-                return;
-            }
-            var count = indices.Count;
-            if (count == 0)
-            {   //since there are no voxels add this one a a lone lower and upper range.
-                indices.Add(lo);
-                indices.Add(hi);
-                return;
-            }
-            var loIndex = BinarySearch(indices, count, lo, out _);
-            var hiIndex = BinarySearch(indices, count, hi, out _);
-            IntersectRange(lo, loIndex, hi, hiIndex);
-        }
-
-        private void IntersectRange(ushort lo, int loIndex, ushort hi, int hiIndex)
-        {
-            for (int i = loIndex; i < hiIndex; i++)
-                indices.RemoveAt(loIndex);
-            if ((hiIndex & 0b1) == 0) indices.Insert(loIndex, hi);
-            if ((loIndex & 0b1) == 0) indices.Insert(loIndex, lo);
+            if (hiVoxelIsOn) indices.Insert(loIndex, hi);
+            if (loVoxelIsOn) indices.Insert(loIndex, lo);
         }
     }
 }

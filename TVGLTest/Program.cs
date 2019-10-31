@@ -80,9 +80,9 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
-            var r = new Random(2);
-            var len = 100;
-            for (int k = 0; k < 20; k++)
+            var r = new Random(5);
+            var len = 33;
+            for (int k = 0; k < 20000; k++)
             {
                 Console.WriteLine("Trial {0}", k);
 
@@ -97,9 +97,9 @@ namespace TVGLPresenterDX
                 if (otherSparse.indices.Count % 2 != 0) otherSparse.indices.RemoveAt(otherSparse.indices.Count - 1);
                 var thisDense = new VoxelRowDense(thisSparse, (ushort)((len >> 3) + 1));
                 var otherDense = new VoxelRowDense(otherSparse, (ushort)((len >> 3) + 1));
-
-                //thisDense.Union(new IVoxelRow[] { otherDense });
-                //thisSparse.Union(new IVoxelRow[] { otherSparse });
+                var origSparse = new VoxelRowSparse(thisSparse);
+                thisDense.Union(new IVoxelRow[] { otherDense });
+                thisSparse.Union(new IVoxelRow[] { otherSparse });
                 var newSparse = new VoxelRowSparse(thisDense);
                 for (int i = 0; i < thisSparse.indices.Count; i++)
                 {
@@ -107,6 +107,7 @@ namespace TVGLPresenterDX
                         Console.WriteLine("this: {0}; other: {1}", thisSparse.indices[i], newSparse.indices[i]);
                 }
             }
+            Console.WriteLine("done");
             Console.ReadKey();
 
             //Difference2();

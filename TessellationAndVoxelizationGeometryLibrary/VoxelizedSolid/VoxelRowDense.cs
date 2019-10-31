@@ -40,18 +40,7 @@ namespace TVGL.Voxelization
         { return GetValue(xCoord >> 3, xCoord & 7); }
         bool GetValue(int byteCoord, int bitPosition)
         {
-            return (byte)(byteCoord << bitPosition) >> 7 != 0;
-            // this previous line looks hacky but it is faster than the following conditional
-            // i guess the reason is that simplicity of execution even though shifting would 
-            // seem to do more constructing.
-            //if (bitPosition == 0) return (b & 0b1) != 0;
-            //else if (bitPosition == 1) return (b & 0b01) != 0;
-            //else if (bitPosition == 2) return (b & 0b001) != 0;
-            //else if (bitPosition == 3) return (b & 0b0001) != 0;
-            //else if (bitPosition == 4) return (b & 0b00001) != 0;
-            //else if (bitPosition == 5) return (b & 0b000001) != 0;
-            //else if (bitPosition == 6) return (b & 0b0000001) != 0;
-            //return (b & 0b00000001) != 0;
+            return (values[byteCoord] & (0b1 << bitPosition)) != 0;
         }
         public (bool, bool) GetNeighbors(int index)
         {
@@ -95,13 +84,13 @@ namespace TVGL.Voxelization
                 foreach (var b in values)
                 {
                     if (b == 0) continue;
-                    if ((b & 1) > 0) num++;
-                    if ((b & 2) > 0) num++;
-                    if ((b & 4) > 0) num++;
-                    if ((b & 8) > 0) num++;
-                    if ((b & 16) > 0) num++;
-                    if ((b & 32) > 0) num++;
-                    if ((b & 64) > 0) num++;
+                    if ((b & 1) != 0) num++;
+                    if ((b & 2) != 0) num++;
+                    if ((b & 4) != 0) num++;
+                    if ((b & 8) != 0) num++;
+                    if ((b & 16) != 0) num++;
+                    if ((b & 32) != 0) num++;
+                    if ((b & 64) != 0) num++;
                     if (b > 127) num++;
                 }
                 return num;
@@ -110,65 +99,44 @@ namespace TVGL.Voxelization
 
         public void TurnOnRange(ushort lo, ushort hi)
         {
-            var xByte = lo >> 3;
-            var xByteEnd = hi >> 3;
-            var bitPostion = lo & 7;
-            switch (bitPostion)
+            var startByte = lo >> 3;
+            var endByte = (hi - 1) >> 3;
+            var startBitPostion = lo & 7;
+            var endBitPostion = 7 - ((hi - 1) & 7);
+            byte mask = 0b11111111;
+            byte loMask = (byte)(mask >> startBitPostion);
+            byte hiMask = (byte)(mask << endBitPostion);
+            if (startByte == endByte)
             {
-                case 0: values[xByte] |= 0b11111111; break;
-                case 1: values[xByte] |= 0b01111111; break;
-                case 2: values[xByte] |= 0b00111111; break;
-                case 3: values[xByte] |= 0b00011111; break;
-                case 4: values[xByte] |= 0b00001111; break;
-                case 5: values[xByte] |= 0b00000111; break;
-                case 6: values[xByte] |= 0b00000011; break;
-                default: values[xByte] |= 0b00000001; break;
+                mask = (byte)(loMask & hiMask);
+                values[startByte] |= mask;
+                return;
             }
-            while (++xByte < xByteEnd)
-                values[xByte] = 0b11111111;
-            bitPostion = hi & 7;
-            switch (bitPostion)
-            {
-                case 1: values[xByte] |= 0b10000000; break;
-                case 2: values[xByte] |= 0b11000000; break;
-                case 3: values[xByte] |= 0b11100000; break;
-                case 4: values[xByte] |= 0b11110000; break;
-                case 5: values[xByte] |= 0b11111000; break;
-                case 6: values[xByte] |= 0b11111100; break;
-                case 7: values[xByte] |= 0b11111110; break;
-                default: break;
-            }
+            values[startByte] |= loMask;
+            while (++startByte < endByte)
+                values[startByte] = 0b11111111;
+            values[startByte] |= hiMask;
         }
+
         public void TurnOffRange(ushort lo, ushort hi)
         {
-            var xByte = lo >> 3;
-            var xByteEnd = hi >> 3;
-            var bitPostion = lo & 7;
-            switch (bitPostion)
+            var startByte = lo >> 3;
+            var endByte = (hi - 1) >> 3;
+            var startBitPostion = lo & 7;
+            var endBitPostion = 7 - ((hi - 1) & 7);
+            byte mask = 0b11111111;
+            byte loMask = (byte)(~(byte)(mask >> startBitPostion));
+            byte hiMask = (byte)(~(byte)(mask << endBitPostion));
+            if (startByte == endByte)
             {
-                case 0: values[xByte] &= 0b00000000; break;
-                case 1: values[xByte] &= 0b10000000; break;
-                case 2: values[xByte] &= 0b11000000; break;
-                case 3: values[xByte] &= 0b11100000; break;
-                case 4: values[xByte] &= 0b11110000; break;
-                case 5: values[xByte] &= 0b11111000; break;
-                case 6: values[xByte] &= 0b11111100; break;
-                default: values[xByte] &= 0b11111110; break;
+                mask = (byte)(loMask & hiMask);
+                values[startBitPostion] &= mask;
+                return;
             }
-            while (++xByte < xByteEnd)
-                values[xByte] = 0b00000000;
-            bitPostion = hi & 7;
-            switch (bitPostion)
-            {
-                case 1: values[xByte] &= 0b01111111; break;
-                case 2: values[xByte] &= 0b00111111; break;
-                case 3: values[xByte] &= 0b00011111; break;
-                case 4: values[xByte] &= 0b00001111; break;
-                case 5: values[xByte] &= 0b00000111; break;
-                case 6: values[xByte] &= 0b00000011; break;
-                case 7: values[xByte] &= 0b00000001; break;
-                default: break;
-            }
+            values[startByte] &= loMask;
+            while (++startByte < endByte)
+                values[startByte] = 0b11111111;
+            values[startByte] &= hiMask;
         }
 
         public void Intersect(IVoxelRow[] others, int offset)
@@ -192,41 +160,11 @@ namespace TVGL.Voxelization
                     var indices = ((VoxelRowSparse)item).indices;
                     if (indices.Any())
                         for (int i = 0; i < indices.Count; i += 2)
-                            IntersectRange(indices[i], indices[i + 1]);
+                            ;//this doesn't work  IntersectRange(indices[i], indices[i + 1]);
                 }
             }
         }
-       public void IntersectRange(ushort lo, ushort hi)
-        {
-            var xByte = lo >> 3;
-            var xByteEnd = hi >> 3;
-            var bitPostion = lo & 7;
-            switch (bitPostion)
-            {
-                case 0: values[xByte] &= 0b11111111; break;
-                case 1: values[xByte] &= 0b01111111; break;
-                case 2: values[xByte] &= 0b00111111; break;
-                case 3: values[xByte] &= 0b00011111; break;
-                case 4: values[xByte] &= 0b00001111; break;
-                case 5: values[xByte] &= 0b00000111; break;
-                case 6: values[xByte] &= 0b00000011; break;
-                default: values[xByte] &= 0b00000001; break;
-            }
-            while (++xByte < xByteEnd)
-                values[xByte] = 0b11111111;
-            bitPostion = hi & 7;
-            switch (bitPostion)
-            {
-                case 1: values[xByte] &= 0b10000000; break;
-                case 2: values[xByte] &= 0b11000000; break;
-                case 3: values[xByte] &= 0b11100000; break;
-                case 4: values[xByte] &= 0b11110000; break;
-                case 5: values[xByte] &= 0b11111000; break;
-                case 6: values[xByte] &= 0b11111100; break;
-                case 7: values[xByte] &= 0b11111110; break;
-                default: break;
-            }
-        }
+
         public void Subtract(IVoxelRow[] subtrahends, int offset)
         {
             if (offset != 0) throw new ArgumentException("Subtract of Dense Voxels currently" +

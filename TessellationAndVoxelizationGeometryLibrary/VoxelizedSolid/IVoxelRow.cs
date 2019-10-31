@@ -12,7 +12,6 @@ namespace TVGL.Voxelization
         int Count { get; }
         void TurnOnRange(ushort lo, ushort hi);
         void TurnOffRange(ushort lo, ushort hi);
-        void IntersectRange(ushort lo, ushort hi);
         
         (bool, bool) GetNeighbors(int index);
         void Union(IVoxelRow[] others, int offset = 0);
