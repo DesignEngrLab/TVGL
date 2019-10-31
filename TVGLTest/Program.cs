@@ -82,24 +82,24 @@ namespace TVGLPresenterDX
         {
             var r = new Random(5);
             var len = 33;
-            for (int k = 0; k < 20000; k++)
+            for (int k = 0; k < 200000; k++)
             {
-                Console.WriteLine("Trial {0}", k);
+                //Console.WriteLine("Trial {0}", k);
 
                 var thisSparse = new VoxelRowSparse(true);
                 var otherSparse = new VoxelRowSparse(true);
                 for (int i = 0; i < len; i++)
                 {
-                    if (r.NextDouble() > 0.96) thisSparse.indices.Add((ushort)i);
-                    if (r.NextDouble() > 0.96) otherSparse.indices.Add((ushort)i);
+                    if (r.NextDouble() > 0.67) thisSparse.indices.Add((ushort)i);
+                    if (r.NextDouble() > 0.67) otherSparse.indices.Add((ushort)i);
                 }
                 if (thisSparse.indices.Count % 2 != 0) thisSparse.indices.RemoveAt(thisSparse.indices.Count - 1);
                 if (otherSparse.indices.Count % 2 != 0) otherSparse.indices.RemoveAt(otherSparse.indices.Count - 1);
                 var thisDense = new VoxelRowDense(thisSparse, (ushort)((len >> 3) + 1));
                 var otherDense = new VoxelRowDense(otherSparse, (ushort)((len >> 3) + 1));
                 var origSparse = new VoxelRowSparse(thisSparse);
-                thisDense.Union(new IVoxelRow[] { otherDense });
-                thisSparse.Union(new IVoxelRow[] { otherSparse });
+                thisDense.Subtract(new IVoxelRow[] { otherDense });
+                thisSparse.Subtract(new IVoxelRow[] { otherSparse });
                 var newSparse = new VoxelRowSparse(thisDense);
                 for (int i = 0; i < thisSparse.indices.Count; i++)
                 {

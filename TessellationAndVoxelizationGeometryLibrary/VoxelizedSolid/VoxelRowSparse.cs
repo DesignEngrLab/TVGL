@@ -192,8 +192,15 @@ namespace TVGL.Voxelization
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
-                for (int j = 0; j < otherLength; j += 2)
-                    TurnOnRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
+                if (otherLength == 0) indices.Clear();
+                else
+                {
+                    if (otherIndices[0] != 0)
+                        TurnOffRange(0, otherIndices[0], ref indexLowerBound);
+                    for (int j = 1; j < otherLength - 1; j += 2)
+                        TurnOffRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
+                    TurnOffRange(otherIndices[otherLength - 1], ushort.MaxValue, ref indexLowerBound);
+                }
             }
         }
 
@@ -229,16 +236,34 @@ namespace TVGL.Voxelization
             indexLowerBound = loIndex;
             var hiIndex = BinarySearch(indices, indices.Count, hi, out var hiValueExists, out var hiVoxelIsOn, indexLowerBound);
             indexLowerBound = hiIndex;
-            TurnOnRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn);
+            TurnOnRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn, ref indexLowerBound);
         }
-        private void TurnOnRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex, bool hiValueExists, bool hiVoxelIsOn)
+        private void TurnOnRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex,
+            bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {
-            //if (loValueExists && loVoxelIsOn) loIndex++;
-            if (hiValueExists && !hiVoxelIsOn) hiIndex++;
+            if (loValueExists && loVoxelIsOn) loIndex++; //if the lo value already lines up with the beginning of a current range
+            // then don't delete it
+            if (hiValueExists && hiVoxelIsOn)
+            {
+                hiIndex++; //if the new range ends right where an old one picks up then, be sure not
+                           // to include this value in the new ranges as it is in the middle of a good range of on's
+                indexLowerBound++;
+            }
             for (int i = loIndex; i < hiIndex; i++)
+            {
                 indices.RemoveAt(loIndex);
-            if (!hiVoxelIsOn) indices.Insert(loIndex, hi);
-            if (!loVoxelIsOn) indices.Insert(loIndex, lo);
+                indexLowerBound--;
+            }
+            if (!hiVoxelIsOn && !hiValueExists)
+            {
+                indices.Insert(loIndex, hi);
+                indexLowerBound++;
+            }
+            if (!loVoxelIsOn && !loValueExists)
+            {
+                indices.Insert(loIndex, lo);
+                indexLowerBound++;
+            }
         }
 
         public void TurnOffRange(ushort lo, ushort hi)
@@ -255,17 +280,35 @@ namespace TVGL.Voxelization
             indexLowerBound = loIndex;
             var hiIndex = BinarySearch(indices, indices.Count, hi, out var hiValueExists, out var hiVoxelIsOn, indexLowerBound);
             indexLowerBound = hiIndex;
-            TurnOffRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn);
+            TurnOffRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn, ref indexLowerBound);
         }
 
-        private void TurnOffRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex, bool hiValueExists, bool hiVoxelIsOn)
+        private void TurnOffRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex,
+            bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {
-            if (loValueExists && !loVoxelIsOn) loIndex++;
-            if (hiValueExists && hiVoxelIsOn) hiIndex--;
+            if (loValueExists && !loVoxelIsOn) loIndex++; //if the lo value already lines up with the beginning of a current range
+            // then don't delete it
+            if (hiValueExists && !hiVoxelIsOn)
+            {
+                hiIndex++; //if the new range ends right where an old one picks up then, be sure not
+                           // to include this value in the new ranges as it is in the middle of a good range of on's
+                indexLowerBound++;
+            }
             for (int i = loIndex; i < hiIndex; i++)
+            {
                 indices.RemoveAt(loIndex);
-            if (hiVoxelIsOn) indices.Insert(loIndex, hi);
-            if (loVoxelIsOn) indices.Insert(loIndex, lo);
+                indexLowerBound--;
+            }
+            if (hiVoxelIsOn && !hiValueExists)
+            {
+                indices.Insert(loIndex, hi);
+                indexLowerBound++;
+            }
+            if (loVoxelIsOn && !loValueExists)
+            {
+                indices.Insert(loIndex, lo);
+                indexLowerBound++;
+            }
         }
     }
 }
