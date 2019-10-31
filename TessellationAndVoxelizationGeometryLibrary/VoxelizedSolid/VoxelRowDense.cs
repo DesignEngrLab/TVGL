@@ -14,14 +14,21 @@ namespace TVGL.Voxelization
         /// a voxel is on or off
         /// </summary>
         internal readonly byte[] values;
+        /// <summary>
+        /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
+        /// for the participating solid.
+        /// </summary>
+        public int length { get; }
         readonly int numBytes;
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRowDense"/> struct.
         /// </summary>
         /// <param name="numBytes">The number bytes.</param>
-        internal VoxelRowDense(ushort numBytes)
+        internal VoxelRowDense(int length)
         {
-            this.numBytes = numBytes;
+            this.length = length;
+            numBytes = length >> 3;
+            if ((length & 7) != 0) numBytes++;
             values = new byte[numBytes];
         }
         /// <summary>
@@ -31,7 +38,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="row">The row.</param>
         /// <param name="numBytes">The number bytes.</param>
-        internal VoxelRowDense(IVoxelRow row, ushort numBytes) : this(numBytes)
+        internal VoxelRowDense(IVoxelRow row, int length) : this(length)
         {
             if (row is VoxelRowSparse)
             {
@@ -298,6 +305,18 @@ namespace TVGL.Voxelization
                             TurnOnRange(indices[i], indices[i + 1]);
                 }
             }
+        }
+
+        public void Invert()
+        {
+            for (int i = 0; i < numBytes; i++)
+                values[i] = (byte)~values[i];
+        }
+
+        public void Clear()
+        {
+            for (int i = 0; i < numBytes; i++)
+                values[i] = 0b0;
         }
     }
 }

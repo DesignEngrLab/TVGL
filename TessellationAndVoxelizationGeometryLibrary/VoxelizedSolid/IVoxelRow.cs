@@ -8,6 +8,12 @@
     internal interface IVoxelRow
     {
         /// <summary>
+        /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
+        /// for the participating solid.
+        /// </summary>
+        int length { get; }
+
+        /// <summary>
         /// Gets or sets the <see cref="System.Boolean"/> at the specified index.
         /// </summary>
         /// <value>
@@ -60,5 +66,15 @@
         /// <param name="subtrahends">The subtrahends.</param>
         /// <param name="offset">The offset.</param>
         void Subtract(IVoxelRow[] subtrahends, int offset = 0);
+
+        /// <summary>
+        /// Inverts this row - making all on voxels off and vice-versa.
+        /// </summary>
+        void Invert();
+
+        /// <summary>
+        /// Clears this row of all on voxels.
+        /// </summary>
+        void Clear();
     }
 }

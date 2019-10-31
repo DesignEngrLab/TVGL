@@ -21,6 +21,12 @@ namespace TVGL.Voxelization
         internal readonly List<ushort> indices;
 
         /// <summary>
+        /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
+        /// for the participating solid.
+        /// </summary>
+        public int length { get; }
+
+        /// <summary>
         /// Gets the number of voxels in this row.
         /// </summary>
         /// <value>
@@ -45,16 +51,18 @@ namespace TVGL.Voxelization
         /// We are forced to add the dummy input.
         /// </summary>
         /// <param name="dummy">if set to <c>true</c> [dummy].</param>
-        internal VoxelRowSparse(bool dummy)
+        internal VoxelRowSparse(int length)
         {
+            this.length = length;
             indices = new List<ushort>();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRowSparse"/> struct.
         /// </summary>
         /// <param name="row">The row.</param>
-        internal VoxelRowSparse(IVoxelRow row)
+        internal VoxelRowSparse(IVoxelRow row, int length)
         {
+            this.length = length;
             if (row is VoxelRowSparse)
             {
                 indices = new List<ushort>(((VoxelRowSparse)row).indices);
@@ -219,7 +227,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = new VoxelRowSparse(other);
+                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.length);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -237,7 +245,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = new VoxelRowSparse(other);
+                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.length);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -248,7 +256,7 @@ namespace TVGL.Voxelization
                         TurnOffRange(0, otherIndices[0], ref indexLowerBound);
                     for (int j = 1; j < otherLength - 1; j += 2)
                         TurnOffRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
-                    TurnOffRange(otherIndices[otherLength - 1], ushort.MaxValue, ref indexLowerBound);
+                    TurnOffRange(otherIndices[otherLength - 1], (ushort)(other.length + 1), ref indexLowerBound);
                 }
             }
         }
@@ -263,7 +271,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < subtrahends.Length; i++)
             {
                 IVoxelRow subtrahend = subtrahends[i];
-                if (subtrahend is VoxelRowDense) subtrahend = new VoxelRowSparse(subtrahend);
+                if (subtrahend is VoxelRowDense) subtrahend = new VoxelRowSparse(subtrahend, subtrahend.length);
                 var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -373,6 +381,24 @@ namespace TVGL.Voxelization
                 indices.Insert(loIndex, lo);
                 indexLowerBound++;
             }
+        }
+
+        /// <summary>
+        /// Inverts this row - making all on voxels off and vice-versa.
+        /// </summary>
+        public void Invert()
+        {
+            if (indices[0] == 0) indices.RemoveAt(0);
+            else indices.Insert(0, 0);
+            indices.Add((ushort)(length + 1));
+        }
+
+        /// <summary>
+        /// Clears this row of all on voxels.
+        /// </summary>
+        public void Clear()
+        {
+            indices.Clear();
         }
     }
 }

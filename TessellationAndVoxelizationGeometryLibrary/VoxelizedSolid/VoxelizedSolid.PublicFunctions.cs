@@ -19,7 +19,7 @@ namespace TVGL.Voxelization
             set
             {
                 var voxelRowToChange = voxels[yCoord + zMultiplier * zCoord];
-                lock(voxelRowToChange)
+                lock (voxelRowToChange)
                     voxelRowToChange[xCoord] = value;
             }
         }
@@ -172,92 +172,56 @@ namespace TVGL.Voxelization
         #region Slice Voxel Solids
         // If vd is negative, the negative side solid is in position one of return tuple
         // If vd is positive, the positive side solid is in position one of return tuple
-        // cutBefore is the zero-based index of voxel-plane to cut before
-        // i.e. cutBefore = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
-        // 0 < cutBefore < VoxelsPerSide[cut direction]
-        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(CartesianDirections vd, int cutBefore)
+        // distance is the zero-based index of voxel-plane to cut before
+        // i.e. distance = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
+        // 0 < distance < VoxelsPerSide[cut direction]
+        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(CartesianDirections vd, int distance)
         {
-            var cutDir = Math.Abs((int)vd) - 1;
-            if (cutBefore >= VoxelsPerSide[cutDir] || cutBefore < 1)
+            if (distance >= VoxelsPerSide[Math.Abs((int)vd) - 1] || distance < 1)
                 throw new ArgumentOutOfRangeException();
-
-            var cutSign = Math.Sign((int)vd);
+            ushort uCutBefore = (ushort)distance;
+            ushort top = (ushort)numVoxelsX;
             var vs1 = (VoxelizedSolid)Copy();
             var vs2 = (VoxelizedSolid)Copy();
-            if (cutSign == 1)
-                switch (cutDir)
-                {
-                    case 0:
-                        Parallel.For(0, VoxelsPerSide[0], i =>
-                        {
-                            for (var j = 0; j < VoxelsPerSide[1]; j++)
-                                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                                    if (i < cutBefore)
-                                        vs1[i, j, k] = false;
-                                    else
-                                        vs2[i, j, k] = false;
-                        });
-                        break;
-                    case 1:
-                        Parallel.For(0, VoxelsPerSide[0], i =>
-                        {
-                            for (var j = 0; j < VoxelsPerSide[1]; j++)
-                                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                                    if (j < cutBefore)
-                                        vs1[i, j, k] = false;
-                                    else
-                                        vs2[i, j, k] = false;
-                        });
-                        break;
-                    case 2:
-                        Parallel.For(0, VoxelsPerSide[0], i =>
-                        {
-                            for (var j = 0; j < VoxelsPerSide[1]; j++)
-                                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                                    if (k < cutBefore)
-                                        vs1[i, j, k] = false;
-                                    else
-                                        vs2[i, j, k] = false;
-                        });
-                        break;
-                }
-            else
-                switch (cutDir)
-                {
-                    case 0:
-                        Parallel.For(0, VoxelsPerSide[0], i =>
-                        {
-                            for (var j = 0; j < VoxelsPerSide[1]; j++)
-                                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                                    if (i < cutBefore)
-                                        vs2[i, j, k] = false;
-                                    else
-                                        vs1[i, j, k] = false;
-                        });
-                        break;
-                    case 1:
-                        Parallel.For(0, VoxelsPerSide[0], i =>
-                        {
-                            for (var j = 0; j < VoxelsPerSide[1]; j++)
-                                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                                    if (j < cutBefore)
-                                        vs2[i, j, k] = false;
-                                    else
-                                        vs1[i, j, k] = false;
-                        });
-                        break;
-                    case 2:
-                        Parallel.For(0, VoxelsPerSide[0], i =>
-                        {
-                            for (var j = 0; j < VoxelsPerSide[1]; j++)
-                                for (var k = 0; k < VoxelsPerSide[2]; k++)
-                                    if (k < cutBefore)
-                                        vs2[i, j, k] = false;
-                                    else
-                                        vs1[i, j, k] = false;
-                        });
-                        break;
-                }
+            switch (vd)
+            {
+                case CartesianDirections.XPositive:
+                    Parallel.ForEach(vs1.voxels, row => row.TurnOffRange(0, uCutBefore));
+                    Parallel.ForEach(vs2.voxels, row => row.TurnOffRange(uCutBefore, (ushort)numVoxelsX));
+                    break;
+                case CartesianDirections.YPositive:
+                    Parallel.For(0, numVoxelsZ, k =>
+                    {
+                        for (var j = 0; j < distance; j++)
+                            vs1.voxels[j + zMultiplier * k].Clear();
+                        for (var j = distance; j < numVoxelsY; j++)
+                            vs2.voxels[j + zMultiplier * k].Clear();
+                    });
+                    break;
+                case CartesianDirections.ZPositive:
+                    Parallel.For(0, VoxelsPerSide[1] * distance, i => vs1.voxels[i].Clear());
+                    Parallel.For(VoxelsPerSide[1] * distance, numVoxelsY * numVoxelsZ,
+                        i => vs2.voxels[i].Clear());
+                    break;
+                case CartesianDirections.XNegative:
+                    Parallel.ForEach(vs2.voxels, row => row.TurnOffRange(0, uCutBefore));
+                    Parallel.ForEach(vs1.voxels, row => row.TurnOffRange(uCutBefore, (ushort)numVoxelsX));
+                    break;
+                case CartesianDirections.YNegative:
+                    Parallel.For(0, numVoxelsZ, k =>
+                    {
+                        for (var j = 0; j < distance; j++)
+                            vs2.voxels[j + zMultiplier * k].Clear();
+                        for (var j = distance; j < numVoxelsY; j++)
+                            vs1.voxels[j + zMultiplier * k].Clear();
+                    });
+                    break;
+                case CartesianDirections.ZNegative:
+                    Parallel.For(0, zMultiplier * distance, i => vs2.voxels[i].Clear());
+                    Parallel.For(zMultiplier * distance, numVoxelsY * numVoxelsZ,
+                        i => vs1.voxels[i].Clear());
+                    break;
+            }
             vs1.UpdateProperties();
             vs2.UpdateProperties();
             return (vs1, vs2);
@@ -276,23 +240,33 @@ namespace TVGL.Voxelization
             var xOff = Offset[0];
             var yOff = Offset[1];
             var zOff = Offset[2];
-
-            Parallel.For(0, VoxelsPerSide[0], i =>
-            {
-                for (var j = 0; j < VoxelsPerSide[1]; j++)
-                    for (var k = 0; k < VoxelsPerSide[2]; k++)
+            if (pn[0].IsNegligible()) //since no x component. we simply clear rows
+                Parallel.For(0, numVoxelsZ, k =>
+                {
+                    for (var j = 0; j < VoxelsPerSide[1]; j++)
                     {
-                        var x = xOff + (i + .5) * VoxelSideLength;
                         var y = yOff + (j + .5) * VoxelSideLength;
                         var z = zOff + (k + .5) * VoxelSideLength;
-                        var d = MiscFunctions.DistancePointToPlane(new[] { x, y, z }, pn, pp);
+                        var d = MiscFunctions.DistancePointToPlane(new[] { 0, y, z }, pn, pp);
                         if (d < 0)
-                            vs1[i, j, k] = false;
-                        else
-                            vs2[i, j, k] = false;
+                            vs1.voxels[j + zMultiplier * k].Clear();
+                        else vs2.voxels[j + zMultiplier * k].Clear();
                     }
-            });
-
+                });
+            else
+                Parallel.For(0, numVoxelsZ, k =>
+                {
+                    for (var j = 0; j < VoxelsPerSide[1]; j++)
+                    {
+                        var x = yOff + (j + .5) * VoxelSideLength;
+                        var y = yOff + (j + .5) * VoxelSideLength;
+                        var z = zOff + (k + .5) * VoxelSideLength;
+                        var d = MiscFunctions.DistancePointToPlane(new[] { 0, y, z }, pn, pp);
+                        if (d < 0)
+                            vs1.voxels[j + zMultiplier * k].Clear();
+                        else vs2.voxels[j + zMultiplier * k].Clear();
+                    }
+                });
             vs1.UpdateProperties();
             vs2.UpdateProperties();
             return (vs1, vs2);

@@ -30,7 +30,7 @@ namespace TVGL.Voxelization
     {
         #region Properties
         internal IVoxelRow[] voxels { get; private set; }
-        public int bytesInX { get; private set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether the dense encoding is current.
         /// </summary>
@@ -64,12 +64,11 @@ namespace TVGL.Voxelization
             SolidColor = new Color(vs.SolidColor.A, vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B);
             VoxelSideLength = vs.VoxelSideLength;
             numVoxelsX = vs.numVoxelsX;
-            bytesInX = vs.bytesInX;
             numVoxelsY = vs.numVoxelsY;
             numVoxelsZ = vs.numVoxelsZ;
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse(vs.voxels[i]);
+                voxels[i] = new VoxelRowSparse(vs.voxels[i],numVoxelsX);
             FractionDense = 0;
             UpdateProperties();
         }
@@ -108,7 +107,7 @@ namespace TVGL.Voxelization
             numVoxelsZ = voxelsPerSide[2];
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse(true);
+                voxels[i] = new VoxelRowSparse(numVoxelsX);
             FillInFromTessellation(ts);
             FractionDense = 0;
             UpdateProperties();
@@ -137,8 +136,6 @@ namespace TVGL.Voxelization
             VoxelSideLength = voxelSideLength;
             var voxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
             numVoxelsX = voxelsPerSide[0];
-            bytesInX = numVoxelsX >> 3;
-            if ((numVoxelsX & 7) != 0) bytesInX++;
             numVoxelsY = voxelsPerSide[1];
             numVoxelsZ = voxelsPerSide[2];
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
@@ -321,14 +318,12 @@ namespace TVGL.Voxelization
             fullBlock.VoxelSideLength = voxelSideLength;
             var voxelsPerSide = fullBlock.Dimensions.Select(d => (int)Math.Ceiling(d / fullBlock.VoxelSideLength)).ToArray();
             fullBlock.numVoxelsX = voxelsPerSide[0];
-            fullBlock.bytesInX = fullBlock.numVoxelsX >> 3;
-            if ((fullBlock.numVoxelsX & 7) != 0) fullBlock.bytesInX++;
             fullBlock.numVoxelsY = voxelsPerSide[1];
             fullBlock.numVoxelsZ = voxelsPerSide[2];
             fullBlock.voxels = new IVoxelRow[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
             for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
             {
-                var fullRow = new VoxelRowSparse(false);
+                var fullRow = new VoxelRowSparse(fullBlock.numVoxelsX);
                 fullRow.indices.Add(0);
                 fullRow.indices.Add((ushort)fullBlock.numVoxelsX);
                 fullBlock.voxels[i] = fullRow;
@@ -342,19 +337,21 @@ namespace TVGL.Voxelization
         #region Conversion Methods
         public void UpdateToAllDense()
         {
+            if (FractionDense == 1) return;
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
                 if (voxels[i] is VoxelRowDense) continue;
-                voxels[i] = new VoxelRowDense((VoxelRowSparse)voxels[i], (ushort)bytesInX);
+                voxels[i] = new VoxelRowDense((VoxelRowSparse)voxels[i], numVoxelsX);
             }
             FractionDense = 1;
         }
         public void UpdateToAllSparse()
         {
+            if (FractionDense == 0) return;
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
                 if (voxels[i] is VoxelRowSparse) continue;
-                voxels[i] = new VoxelRowSparse((VoxelRowDense)voxels[i]);
+                voxels[i] = new VoxelRowSparse((VoxelRowDense)voxels[i],numVoxelsX);
             }
             FractionDense = 0;
         }
