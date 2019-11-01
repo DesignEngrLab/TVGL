@@ -165,9 +165,10 @@ namespace TVGLPresenterDX
             var vs = new VoxelizedSolid(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
+            vs.UpdateToAllDense();
             //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
             //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
-           // Presenter.ShowAndHang(vs);
+           //Presenter.ShowAndHang(vs);
 
             var vs_cut2 = vs.SliceOnFlat(CartesianDirections.XNegative, 87);
             vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
@@ -196,10 +197,10 @@ namespace TVGLPresenterDX
             var neg_dense = vs.InvertToNewSolid();
             stopwatch.Stop();
             Console.WriteLine("Dense inversion   : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(neg_dense); //, vs_dense);
+            //Presenter.ShowAndHang(neg_dense); //, vs_dense);
 
             stopwatch.Restart();
-            var draft_dense = vs.DraftToNewSolid(CartesianDirections.ZPositive);
+            var draft_dense = vs.DraftToNewSolid(CartesianDirections.YPositive);
             stopwatch.Stop();
             Console.WriteLine("Dense draft   : {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(draft_dense); //, vs_dense);

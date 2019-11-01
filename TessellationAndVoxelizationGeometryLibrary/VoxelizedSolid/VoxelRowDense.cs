@@ -79,7 +79,8 @@ namespace TVGL.Voxelization
         /// <returns></returns>
         bool GetValue(int byteCoord, int bitPosition)
         {
-            return (values[byteCoord] & (0b1 << bitPosition)) != 0;
+            var shift = 7 - bitPosition;
+            return (values[byteCoord] & (0b1 << shift)) != 0;
         }
         /// <summary>
         /// Gets the lower-x neighbor and the upper-x neighbor for the one at xCoord.
@@ -110,7 +111,8 @@ namespace TVGL.Voxelization
         /// <param name="bitPosition">The bit position.</param>
         void TurnOn(int byteCoord, int bitPosition)
         {
-            values[byteCoord] |= (byte)(0b1 << bitPosition);
+            var shift = 7 - bitPosition;
+            values[byteCoord] |= (byte)(0b1 << shift);
         }
 
         /// <summary>
@@ -120,13 +122,13 @@ namespace TVGL.Voxelization
         /// <param name="bitPosition">The bit position.</param>
         void TurnOff(int byteCoord, int bitPosition)
         {
-            if (bitPosition == 0) values[byteCoord] &= 0b11111110;
-            else if (bitPosition == 1) values[byteCoord] &= 0b11111101;
-            else if (bitPosition == 2) values[byteCoord] &= 0b11111011;
-            else if (bitPosition == 3) values[byteCoord] &= 0b11110111;
-            else if (bitPosition == 4) values[byteCoord] &= 0b11101111;
-            else if (bitPosition == 5) values[byteCoord] &= 0b11011111;
-            else if (bitPosition == 6) values[byteCoord] &= 0b10111111;
+            if (bitPosition == 7) values[byteCoord] &= 0b11111110;
+            else if (bitPosition == 6) values[byteCoord] &= 0b11111101;
+            else if (bitPosition == 5) values[byteCoord] &= 0b11111011;
+            else if (bitPosition == 4) values[byteCoord] &= 0b11110111;
+            else if (bitPosition == 3) values[byteCoord] &= 0b11101111;
+            else if (bitPosition == 2) values[byteCoord] &= 0b11011111;
+            else if (bitPosition == 1) values[byteCoord] &= 0b10111111;
             else values[byteCoord] &= 0b01111111;
         }
         /// <summary>
