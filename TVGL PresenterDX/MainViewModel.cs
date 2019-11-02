@@ -51,7 +51,7 @@ namespace TVGLPresenterDX
 
     public partial class MainViewModel : ObservableObject
     {
-        public Element3DCollection ModelGeometry { get; private set; }
+        public GroupElement3D ModelGeometry { get; private set; }
         public Transform3D ModelTransform { get; private set; }
         public Viewport3DX modelView
         {
@@ -66,24 +66,24 @@ namespace TVGLPresenterDX
         }
         public DefaultEffectsManager EffectsManager { get; private set; }
 
-        public DefaultRenderTechniquesManager RenderTechniquesManager { get; private set; }
+       // public DefaultRenderTechniquesManager RenderTechniquesManager { get; private set; }
         public MainViewModel()
         {
             this.ModelTransform = new TranslateTransform3D(0, 0, 0);
 
-            this.ModelGeometry = new Element3DCollection();
-            RenderTechniquesManager = new DefaultRenderTechniquesManager();
-            EffectsManager = new DefaultEffectsManager(RenderTechniquesManager);
+            this.ModelGeometry = new GroupModel3D();
+        //    RenderTechniquesManager = new DefaultRenderTechniquesManager();
+            EffectsManager = new DefaultEffectsManager();
         }
 
         
         public void AttachModelList(IList<MeshGeometryModel3D> model3Ds)
         {
             this.ModelTransform = new TranslateTransform3D(0, 0, 0);
-            this.ModelGeometry = new Element3DCollection();
+            this.ModelGeometry = new GroupModel3D();
             foreach (var model3D in model3Ds)
             {
-                this.ModelGeometry.Add(model3D);
+                this.ModelGeometry.ItemsSource.Add(model3D);
                 //  model3D.Attach(modelView.RenderHost);
             }
             this.OnPropertyChanged("ModelGeometry");

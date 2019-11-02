@@ -98,19 +98,26 @@ namespace TVGL
             if (minAngle > 4.999) minAngle = 4.999; //min angle must be between 0 and 5 degrees. 0.1 degree has proven to be good.
             //Note also that the offset is based on the min angle.
             var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180); //Angle of 89.9 Degrees from normal
+            var angleTolerance2 = Math.Cos((90 - 5) * Math.PI / 180); //Angle of 85 Degrees from normal
 
             var positiveFaces = new HashSet<PolygonalFace>();
             var smallFaces = new List<PolygonalFace>();
             var allPositives = new Dictionary<int, PolygonalFace>();
             var allVertices = new HashSet<Vertex>();
+            var positiveEdgeFaces = new HashSet<PolygonalFace>();
             foreach (var face in faces)
             {
                 if (face.Area.IsNegligible()) continue;
-                var dot = normal.dotProduct(face.Normal, 3);
-                if (dot.IsGreaterThanNonNegligible(angleTolerance))
+                var dot = normal.dotProduct(face.Normal, 3);               
+                if (dot.IsGreaterThanNonNegligible(angleTolerance2))
                 {
                     allPositives.Add(face.IndexInList, face);
                     positiveFaces.Add(face);
+                }
+                else if (dot.IsGreaterThanNonNegligible(angleTolerance))
+                {
+                    //allPositives.Add(face.IndexInList, face);
+                    positiveEdgeFaces.Add(face);
                 }
                 else if (Math.Sign(dot) > 0 && face.Area < 1.0)
                 {
@@ -141,14 +148,14 @@ namespace TVGL
                 }
                 if (addToPositives)
                 {
-                    allPositives.Add(smallFace.IndexInList, smallFace);
-                    positiveFaces.Add(smallFace);
+                    //allPositives.Add(smallFace.IndexInList, smallFace);
+                    positiveEdgeFaces.Add(smallFace);
                 }
             }
 
             //Get the polygons of all the positive faces. Force the polygons to be positive CCW
             var vertices = new HashSet<Vertex>();
-            foreach (var face in positiveFaces)
+            foreach (var face in allPositives.Values)
             {
                 foreach (var vertex in face.Vertices)
                 {
@@ -194,6 +201,35 @@ namespace TVGL
 
             //Get the surface paths from all the surfaces and union them together
             var solution = GetSurfacePaths(allSurfaces, normal, minPathAreaToConsider, originalSolid, projectedFacePolygons).ToList();
+
+            var positiveEdgeFacePolygons = new List<List<PointLight>>();
+            foreach(var face in positiveEdgeFaces)
+            {
+                var polygon = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(face.Vertices, normal));
+                if (!polygon.IsPositive) polygon.Path.Reverse();
+                positiveEdgeFacePolygons.Add(polygon.Path);
+            }
+          
+            try //Try to merge them all at once
+            {
+                solution = PolygonOperations.Union(solution, positiveEdgeFacePolygons, false, PolygonFillType.NonZero);
+            }         
+            catch
+            {
+                //Do them one at a time, skipping those that fail
+                foreach (var face in positiveEdgeFacePolygons)
+                {
+                    try
+                    {
+                        solution = PolygonOperations.Union(solution, face, false, PolygonFillType.NonZero);
+                    }
+                    catch 
+                    {
+                        continue;
+                    }
+                }
+            }
+          
 
             //Offset by enough to account for minimum angle 
             var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;

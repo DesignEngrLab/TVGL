@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Xml.Serialization;
 using MIConvexHull;
 using StarMathLib;
 
@@ -28,9 +27,9 @@ namespace TVGL
     [DataContract]
     public struct PointLight : IVertex2D
     {
-
+        [DataMember]
         public double X { get; set; }
-
+        [DataMember]
         public double Y { get; set; }
         public List<Vertex> References { get; set; }
 
@@ -76,6 +75,10 @@ namespace TVGL
         public static bool operator ==(PointLight a, PointLight b)
         {
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (PointLight)obj;
         }
 
         public static bool operator !=(PointLight a, PointLight b)

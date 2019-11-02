@@ -16,7 +16,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Serialization;
 using MIConvexHull;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StarMathLib;
 using TVGL.IOFunctions;
 
@@ -38,45 +41,53 @@ namespace TVGL
         ///     Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
+        [JsonIgnore]
         public PolygonalFace[] Faces { get; private set; }
 
         /// <summary>
         ///     Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
+        [JsonIgnore]
         public Edge[] Edges { get; private set; }
 
 
+        [JsonIgnore]
         public Edge[] BorderEdges { get; private set; }
 
         /// <summary>
         ///     Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
+        [JsonIgnore]
         public Vertex[] Vertices { get; private set; }
 
         /// <summary>
         ///     Gets the number of faces.
         /// </summary>
         /// <value>The number of faces.</value>
+        [JsonIgnore]
         public int NumberOfFaces { get; private set; }
 
         /// <summary>
         ///     Gets the number of vertices.
         /// </summary>
         /// <value>The number of vertices.</value>
+        [JsonIgnore]
         public int NumberOfVertices { get; private set; }
 
         /// <summary>
         ///     Gets the number of edges.
         /// </summary>
         /// <value>The number of edges.</value>
+        [JsonIgnore]
         public int NumberOfEdges { get; private set; }
 
 
         /// <summary>
         ///     The has uniform color
         /// </summary>
+        [JsonIgnore]
         public override double[,] InertiaTensor
         {
             get
@@ -96,10 +107,13 @@ namespace TVGL
         /// <summary>
         ///     Errors in the tesselated solid
         /// </summary>
+        [JsonIgnore]
         public TessellationError Errors { get; internal set; }
         #endregion
 
         #region Constructors
+        public TessellatedSolid() { }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
         /// matches with the STL format.
@@ -147,64 +161,80 @@ namespace TVGL
             MakeFaces(faceToVertexIndices, colors);
             CompleteInitiation();
         }
-
-        internal TessellatedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
         {
-            SameTolerance = fileData.SameTolerance;
-            
-            var stringList = fileData.Vertices.Split(',');
-            var listLength = stringList.Length;
-            var coords = new double[listLength / 3][];
-            for (int i = 0; i < listLength / 3; i++)
-                coords[i] = new[]
-                {
-                    double.Parse(stringList[3*i]),
-                    double.Parse(stringList[3*i+1]),
-                    double.Parse(stringList[3*i+2])
-                };
-            stringList = fileData.Faces.Split(',');
-            listLength = stringList.Length;
-            var faceIndices = new int[listLength / 3][];
-            for (int i = 0; i < listLength / 3; i++)
-                faceIndices[i] = new[]
-                {
-                    int.Parse(stringList[3 * i]),
-                    int.Parse(stringList[3 * i + 1]),
-                    int.Parse(stringList[3 * i + 2])
-                };
+            //if (serializationData == null)
+            serializationData = new Dictionary<string, JToken>();
+            serializationData.Add("ConvexHullVertices",
+                JToken.FromObject(ConvexHull.Vertices.Select(v => v.IndexInList)));
+            serializationData.Add("ConvexHullFaces",
+                JToken.FromObject(ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))));
+            serializationData.Add("FaceIndices",
+                JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
+            serializationData.Add("VertexCoords",
+                JToken.FromObject(Vertices.SelectMany(v => v.Position)));
+            serializationData.Add("Colors",
+            (HasUniformColor || Faces.All(f => f.Color.Equals(Faces[0].Color)))
+            ? SolidColor.ToString()
+            : JToken.FromObject(Faces.Select(f => f.Color)));
+        }
 
-  
-            stringList = fileData.Colors.Split(',');
-            listLength = stringList.Length;
-            var colors = new Color[listLength];
-            for (int i = 0; i < listLength; i++)
-                colors[i] = new Color(stringList[i]);
 
+        [OnDeserialized]
+        protected void OnDeserializedMethod(StreamingContext context)
+        {
+            JArray jArray = (JArray)serializationData["VertexCoords"];
+            var vertexArray = jArray.ToObject<double[]>();
+            var coords = new double[vertexArray.Length / 3][];
+            for (int i = 0; i < vertexArray.Length / 3; i++)
+                coords[i] = new[] { vertexArray[3 * i], vertexArray[3 * i + 1], vertexArray[3 * i + 2] };
+
+            jArray = (JArray)serializationData["FaceIndices"];
+            var faceIndicesArray = jArray.ToObject<int[]>();
+            var faceIndices = new int[faceIndicesArray.Length / 3][];
+            for (int i = 0; i < faceIndicesArray.Length / 3; i++)
+                faceIndices[i] = new[] { faceIndicesArray[3 * i], faceIndicesArray[3 * i + 1], faceIndicesArray[3 * i + 2] };
+
+            jArray = serializationData["Colors"] as JArray;
+            Color[] colors;
+            if (jArray == null)
+            { colors = new[] { new Color(serializationData["Colors"].ToString()) }; }
+            else
+            {
+                var colorStringsArray = jArray.ToObject<string[]>();
+                colors = new Color[colorStringsArray.Length];
+                for (int i = 0; i < colorStringsArray.Length; i++)
+                    colors[i] = new Color(colorStringsArray[i]);
+            }
+            DefineAxisAlignedBoundingBoxAndTolerance(coords);
             MakeVertices(coords, faceIndices);
             MakeFaces(faceIndices, colors);
 
             MakeEdges(out var newFaces, out var removedVertices);
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
-          
+
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
                 v.DefineCurvature();
 
-            stringList = fileData.ConvexHullVertices.Split(',');
-            listLength = stringList.Length;
-            var cvxVertices = new Vertex[listLength];
-            for (int i = 0; i < listLength; i++)
-                cvxVertices[i] = Vertices[int.Parse(stringList[i])];
-            stringList = fileData.ConvexHullFaces.Split(',');
-            listLength = stringList.Length;
-            var cvxFaceIndices = new int[listLength];
-            for (int i = 0; i < listLength; i++)
-                cvxFaceIndices[i] = int.Parse(stringList[i]);
-
-            ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices, fileData.ConvexHullCenter,
-                fileData.ConvexHullVolume, fileData.ConvexHullArea);
+            if (serializationData.ContainsKey("ConvexHullVertices"))
+            {
+                jArray = (JArray)serializationData["ConvexHullVertices"];
+                var cvxIndices = jArray.ToObject<int[]>();
+                var cvxVertices = new Vertex[cvxIndices.Length];
+                for (int i = 0; i < cvxIndices.Length; i++)
+                    cvxVertices[i] = Vertices[cvxIndices[i]];
+                jArray = (JArray)serializationData["ConvexHullFaces"];
+                var cvxFaceIndices = jArray.ToObject<int[]>();
+                ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices);
+            }
+            else
+            {
+                ConvexHull = new TVGLConvexHull(this);
+            }
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartOfConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
@@ -213,14 +243,13 @@ namespace TVGL
                 foreach (var e in face.Edges)
                     if (e != null) e.PartOfConvexHull = true;
             }
-            if (fileData.Primitives != null && fileData.Primitives.Any())
+            if (Primitives != null && Primitives.Any())
             {
-                Primitives = fileData.Primitives;
                 foreach (var surface in Primitives)
                     surface.CompletePostSerialization(this);
             }
-        }
 
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
@@ -235,38 +264,44 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, bool copyElements = true,
+        public TessellatedSolid(IEnumerable<PolygonalFace> faces, IEnumerable<Vertex> vertices = null, bool copyElements = true,
             IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
+            NumberOfFaces = faces.Count();
+            NumberOfVertices = vertices.Count();
             if (vertices == null)
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             //Create a copy of the vertex and face (This is NON-Destructive!)
-            Vertices = new Vertex[vertices.Count];
+            Vertices = new Vertex[NumberOfVertices];
             var simpleCompareDict = new Dictionary<Vertex, Vertex>();
-            for (var i = 0; i < vertices.Count; i++)
+            int i = 0;
+            foreach (var origVertex in vertices)
             {
-                var vertex = copyElements ? vertices[i].Copy() : vertices[i];
+                var vertex = copyElements ? origVertex.Copy() : origVertex;
                 vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
+                vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
                 Vertices[i] = vertex;
-                simpleCompareDict.Add(vertices[i], vertex);
+                simpleCompareDict.Add(origVertex, vertex);
+                i++;
             }
 
             HasUniformColor = true;
             if (colors == null || !colors.Any())
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
-            Faces = new PolygonalFace[faces.Count];
-            for (var i = 0; i < faces.Count; i++)
+            Faces = new PolygonalFace[NumberOfFaces];
+            i = 0;
+            foreach (var origFace in faces)
             {
                 //Keep "CreatedInFunction" to help with debug
-                var face = copyElements ? faces[i].Copy() : faces[i];
+                var face = copyElements ? origFace.Copy() : origFace;
                 face.PartOfConvexHull = false;
                 face.IndexInList = i;
                 var faceVertices = new List<Vertex>();
-                foreach (var vertex in faces[i].Vertices)
+                foreach (var vertex in origFace.Vertices)
                 {
                     var newVertex = simpleCompareDict[vertex];
                     faceVertices.Add(newVertex);
@@ -281,9 +316,8 @@ namespace TVGL
                     if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
                 }
                 Faces[i] = face;
+                i++;
             }
-            NumberOfFaces = Faces.Length;
-            NumberOfVertices = Vertices.Length;
             CompleteInitiation();
         }
 

@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,12 +24,6 @@ namespace TVGL
     /// <summary>
     ///     Class PrimitiveSurface.
     /// </summary>
-    [XmlInclude(typeof(Flat))]
-    [XmlInclude(typeof(Cone))]
-    [XmlInclude(typeof(Cylinder))]
-    [XmlInclude(typeof(Sphere))]
-    [XmlInclude(typeof(Torus))]
-    [XmlInclude(typeof(DenseRegion))]
     public abstract class PrimitiveSurface
     {
         #region Constructors
@@ -40,7 +35,7 @@ namespace TVGL
         protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
             Type = PrimitiveSurfaceType.Unknown;
-            Faces = faces.ToList();
+            Faces = new HashSet<PolygonalFace>(faces);
             foreach (var face in faces)
                 face.BelongsToPrimitive = this;
             Area = Faces.Sum(f => f.Area);
@@ -60,26 +55,29 @@ namespace TVGL
         ///     Gets the Type of primitive surface
         /// </summary>
         /// <value>The type.</value>
-        [XmlIgnore]
         public PrimitiveSurfaceType Type { get; protected set; }
 
         /// <summary>
         ///     Gets the area.
         /// </summary>
         /// <value>The area.</value>
-        [XmlIgnore]
         public double Area { get; protected set; }
 
         /// <summary>
         ///     Gets or sets the polygonal faces.
         /// </summary>
         /// <value>The polygonal faces.</value>
-        [XmlIgnore]
-        public List<PolygonalFace> Faces { get; protected set; }
+        [JsonIgnore]
+        public HashSet<PolygonalFace> Faces { get; protected set; }
 
-        public string FaceIndices
+        public int[] FaceIndices
         {
-            get { return string.Join(",", Faces.Select(f => f.IndexInList)); }
+            get
+            {
+                if (Faces != null)
+                    return Faces.Select(f => f.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _faceIndices = value; }
         }
 
@@ -88,12 +86,17 @@ namespace TVGL
         ///     Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        [XmlIgnore]
+        [JsonIgnore]
         public List<Vertex> Vertices { get; protected set; }
 
-        public string VertexIndices
+        public int[] VertexIndices
         {
-            get { return string.Join(",", Vertices.Select(v => v.IndexInList)); }
+            get
+            {
+                if (Vertices != null)
+                    return Vertices.Select(v => v.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _vertexIndices = value; }
         }
 
@@ -102,7 +105,7 @@ namespace TVGL
         ///     Gets the inner edges.
         /// </summary>
         /// <value>The inner edges.</value>
-        [XmlIgnore]
+        [JsonIgnore]
         public List<Edge> InnerEdges
         {
             get
@@ -113,9 +116,14 @@ namespace TVGL
         }
 
 
-        public string InnerEdgeIndices
+        public int[] InnerEdgeIndices
         {
-            get { return string.Join(",", InnerEdges.Select(e => e.IndexInList)); }
+            get
+            {
+                if (Faces != null)
+                    return InnerEdges.Select(e => e.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _innerEdgeIndices = value; }
         }
 
@@ -123,7 +131,7 @@ namespace TVGL
         ///     Gets the outer edges.
         /// </summary>
         /// <value>The outer edges.</value>
-        [XmlIgnore]
+        [JsonIgnore]
         public List<Edge> OuterEdges
         {
             get
@@ -133,22 +141,28 @@ namespace TVGL
             }
         }
 
-        public string OuterEdgeIndices
+        public int[] OuterEdgeIndices
         {
-            get { return string.Join(",", OuterEdges.Select(e => e.IndexInList)); }
+            get
+            {
+                if (Faces != null)
+                    return OuterEdges.Select(e => e.IndexInList).ToArray();
+                return new int[0];
+            }
             set { _outerEdgeIndices = value; }
         }
         private List<Edge> _innerEdges;
         private List<Edge> _outerEdges;
-        private string _faceIndices;
-        private string _innerEdgeIndices;
-        private string _outerEdgeIndices;
-        private string _vertexIndices;
+        private int[] _faceIndices;
+        private int[] _innerEdgeIndices;
+        private int[] _outerEdgeIndices;
+        private int[] _vertexIndices;
 
         private void DefineInnerOuterEdges()
         {
             var outerEdgeHash = new HashSet<Edge>();
             var innerEdgeHash = new HashSet<Edge>();
+            if (Faces!=null)
             foreach (var face in Faces)
             {
                 foreach (var edge in face.Edges)
@@ -202,39 +216,96 @@ namespace TVGL
 
         public void CompletePostSerialization(TessellatedSolid ts)
         {
-            Faces = new List<PolygonalFace>();
-            var stringList = _faceIndices.Split(',');
-            var listLength = stringList.Length;
-            for (int i = 0; i < listLength; i++)
+            Faces = new HashSet<PolygonalFace>();         
+            foreach (var i in _faceIndices)
             {
-                var face = ts.Faces[int.Parse(stringList[i])];
+                var face = ts.Faces[i];
                 Faces.Add(face);
                 face.BelongsToPrimitive = this;
             }
-
             Vertices = new List<Vertex>();
-            stringList = _vertexIndices.Split(',');
-            listLength = stringList.Length;
-            for (int i = 0; i < listLength; i++)
-                Vertices.Add(ts.Vertices[int.Parse(stringList[i])]);
+            foreach (var i in _vertexIndices)
+                Vertices.Add(ts.Vertices[i]);
 
-            if (!string.IsNullOrWhiteSpace(_innerEdgeIndices))
-            {
-                _innerEdges = new List<Edge>();
-                stringList = _innerEdgeIndices.Split(',');
-                listLength = stringList.Length;
-                for (int i = 0; i < listLength; i++)
-                    _innerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
-            }
-            if (!string.IsNullOrWhiteSpace(_outerEdgeIndices))
-            {
-                _outerEdges = new List<Edge>();
-                stringList = _outerEdgeIndices.Split(',');
-                listLength = stringList.Length;
-                for (int i = 0; i < listLength; i++)
-                    _outerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
-            }
+            _innerEdges = new List<Edge>();
+            foreach (var i in _innerEdgeIndices)
+                _innerEdges.Add(ts.Edges[i]);
+
+            _outerEdges = new List<Edge>();
+            foreach (var i in _outerEdgeIndices)
+                _outerEdges.Add(ts.Edges[i]);
             Area = Faces.Sum(f => f.Area);
+        }
+
+        public HashSet<PolygonalFace> GetAdjacentFaces()
+        {
+            var adjacentFaces = new HashSet<PolygonalFace>(); //use a hash to avoid duplicates
+            foreach (var edge in OuterEdges)
+            {
+                if (Faces.Contains(edge.OwnedFace)) adjacentFaces.Add(edge.OtherFace);
+                else adjacentFaces.Add(edge.OwnedFace);
+            }
+            return adjacentFaces;
+        }
+
+        /// <summary>
+        /// Takes in a list of edges and returns their list of loops for edges and vertices 
+        /// The order of the output loops are not considered (i.e., they may be "reversed"),
+        /// since no face normal information is used.
+        /// </summary>
+        /// <param name="edges"></param>
+        /// <returns></returns>
+        public static (bool allLoopsClosed, List<List<Edge>> edgeLoops, List<List<Vertex>> vertexLoops) GetLoops(HashSet<Edge> outerEdges, bool canModifyTheInput)
+        {
+            //Use a boolean canModifyTheInput, so that we can save time creating a hashset if the user allows it to be mutated. 
+            var edges = canModifyTheInput ? outerEdges : new HashSet<Edge>(outerEdges);
+
+            //loop through the edges to form loops 
+            var allLoopsClosed = true;
+            var loops = new List<List<Vertex>>();
+            var edgeLoops = new List<List<Edge>>();
+            while (edges.Any())
+            {
+                var currentEdge = edges.First();
+                edges.Remove(currentEdge);
+                var startVertex = currentEdge.From;
+                var loop = new List<Vertex> { startVertex };
+                var edgeLoop = new List<Edge> { currentEdge };
+                bool isClosed = false;
+                var previousVertex = startVertex;
+                while (!isClosed)
+                {
+                    //The To/From order cannot be used, since it is only correct for the face the edge belongs to.
+                    //So, add whichever vertex of the edge has no already been added
+                    var currentVertex = previousVertex == currentEdge.From ? currentEdge.To : currentEdge.From;
+                    //Check if we have wrapped around to close the loop
+                    isClosed = currentVertex == startVertex;
+                    if (isClosed) continue; //Break the while loop.
+
+                    //Otherwise, add the new vertex and find the next edge
+                    loop.Add(currentVertex);
+                    var possibleEdges = currentVertex.Edges;
+                    Edge nextEdge = null;
+                    foreach (var edge in possibleEdges)
+                    {
+                        if (!edges.Contains(edge)) continue;
+                        edges.Remove(edge);
+                        nextEdge = edge;
+                        break;
+                    }
+                    if (nextEdge == null)
+                    {
+                        allLoopsClosed = false; //This loop does not close
+                        break;
+                    }
+                    edgeLoop.Add(nextEdge);
+                    previousVertex = currentVertex;
+                    currentEdge = nextEdge;
+                }
+                edgeLoops.Add(edgeLoop);
+                loops.Add(loop);
+            }
+            return (allLoopsClosed, edgeLoops, loops);
         }
     }
 }

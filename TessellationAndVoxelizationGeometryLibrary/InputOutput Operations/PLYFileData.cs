@@ -101,7 +101,7 @@ namespace TVGL.IOFunctions
             var reader = new StreamReader(s);
             var offSetForCharReturn = 1;
             var fileTypeString = "ASCII";
-            var plyData = new PLYFileData { FileName = filename, Name = GetNameFromFileName(filename) };
+            var plyData = new PLYFileData { FileName = filename, Name = Path.GetFileNameWithoutExtension(filename) };
             var line = reader.ReadLine();
             if (!line.Contains("ply") && !line.Contains("PLY"))
                 return null;

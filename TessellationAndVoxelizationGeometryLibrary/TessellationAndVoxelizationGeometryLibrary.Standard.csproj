@@ -15,7 +15,7 @@
     <PackageProjectUrl>http://designengrlab.github.io/TVGL/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>3d, solid moedling, computaional geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
+    <PackageTags>3d, solid modeling, computational geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
     <Platforms>AnyCPU;x64</Platforms>
     <Configurations>Debug;Release;DebugSingleThread</Configurations>
@@ -34,17 +34,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DenseVoxels\**" />
-    <EmbeddedResource Remove="DenseVoxels\**" />
-    <None Remove="DenseVoxels\**" />
-  </ItemGroup>
-
-
-  <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.504" />
     <PackageReference Include="StarMath" Version="2.0.17.1019" />
   </ItemGroup>
-
 
 
   <ItemGroup>
@@ -56,12 +48,12 @@
   </ItemGroup>
 
 
-
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+
 
 </Project>

@@ -109,7 +109,7 @@ namespace TVGL.IOFunctions
                 return null;
             }
             amfData.FileName = filename;
-            amfData.Name = GetNameFromFileName(filename);
+            amfData.Name = Path.GetFileNameWithoutExtension(filename);
             var results = new List<TessellatedSolid>();
             var objectDict = new Dictionary<int, AMF_Object>();
             foreach (var amfObject in amfData.Objects)

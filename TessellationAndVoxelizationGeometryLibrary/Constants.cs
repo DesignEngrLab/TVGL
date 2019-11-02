@@ -299,6 +299,10 @@ namespace TVGL
         /// </summary>
         PLY_Binary,
         /// <summary>
+        ///     Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
+        /// </summary>
+        SHELL,
+        /// <summary>
         ///     A serialized version of the TessellatedSolid object
         /// </summary>
         TVGL
