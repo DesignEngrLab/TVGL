@@ -18,7 +18,7 @@ namespace TVGL.Voxelization
         /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
         /// for the participating solid.
         /// </summary>
-        public int length { get; }
+        public ushort maxNumberOfVoxels { get; }
         readonly int numBytes;
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRowDense"/> struct.
@@ -26,7 +26,7 @@ namespace TVGL.Voxelization
         /// <param name="numBytes">The number bytes.</param>
         internal VoxelRowDense(int length)
         {
-            this.length = length;
+            maxNumberOfVoxels = (ushort)length;
             numBytes = length >> 3;
             if ((length & 7) != 0) numBytes++;
             values = new byte[numBytes];
@@ -319,6 +319,26 @@ namespace TVGL.Voxelization
         {
             for (int i = 0; i < numBytes; i++)
                 values[i] = 0b0;
+        }
+
+        public double AverageXPosition()
+        {
+            var xTotal = 0;
+            var byteOffset = 0;
+            foreach (var b in values)
+            {
+                if (b == 0) continue;
+                if ((b & 1) != 0) xTotal += byteOffset + 7;
+                if ((b & 2) != 0) xTotal += byteOffset + 6;
+                if ((b & 4) != 0) xTotal += byteOffset + 5;
+                if ((b & 8) != 0) xTotal += byteOffset + 4;
+                if ((b & 16) != 0) xTotal += byteOffset + 3;
+                if ((b & 32) != 0) xTotal += byteOffset + 2;
+                if ((b & 64) != 0) xTotal += byteOffset + 1;
+                if (b > 127) xTotal += byteOffset;
+                byteOffset += 8;
+            }
+            return xTotal / (double)Count;
         }
     }
 }

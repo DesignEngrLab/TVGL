@@ -13,55 +13,71 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Public Methods that Branch
+        /// <summary>
+        /// Gets or sets the <see cref="System.Boolean"/> at the specified coordinate.
+        /// true corresponds to "on" and false to "off".
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Boolean"/>.
+        /// </value>
+        /// <param name="xCoord">The x coord.</param>
+        /// <param name="yCoord">The y coord.</param>
+        /// <param name="zCoord">The z coord.</param>
+        /// <returns></returns>
         public bool this[int xCoord, int yCoord, int zCoord]
         {
             get => voxels[yCoord + zMultiplier * zCoord][xCoord];
-            set
-            {
-                var voxelRowToChange = voxels[yCoord + zMultiplier * zCoord];
-                lock (voxelRowToChange)
-                    voxelRowToChange[xCoord] = value;
-            }
-        }
-        //Neighbors functions use VoxelsPerSide
-        public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
-        {
-            return GetNeighbors(xCoord, yCoord, zCoord, numVoxelsX, numVoxelsY, numVoxelsZ);
+            set => voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
         }
 
+        /// <summary>
+        /// Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
+        /// The result is true if there are neighbors and false if there are none.
+        /// the neighbors array is the coordinates or nulls. Where the null represents off-voxels.
+        /// </summary>
+        /// <param name="xCoord">The x coord.</param>
+        /// <param name="yCoord">The y coord.</param>
+        /// <param name="zCoord">The z coord.</param>
+        /// <param name="neighbors">The neighbors.</param>
+        /// <returns></returns>
         public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
         {
             neighbors = GetNeighbors(xCoord, yCoord, zCoord);
             return !neighbors.Any(n => n != null);
         }
-        public int NumNeighbors(int xCoord, int yCoord, int zCoord)
-        {
-            return NumNeighbors(xCoord, yCoord, zCoord, numVoxelsX, numVoxelsY, numVoxelsZ);
-        }
-
-        public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
+        
+        /// <summary>
+        /// Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
+        /// The result is an array of coordinates or nulls. Where the null represents off-voxels.
+        /// </summary>
+        /// <param name="xCoord">The x coord.</param>
+        /// <param name="yCoord">The y coord.</param>
+        /// <param name="zCoord">The z coord.</param>
+        /// <returns></returns>
+        public int[][] GetNeighbors(int xCoord, int yCoord, int zCoord)
         {
             var neighbors = new int[][] { null, null, null, null, null, null };
-
             var xNeighbors = voxels[yCoord + zMultiplier * zCoord].GetNeighbors(xCoord);
             if (xNeighbors.Item1)
                 neighbors[0] = new[] { xCoord - 1, yCoord, zCoord };
             if (xNeighbors.Item2)
                 neighbors[1] = new[] { xCoord + 1, yCoord, zCoord };
 
-            if (yCoord != 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord])
+            if (yCoord > 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord])
                 neighbors[2] = new[] { xCoord, yCoord - 1, zCoord };
-            if (yCoord + 1 != yLim && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord])
+            if (yCoord + 1 < numVoxelsY && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord])
                 neighbors[3] = new[] { xCoord, yCoord + 1, zCoord };
 
-            if (zCoord != 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord])
+            if (zCoord > 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord])
                 neighbors[4] = new[] { xCoord, yCoord, zCoord - 1 };
-            if (zCoord + 1 != zLim && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
+            if (zCoord + 1 < numVoxelsZ && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord])
                 neighbors[5] = new[] { xCoord, yCoord, zCoord + 1 };
 
             return neighbors;
         }
-        public int NumNeighbors(int xCoord, int yCoord, int zCoord, int xLim, int yLim, int zLim)
+
+
+        public int NumNeighbors(int xCoord, int yCoord, int zCoord)
         {
             var neighbors = 0;
 
@@ -70,10 +86,10 @@ namespace TVGL.Voxelization
             if (xNeighbors.Item2) neighbors++;
 
             if (yCoord != 0 && voxels[yCoord - 1 + zMultiplier * zCoord][xCoord]) neighbors++;
-            if (yCoord + 1 != yLim && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) neighbors++;
+            if (yCoord + 1 < numVoxelsY && voxels[yCoord + 1 + zMultiplier * zCoord][xCoord]) neighbors++;
 
             if (zCoord != 0 && voxels[yCoord + zMultiplier * (zCoord - 1)][xCoord]) neighbors++;
-            if (zCoord + 1 != zLim && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) neighbors++;
+            if (zCoord + 1 < numVoxelsZ && voxels[yCoord + zMultiplier * (zCoord + 1)][xCoord]) neighbors++;
 
             return neighbors;
         }
@@ -82,96 +98,137 @@ namespace TVGL.Voxelization
         #region Set/update properties
         public void UpdateProperties()
         {
-            var count = new ConcurrentBag<int>();
-            Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
-              {
-                  count.Add(voxels[i].Count);
-              });
-            Count = count.Sum();
-            Volume = Count * Math.Pow(VoxelSideLength, 3);
-            /*
-            var neighbors = new ConcurrentDictionary<int, int>();
-            //Parallel.For(0, xLim, i =>
-            for (int i = 0; i < numVoxelsX; i++)
-            {
-                var neighborCount = 0;
-                for (var j = 0; j < numVoxelsY; j++)
+            Count = 0;
+            var xTotal = 0.0;
+            var yTotal = 0.0;
+            var zTotal = 0.0;
+            for (int j = 0; j < numVoxelsY; j++)
+                for (int k = 0; k < numVoxelsZ; k++)
                 {
-                    for (var k = 0; k < numVoxelsZ; k++)
-                    {
-                        if (!this[i, j, k]) continue;
-                        var num = NumNeighbors(i, j, k, numVoxelsX, numVoxelsY, numVoxelsZ);
-                        neighborCount += num;
-                    }
+                    var voxelRow = voxels[j + zMultiplier * k];
+                    var rowCount = voxelRow.Count;
+                    xTotal += rowCount * voxelRow.AverageXPosition();
+                    yTotal += rowCount * j;
+                    zTotal += rowCount * k;
+                    Count += rowCount;
                 }
-                neighbors.TryAdd(i, neighborCount);
-            } //);
-            long totalNeighbors = 0;
-            foreach (var v in neighbors.Values)
-                totalNeighbors += v;
-            SurfaceArea = 6 * (Count - totalNeighbors / 6) * Math.Pow(VoxelSideLength, 2);
-            */
+            Volume = Count * Math.Pow(VoxelSideLength, 3);
+            Center = new double[]
+            {
+                VoxelSideLength*xTotal / Count,
+                VoxelSideLength*yTotal /Count,
+                VoxelSideLength*zTotal / Count
+            };
         }
+
+
+
+        /*
+        var neighbors = new ConcurrentDictionary<int, int>();
+        //Parallel.For(0, xLim, i =>
+        for (int i = 0; i < numVoxelsX; i++)
+        {
+            var neighborCount = 0;
+            for (var j = 0; j < numVoxelsY; j++)
+            {
+                for (var k = 0; k < numVoxelsZ; k++)
+                {
+                    if (!this[i, j, k]) continue;
+                    var num = NumNeighbors(i, j, k, numVoxelsX, numVoxelsY, numVoxelsZ);
+                    neighborCount += num;
+                }
+            }
+            neighbors.TryAdd(i, neighborCount);
+        } //);
+        long totalNeighbors = 0;
+        foreach (var v in neighbors.Values)
+            totalNeighbors += v;
+        SurfaceArea = 6 * (Count - totalNeighbors / 6) * Math.Pow(VoxelSideLength, 2);
+        */
+
         #endregion
 
         #region Boolean functions
         // NOT A
         public VoxelizedSolid InvertToNewSolid()
         {
+            var vs = (VoxelizedSolid)Copy();
+            vs.Invert();
+            return vs;
+        }
+        // NOT A
+        public void Invert()
+        {
             UpdateToAllSparse();
-            var full = CreateFullBlock(VoxelSideLength, Bounds);
-            return full.SubtractToNewSolid(this);
+            Parallel.ForEach(voxels, vx => vx.Invert());
+            UpdateProperties();
         }
 
         // A OR B
         public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)
         {
             var vs = (VoxelizedSolid)Copy();
-            vs.UpdateToAllSparse();
+            vs.Union(solids);
+            return vs;
+        }
+        // A OR B
+        public void Union(params VoxelizedSolid[] solids)
+        {
+            UpdateToAllSparse();
             foreach (var solid in solids)
                 solid.UpdateToAllSparse();
             Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
-              {
-                  vs.voxels[i].Union(solids.Select(s => s.voxels[i]).ToArray());
-              });
-            vs.UpdateProperties();
-            return vs;
+            {
+                voxels[i].Union(solids.Select(s => s.voxels[i]).ToArray());
+            });
+            UpdateProperties();
         }
 
         // A AND B
         public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)
         {
             var vs = (VoxelizedSolid)Copy();
-            vs.UpdateToAllSparse();
+            vs.Intersect(solids);
+            return vs;
+        }
+        // A AND B
+        public void Intersect(params VoxelizedSolid[] solids)
+        {
+            UpdateToAllSparse();
             foreach (var solid in solids)
                 solid.UpdateToAllSparse();
             Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
             {
-                vs.voxels[i].Intersect(solids.Select(s => s.voxels[i]).ToArray());
+                voxels[i].Intersect(solids.Select(s => s.voxels[i]).ToArray());
             });
-            vs.UpdateProperties();
-            return vs;
+            UpdateProperties();
         }
 
         // A AND (NOT B)
         public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)
         {
             var vs = (VoxelizedSolid)Copy();
-            vs.UpdateToAllSparse();
+            vs.Subtract(subtrahends);
+            return vs;
+        }
+
+        // A AND (NOT B)
+        public void Subtract(params VoxelizedSolid[] subtrahends)
+        {
+            UpdateToAllSparse();
             foreach (var solid in subtrahends)
                 solid.UpdateToAllSparse();
             Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
             {
-                vs.voxels[i].Subtract(subtrahends.Select(s => s.voxels[i]).ToArray());
+                voxels[i].Subtract(subtrahends.Select(s => s.voxels[i]).ToArray());
             });
-            vs.UpdateProperties();
-            return vs;
+            UpdateProperties();
         }
         #endregion
 
         #region Slice Voxel Solids
-        // If vd is negative, the negative side solid is in position one of return tuple
-        // If vd is positive, the positive side solid is in position one of return tuple
+        // If direction is negative, the negative side solid is in position one of return tuple
+        // If direction is positive, the positive side solid is in position one of return tuple
         // distance is the zero-based index of voxel-plane to cut before
         // i.e. distance = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
         // 0 < distance < VoxelsPerSide[cut direction]
@@ -256,16 +313,25 @@ namespace TVGL.Voxelization
             else
             {
                 Parallel.For(0, numVoxelsZ, k =>
+                //for (int k = 0; k < numVoxelsZ; k++)
                 {
                     var z = zOff + (k + .5) * VoxelSideLength;
                     var zComponent = distOfPlane - z * normalOfPlane[2];
                     for (var j = 0; j < VoxelsPerSide[1]; j++)
                     {
                         var y = yOff + (j + .5) * VoxelSideLength;
-                        var x = zComponent - y * normalOfPlane[1];
-                        var xIndex = (ushort)((x - xOff) / VoxelSideLength - 0.5);
-                        vs1.voxels[j + zMultiplier * k].TurnOffRange(0, xIndex);
-                        vs2.voxels[j + zMultiplier * k].TurnOffRange(xIndex, (ushort)(numVoxelsX + 1));
+                        var x = (zComponent - y * normalOfPlane[1]) / normalOfPlane[0];
+                        var xIndex = (x - xOff) / VoxelSideLength - 0.5;
+                        if (xIndex < 0)
+                            vs2.voxels[j + zMultiplier * k].Clear();
+                        else if (xIndex > numVoxelsX)
+                            vs1.voxels[j + zMultiplier * k].Clear();
+                        else
+                        {
+                            vs1.voxels[j + zMultiplier * k].TurnOffRange(0, (ushort)xIndex);
+                            vs2.voxels[j + zMultiplier * k].TurnOffRange((ushort)xIndex,
+                                (ushort)(numVoxelsX + 1));
+                        }
                     }
                 });
             }
@@ -273,184 +339,154 @@ namespace TVGL.Voxelization
             vs2.UpdateProperties();
             return (vs1, vs2);
         }
-
-        private static bool GetPlaneBoundsInSolid(double[][] bds, Flat plane, out List<double[]> intersections)
-        {
-            var pn = plane.Normal;
-            var pd = plane.DistanceToOrigin;
-            //these arrays should be moved to static readonly only fields to minimize time and memory
-            var vertices = new List<double[]>
-            {
-                new[] {bds[0][0], bds[0][1], bds[0][2]},
-                new[] {bds[1][0], bds[0][1], bds[0][2]},
-                new[] {bds[0][0], bds[1][1], bds[0][2]},
-                new[] {bds[0][0], bds[0][1], bds[1][2]},
-                new[] {bds[1][0], bds[1][1], bds[0][2]},
-                new[] {bds[1][0], bds[0][1], bds[1][2]},
-                new[] {bds[0][0], bds[1][1], bds[1][2]},
-                new[] {bds[1][0], bds[1][1], bds[1][2]}
-            };
-
-            var dirs = new List<double[]>
-            {
-                new[] {1.0, 0, 0},
-                new[] {0, 1.0, 0},
-                new[] {0, 0, 1.0},
-            };
-
-            var rays = new List<int[]>
-            {
-                new[] {0, 0},
-                new[] {0, 1},
-                new[] {0, 2},
-                new[] {1, 1},
-                new[] {1, 2},
-                new[] {2, 0},
-                new[] {2, 2},
-                new[] {3, 0},
-                new[] {3, 1},
-                new[] {4, 2},
-                new[] {5, 1},
-                new[] {6, 0},
-            };
-
-            intersections = new List<double[]>();
-
-            foreach (var ray in rays)
-            {
-                var inter = MiscFunctions.PointOnPlaneFromRay(pn, pd, vertices[ray[0]], dirs[ray[1]], out var dist);
-                if (!(inter is null) && dist >= 0 && inter[0] <= bds[1][0] && inter[1] <= bds[1][1] &&
-                    inter[2] <= bds[1][2])
-                    intersections.Add(inter);
-            }
-
-            return intersections.Count > 2;
-        }
         #endregion
 
         #region Draft in VoxelDirection
-        public VoxelizedSolid DraftToNewSolid(CartesianDirections vd)
+        /// <summary>
+        /// Drafts or extrudes the solid in specified direction. This means that the side of the
+        /// part opposite the direction will be like the origial and the side facing the direction
+        /// will be flat - as if extrude (playdoh style) in the specified direction.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <returns></returns>
+        public VoxelizedSolid DraftToNewSolid(CartesianDirections direction)
         {
-            if (vd == CartesianDirections.XPositive)
-                return DraftInPositiveX();
-            if (vd == CartesianDirections.XNegative)
-                return DraftInNegativeX();
             var vs = (VoxelizedSolid)Copy();
-            //vs.UpdateToAllDense();
-            if (vd == CartesianDirections.YPositive)
+            vs.Draft(direction);
+            return vs;
+        }
+        /// <summary>
+        /// Drafts or extrudes the solid in specified direction. This means that the side of the
+        /// part opposite the direction will be like the origial and the side facing the direction
+        /// will be flat - as if extrude (playdoh style) in the specified direction.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        public void Draft(CartesianDirections direction)
+        {
+            UpdateToAllSparse();
+            if (direction == CartesianDirections.XPositive)
+                Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
+                {
+                    var rowIndices = ((VoxelRowSparse)voxels[i]).indices;
+                    if (rowIndices.Any())
+                    {
+                        var start = rowIndices[0];
+                        rowIndices.Clear();
+                        rowIndices.Add(start);
+                        rowIndices.Add((ushort)(numVoxelsX + 1));
+                    }
+                });
+            if (direction == CartesianDirections.XNegative)
+                Parallel.For(0, numVoxelsY * numVoxelsZ, i =>
+                {
+                    var rowIndices = ((VoxelRowSparse)voxels[i]).indices;
+                    if (rowIndices.Any())
+                    {
+                        var end = rowIndices.Last();
+                        rowIndices.Clear();
+                        rowIndices.Add(0);
+                        rowIndices.Add(end);
+                    }
+                });
+            if (direction == CartesianDirections.YPositive)
                 Parallel.For(0, numVoxelsX, i =>
-                //for (int i = 0; i < numVoxelsX; i++)
                 {
                     for (var k = 0; k < numVoxelsZ; k++)
                     {
                         var j = 0;
-                        while (j < numVoxelsY && !vs[i, j, k]) j++;
+                        while (j < numVoxelsY && !this[i, j, k]) j++;
                         for (; j < numVoxelsY; j++)
-                            vs[i, j, k] = true;
+                            this[i, j, k] = true;
                     }
                 });
-            if (vd == CartesianDirections.YNegative)
+            if (direction == CartesianDirections.YNegative)
                 Parallel.For(0, numVoxelsX, i =>
                 {
                     for (var k = 0; k < numVoxelsZ; k++)
                     {
                         var j = numVoxelsY - 1;
-                        while (j >= 0 && !vs[i, j, k]) j--;
+                        while (j >= 0 && !this[i, j, k]) j--;
                         for (; j >= 0; j--)
-                            vs[i, j, k] = true;
+                            this[i, j, k] = true;
                     }
                 });
-            if (vd == CartesianDirections.ZPositive)
+            if (direction == CartesianDirections.ZPositive)
                 Parallel.For(0, numVoxelsX, i =>
-                //for (int i = 0; i < numVoxelsX; i++)
                 {
                     for (var j = 0; j < numVoxelsY; j++)
                     {
                         var k = 0;
-                        while (k < numVoxelsZ && !vs[i, j, k]) k++;
+                        while (k < numVoxelsZ && !this[i, j, k]) k++;
                         for (; k < numVoxelsZ; k++)
-                            vs[i, j, k] = true;
+                            this[i, j, k] = true;
                     }
                 });
-            if (vd == CartesianDirections.ZNegative)
+            if (direction == CartesianDirections.ZNegative)
                 Parallel.For(0, numVoxelsX, i =>
                 {
                     for (var j = 0; j < numVoxelsY; j++)
                     {
                         var k = numVoxelsZ - 1;
-                        while (k >= 0 && !vs[i, j, k]) k--;
+                        while (k >= 0 && !this[i, j, k]) k--;
                         for (; k >= 0; k--)
-                            vs[i, j, k] = true;
+                            this[i, j, k] = true;
                     }
                 });
-            vs.UpdateProperties();
-            return vs;
+            UpdateProperties();
         }
-
-        public VoxelizedSolid DraftInPositiveX()
-        {
-            var vs = (VoxelizedSolid)Copy();
-            vs.UpdateToAllSparse();
-            Parallel.For(0, numVoxelsY * numVoxelsZ, m =>
-            {
-                var rowIndices = ((VoxelRowSparse)vs.voxels[m]).indices;
-                if (rowIndices.Any())
-                {
-                    var start = rowIndices[0];
-                    rowIndices.Clear();
-                    rowIndices.Add(start);
-                    rowIndices.Add((ushort)(numVoxelsX + 1));
-                }
-            });
-            vs.UpdateProperties();
-            return vs;
-        }
-        public VoxelizedSolid DraftInNegativeX()
-        {
-            var vs = (VoxelizedSolid)Copy();
-            vs.UpdateToAllSparse();
-            Parallel.For(0, numVoxelsY * numVoxelsZ, m =>
-            {
-                var rowIndices = ((VoxelRowSparse)vs.voxels[m]).indices;
-                if (rowIndices.Any())
-                {
-                    var end = rowIndices.Last();
-                    rowIndices.Clear();
-                    rowIndices.Add(0);
-                    rowIndices.Add(end);
-                }
-            });
-            vs.UpdateProperties();
-            return vs;
-        }
-
         #endregion
 
         #region Voxel erosion
-        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, double[] dir,
-            double tLimit = 0, double toolDia = 0, params string[] toolOptions)
+        /// <summary>
+        /// Erodes the solid in the supplied direction until the mask contacts the constraint solid.
+        /// This creates a new solid. The orinal is unaltered.
+        /// </summary>
+        /// <param name="constraintSolid">The constraint solid.</param>
+        /// <param name="dir">The dir.</param>
+        /// <param name="tLimit">The t limit.</param>
+        /// <param name="maskSize">Size of the mask.</param>
+        /// <param name="maskOptions">The mask options.</param>
+        /// <returns></returns>
+        public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, double[] dir,
+            double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, toolOptions);
-            copy.UpdateProperties();
+            copy.DirectionalErodeToConstraint(constraintSolid, dir.normalize(3), tLimit, maskSize, maskOptions);
             return copy;
         }
 
-        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid constraintSolid, CartesianDirections dir,
-            double tLimit = 0, double toolDia = 0, params string[] toolOptions)
+        /// <summary>
+        /// Erodes the solid in the supplied direction until the mask contacts the constraint solid.
+        /// This creates a new solid. The orinal is unaltered.
+        /// </summary>
+        /// <param name="constraintSolid">The constraint solid.</param>
+        /// <param name="dir">The dir.</param>
+        /// <param name="tLimit">The t limit.</param>
+        /// <param name="maskSize">Size of the mask.</param>
+        /// <param name="maskOptions">The mask options.</param>
+        /// <returns></returns>
+        public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, CartesianDirections dir,
+            double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
             var copy = (VoxelizedSolid)Copy();
 
             var tDir = new[] { .0, .0, .0 };
             tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
 
-            copy.ErodeVoxelSolid(constraintSolid, tDir.normalize(3), tLimit, toolDia, toolOptions);
-            copy.UpdateProperties();
+            copy.DirectionalErodeToConstraint(constraintSolid, tDir.normalize(3), tLimit, maskSize, maskOptions);
             return copy;
         }
 
-        private void ErodeVoxelSolid(VoxelizedSolid constraintSolid, double[] dir,
-            double tLimit, double toolDia, params string[] toolOptions)
+        /// <summary>
+        /// Erodes the solid in the supplied direction until the mask contacts the constraint solid.
+        /// </summary>
+        /// <param name="constraintSolid">The constraint solid.</param>
+        /// <param name="dir">The dir.</param>
+        /// <param name="tLimit">The t limit.</param>
+        /// <param name="maskSize">The tool dia.</param>
+        /// <param name="toolOptions">The tool options.</param>
+        private void DirectionalErodeToConstraint(VoxelizedSolid constraintSolid, double[] dir,
+            double tLimit, double maskSize, params string[] maskOptions)
         {
             var dirX = dir[0];
             var dirY = dir[1];
@@ -465,13 +501,14 @@ namespace TVGL.Voxelization
             tLimit = tLimit <= 0 ? VoxelsPerSide.norm2() : tLimit / VoxelSideLength;
             var mLimit = tLimit + VoxelsPerSide.norm2();
             var mask = CreateProjectionMask(dir, mLimit);
-            var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, toolDia);
-            var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
+            var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, maskSize);
+            var sliceMask = ThickenMask(mask[0], dir, maskSize, maskOptions);
 
-            Parallel.ForEach(starts, vox =>
-                ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox));
-            //foreach (var vox in starts)
-            //    ErodeMask(constraintSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
+            //Parallel.ForEach(starts, vox =>
+            //    ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox));
+            foreach (var vox in starts)
+                ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox);
+            UpdateProperties();
         }
 
         private static IEnumerable<CartesianDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
@@ -694,21 +731,21 @@ namespace TVGL.Voxelization
             return voxels.ToArray();
         }
 
-        private int[][] ThickenMask(int[] vox, double[] dir, double toolDia, params string[] toolOptions)
+        private int[][] ThickenMask(int[] vox, double[] dir, double toolDia, params string[] maskOptions)
         {
             if (toolDia <= 0) return new[] { vox };
 
             var radius = 0.5 * toolDia / VoxelSideLength;
-            toolOptions = toolOptions.Length == 0 ? new[] { "flat" } : toolOptions;
+            maskOptions = maskOptions.Length == 0 ? new[] { "flat" } : maskOptions;
 
-            switch (toolOptions[0])
+            switch (maskOptions[0])
             {
                 case "ball":
                     return GetVoxelsOnHemisphere(vox, dir, radius);
                 case "cone":
                     double angle;
-                    if (toolOptions.Length < 2) angle = 118;
-                    else if (!double.TryParse(toolOptions[1], out angle))
+                    if (maskOptions.Length < 2) angle = 118;
+                    else if (!double.TryParse(maskOptions[1], out angle))
                         angle = 118;
                     return GetVoxelsOnCone(vox, dir, radius, angle);
                 default:
@@ -772,8 +809,8 @@ namespace TVGL.Voxelization
                 firstInt[dir] = (int)(firstVoxel[dir] + 0.5 * searchSigns[dir]);
             }
 
-            //foreach (var dir in searchDirs)
-            Parallel.ForEach(searchDirs, dir =>
+            foreach (var dir in searchDirs)
+            //Parallel.ForEach(searchDirs, dir =>
             {
                 var c = firstVoxel[dir];
                 var d = direction[dir];
@@ -786,7 +823,7 @@ namespace TVGL.Voxelization
                     var t = (i - c) / d;
                     if (t <= tLimit) intersections.Add(t);
                 }
-            });
+            } //);
 
             var sortedIntersections = new SortedSet<double>(intersections).ToArray();
             return sortedIntersections;

@@ -24,7 +24,7 @@ namespace TVGL.Voxelization
         /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
         /// for the participating solid.
         /// </summary>
-        public int length { get; }
+        public ushort maxNumberOfVoxels { get; }
 
         /// <summary>
         /// Gets the number of voxels in this row.
@@ -53,7 +53,7 @@ namespace TVGL.Voxelization
         /// <param name="dummy">if set to <c>true</c> [dummy].</param>
         internal VoxelRowSparse(int length)
         {
-            this.length = length;
+            maxNumberOfVoxels = (ushort)length;
             indices = new List<ushort>();
         }
         /// <summary>
@@ -62,7 +62,7 @@ namespace TVGL.Voxelization
         /// <param name="row">The row.</param>
         internal VoxelRowSparse(IVoxelRow row, int length)
         {
-            this.length = length;
+            maxNumberOfVoxels = (ushort)length;
             if (row is VoxelRowSparse)
             {
                 indices = new List<ushort>(((VoxelRowSparse)row).indices);
@@ -101,12 +101,20 @@ namespace TVGL.Voxelization
         /// <returns></returns>
         public bool this[int index]
         {
-            get => GetValue(index);
+            get
+            {
+                lock (indices)
+                    return GetValue(index);
+            }
             set
             {
                 var dummy = 0;
-                if (value) TurnOn((ushort)index, ref dummy);
-                else TurnOff((ushort)index, ref dummy);
+                if (value)
+                    lock (indices)
+                        TurnOn((ushort)index, ref dummy);
+                else
+                    lock (indices)
+                        TurnOff((ushort)index, ref dummy);
             }
         }
 
@@ -143,15 +151,16 @@ namespace TVGL.Voxelization
             }
             else //the current voxel is off
             {
-                if (valueExists) //then current is end of range which means previous is on, current is off, but next could be 
-                    //start of new range 
-                    return (true, xCoord + 1 == indices[i + 1]);
+                if (valueExists) //then current is end of range which means previous is on, 
+                    //current is off, but next could be start of new range 
+                    return (true, i + 1 < count && xCoord + 1 == indices[i + 1]);
                 else  //but neighbors could be inside
-                    return (false, xCoord + 1 == indices[i]);
+                    return (false, i < count && xCoord + 1 == indices[i]);
             }
         }
         // This binary search is modified/simplified from Array.BinarySearch
-        // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9)
+        // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9),
+        // but because our lists are pairs of ranges a bunch of extra conditions have been added
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int BinarySearch(IList<ushort> array, int length, double value, out bool valueExists, out bool voxelIsOn, int lowerBound = 0)
         {
@@ -189,12 +198,28 @@ namespace TVGL.Voxelization
             }
             index = BinarySearch(indices, count, value, out var valueExists, out var voxelIsOn);
             if (voxelIsOn) return; //it's already on
-            if (valueExists) indices[index]++;
-            else
+            if (valueExists)
             {
-                indices.Insert(index, (ushort)(value + 1));
-                indices.Insert(index, value);
-                index++;
+                if (index + 1 < count && value + 1 == indices[index + 1])
+                {  //check to see if this new voxel perfectly fill a gap between two ranges
+                    indices.RemoveAt(index);
+                    indices.RemoveAt(index);
+                    index--;
+                }
+                else indices[index]++; //otherwise increment the upper range of these on-voxels
+            }
+            else //in the range of off-voxels
+            {
+                if (index < count && value + 1 == indices[index])
+                    //this was the last off-voxel in a range, so need to pull back the next on-voxel
+                    //range to include this
+                    indices[index]--;
+                else
+                {  //add this lone voxel in a range of off-voxels
+                    indices.Insert(index, (ushort)(value + 1));
+                    indices.Insert(index, value);
+                    index++;
+                }
             }
         }
 
@@ -208,12 +233,34 @@ namespace TVGL.Voxelization
             }
             index = BinarySearch(indices, count, value, out var valueExists, out var voxelIsOn);
             if (!voxelIsOn) return; //it's already off
-            if (valueExists) indices[index]++;
-            else
+            if (valueExists)
             {
-                indices.Insert(index, (ushort)(value + 1));
-                indices.Insert(index, value);
-                index++;
+                if (value + 1 == indices[index + 1])
+                {  //check to see if this is deleting a lone voxel
+                    indices.RemoveAt(index);
+                    indices.RemoveAt(index);
+                    index--;
+                }
+                else indices[index]++;
+                //otherwise increase the lower bound of this range of on-voxels
+                //(or, to say it another way, increase the upper bound of these off-voxels
+            }
+            else  // in the range of on-voxels
+            {
+                if (value + 1 == indices[index])
+                    //this was the last on-voxel in a range, so need to decrement the top of the range
+                    indices[index]--;
+                else
+                {   // make a one in the range of on-voxels
+                    indices.Insert(index, (ushort)(value + 1));
+                    indices.Insert(index, value);
+                    index++;
+                }
+            }
+            if ((indices.Count & 0b1) > 0) Console.WriteLine();
+            for (int i = 1; i < indices.Count; i++)
+            {
+                if (indices[i] - indices[i - 1] <= 0) Console.WriteLine();
             }
         }
 
@@ -227,7 +274,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.length);
+                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.maxNumberOfVoxels);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -245,7 +292,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < others.Length; i++)
             {
                 IVoxelRow other = others[i];
-                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.length);
+                if (other is VoxelRowDense) other = new VoxelRowSparse(other, other.maxNumberOfVoxels);
                 var otherIndices = ((VoxelRowSparse)other).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -256,7 +303,7 @@ namespace TVGL.Voxelization
                         TurnOffRange(0, otherIndices[0], ref indexLowerBound);
                     for (int j = 1; j < otherLength - 1; j += 2)
                         TurnOffRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
-                    TurnOffRange(otherIndices[otherLength - 1], (ushort)(other.length + 1), ref indexLowerBound);
+                    TurnOffRange(otherIndices[otherLength - 1], other.maxNumberOfVoxels, ref indexLowerBound);
                 }
             }
         }
@@ -271,7 +318,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < subtrahends.Length; i++)
             {
                 IVoxelRow subtrahend = subtrahends[i];
-                if (subtrahend is VoxelRowDense) subtrahend = new VoxelRowSparse(subtrahend, subtrahend.length);
+                if (subtrahend is VoxelRowDense) subtrahend = new VoxelRowSparse(subtrahend, subtrahend.maxNumberOfVoxels);
                 var otherIndices = ((VoxelRowSparse)subtrahend).indices;
                 var otherLength = otherIndices.Count;
                 var indexLowerBound = 0;
@@ -388,9 +435,20 @@ namespace TVGL.Voxelization
         /// </summary>
         public void Invert()
         {
-            if (indices[0] == 0) indices.RemoveAt(0);
-            else indices.Insert(0, 0);
-            indices.Add((ushort)(length + 1));
+            if (!indices.Any())
+            {
+                indices.Add(0);
+                indices.Add(maxNumberOfVoxels);
+            }
+            else
+            {
+                if (indices[0] == 0) indices.RemoveAt(0);
+                else indices.Insert(0, 0);
+                var lastIndex = indices.Count - 1;
+                if (indices[lastIndex] == maxNumberOfVoxels)
+                    indices.RemoveAt(lastIndex);
+                else indices.Add(maxNumberOfVoxels);
+            }
         }
 
         /// <summary>
@@ -399,6 +457,21 @@ namespace TVGL.Voxelization
         public void Clear()
         {
             indices.Clear();
+        }
+
+        public double AverageXPosition()
+        {
+            var count = 0;
+            var rowTotal = 0.0;
+            var numIndices = indices.Count;
+            if (numIndices == 0) return 0.0;
+            for (int i = 0; i < numIndices; i += 2)
+            {
+                var num = indices[i + 1] - indices[i];
+                rowTotal += num * (indices[i] + indices[i + 1]) / 2.0;
+                count += num;
+            }
+            return rowTotal / count;
         }
     }
 }

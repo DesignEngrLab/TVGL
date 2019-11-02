@@ -11,7 +11,7 @@
         /// The length of the row. This is the same as the number of voxels in x (numVoxelsX)
         /// for the participating solid.
         /// </summary>
-        int length { get; }
+        ushort maxNumberOfVoxels { get; }
 
         /// <summary>
         /// Gets or sets the <see cref="System.Boolean"/> at the specified index.
@@ -76,5 +76,11 @@
         /// Clears this row of all on voxels.
         /// </summary>
         void Clear();
+
+        /// <summary>
+        /// Averages the positions of the on voxels. This is used in finding center of mass.
+        /// </summary>
+        /// <returns></returns>
+        double AverageXPosition();
     }
 }

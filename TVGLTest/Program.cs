@@ -7,6 +7,7 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
+using StarMathLib;
 
 namespace TVGLPresenterDX
 {
@@ -80,7 +81,7 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
-                       //Difference2();
+            //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
@@ -138,7 +139,7 @@ namespace TVGLPresenterDX
             }
 
             Console.WriteLine("Completed.");
-          //  Console.ReadKey();
+            //  Console.ReadKey();
         }
 
         public static void TestSlice(TessellatedSolid ts, Flat flat = null)
@@ -157,77 +158,112 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 200;
-
-            Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
+            var res = 500;
 
             stopwatch.Restart();
             var vs = new VoxelizedSolid(ts, res);
             stopwatch.Stop();
-            Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
-            vs.UpdateToAllDense();
-            //var vs_cut = vs_dense.CutSolid(VoxelDirections.XNegative, 100);
-            //vs_cut.Item1.SolidColor = new Color(KnownColors.Magenta);
-           //Presenter.ShowAndHang(vs);
+            Console.WriteLine("voxelization    : {0}", stopwatch.Elapsed);
+            VoxelizedSolid testResult = null;
 
-            var vs_cut2 = vs.SliceOnFlat(CartesianDirections.XNegative, 87);
-            vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
-          //  Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
+            #region test cartesian slicing
+            for (int i = -3; i < 4; i++)
+            {
+                if (i == 0) continue;
+                stopwatch.Restart();
+                var testResults = vs.SliceOnFlat((CartesianDirections)i, vs.VoxelsPerSide[Math.Abs(i)-1]/3);
+                stopwatch.Stop();
+                testResults.Item1.SolidColor = new Color(KnownColors.Magenta);
+                Console.WriteLine("Slicing in {0}   : {1}", (CartesianDirections)i,
+                    stopwatch.Elapsed);
+               // Presenter.ShowAndHang(testResults.Item1, testResults.Item2);
 
-            //var vs_cut2 = vs_dense.SliceOnFlat(VoxelDirections.XNegative, 87);
-            //vs_cut2.Item1.SolidColor = new Color(KnownColors.Magenta);
-            //Presenter.ShowAndHang(vs_cut2.Item1, vs_cut2.Item2);
+            }
+            #endregion
+            #region test arbitrary slicing
+            var r = new Random(1);
+            for (int i = 0; i < 10; i++)
+            {
+                var normal = new[] { r.NextDouble() - .5, r.NextDouble() - .5, r.NextDouble() - .5 };
+                normal.normalizeInPlace();
+                stopwatch.Restart();
+                var testResults = vs.SliceOnFlat(new Flat(vs.Center, normal));
+                stopwatch.Stop();
+                testResults.Item1.SolidColor = new Color(KnownColors.Magenta);
+                Console.WriteLine("Slicing in {0}   : {1}", i, stopwatch.Elapsed);
+                //Presenter.ShowAndHang(testResults.Item1, testResults.Item2);
+            }
+            #endregion
+            #region test cartesian drafting
+            for (int i = -3; i < 4; i++)
+            {
+                if (i == 0) continue;
+                stopwatch.Restart();
+                testResult = vs.DraftToNewSolid((CartesianDirections)i);
+                stopwatch.Stop();
+                Console.WriteLine("Drafting in {0}   : {1}", (CartesianDirections)i,
+                    stopwatch.Elapsed);
+               // Presenter.ShowAndHang(testResult);
+            }
+            #endregion
 
 
             stopwatch.Restart();
             var fullBlock = VoxelizedSolid.CreateFullBlock(vs);
             stopwatch.Stop();
-            Console.WriteLine("Dense bounding solid   : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Creating Full block   : {0}", stopwatch.Elapsed);
 
+            var newBounds = new[]{ ts.Bounds[0].subtract(ts.Center.multiply(0.5)),
+                ts.Bounds[1].subtract(ts.Center.multiply(0.5)) };
+            var offsetVs = new VoxelizedSolid(ts, res, newBounds);
+            Console.WriteLine("Created offset solid");
+           // Presenter.ShowAndHang(offsetVs);
+
+            #region Boolean testing
             stopwatch.Restart();
-            var erd_dense = fullBlock.ErodeToNewSolid(vs, new[] { 0, .471, -.882 }, 0, 0, "flat");
+            testResult = vs.UnionToNewSolid(offsetVs);
             stopwatch.Stop();
-            Console.WriteLine("Dense erosion   : {0}", stopwatch.Elapsed);
-            erd_dense.SolidColor = new Color(KnownColors.Magenta);
-
-          //  Presenter.ShowAndHang(erd_dense); //, vs_dense);
-
-
+            Console.WriteLine("union with offset      : {0}", stopwatch.Elapsed);
+           // Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            var neg_dense = vs.InvertToNewSolid();
+            testResult = vs.IntersectToNewSolid(offsetVs);
             stopwatch.Stop();
-            Console.WriteLine("Dense inversion   : {0}", stopwatch.Elapsed);
-            //Presenter.ShowAndHang(neg_dense); //, vs_dense);
-
+            Console.WriteLine("intersect with offset      : {0}", stopwatch.Elapsed);
+            //Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            var draft_dense = vs.DraftToNewSolid(CartesianDirections.YPositive);
+            testResult = vs.SubtractToNewSolid(offsetVs);
             stopwatch.Stop();
-            Console.WriteLine("Dense draft   : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(draft_dense); //, vs_dense);
-
-
-
-
+            Console.WriteLine("subtract with offset      : {0}", stopwatch.Elapsed);
+           // Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            var intersect_dense = neg_dense.IntersectToNewSolid(draft_dense);
+            testResult = vs.InvertToNewSolid();
             stopwatch.Stop();
-            Console.WriteLine("Dense intersect   : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(intersect_dense); //, vs_dense);
-
-
-            var draft1_dense = vs.DraftToNewSolid(CartesianDirections.YNegative);
+            Console.WriteLine("invert original      : {0}", stopwatch.Elapsed);
+            //Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            var union_dense = draft_dense.UnionToNewSolid(draft1_dense);
+            testResult.Union(vs);
             stopwatch.Stop();
-            Console.WriteLine("Dense union   : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(union_dense); //, vs_dense);
-
-
+            Console.WriteLine("union invert with original      : {0}", stopwatch.Elapsed);
+            //Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            var subtract_dense = draft_dense.SubtractToNewSolid(draft1_dense);
+            testResult.Invert();
             stopwatch.Stop();
-            Console.WriteLine("Dense subtract   : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(subtract_dense); //, vs_dense);
+            Console.WriteLine("invert previous \"all\"      : {0}", stopwatch.Elapsed);
+            // Presenter.ShowAndHang(testResult);
+            #endregion
+
+            #region Erode testing
+            stopwatch.Restart();
+            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, -.471, .882 }, 2, 2, "flat");
+            stopwatch.Stop();
+            Console.WriteLine("eroding full block to constraint 0-flat       : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(testResult);
+            stopwatch.Restart();
+            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, -.471, .882 },10, 2, "flat");
+            stopwatch.Stop();
+            Console.WriteLine("eroding full block to constraint        : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(testResult);
+            #endregion
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
