@@ -158,14 +158,14 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 500;
+            var res = 800;
 
             stopwatch.Restart();
             var vs = new VoxelizedSolid(ts, res);
             stopwatch.Stop();
             Console.WriteLine("voxelization    : {0}", stopwatch.Elapsed);
             VoxelizedSolid testResult = null;
-
+            /*
             #region test cartesian slicing
             for (int i = -3; i < 4; i++)
             {
@@ -198,20 +198,26 @@ namespace TVGLPresenterDX
             for (int i = -3; i < 4; i++)
             {
                 if (i == 0) continue;
+
+                vs.UpdateToAllSparse();
                 stopwatch.Restart();
                 testResult = vs.DraftToNewSolid((CartesianDirections)i);
                 stopwatch.Stop();
-                Console.WriteLine("Drafting in {0}   : {1}", (CartesianDirections)i,
+                Console.WriteLine("Sparse Drafting in {0}   : {1}", (CartesianDirections)i,
+                    stopwatch.Elapsed);
+               // Presenter.ShowAndHang(testResult);
+                
+                vs.UpdateToAllDense();
+                stopwatch.Restart();
+                testResult = vs.DraftToNewSolid((CartesianDirections)i);
+                stopwatch.Stop();
+                Console.WriteLine("Dense Drafting in {0}   : {1}", (CartesianDirections)i,
                     stopwatch.Elapsed);
                // Presenter.ShowAndHang(testResult);
             }
             #endregion
+            vs.UpdateToAllSparse();
 
-
-            stopwatch.Restart();
-            var fullBlock = VoxelizedSolid.CreateFullBlock(vs);
-            stopwatch.Stop();
-            Console.WriteLine("Creating Full block   : {0}", stopwatch.Elapsed);
 
             var newBounds = new[]{ ts.Bounds[0].subtract(ts.Center.multiply(0.5)),
                 ts.Bounds[1].subtract(ts.Center.multiply(0.5)) };
@@ -251,15 +257,28 @@ namespace TVGLPresenterDX
             Console.WriteLine("invert previous \"all\"      : {0}", stopwatch.Elapsed);
             // Presenter.ShowAndHang(testResult);
             #endregion
+            */
+            stopwatch.Restart();
+            var fullBlock = VoxelizedSolid.CreateFullBlock(vs);
+            stopwatch.Stop();
+            Console.WriteLine("Creating Full block   : {0}", stopwatch.Elapsed);
 
             #region Erode testing
             stopwatch.Restart();
-            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, -.471, .882 }, 2, 2, "flat");
+            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, .471, .882 }, 0, 0, "flat");
             stopwatch.Stop();
-            Console.WriteLine("eroding full block to constraint 0-flat       : {0}", stopwatch.Elapsed);
+            Console.WriteLine("sparse eroding full block to constraint 0-flat       : {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(testResult);
+            vs.UpdateToAllDense();
             stopwatch.Restart();
-            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, -.471, .882 },10, 2, "flat");
+            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, .471, .882 }, 0, 0, "flat");
+            stopwatch.Stop();
+            Console.WriteLine("dense eroding full block to constraint 0-flat       : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(testResult);
+
+
+            stopwatch.Restart();
+            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, .471, .882 },10, 2, "flat");
             stopwatch.Stop();
             Console.WriteLine("eroding full block to constraint        : {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(testResult);

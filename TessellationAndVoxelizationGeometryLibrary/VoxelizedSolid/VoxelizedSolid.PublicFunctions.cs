@@ -504,10 +504,10 @@ namespace TVGL.Voxelization
             var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, maskSize);
             var sliceMask = ThickenMask(mask[0], dir, maskSize, maskOptions);
 
-            //Parallel.ForEach(starts, vox =>
-            //    ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox));
-            foreach (var vox in starts)
-                ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox);
+            Parallel.ForEach(starts, vox =>
+                ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox));
+            //foreach (var vox in starts)
+            //    ErodeMask(constraintSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox);
             UpdateProperties();
         }
 
