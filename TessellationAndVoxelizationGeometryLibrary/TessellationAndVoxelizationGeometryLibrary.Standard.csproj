@@ -34,7 +34,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MIConvexHull" Version="1.1.19.504" />
+    <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="StarMath" Version="2.0.17.1019" />
   </ItemGroup>
 

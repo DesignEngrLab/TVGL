@@ -252,10 +252,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\MIConvexHull\MIConvexHull.NET Standard\MIConvexHull.NET Standard.csproj">
-      <Project>{5e329462-5808-4295-8e0b-cff967949768}</Project>
-      <Name>MIConvexHull.NET Standard</Name>
-    </ProjectReference>
     <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
       <Project>{859a90c2-4b36-4486-9279-ef9df02c0c9b}</Project>
       <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>

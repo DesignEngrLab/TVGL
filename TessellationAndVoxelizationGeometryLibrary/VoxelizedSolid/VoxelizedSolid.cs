@@ -73,10 +73,6 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
-        public VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
-        {
-            UpdateProperties();
-        }
 
 
         /// <summary>
@@ -398,7 +394,7 @@ namespace TVGL.Voxelization
         {
             throw new NotImplementedException();
         }
-        public override double[,] InertiaTensor { get => base.InertiaTensor; protected set => base.InertiaTensor = value; }
+        public override double[,] InertiaTensor { get => base.InertiaTensor; set => base.InertiaTensor = value; }
         #endregion
 
         private class SameCoordinates : EqualityComparer<int[]>

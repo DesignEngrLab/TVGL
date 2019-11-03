@@ -61,8 +61,8 @@
     <Reference Include="HelixToolkit.Wpf, Version=2.9.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
       <HintPath>..\packages\HelixToolkit.Wpf.2.9.0\lib\net45\HelixToolkit.Wpf.dll</HintPath>
     </Reference>
-    <Reference Include="MIConvexHull, Version=1.1.19.927, Culture=neutral, PublicKeyToken=2644b6f8be52c998, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.19.927\lib\netstandard2.0\MIConvexHull.dll</HintPath>
+    <Reference Include="MIConvexHull, Version=1.1.19.1018, Culture=neutral, PublicKeyToken=2644b6f8be52c998, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.1.19.1019\lib\netstandard2.0\MIConvexHull.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Win32.Primitives, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Win32.Primitives.4.3.0\lib\net46\Microsoft.Win32.Primitives.dll</HintPath>
@@ -257,9 +257,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>TVGL\InputOutput Operations\STLFileData.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Math Operations\Proximity.cs">
-      <Link>TVGL\Math Operations\Proximity.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\DirectionalDecomposition.cs">
       <Link>TVGL\Miscellaneous Functions\DirectionalDecomposition.cs</Link>
     </Compile>
@@ -268,6 +265,9 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs">
       <Link>TVGL\Miscellaneous Functions\MiscFunctions.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Proximity.cs">
+      <Link>TVGL\Miscellaneous Functions\Proximity.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs">
       <Link>TVGL\Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs</Link>
@@ -314,6 +314,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Flat.cs">
       <Link>TVGL\Primitive Surfaces\Flat.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\ImplicitSolid.cs">
+      <Link>TVGL\Primitive Surfaces\ImplicitSolid.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\PrimitiveSurface.cs">
       <Link>TVGL\Primitive Surfaces\PrimitiveSurface.cs</Link>
     </Compile>
@@ -323,8 +326,20 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Torus.cs">
       <Link>TVGL\Primitive Surfaces\Torus.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\CrossSectionSolid.cs">
+      <Link>TVGL\Solid Body Classes\CrossSectionSolid.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Edge.cs">
       <Link>TVGL\Solid Body Classes\Edge.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\MarchingCubes\MarchingCubes.Base.cs">
+      <Link>TVGL\Solid Body Classes\Marching Cubes\MarchingCubes.Base.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\MarchingCubes\MarchingCubes.Implicit.cs">
+      <Link>TVGL\Solid Body Classes\Marching Cubes\MarchingCubes.Implicit.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\MarchingCubes\MarchingCubes.VoxelizedSolid.cs">
+      <Link>TVGL\Solid Body Classes\Marching Cubes\MarchingCubes.VoxelizedSolid.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\PolygonalFace.cs">
       <Link>TVGL\Solid Body Classes\PolygonalFace.cs</Link>
@@ -404,6 +419,7 @@
   <ItemGroup>
     <Content Include="StarMath.XML" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets" Condition="Exists('..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
