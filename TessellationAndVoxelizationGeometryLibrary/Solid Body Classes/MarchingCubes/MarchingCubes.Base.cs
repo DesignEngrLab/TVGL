@@ -5,79 +5,70 @@ using System;
 
 namespace TVGL
 {
-    public abstract class MarchingCubes<SolidT, CoordT, ValueT>
+    internal class StoredValue<ValueT>
+    {
+        internal ValueT Value;
+        internal double X;
+        internal double Y;
+        internal double Z;
+        internal int NumTimesCalled;
+        internal long ID;
+    }
+
+    internal abstract class MarchingCubes<SolidT, ValueT>
         where SolidT : Solid
-        // where CoordT and ValueT are numbers or bool
+        // where double and ValueT are numbers or bool
     {
         #region Constructor
-        public MarchingCubes(SolidT solid, CoordT discretization) : this()
+        internal MarchingCubes(SolidT solid, double gridToCoordinateFactor)
         {
             this.solid = solid;
-            this.discretization = discretization;
-        }
-        protected MarchingCubes()
-        {
-            EdgeVertex = new Vertex[12];
+            this.gridToCoordinateSpacing = gridToCoordinateFactor;
+            this.coordToGridFactor = 1 / gridToCoordinateFactor;
             vertexDictionaries = new[] {
                 new Dictionary<long, Vertex>(),
                 new Dictionary<long, Vertex>(),
                 new Dictionary<long, Vertex>()
             };
-            valueDictionary = new Dictionary<long, StoredValue>();
+            valueDictionary = new Dictionary<long, StoredValue<ValueT>>();
             faces = new List<PolygonalFace>();
-            GridOffsetTable = new CoordT[8][];
+            for (int i = 0; i < 8; i++)
+                GridOffsetTable[i] = _unitOffsetTable[i].multiply(this.gridToCoordinateSpacing);
         }
         #endregion
 
         #region Fields
-        protected readonly Dictionary<long, Vertex>[] vertexDictionaries;
-        class StoredValue
-        {
-            internal ValueT Value;
-            internal int NumTimesCalled;
-        }
-
+        readonly Dictionary<long, Vertex>[] vertexDictionaries;
         protected readonly SolidT solid;
-        protected readonly CoordT discretization;
-        protected readonly CoordT[][] GridOffsetTable;
-        readonly Dictionary<long, StoredValue> valueDictionary;
-        protected readonly List<PolygonalFace> faces;
-        protected readonly Vertex[] EdgeVertex;
-        protected readonly int[] WindingOrder;
+        protected readonly double gridToCoordinateSpacing;
+        protected readonly double coordToGridFactor;
+        protected readonly double[][] GridOffsetTable;
+        readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
+        readonly List<PolygonalFace> faces;
+
+        #region to be assigned in inherited constructor
         protected int numGridX, numGridY, numGridZ;
-        int yMultiplier => numGridX;
+        protected int yMultiplier;
         protected int zMultiplier;
+        protected double[] solidOffset;
+        #endregion
         #endregion
 
         #region Abstract Methods
-        protected abstract CoordT GetOffset(ValueT v1, ValueT v2);
-        protected abstract ValueT GetValueFromSolid(CoordT x, CoordT y, CoordT z);
-        protected abstract int FindEdgeVertices(int x, int y, int z, long identifier);
+        protected abstract bool IsInside(ValueT v);
+        protected abstract ValueT GetValueFromSolid(double x, double y, double z);
+        protected abstract double GetOffset(StoredValue<ValueT> from, StoredValue<ValueT> to,
+            int direction, int sign);
         #endregion
 
         #region Main Methods
-        public TessellatedSolid Generate()
+        internal TessellatedSolid Generate()
         {
             zMultiplier = numGridX * numGridY;
-            for (var x = 0; x < numGridX - 1; x++)
-                for (var y = 0; y < numGridY - 1; y++)
-                    for (var z = 0; z < numGridZ - 1; z++)
-                    {
-                        var identifier = getIdentifier(x, y, z);
-                        var cubeType = FindEdgeVertices(x, y, z, identifier);
-                        //now the triangular faces are created that connect the vertices identified above.
-                        //based on the les that were found. There can be up to five per cube
-                        var faceVertices = new Vertex[3];
-                        for (var i = 0; i < NumFacesTable[cubeType]; i++)
-                        {
-                            for (var j = 0; j < 3; j++)
-                            {
-                                var vertexIndex = FaceVertexIndicesTable[cubeType][3 * i + j];
-                                faceVertices[j] = EdgeVertex[vertexIndex];
-                            }
-                            faces.Add(new PolygonalFace(faceVertices, true));
-                        }
-                    }
+            for (var i = 0; i < numGridX - 1; i++)
+                for (var j = 0; j < numGridY - 1; j++)
+                    for (var k = 0; k < numGridZ - 1; k++)
+                        MakeFacesInCube(i, j, k);
             var comments = new List<string>(solid.Comments);
             comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
             return new TessellatedSolid(faces, vertexDictionaries.SelectMany(d => d.Values), false,
@@ -86,29 +77,102 @@ namespace TVGL
         }
 
 
-        protected long getIdentifier(int x, int y, int z)
+        protected long getIdentifier(double x, double y, double z)
         {
-            return x + yMultiplier * y + zMultiplier * z;
+            return (long)x + (long)(yMultiplier * y) + (long)(zMultiplier * z);
         }
 
-        protected ValueT GetValue(CoordT x, CoordT y, CoordT z, long identifier)
+        protected StoredValue<ValueT> GetValue(double x, double y, double z, long identifier)
         {
             if (valueDictionary.ContainsKey(identifier))
             {
-                var storedValue = valueDictionary[identifier];
-                if (storedValue.NumTimesCalled < 7)
-                    storedValue.NumTimesCalled++;
+                var prevValue = valueDictionary[identifier];
+                if (prevValue.NumTimesCalled < 7)
+                    prevValue.NumTimesCalled++;
                 else valueDictionary.Remove(identifier);
-                return storedValue.Value;
+                return prevValue;
             }
-            var value = GetValueFromSolid(x, y, z);
-            valueDictionary.Add(identifier, new StoredValue
+            var newValue = new StoredValue<ValueT>
             {
-                Value = value,
-                NumTimesCalled = 1
-            });
-            return value;
+                Value = GetValueFromSolid(x, y, z),
+                X = x,
+                Y = y,
+                Z = z,
+                NumTimesCalled = 1,
+                ID = identifier
+            };
+            valueDictionary.Add(identifier, newValue);
+            return newValue;
         }
+
+        /// <summary>
+        /// MakeTriangles performs the Marching Cubes algorithm on a single cube
+        /// </summary>
+        private void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
+        {
+            var xCoord = solidOffset[0] + xIndex * gridToCoordinateSpacing;
+            var yCoord = solidOffset[1] + yIndex * gridToCoordinateSpacing;
+            var zCoord = solidOffset[2] + zIndex * gridToCoordinateSpacing;
+            int cubeType = 0;
+            var cube = new StoredValue<ValueT>[8];
+            //Find which vertices are inside of the surface and which are outside
+            for (var i = 0; i < 8; i++)
+            {
+                var thisX = xCoord + GridOffsetTable[i][0];
+                var thisY = yCoord + GridOffsetTable[i][1];
+                var thisZ = zCoord + GridOffsetTable[i][2];
+                var id = getIdentifier(thisX, thisY, thisZ);
+                var v = cube[i] = GetValue(thisX, thisY, thisZ, id);
+                if (IsInside(v.Value))
+                    cubeType |= 1 << i;
+            }
+            //Find which edges are intersected by the surface
+            int edgeFlags = CubeEdgeFlagsTable[cubeType];
+
+            //If the cube is entirely inside or outside of the surface, then there will be no intersections
+            if (edgeFlags == 0) return;
+            var EdgeVertex = new Vertex[12];
+            //this loop creates or retrieves the vertices that are on the edges of the 
+            //marching cube. These are stored in the EdgeVertexIndexTable
+            for (var i = 0; i < 12; i++)
+            {
+                //if there is an intersection on this edge
+                if ((edgeFlags & 1) != 0)
+                {
+
+                    var direction = Math.Abs((int)directionTable[i]) - 1;
+                    var sign = directionTable[i] > 0 ? 1 : -1;
+                    var fromCorner = cube[EdgeCornerIndexTable[i][0]];
+                    var toCorner = cube[EdgeCornerIndexTable[i][1]];
+                    var id = sign > 0 ? fromCorner.ID : toCorner.ID;
+                    if (vertexDictionaries[direction].ContainsKey(id))
+                        EdgeVertex[i] = vertexDictionaries[direction][id];
+                    else
+                    {
+                        var coord = new[] { fromCorner.X, fromCorner.Y, fromCorner.Z };
+                        double offset = GetOffset(fromCorner, toCorner, direction, sign);
+                        coord[direction] = coord[direction] + sign * offset;
+                        EdgeVertex[i] = new Vertex(coord);
+                        vertexDictionaries[direction].Add(id, EdgeVertex[i]);
+                    }
+                }
+                edgeFlags >>= 1;
+            }
+            //now the triangular faces are created that connect the vertices identified above.
+            //based on the les that were found. There can be up to five per cube
+            var faceVertices = new Vertex[3];
+            for (var i = 0; i < NumFacesTable[cubeType]; i++)
+            {
+                for (var j = 0; j < 3; j++)
+                {
+                    var vertexIndex = FaceVertexIndicesTable[cubeType][3 * i + j];
+                    faceVertices[j] = EdgeVertex[vertexIndex];
+                }
+                faces.Add(new PolygonalFace(faceVertices, true));
+            }
+        }
+
+
         #endregion
 
         #region Static Tables
@@ -159,7 +223,7 @@ namespace TVGL
         /// of the 12 edges of the cube.
         /// edgeConnection[12][2]
         /// </summary>
-        protected static readonly int[][] EdgeVertexIndexTable = new int[][]
+        protected static readonly int[][] EdgeCornerIndexTable = new int[][]
         {
             new[]{0,1}, new[]{1,2}, new[]{2,3}, new[]{3,0},
             new[]{4,5}, new[]{5,6}, new[]{6,7}, new[]{7,4},
@@ -478,7 +542,7 @@ namespace TVGL
         3, 4, 4, 5, 4, 5, 5, 2, 4, 3, 5, 4, 3, 2, 4, 1,
         3, 4, 4, 5, 4, 5, 3, 4, 4, 5, 5, 2, 3, 4, 2, 1,
         2, 3, 3, 2, 3, 4, 2, 1, 3, 2, 4, 1, 2, 1, 1, 0
-            };
+        };
         #endregion
     }
 

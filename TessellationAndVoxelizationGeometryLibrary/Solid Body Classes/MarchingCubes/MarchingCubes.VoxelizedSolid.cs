@@ -1,69 +1,56 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using StarMathLib;
 using TVGL.Voxelization;
 
 namespace TVGL
 {
-    public class MarchingCubesDenseVoxels : MarchingCubes<VoxelizedSolid, int, byte>
+    internal class MarchingCubesDenseVoxels : MarchingCubes<VoxelizedSolid, bool>
     {
-
-        public MarchingCubesDenseVoxels(VoxelizedSolid solid, int discretization)
+        internal MarchingCubesDenseVoxels(VoxelizedSolid solid, double discretization)
             : base(solid, discretization)
         {
-            numGridX = (int)Math.Ceiling(solid.VoxelsPerSide[0] / (double)discretization);
-            numGridY = (int)Math.Ceiling(solid.VoxelsPerSide[1] / (double)discretization);
-            numGridZ = (int)Math.Ceiling(solid.VoxelsPerSide[2] / (double)discretization);
-            for (int i = 0; i < 8; i++)
-                GridOffsetTable[i] = _unitOffsetTable[i].multiply(discretization);
+            numGridX = (int)Math.Ceiling(solid.VoxelsPerSide[0] / discretization);
+            numGridY = (int)Math.Ceiling(solid.VoxelsPerSide[1] / discretization);
+            numGridZ = (int)Math.Ceiling(solid.VoxelsPerSide[2] / discretization);
+            yMultiplier = numGridX;
+            zMultiplier = numGridX * numGridY;
+            solidOffset = new double[3];
         }
 
-        protected override int GetOffset(byte v1, byte v2)
+        protected override bool GetValueFromSolid(double x, double y, double z)
         {
-            throw new NotImplementedException();
+            return solid[(int)x, (int)y, (int)z];
         }
 
-        protected override byte GetValueFromSolid(int x, int y, int z)
+        protected override bool IsInside(bool v)
         {
-            return solid[x, y, z];
+            return v;
         }
 
-        /// <summary>
-        /// MakeTriangles performs the Marching Cubes algorithm on a single cube
-        /// </summary>
-        protected override int FindEdgeVertices(int x, int y, int z, long identifier)
+        protected override double GetOffset(StoredValue<bool> from, StoredValue<bool> to,
+            int direction, int sign)
         {
-            int cubeType = 0;
-            //Find which vertices are inside of the surface and which are outside
-            for (var i = 0; i < 8; i++)
+            switch (direction)
             {
-                if (solid[x + GridOffsetTable[i][0],
-                    y + GridOffsetTable[i][1],
-                    z + GridOffsetTable[i][2]] > 0)
-                    cubeType |= 1 << i;
+                case 0:
+                    var maxX = (int)(to.X - from.X);
+                    for (int i = 0; i < maxX; i++)
+                        if (!solid[(int)(from.X + sign * i), (int)from.Y, (int)from.Z])
+                            return gridToCoordinateSpacing * (i + 0.5) / maxX;
+                    break;
+                case 1:
+                    var maxY = (int)(to.Y - from.Y);
+                    for (int i = 0; i < maxY; i++)
+                        if (!solid[(int)from.X, (int)(from.Y + sign * i), (int)from.Z])
+                            return gridToCoordinateSpacing * (i + 0.5) / maxY;
+                    break;
+                case 2:
+                    var maxZ = (int)(to.X - from.X);
+                    for (int i = 0; i < maxZ; i++)
+                        if (!solid[(int)from.X, (int)from.Y, (int)(from.Z + sign * i)])
+                            return gridToCoordinateSpacing * (i + 0.5) / maxZ;
+                    break;
             }
-            //Find which edges are intersected by the surface
-            int edgeFlags = CubeEdgeFlagsTable[cubeType];
-
-            //If the cube is entirely inside or outside of the surface, then there will be no intersections
-            if (edgeFlags == 0) return cubeType;
-
-            //Find the point of intersection of the surface with each edge
-            for (var i = 0; i < 12; i++)
-            {
-                //if there is an intersection on this edge
-                if ((edgeFlags & 1) != 0)
-                {
-                    double offset = GetOffset(cube[EdgeVertexIndexTable[i][0]], cube[EdgeVertexIndexTable[i][1]]);
-
-                    EdgeVertex[i][0] = x + (_unitOffsetTable[EdgeVertexIndexTable[i][0]][0] + offset * EdgeDirectionTable[i][0]);
-                    EdgeVertex[i][1] = y + (_unitOffsetTable[EdgeVertexIndexTable[i][0]][1] + offset * EdgeDirectionTable[i][1]);
-                    EdgeVertex[i][2] = z + (_unitOffsetTable[EdgeVertexIndexTable[i][0]][2] + offset * EdgeDirectionTable[i][2]);
-                }
-                edgeFlags >>= 1;
-            }
-            return cubeType;
+            return gridToCoordinateSpacing;
         }
     }
 }
