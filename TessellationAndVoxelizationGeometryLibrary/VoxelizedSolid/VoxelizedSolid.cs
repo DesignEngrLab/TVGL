@@ -14,6 +14,7 @@
 
 using StarMathLib;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -26,7 +27,7 @@ namespace TVGL.Voxelization
     /// <summary>
     /// Class VoxelizedSparseDense.
     /// </summary>
-    public partial class VoxelizedSolid : Solid
+    public partial class VoxelizedSolid : Solid, IEnumerable<int[]>
     {
         #region Properties
         internal IVoxelRow[] voxels { get; private set; }
@@ -400,27 +401,21 @@ namespace TVGL.Voxelization
         {
             throw new NotImplementedException();
         }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new VoxelEnumerator(this);
+        }
+
+        public IEnumerator<int[]> GetEnumerator()
+        {
+            return new VoxelEnumerator(this);
+
+        }
+
         public override double[,] InertiaTensor { get => base.InertiaTensor; set => base.InertiaTensor = value; }
         #endregion
 
-        private class SameCoordinates : EqualityComparer<int[]>
-        {
-            public override bool Equals(int[] a1, int[] a2)
-            {
-                if (a1 == null && a2 == null)
-                    return true;
-                if (a1 == null || a2 == null)
-                    return false;
-                return (a1[0] == a2[0] &&
-                        a1[1] == a2[1] &&
-                        a1[2] == a2[2]);
-            }
-            public override int GetHashCode(int[] ax)
-            {
-                if (ax is null) return 0;
-                var hCode = ax[0] + (ax[1] << 10) + (ax[2] << 20);
-                return hCode.GetHashCode();
-            }
-        }
+
     }
 }

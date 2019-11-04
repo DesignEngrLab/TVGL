@@ -10,7 +10,7 @@ namespace TVGL.Voxelization
     /// <summary>
     /// Class VoxelizedSolid.
     /// </summary>
-    public partial class VoxelizedSolid
+    public partial class VoxelizedSolid:Solid, IEnumerable<int[]>
     {
         #region Public Methods that Branch
         /// <summary>
@@ -28,6 +28,23 @@ namespace TVGL.Voxelization
         {
             get => voxels[yCoord + zMultiplier * zCoord][xCoord];
             set => voxels[yCoord + zMultiplier * zCoord][xCoord] = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="System.Boolean"/> at the specified coordinate.
+        /// true corresponds to "on" and false to "off".
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Boolean"/>.
+        /// </value>
+        /// <param name="xCoord">The x coord.</param>
+        /// <param name="yCoord">The y coord.</param>
+        /// <param name="zCoord">The z coord.</param>
+        /// <returns></returns>
+        public bool this[int[] coordinates]
+        {
+            get => voxels[coordinates[1] + zMultiplier * coordinates[2]][coordinates[0]];
+            set => voxels[coordinates[1] + zMultiplier * coordinates[2]][coordinates[0]] = value;
         }
 
         /// <summary>
