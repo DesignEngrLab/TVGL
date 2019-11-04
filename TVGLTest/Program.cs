@@ -158,25 +158,35 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 800;
+            var res = 600;
 
             stopwatch.Restart();
-            var vs = new VoxelizedSolid(ts, res);
+            var vsa = new VoxelizedSolid(ts, res);
+            stopwatch.Stop();
+            stopwatch.Restart();
+            var vsb = new VoxelizedSolidByte(ts, res);
             stopwatch.Stop();
             Console.WriteLine("voxelization    : {0}", stopwatch.Elapsed);
-            VoxelizedSolid testResult = null;
-            /*
+            VoxelizedSolid resultsA = null;
+            VoxelizedSolidByte resultB = null;
+
             #region test cartesian slicing
             for (int i = -3; i < 4; i++)
             {
                 if (i == 0) continue;
                 stopwatch.Restart();
-                var testResults = vs.SliceOnFlat((CartesianDirections)i, vs.VoxelsPerSide[Math.Abs(i)-1]/3);
+                var testResults = vsa.SliceOnFlat((CartesianDirections)i, vsa.VoxelsPerSide[Math.Abs(i) - 1] / 3);
                 stopwatch.Stop();
                 testResults.Item1.SolidColor = new Color(KnownColors.Magenta);
                 Console.WriteLine("Slicing in {0}   : {1}", (CartesianDirections)i,
                     stopwatch.Elapsed);
-               // Presenter.ShowAndHang(testResults.Item1, testResults.Item2);
+                stopwatch.Restart();
+                var testresultB = vsb.SliceOnFlat((CartesianDirections)i, vsa.VoxelsPerSide[Math.Abs(i) - 1] / 3);
+                stopwatch.Stop();
+                testResults.Item1.SolidColor = new Color(KnownColors.Magenta);
+                Console.WriteLine("Slicing in {0}   : {1}", (CartesianDirections)i,
+                    stopwatch.Elapsed);
+                // Presenter.ShowAndHang(testResults.Item1, testResults.Item2);
 
             }
             #endregion
@@ -187,7 +197,14 @@ namespace TVGLPresenterDX
                 var normal = new[] { r.NextDouble() - .5, r.NextDouble() - .5, r.NextDouble() - .5 };
                 normal.normalizeInPlace();
                 stopwatch.Restart();
-                var testResults = vs.SliceOnFlat(new Flat(vs.Center, normal));
+                var testResults = vsa.SliceOnFlat(new Flat(vsa.Center, normal));
+                stopwatch.Stop();
+                testResults.Item1.SolidColor = new Color(KnownColors.Magenta);
+                Console.WriteLine("Slicing in {0}   : {1}", i, stopwatch.Elapsed);
+                normal = new[] { r.NextDouble() - .5, r.NextDouble() - .5, r.NextDouble() - .5 };
+                normal.normalizeInPlace();
+                stopwatch.Restart();
+                var testResultsB = vsb.SliceOnFlat(new Flat(vsa.Center, normal));
                 stopwatch.Stop();
                 testResults.Item1.SolidColor = new Color(KnownColors.Magenta);
                 Console.WriteLine("Slicing in {0}   : {1}", i, stopwatch.Elapsed);
@@ -199,89 +216,142 @@ namespace TVGLPresenterDX
             {
                 if (i == 0) continue;
 
-                vs.UpdateToAllSparse();
+                vsa.UpdateToAllSparse();
                 stopwatch.Restart();
-                testResult = vs.DraftToNewSolid((CartesianDirections)i);
+                resultsA = vsa.DraftToNewSolid((CartesianDirections)i);
                 stopwatch.Stop();
                 Console.WriteLine("Sparse Drafting in {0}   : {1}", (CartesianDirections)i,
                     stopwatch.Elapsed);
-               // Presenter.ShowAndHang(testResult);
                 
-                vs.UpdateToAllDense();
+                // Presenter.ShowAndHang(testResult);
+
+                vsa.UpdateToAllDense();
                 stopwatch.Restart();
-                testResult = vs.DraftToNewSolid((CartesianDirections)i);
+                resultB = vsb.DraftToNewSolid((CartesianDirections)i);
                 stopwatch.Stop();
                 Console.WriteLine("Dense Drafting in {0}   : {1}", (CartesianDirections)i,
                     stopwatch.Elapsed);
-               // Presenter.ShowAndHang(testResult);
+                // Presenter.ShowAndHang(testResult);
             }
             #endregion
-            vs.UpdateToAllSparse();
+            vsa.UpdateToAllSparse();
 
 
             var newBounds = new[]{ ts.Bounds[0].subtract(ts.Center.multiply(0.5)),
                 ts.Bounds[1].subtract(ts.Center.multiply(0.5)) };
-            var offsetVs = new VoxelizedSolid(ts, res, newBounds);
+            var offsetVsA = new VoxelizedSolid(ts, res, newBounds);
             Console.WriteLine("Created offset solid");
-           // Presenter.ShowAndHang(offsetVs);
+            var offsetVsB = new VoxelizedSolidByte(ts, res, newBounds);
+            Console.WriteLine("Created offset solid");
+            // Presenter.ShowAndHang(offsetVs);
 
             #region Boolean testing
             stopwatch.Restart();
-            testResult = vs.UnionToNewSolid(offsetVs);
+            resultsA = vsa.UnionToNewSolid(offsetVsA);
             stopwatch.Stop();
             Console.WriteLine("union with offset      : {0}", stopwatch.Elapsed);
-           // Presenter.ShowAndHang(testResult);
+            // Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            testResult = vs.IntersectToNewSolid(offsetVs);
+            resultsA = vsa.IntersectToNewSolid(offsetVsA);
             stopwatch.Stop();
             Console.WriteLine("intersect with offset      : {0}", stopwatch.Elapsed);
             //Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            testResult = vs.SubtractToNewSolid(offsetVs);
+            resultsA = vsa.SubtractToNewSolid(offsetVsA);
             stopwatch.Stop();
             Console.WriteLine("subtract with offset      : {0}", stopwatch.Elapsed);
-           // Presenter.ShowAndHang(testResult);
+            // Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            testResult = vs.InvertToNewSolid();
+            resultsA = vsa.InvertToNewSolid();
             stopwatch.Stop();
             Console.WriteLine("invert original      : {0}", stopwatch.Elapsed);
             //Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            testResult.Union(vs);
+            resultsA.Union(vsa);
             stopwatch.Stop();
             Console.WriteLine("union invert with original      : {0}", stopwatch.Elapsed);
             //Presenter.ShowAndHang(testResult);
             stopwatch.Restart();
-            testResult.Invert();
+            resultsA.Invert();
+            stopwatch.Stop();
+            Console.WriteLine("invert previous \"all\"      : {0}", stopwatch.Elapsed);
+            // Presenter.ShowAndHang(testResult);
+
+
+            stopwatch.Restart();
+            resultB = vsb.UnionToNewSolid(offsetVsB);
+            stopwatch.Stop();
+            Console.WriteLine("union with offset      : {0}", stopwatch.Elapsed);
+            // Presenter.ShowAndHang(testResult);
+            stopwatch.Restart();
+            resultB = vsb.IntersectToNewSolid(offsetVsB);
+            stopwatch.Stop();
+            Console.WriteLine("intersect with offset      : {0}", stopwatch.Elapsed);
+            //Presenter.ShowAndHang(testResult);
+            stopwatch.Restart();
+            resultB = vsb.SubtractToNewSolid(offsetVsB);
+            stopwatch.Stop();
+            Console.WriteLine("subtract with offset      : {0}", stopwatch.Elapsed);
+            // Presenter.ShowAndHang(testResult);
+            stopwatch.Restart();
+            resultB = vsb.InvertToNewSolid();
+            stopwatch.Stop();
+            Console.WriteLine("invert original      : {0}", stopwatch.Elapsed);
+            //Presenter.ShowAndHang(testResult);
+            stopwatch.Restart();
+            resultB.Union(vsb);
+            stopwatch.Stop();
+            Console.WriteLine("union invert with original      : {0}", stopwatch.Elapsed);
+            //Presenter.ShowAndHang(testResult);
+            stopwatch.Restart();
+            resultB = resultB.InvertToNewSolid();
             stopwatch.Stop();
             Console.WriteLine("invert previous \"all\"      : {0}", stopwatch.Elapsed);
             // Presenter.ShowAndHang(testResult);
             #endregion
-            */
+
+
             stopwatch.Restart();
-            var fullBlock = VoxelizedSolid.CreateFullBlock(vs);
+            var fullBlock = VoxelizedSolid.CreateFullBlock(vsa);
+            stopwatch.Stop();
+            Console.WriteLine("Creating Full block   : {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var fullBlockB = new VoxelizedSolidByte(vsb.VoxelsPerSide, res, vsb.VoxelSideLength, vsb.Bounds, 255);
             stopwatch.Stop();
             Console.WriteLine("Creating Full block   : {0}", stopwatch.Elapsed);
 
             #region Erode testing
             stopwatch.Restart();
-            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, .471, .882 }, 0, 0, "flat");
+            resultsA = fullBlock.DirectionalErodeToConstraintToNewSolid(vsa, new[] { 0, .471, .882 }, 0, 0, "flat");
             stopwatch.Stop();
             Console.WriteLine("sparse eroding full block to constraint 0-flat       : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(testResult);
-            vs.UpdateToAllDense();
+            Presenter.ShowAndHang(resultsA);
+
+
             stopwatch.Restart();
-            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, .471, .882 }, 0, 0, "flat");
+            resultB = fullBlockB.ErodeToNewSolid(vsb, new[] { 0, .471, .882 }, 0, 0, "flat");
+            stopwatch.Stop();
+            Console.WriteLine("sparse eroding full block to constraint 0-flat       : {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(resultsA);
+
+
+
+
+
+            vsa.UpdateToAllDense();
+            stopwatch.Restart();
+            resultsA = fullBlock.DirectionalErodeToConstraintToNewSolid(vsa, new[] { 0, .471, .882 }, 0, 0, "flat");
             stopwatch.Stop();
             Console.WriteLine("dense eroding full block to constraint 0-flat       : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(testResult);
+            Presenter.ShowAndHang(resultsA);
 
 
             stopwatch.Restart();
-            testResult = fullBlock.DirectionalErodeToConstraintToNewSolid(vs, new[] { 0, .471, .882 },10, 2, "flat");
+            resultsA = fullBlock.DirectionalErodeToConstraintToNewSolid(vsa, new[] { 0, .471, .882 }, 10, 2, "flat");
             stopwatch.Stop();
             Console.WriteLine("eroding full block to constraint        : {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(testResult);
+            Presenter.ShowAndHang(resultsA);
             #endregion
         }
 
@@ -302,8 +372,8 @@ namespace TVGLPresenterDX
             {
                 Dictionary<int, double> stepDistances;
                 Dictionary<int, double> sortedVertexDistanceLookup;
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
-                    stepSize, out stepDistances, out sortedVertexDistanceLookup);
+                //var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
+                //    stepSize, out stepDistances, out sortedVertexDistanceLookup);
                 //foreach (var segment in segments)
                 //{
                 //    var vertexLists = segment.DisplaySetup(ts);
