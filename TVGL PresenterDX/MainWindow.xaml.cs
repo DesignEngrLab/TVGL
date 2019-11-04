@@ -81,11 +81,11 @@ namespace TVGLPresenterDX
         {
             if (false)
             {
-                var ts = vs.ConvertToTessellatedSolid(
-                     new Color(KnownColors.MediumSeaGreen)
-                     {
-                         Af = 0.80f
-                     });
+                var ts = vs.ConvertToTessellatedSolidMarchingCubes(20);
+                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
+                {
+                    Af = 0.80f
+                };
                 return ConvertTessellatedSolidtoObject3D(ts);
             }
 
@@ -116,7 +116,7 @@ namespace TVGLPresenterDX
             };
             var positions = new Vector3Collection();
             var normals = new Vector3Collection();
-           
+
             var s = (float)vs.VoxelSideLength;
 
             for (var i = 0; i < vs.numVoxelsX; i++)
@@ -124,7 +124,7 @@ namespace TVGLPresenterDX
                     for (var k = 0; k < vs.numVoxelsZ; k++)
                     {
                         if (!vs[i, j, k]) continue;
-                        
+
                         if (!vs.GetNeighbors(i, j, k, out var neighbors)) continue;
 
                         var x = i * s + (float)vs.Offset[0];

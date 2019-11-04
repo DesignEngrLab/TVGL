@@ -371,6 +371,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\IVoxelRow.cs">
       <Link>TVGL\VoxelizedSolid\IVoxelRow.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelHelperClasses.cs">
+      <Link>TVGL\VoxelizedSolid\VoxelHelperClasses.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.cs">
       <Link>TVGL\VoxelizedSolid\VoxelizedSolid.cs</Link>
     </Compile>
