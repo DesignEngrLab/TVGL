@@ -269,9 +269,11 @@ namespace TVGL
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
             NumberOfFaces = faces.Count();
-            NumberOfVertices = vertices.Count();
             if (vertices == null)
+            {
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
+            }
+            NumberOfVertices = vertices.Count();
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             //Create a copy of the vertex and face (This is NON-Destructive!)
             Vertices = new Vertex[NumberOfVertices];

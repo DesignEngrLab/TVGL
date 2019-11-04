@@ -32,6 +32,7 @@ namespace TVGL
             };
             valueDictionary = new Dictionary<long, StoredValue<ValueT>>();
             faces = new List<PolygonalFace>();
+            GridOffsetTable = new double[8][];
             for (int i = 0; i < 8; i++)
                 GridOffsetTable[i] = _unitOffsetTable[i].multiply(this.gridToCoordinateSpacing);
         }
@@ -64,16 +65,15 @@ namespace TVGL
         #region Main Methods
         internal TessellatedSolid Generate()
         {
-            zMultiplier = numGridX * numGridY;
             for (var i = 0; i < numGridX - 1; i++)
                 for (var j = 0; j < numGridY - 1; j++)
                     for (var k = 0; k < numGridZ - 1; k++)
                         MakeFacesInCube(i, j, k);
             var comments = new List<string>(solid.Comments);
             comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
-            return new TessellatedSolid(faces, vertexDictionaries.SelectMany(d => d.Values), false,
-                new[] { solid.SolidColor },
-                solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
+            return new TessellatedSolid(faces);
+            // vertexDictionaries.SelectMany(d => d.Values), false,
+            //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
         }
 
 

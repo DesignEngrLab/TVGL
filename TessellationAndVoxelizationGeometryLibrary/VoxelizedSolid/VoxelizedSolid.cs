@@ -58,8 +58,8 @@ namespace TVGL.Voxelization
         public VoxelizedSolid(VoxelizedSolid vs) : this()
         {
             Bounds = new double[2][];
-                Bounds[0] = (double[])vs.Bounds[0].Clone();
-                Bounds[1] = (double[])vs.Bounds[1].Clone();
+            Bounds[0] = (double[])vs.Bounds[0].Clone();
+            Bounds[1] = (double[])vs.Bounds[1].Clone();
             Dimensions = Bounds[1].subtract(Bounds[0]);
             SolidColor = new Color(vs.SolidColor.A, vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B);
             VoxelSideLength = vs.VoxelSideLength;
@@ -68,7 +68,7 @@ namespace TVGL.Voxelization
             numVoxelsZ = vs.numVoxelsZ;
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
-                voxels[i] = new VoxelRowSparse(vs.voxels[i],numVoxelsX);
+                voxels[i] = new VoxelRowSparse(vs.voxels[i], numVoxelsX);
             FractionDense = 0;
             UpdateProperties();
         }
@@ -173,7 +173,7 @@ namespace TVGL.Voxelization
                         }
                     }
                 }
-            } );
+            });
         }
         private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
@@ -300,7 +300,7 @@ namespace TVGL.Voxelization
 
 
         public static VoxelizedSolid CreateFullBlock(VoxelizedSolid vs)
-        { 
+        {
             return CreateFullBlock(vs.VoxelSideLength, vs.Bounds);
         }
         public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<double[]> bounds)
@@ -347,7 +347,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
             {
                 if (voxels[i] is VoxelRowSparse) continue;
-                voxels[i] = new VoxelRowSparse((VoxelRowDense)voxels[i],numVoxelsX);
+                voxels[i] = new VoxelRowSparse((VoxelRowDense)voxels[i], numVoxelsX);
             }
             FractionDense = 0;
         }
@@ -373,9 +373,15 @@ namespace TVGL.Voxelization
             }
             return allRows.ToArray();
         }
-        public TessellatedSolid ConvertToTessellatedSolid(Color color)
+        public TessellatedSolid ConvertToTessellatedSolidRectilinear()
         {
             throw new NotImplementedException();
+        }
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)
+        {
+            var marchingCubes = new MarchingCubesDenseVoxels(this, voxelsPerTriangleSpacing);
+            var ts = marchingCubes.Generate();
+            return ts;
         }
         #endregion
 
