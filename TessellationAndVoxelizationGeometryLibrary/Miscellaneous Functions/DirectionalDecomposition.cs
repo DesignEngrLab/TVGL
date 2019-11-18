@@ -449,19 +449,21 @@ namespace TVGL
         /// The slices are spaced as close to the stepSizes as possible, while avoiding vertex positions. The cross sections
         /// will all be interior to the part, unless addCrossSectionAtStartAndEnd = true.
         /// </summary>
-        public static List<DecompositionData> UniformDirectionalDecomposition(CrossSectionSolid ts, double stepSize, double[] direction, SnapType snapTo, 
+        public static List<DecompositionData> UniformDecomposition(CrossSectionSolid ts, double stepSize, double[] direction, SnapType snapTo, 
             out Dictionary<int, double> stepDistances)
         {
-            var outputData = new List<DecompositionData>();
             var perpendicular = MiscFunctions.GetPerpendicularDirection(direction);
             var vertices = ts.Layer3D.SelectMany(s => s.Value.SelectMany(v => v)).ToList();
             var vertexLookup = new Dictionary<int, Vertex>();
             //initialize the vertex to edge dictionary
             var vertexEdges = new Dictionary<int, List<long>>(); //Key = vertex index, Value = List<edge checkSums>
+            var k = 0;
             foreach (var vertex in vertices)
             {
-                vertexEdges.Add(vertex.IndexInList, new List<long>());
-                vertexLookup.Add(vertex.IndexInList, vertex);
+                vertex.IndexInList = k;
+                vertexEdges.Add(k, new List<long>());
+                vertexLookup.Add(k, vertex);
+                k++;
             }
 
             //Sort all the vertices, the layers, and their loops along the given direction, such that we know which ones to check as we move along the direction
@@ -521,6 +523,8 @@ namespace TVGL
             //minor adjustments occur to avoid cutting through vertices.
             stepDistances = GetEvenlySpacedStepDistances(snapTo, stepSize, minOffset, firstDistance, furthestDistance,
                 out int numSteps, out bool addToStart, out bool addToEnd);
+            //Initialize the output data at the correct size for the snapTo (numSteps is defined in previous function)
+            var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
 
             //Move to the next step index
             //For all vertices that come before this step index, update the current loops/edges
@@ -588,8 +592,8 @@ namespace TVGL
                     foreach(var edge in currentVertexEdges)
                     {
                         if (!currentEdgesByLoop.ContainsKey(j)) currentEdgesByLoop.Add(j, new HashSet<long>());
-                        if (currentEdgesByLoop[i].Contains(edge)) currentEdgesByLoop[i].Remove(edge);
-                        else currentEdgesByLoop[i].Add(edge);
+                        if (currentEdgesByLoop[j].Contains(edge)) currentEdgesByLoop[j].Remove(edge);
+                        else currentEdgesByLoop[j].Add(edge);
                     }
                     if (startVerticesByLoop[j].Contains(vertex)) currentLoops.Add(j);
                     if (endVerticesByLoop[j].Contains(vertex)) currentLoops.Remove(j);
@@ -643,7 +647,7 @@ namespace TVGL
                 {
                     foreach (var path in currentPaths) path.Reverse();
                 }
-                outputData.Add(new DecompositionData(currentPaths, current3DLoops, stepDistances[stepIndex], stepIndex));
+                outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, stepDistances[stepIndex], stepIndex);
 
                 stepIndex++;
             }
