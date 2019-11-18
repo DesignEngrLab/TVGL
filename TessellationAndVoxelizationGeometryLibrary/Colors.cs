@@ -14,6 +14,7 @@
 
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace TVGL
@@ -21,6 +22,7 @@ namespace TVGL
     /// <summary>
     ///     Enum KnownColors
     /// </summary>
+    [Obsolete("The KnownColors attribute should be replaced with call to Constants.ColorDictionary")]
     public enum KnownColors : uint
     {
         /// <summary>
@@ -873,6 +875,7 @@ namespace TVGL
             : this(0xff, r, g, b)
         {
         }
+
         public Color() { }
         /// <summary>
         /// Initializes a new instance of the <see cref="Color"/> class.
@@ -1013,7 +1016,47 @@ namespace TVGL
             set { B = Convert(value); }
         }
 
-        #endregion Public Properties
+        public float GetHue()
+        {
+            float h;
+            var min = Math.Min(Rf, Math.Min(Gf, Bf));
+            var max = Math.Max(Rf, Math.Max(Gf, Bf));
+            var delta = max - min;
+            if (max <= 0)
+                return 0f;
+            if (Rf == max)
+                h = (Gf - Bf) / delta; // between yellow & magenta
+            else if (Gf == max)
+                h = 2 + (Bf - Rf) / delta; // between cyan & yellow
+            else
+                h = 4 + (Rf - Gf) / delta; // between magenta & cyan
+            h /= 6f; // degrees
+            if (h < 0)
+                h += 1f;
+            return h;
+        }
 
+        public float GetSaturation()
+        {
+            var min = Math.Min(Rf, Math.Min(Gf, Bf));
+            var max = Math.Max(Rf, Math.Max(Gf, Bf));
+            var delta = max - min;
+            if (max != 0)
+                return delta / max; // s
+            else return 0f;
+        }
+
+
+        public float GetValue()
+        {
+            return Math.Max(Rf, Math.Max(Gf, Bf));
+        }
+
+        #endregion Public Properties
     }
+
+    public enum ColorFamily
+    {
+        Red, Pink, Magenta, Blue, CyanBlue, Cyan, GreenCyan, Green, Yellow, OrangeYellow, OrangeBrown, RedOrange
+    };
 }

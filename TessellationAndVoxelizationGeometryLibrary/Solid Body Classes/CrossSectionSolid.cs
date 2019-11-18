@@ -47,7 +47,6 @@ namespace TVGL
         public double[] Direction;
 
         public double SameTolerance;
-        public int Index { get; set; } = -1;
 
         public CrossSectionSolid(double [] direction, Dictionary<int, double> stepDistances, double sameTolerance, UnitType units = UnitType.unspecified)
         {
