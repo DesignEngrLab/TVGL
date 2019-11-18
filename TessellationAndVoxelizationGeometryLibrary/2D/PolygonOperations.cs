@@ -538,13 +538,13 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<PointLight> OffsetMiter(IEnumerable<PointLight> path, double offset, double minLength = 0.0)
+        public static List<List<PointLight>> OffsetMiter(IEnumerable<PointLight> path, double offset, double minLength = 0.0)
         {
-            return Offset(new PathsAsLight { path.ToList() }, offset, JoinType.jtMiter, minLength).FirstOrDefault();
+            return Offset(new PathsAsLight { path.ToList() }, offset, JoinType.jtMiter, minLength);
         }
-        public static PolygonLight OffsetMiter(PolygonLight path, double offset, double minLength = 0.0)
+        public static List<PolygonLight> OffsetMiter(PolygonLight path, double offset, double minLength = 0.0)
         {
-            return Offset(new PolygonsAsLight { path }, offset, JoinType.jtMiter, minLength).FirstOrDefault();
+            return Offset(new PolygonsAsLight { path }, offset, JoinType.jtMiter, minLength);
         }
 
         /// <summary>

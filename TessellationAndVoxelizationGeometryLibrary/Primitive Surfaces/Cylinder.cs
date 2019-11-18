@@ -288,6 +288,12 @@ namespace TVGL
         public List<Edge> EdgeLoop2 { get; set; }
 
         public HashSet<Flat> SmallFlats { get; set; }
+
+        public PolygonLight Loop2D { get; set; }
+
+        public double MaxDistanceAlongAxis { get; set; }
+
+        public double MinDistanceAlongAxis { get; set; }
         #endregion
 
         #region Constructors
@@ -414,6 +420,23 @@ namespace TVGL
 
         internal Cylinder()
         { Type = PrimitiveSurfaceType.Cylinder; }
+
+        //public TessellatedSolid AsTessellatedSolid()
+        //{
+        //    var faces = new List<PolygonalFace>();
+        //    foreach(var face in Faces)
+        //    {
+        //        var vertices = new Vertex[] { face.C, face.B, face.A }; //reverse the vertices
+        //        faces.Add(new PolygonalFace(vertices, face.Normal.multiply(-1)));
+        //    }
+        //    //Add the top and bottom faces
+        //    //Build the cylinder along the axis
+        //    //First, get the planes on the top and bottom.
+        //    //Second, determine which plane is further along the axis. The faces on this plane will have a normal == axis
+        //    //The bottom plane will have faces in the reverse of the axis.
+        //    var plane1 = MiscFunctions.GetPlaneFromThreePoints(Loop1[0].Position, Loop1[1].Position, Loop1[2].Position);
+        //    var plane
+        //}
         #endregion
     }
 }
