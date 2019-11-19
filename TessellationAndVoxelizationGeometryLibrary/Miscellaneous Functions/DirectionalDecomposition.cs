@@ -616,24 +616,29 @@ namespace TVGL
                     }
 
                     var currentLoopEdges = currentEdgesByLoop[currentLoop];
-                    var intersections = GetIntersections(currentLoopEdges, vertexLookup, direction, distanceAlongAxis);
+                    var intersections = GetIntersections(currentLoopEdges, vertexLookup, direction, distanceAlongAxis );
                     MiscFunctions.SortAlongDirection(perpendicular, intersections, out List<Vertex> sortedIntersections);
                     if (sortedIntersections.Count % 2 != 0) throw new Exception();
 
-                    var j = 0;
-                    var numV = sortedIntersections.Count() - 1;
-                    while (j < numV / 2)
+                    //Now create the intersection pairings. These "sets" are given indices to help determine which
+                    //direction the intersection is going (similar to positive/negative)
+                    var setIndex = 0;
+                    var numV = sortedIntersections.Count();
+                    while (setIndex < numV / 2)
                     {
-                        var v1 = sortedIntersections[j];
-                        var v2 = sortedIntersections[numV - 1 - j];
-                        j++;
-                        intersectionsByLayer[layerIndex].Add((j, v1, v2));
+                        //Get the vertex set moving inward. Initially, this will be the top-most and bottom-most vertex.
+                        //Note that since you are only sorting the intersection vertices for one loop at a time, there is
+                        //no need to consider whether the loop is positive or negative.
+                        var v1 = sortedIntersections[setIndex];
+                        var v2 = sortedIntersections[numV - 1 - setIndex];                      
+                        intersectionsByLayer[layerIndex].Add((setIndex, v1, v2));
+                        setIndex++;
                     }
                 }
 
                 var current3DLoops = GetCrossSection3DAtDistance(intersectionsByLayer);
                 //Get the area of this layer
-                var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
+                var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction)); 
                 if (area < 0)
                 {
                     //Rather than throwing an exception, just assume the polygons were the wrong direction      
