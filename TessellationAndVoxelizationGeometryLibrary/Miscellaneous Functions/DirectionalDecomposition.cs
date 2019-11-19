@@ -605,21 +605,25 @@ namespace TVGL
 
                 //Get the intersection vertices for each current loop's current edges.
                 //Then, order the vertices along the pre-defined "perpendicular" direction
-                //Then, pair the outer vertices together as a set, moving inward. There should be an even number.
-                var intersectionsByLayer = new Dictionary<int, List<(int, Vertex, Vertex)>>(); //Value == list of setIndex, lowerIntersectionVertex, upperIntersectionVertex
+                //Then, pair the outer vertices together as a set, moving inward. There should be an even number.               
+                var intersectionsByLayer2 = new Dictionary<int, List<Vertex>>(); 
                 foreach (var currentLoop in currentLoops)
                 {
                     var layerIndex = layerByLoopId[currentLoop];
-                    if(!intersectionsByLayer.ContainsKey(layerIndex))
+                    if (!intersectionsByLayer2.ContainsKey(layerIndex))
                     {
-                        intersectionsByLayer.Add(layerIndex, new List<(int, Vertex, Vertex)>());
+                        intersectionsByLayer2.Add(layerIndex, new List<Vertex>());
                     }
 
                     var currentLoopEdges = currentEdgesByLoop[currentLoop];
-                    var intersections = GetIntersections(currentLoopEdges, vertexLookup, direction, distanceAlongAxis );
-                    MiscFunctions.SortAlongDirection(perpendicular, intersections, out List<Vertex> sortedIntersections);
+                    var intersections = GetIntersections(currentLoopEdges, vertexLookup, direction, distanceAlongAxis);
+                    intersectionsByLayer2[layerIndex].AddRange(intersections);
+                }
+                var intersectionsByLayer = new Dictionary<int, List<(int, Vertex, Vertex)>>(); //Value == list of setIndex, lowerIntersectionVertex, upperIntersectionVertex
+                foreach (var layerIndex in intersectionsByLayer2.Keys) 
+                { 
+                    MiscFunctions.SortAlongDirection(perpendicular, intersectionsByLayer2[layerIndex], out List<Vertex> sortedIntersections);
                     if (sortedIntersections.Count % 2 != 0) throw new Exception();
-
                     //Now create the intersection pairings. These "sets" are given indices to help determine which
                     //direction the intersection is going (similar to positive/negative)
                     var setIndex = 0;
