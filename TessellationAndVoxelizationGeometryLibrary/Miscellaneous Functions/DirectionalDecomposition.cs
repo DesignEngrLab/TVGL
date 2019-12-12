@@ -606,41 +606,23 @@ namespace TVGL
                 //Get the intersection vertices for each current loop's current edges.
                 //Then, order the vertices along the pre-defined "perpendicular" direction
                 //Then, pair the outer vertices together as a set, moving inward. There should be an even number.               
-                var intersectionsByLayer2 = new Dictionary<int, List<Vertex>>(); 
+                var intersectionsByLayer = new Dictionary<int, List<Vertex>>();
                 foreach (var currentLoop in currentLoops)
                 {
                     var layerIndex = layerByLoopId[currentLoop];
-                    if (!intersectionsByLayer2.ContainsKey(layerIndex))
+                    if (!intersectionsByLayer.ContainsKey(layerIndex))
                     {
-                        intersectionsByLayer2.Add(layerIndex, new List<Vertex>());
+                        intersectionsByLayer.Add(layerIndex, new List<Vertex>());
                     }
 
                     var currentLoopEdges = currentEdgesByLoop[currentLoop];
                     var intersections = GetIntersections(currentLoopEdges, vertexLookup, direction, distanceAlongAxis);
-                    intersectionsByLayer2[layerIndex].AddRange(intersections);
-                }
-                var intersectionsByLayer = new Dictionary<int, List<(int, Vertex, Vertex)>>(); //Value == list of setIndex, lowerIntersectionVertex, upperIntersectionVertex
-                foreach (var layerIndex in intersectionsByLayer2.Keys) 
-                { 
-                    MiscFunctions.SortAlongDirection(perpendicular, intersectionsByLayer2[layerIndex], out List<Vertex> sortedIntersections);
-                    if (sortedIntersections.Count % 2 != 0) throw new Exception();
-                    //Now create the intersection pairings. These "sets" are given indices to help determine which
-                    //direction the intersection is going (similar to positive/negative)
-                    var setIndex = 0;
-                    var numV = sortedIntersections.Count();
-                    while (setIndex < numV / 2)
-                    {
-                        //Get the vertex set moving inward. Initially, this will be the top-most and bottom-most vertex.
-                        //Note that since you are only sorting the intersection vertices for one loop at a time, there is
-                        //no need to consider whether the loop is positive or negative.
-                        var v1 = sortedIntersections[setIndex];
-                        var v2 = sortedIntersections[numV - 1 - setIndex];                      
-                        intersectionsByLayer[layerIndex].Add((setIndex, v1, v2));
-                        setIndex++;
-                    }
+                    intersectionsByLayer[layerIndex].AddRange(intersections);
                 }
 
-                var current3DLoops = GetCrossSection3DAtDistance(intersectionsByLayer);
+
+
+                var current3DLoops = GetCrossSection3DAtDistance(pairsByLayer);
                 //Get the area of this layer
                 var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction)); 
                 if (area < 0)
@@ -682,7 +664,7 @@ namespace TVGL
             return intersections;
         }
 
-        private static List<List<Vertex>> GetCrossSection3DAtDistance(Dictionary<int, List<(int, Vertex, Vertex)>> intersectionsByLayer)
+        private static List<List<Vertex>> GetCrossSection3DAtDistanceOld(Dictionary<int, List<(int, Vertex, Vertex)>> intersectionsByLayer)
         {
             //  Next, build the cross sections (If this is backward (CW vs. CCW), we will reverse all the cross sections later).
             //  If the intersection set is positive, then connects to the positive intersection set with the same index, on the loop on the next layer   
@@ -831,6 +813,150 @@ namespace TVGL
                     crossSections.Add(crossSection);
                 }
             }
+            return crossSections;
+        }
+
+        private class LineSegment
+        {
+            public Pair Start { get; set; }
+            public Pair End { get; set; }
+            public List<Vertex> Path { get; set; }
+            public bool IsPositive;
+            public bool IsClosed = false;
+
+            public LineSegment(Pair startingPair, bool positive)
+            {
+                Start = startingPair;
+                End = startingPair;
+                IsPositive = positive;
+                Path = new List<Vertex> { Start.A, Start.B };
+            }
+
+            public void Add(Pair pair)
+            {
+                End = pair;
+                Path.Insert(0, pair.A);
+                Path.Add(pair.B);
+            }
+        }
+
+        private class Pair
+        {
+            public Vertex A { get; set; }
+            public double Ad { get; set; }
+            public Vertex B { get; set; }
+            public double Bd { get; set; }
+            public Pair((Vertex, double) a, (Vertex, double) b)
+            {
+                A = a.Item1;
+                B = b.Item1;
+                Ad = a.Item2;
+                Bd = b.Item2;
+            }
+        }
+        private static List<List<Vertex>> GetCrossSection3DAtDistance(double[] perpendicular, Dictionary<int, List<Vertex>> intersectionsByLayer)
+        {
+
+            //We need to build up the 3D cross section by stitching together the intersections for each layer.
+            //For the beginning, start a line segment for each pair.
+            //For each additional layer, look for intersection pairs between the layers that overlap in their sorted distance
+            //MAJOR ASSUMPTION: The step size is sufficiently small to capture abrupt changes.
+            //There are a few possible cases
+            //1) One new pair overlaps with one prior segment; insert the first point in the pair at the start of the segment and add the second point to the end.
+            //2) Multiple new pairs overlap one prior segment; branch the cross section by starting interior segments
+            //3) One new pair overlaps multiple prior segments; close interior segments and add the new points to the outmost prior segment.
+            Dictionary<Vertex, double> previousDistanceAlong = null;
+            List<LineSegment> segments = null;
+            foreach (var layerIndex in intersectionsByLayer.Keys)
+            {
+                var unconnected = new List<(Vertex, Vertex)>();
+                var pairsByLayer = new Dictionary<int, List<(Vertex, Vertex)>>();
+                MiscFunctions.SortAlongDirection(perpendicular, intersectionsByLayer[layerIndex], out List<(Vertex, double)> sortedIntersections);
+                if (sortedIntersections.Count % 2 != 0) throw new Exception();
+
+                var previousToConnections = new Dictionary<Pair, List<Pair>>();
+                var previousFromConnections = new Dictionary<Pair, List<Pair>>();
+
+                for (var i = 0; i < sortedIntersections.Count; i += 2)
+                {
+                    var intersectionA = sortedIntersections[i];
+                    var intersectionB = sortedIntersections[i + 1];
+                    var pair = new Pair(intersectionA, intersectionB);
+                    //Get the perpendicular distances 
+                    var a = intersectionA.Item2;
+                    var b = intersectionB.Item2;
+                    if (previousDistanceAlong == null)
+                    {
+                        //This is the first layer to consider. Every pair must be a new positive segment.
+                        segments.Add(new LineSegment(pair, true));
+                    }
+                    else
+                    {
+                        foreach (var segment in segments)
+                        {
+                            var previousPair = segment.End;
+                            var c = previousDistanceAlong[previousPair.A];
+                            var d = previousDistanceAlong[previousPair.B];
+                            if ((c <= b && c >= a) || d <= b && d >= a || a <= c && a >= d || b <= c && b >= d)
+                            {
+                                if (!previousToConnections.ContainsKey(pair))
+                                    previousToConnections.Add(pair, new List<Pair>());
+                                previousToConnections[pair].Add(previousPair);
+
+                                if (!previousFromConnections.ContainsKey(previousPair))
+                                    previousFromConnections.Add(pair, new List<Pair>());
+                                previousFromConnections[previousPair].Add(pair);
+                            }
+                            else
+                            {
+                                //Line segments added this way had no prior intersections below them, so it must be positive.
+                                //A new negative segment would cause a branch.
+                                segments.Add(new LineSegment(pair, true));
+                            }
+                        }
+                    }
+                }
+                //Handle all the possible cases
+                //1) One new pair overlaps with one prior segment; insert the first point in the pair at the start of the segment and add the second point to the end.
+                //2) Multiple new pairs overlap one prior segment; branch the cross section by starting interior segments
+                //3) One new pair overlaps multiple prior segments; close interior segments and add the new points to the outmost prior segment.
+                foreach(var pairSet in previousToConnections)
+                {
+                    var pair = pairSet.Key;
+                    var previousPairs = pairSet.Value;
+                    if (previousFromConnections[previousPairs[0]].Count > 1)
+                    {
+                        if (previousPairs.Count > 1) throw new Exception("Cannot have both a branch and merge for an intersection pair. Step size is not small enough.");
+                        //Case 2: Branch. Perform this in the next loop.
+                    }
+                    else if (previousPairs.Count == 1)
+                    {
+                        //Case 1: Add to previous segment
+                        //Find the segment that the previous pair belongs to
+                        var previousSegment = segments.First(p => p.End == previousPairs[0]);
+                        previousSegment.Add(pair);
+                    }
+                    else
+                    { 
+                        //Case 3: Merge
+          
+                    }
+                }
+                
+                //Handle all the branches
+                foreach(var pairSet in previousFromConnections)
+                {
+                    var previousPair = pairSet.Key;
+                    var currentPairs = pairSet.Value;
+                    if(currentPairs.Count > 1)
+                    {
+                        //
+                    }
+                }
+            }
+
+
+            var cr   ossSections = new List<List<Vertex>>();
             return crossSections;
         }
 
