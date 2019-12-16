@@ -346,7 +346,7 @@ namespace TVGL
         /// Returns owned and other face in that order
         /// </summary>
         /// <returns></returns>
-        internal static (PolygonalFace, PolygonalFace) GetOwnedAndOtherFace(long edgeChecksum, PolygonalFace face1, PolygonalFace face2)
+        public static (PolygonalFace, PolygonalFace) GetOwnedAndOtherFace(long edgeChecksum, PolygonalFace face1, PolygonalFace face2)
         {
             var (from, to) = GetVertexIndices(edgeChecksum);
             //We are going to enforce that the edge is defined along the vertices, such that it goes from the smaller
@@ -362,7 +362,7 @@ namespace TVGL
             return Math.Sign(dot) > 0 ? (face1, face2) : (face2, face1);
         }
 
-        internal static (int, int) GetVertexIndices(long checkSum)
+        public static (int, int) GetVertexIndices(long checkSum)
         {
             //The checksum is ordered from larger to smaller
             var largeIndex = (int)(checkSum / Constants.VertexCheckSumMultiplier);
@@ -370,12 +370,12 @@ namespace TVGL
             return (smallIndex, largeIndex);
         }
 
-        internal static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
+        public static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
         {
             return TessellatedSolid.GetEdgeChecksum(vertex1, vertex2);
         }
 
-        internal static long GetEdgeChecksum(int vertex1Index, int vertex2Index)
+        public static long GetEdgeChecksum(int vertex1Index, int vertex2Index)
         {
             return TessellatedSolid.GetEdgeChecksum(vertex1Index, vertex2Index);
         }
