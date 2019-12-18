@@ -87,8 +87,8 @@ namespace TVGL
         public void SetVolume(bool extrudeBack = true)
         {
             Volume = 0.0;
-            var start = Layer2D.Where(p => p.Value.Any()).First().Key;
-            var stop = Layer2D.Where(p => p.Value.Any()).Last().Key;
+            var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
+            var stop = Layer2D.Where(p => p.Value.Any()).LastOrDefault().Key;
             var reverse = start < stop ? 1 : -1;
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
@@ -115,8 +115,8 @@ namespace TVGL
         public void SetSolidRepresentation(bool extrudeBack = true)
         {
             if (!Layer3D.Any()) SetAllVertices();
-            var start = Layer3D.Where(p => p.Value.Any()).First().Key;
-            var stop = Layer3D.Where(p => p.Value.Any()).Last().Key;
+            var start = Layer3D.Where(p => p.Value.Any()).FirstOrDefault().Key;
+            var stop = Layer3D.Where(p => p.Value.Any()).LastOrDefault().Key;
             var reverse = start < stop ? 1 : -1;
             var direction = reverse == 1 ? Direction : Direction.multiply(-1); 
             Faces = new List<PolygonalFace>();
