@@ -48,7 +48,8 @@ namespace TVGL
 
         public double SameTolerance;
 
-        public CrossSectionSolid(double [] direction, Dictionary<int, double> stepDistances, double sameTolerance, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(double [] direction, Dictionary<int, double> stepDistances, double sameTolerance, 
+            UnitType units = UnitType.unspecified)
         {
             Layer2D = new Dictionary<int, List<PolygonLight>>();
             Layer3D = new Dictionary<int, List<List<Vertex>>>();

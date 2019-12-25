@@ -20,7 +20,7 @@ namespace TVGL
         // where double and ValueT are numbers or bool
     {
         #region Constructor
-        internal MarchingCubes(SolidT solid, double gridToCoordinateFactor)
+        protected MarchingCubes(SolidT solid, double gridToCoordinateFactor)
         {
             this.solid = solid;
             this.gridToCoordinateSpacing = gridToCoordinateFactor;
@@ -63,7 +63,7 @@ namespace TVGL
         #endregion
 
         #region Main Methods
-        internal TessellatedSolid Generate()
+        internal virtual TessellatedSolid Generate()
         {
             for (var i = 0; i < numGridX - 1; i++)
                 for (var j = 0; j < numGridY - 1; j++)
