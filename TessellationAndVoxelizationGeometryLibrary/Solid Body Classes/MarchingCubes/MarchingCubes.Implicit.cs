@@ -33,9 +33,9 @@ namespace TVGL
             int direction, int sign)
         {
             if (from.Value.IsPracticallySame(surfaceLevel)) return 0.0;
-            if (to.Value.IsPracticallySame(surfaceLevel)) return gridToCoordinateSpacing;
-            if (to.Value.IsPracticallySame(from.Value)) return gridToCoordinateSpacing/2;
-            return gridToCoordinateSpacing*(surfaceLevel - from.Value) / (to.Value - from.Value);
+            if (to.Value.IsPracticallySame(surfaceLevel)) return gridToCoordinateFactor;
+            if (to.Value.IsPracticallySame(from.Value)) return gridToCoordinateFactor/2;
+            return gridToCoordinateFactor*(surfaceLevel - from.Value) / (to.Value - from.Value);
         }
     }
 }

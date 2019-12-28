@@ -35,22 +35,22 @@ namespace TVGL
                     var maxX = (int)(to.X - from.X);
                     for (int i = 1; i < maxX; i++)
                         if (solid[(int)(from.X + sign * i), (int)from.Y, (int)from.Z]!= solid[(int)(from.X + sign * (i-1)), (int)from.Y, (int)from.Z])
-                            return gridToCoordinateSpacing * (i + 0.5) / maxX;
+                            return gridToCoordinateFactor * (i + 0.5) / maxX;
                     break;
                 case 1:
                     var maxY = (int)(to.Y - from.Y);
                     for (int i = 1; i < maxY; i++)
                         if (solid[(int)from.X, (int)(from.Y + sign * i), (int)from.Z]!=solid[(int)from.X, (int)(from.Y + sign * (i-1)), (int)from.Z])
-                           return gridToCoordinateSpacing * (i + 0.5) / maxY;
+                           return gridToCoordinateFactor * (i + 0.5) / maxY;
                     break;
                 case 2:
                     var maxZ = (int)(to.X - from.X);
                     for (int i = 1; i < maxZ; i++)
                         if (solid[(int)from.X, (int)from.Y, (int)(from.Z + sign * i)]!= solid[(int)from.X, (int)from.Y, (int)(from.Z + sign * (i-1))])
-                            return gridToCoordinateSpacing * (i + 0.5) / maxZ;
+                            return gridToCoordinateFactor * (i + 0.5) / maxZ;
                     break;
             }
-            return gridToCoordinateSpacing;
+            return gridToCoordinateFactor;
         }
     }
 }

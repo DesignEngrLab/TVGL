@@ -23,7 +23,7 @@ namespace TVGL
         protected MarchingCubes(SolidT solid, double gridToCoordinateFactor)
         {
             this.solid = solid;
-            this.gridToCoordinateSpacing = gridToCoordinateFactor;
+            this.gridToCoordinateFactor = gridToCoordinateFactor;
             this.coordToGridFactor = 1 / gridToCoordinateFactor;
             vertexDictionaries = new[] {
                 new Dictionary<long, Vertex>(),
@@ -34,18 +34,18 @@ namespace TVGL
             faces = new List<PolygonalFace>();
             GridOffsetTable = new double[8][];
             for (int i = 0; i < 8; i++)
-                GridOffsetTable[i] = _unitOffsetTable[i].multiply(this.gridToCoordinateSpacing);
+                GridOffsetTable[i] = _unitOffsetTable[i].multiply(this.gridToCoordinateFactor);
         }
         #endregion
 
         #region Fields
         readonly Dictionary<long, Vertex>[] vertexDictionaries;
         protected readonly SolidT solid;
-        protected readonly double gridToCoordinateSpacing;
+        protected readonly double gridToCoordinateFactor;
         protected readonly double coordToGridFactor;
         protected readonly double[][] GridOffsetTable;
         readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
-        readonly List<PolygonalFace> faces;
+        protected readonly List<PolygonalFace> faces;
 
         #region to be assigned in inherited constructor
         protected int numGridX, numGridY, numGridZ;
@@ -108,11 +108,11 @@ namespace TVGL
         /// <summary>
         /// MakeTriangles performs the Marching Cubes algorithm on a single cube
         /// </summary>
-        private void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
+        protected void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
         {
-            var xCoord = solidOffset[0] + xIndex * gridToCoordinateSpacing;
-            var yCoord = solidOffset[1] + yIndex * gridToCoordinateSpacing;
-            var zCoord = solidOffset[2] + zIndex * gridToCoordinateSpacing;
+            var xCoord = solidOffset[0] + xIndex * gridToCoordinateFactor;
+            var yCoord = solidOffset[1] + yIndex * gridToCoordinateFactor;
+            var zCoord = solidOffset[2] + zIndex * gridToCoordinateFactor;
             int cubeType = 0;
             var cube = new StoredValue<ValueT>[8];
             //Find which vertices are inside of the surface and which are outside
