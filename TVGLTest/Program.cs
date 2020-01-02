@@ -158,8 +158,16 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
+            var stepSize = (ts.ZMax - ts.ZMin) / 100;
+            var direction = new[] { 0.0, 0.0, 1.0 };
+            var xSections =
+            DirectionalDecomposition.UniformDecomposition(ts, direction, stepSize, out var stepDistances, out _,
+                DirectionalDecomposition.SnapType.CenterAllInside, true);
+            var xs = new CrossSectionSolid(direction, stepDistances.Values.ToArray(), 1e-10, xSections.Select(d => d.Paths).ToArray());
+            TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
+            Presenter.ShowAndHang(xs, ts1);
+            return;
             var res = 600;
-
             stopwatch.Restart();
             var vsa = new VoxelizedSolid(ts, res);
             stopwatch.Stop();

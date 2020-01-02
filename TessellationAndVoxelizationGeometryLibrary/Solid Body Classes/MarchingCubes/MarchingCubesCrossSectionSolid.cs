@@ -8,48 +8,179 @@ namespace TVGL
 {
     internal class MarchingCubesCrossSectionSolid : MarchingCubes<CrossSectionSolid, double>
     {
-        double[][,] gridLayers;
-        bool onLayers = false;
+        private readonly double[][,] gridLayers;
+        private readonly bool onLayers;
+        private readonly double discretization;
+        private readonly int numGridLayersToStore;
+        private readonly double xMin;
+        private readonly double yMin;
+
         internal MarchingCubesCrossSectionSolid(CrossSectionSolid solid)
-            : this(solid, (solid.StepDistances[^1] - solid.StepDistances[0]) / (solid.NumLayers - 1))
+            : this(solid, (solid.StepDistances[solid.NumLayers - 1] - solid.StepDistances[0]) / (solid.NumLayers - 1))
         { }
         internal MarchingCubesCrossSectionSolid(CrossSectionSolid solid, double discretization)
             : base(solid, discretization)
         {
-            var distanceBetweenLayers = (solid.StepDistances[^1] - solid.StepDistances[0]) / (solid.NumLayers - 1);
+            this.discretization = discretization;
+            var distanceBetweenLayers = (solid.StepDistances[solid.NumLayers - 1] - solid.StepDistances[0]) / (solid.NumLayers - 1);
             onLayers = distanceBetweenLayers.IsPracticallySame(discretization);
-            var closestFacingDir = 0;
-            if (Math.Abs(solid.Direction[1]) > Math.Abs(solid.Direction[closestFacingDir])) closestFacingDir = 1;
-            if (Math.Abs(solid.Direction[2]) > Math.Abs(solid.Direction[closestFacingDir])) closestFacingDir = 2;
-            var newDirection = new double[3];
-            newDirection[closestFacingDir] = Math.Sign(solid.Direction[closestFacingDir]);
-
+            xMin = solid.XMin;
+            yMin = solid.YMin;
             numGridX = (int)Math.Ceiling((solid.XMax - solid.XMin) / discretization);
             numGridY = (int)Math.Ceiling((solid.YMax - solid.ZMin) / discretization);
             numGridZ = (int)Math.Ceiling((solid.ZMax - solid.ZMin) / discretization);
-            var gridLayersToStore =
+            numGridLayersToStore =
             (distanceBetweenLayers <= discretization) ? 2
             : (2 * distanceBetweenLayers <= discretization) ? 3 : 4;
-            gridLayers = new double[gridLayersToStore][,];
-
+            gridLayers = new double[numGridLayersToStore][,];
         }
 
         internal override TessellatedSolid Generate()
         {
+            var distanceForGridLayers = new double[gridLayers.Length];
+            var start = 0;
+            while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
+            var startingDistance = distanceForGridLayers[0] = solid.StepDistances[start];
+            distanceForGridLayers[1] = solid.StepDistances[start + 1];
+            if (!onLayers)
+            {
+                var nextXSection = startingDistance + discretization;
+                //okay, need to work on this logic for 2, 3, and 4 layers
+                while (solid.StepDistances[start] < nextXSection) start++;
+                distanceForGridLayers[onLayers ? 1 : 2] = solid.StepDistances[start];
+                if (!onLayers) distanceForGridLayers[3] = solid.StepDistances[start + 1];
+            }
+            var last = solid.NumLayers - 1;
+            while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
+            for (var k = start; k <= last; k++)
+            {
+                gridLayers[k % numGridLayersToStore] = CreateDistanceGridBruteForce(solid.Layer2D[k]);
+                for (var i = 0; i < numGridX - 1; i++)
+                    for (var j = 0; j < numGridY - 1; j++)
+                        MakeFacesInCube(i, j, k);
+
+            }
             //Calculate new grid
             //interpolate points for grid
             //call marching cubes function for this z-layer
-            for (var i = 0; i < numGridX - 1; i++)
-                for (var j = 0; j < numGridY - 1; j++)
-                    for (var k = 0; k < numGridZ - 1; k++)
-                        MakeFacesInCube(i, j, k);
+            // for (var k = 0; k < numGridZ - 1; k++)
             var comments = new List<string>(solid.Comments);
             comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
             return new TessellatedSolid(faces);
         }
+
+        private double[,] CreateDistanceGridBruteForce(List<PolygonLight> layer)
+        {
+            var grid = new double[numGridX, numGridY];
+            for (int i = 0; i < numGridX; i++)
+                for (int j = 0; j < numGridY; j++)
+                    grid[i, j] = double.PositiveInfinity;
+            foreach (var polygon in layer)
+            {
+                var numSegments = polygon.Path.Count;
+                var fromPoint = polygon.Path[numSegments - 1];
+                var lastPoint = polygon.Path[numSegments - 2];
+                foreach (var toPoint in polygon.Path)
+                {
+                    var segment = toPoint - fromPoint;
+                    for (int i = 0; i < numGridX; i++)
+                        for (int j = 0; j < numGridY; j++)
+                        {
+                            var p = new PointLight(xMin + i * discretization, yMin + j * discretization);
+                            var vFrom = p - fromPoint;
+                            var vTo = p - toPoint;
+                            var dot_from = segment.dotProduct(vFrom);
+                            var dot_to = segment.dotProduct(vTo);
+                            if (dot_from >= 0 || dot_to <= 0)
+                            {
+                                var d = StarMath.crossProduct2(segment.normalize(), vFrom);
+                                if (Math.Abs(d) < Math.Abs(grid[i, j]))
+                                    grid[i, j] = d;
+                            }
+                            else
+                            {
+                                var lastSegment = fromPoint - lastPoint;
+                                if (dot_from < 0 && lastSegment.dotProduct(vFrom) > 0)
+                                {
+                                    var sign = Math.Sign(StarMath.crossProduct2(segment, lastSegment));
+                                    var d = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
+                                    if (d < Math.Abs(grid[i, j]))
+                                        grid[i, j] = sign * d;
+                                }
+                            }
+                        }
+                    lastPoint = fromPoint;
+                    fromPoint = toPoint;
+                }
+            }
+            return grid;
+        }
+        private double[,] CreateDistanceGrid(List<PolygonLight> layer)
+        {
+            var grid = new double[numGridX, numGridY];
+            for (int i = 0; i < numGridX; i++)
+                for (int j = 0; j < numGridY; j++)
+                    grid[i, j] = Constants.MarchingCubesCrossSectionExpandFactor * discretization;
+            foreach (var polygon in layer)
+            {
+                var numSegments = polygon.Path.Count;
+                var fromPoint = polygon.Path[numSegments - 1];
+                var lastPoint = polygon.Path[numSegments - 2];
+                for (int i = 0; i < polygon.Path.Count; i++)
+                {
+                    var toPoint = polygon.Path[i];
+                    var segment = toPoint - fromPoint;
+                    var xDelta = (toPoint.Y > fromPoint.Y) ? +1 : (fromPoint.Y > toPoint.Y) ? -1 : 0;
+                    var yDelta = (fromPoint.X > toPoint.X) ? +1 : (toPoint.X > fromPoint.X) ? -1 : 0;
+                    var queuePoints = GetGridPointsAroundSegment(fromPoint, toPoint);
+                    while (queuePoints.Any())
+                    {
+                        var p = queuePoints.Dequeue();
+                        var vFrom = p - fromPoint;
+                        var vTo = p - toPoint;
+                        var dot_from = segment.dotProduct(vFrom);
+                        var dot_to = segment.dotProduct(vTo);
+                        if (dot_from <= 0 || dot_to >= 0) continue;
+                        var d = segment.normalize().crossProduct(vFrom).norm2();
+                        //    l = norm(axis)
+                        //    radius = abs(dot_to) * rfrom / l + abs(dot_from) * rto / l
+                        //    smoothness = abs(dot_to) * sfrom / l + abs(dot_from) * sto / l
+                        //end
+
+                        //v = radius * ((1 - smoothness) / d + smoothness / d ^ 5)
+                        //if v > DefaultMaximumValue
+                        //    v = DefaultMaximumValue
+                        //end
+                        //return v
+
+                        //var newDist =
+                    }
+
+
+
+
+
+
+
+
+                    lastPoint = fromPoint;
+                    fromPoint = toPoint;
+                }
+            }
+            return grid;
+        }
+
+
+        private Queue<PointLight> GetGridPointsAroundSegment(PointLight a, PointLight b)
+        {
+            throw new NotImplementedException();
+        }
+
         protected override double GetValueFromSolid(double x, double y, double z)
         {
-            return gridLayers[(int)z][(int)x, (int)y];
+            if (onLayers)
+                return gridLayers[(int)z % 2][(int)x, (int)y];
+            else return 0;
         }
 
         protected override bool IsInside(double v)

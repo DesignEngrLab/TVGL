@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using StarMathLib;
 using TVGL.IOFunctions;
+using TVGL.Voxelization;
 
 namespace TVGL.Implicit
 {
@@ -51,6 +52,11 @@ namespace TVGL.Implicit
         }
 
         private double Evaluate(double x, double y, double z)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TessellatedSolid ConvertToTessellatedSolid()
         {
             throw new NotImplementedException();
         }

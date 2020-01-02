@@ -23,6 +23,7 @@ using HelixToolkit.Wpf;
 using OxyPlot;
 using StarMathLib;
 using TVGL.Voxelization;
+using System;
 
 namespace TVGL
 {
@@ -735,17 +736,32 @@ namespace TVGL
             var models = new List<Visual3D>();
             foreach (var s in solids)
             {
-                Visual3D model = null;
-                if (s is TessellatedSolid)
-                    model = MakeModelVisual3D((TessellatedSolid)s);
-                else if (s is VoxelizedSolid)
-                    model = MakeModelVisual3D((VoxelizedSolid)s);
-                models.Add(model);
-                window.view1.Children.Add(model);
+                if (s is CrossSectionSolid)
+                {
+                    var contours = MakeLinesVisual3D(((CrossSectionSolid)s).Layer2D, ((CrossSectionSolid)s).StepDistances, true);
+                    models.AddRange(contours);
+                    foreach (var contour in contours)
+                        window.view1.Children.Add(contour);
+                }
+                else
+                {
+                    Visual3D model = null;
+                    if (s is TessellatedSolid)
+                        model = MakeModelVisual3D((TessellatedSolid)s);
+                    else if (s is VoxelizedSolid)
+                        model = MakeModelVisual3D((VoxelizedSolid)s);
+                    else if (s is Implicit.ImplicitSolid)
+                    {
+                        model = MakeModelVisual3D(((Implicit.ImplicitSolid)s).ConvertToTessellatedSolid());
+                    }
+                    models.Add(model);
+                    window.view1.Children.Add(model);
+                }
             }
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
+
 
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
         {
@@ -929,6 +945,76 @@ namespace TVGL
             };
         }
 
+
+        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<double[]>> paths, bool closePaths = true)
+        {
+            var lineVisuals = new List<LinesVisual3D>();
+            foreach (var path in paths)
+            {
+                var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                foreach (var t in contour)
+                {
+                    lineCollection.Add(t);
+                    lineCollection.Add(t);
+                }
+                lineCollection.RemoveAt(0);
+                if (closePaths)
+                    lineCollection.Add(lineCollection.First());
+                lineVisuals.Add(new LinesVisual3D { Points = new Point3DCollection(lineCollection) });
+            }
+            return lineVisuals;
+        }
+        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<Vertex>> paths, bool closePaths = true)
+        {
+            var lineVisuals = new List<LinesVisual3D>();
+            foreach (var path in paths)
+            {
+                var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                foreach (var t in contour)
+                {
+                    lineCollection.Add(t);
+                    lineCollection.Add(t);
+                }
+                lineCollection.RemoveAt(0);
+                if (closePaths)
+                    lineCollection.Add(lineCollection.First());
+                lineVisuals.Add(new LinesVisual3D { Points = new Point3DCollection(lineCollection) });
+            }
+            return lineVisuals;
+        }
+
+
+        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<PolygonLight>> xYPaths,
+            IEnumerable<double> zValues, bool closePaths = true)
+        {
+            var lineVisuals = new List<LinesVisual3D>();
+            var zEnumerator = zValues.GetEnumerator();
+            foreach (var layer in xYPaths)
+            {
+                zEnumerator.MoveNext();
+                var z = zEnumerator.Current; 
+                foreach (var polygon in layer)
+                {
+                    var contour = polygon.Path.Select(point => new Point3D(point.X, point.Y, z)).ToList();
+                    //Now create a line collection by doubling up the points
+                    var lineCollection = new List<Point3D>();
+                    foreach (var t in contour)
+                    {
+                        lineCollection.Add(t);
+                        lineCollection.Add(t);
+                    }
+                    lineCollection.RemoveAt(0);
+                    if (closePaths)
+                        lineCollection.Add(lineCollection.First());
+                    lineVisuals.Add(new LinesVisual3D { Points = new Point3DCollection(lineCollection) });
+                }
+            }
+            return lineVisuals;
+        }
 
         /// <summary>
         /// Makes the model visual3 d.

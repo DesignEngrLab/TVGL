@@ -103,6 +103,11 @@ namespace TVGL
         /// </summary>
         public const double LowConfidence = 0.68;
 
+        /// <summary>
+        /// This is used to set the amount that polygon segments search outward to define the grid
+        /// points that they affect.
+        /// </summary>
+        internal const int MarchingCubesCrossSectionExpandFactor = 5;
 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that

@@ -23,7 +23,7 @@ namespace TVGL
         /// extrude backward from the first valid loop in Layer3D up until the last valid loop
         /// in the list.
         /// </summary>
-        public List<List<Vertex>>[] Layer3D { get; }
+        public List<List<Vertex>>[] Layer3D { get; set; }
         public List<PolygonLight>[] Layer2D { get; }
 
         /// <summary>
@@ -58,13 +58,14 @@ namespace TVGL
             SameTolerance = sameTolerance;
         }
         public CrossSectionSolid(double[] direction, double[] stepDistances, double sameTolerance,
-            UnitType units = UnitType.unspecified)
+         List<PolygonLight>[] Layer2D, UnitType units = UnitType.unspecified)
         {
             Direction = direction;
             NumLayers = stepDistances.Length;
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
+            this.Layer2D = Layer2D;
         }
 
         public void Add(List<Vertex> feature3D, PolygonLight feature2D, int layer)
@@ -97,21 +98,11 @@ namespace TVGL
         public void SetVolume(bool extrudeBack = true)
         {
             Volume = 0.0;
-            var start = Layer2D.First(p => p.Any()).Key;
-            var stop = Layer2D.Where(p => p.Value.Any()).Last().Key;
-            var reverse = start < stop ? 1 : -1;
-            //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
-            //Otherwise, extrude the first loop and all other loops forward, except the last loop.
-            //Which of these extrusion options you choose depends on how the cross sections were defined.
-            //But both methods, only result in material between the cross sections.
-            if (extrudeBack) start += reverse;
-            else stop -= reverse;
-            for (var i = start; i * reverse <= stop * reverse; i += reverse) //Include the last index, since we already modified start or stop
+            for (var i = 0; i < NumLayers - 1; i++) //Include the last index, since we already modified start or stop
             {
-                double distance;
-                if (extrudeBack) distance = Math.Abs(StepDistances[i] - StepDistances[i - reverse]);//current - prior (reverse extrusion)        
-                else distance = Math.Abs(StepDistances[i + reverse] - StepDistances[i]); //next - current (forward extrusion)
-                Volume += distance * Layer2D[i].Sum(p => p.Area);
+                if (Layer2D[i] == null || !Layer2D[i].Any() || Layer2D[i + 1] == null || !Layer2D[i + 1].Any()) continue;
+                var halfThickness = 0.5 * (StepDistances[i + 1] - StepDistances[i]);
+                Volume += halfThickness * (Layer2D[i].Sum(p => p.Area) + Layer2D[i].Sum(p => p.Area));
             }
         }
 
@@ -125,8 +116,10 @@ namespace TVGL
         public void SetSolidRepresentation(bool extrudeBack = true)
         {
             if (!Layer3D.Any()) SetAllVertices();
-            var start = Layer3D.Where(p => p.Value.Any()).First().Key;
-            var stop = Layer3D.Where(p => p.Value.Any()).Last().Key;
+            var start = 0;
+            while (Layer2D[start] == null || !Layer2D[start].Any()) start++;
+            var stop = NumLayers - 1;
+            while (Layer2D[stop] == null || !Layer2D[stop].Any()) stop--;
             var reverse = start < stop ? 1 : -1;
             var direction = reverse == 1 ? Direction : Direction.multiply(-1);
             Faces = new List<PolygonalFace>();
@@ -154,7 +147,7 @@ namespace TVGL
 
         public override Solid Copy()
         {
-            var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Units);
+            var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Layer2D, Units);
             //Recreate the loops, so that the lists are not linked to the original.
             //Since polygonlight is a struct, it will not be linked.
             for (int i = 0; i < NumLayers; i++)
@@ -174,6 +167,12 @@ namespace TVGL
                 solid.Layer3D[i] = newLoops;
             }
             return solid;
+        }
+
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes()
+        {
+            var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
+            return marchingCubesAlgorithm.Generate();
         }
 
         public override void Transform(double[,] transformMatrix)

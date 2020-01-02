@@ -453,7 +453,7 @@ namespace TVGL
             out Dictionary<int, double> stepDistances)
         {
             var perpendicular = MiscFunctions.GetPerpendicularDirection(direction);
-            var vertices = ts.Layer3D.SelectMany(s => s.Value.SelectMany(v => v)).ToList();
+            var vertices = ts.Layer3D.SelectMany(s => s.SelectMany(v => v)).ToList();
             var vertexLookup = new Dictionary<int, Vertex>();
             //initialize the vertex to edge dictionary
             var vertexEdges = new Dictionary<int, List<long>>(); //Key = vertex index, Value = List<edge checkSums>
@@ -475,9 +475,10 @@ namespace TVGL
             var loopID = 0;
             var forwardEdges = new Dictionary<Vertex, Vertex>();
             var reverseEdges = new Dictionary<Vertex, Vertex>();
-            foreach (var layer in ts.Layer3D)
+            for (int j = 0; j < ts.Layer3D.Length; j++)
             {
-                foreach(var loop in layer.Value)
+                List<List<Vertex>> layer = ts.Layer3D[j];
+                foreach (var loop in layer)
                 {
                     MinimumEnclosure.GetLengthAndExtremeVertices(direction, loop, out var vBottom, out var vTop);
                     startVerticesByLoop.Add(loopID, new HashSet<Vertex>(vBottom));
@@ -501,7 +502,7 @@ namespace TVGL
                     }
                     passedVertices.Add(loopID, new List<int>());
                     loops.Add(loopID, loop);
-                    layerByLoopId.Add(loopID, layer.Key);
+                    layerByLoopId.Add(loopID, j);
                     loopID++;
                 }
             }   
