@@ -5,16 +5,10 @@ namespace TVGL
 {
     internal class MarchingCubesDenseVoxels : MarchingCubes<VoxelizedSolid, bool>
     {
-        internal MarchingCubesDenseVoxels(VoxelizedSolid solid, double discretization)
-            : base(solid, discretization)
-        {
-            numGridX = (int)Math.Ceiling(solid.VoxelsPerSide[0] / discretization);
-            numGridY = (int)Math.Ceiling(solid.VoxelsPerSide[1] / discretization);
-            numGridZ = (int)Math.Ceiling(solid.VoxelsPerSide[2] / discretization);
-            yMultiplier = numGridX;
-            zMultiplier = numGridX * numGridY;
-            solidOffset = new double[3];
-        }
+
+        internal MarchingCubesDenseVoxels(VoxelizedSolid solid, int numVoxelsPerGrid)
+            : base(solid, solid.VoxelSideLength*numVoxelsPerGrid)
+        { }
 
         protected override bool GetValueFromSolid(double x, double y, double z)
         {

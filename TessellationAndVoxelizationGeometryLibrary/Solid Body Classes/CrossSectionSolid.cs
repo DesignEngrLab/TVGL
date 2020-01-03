@@ -41,31 +41,42 @@ namespace TVGL
         /// <summary>
         public double[] StepDistances { get; }
 
-        /// <summary>
-        /// This is the direction that the cross sections will be extruded along
-        /// </summary>
-        public double[] Direction;
+        public double[,] TranformMatrix { get; set; } = StarMath.makeIdentity(4);
+        double[] directionOfLayers
+        { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
         public double SameTolerance;
         public int NumLayers { get; }
-        public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance,
+        public CrossSectionSolid(Dictionary<int, double> stepDistances, 
             UnitType units = UnitType.unspecified)
         {
-            Direction = direction;
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances.Values.ToArray();
             Units = units;
-            SameTolerance = sameTolerance;
         }
-        public CrossSectionSolid(double[] direction, double[] stepDistances, double sameTolerance,
-         List<PolygonLight>[] Layer2D, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(double[] stepDistances, List<PolygonLight>[] Layer2D, UnitType units = UnitType.unspecified)
         {
-            Direction = direction;
             NumLayers = stepDistances.Length;
             StepDistances = stepDistances;
             Units = units;
-            SameTolerance = sameTolerance;
             this.Layer2D = Layer2D;
+            ZMin = StepDistances[0];
+            ZMax = StepDistances[NumLayers - 1];
+            var xmin = double.PositiveInfinity;
+            var xmax = double.NegativeInfinity;
+            var ymin = double.PositiveInfinity;
+            var ymax = double.NegativeInfinity;
+            foreach (var layer in Layer2D)
+                foreach (var polygon in layer)
+                    foreach (var point in polygon.Path)
+                    {
+                        if (xmin > point.X) xmin = point.X;
+                        if (ymin > point.Y) ymin = point.Y;
+                        if (xmax < point.X) xmax = point.X;
+                        if (ymax < point.Y) ymax = point.Y;
+                    }
+            Bounds = new[] { new[] {xmin, ymin, StepDistances[0]},
+ new[] {xmax, ymax, StepDistances[NumLayers-1]}            };
         }
 
         public void Add(List<Vertex> feature3D, PolygonLight feature2D, int layer)
@@ -91,7 +102,7 @@ namespace TVGL
             var layer = Layer3D[i] = new List<List<Vertex>>();
             foreach (var polygon in Layer2D[i])
             {
-                layer.Add(MiscFunctions.GetVerticesFrom2DPoints(polygon.Path, Direction, StepDistances[i]));
+                layer.Add(MiscFunctions.GetVerticesFrom2DPoints(polygon.Path, directionOfLayers, StepDistances[i]));
             }
         }
 
@@ -121,7 +132,7 @@ namespace TVGL
             var stop = NumLayers - 1;
             while (Layer2D[stop] == null || !Layer2D[stop].Any()) stop--;
             var reverse = start < stop ? 1 : -1;
-            var direction = reverse == 1 ? Direction : Direction.multiply(-1);
+            var direction = reverse == 1 ? directionOfLayers : directionOfLayers.multiply(-1);
             Faces = new List<PolygonalFace>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
@@ -147,7 +158,7 @@ namespace TVGL
 
         public override Solid Copy()
         {
-            var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Layer2D, Units);
+            var solid = new CrossSectionSolid(StepDistances, Layer2D, Units);
             //Recreate the loops, so that the lists are not linked to the original.
             //Since polygonlight is a struct, it will not be linked.
             for (int i = 0; i < NumLayers; i++)

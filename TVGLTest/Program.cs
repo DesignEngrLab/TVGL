@@ -97,11 +97,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupport*").ToArray();
+           // var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i++)
+            for (var i = 50; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -136,6 +136,7 @@ namespace TVGLPresenterDX
                 // Presenter.ShowAndHang(vs1);
                 //TestVoxelization(ts[0]);
                 //bounds = vs1.Bounds;
+                return;
             }
 
             Console.WriteLine("Completed.");
@@ -158,14 +159,14 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var stepSize = (ts.ZMax - ts.ZMin) / 100;
+            var stepSize = (ts.ZMax - ts.ZMin) / 50;
             var direction = new[] { 0.0, 0.0, 1.0 };
             var xSections =
             DirectionalDecomposition.UniformDecomposition(ts, direction, stepSize, out var stepDistances, out _,
                 DirectionalDecomposition.SnapType.CenterAllInside, true);
-            var xs = new CrossSectionSolid(direction, stepDistances.Values.ToArray(), 1e-10, xSections.Select(d => d.Paths).ToArray());
+            var xs = new CrossSectionSolid(stepDistances.Values.ToArray(), xSections.Select(d => d.Paths).ToArray());
             TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
-            Presenter.ShowAndHang(xs, ts1);
+            //Presenter.ShowAndHang(ts1);
             return;
             var res = 600;
             stopwatch.Restart();

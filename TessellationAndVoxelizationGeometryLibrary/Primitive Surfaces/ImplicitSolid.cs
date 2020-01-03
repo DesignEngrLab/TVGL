@@ -24,11 +24,17 @@ using StarMathLib;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
 
-namespace TVGL.Implicit
+namespace TVGL
 {
     public class ImplicitSolid : Solid
     {
         public double SurfaceLevel { get; set; }
+
+        public ImplicitSolid()
+        {
+            Bounds = new[] { new[] {0.0,0.0,0.0},
+            new[]{10.0,10.0,10.0}};
+        }
         public override Solid Copy()
         {
             throw new NotImplementedException();
@@ -53,12 +59,16 @@ namespace TVGL.Implicit
 
         private double Evaluate(double x, double y, double z)
         {
-            throw new NotImplementedException();
+            var center = new double[] { 5, 5, 5 };
+            var queriedPoint = new[] { x, y, z };
+            var radius = 3.0;
+            return queriedPoint.subtract(center).norm2() - radius;
         }
 
         public TessellatedSolid ConvertToTessellatedSolid()
         {
-            throw new NotImplementedException();
+            var marchingCubesAlgorithm = new MarchingCubesImplicit(this, 0.7);
+            return marchingCubesAlgorithm.Generate();
         }
     }
 }

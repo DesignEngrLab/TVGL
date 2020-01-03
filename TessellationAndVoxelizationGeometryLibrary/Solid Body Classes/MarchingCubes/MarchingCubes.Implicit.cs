@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.Implicit;
 
 namespace TVGL
 {
@@ -14,9 +13,6 @@ namespace TVGL
             : base(solid, discretization)
         {
             surfaceLevel = solid.SurfaceLevel;
-            numGridX = (int)Math.Ceiling((solid.XMax - solid.XMin) / discretization);
-            numGridY = (int)Math.Ceiling((solid.YMax - solid.ZMin) / discretization);
-            numGridZ = (int)Math.Ceiling((solid.ZMax - solid.ZMin) / discretization);
         }
 
         protected override double GetValueFromSolid(double x, double y, double z)

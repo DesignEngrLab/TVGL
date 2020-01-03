@@ -20,11 +20,24 @@ namespace TVGL
         // where double and ValueT are numbers or bool
     {
         #region Constructor
-        protected MarchingCubes(SolidT solid, double gridToCoordinateFactor)
+        protected MarchingCubes(SolidT solid, double discretization)
         {
             this.solid = solid;
-            this.gridToCoordinateFactor = gridToCoordinateFactor;
+            this.gridToCoordinateFactor = discretization;
             this.coordToGridFactor = 1 / gridToCoordinateFactor;
+            var buffer = discretization * fractionOfGridToExpand;
+            xMin = solid.XMin - buffer;
+            yMin = solid.YMin - buffer;
+            zMin = solid.ZMin - buffer;
+            xMax = solid.XMax + buffer;
+            yMax = solid.YMax + buffer;
+            zMax = solid.ZMax + buffer;
+            numGridX = (int)Math.Ceiling((xMax - xMin) / discretization);
+            numGridY = (int)Math.Ceiling((yMax - yMin) / discretization);
+            numGridZ = (int)Math.Ceiling((zMax - zMin) / discretization);
+            yMultiplier = numGridX;
+            zMultiplier = numGridX * numGridY;
+
             vertexDictionaries = new[] {
                 new Dictionary<long, Vertex>(),
                 new Dictionary<long, Vertex>(),
@@ -46,12 +59,13 @@ namespace TVGL
         protected readonly double[][] GridOffsetTable;
         readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         protected readonly List<PolygonalFace> faces;
-
+        protected const double fractionOfGridToExpand = 0.05;
         #region to be assigned in inherited constructor
         protected int numGridX, numGridY, numGridZ;
+        protected double xMin, yMin, zMin;
+        protected double xMax, yMax, zMax;
         protected int yMultiplier;
         protected int zMultiplier;
-        protected double[] solidOffset;
         #endregion
         #endregion
 
@@ -77,7 +91,7 @@ namespace TVGL
         }
 
 
-        protected long getIdentifier(double x, double y, double z)
+        protected long getIdentifier(int x, int y, int z)
         {
             return (long)x + (long)(yMultiplier * y) + (long)(zMultiplier * z);
         }
@@ -87,7 +101,7 @@ namespace TVGL
             if (valueDictionary.ContainsKey(identifier))
             {
                 var prevValue = valueDictionary[identifier];
-                if (prevValue.NumTimesCalled < 7)
+                if (prevValue.NumTimesCalled < 7) //i think this should be 3 - not 7...change after you get it working
                     prevValue.NumTimesCalled++;
                 else valueDictionary.Remove(identifier);
                 return prevValue;
@@ -110,9 +124,9 @@ namespace TVGL
         /// </summary>
         protected void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
         {
-            var xCoord = solidOffset[0] + xIndex * gridToCoordinateFactor;
-            var yCoord = solidOffset[1] + yIndex * gridToCoordinateFactor;
-            var zCoord = solidOffset[2] + zIndex * gridToCoordinateFactor;
+            var xCoord = solid.XMin + xIndex * gridToCoordinateFactor;
+            var yCoord = solid.YMin + yIndex * gridToCoordinateFactor;
+            var zCoord = solid.ZMin + zIndex * gridToCoordinateFactor;
             int cubeType = 0;
             var cube = new StoredValue<ValueT>[8];
             //Find which vertices are inside of the surface and which are outside
@@ -121,7 +135,8 @@ namespace TVGL
                 var thisX = xCoord + GridOffsetTable[i][0];
                 var thisY = yCoord + GridOffsetTable[i][1];
                 var thisZ = zCoord + GridOffsetTable[i][2];
-                var id = getIdentifier(thisX, thisY, thisZ);
+                var id = getIdentifier(xIndex+_unitOffsetTable[i][0], yIndex + _unitOffsetTable[i][1],
+                    zIndex + _unitOffsetTable[i][2]);
                 var v = cube[i] = GetValue(thisX, thisY, thisZ, id);
                 if (IsInside(v.Value))
                     cubeType |= 1 << i;
@@ -144,6 +159,7 @@ namespace TVGL
                     var sign = directionTable[i] > 0 ? 1 : -1;
                     var fromCorner = cube[EdgeCornerIndexTable[i][0]];
                     var toCorner = cube[EdgeCornerIndexTable[i][1]];
+                   // var id = fromCorner.ID ;
                     var id = sign > 0 ? fromCorner.ID : toCorner.ID;
                     if (vertexDictionaries[direction].ContainsKey(id))
                         EdgeVertex[i] = vertexDictionaries[direction][id];

@@ -750,9 +750,9 @@ namespace TVGL
                         model = MakeModelVisual3D((TessellatedSolid)s);
                     else if (s is VoxelizedSolid)
                         model = MakeModelVisual3D((VoxelizedSolid)s);
-                    else if (s is Implicit.ImplicitSolid)
+                    else if (s is ImplicitSolid)
                     {
-                        model = MakeModelVisual3D(((Implicit.ImplicitSolid)s).ConvertToTessellatedSolid());
+                        model = MakeModelVisual3D(((ImplicitSolid)s).ConvertToTessellatedSolid());
                     }
                     models.Add(model);
                     window.view1.Children.Add(model);
