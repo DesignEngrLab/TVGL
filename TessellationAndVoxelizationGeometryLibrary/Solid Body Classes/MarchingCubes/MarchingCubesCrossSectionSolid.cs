@@ -31,7 +31,7 @@ namespace TVGL
         {
             var distanceForGridLayers = new double[gridLayers.Length];
             var start = 0;
-            while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
+            // while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
             var startingDistance = distanceForGridLayers[0] = solid.StepDistances[start];
             distanceForGridLayers[1] = solid.StepDistances[start + 1];
             if (!onLayers)
@@ -43,7 +43,7 @@ namespace TVGL
                 if (!onLayers) distanceForGridLayers[3] = solid.StepDistances[start + 1];
             }
             var last = solid.NumLayers - 1;
-            while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
+            //while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
             for (int k = 1; k < numGridLayersToStore; k++)
                 gridLayers[k] = CreateDistanceGridBruteForce(solid.Layer2D[k]);
             for (var k = start; k <= last; k++)
@@ -52,7 +52,6 @@ namespace TVGL
                 for (var i = 0; i < numGridX - 1; i++)
                     for (var j = 0; j < numGridY - 1; j++)
                         MakeFacesInCube(i, j, k);
-
             }
             //Calculate new grid
             //interpolate points for grid
@@ -76,45 +75,16 @@ namespace TVGL
                 var lastPoint = polygon.Path[numSegments - 2];
                 foreach (var toPoint in polygon.Path)
                 {
+                    var segment = toPoint - fromPoint;
+                    var lastSegment = fromPoint - lastPoint;
                     for (int i = 0; i < numGridX; i++)
                         for (int j = 0; j < numGridY; j++)
-                            UpdateGrid(i, j, lastPoint, fromPoint, toPoint, grid);
+                            UpdateGrid(i, j, lastPoint, fromPoint, toPoint,segment, lastSegment, grid);
                     lastPoint = fromPoint;
                     fromPoint = toPoint;
                 }
             }
             return grid;
-        }
-        bool UpdateGrid(int i, int j, PointLight lastPoint, PointLight fromPoint, PointLight toPoint, double[,] grid)
-        {
-            var segment = toPoint - fromPoint;
-            var p = new PointLight(xMin + i * discretization, yMin + j * discretization);
-            var vFrom = p - fromPoint;
-            var vTo = p - toPoint;
-            var dot_from = segment.dotProduct(vFrom, 2);
-            var dot_to = segment.dotProduct(vTo, 2);
-            if (dot_from >= 0 && dot_to <= 0)
-            {
-                var d = StarMath.crossProduct2(segment.normalize(), vFrom);
-                if (Math.Abs(d) >= Math.Abs(grid[i, j]))
-                    return false;
-                grid[i, j] = d;
-                return true;
-            }
-            if (dot_from < 0)
-            {
-                var lastSegment = fromPoint - lastPoint;
-                if (lastSegment.dotProduct(vFrom) > 0)
-                {
-                    var sign = Math.Sign(StarMath.crossProduct2(segment, lastSegment));
-                    var d = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
-                    if (d >= Math.Abs(grid[i, j]))
-                        return false;
-                    grid[i, j] = sign * d;
-                    return true;
-                }
-            }
-            return false;
         }
         private double[,] CreateDistanceGrid(List<PolygonLight> layer)
         {
@@ -127,9 +97,8 @@ namespace TVGL
                 var numSegments = polygon.Path.Count;
                 var fromPoint = polygon.Path[numSegments - 1];
                 var lastPoint = polygon.Path[numSegments - 2];
-                for (int i = 0; i < polygon.Path.Count; i++)
+                foreach (var toPoint in polygon.Path)
                 {
-                    var toPoint = polygon.Path[i];
                     var segment = toPoint - fromPoint;
                     var xDelta = (toPoint.Y > fromPoint.Y) ? +1 : (fromPoint.Y > toPoint.Y) ? -1 : 0;
                     var yDelta = (fromPoint.X > toPoint.X) ? +1 : (toPoint.X > fromPoint.X) ? -1 : 0;
@@ -171,6 +140,36 @@ namespace TVGL
             return grid;
         }
 
+        bool UpdateGrid(int i, int j, PointLight lastPoint, PointLight fromPoint, PointLight toPoint,
+            double[] segment, double[] lastSegment, double[,] grid)
+        {
+            var p = new PointLight(xMin + i * discretization, yMin + j * discretization);
+            var vFrom = p - fromPoint;
+            var vTo = p - toPoint;
+            var dot_from = segment.dotProduct(vFrom, 2);
+            var dot_to = segment.dotProduct(vTo, 2);
+            if (dot_from >= 0 && dot_to <= 0)
+            {
+                var d = StarMath.crossProduct2(segment.normalize(), vFrom);
+                if (Math.Abs(d) >= Math.Abs(grid[i, j]))
+                    return false;
+                grid[i, j] = d;
+                return true;
+            }
+            if (dot_from < 0)
+            {
+                if (lastSegment.dotProduct(vFrom) > 0)
+                {
+                    var sign = Math.Sign(StarMath.crossProduct2(segment, lastSegment));
+                    var d = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
+                    if (d >= Math.Abs(grid[i, j]))
+                        return false;
+                    grid[i, j] = sign * d;
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private Queue<PointLight> GetGridPointsAroundSegment(PointLight a, PointLight b)
         {
