@@ -26,15 +26,15 @@ namespace TVGL
             this.gridToCoordinateFactor = discretization;
             this.coordToGridFactor = 1 / gridToCoordinateFactor;
             var buffer = discretization * fractionOfGridToExpand;
-            xMin = solid.XMin - buffer;
-            yMin = solid.YMin - buffer;
-            zMin = solid.ZMin - buffer;
-            xMax = solid.XMax + buffer;
-            yMax = solid.YMax + buffer;
-            zMax = solid.ZMax + buffer;
-            numGridX = (int)Math.Ceiling((xMax - xMin) / discretization);
-            numGridY = (int)Math.Ceiling((yMax - yMin) / discretization);
-            numGridZ = (int)Math.Ceiling((zMax - zMin) / discretization);
+            _xMin = solid.XMin - buffer;
+            _yMin = solid.YMin - buffer;
+            _zMin = solid.ZMin - buffer;
+            _xMax = solid.XMax + buffer;
+            _yMax = solid.YMax + buffer;
+            _zMax = solid.ZMax + buffer;
+            numGridX = (int)Math.Ceiling((_xMax - _xMin) / discretization);
+            numGridY = (int)Math.Ceiling((_yMax - _yMin) / discretization);
+            numGridZ = (int)Math.Ceiling((_zMax - _zMin) / discretization);
             yMultiplier = numGridX;
             zMultiplier = numGridX * numGridY;
 
@@ -62,8 +62,8 @@ namespace TVGL
         protected const double fractionOfGridToExpand = 0.05;
         #region to be assigned in inherited constructor
         protected int numGridX, numGridY, numGridZ;
-        protected double xMin, yMin, zMin;
-        protected double xMax, yMax, zMax;
+        protected double _xMin, _yMin, _zMin;
+        protected double _xMax, _yMax, _zMax;
         protected int yMultiplier;
         protected int zMultiplier;
         #endregion

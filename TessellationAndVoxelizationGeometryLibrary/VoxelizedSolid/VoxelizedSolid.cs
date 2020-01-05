@@ -144,7 +144,7 @@ namespace TVGL.Voxelization
         }
 
         #region Fill In From Tessellation Functions
-        private void FillInFromTessellation(TessellatedSolid ts, bool possibleNullSlices = false)
+        private void FillInFromTessellation(TessellatedSolid ts)
         {
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;

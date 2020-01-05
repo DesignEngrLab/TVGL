@@ -35,34 +35,32 @@ namespace TVGL
     {
         private void MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices)
         {
-            List<(Edge, List<PolygonalFace>)> overDefinedEdges;
-            List<Edge> singleSidedEdges, moreSingleSidedEdges;
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
-            var edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
+            var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
             // moreSingleSidedEdges
-            edgeList.AddRange(TeaseApartOverUsedEdges(overDefinedEdges, out moreSingleSidedEdges));
-            singleSidedEdges.AddRange(moreSingleSidedEdges);
+            if (overDefinedEdges.Any())
+            {
+                edgeList.AddRange(TeaseApartOverUsedEdges(overDefinedEdges, out var moreSingleSidedEdges));
+                singleSidedEdges.AddRange(moreSingleSidedEdges);
+            }
             // #3 often the singleSided Edges make loops that we can triangulate. If they are not in loops
             // then we spit back the remainingEdges.
-            List<Edge> remainingEdges, moreRemainingEdges;
-            var loops = OrganizeIntoLoops(singleSidedEdges, out remainingEdges);
+            var loops = OrganizeIntoLoops(singleSidedEdges, out var remainingEdges);
             // well, even if they were in loops - sometimes we can't triangulate - yet moreRemainingEdges
-            edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out newFaces, out moreRemainingEdges));
+            edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out newFaces, out var moreRemainingEdges));
             remainingEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
-
             // well, the edgelist is definitely going to work out so, we are going to need to make
             // sure that they are known to their vertices for the next few steps - so here we take 
             // a moment to stitch these to the vertices
             foreach (var tuple in edgeList)
                 tuple.Item1.DoublyLinkVertices();
-            HashSet<Edge> borderEdges;
             // finally, the remainingEdges may be close enough that they should have been matched together
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out borderEdges, out removedVertices));
+            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out removedVertices));
             BorderEdges = borderEdges.ToArray();
             // now, we have list, we can do some finally cleanup and stitching
             NumberOfEdges = edgeList.Count;
@@ -331,9 +329,10 @@ namespace TVGL
         internal static List<(List<Edge>, double[])> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
-            remainingEdges = new List<Edge>(singleSidedEdges);
-            var attempts = 0;
             var listOfLoops = new List<(List<Edge>, double[])>();
+            remainingEdges = new List<Edge>(singleSidedEdges);
+            if (!singleSidedEdges.Any()) return listOfLoops;
+            var attempts = 0;
             while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
             {
                 var loop = new List<Edge>();
@@ -350,6 +349,7 @@ namespace TVGL
                     if (possibleNextEdges.Any())
                     {
                         var bestNext = pickBestEdge(possibleNextEdges, loop.Last().Vector, normal);
+                        if (bestNext == null) break;
                         loop.Add(bestNext);
                         var n1 = loop[loop.Count - 1].Vector.crossProduct(loop[loop.Count - 2].Vector).normalize(3);
                         if (!n1.Contains(double.NaN))
@@ -369,6 +369,7 @@ namespace TVGL
                         {
                             var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector.multiply(-1),
                                 normal);
+                            if (bestPrev == null) break;
                             loop.Insert(0, bestPrev);
                             var n1 = loop[1].Vector.crossProduct(loop[0].Vector).normalize(3);
                             if (!n1.Contains(double.NaN))

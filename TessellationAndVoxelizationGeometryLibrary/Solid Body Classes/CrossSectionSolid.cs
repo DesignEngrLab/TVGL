@@ -185,6 +185,11 @@ namespace TVGL
             var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
             return marchingCubesAlgorithm.Generate();
         }
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes2()
+        {
+            var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
+            return marchingCubesAlgorithm.Generate2();
+        }
 
         public override void Transform(double[,] transformMatrix)
         {

@@ -91,6 +91,7 @@ namespace TVGL
                 index = lastIndex;
             else index = Math.Min(vertFromIndex, vertToIndex);
             while (Edges.Count <= index) Edges.Add(null);
+            if (index < 0) return;
             Edges[index] = edge;
         }
 
