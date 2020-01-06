@@ -15,9 +15,13 @@ namespace TVGL
             surfaceLevel = solid.SurfaceLevel;
         }
 
-        protected override double GetValueFromSolid(double x, double y, double z)
+        protected override double GetValueFromSolid(int x, int y, int z)
         {
-            return solid[x, y, z];
+            return solid[
+                  _xMin + x * gridToCoordinateFactor,
+                            _yMin + y * gridToCoordinateFactor,
+                            _zMin + z * gridToCoordinateFactor
+                ];
         }
 
         protected override bool IsInside(double v)
@@ -30,8 +34,8 @@ namespace TVGL
         {
             if (from.Value.IsPracticallySame(surfaceLevel)) return 0.0;
             if (to.Value.IsPracticallySame(surfaceLevel)) return gridToCoordinateFactor;
-            if (to.Value.IsPracticallySame(from.Value)) return gridToCoordinateFactor/2;
-            return gridToCoordinateFactor*(surfaceLevel - from.Value) / (to.Value - from.Value);
+            if (to.Value.IsPracticallySame(from.Value)) return gridToCoordinateFactor / 2;
+            return gridToCoordinateFactor * (surfaceLevel - from.Value) / (to.Value - from.Value);
         }
     }
 }

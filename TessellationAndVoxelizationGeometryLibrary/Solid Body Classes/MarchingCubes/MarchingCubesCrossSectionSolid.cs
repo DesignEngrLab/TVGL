@@ -108,11 +108,15 @@ namespace TVGL
                 var numSegments = polygon.Path.Count;
                 var fromPoint = polygon.Path[numSegments - 1];
                 var lastPoint = polygon.Path[numSegments - 2];
+                var iMin = Math.Max((int)((polygon.MinX - _xMin) * coordToGridFactor) - 1, 0);
+                var iMax = Math.Min((int)((polygon.MaxX - _xMin) * coordToGridFactor) + 2, numGridX);
+                var jMin = Math.Max((int)((polygon.MinY - _yMin) * coordToGridFactor) - 1, 0);
+                var jMax = Math.Min((int)((polygon.MaxY - _yMin) * coordToGridFactor) + 2, numGridY);
                 foreach (var toPoint in polygon.Path)
                 {
                     var segment = toPoint - fromPoint;
-                    for (int i = 0; i < numGridX; i++)
-                        for (int j = 0; j < numGridY; j++)
+                    for (int i = iMin; i < iMax; i++)
+                        for (int j = jMin; j < jMax; j++)
                         {
                             var p = new PointLight(_xMin + i * discretization, _yMin + j * discretization);
                             var vFrom = p - fromPoint;
@@ -149,174 +153,188 @@ namespace TVGL
             for (int i = 0; i < numGridX; i++)
                 for (int j = 0; j < numGridY; j++)
                     grid[i, j] = double.PositiveInfinity;
-            //grid[i, j] = Constants.MarchingCubesCrossSectionExpandFactor * discretization;
             foreach (var polygon in layer)
             {
                 var numSegments = polygon.Path.Count;
                 var fromPoint = polygon.Path[numSegments - 1];
                 var lastPoint = polygon.Path[numSegments - 2];
+                var iMin = Math.Max((int)((polygon.MinX - _xMin) * coordToGridFactor) - 1, 0);
+                var iMax = Math.Min((int)((polygon.MaxX - _xMin) * coordToGridFactor) + 2, numGridX);
+                var jMin = Math.Max((int)((polygon.MinY - _yMin) * coordToGridFactor) - 1, 0);
+                var jMax = Math.Min((int)((polygon.MaxY - _yMin) * coordToGridFactor) + 2, numGridY);
                 foreach (var toPoint in polygon.Path)
                 {
                     var segment = toPoint - fromPoint;
-                    //var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
-                    //if (Math.Abs(segment[0]) > Math.Abs(segment[1]))
-                    //    ExpandHorizontally(segment[0], segment[1], magnitude, fromPoint, grid);
-                    //else ExpandVertically(segment[0], segment[1], magnitude, fromPoint, grid);
+                    var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
                     // first check points on inside side of line segment
-                    var xDelta = (fromPoint.Y < toPoint.Y) ? -1 : (fromPoint.Y > toPoint.Y) ? +1 : 0;
-                    var yDelta = (fromPoint.X > toPoint.X) ? -1 : (fromPoint.X < toPoint.X) ? +1 : 0;
-                    var visited = new HashSet<int>(GetGridPointsUnderSegment(fromPoint, toPoint, xDelta, yDelta));
-                    var queuePoints = new Queue<int>(visited);
-                    MarchOutQueue(queuePoints, visited, xDelta, yDelta, fromPoint, toPoint, segment,
-                        grid);
-                    // now check points on negative (or inside) of line segment. This is done by just 
-                    // reversing to and from and the directions of x and y Deltas
-                    xDelta = -xDelta;
-                    yDelta = -yDelta;
-                    queuePoints = new Queue<int>(GetGridPointsUnderSegment(fromPoint, toPoint, xDelta, yDelta)
-                        .Where(id => !visited.Contains(id)));
-                    MarchOutQueue(queuePoints, visited, xDelta, yDelta, fromPoint, toPoint, segment,
-                        grid);
+                    if (Math.Abs(segment[0]) <= Math.Abs(segment[1]))
+                        ExpandHorizontally(segment, magnitude, fromPoint, toPoint, grid, iMin, iMax, jMin, jMax);
+                    else ExpandVertically(segment, magnitude, fromPoint, toPoint, grid, iMin, iMax, jMin, jMax);
+                    //Console.WriteLine("line");
+                    //Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
                     // finally, check the corner, which could be on the inside or outside, this is dictated by 
                     // the 'sign' variable. There is no quick and robust way to do this, as the wedge may be
-                    // really narrow and now capture a grid point for many units distance from the current point
+                    // really narrow and not capture a grid point for many units distance from the current point
                     // or it may be quite wide and require a queue to march out in a semi-circle. To avoid
                     // complex math and doing something thorough like https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
                     // We're just going to search the square around the point that is within plus/minus 
                     // of the MarchingCubesCrossSectionExpandFactor and do a brute force check in there
-                    Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
-                    Console.WriteLine();
                     var lastSegment = fromPoint - lastPoint;
-                    var sign = Math.Sign(StarMath.crossProduct2(lastSegment, segment));
+                    var xDiffFactor = segment[0] * lastSegment[0];
+                    var yDiffFactor = segment[1] * lastSegment[1];
+                    var cross = StarMath.crossProduct2(lastSegment, segment);
+                    var sign = Math.Sign(cross);
                     var iMid = (int)((fromPoint.X - _xMin) * coordToGridFactor);
                     var jMid = (int)((fromPoint.Y - _yMin) * coordToGridFactor);
-                    var iMin = Math.Max(iMid - Constants.MarchingCubesCrossSectionExpandFactor, 0);
-                    var jMin = Math.Max(jMid - Constants.MarchingCubesCrossSectionExpandFactor, 0);
-                    var iMax = Math.Min(iMid + 1 + Constants.MarchingCubesCrossSectionExpandFactor, numGridX - 1);
-                    var jMax = Math.Min(jMid + 1 + Constants.MarchingCubesCrossSectionExpandFactor, numGridY - 1);
-                    for (int j = jMin; j <= jMax; j++)
-                    {
-                        var id = iMin + j * yMultiplier;
-                        for (int i = iMin; i <= iMax; i++)
+                    var iStart = Math.Max(iMin, 0);
+                    var jStart = Math.Max(jMin, 0);
+                    var iEnd = Math.Min(iMax, numGridX);
+                    var jEnd = Math.Min(jMax, numGridY);
+
+                    //if (xDiffFactor >= 0 && yDiffFactor >= 0)
+                    //{ // then two ranges can be reduced
+                    //    if (segment[0] >= 0 == sign >= 0) iStart = iMid;
+                    //    else iEnd = iMid + 1;
+                    //    if (segment[1] >= 0 == sign <= 0) jStart = jMid;
+                    //    else jEnd = jMid + 1;
+                    //}
+                    //else if (yDiffFactor >= 0)
+                    //{ //then x is going in opposite directions but y's are the same
+                    //    if ((segment[1] >= 0) == sign >= 0) iStart = iMid;
+                    //    else iEnd = iMid + 1;
+                    //}
+                    //else if (xDiffFactor >= 0)
+                    //{ //then y is going in opposite directions but x's are the same
+                    //    if ((segment[0] >= 0) == sign <= 0) jStart = jMid;
+                    //    else jEnd = jMid + 1;
+                    //}
+
+                    for (int i = iStart; i < iEnd; i++)
+                        for (int j = jStart; j < jEnd; j++)
                         {
-                            if (visited.Contains(id++)) continue;
                             var p = new PointLight(_xMin + i * discretization, _yMin + j * discretization);
                             var vFrom = p - fromPoint;
-                            if (segment.dotProduct(vFrom, 2) >= 0 || lastSegment.dotProduct(vFrom, 2) <= 0) continue;
+                            if (segment.dotProduct(vFrom, 2) > 0 || lastSegment.dotProduct(vFrom, 2) < 0) continue;
                             var d = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
                             if (d < Math.Abs(grid[i, j]))
                                 grid[i, j] = sign * d;
                         }
-                    }
+                    //Console.WriteLine("angle");
+                    //Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
                     lastPoint = fromPoint;
                     fromPoint = toPoint;
-                    Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
-                    Console.WriteLine();
                 }
             }
+            //if (double.IsInfinity(grid.Max()))
+            //{
+            //    Console.WriteLine("infinity still in matrix");
+            //    Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
+            //}
             return grid;
         }
 
-
-        private void MarchOutQueue(Queue<int> queuePoints, HashSet<int> visited, int xDelta, int yDelta,
-            PointLight fromPoint, PointLight toPoint, double[] segment,
-            double[,] grid)
+        private void ExpandVertically(double[] segment, double magnitude, PointLight fromPoint, PointLight toPoint, double[,] grid,
+            int iMin, int iMax, int jMin, int jMax)
         {
-            while (queuePoints.Any())
+            var yStart = fromPoint.Y + 0.5 * segment[1];
+            var jStart = (int)((yStart - _yMin) * coordToGridFactor);
+            var d = new[] { segment[1] / magnitude, -segment[0] / magnitude }; //unit vector along the band
+            var refPoint = (toPoint.X > fromPoint.X) ? toPoint : fromPoint;
+            var bandWidth = magnitude * magnitude / Math.Abs(segment[0]);
+            var numPointsInBand = (int)(bandWidth * coordToGridFactor) + 1;
+            for (int yDelta = -1; yDelta <= 1; yDelta += 2)
             {
-                var id = queuePoints.Dequeue();
-                var i = id % yMultiplier;
-                var j = id / yMultiplier;
-                var p = new PointLight(_xMin + i * discretization,
-                    _yMin + j * discretization);
-                var vFrom = p - fromPoint;
-                var vTo = p - toPoint;
-                var dot_from = segment.dotProduct(vFrom, 2);
-                var dot_to = segment.dotProduct(vTo, 2);
-                if (dot_from >= 0 && dot_to <= 0)
+                var numOutOfBoundAttempts = Constants.MarchingCubesOOBFactor * numPointsInBand;
+                //this magnitude * magnitude / yS should be the height of the band...this is weird but correctkk
+                var j = jStart;
+                if (yDelta > 0) j++;
+                while (numOutOfBoundAttempts >= 0)
                 {
-                    var d = StarMath.crossProduct2(vFrom, segment.normalize());
-                    if (Math.Abs(d) < Math.Abs(grid[i, j]))
+                    if (j < jMin || j >= jMax)
                     {
-                        Console.WriteLine("grid[i,j] was {0} will now be {1}", grid[i, j], d);
-                        grid[i, j] = d;
-                        if (xDelta != 0 && i + xDelta >= 0 && i + xDelta < numGridX)
-                        {
-                            var child = (i + xDelta) + j * yMultiplier;
-                            if (!visited.Contains(child))
-                            {
-                                queuePoints.Enqueue(child);
-                                visited.Add(child);
-                            }
-                        }
-                        if (yDelta != 0 && j + yDelta >= 0 && j + yDelta < numGridY)
-                        {
-                            var child = i + (j + yDelta) * yMultiplier;
-                            if (!visited.Contains(child))
-                            {
-                                queuePoints.Enqueue(child);
-                                visited.Add(child);
-                            }
-                        }
+                        numOutOfBoundAttempts = -1;
+                        continue;
                     }
+                    var y = j * gridToCoordinateFactor + _yMin;
+                    var x = refPoint.X + d[0] * (y - refPoint.Y) / d[1];
+                    var i = (int)((x - _xMin) * coordToGridFactor);
+                    for (var n = 0; n < numPointsInBand; n++)
+                    {
+                        if (i >= iMin && i < iMax)
+                        {
+                            var p = new PointLight(i * gridToCoordinateFactor + _xMin, y);
+                            var vFrom = p - fromPoint;
+                            var vTo = p - toPoint;
+                            var dot_from = segment.dotProduct(vFrom, 2);
+                            var dot_to = segment.dotProduct(vTo, 2);
+                            if (dot_from >= 0 && dot_to <= 0)
+                            {
+                                var t = d.dotProduct(vFrom, 2);
+                                if (Math.Abs(t) < Math.Abs(grid[i, j]))
+                                    grid[i, j] = t;
+                                else numOutOfBoundAttempts--;
+                            }
+                        }
+                        i--;
+                    }
+                    j += yDelta;
                 }
             }
         }
 
-        private IEnumerable<int> GetGridPointsUnderSegment(PointLight a, PointLight b, int xDelta, int yDelta)
+        private void ExpandHorizontally(double[] segment, double magnitude, PointLight fromPoint, PointLight toPoint, double[,] grid,
+            int iMin, int iMax, int jMin, int jMax)
         {
-            var xmin = Math.Min(a.X, b.X);
-            var ymin = Math.Min(a.Y, b.Y);
-            var xmax = Math.Max(a.X, b.X);
-            var ymax = Math.Max(a.Y, b.Y);
-            var iMin = (int)((xmin - _xMin) * coordToGridFactor);
-            var jMin = (int)((ymin - _yMin) * coordToGridFactor);
-            var iMax = Math.Min((int)((xmax - _xMin) * coordToGridFactor) + 1, numGridX - 1);
-            var jMax = Math.Min((int)((ymax - _yMin) * coordToGridFactor) + 1, numGridY - 1);
-            var result = new List<int>();
-            for (int i = iMin; i <= iMax; i++)
+            var xStart = fromPoint.X + 0.5 * segment[0];
+            var iStart = (int)((xStart - _xMin) * coordToGridFactor);
+            var d = new[] { segment[1] / magnitude, -segment[0] / magnitude }; //unit vector along the band
+            var refPoint = (toPoint.Y > fromPoint.Y) ? toPoint : fromPoint;
+            var bandHeight = magnitude * magnitude / Math.Abs(segment[1]);
+            var numPointsInBand = (int)(bandHeight * coordToGridFactor) + 1;
+            for (int xDelta = -1; xDelta <= 1; xDelta += 2)
             {
-                var x = i * gridToCoordinateFactor + _xMin;
-                var t = (x - a.X) / (b.X - a.X);
-                if (t > 1 || t < 0) continue;
-                var y = (1 - t) * a.Y + t * b.Y;
-                var j = (y - _yMin) * coordToGridFactor;
-                if (yDelta > 0) j += 1;
-                if (j < 0 || j >= numGridY) continue;
-                var id = i + yMultiplier * (int)j;
-                if (!result.Contains(id)) result.Add(id);
-                if ((int)j > 0 && j.IsPracticallySame((int)j))
+                var numOutOfBoundAttempts = Constants.MarchingCubesOOBFactor * numPointsInBand;
+                //this magnitude * magnitude / yS should be the height of the band...this is weird but correctkk
+                var i = iStart;
+                if (xDelta > 0) i++;
+                while (numOutOfBoundAttempts >= 0)
                 {
-                    id += yDelta * yMultiplier;
-                    if (!result.Contains(id)) result.Add(id);
+                    if (i < iMin || i >= iMax)
+                    {
+                        numOutOfBoundAttempts = -1;
+                        continue;
+                    }
+                    var x = i * gridToCoordinateFactor + _xMin;
+                    var y = refPoint.Y + d[1] * (x - refPoint.X) / d[0];
+                    var j = (int)((y - _yMin) * coordToGridFactor);
+                    for (var n = 0; n < numPointsInBand; n++)
+                    {
+                        if (j >= jMin && j < jMax)
+                        {
+                            var p = new PointLight(x, j * gridToCoordinateFactor + _yMin);
+                            var vFrom = p - fromPoint;
+                            var vTo = p - toPoint;
+                            var dot_from = segment.dotProduct(vFrom, 2);
+                            var dot_to = segment.dotProduct(vTo, 2);
+                            if (dot_from >= 0 && dot_to <= 0)
+                            {
+                                var t = d.dotProduct(vFrom, 2);
+                                if (Math.Abs(t) < Math.Abs(grid[i, j]))
+                                    grid[i, j] = t;
+                                else numOutOfBoundAttempts--;
+                            }
+                        }
+                        j--;
+                    }
+                    i += xDelta;
                 }
             }
-            for (int j = jMin; j <= jMax; j++)
-            {
-                var y = j * gridToCoordinateFactor + _yMin;
-                var t = (y - a.Y) / (b.Y - a.Y);
-                var x = (1 - t) * a.X + t * b.X;
-                var i = (x - _xMin) * coordToGridFactor;
-                if (xDelta > 0) i += 1;
-                if (i < 0 || i >= numGridY) continue;
-                var id = (int)i + yMultiplier * j;
-                if (!result.Contains(id)) result.Add(id);
-                if ((int)i > 0 && i.IsPracticallySame((int)i))
-                {
-                    id += xDelta;
-                    if (!result.Contains(id)) result.Add(id);
-                }
-            }
-            return result;
         }
 
-        protected override double GetValueFromSolid(double x, double y, double z)
+        protected override double GetValueFromSolid(int x, int y, int z)
         {
-            var i = (int)((x - _xMin) * coordToGridFactor);
-            var j = (int)((y - _yMin) * coordToGridFactor);
-            var k = (int)((z - _zMin) * coordToGridFactor);
             if (onLayers)
-                return gridLayers[k % numGridLayersToStore][i, j];
+                return gridLayers[z % numGridLayersToStore][x,y];
             else return 0;
         }
 
@@ -330,6 +348,7 @@ namespace TVGL
         {
             if (from.Value.IsNegligible()) return 0.0;
             if (to.Value.IsNegligible()) return gridToCoordinateFactor;
+            if (direction == 2 && (double.IsInfinity(from.Value) || double.IsInfinity(to.Value))) return 0.5 * gridToCoordinateFactor;
             return -gridToCoordinateFactor * from.Value / (to.Value - from.Value);
         }
     }

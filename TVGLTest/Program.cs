@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-           // var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
@@ -160,15 +160,15 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts)
         {
             //Presenter.ShowAndHang(new ImplicitSolid());
-            var stepSize = (ts.ZMax - ts.ZMin) / 20;
+            var stepSize = (ts.ZMax - ts.ZMin) / 66;
             var direction = new[] { 0.0, 0.0, 1.0 };
             var xSections =
             DirectionalDecomposition.UniformDecomposition(ts, direction, stepSize, out var stepDistances, out _,
                 DirectionalDecomposition.SnapType.CenterAllInside, true);
             var xs = new CrossSectionSolid(stepDistances.Values.ToArray(), xSections.Select(d => d.Paths).ToArray());
-            stopwatch.Restart();
-           // TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
-            //Console.WriteLine("bruteforce = {0}",stopwatch.Elapsed);
+            //stopwatch.Restart();
+            //TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
+            //Console.WriteLine("bruteforce = {0}", stopwatch.Elapsed);
             //Presenter.ShowAndHang(ts);
             //Presenter.ShowAndHang(xs);
             //Presenter.ShowAndHang(ts1);

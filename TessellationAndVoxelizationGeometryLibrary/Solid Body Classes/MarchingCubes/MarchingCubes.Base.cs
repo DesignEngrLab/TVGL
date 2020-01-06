@@ -8,9 +8,9 @@ namespace TVGL
     internal class StoredValue<ValueT>
     {
         internal ValueT Value;
-        internal double X;
-        internal double Y;
-        internal double Z;
+        internal int X;
+        internal int Y;
+        internal int Z;
         internal int NumTimesCalled;
         internal long ID;
     }
@@ -32,9 +32,9 @@ namespace TVGL
             _xMax = solid.XMax + buffer;
             _yMax = solid.YMax + buffer;
             _zMax = solid.ZMax + buffer;
-            numGridX = (int)Math.Ceiling((_xMax - _xMin) / discretization);
-            numGridY = (int)Math.Ceiling((_yMax - _yMin) / discretization);
-            numGridZ = (int)Math.Ceiling((_zMax - _zMin) / discretization);
+            numGridX = (int)Math.Ceiling((_xMax - _xMin) / discretization) + 1;
+            numGridY = (int)Math.Ceiling((_yMax - _yMin) / discretization) + 1;
+            numGridZ = (int)Math.Ceiling((_zMax - _zMin) / discretization) + 1;
             yMultiplier = numGridX;
             zMultiplier = numGridX * numGridY;
 
@@ -59,7 +59,7 @@ namespace TVGL
         protected readonly double[][] GridOffsetTable;
         readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         protected readonly List<PolygonalFace> faces;
-        protected const double fractionOfGridToExpand = 0.05;
+        protected const double fractionOfGridToExpand = 1.5;
         #region to be assigned in inherited constructor
         protected int numGridX, numGridY, numGridZ;
         protected double _xMin, _yMin, _zMin;
@@ -71,7 +71,7 @@ namespace TVGL
 
         #region Abstract Methods
         protected abstract bool IsInside(ValueT v);
-        protected abstract ValueT GetValueFromSolid(double x, double y, double z);
+        protected abstract ValueT GetValueFromSolid(int x, int y, int z);
         protected abstract double GetOffset(StoredValue<ValueT> from, StoredValue<ValueT> to,
             int direction, int sign);
         #endregion
@@ -96,12 +96,12 @@ namespace TVGL
             return (long)x + (long)(yMultiplier * y) + (long)(zMultiplier * z);
         }
 
-        protected StoredValue<ValueT> GetValue(double x, double y, double z, long identifier)
+        protected StoredValue<ValueT> GetValue(int x, int y, int z, long identifier)
         {
             if (valueDictionary.ContainsKey(identifier))
             {
                 var prevValue = valueDictionary[identifier];
-                if (prevValue.NumTimesCalled < 7) //i think this should be 3 - not 7...change after you get it working
+                if (prevValue.NumTimesCalled < 7)
                     prevValue.NumTimesCalled++;
                 else valueDictionary.Remove(identifier);
                 return prevValue;
@@ -124,19 +124,15 @@ namespace TVGL
         /// </summary>
         protected void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
         {
-            var xCoord = solid.XMin + xIndex * gridToCoordinateFactor;
-            var yCoord = solid.YMin + yIndex * gridToCoordinateFactor;
-            var zCoord = solid.ZMin + zIndex * gridToCoordinateFactor;
             int cubeType = 0;
             var cube = new StoredValue<ValueT>[8];
             //Find which vertices are inside of the surface and which are outside
             for (var i = 0; i < 8; i++)
             {
-                var thisX = xCoord + GridOffsetTable[i][0];
-                var thisY = yCoord + GridOffsetTable[i][1];
-                var thisZ = zCoord + GridOffsetTable[i][2];
-                var id = getIdentifier(xIndex+_unitOffsetTable[i][0], yIndex + _unitOffsetTable[i][1],
-                    zIndex + _unitOffsetTable[i][2]);
+                var thisX = xIndex + _unitOffsetTable[i][0];
+                var thisY = yIndex + _unitOffsetTable[i][1];
+                var thisZ = zIndex + _unitOffsetTable[i][2];
+                var id = getIdentifier(thisX, thisY, thisZ);
                 var v = cube[i] = GetValue(thisX, thisY, thisZ, id);
                 if (IsInside(v.Value))
                     cubeType |= 1 << i;
@@ -159,14 +155,18 @@ namespace TVGL
                     var sign = directionTable[i] > 0 ? 1 : -1;
                     var fromCorner = cube[EdgeCornerIndexTable[i][0]];
                     var toCorner = cube[EdgeCornerIndexTable[i][1]];
-                   // var id = fromCorner.ID ;
+                    // var id = fromCorner.ID ;
                     var id = sign > 0 ? fromCorner.ID : toCorner.ID;
                     if (vertexDictionaries[direction].ContainsKey(id))
                         EdgeVertex[i] = vertexDictionaries[direction][id];
                     else
                     {
-                        var coord = new[] { fromCorner.X, fromCorner.Y, fromCorner.Z };
                         double offset = GetOffset(fromCorner, toCorner, direction, sign);
+                        var coord = new[] {
+                           _xMin+ fromCorner.X*gridToCoordinateFactor,
+                            _yMin+fromCorner.Y*gridToCoordinateFactor,
+                            _zMin+   fromCorner.Z*gridToCoordinateFactor
+                        };
                         coord[direction] = coord[direction] + sign * offset;
                         EdgeVertex[i] = new Vertex(coord);
                         vertexDictionaries[direction].Add(id, EdgeVertex[i]);

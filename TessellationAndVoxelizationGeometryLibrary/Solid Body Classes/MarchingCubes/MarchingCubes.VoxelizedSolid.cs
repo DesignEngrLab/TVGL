@@ -10,9 +10,9 @@ namespace TVGL
             : base(solid, solid.VoxelSideLength*numVoxelsPerGrid)
         { }
 
-        protected override bool GetValueFromSolid(double x, double y, double z)
+        protected override bool GetValueFromSolid(int x, int y, int z)
         {
-            return solid[(int)x, (int)y, (int)z];
+            return solid[x, y, z];
         }
 
         protected override bool IsInside(bool v)
