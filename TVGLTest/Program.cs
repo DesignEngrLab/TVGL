@@ -160,7 +160,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts)
         {
             //Presenter.ShowAndHang(new ImplicitSolid());
-            var stepSize = (ts.ZMax - ts.ZMin) / 66;
+            var stepSize = (ts.ZMax - ts.ZMin) / 50;
             var direction = new[] { 0.0, 0.0, 1.0 };
             var xSections =
             DirectionalDecomposition.UniformDecomposition(ts, direction, stepSize, out var stepDistances, out _,

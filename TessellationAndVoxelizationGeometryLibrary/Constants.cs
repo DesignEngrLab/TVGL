@@ -107,7 +107,7 @@ namespace TVGL
         /// This is used to set the amount that polygon segments search outward to define the grid
         /// points that they affect.
         /// </summary>
-        internal const int MarchingCubesOOBFactor = 2;
+        internal const int MarchingCubesBufferFactor = 1;
 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
