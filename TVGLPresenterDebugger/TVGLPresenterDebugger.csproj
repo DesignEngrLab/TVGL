@@ -257,9 +257,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>TVGL\InputOutput Operations\STLFileData.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\DirectionalDecomposition.cs">
-      <Link>TVGL\Miscellaneous Functions\DirectionalDecomposition.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Extrude.cs">
       <Link>TVGL\Miscellaneous Functions\Extrude.cs</Link>
     </Compile>

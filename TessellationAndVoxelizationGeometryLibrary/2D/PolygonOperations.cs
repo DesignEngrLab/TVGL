@@ -19,12 +19,12 @@ namespace TVGL
         Intersection
     };
 
-    public enum PolygonFillType
+    public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
     {
-        Positive, 
-        EvenOdd,
-        Negative,
-        NonZero
+        Positive, // (Most common if polygons are ordered correctly and not self-intersecting) All sub-regions with winding counts > 0 are filled.
+        EvenOdd,  // (Most common when polygon directions are unknown) Odd numbered sub-regions are filled, while even numbered sub-regions are not.
+        Negative, // (Rarely used) All sub-regions with winding counts < 0 are filled.
+        NonZero //(Common if polygon directions are unknown) All non-zero sub-regions are filled (used in silhouette because we prefer filled regions).
     };
 
     /// <summary>
@@ -944,24 +944,24 @@ namespace TVGL
            IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
             //Convert the fill type from PolygonOperations wrapper to Clipper enum types
-            PolyFillType fillType = PolyFillType.pftPositive;
-            if (fillMethod == PolygonFillType.Positive)
+            PolyFillType fillType;
+            switch (fillMethod)
             {
-                fillType = PolyFillType.pftPositive;
-            }
-            else if (fillMethod == PolygonFillType.Negative)
-            {
-                fillType = PolyFillType.pftNegative;
-            }
-            else if (fillMethod == PolygonFillType.NonZero)
-            {
-                fillType = PolyFillType.pftNonZero;
-            }
-            else if (fillMethod == PolygonFillType.EvenOdd)
-            {
-                fillType = PolyFillType.pftEvenOdd;
-            }
-
+                case PolygonFillType.Positive:
+                    fillType = PolyFillType.pftPositive;
+                    break;
+                case PolygonFillType.Negative:
+                    fillType = PolyFillType.pftNegative;
+                    break;
+                case PolygonFillType.NonZero:
+                    fillType = PolyFillType.pftNonZero;
+                    break;
+                case PolygonFillType.EvenOdd:
+                    fillType = PolyFillType.pftEvenOdd;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }      
             return BooleanOperation(fillType, clipType, subject, clip, simplifyPriorToBooleanOperation, scale);
         }
 

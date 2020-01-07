@@ -287,6 +287,72 @@ namespace TVGL
             return copy;
         }
 
+        public static BoundingBox ExtendAlongDirection(BoundingBox original, double[] direction, double distance)
+        {
+            int sign = 0;
+            var updateIndex = -1;
+            for (var i = 0; i <= 2; i++)
+            {
+                var dot = direction.dotProduct(original.Directions[i]);
+                sign = Math.Sign(dot);
+                if (Math.Abs(dot).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance))
+                {
+                    updateIndex = i;
+                    break;
+                }
+            }
+            if (updateIndex == -1) throw new Exception("BoundingBox may only be extended along one of its three defining directions.");
+
+            var dimensions = new[] { original.Dimensions[0], original.Dimensions[1], original.Dimensions[2] };
+            dimensions[updateIndex] += distance;
+            var volume = dimensions[0] * dimensions[1] * dimensions[2];
+
+            var result = new BoundingBox
+            {
+                Center = new Vertex(original.Center.Position.add(direction.multiply(distance / 2))),
+                Dimensions = dimensions,
+                Volume = volume,
+                Directions = original.Directions, //If these change, then the copy is useless anyways
+                PointsOnFaces = null, // these reference vertices are no longer valid.
+                CornerVertices = new Vertex[8]
+            };   
+
+            //Recreate the corner vertices  
+            for (var i = 0; i < 8; i++)
+            {
+                result.CornerVertices[i] = original.CornerVertices[i].Copy();
+            }
+
+            //And then move the vertices furthest along the direction by the given distance
+            var vectorOffset = direction.multiply(distance);
+            //Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
+            //[0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
+            int[] indicesToUpdate;
+            if(updateIndex == 0)
+            {
+                if (sign == 1) indicesToUpdate = new int[] { 0, 1, 2, 3 };
+                else indicesToUpdate = new int[] { 4, 5, 6, 7 };
+            } 
+            else if(updateIndex == 1)
+            {
+                if (sign == 1) indicesToUpdate = new int[] { 0, 3, 4, 7 };
+                else indicesToUpdate = new int[] { 1, 2, 5, 6 };
+            }
+            else
+            {
+                if (sign == 1) indicesToUpdate = new int[] { 0, 1, 4, 5 };
+                else indicesToUpdate = new int[] { 2, 3, 6, 7 };
+            }           
+            foreach (var i in indicesToUpdate)
+            {
+                result.CornerVertices[i] = new Vertex(result.CornerVertices[i].Position.add(vectorOffset));
+            }        
+
+            //Recreate the solid representation if one existing in the original
+            if (original.SolidRepresentation != null) result.SetSolidRepresentation();
+            return result;
+        }
+
         //Note: Corner vertices must be ordered correctly. See below where - = low and + = high along directions 0, 1, and 2 respectively.
         // [0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
         public static BoundingBox FromCornerVertices(double[][] directions, Vertex[] cornerVertices, bool areVerticesInCorrectOrder)

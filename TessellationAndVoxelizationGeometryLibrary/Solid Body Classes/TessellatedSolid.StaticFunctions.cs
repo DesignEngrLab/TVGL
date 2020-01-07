@@ -15,9 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MIConvexHull;
 using StarMathLib;
-using TVGL.IOFunctions;
 
 namespace TVGL
 {
@@ -45,28 +43,6 @@ namespace TVGL
         {
             surfaceArea = faces.Sum(face => face.Area);
             volume = CalculateVolume(faces, out center);
-        }
-
-        /// <summary>
-        /// Find the volume of a tesselated solid with a slower method. 
-        /// This method could be exteded to find partial volumes of a solid (e.g. volume between two planes)
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <returns></returns>
-        private static double VolumeViaAreaDecomposition(TessellatedSolid ts)
-        {
-            var normal = new[] { 1.0, 0.0, 0.0 }; //Direction is irrellevant
-            var stepSize = 0.01;
-            var volume = 0.0;
-            var areas = DirectionalDecomposition.NonUniformAreaDecomposition(ts, normal, stepSize);
-            //Trapezoidal approximation. This should be accurate since the lines betweens data points are linear
-            for (var i = 1; i < areas.Count; i++)
-            {
-                var deltaX = areas[i][0] - areas[i - 1][0];
-                if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
-                volume = volume + .5 * (areas[i][1] + areas[i - 1][1]) * deltaX;
-            }
-            return volume;
         }
 
         /// <summary>
