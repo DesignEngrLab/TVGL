@@ -176,6 +176,40 @@ namespace TVGL.Voxelization
                 }
             });
         }
+
+        static List<List<PointLight>>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
+        {
+            List<List<PointLight>>[] loopsAlongZ = new List<List<PointLight>>[numSteps];
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
+            var currentEdges = new HashSet<Edge>();
+            var nextDistance = sortedVertices.First().Z;
+            var vIndex = 0;
+            for (int step = 0; step < numSteps; step++)
+            {
+                var z = startDistance + step * stepSize;
+                var thisVertex = sortedVertices[vIndex];
+                var needToOffset = false;
+                while (thisVertex.Z <= z)
+                {
+                    if (thisVertex.Z == z) needToOffset = true;
+                    foreach (var edge in thisVertex.Edges)
+                    {
+                        if (currentEdges.Contains(edge)) currentEdges.Remove(edge);
+                        else currentEdges.Add(edge);
+                    }
+                    vIndex++;
+                    if (vIndex == sortedVertices.Length) break;
+                    thisVertex = sortedVertices[vIndex];
+                }
+                if (needToOffset)
+                    z += (z + Math.Min(stepSize / 2, sortedVertices[vIndex + 1].Z)) / 2;
+                if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
+                else loopsAlongZ[step] = new List<List<PointLight>>();
+            }
+            return loopsAlongZ;
+        }
+
         private static List<List<PointLight>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
             var loops = new List<List<PointLight>>();
@@ -218,39 +252,6 @@ namespace TVGL.Voxelization
                 } while (!finishedLoop);
             }
             return loops;
-        }
-
-        static List<List<PointLight>>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
-        {
-            List<List<PointLight>>[] loopsAlongZ = new List<List<PointLight>>[numSteps];
-            //First, sort the vertices along the given axis. Duplicate distances are not important.
-            var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
-            var currentEdges = new HashSet<Edge>();
-            var nextDistance = sortedVertices.First().Z;
-            var vIndex = 0;
-            for (int step = 0; step < numSteps; step++)
-            {
-                var z = startDistance + step * stepSize;
-                var thisVertex = sortedVertices[vIndex];
-                var needToOffset = false;
-                while (thisVertex.Z <= z)
-                {
-                    if (thisVertex.Z == z) needToOffset = true;
-                    foreach (var edge in thisVertex.Edges)
-                    {
-                        if (currentEdges.Contains(edge)) currentEdges.Remove(edge);
-                        else currentEdges.Add(edge);
-                    }
-                    vIndex++;
-                    if (vIndex == sortedVertices.Length) break;
-                    thisVertex = sortedVertices[vIndex];
-                }
-                if (needToOffset)
-                    z += (z + Math.Min(stepSize / 2, sortedVertices[vIndex + 1].Z)) / 2;
-                if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
-                else loopsAlongZ[step] = new List<List<PointLight>>();
-            }
-            return loopsAlongZ;
         }
 
         internal static List<double[]> AllPolygonIntersectionPointsAlongY(List<List<PointLight>> loops, double start, int numSteps, double stepSize,
