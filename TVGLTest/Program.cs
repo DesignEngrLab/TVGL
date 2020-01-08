@@ -97,11 +97,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            //var fileNames = dir.GetFiles("*").ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 55; i < fileNames.Count(); i++)
+            for (var i = 77; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -160,12 +160,13 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts)
         {
             //Presenter.ShowAndHang(new ImplicitSolid());
-            var xs = new CrossSectionSolid(ts, CartesianDirections.ZPositive, 100);
+            var xs = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.ZPositive,50);
             //Presenter.ShowAndHang(ts);
             Presenter.ShowAndHang(xs);
             stopwatch.Restart();
             TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
-            Console.WriteLine("bruteforce = {0}", stopwatch.Elapsed);
+            Console.WriteLine("time elapsed = {0}", stopwatch.Elapsed);
+            //ts1.SimplifyFlatPatches();
             Presenter.ShowAndHang(ts1);
             return;
             //var res = 600;

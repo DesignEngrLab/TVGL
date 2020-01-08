@@ -46,48 +46,59 @@ namespace TVGL
         { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
         public double SameTolerance;
-        private TessellatedSolid ts;
-        private CartesianDirections zPositive;
-        private int v;
+
 
         public int NumLayers { get; }
-        public CrossSectionSolid(Dictionary<int, double> stepDistances, 
+        public CrossSectionSolid(Dictionary<int, double> stepDistances,
             UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances.Values.ToArray();
             Units = units;
         }
-        public CrossSectionSolid(double[] stepDistances, List<PolygonLight>[] Layer2D, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(double[] stepDistances, List<PolygonLight>[] Layer2D, double[][] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Length;
             StepDistances = stepDistances;
             Units = units;
             this.Layer2D = Layer2D;
-            ZMin = StepDistances[0];
-            ZMax = StepDistances[NumLayers - 1];
-            var xmin = double.PositiveInfinity;
-            var xmax = double.NegativeInfinity;
-            var ymin = double.PositiveInfinity;
-            var ymax = double.NegativeInfinity;
-            foreach (var layer in Layer2D)
-                foreach (var polygon in layer)
-                    foreach (var point in polygon.Path)
-                    {
-                        if (xmin > point.X) xmin = point.X;
-                        if (ymin > point.Y) ymin = point.Y;
-                        if (xmax < point.X) xmax = point.X;
-                        if (ymax < point.Y) ymax = point.Y;
-                    }
-            Bounds = new[] { new[] {xmin, ymin, StepDistances[0]},
- new[] {xmax, ymax, StepDistances[NumLayers-1]}            };
+            if (bounds == null)
+            {
+                var xmin = double.PositiveInfinity;
+                var xmax = double.NegativeInfinity;
+                var ymin = double.PositiveInfinity;
+                var ymax = double.NegativeInfinity;
+                foreach (var layer in Layer2D)
+                    foreach (var polygon in layer)
+                        foreach (var point in polygon.Path)
+                        {
+                            if (xmin > point.X) xmin = point.X;
+                            if (ymin > point.Y) ymin = point.Y;
+                            if (xmax < point.X) xmax = point.X;
+                            if (ymax < point.Y) ymax = point.Y;
+                        }
+                Bounds = new[] {
+                new[] {xmin, ymin, StepDistances[0]},
+                new[] {xmax, ymax, StepDistances[NumLayers-1]}
+                };
+            }
+            else Bounds = bounds;
         }
 
-        public CrossSectionSolid(TessellatedSolid ts, CartesianDirections zPositive, int v)
+        public static CrossSectionSolid CreateFromTessellatedSolid(TessellatedSolid ts, CartesianDirections direction, int numberOfLayers)
         {
-            this.ts = ts;
-            this.zPositive = zPositive;
-            this.v = v;
+            var intDir = Math.Abs((int)direction) - 1;
+            var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
+            var stepSize = lengthAlongDir / numberOfLayers;
+            var stepDistances = new double[numberOfLayers];
+            stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
+            for (int i = 1; i < numberOfLayers; i++)
+                stepDistances[i] = stepDistances[i - 1] + stepSize;
+            var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
+            var bounds = new[] { (double[])ts.Bounds[0].Clone(), (double[])ts.Bounds[1].Clone() };
+            var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
+            cs.TranformMatrix = StarMath.makeIdentity(4);
+            return cs;
         }
 
         public void Add(List<Vertex> feature3D, PolygonLight feature2D, int layer)
@@ -113,7 +124,7 @@ namespace TVGL
             var layer = Layer3D[i] = new List<List<Vertex>>();
             foreach (var polygon in Layer2D[i])
             {
-                layer.Add(MiscFunctions.GetVerticesFrom2DPoints(polygon.Path, directionOfLayers, StepDistances[i]));
+                layer.Add(MiscFunctions.GetVerticesFrom2DPoints(polygon.Path.Select(p => new Point(p.X, p.Y)), directionOfLayers, StepDistances[i]));
             }
         }
 
@@ -170,7 +181,7 @@ namespace TVGL
 
         public override Solid Copy()
         {
-            var solid = new CrossSectionSolid(StepDistances, Layer2D, Units);
+            var solid = new CrossSectionSolid(StepDistances, Layer2D, Bounds, Units);
             //Recreate the loops, so that the lists are not linked to the original.
             //Since polygonlight is a struct, it will not be linked.
             for (int i = 0; i < NumLayers; i++)

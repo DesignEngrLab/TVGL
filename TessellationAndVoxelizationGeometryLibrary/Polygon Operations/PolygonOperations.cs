@@ -34,10 +34,10 @@ namespace TVGL
     {
         #region Line Intersections with Polygon
 
-        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<PointLight>> polygons, double[] lineReference, double lineDirection,
+        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<PolygonLight> polygons, double[] lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p.Select(point => new Point(point)), true)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, true)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, double[] lineReference, double lineDirection,
@@ -45,10 +45,10 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<PointLight>> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonLight> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p.Select(point => new Point(point)), true)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, true)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
@@ -56,11 +56,11 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<List<PointLight>> loops, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(loops.Select(p => new Polygon(p.Select(point => new Point(point)), true)), startingYValue, numSteps, stepSize,
-            out firstIntersectingIndex);
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, true)), startingYValue,
+                numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)

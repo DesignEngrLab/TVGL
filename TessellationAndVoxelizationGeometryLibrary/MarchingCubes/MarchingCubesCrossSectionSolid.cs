@@ -67,7 +67,7 @@ namespace TVGL
             return new TessellatedSolid(faces);
         }
 
-        private double[,] CreateDistanceGridBruteForce(List<PolygonLight> layer)
+        private double[,] CreateDistanceGridBruteForce(List<Polygon> layer)
         {
             var grid = new double[numGridX, numGridY];
             for (int i = 0; i < numGridX; i++)
@@ -127,10 +127,34 @@ namespace TVGL
         }
         private double[,] CreateDistanceGrid(List<PolygonLight> layer)
         {
+            var allIntersections = PolygonOperations.AllPolygonIntersectionPointsAlongY(layer, _yMin, numGridY, discretization, out var firstIntersectingIndex);
+            var allIntersectionsEnumerator = allIntersections.GetEnumerator();
             var grid = new double[numGridX, numGridY];
-            for (int i = 0; i < numGridX; i++)
-                for (int j = 0; j < numGridY; j++)
-                    grid[i, j] = double.PositiveInfinity;
+            for (int j = 0; j < numGridY; j++)
+            {
+                double[] intersections = null;
+                if (j >= firstIntersectingIndex)
+                {
+                    allIntersectionsEnumerator.MoveNext();
+                    intersections = allIntersectionsEnumerator.Current;
+                }
+                if (intersections == null)
+                    for (int i = 0; i < numGridX; i++)
+                        grid[i, j] = double.PositiveInfinity;
+                else
+                {
+                    var xIndex = 0;
+                    var x = _xMin;
+                    for (int i = 0; i < numGridX; i++)
+                    {
+                        while (xIndex < intersections.Length && x > intersections[xIndex]) xIndex++;
+                        if (xIndex % 2 == 0)
+                            grid[i, j] = double.PositiveInfinity;
+                        else grid[i, j] = double.NegativeInfinity;
+                        x += discretization;
+                    }
+                }
+            }
             foreach (var polygon in layer)
             {
                 var numSegments = polygon.Path.Count;
@@ -146,29 +170,10 @@ namespace TVGL
                         ExpandHorizontally(lastPoint, fromPoint, toPoint, grid, iMin, iMax, jMin, jMax);
                     else
                         ExpandVertically(lastPoint, fromPoint, toPoint, grid, iMin, iMax, jMin, jMax);
-                    //Console.WriteLine("");
-                    //Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
                     lastPoint = fromPoint;
                     fromPoint = toPoint;
                 }
-                //Clean up
-                for (int i = iMin; i < iMax; i++)
-                    for (int j = jMin; j < jMin; j++)
-                    {
-                        if (grid[i, j] > 0) continue;
-                        if ((i > 0 && double.IsInfinity(grid[i - 1, j])) ||
-                            (i < numGridX - 1 && double.IsInfinity(grid[i + 1, j])) ||
-                            (j > 0 && double.IsInfinity(grid[i, j - 1])) ||
-                            (j < numGridY - 1 && double.IsInfinity(grid[i, j + 1])))
-                            grid[i, j] = -grid[i, j];
-                    }
             }
-            //if (double.IsInfinity(grid.Max()))
-            //{
-            //    Console.WriteLine("infinity still in matrix");
-            //Console.WriteLine();
-            //Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
-            //}
             return grid;
         }
 
@@ -210,7 +215,7 @@ namespace TVGL
                             var t = d.dotProduct(vFrom, 2);
                             if (segment.dotProduct(vFrom, 2) >= 0) //then in the band of the extruded edge
                             {
-                                if (Math.Abs(t) < Math.Abs(grid[i, j]))
+                                if (Math.Sign(t) * t < Math.Sign(t) * grid[i, j])
                                 {
                                     grid[i, j] = t;
                                     atLeastOneSuccessfulChange = true;
@@ -219,7 +224,7 @@ namespace TVGL
                             else if (lastSegment.dotProduct(vFrom, 2) >= 0)
                             {
                                 var distance = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
-                                if (distance < Math.Abs(grid[i, j]))
+                                if (distance < convexSign * grid[i, j])
                                 {
                                     grid[i, j] = convexSign * distance;
                                     atLeastOneSuccessfulChange = true;
@@ -279,7 +284,7 @@ namespace TVGL
                             var t = d.dotProduct(vFrom, 2);
                             if (segment.dotProduct(vFrom, 2) >= 0) //then in the band of the extruded edge
                             {
-                                if (Math.Abs(t) < Math.Abs(grid[i, j]))
+                                if (Math.Sign(t) * t < Math.Sign(t) * grid[i, j])
                                 {
                                     grid[i, j] = t;
                                     atLeastOneSuccessfulChange = true;
@@ -288,7 +293,7 @@ namespace TVGL
                             else if (lastSegment.dotProduct(vFrom, 2) >= 0)
                             {
                                 var distance = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
-                                if (distance < Math.Abs(grid[i, j]))
+                                if (distance < convexSign * grid[i, j])
                                 {
                                     grid[i, j] = convexSign * distance;
                                     atLeastOneSuccessfulChange = true;
@@ -330,7 +335,7 @@ namespace TVGL
                         var xterm = x - fromPoint.X;
                         var yterm = j * gridToCoordinateFactor + _yMin - fromPoint.Y;
                         var distance = Math.Sqrt(xterm * xterm + yterm * yterm);
-                        if (distance < Math.Abs(grid[i, j]))
+                        if (distance < convexSign * grid[i, j])
                         {
                             grid[i, j] = convexSign * distance;
                             atLeastOneSuccessfulChange = true;
@@ -371,7 +376,7 @@ namespace TVGL
                         var xterm = i * gridToCoordinateFactor + _xMin - fromPoint.X;
                         var yterm = y - fromPoint.Y;
                         var distance = Math.Sqrt(xterm * xterm + yterm * yterm);
-                        if (distance < Math.Abs(grid[i, j]))
+                        if (distance < convexSign * grid[i, j])
                         {
                             grid[i, j] = convexSign * distance;
                             atLeastOneSuccessfulChange = true;

@@ -9,43 +9,43 @@ namespace TVGL
 {
     [DataContract]
     [KnownType(typeof(List<PointLight>))]
-    public struct PolygonLight
+    public readonly struct PolygonLight
     {
         /// <summary>
         /// Gets the PointLights that make up the polygon
         /// </summary>
         [DataMember]
-        public List<PointLight> Path;
+        public readonly List<PointLight> Path;
 
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
         [DataMember]
-        public double Area;
+        public readonly double Area;
 
         /// <summary>
-        /// Maxiumum X value
+        /// Maximum X value
         /// </summary>
         [DataMember]
-        public double MaxX;
+        public readonly double MaxX;
 
         /// <summary>
-        /// Miniumum X value
+        /// Minimum X value
         /// </summary>
         [DataMember]
-        public double MinX;
+        public readonly double MinX;
 
         /// <summary>
         /// Maxiumum Y value
         /// </summary>
         [DataMember]
-        public double MaxY;
+        public readonly double MaxY;
 
         /// <summary>
         /// Minimum Y value
         /// </summary>
         [DataMember]
-        public double MinY;
+        public readonly double MinY;
 
         public PolygonLight(Polygon polygon)
         {
