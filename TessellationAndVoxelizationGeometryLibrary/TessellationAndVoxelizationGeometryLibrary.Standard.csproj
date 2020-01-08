@@ -5,7 +5,7 @@
     <AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
     <RootNamespace>TVGL</RootNamespace>
     <Version>1.0.17.1019</Version>
-    <Product>Tesselation and Voxelization Geometry Library</Product>
+    <Product>Tessellation and Voxelization Geometry Library</Product>
     <PackageId>TVGL</PackageId>
     <Authors>Matt Campbell, Brandon Massoni, Nima Rafibakhsh</Authors>
     <Company>Design Engineering Lab</Company>
@@ -35,7 +35,11 @@
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="StarMath" Version="2.0.17.1019" />
   </ItemGroup>
 
