@@ -54,7 +54,39 @@ namespace TVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            throw new NotImplementedException();
+            var intersections = new List<double[]>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.X).ToList();
+            var currentLines = new HashSet<Line>();
+            var nextDistance = sortedPoints.First().X;
+            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
+            var pIndex = 0;
+            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            {
+                var x = startingXValue + i * stepSize;
+                var thisPoint = sortedPoints[pIndex];
+                var needToOffset = false;
+                while (thisPoint.X <= x)
+                {
+                    if (x.IsPracticallySame(thisPoint.X)) needToOffset = true;
+                    foreach (var line in thisPoint.Lines)
+                    {
+                        if (currentLines.Contains(line)) currentLines.Remove(line);
+                        else currentLines.Add(line);
+                    }
+                    pIndex++;
+                    if (pIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pIndex];
+                }
+                if (needToOffset)
+                    x += Math.Min(stepSize, sortedPoints[pIndex + 1].X) / 10.0;
+                var numIntersects = currentLines.Count;
+                var intersects = new double[numIntersects];
+                var index = 0;
+                foreach (var line in currentLines)
+                    intersects[index++] = line.YGivenX(x);
+                intersections.Add(intersects.OrderBy(y => y).ToArray());
+            }
+            return intersections;
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
@@ -78,7 +110,7 @@ namespace TVGL
                 var needToOffset = false;
                 while (thisPoint.Y <= y)
                 {
-                    if (thisPoint.Y == y) needToOffset = true;
+                    if (y.IsPracticallySame(thisPoint.Y)) needToOffset = true;
                     foreach (var line in thisPoint.Lines)
                     {
                         if (currentLines.Contains(line)) currentLines.Remove(line);
@@ -89,7 +121,8 @@ namespace TVGL
                     thisPoint = sortedPoints[pIndex];
                 }
                 if (needToOffset)
-                    y += (y + Math.Min(stepSize / 2, sortedPoints[pIndex + 1].Y)) / 2;
+                    y += Math.Min(stepSize, sortedPoints[pIndex + 1].Y) / 10.0;
+
                 var numIntersects = currentLines.Count;
                 var intersects = new double[numIntersects];
                 var index = 0;

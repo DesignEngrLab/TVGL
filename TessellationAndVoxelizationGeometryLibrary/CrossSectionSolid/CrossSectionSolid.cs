@@ -41,8 +41,10 @@ namespace TVGL
         /// <summary>
         public double[] StepDistances { get; }
 
+        public int[] StepIndices { get; }
+
         public double[,] TranformMatrix { get; set; } = StarMath.makeIdentity(4);
-        double[] directionOfLayers
+        public double[] DirectionOfLayers
         { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
         public double SameTolerance;
@@ -124,7 +126,7 @@ namespace TVGL
             var layer = Layer3D[i] = new List<List<Vertex>>();
             foreach (var polygon in Layer2D[i])
             {
-                layer.Add(MiscFunctions.GetVerticesFrom2DPoints(polygon.Path.Select(p => new Point(p.X, p.Y)), directionOfLayers, StepDistances[i]));
+                layer.Add(MiscFunctions.GetVerticesFrom2DPoints(polygon.Path.Select(p => new Point(p.X, p.Y)), DirectionOfLayers, StepDistances[i]));
             }
         }
 
@@ -146,7 +148,7 @@ namespace TVGL
         /// n-1 extrusion will have ended on at the distance of the final cross section). 
         /// If reversed, it will simply extrude backward instead of forward.
         /// </summary>
-        public void SetSolidRepresentation(bool extrudeBack = true)
+        public void ConvertToTessellatedExtrusions(bool extrudeBack = true)
         {
             if (!Layer3D.Any()) SetAllVertices();
             var start = 0;
@@ -154,7 +156,7 @@ namespace TVGL
             var stop = NumLayers - 1;
             while (Layer2D[stop] == null || !Layer2D[stop].Any()) stop--;
             var reverse = start < stop ? 1 : -1;
-            var direction = reverse == 1 ? directionOfLayers : directionOfLayers.multiply(-1);
+            var direction = reverse == 1 ? DirectionOfLayers : DirectionOfLayers.multiply(-1);
             Faces = new List<PolygonalFace>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
@@ -178,6 +180,11 @@ namespace TVGL
             }
         }
 
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes()
+        {
+            var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
+            return marchingCubesAlgorithm.Generate();
+        }
 
         public override Solid Copy()
         {
@@ -203,11 +210,6 @@ namespace TVGL
             return solid;
         }
 
-        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes()
-        {
-            var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
-            return marchingCubesAlgorithm.Generate();
-        }
 
         public override void Transform(double[,] transformMatrix)
         {
