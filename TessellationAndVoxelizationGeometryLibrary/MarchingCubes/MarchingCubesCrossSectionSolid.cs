@@ -28,42 +28,11 @@ namespace TVGL
             gridLayers = new double[numGridLayersToStore][,];
         }
 
-        internal override TessellatedSolid Generate()
-        {
-            var distanceForGridLayers = new double[gridLayers.Length];
-            var start = 0;
-            // while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
-            var startingDistance = distanceForGridLayers[0] = solid.StepDistances[start];
-            distanceForGridLayers[1] = solid.StepDistances[start + 1];
-            if (!onLayers)
-            {
-                var nextXSection = startingDistance + discretization;
-                //okay, need to work on this logic for 2, 3, and 4 layers
-                while (solid.StepDistances[start] < nextXSection) start++;
-                distanceForGridLayers[onLayers ? 1 : 2] = solid.StepDistances[start];
-                if (!onLayers) distanceForGridLayers[3] = solid.StepDistances[start + 1];
-            }
-            var last = solid.NumLayers - 1;
-            //while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
-            for (int k = 1; k < numGridLayersToStore; k++)
-                gridLayers[k] = CreateDistanceGridBruteForce(solid.Layer2D[k]);
-            for (var k = start; k <= last; k++)
-            {
-                gridLayers[k % numGridLayersToStore] = CreateDistanceGridBruteForce(solid.Layer2D[k]);
-                for (var i = 0; i < numGridX - 1; i++)
-                    for (var j = 0; j < numGridY - 1; j++)
-                        MakeFacesInCube(i, j, k);
-            }
-            //Calculate new grid
-            //interpolate points for grid
-            //call marching cubes function for this z-layer
-            // for (var k = 0; k < numGridZ - 1; k++)
-            var comments = new List<string>(solid.Comments);
-            comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
-            return new TessellatedSolid(faces);
-        }
-
-        internal TessellatedSolid Generate2()
+        /// <summary>
+        /// Generates the marching cubes solid
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
+        internal TessellatedSolid Generate()
         {
             var distanceForGridLayers = new double[gridLayers.Length];
             var start = 0;
@@ -272,6 +241,69 @@ namespace TVGL
             }
         }
 
+        private void ExpandVertically(PointLight lastPoint, PointLight fromPoint, PointLight toPoint, double[,] grid, int iMin, int iMax, int jMin, int jMax)
+        {
+            var segment = toPoint - fromPoint;
+            if (segment[0].IsNegligible(1e-9)) return;
+            var segmentHalfHeight = 0.5 * segment[1];
+            var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
+            var lastSegment = fromPoint - lastPoint;
+            var convexSign = Math.Sign(StarMath.crossProduct2(lastSegment, segment));
+            var yStart = fromPoint.Y + segmentHalfHeight;
+            var jStart = (int)((yStart - _yMin) * coordToGridFactor);
+            var numStepsInHalfHeight = (int)(segmentHalfHeight * coordToGridFactor) + 1;
+            var d = new[] { segment[1] / magnitude, -segment[0] / magnitude }; //unit vector along the band
+            var xDelta = (toPoint.X > fromPoint.X) ? -1 : +1;
+            for (int yDelta = -1; yDelta <= 1; yDelta += 2)
+            { //first backward, then forward
+                var j = jStart;
+                if (yDelta > 0) j++;
+                var numSteps = 0;
+                bool atLeastOneSuccessfulChange;
+                do
+                {  // outer x loop
+                    atLeastOneSuccessfulChange = false;
+                    numSteps++;
+                    if (j < jMin || j >= jMax) break;
+                    var y = j * gridToCoordinateFactor + _yMin;
+                    var x = toPoint.X + d[0] * (y - toPoint.Y) / d[1];
+                    var i = (int)((x - _xMin) * coordToGridFactor);
+                    while (true)
+                    { //inner y loop
+                        if ((xDelta > 0 && i >= iMax) || (xDelta < 0 && i < iMin))
+                            break;
+                        if ((xDelta <= 0 || i >= iMin) && (xDelta >= 0 || i < iMax))
+                        {
+                            var p = new PointLight(i * gridToCoordinateFactor + _xMin, y);
+                            var vFrom = p - fromPoint;
+                            var t = d.dotProduct(vFrom, 2);
+                            if (segment.dotProduct(vFrom, 2) >= 0) //then in the band of the extruded edge
+                            {
+                                if (Math.Abs(t) < Math.Abs(grid[i, j]))
+                                {
+                                    grid[i, j] = t;
+                                    atLeastOneSuccessfulChange = true;
+                                }
+                            }
+                            else if (lastSegment.dotProduct(vFrom, 2) >= 0)
+                            {
+                                var distance = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
+                                if (distance < Math.Abs(grid[i, j]))
+                                {
+                                    grid[i, j] = convexSign * distance;
+                                    atLeastOneSuccessfulChange = true;
+                                }
+                            }
+                            else break;
+                        }
+                        i += xDelta;
+                    }
+                    j += yDelta;
+                } while (atLeastOneSuccessfulChange || numSteps <= numStepsInHalfHeight);
+            }
+        }
+
+
         private void ExpandLastCornerHorizontally(PointLight fromPoint, double[] lastSegment, double[,] grid, int iMin, int iMax, int jMin, int jMax, int convexSign)
         {
             var magnitude = Math.Sqrt(lastSegment[0] * lastSegment[0] + lastSegment[1] * lastSegment[1]);
@@ -351,69 +383,6 @@ namespace TVGL
                 j += yDelta;
             } while (atLeastOneSuccessfulChange || numSteps <= Constants.MarchingCubesMissedFactor);
         }
-
-        private void ExpandVertically(PointLight lastPoint, PointLight fromPoint, PointLight toPoint, double[,] grid, int iMin, int iMax, int jMin, int jMax)
-        {
-            var segment = toPoint - fromPoint;
-            if (segment[0].IsNegligible(1e-9)) return;
-            var segmentHalfHeight = 0.5 * segment[1];
-            var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
-            var lastSegment = fromPoint - lastPoint;
-            var convexSign = Math.Sign(StarMath.crossProduct2(lastSegment, segment));
-            var yStart = fromPoint.Y + segmentHalfHeight;
-            var jStart = (int)((yStart - _yMin) * coordToGridFactor);
-            var numStepsInHalfHeight = (int)(segmentHalfHeight * coordToGridFactor) + 1;
-            var d = new[] { segment[1] / magnitude, -segment[0] / magnitude }; //unit vector along the band
-            var xDelta = (toPoint.X > fromPoint.X) ? -1 : +1;
-            for (int yDelta = -1; yDelta <= 1; yDelta += 2)
-            { //first backward, then forward
-                var j = jStart;
-                if (yDelta > 0) j++;
-                var numSteps = 0;
-                bool atLeastOneSuccessfulChange;
-                do
-                {  // outer x loop
-                    atLeastOneSuccessfulChange = false;
-                    numSteps++;
-                    if (j < jMin || j >= jMax) break;
-                    var y = j * gridToCoordinateFactor + _yMin;
-                    var x = toPoint.X + d[0] * (y - toPoint.Y) / d[1];
-                    var i = (int)((x - _xMin) * coordToGridFactor);
-                    while (true)
-                    { //inner y loop
-                        if ((xDelta > 0 && i >= iMax) || (xDelta < 0 && i < iMin))
-                            break;
-                        if ((xDelta <= 0 || i >= iMin) && (xDelta >= 0 || i < iMax))
-                        {
-                            var p = new PointLight(i * gridToCoordinateFactor + _xMin, y);
-                            var vFrom = p - fromPoint;
-                            var t = d.dotProduct(vFrom, 2);
-                            if (segment.dotProduct(vFrom, 2) >= 0) //then in the band of the extruded edge
-                            {
-                                if (Math.Abs(t) < Math.Abs(grid[i, j]))
-                                {
-                                    grid[i, j] = t;
-                                    atLeastOneSuccessfulChange = true;
-                                }
-                            }
-                            else if (lastSegment.dotProduct(vFrom, 2) >= 0)
-                            {
-                                var distance = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
-                                if (distance < Math.Abs(grid[i, j]))
-                                {
-                                    grid[i, j] = convexSign * distance;
-                                    atLeastOneSuccessfulChange = true;
-                                }
-                            }
-                            else break;
-                        }
-                        i += xDelta;
-                    }
-                    j += yDelta;
-                } while (atLeastOneSuccessfulChange || numSteps <= numStepsInHalfHeight);
-            }
-        }
-
 
         protected override double GetValueFromSolid(int x, int y, int z)
         {

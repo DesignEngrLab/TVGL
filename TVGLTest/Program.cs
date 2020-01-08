@@ -167,10 +167,6 @@ namespace TVGLPresenterDX
             TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
             Console.WriteLine("bruteforce = {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(ts1);
-            stopwatch.Restart();
-            TessellatedSolid ts2 = xs.ConvertToTessellatedSolidMarchingCubes2();
-            Console.WriteLine("marching = {0}", stopwatch.Elapsed);
-            Presenter.ShowAndHang(ts2);
             return;
             //var res = 600;
             //stopwatch.Restart();

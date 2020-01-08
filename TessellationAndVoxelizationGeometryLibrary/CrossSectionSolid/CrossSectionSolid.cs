@@ -5,7 +5,7 @@ using StarMathLib;
 
 namespace TVGL
 {
-    public class CrossSectionSolid : Solid
+    public partial class CrossSectionSolid : Solid
     {
         /// <summary>
         /// Layers are the 2D and 3D layers for every cross section in this feature.
@@ -46,6 +46,10 @@ namespace TVGL
         { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
         public double SameTolerance;
+        private TessellatedSolid ts;
+        private CartesianDirections zPositive;
+        private int v;
+
         public int NumLayers { get; }
         public CrossSectionSolid(Dictionary<int, double> stepDistances, 
             UnitType units = UnitType.unspecified)
@@ -77,6 +81,13 @@ namespace TVGL
                     }
             Bounds = new[] { new[] {xmin, ymin, StepDistances[0]},
  new[] {xmax, ymax, StepDistances[NumLayers-1]}            };
+        }
+
+        public CrossSectionSolid(TessellatedSolid ts, CartesianDirections zPositive, int v)
+        {
+            this.ts = ts;
+            this.zPositive = zPositive;
+            this.v = v;
         }
 
         public void Add(List<Vertex> feature3D, PolygonLight feature2D, int layer)
@@ -156,6 +167,7 @@ namespace TVGL
             }
         }
 
+
         public override Solid Copy()
         {
             var solid = new CrossSectionSolid(StepDistances, Layer2D, Units);
@@ -184,11 +196,6 @@ namespace TVGL
         {
             var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
             return marchingCubesAlgorithm.Generate();
-        }
-        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes2()
-        {
-            var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
-            return marchingCubesAlgorithm.Generate2();
         }
 
         public override void Transform(double[,] transformMatrix)
