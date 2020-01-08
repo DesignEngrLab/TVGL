@@ -101,7 +101,7 @@ namespace TVGLPresenterDX
             //var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 53; i < fileNames.Count(); i++)
+            for (var i = 55; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -136,7 +136,7 @@ namespace TVGLPresenterDX
                 // Presenter.ShowAndHang(vs1);
                 //TestVoxelization(ts[0]);
                 //bounds = vs1.Bounds;
-               // return;
+                // return;
             }
 
             Console.WriteLine("Completed.");
@@ -160,21 +160,16 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts)
         {
             //Presenter.ShowAndHang(new ImplicitSolid());
-            var stepSize = (ts.ZMax - ts.ZMin) / 150;
-            var direction = new[] { 0.0, 0.0, 1.0 };
-            var xSections =
-            DirectionalDecomposition.UniformDecomposition(ts, direction, stepSize, out var stepDistances, out _,
-                DirectionalDecomposition.SnapType.CenterAllInside, true);
-            var xs = new CrossSectionSolid(stepDistances.Values.ToArray(), xSections.Select(d => d.Paths).ToArray());
+            var xs = new CrossSectionSolid(ts, CartesianDirections.ZPositive, 100);
+            //Presenter.ShowAndHang(ts);
+            Presenter.ShowAndHang(xs);
             stopwatch.Restart();
             TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
             Console.WriteLine("bruteforce = {0}", stopwatch.Elapsed);
-            //Presenter.ShowAndHang(ts);
-            //Presenter.ShowAndHang(xs);
             Presenter.ShowAndHang(ts1);
             stopwatch.Restart();
             TessellatedSolid ts2 = xs.ConvertToTessellatedSolidMarchingCubes2();
-            Console.WriteLine("marching = {0}",stopwatch.Elapsed);
+            Console.WriteLine("marching = {0}", stopwatch.Elapsed);
             Presenter.ShowAndHang(ts2);
             return;
             //var res = 600;

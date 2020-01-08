@@ -83,7 +83,7 @@ namespace TVGL
         {
             var path = new List<PointLight>(original.Path);
             path.Reverse();
-            var newPoly =  new PolygonLight(path);
+            var newPoly = new PolygonLight(path);
             return newPoly;
         }
 
@@ -105,7 +105,7 @@ namespace TVGL
             using (var reader = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
                 var ser = new DataContractSerializer(typeof(PolygonLight));
-                return (PolygonLight) ser.ReadObject(reader);
+                return (PolygonLight)ser.ReadObject(reader);
             }
         }
     }
@@ -203,7 +203,7 @@ namespace TVGL
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
         public double Area;
-        
+
         /// <summary>
         /// Maxiumum X value
         /// </summary>
@@ -238,7 +238,7 @@ namespace TVGL
             MinX = double.MaxValue;
             MaxY = double.MinValue;
             MinY = double.MaxValue;
-            for (var i =0; i < Path.Count; i++)
+            for (var i = 0; i < Path.Count; i++)
             {
                 var point = Path[i];
                 if (point.X > MaxX) MaxX = point.X;
@@ -261,7 +261,7 @@ namespace TVGL
             }
         }
 
-        public Polygon(PolygonLight poly): this(poly.Path.Select(p => new Point(p)))
+        public Polygon(PolygonLight poly, bool setLines = false) : this(poly.Path.Select(p => new Point(p)), setLines)
         {
         }
 
@@ -367,7 +367,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public int NextPointIndex(int currentPointIndex)
         {
-            if(Path[currentPointIndex].IndexInPath != currentPointIndex)
+            if (Path[currentPointIndex].IndexInPath != currentPointIndex)
                 throw new Exception("Path has been altered and the indices do not match up");
             if (Path.Count == currentPointIndex + 1)
             {
@@ -409,7 +409,7 @@ namespace TVGL
         public bool IsConvex()
         {
             if (!Area.IsGreaterThanNonNegligible()) return false; //It must have an area greater than zero
-            if(PathLines == null) SetPathLines();
+            if (PathLines == null) SetPathLines();
             var firstLine = PathLines.Last();
             foreach (var secondLine in PathLines)
             {

@@ -57,4 +57,10 @@
   </ItemGroup>
 
 
+  <ItemGroup>
+    <Folder Include="ImplicitSolid\" />
+    <Folder Include="TessellatedSolid\" />
+  </ItemGroup>
+
+
 </Project>
