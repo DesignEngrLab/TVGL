@@ -97,11 +97,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupport*").ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i++)
+            for (var i = 55; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -136,6 +136,7 @@ namespace TVGLPresenterDX
                 // Presenter.ShowAndHang(vs1);
                 //TestVoxelization(ts[0]);
                 //bounds = vs1.Bounds;
+                // return;
             }
 
             Console.WriteLine("Completed.");
@@ -158,14 +159,26 @@ namespace TVGLPresenterDX
         }
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 600;
-
+            //Presenter.ShowAndHang(new ImplicitSolid());
+            var xs = new CrossSectionSolid(ts, CartesianDirections.ZPositive, 100);
+            //Presenter.ShowAndHang(ts);
+            Presenter.ShowAndHang(xs);
             stopwatch.Restart();
-            var vsa = new VoxelizedSolid(ts, res);
-            stopwatch.Stop();
+            TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
+            Console.WriteLine("bruteforce = {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(ts1);
             stopwatch.Restart();
-            var ts2 = vsa.ConvertToTessellatedSolidMarchingCubes(100);
-            Presenter.ShowAndHang(vsa, ts2);
+            TessellatedSolid ts2 = xs.ConvertToTessellatedSolidMarchingCubes2();
+            Console.WriteLine("marching = {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(ts2);
+            return;
+            //var res = 600;
+            //stopwatch.Restart();
+            //var vsa = new VoxelizedSolid(ts, res);
+            //stopwatch.Stop();
+            //stopwatch.Restart();
+            //var ts2 = vsa.ConvertToTessellatedSolidMarchingCubes(100);
+            //Presenter.ShowAndHang(vsa, ts2);
         }
 
         public static void TestSilhouette(TessellatedSolid ts)

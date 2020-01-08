@@ -1212,7 +1212,9 @@ namespace TVGL
                 contour.Add(new Vertex(vertexPosition));
             }
 
-            return new List<Vertex>(contour);
+            return contour;
+            //replacing the below line with the above. just return the contour, right? why put it in a new list
+            //return new List<Vertex>(contour);
         }
         #endregion
 
