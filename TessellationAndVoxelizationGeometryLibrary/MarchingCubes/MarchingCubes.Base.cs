@@ -59,7 +59,7 @@ namespace TVGL
         protected readonly double[][] GridOffsetTable;
         readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         protected readonly List<PolygonalFace> faces;
-        protected const double fractionOfGridToExpand = 1.5;
+        protected const double fractionOfGridToExpand = 1.05;
         #region to be assigned in inherited constructor
         protected int numGridX, numGridY, numGridZ;
         protected double _xMin, _yMin, _zMin;

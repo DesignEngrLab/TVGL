@@ -738,7 +738,7 @@ namespace TVGL
             {
                 if (s is CrossSectionSolid)
                 {
-                    var contours = MakeLinesVisual3D(((CrossSectionSolid)s).Layer2D, ((CrossSectionSolid)s).StepDistances, true);
+                    var contours = MakeLinesVisual3D(((CrossSectionSolid)s).Layer2D.Values, ((CrossSectionSolid)s).StepDistances.Values, true);
                     models.AddRange(contours);
                     foreach (var contour in contours)
                         window.view1.Children.Add(contour);
