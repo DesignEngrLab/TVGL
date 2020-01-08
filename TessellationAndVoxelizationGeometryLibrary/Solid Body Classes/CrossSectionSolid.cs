@@ -147,12 +147,12 @@ namespace TVGL
             var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Units);
             //Recreate the loops, so that the lists are not linked to the original.
             //Since polygonlight is a struct, it will not be linked.
-            foreach(var layer in solid.Layer2D)
+            foreach(var layer in Layer2D)
             {
                 solid.Layer2D.Add(layer.Key, new List<PolygonLight>(layer.Value));
             }
             //To create an unlinked copy for layer3D, we need to create new lists and copy the vertices
-            foreach (var layer in solid.Layer3D)
+            foreach (var layer in Layer3D)
             {
                 var newLoops = new List<List<Vertex>>();
                 foreach (var loop in layer.Value)
