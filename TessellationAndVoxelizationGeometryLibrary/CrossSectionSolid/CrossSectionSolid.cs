@@ -41,7 +41,7 @@ namespace TVGL
         /// It can be bigger than either of the above dictionaries if, for example,
         /// you wanted to define multiple ParallelCrossSectionSolids along the same direction.
         /// <summary>
-        Dictionary<int, double> StepDistances;
+        public Dictionary<int, double> StepDistances { get; }
         // an alternate approach without using dictionaries should be pursued
         //public double[] StepDistances { get; }
         /// <summary>
@@ -57,16 +57,22 @@ namespace TVGL
 
 
         public int NumLayers { get; }
-        public CrossSectionSolid(Dictionary<int, double> stepDistances,
-            UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, double[][] bounds = null, UnitType units = UnitType.unspecified)
+        {
+            Layer2D = new Dictionary<int, List<PolygonLight>>();
+            Layer3D = new Dictionary<int, List<List<Vertex>>>();
+            Direction = direction;
+            StepDistances = stepDistances;
+            NumLayers = stepDistances.Count;
+            Units = units;
+            SameTolerance = sameTolerance;
+        }
+
+        public CrossSectionSolid(Dictionary<int, double> stepDistances, Dictionary<int, List<PolygonLight>> Layer2D, double[][] bounds = null, UnitType units = UnitType.unspecified)
+        //public CrossSectionSolid(double[] stepDistances, List<PolygonLight>[] Layer2D, double[][] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
-            StepDistances = stepDistances.Values.ToArray();
-            Units = units;
-        }
-        public CrossSectionSolid(double[] stepDistances, List<PolygonLight>[] Layer2D, double[][] bounds = null, UnitType units = UnitType.unspecified)
-        {
-            NumLayers = stepDistances.Length;
+            //NumLayers = stepDistances.Length;
             StepDistances = stepDistances;
             Units = units;
             this.Layer2D = Layer2D;
@@ -77,7 +83,7 @@ namespace TVGL
                 var ymin = double.PositiveInfinity;
                 var ymax = double.NegativeInfinity;
                 foreach (var layer in Layer2D)
-                    foreach (var polygon in layer)
+                    foreach (var polygon in layer.Value)
                         foreach (var point in polygon.Path)
                         {
                             if (xmin > point.X) xmin = point.X;
@@ -98,13 +104,22 @@ namespace TVGL
             var intDir = Math.Abs((int)direction) - 1;
             var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
             var stepSize = lengthAlongDir / numberOfLayers;
-            var stepDistances = new double[numberOfLayers];
-            stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
+            var stepDistances = new Dictionary<int, double>();
+            //var stepDistances = new double[numberOfLayers];
+            stepDistances.Add(0, ts.Bounds[0][intDir] + 0.5 * stepSize);
+            //stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
             for (int i = 1; i < numberOfLayers; i++)
-                stepDistances[i] = stepDistances[i - 1] + stepSize;
-            var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
+                stepDistances.Add(i, stepDistances[i - 1] + stepSize);
+            //stepDistances[i] = stepDistances[i - 1] + stepSize;
             var bounds = new[] { (double[])ts.Bounds[0].Clone(), (double[])ts.Bounds[1].Clone() };
-            var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
+
+            var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
+            var layerDict = new Dictionary<int, List<PolygonLight>>();
+            for (int i = 0; i < layers.Length; i++)
+                layerDict.Add(i, layers[i]);
+
+            var cs = new CrossSectionSolid(stepDistances, layerDict, bounds, ts.Units);
+            //var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
             cs.TranformMatrix = StarMath.makeIdentity(4);
             return cs;
         }
@@ -123,7 +138,7 @@ namespace TVGL
 
         public void SetAllVertices()
         {
-            foreach(var layer in Layer2D) SetVerticesByLayer(layer.Key);
+            foreach (var layer in Layer2D) SetVerticesByLayer(layer.Key);
         }
 
         public void SetVerticesByLayer(int i)
@@ -138,13 +153,33 @@ namespace TVGL
         public void SetVolume(bool extrudeBack = true)
         {
             Volume = 0.0;
-            for (var i = 0; i < NumLayers - 1; i++) //Include the last index, since we already modified start or stop
+            var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
+            var stop = Layer2D.Where(p => p.Value.Any()).LastOrDefault().Key;
+            var reverse = start < stop ? 1 : -1;
+            //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
+            //Otherwise, extrude the first loop and all other loops forward, except the last loop.
+            //Which of these extrusion options you choose depends on how the cross sections were defined.
+            //But both methods, only result in material between the cross sections.
+            if (extrudeBack) start += reverse;
+            else stop -= reverse;
+            for (var i = start; i * reverse <= stop * reverse; i += reverse) //Include the last index, since we already modified start or stop
             {
-                if (Layer2D[i] == null || !Layer2D[i].Any() || Layer2D[i + 1] == null || !Layer2D[i + 1].Any()) continue;
-                var halfThickness = 0.5 * (StepDistances[i + 1] - StepDistances[i]);
-                Volume += halfThickness * (Layer2D[i].Sum(p => p.Area) + Layer2D[i].Sum(p => p.Area));
+                double distance;
+                if (extrudeBack) distance = Math.Abs(StepDistances[i] - StepDistances[i - reverse]);//current - prior (reverse extrusion)        
+                else distance = Math.Abs(StepDistances[i + reverse] - StepDistances[i]); //next - current (forward extrusion)
+                Volume += distance * Layer2D[i].Sum(p => p.Area);
             }
         }
+        //public void SetVolume()
+        //{
+        //    Volume = 0.0;
+        //    for (var i = 0; i < NumLayers - 1; i++) //Include the last index, since we already modified start or stop
+        //    {
+        //        if (Layer2D[i] == null || !Layer2D[i].Any() || Layer2D[i + 1] == null || !Layer2D[i + 1].Any()) continue;
+        //        var halfThickness = 0.5 * (StepDistances[i + 1] - StepDistances[i]);
+        //        Volume += halfThickness * (Layer2D[i].Sum(p => p.Area) + Layer2D[i].Sum(p => p.Area));
+        //    }
+        //}
 
         /// <summary>
         /// Layer2D and 3D can be indexed in the forward or reverse order from the step distances.
@@ -159,7 +194,7 @@ namespace TVGL
             var start = Layer3D.Where(p => p.Value.Any()).FirstOrDefault().Key;
             var stop = Layer3D.Where(p => p.Value.Any()).LastOrDefault().Key;
             var reverse = start < stop ? 1 : -1;
-            var direction = reverse == 1 ? Direction : Direction.multiply(-1); 
+            var direction = reverse == 1 ? Direction : Direction.multiply(-1);
             Faces = new List<PolygonalFace>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
@@ -191,10 +226,10 @@ namespace TVGL
 
         public override Solid Copy()
         {
-            var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Units);
+            var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Bounds, Units);
             //Recreate the loops, so that the lists are not linked to the original.
             //Since polygonlight is a struct, it will not be linked.
-            foreach(var layer in Layer2D)
+            foreach (var layer in Layer2D)
             {
                 solid.Layer2D.Add(layer.Key, new List<PolygonLight>(layer.Value));
             }
@@ -205,7 +240,7 @@ namespace TVGL
                 foreach (var loop in layer.Value)
                 {
                     var newLoop = new List<Vertex>();
-                    foreach(var vertex in loop)
+                    foreach (var vertex in loop)
                     {
                         newLoop.Add(vertex.Copy());
                     }
