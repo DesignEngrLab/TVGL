@@ -1170,7 +1170,7 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="distanceAlongDirection"></param>
         /// <returns></returns>
-        public static List<Vertex> GetVerticesFrom2DPoints(List<Point> points, double[] direction, double distanceAlongDirection)
+        public static List<Vertex> GetVerticesFrom2DPoints(IEnumerable<Point> points, double[] direction, double distanceAlongDirection)
         {
             //Rotate axis back to the original, and then transform points along the given direction.
             //If you try to transform first, it will shift the vertices incorrectly
@@ -1212,7 +1212,9 @@ namespace TVGL
                 contour.Add(new Vertex(vertexPosition));
             }
 
-            return new List<Vertex>(contour);
+            return contour;
+            //replacing the below line with the above. just return the contour, right? why put it in a new list
+            //return new List<Vertex>(contour);
         }
         #endregion
 

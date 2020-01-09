@@ -32,6 +32,108 @@ namespace TVGL
     /// </summary>
     public class PolygonOperations
     {
+        #region Line Intersections with Polygon
+
+        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<PolygonLight> polygons, double[] lineReference, double lineDirection,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, true)), lineReference,
+                lineDirection, numSteps, stepSize, out firstIntersectingIndex);
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, double[] lineReference, double lineDirection,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            throw new NotImplementedException();
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonLight> polygons, double startingXValue,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, true)), startingXValue,
+                numSteps, stepSize, out firstIntersectingIndex);
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            var intersections = new List<double[]>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.X).ToList();
+            var currentLines = new HashSet<Line>();
+            var nextDistance = sortedPoints.First().X;
+            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
+            var pIndex = 0;
+            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            {
+                var x = startingXValue + i * stepSize;
+                var thisPoint = sortedPoints[pIndex];
+                var needToOffset = false;
+                while (thisPoint.X <= x)
+                {
+                    if (x.IsPracticallySame(thisPoint.X)) needToOffset = true;
+                    foreach (var line in thisPoint.Lines)
+                    {
+                        if (currentLines.Contains(line)) currentLines.Remove(line);
+                        else currentLines.Add(line);
+                    }
+                    pIndex++;
+                    if (pIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pIndex];
+                }
+                if (needToOffset)
+                    x += Math.Min(stepSize, sortedPoints[pIndex + 1].X) / 10.0;
+                var numIntersects = currentLines.Count;
+                var intersects = new double[numIntersects];
+                var index = 0;
+                foreach (var line in currentLines)
+                    intersects[index++] = line.YGivenX(x);
+                intersections.Add(intersects.OrderBy(y => y).ToArray());
+            }
+            return intersections;
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
+              out int firstIntersectingIndex)
+        {
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, true)), startingYValue,
+                numSteps, stepSize, out firstIntersectingIndex);
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+                out int firstIntersectingIndex)
+        {
+            var intersections = new List<double[]>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.Y).ToList();
+            var currentLines = new HashSet<Line>();
+            var nextDistance = sortedPoints.First().Y;
+            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
+            var pIndex = 0;
+            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            {
+                var y = startingYValue + i * stepSize;
+                var thisPoint = sortedPoints[pIndex];
+                var needToOffset = false;
+                while (thisPoint.Y <= y)
+                {
+                    if (y.IsPracticallySame(thisPoint.Y)) needToOffset = true;
+                    foreach (var line in thisPoint.Lines)
+                    {
+                        if (currentLines.Contains(line)) currentLines.Remove(line);
+                        else currentLines.Add(line);
+                    }
+                    pIndex++;
+                    if (pIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pIndex];
+                }
+                if (needToOffset)
+                    y += Math.Min(stepSize, sortedPoints[pIndex + 1].Y) / 10.0;
+
+                var numIntersects = currentLines.Count;
+                var intersects = new double[numIntersects];
+                var index = 0;
+                foreach (var line in currentLines)
+                    intersects[index++] = line.XGivenY(y);
+                intersections.Add(intersects.OrderBy(x => x).ToArray());
+            }
+            return intersections;
+        }
+        #endregion
+
         /// <summary>
         /// Gets whether a polygon is rectangular by using the minimum bounding rectangle.
         /// The rectangle my be in any orientation and contain any number of points greater than three.
@@ -55,10 +157,10 @@ namespace TVGL
             var sqrRootTerm = Math.Sqrt(p * p - 16 * polygon.Area);
             var length = 0.25 * (p + sqrRootTerm);
             var width = 0.25 * (p - sqrRootTerm);
-            dimensions = new[] {length, width};
+            dimensions = new[] { length, width };
             var areaCheck = length * width;
             var perimeterCheck = 2 * length + 2 * width;
-            if(!polygon.Area.IsPracticallySame(areaCheck, polygon.Area * tolerancePercentage) && 
+            if (!polygon.Area.IsPracticallySame(areaCheck, polygon.Area * tolerancePercentage) &&
                 !polygon.Length.IsPracticallySame(perimeterCheck, polygon.Length * tolerancePercentage))
             {
                 return false;
@@ -82,10 +184,10 @@ namespace TVGL
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
             minCircle = MinimumEnclosure.MinimumCircle(polygon.Path);
-            
+
             //Check if areas are close to the same
             var polygonArea = Math.Abs(polygon.Area);
-            return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage); 
+            return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 
         /// <summary>
@@ -96,7 +198,7 @@ namespace TVGL
         public static double Length(IList<PointLight> path)
         {
             if (path.Count < 2) return 0.0;
-            var editPath = new List<PointLight>(path) {path.First()};
+            var editPath = new List<PointLight>(path) { path.First() };
             var length = 0.0;
             for (var i = 0; i < editPath.Count - 1; i++)
             {
@@ -219,7 +321,7 @@ namespace TVGL
 
             //Remove negligible length lines and combine collinear lines.
             var i = 0;
-            var j = 1; 
+            var j = 1;
             var k = 2;
             var iX = simplePath[i].X;
             var iY = simplePath[i].Y;
@@ -296,10 +398,10 @@ namespace TVGL
             var area2 = MiscFunctions.AreaOfPolygon(simplePath);
 
             //If the simplification destroys a polygon, do not simplify it.
-            if (area2.IsNegligible() || 
+            if (area2.IsNegligible() ||
                 !area1.IsPracticallySame(area2, Math.Abs(area1 * (1 - Constants.HighConfidence))))
             {
-                return (PathAsLight) path;
+                return (PathAsLight)path;
             }
 
             return simplePath;
@@ -311,7 +413,7 @@ namespace TVGL
         /// <param name="path"></param>
         /// <param name="edgeLength"></param>
         /// <returns></returns>
-        public static List<PointLight> SampleWithEdgeLength (IList<PointLight> path, double edgeLength)
+        public static List<PointLight> SampleWithEdgeLength(IList<PointLight> path, double edgeLength)
         {
             //ToDo: Speed this up to be like SimplifyFuzzy
             var lengthTolerance = edgeLength / 2;
@@ -331,12 +433,12 @@ namespace TVGL
                 var length = MiscFunctions.DistancePointToPoint(current, next);
                 if (length > edgeLength)
                 {
-                    var n = (int) (length / edgeLength);
-                    var vector = (next-current).normalize().multiply(edgeLength);
+                    var n = (int)(length / edgeLength);
+                    var vector = (next - current).normalize().multiply(edgeLength);
                     newPath.Add(current);
                     for (var p = 0; p < n; p++)
                     {
-                        current = new PointLight(new []{current.X+vector[0],current.Y+vector[1]});
+                        current = new PointLight(new[] { current.X + vector[0], current.Y + vector[1] });
                         newPath.Add(current);
                     }
                 }
@@ -467,7 +569,7 @@ namespace TVGL
             if (area2.IsNegligible() ||
                 !area1.IsPracticallySame(area2, Math.Abs(area1 * (1 - Constants.HighConfidence))))
             {
-                return (Path) path;
+                return (Path)path;
             }
 
             return simplePath;
@@ -481,7 +583,7 @@ namespace TVGL
             return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
         }
 
-        private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y, 
+        private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y,
             double tolerance = Constants.LineSlopeTolerance)
         {
             if (tolerance.IsNegligible()) tolerance = Constants.LineSlopeTolerance;
@@ -576,7 +678,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<PointLight>> OffsetSquare(List<PointLight> path, double offset, double minLength = 0.0)
         {
-            return Offset(new PathsAsLight {path.ToList()}, offset, JoinType.jtSquare, minLength);
+            return Offset(new PathsAsLight { path.ToList() }, offset, JoinType.jtSquare, minLength);
         }
         public static PolygonsAsLight OffsetSquare(PolygonLight path, double offset, double minLength = 0.0)
         {
@@ -617,12 +719,12 @@ namespace TVGL
                 paths.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
 
             //Setup Clipper
-            var clip = new ClipperOffset(2, minLength*scale);
+            var clip = new ClipperOffset(2, minLength * scale);
             clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
             var clipperSolution = new List<List<IntPoint>>();
-            clip.Execute(clipperSolution, offset*scale);
+            clip.Execute(clipperSolution, offset * scale);
 
             //Convert back to points and return solution
             var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new PointLight(point.X / scale, point.Y / scale)).ToList()).ToList();
@@ -654,7 +756,7 @@ namespace TVGL
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
         public static PolygonsAsLight Union(PolygonsAsLight subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {          
+        {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
 
@@ -743,7 +845,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<PointLight>> Difference(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject}, new PathsAsLight { clip}, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, new PathsAsLight { clip }, simplifyPriorToDifference);
         }
         public static PolygonsAsLight Difference(PolygonLight subject, PolygonLight clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
@@ -777,10 +879,10 @@ namespace TVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(List<PointLight> subject, IList<List<PointLight>> clip, 
+        public static List<List<PointLight>> Difference(List<PointLight> subject, IList<List<PointLight>> clip,
             bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject}, clip , simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, clip, simplifyPriorToDifference);
         }
         public static PolygonsAsLight Difference(PolygonLight subject, PolygonsAsLight clip,
             bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
@@ -961,7 +1063,7 @@ namespace TVGL
                     break;
                 default:
                     throw new NotImplementedException();
-            }      
+            }
             return BooleanOperation(fillType, clipType, subject, clip, simplifyPriorToBooleanOperation, scale);
         }
 
@@ -977,8 +1079,8 @@ namespace TVGL
         /// <param name="fillMethod"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject, 
-            IEnumerable<PathAsLight> clip = null,  bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
+        private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject,
+            IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
             if (simplifyPriorToBooleanOperation)
             {
@@ -1026,7 +1128,7 @@ namespace TVGL
                 var se2Y = LineIntercept(se2.Point, se2.OtherEvent.Point, se1.Point.X);
                 if (IsPointOnSegment(se2.Point, se2.OtherEvent.Point, new Point(se1.Point.X, se2Y)))
                 {
-                    linesBelow ++;
+                    linesBelow++;
                 }
             }
             return linesBelow;
@@ -1075,7 +1177,7 @@ namespace TVGL
                     else if (path[i].X < path[j].X)
                     {
                         se1 = new SweepEvent(path[i], true, true, PolygonType.Subject);
-                        se2 = new SweepEvent(path[j], false, false, PolygonType.Subject); 
+                        se2 = new SweepEvent(path[j], false, false, PolygonType.Subject);
                     }
                     else
                     {
@@ -1144,7 +1246,7 @@ namespace TVGL
                 }
                 if (sweepEvent.Left) //left endpoint
                 {
-                    
+
                     //Inserting the event into the sweepLines list
                     var index = sweepLines.Insert(sweepEvent);
                     sweepEvent.IndexInList = index;
@@ -1207,7 +1309,7 @@ namespace TVGL
                 else //The sweep event corresponds to the right endpoint
                 {
                     var index = sweepLines.Find(sweepEvent.OtherEvent);
-                    if(index == -1) throw new Exception("Other event not found in list. Error in implementation");
+                    if (index == -1) throw new Exception("Other event not found in list. Error in implementation");
                     var next = sweepLines.Next(index);
                     var prev = sweepLines.Previous(index);
                     sweepLines.RemoveAt(index);
@@ -1216,8 +1318,8 @@ namespace TVGL
                 }
                 if (sweepEvent.InResult || sweepEvent.OtherEvent.InResult)
                 {
-                    if(sweepEvent.InResult && !sweepEvent.Left) throw new Exception("error in implementation");
-                    if(sweepEvent.OtherEvent.InResult && sweepEvent.Left) throw new Exception("error in implementation");
+                    if (sweepEvent.InResult && !sweepEvent.Left) throw new Exception("error in implementation");
+                    if (sweepEvent.OtherEvent.InResult && sweepEvent.Left) throw new Exception("error in implementation");
                     if (sweepEvent.Point == sweepEvent.OtherEvent.Point) continue; //Ignore this negligible length line.
                     result.Add(sweepEvent);
                 }
@@ -1253,7 +1355,7 @@ namespace TVGL
                 int parentID;
                 var depth = ComputeDepth(se1, previousPath, out parentID);
                 var path = ComputePath(se1, currentPathID, depth, parentID, result);
-                if (depth%2 != 0) //Odd
+                if (depth % 2 != 0) //Odd
                 {
                     path = CWNegative(path);
                 }
@@ -1262,10 +1364,10 @@ namespace TVGL
                 //{
                 //    solution[parent].AddChild(currentPathID);
                 //}
-                currentPathID ++;
+                currentPathID++;
                 previousPath = path;
             }
-            
+
             return solution;
         }
         #endregion
@@ -1317,7 +1419,7 @@ namespace TVGL
             //Then we use the bool properties of the se2 to determine whether it is inside the polygon that
             //se2 belongs to, its parent, or none.
             if (previousPath != null && se.PrevInResult != null)
-            {    
+            {
                 if (se.PrevInResult.LeftToRight)
                 {
                     //else, outside-inside transition. It is inside the previous polygon.
@@ -1325,7 +1427,7 @@ namespace TVGL
                     return se.PrevInResult.Depth + 1;
                 }
                 if (se.PrevInResult.ParentPathID != -1)
-                { 
+                {
                     //It must share the same parent path and depth
                     parentID = se.PrevInResult.ParentPathID;
                     return se.PrevInResult.Depth;
@@ -1354,7 +1456,7 @@ namespace TVGL
             var neighbors = FindAllNeighbors(startEvent, result);
             neighbors.Add(startEvent);
             var yMin = startEvent.OtherEvent.Point.Y;
-            var xMin = neighbors.Select(neighbor => neighbor.OtherEvent.Point.X).Concat(new[] {double.PositiveInfinity}).Min();
+            var xMin = neighbors.Select(neighbor => neighbor.OtherEvent.Point.X).Concat(new[] { double.PositiveInfinity }).Min();
             foreach (var neighbor in neighbors)
             {
                 //We need the lowest neighbor line, not necessarily the lowest Y value.
@@ -1367,7 +1469,7 @@ namespace TVGL
                 }
             }
 
-            var updateAll = new List<SweepEvent> {startEvent};
+            var updateAll = new List<SweepEvent> { startEvent };
             var path = new Path();
             startEvent.Processed = false; //This will be to true right at the end of the while loop. 
             var currentSweepEvent = startEvent;
@@ -1389,12 +1491,12 @@ namespace TVGL
                 {
                     //Get the minimum signed angle between the two vectors 
                     var minAngle = double.PositiveInfinity;
-                    var v1 = currentSweepEvent.Point-currentSweepEvent.OtherEvent.Point;
+                    var v1 = currentSweepEvent.Point - currentSweepEvent.OtherEvent.Point;
                     foreach (var neighbor in neighbors)
                     {
-                        var v2 = neighbor.OtherEvent.Point-neighbor.Point;
+                        var v2 = neighbor.OtherEvent.Point - neighbor.Point;
                         var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(v1, v2);
-                        if(angle < 0 || angle > 2*Math.PI) throw new Exception("Error in my assumption of output from above function");
+                        if (angle < 0 || angle > 2 * Math.PI) throw new Exception("Error in my assumption of output from above function");
                         if (angle < minAngle)
                         {
                             minAngle = angle;
@@ -1407,7 +1509,7 @@ namespace TVGL
 
                 //if (!currentSweepEvent.From) throw new Exception("Error in implementation");
                 path.Add(currentSweepEvent.Point); //Add the "From" Point  
-                            
+
             } while (currentSweepEvent != startEvent);
 
             //Once all the events of the path are found, update their PathID, ParentID, Depth fields
@@ -1416,7 +1518,7 @@ namespace TVGL
                 sweepEvent.PathID = pathID;
                 sweepEvent.Depth = depth;
                 sweepEvent.ParentPathID = parentID;
-                
+
             }
 
             ////Check if the path should be chopped up with interior paths
@@ -1426,7 +1528,7 @@ namespace TVGL
             //    if (!alreadyConsidered.Contains(point)) alreadyConsidered.Add(point);
             //    else
             //    {
-                    
+
             //    }
             //}
             return path;
@@ -1462,7 +1564,7 @@ namespace TVGL
         #endregion
 
         #region Check and Resolve Intersection between two lines
-        private static void CheckAndResolveIntersection(SweepEvent se1, SweepEvent se2, ref SweepList sweepLines, ref OrderedSweepEventList orderedSweepEvents, out bool goBack )
+        private static void CheckAndResolveIntersection(SweepEvent se1, SweepEvent se2, ref SweepList sweepLines, ref OrderedSweepEventList orderedSweepEvents, out bool goBack)
         {
             goBack = false;
             if (se1 == null || se2 == null) return;
@@ -1609,10 +1711,10 @@ namespace TVGL
             {
                 var se2Other = se2.OtherEvent;
 
-                var newSweepEvent1 = new SweepEvent(se1.OtherEvent.Point, false, !se2.From, se2.PolygonType) {OtherEvent = se2};
+                var newSweepEvent1 = new SweepEvent(se1.OtherEvent.Point, false, !se2.From, se2.PolygonType) { OtherEvent = se2 };
                 se2.OtherEvent = newSweepEvent1;
 
-                var newSweepEvent2 = new SweepEvent(se1.OtherEvent.Point, true, !se2Other.From, se2.PolygonType) {OtherEvent = se2Other};
+                var newSweepEvent2 = new SweepEvent(se1.OtherEvent.Point, true, !se2Other.From, se2.PolygonType) { OtherEvent = se2Other };
                 se2Other.OtherEvent = newSweepEvent2;
 
                 //Add all new sweep events
@@ -1731,11 +1833,11 @@ namespace TVGL
                         //Note that it is possible for either the previous.Point or previous.OtherEvent.Point to be below the current point, as long as the previous point is to the left
                         //of the current.Point and is sloped below or above the current point.
                         throw new Exception("Error in implemenation (sorting?). This should never happen.");
-                    }   
+                    }
                     return previous;
                 }
                 //No other polygon event was found. Return null (or duplicate event if it exists).
-                return current.DuplicateEvent;           
+                return current.DuplicateEvent;
             }
 
             public SweepEvent PreviousInResult(int i)
@@ -1761,16 +1863,16 @@ namespace TVGL
             {
                 if (se1 == null) throw new Exception("Must not be null");
                 if (!se1.Left) throw new Exception("Right end point sweep events are not supposed to go into this list");
-                
+
                 if (_sweepEvents == null)
                 {
-                    _sweepEvents = new List<SweepEvent> {se1};
+                    _sweepEvents = new List<SweepEvent> { se1 };
                     return 0;
                 }
 
                 var se1Y = se1.Point.Y;
                 var i = 0;
-                foreach(var se2 in _sweepEvents)
+                foreach (var se2 in _sweepEvents)
                 {
                     if (se1.Point == se2.Point)
                     {
@@ -1876,7 +1978,7 @@ namespace TVGL
                     return 0.0;
                 }
                 //Else y = mx + Yintercept
-                return (OtherEvent.Point.Y - Point.Y)/(OtherEvent.Point.X - Point.X);
+                return (OtherEvent.Point.Y - Point.Y) / (OtherEvent.Point.X - Point.X);
             }
         }
 
@@ -1945,11 +2047,11 @@ namespace TVGL
                                 //Insert before se2
                                 break;
                             }   //Else increment and continue;
-                        }    
+                        }
                         else if (se1.OtherEvent.Point.X < se2.OtherEvent.Point.X)
                         {
                             //Insert before se2
-                            break; 
+                            break;
                         }   //Else increment and continue;
                     }
                     else if (se1.Point.X.IsPracticallySame(se2.Point.X))
@@ -1994,7 +2096,7 @@ namespace TVGL
                 var se2 = result[i];
                 var se2Y = LineIntercept(se2.Point, se2.OtherEvent.Point, se1.Point.X);
                 var tempPoint = new Point(se1.Point.X, se2Y);
-                if(se2Y < se1Y && IsPointOnSegment(se2.Point, se2.OtherEvent.Point, tempPoint))
+                if (se2Y < se1Y && IsPointOnSegment(se2.Point, se2.OtherEvent.Point, tempPoint))
                 {
                     return se2;
                 }
