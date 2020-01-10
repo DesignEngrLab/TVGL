@@ -260,6 +260,7 @@ namespace TVGL
                 }
                 solid.Layer3D.Add(layer.Key, newLoops);
             }
+            if (!Volume.IsNegligible()) solid.Volume = Volume;
             return solid;
         }
 
