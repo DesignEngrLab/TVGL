@@ -401,8 +401,8 @@ namespace TVGL
         }
 
         private static IEnumerable<(Edge, List<PolygonalFace>)> CreateMissingEdgesAndFaces(
-            List<(List<Edge>, double[])> loops,
-            out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
+                    List<(List<Edge>, double[])> loops,
+                    out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
         {
             var completedEdges = new List<(Edge, List<PolygonalFace>)>();
             newFaces = new List<PolygonalFace>();

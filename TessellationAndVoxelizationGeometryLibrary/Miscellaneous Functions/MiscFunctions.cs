@@ -284,7 +284,7 @@ namespace TVGL
                int minNumberOfFacesPerFlat = 2)
         {
             //Note: This function has been optimized to run very fast for large amount of faces
-            //Used hashet for "Contains" function calls 
+            //Used hashset for "Contains" function calls 
             var usedFaces = new HashSet<PolygonalFace>();
             var listFlats = new List<Flat>();
 
@@ -299,7 +299,7 @@ namespace TVGL
                 //Use a hashset so we can use the ".Contains" function
                 var flatHashSet = new HashSet<PolygonalFace> { startFace };
                 var flat = new Flat(flatHashSet) { Tolerance = tolerance };
-                //Stacks a fast for "Push" and "Pop".
+                //Stacks are fast for "Push" and "Pop".
                 //Add all the adjecent faces from the first face to the stack for 
                 //consideration in the while loop below.
                 var stack = new Stack<PolygonalFace>(flatHashSet);

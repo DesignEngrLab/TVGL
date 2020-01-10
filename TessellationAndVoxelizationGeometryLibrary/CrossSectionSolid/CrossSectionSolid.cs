@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StarMathLib;
 
 namespace TVGL
@@ -23,7 +26,9 @@ namespace TVGL
         /// extrude backward from the first valid loop in Layer3D up until the last valid loop
         /// in the list.
         /// </summary>
+        [JsonIgnore]
         public Dictionary<int, List<List<Vertex>>> Layer3D;
+        [JsonIgnore]
         public Dictionary<int, List<PolygonLight>> Layer2D;
         // an alternate approach without using dictionaries should be pursued
         //public List<List<Vertex>>[] Layer3D { get; set; }
@@ -34,6 +39,7 @@ namespace TVGL
         /// a collection of solids (i.e., many faces will be in the same planes, but have
         /// opposite normals). This is really meant for visualization only.
         /// </summary>
+        [JsonIgnore]
         public List<PolygonalFace> Faces;
 
         /// <summary>
@@ -57,6 +63,12 @@ namespace TVGL
 
 
         public int NumLayers { get; }
+        [JsonConstructor]
+        public CrossSectionSolid(Dictionary<int, double> stepDistances)
+        { 
+            StepDistances = stepDistances;
+        }
+
         public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, double[][] bounds = null, UnitType units = UnitType.unspecified)
         {
             Layer2D = new Dictionary<int, List<PolygonLight>>();
@@ -261,5 +273,34 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
+
+
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
+        {
+            serializationData = new Dictionary<string, JToken>();
+            serializationData.Add("CrossSections",
+                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p=>p.ConvertToDoubles()))));
+        }
+
+
+        [OnDeserialized]
+        protected void OnDeserializedMethod(StreamingContext context)
+        {
+            JArray jArray = (JArray)serializationData["CrossSections"];
+            var layerArray = jArray.ToObject<string[][]>();
+            Layer2D = new Dictionary<int, List<PolygonLight>>();
+            var keysArray = StepDistances.Keys.ToArray();
+            for (int i = 0; i < layerArray.Length; i++)
+            {
+                var layer = new List<PolygonLight>();
+                var key = keysArray[i];
+                foreach (var polystr in layerArray[i])
+                    layer.Add(PolygonLight.MakeFromBinaryString(polystr));
+                Layer2D.Add(key, layer);
+            }
+
+        }
+
     }
 }

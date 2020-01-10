@@ -99,9 +99,6 @@
     <Reference Include="PropertyTools, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ea0c9f2b460934d0, processorArchitecture=MSIL">
       <HintPath>..\packages\PropertyTools.3.0.0\lib\net45\PropertyTools.dll</HintPath>
     </Reference>
-    <Reference Include="PropertyTools.Wpf, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ea0c9f2b460934d0, processorArchitecture=MSIL">
-      <HintPath>..\packages\PropertyTools.Wpf.3.0.0\lib\net45\PropertyTools.Wpf.dll</HintPath>
-    </Reference>
     <Reference Include="ReachFramework" />
     <Reference Include="StarMath, Version=1.0.17.725, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\StarMath.2.0.17.1019\lib\netstandard1.0\StarMath.dll</HintPath>
