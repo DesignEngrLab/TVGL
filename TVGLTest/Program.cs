@@ -108,13 +108,13 @@ namespace TVGLPresenterDX
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 var solid = (TessellatedSolid)IO.Open(filename);
-                //Presenter.ShowAndHang(solid);
+                if (solid.Errors != null) continue;
+                Presenter.ShowAndHang(solid);
                 var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 10);
-                //Presenter.ShowAndHang(xs);
+                Presenter.ShowAndHang(xs);
                 //if (!File.Exists(filename)) continue;
                 //using (fileStream = File.OpenRead(filename))
                 //    IO.Open(fileStream, filename);
-                //if (ts.Errors != null) continue;
                 IO.Save(xs, solid.FileName+".XS", FileType.TVGL);
                 Color color = new Color(KnownColors.AliceBlue);
                 var xs2 = (CrossSectionSolid)IO.Open(solid.FileName + ".tvgl");
@@ -123,7 +123,7 @@ namespace TVGLPresenterDX
                 //{
                 //    Af = 0.25f
                 //};
-                Presenter.ShowAndHang(solid);
+                //Presenter.ShowAndHang(solid);
                // TestCrossSectionSolidToTessellated(ts);
                 //TestSlice(ts);
                 // var stopWatch = new Stopwatch();

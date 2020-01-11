@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using StarMathLib;
+using TVGL.IOFunctions;
 
 namespace TVGL
 {
@@ -104,22 +105,16 @@ namespace TVGL
             }
         }
 
-        internal string ConvertToDoubles()
+        internal IEnumerable<double> ConvertToDoublesArray()
         {
-            var doublesXY = Path.SelectMany(p => new[] { p.X, p.Y }).ToArray();
-            var byteArray = doublesXY.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
-            return System.Text.Encoding.Unicode.GetString(byteArray);
+            return Path.SelectMany(p => new[] { p.X, p.Y });
         }
 
-        internal static PolygonLight MakeFromBinaryString(string coordString)
+        internal static PolygonLight MakeFromBinaryString(double[] coordinates)
         {
-            var bytes = System.Text.Encoding.Unicode.GetBytes(coordString);
-            double[] values = new double[bytes.Length / 8];
-            for (int i = 0; i < values.Length; i++)
-                values[i] = BitConverter.ToDouble(bytes, i * 8);
             var points = new List<PointLight>();
-            for (int i = 0; i < values.Length; i += 2)
-                points.Add(new PointLight(values[i], values[i + 1]));
+            for (int i = 0; i < coordinates.Length; i += 2)
+                points.Add(new PointLight(coordinates[i], coordinates[i + 1]));
             return new PolygonLight(points);
         }
     }

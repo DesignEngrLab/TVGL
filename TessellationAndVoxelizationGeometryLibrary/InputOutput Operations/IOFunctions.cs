@@ -726,7 +726,19 @@ namespace TVGL.IOFunctions
             }
             return double.NaN;
         }
-
+        internal static string ConvertDoubleArrayToString(IEnumerable<double> doubles)
+        {
+            var byteArray = doubles.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
+            return System.Text.Encoding.Unicode.GetString(byteArray);
+        }
+        internal static double[] ConvertStringToDoubleArray(string doublesAsString)
+        {
+            var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
+            double[] values = new double[bytes.Length / 8];
+            for (int i = 0; i < values.Length; i++)
+                values[i] = BitConverter.ToDouble(bytes, i * 8);
+            return values;
+        }
 
         /// <summary>
         /// Tries the parse number type from string.
@@ -996,10 +1008,17 @@ namespace TVGL.IOFunctions
                 case FileType.SHELL:
                     return ShellFileData.Save(stream, (TessellatedSolid)solid);
                 default:
+                    JsonSerializer serializer = new JsonSerializer
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        DefaultValueHandling = DefaultValueHandling.Ignore,
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    };
                     var sw = new StreamWriter(stream);
                     using (var writer = new JsonTextWriter(sw))
                     {
-                        var jObject = JObject.FromObject(solid);
+                        var jObject = JObject.FromObject(solid, serializer);
                         var solidType = solid.GetType();
                         jObject.AddFirst(new JProperty("TVGLSolidType", solid.GetType().FullName));
                         if (!Assembly.GetExecutingAssembly().Equals(solidType.Assembly))
@@ -1022,7 +1041,7 @@ namespace TVGL.IOFunctions
             var stream = new MemoryStream();
             if (!Save(stream, solid, fileType)) return "";
             var byteArray = stream.ToArray();
-            return System.Text.Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
         }
 
         /// <summary>
@@ -1036,7 +1055,7 @@ namespace TVGL.IOFunctions
             var stream = new MemoryStream();
             if (!Save(stream, solids, fileType)) return "";
             var byteArray = stream.ToArray();
-            return System.Text.Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
         }
 
 
