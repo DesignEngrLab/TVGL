@@ -726,6 +726,13 @@ namespace TVGL.IOFunctions
             }
             return double.NaN;
         }
+
+        // These methods are currently not used, but it seems that encoding a doubles array as
+        // a binary char array would be better than parsing the text. There would be 1) less
+        // chance of roundoff,quicker conversions, and - in most cases- a smaller file.
+        // however, experiment in early Jan2020, did not tend to show this. but even the 
+        // doubles changed value which makes me think I didn't do a good job with it. 
+        // Come back to this in the future?
         internal static string ConvertDoubleArrayToString(IEnumerable<double> doubles)
         {
             var byteArray = doubles.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
