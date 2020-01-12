@@ -118,16 +118,18 @@ namespace TVGL.IOFunctions
         {
             if (File.Exists(filename))
                 using (var fileStream = File.OpenRead(filename))
-                    Open(fileStream, filename, out solid);
+                    Open(fileStream, out solid);
             else throw new FileNotFoundException("The file was not found at: " + filename);
 
         }
-        public static void Open(string filename, out VoxelizedSolid[] solids)
+
+        public static void Open(string filename, out CrossSectionSolid solid)
         {
             if (File.Exists(filename))
                 using (var fileStream = File.OpenRead(filename))
-                    Open(fileStream, filename, out solids);
+                    Open(fileStream, out solid);
             else throw new FileNotFoundException("The file was not found at: " + filename);
+
         }
         /// <summary>
         /// Opens the specified stream, s. Note that as a Portable class library
@@ -217,7 +219,7 @@ namespace TVGL.IOFunctions
                     case FileType.OFF:
                     case FileType.PLY_ASCII:
                     case FileType.PLY_Binary:
-                        throw new Exception("Attempting to open multiple solids with a "+extension.ToString()+ " file.");
+                        throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
                     default:
                         var serializer = new JsonSerializer();
                         var sr = new StreamReader(s);
@@ -232,19 +234,19 @@ namespace TVGL.IOFunctions
                 throw new Exception("Cannot open file. Message: " + exc.Message);
             }
         }
-        public static void Open(Stream s, string filename, out VoxelizedSolid solid)
+        public static void Open(Stream s, out VoxelizedSolid solid)
         {
             var serializer = new JsonSerializer();
             var sr = new StreamReader(s);
             using (var reader = new JsonTextReader(sr))
                 solid = serializer.Deserialize<VoxelizedSolid>(reader);
         }
-        public static void Open(Stream s, string filename, out VoxelizedSolid[] solids)
+        public static void Open(Stream s, out CrossSectionSolid solid)
         {
             var serializer = new JsonSerializer();
             var sr = new StreamReader(s);
             using (var reader = new JsonTextReader(sr))
-                solids = serializer.Deserialize<VoxelizedSolid[]>(reader);
+                solid = serializer.Deserialize<CrossSectionSolid>(reader);
         }
         public static Solid Open(string filename)
         {
@@ -322,11 +324,11 @@ namespace TVGL.IOFunctions
                 writer.Write(data);
                 writer.Flush();
             }
-            stream.Position = 0; 
+            stream.Position = 0;
             var name = "data." + GetExtensionFromFileType(fileType);
             Open(stream, name, out solids);
         }
-        public static void OpenFromString(string data, FileType fileType, out VoxelizedSolid solid)
+        public static void OpenFromString(string data, out VoxelizedSolid solid)
         {
             var stream = new MemoryStream();
             using (var writer = new StreamWriter(stream))
@@ -335,9 +337,9 @@ namespace TVGL.IOFunctions
                 writer.Flush();
             }
             stream.Position = 0;
-            Open(stream, "", out solid);
+            Open(stream, out solid);
         }
-        public static void OpenFromString(string data, FileType fileType, out VoxelizedSolid[] solids)
+        public static void OpenFromString(string data, out CrossSectionSolid solid)
         {
             var stream = new MemoryStream();
             using (var writer = new StreamWriter(stream))
@@ -345,8 +347,8 @@ namespace TVGL.IOFunctions
                 writer.Write(data);
                 writer.Flush();
             }
-            stream.Position = 0; ;
-            Open(stream, "", out solids);
+            stream.Position = 0;
+            Open(stream, out solid);
         }
 
         private static FileType GetFileTypeFromExtension(string extension)
@@ -725,6 +727,25 @@ namespace TVGL.IOFunctions
             return double.NaN;
         }
 
+        // These methods are currently not used, but it seems that encoding a doubles array as
+        // a binary char array would be better than parsing the text. There would be 1) less
+        // chance of roundoff,quicker conversions, and - in most cases- a smaller file.
+        // however, experiment in early Jan2020, did not tend to show this. but even the 
+        // doubles changed value which makes me think I didn't do a good job with it. 
+        // Come back to this in the future?
+        internal static string ConvertDoubleArrayToString(IEnumerable<double> doubles)
+        {
+            var byteArray = doubles.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
+            return System.Text.Encoding.Unicode.GetString(byteArray);
+        }
+        internal static double[] ConvertStringToDoubleArray(string doublesAsString)
+        {
+            var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
+            double[] values = new double[bytes.Length / 8];
+            for (int i = 0; i < values.Length; i++)
+                values[i] = BitConverter.ToDouble(bytes, i * 8);
+            return values;
+        }
 
         /// <summary>
         /// Tries the parse number type from string.
@@ -920,7 +941,8 @@ namespace TVGL.IOFunctions
         {
             if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
-            filename = Path.GetFileNameWithoutExtension(filename) + "." + GetExtensionFromFileType(fileType);
+            filename = Path.GetDirectoryName(filename)+Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename) 
+                + "." + GetExtensionFromFileType(fileType);
             using (var fileStream = File.OpenWrite(filename))
                 return Save(fileStream, solid, fileType);
         }
@@ -993,10 +1015,17 @@ namespace TVGL.IOFunctions
                 case FileType.SHELL:
                     return ShellFileData.Save(stream, (TessellatedSolid)solid);
                 default:
+                    JsonSerializer serializer = new JsonSerializer
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        DefaultValueHandling = DefaultValueHandling.Ignore,
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    };
                     var sw = new StreamWriter(stream);
                     using (var writer = new JsonTextWriter(sw))
                     {
-                        var jObject = JObject.FromObject(solid);
+                        var jObject = JObject.FromObject(solid, serializer);
                         var solidType = solid.GetType();
                         jObject.AddFirst(new JProperty("TVGLSolidType", solid.GetType().FullName));
                         if (!Assembly.GetExecutingAssembly().Equals(solidType.Assembly))
@@ -1019,7 +1048,7 @@ namespace TVGL.IOFunctions
             var stream = new MemoryStream();
             if (!Save(stream, solid, fileType)) return "";
             var byteArray = stream.ToArray();
-            return System.Text.Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
         }
 
         /// <summary>
@@ -1033,7 +1062,7 @@ namespace TVGL.IOFunctions
             var stream = new MemoryStream();
             if (!Save(stream, solids, fileType)) return "";
             var byteArray = stream.ToArray();
-            return System.Text.Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
         }
 
 

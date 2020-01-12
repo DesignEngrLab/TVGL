@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StarMathLib;
 
 namespace TVGL
@@ -23,18 +26,13 @@ namespace TVGL
         /// extrude backward from the first valid loop in Layer3D up until the last valid loop
         /// in the list.
         /// </summary>
+        [JsonIgnore]
         public Dictionary<int, List<List<Vertex>>> Layer3D;
+        [JsonIgnore]
         public Dictionary<int, List<PolygonLight>> Layer2D;
         // an alternate approach without using dictionaries should be pursued
         //public List<List<Vertex>>[] Layer3D { get; set; }
         //public List<PolygonLight>[] Layer2D { get; }
-        /// <summary>
-        /// These faces are a visual representation of this solid. They are made
-        /// up from extruding each layer as its own solid, such that this is essentially
-        /// a collection of solids (i.e., many faces will be in the same planes, but have
-        /// opposite normals). This is really meant for visualization only.
-        /// </summary>
-        public List<PolygonalFace> Faces;
 
         /// <summary>
         /// Step distances stores the distance along direction for each index.
@@ -47,35 +45,45 @@ namespace TVGL
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
-        public double[] Direction;
+        public double[] Direction { get; set; }
+        // in the future, wouldn't this just be
+        // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
         public double[,] TranformMatrix { get; set; } = StarMath.makeIdentity(4);
-        public double[] DirectionOfLayers
-        { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
-
-        public double SameTolerance;
 
 
-        public int NumLayers { get; }
-        public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, double[][] bounds = null, UnitType units = UnitType.unspecified)
+        public int NumLayers { get; set; }
+
+        [JsonConstructor]
+        public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
             Layer2D = new Dictionary<int, List<PolygonLight>>();
             Layer3D = new Dictionary<int, List<List<Vertex>>>();
-            Direction = direction;
             StepDistances = stepDistances;
+        }
+
+        public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, double[][] bounds = null, UnitType units = UnitType.unspecified)
+            : this(stepDistances)
+        {
+            Direction = (double[])direction.Clone();
             NumLayers = stepDistances.Count;
+            if (bounds != null)
+                Bounds = new[] { (double[])bounds[0].Clone(), (double[])bounds[1].Clone() };
             Units = units;
             SameTolerance = sameTolerance;
         }
 
-        public CrossSectionSolid(Dictionary<int, double> stepDistances, Dictionary<int, List<PolygonLight>> Layer2D, double[][] bounds = null, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<PolygonLight>> Layer2D, double[][] bounds = null,
+            UnitType units = UnitType.unspecified)
         //public CrossSectionSolid(double[] stepDistances, List<PolygonLight>[] Layer2D, double[][] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
-            //NumLayers = stepDistances.Length;
             StepDistances = stepDistances;
             Units = units;
+            SameTolerance = sameTolerance;
+            Direction = (double[])direction.Clone();
             this.Layer2D = Layer2D;
+            Layer3D = new Dictionary<int, List<List<Vertex>>>();
             if (bounds == null)
             {
                 var xmin = double.PositiveInfinity;
@@ -96,7 +104,7 @@ namespace TVGL
                 new[] {xmax, ymax, StepDistances[NumLayers-1]}
                 };
             }
-            else Bounds = bounds;
+            else Bounds = new[] { (double[])bounds[0].Clone(), (double[])bounds[1].Clone() };
         }
 
         public static CrossSectionSolid CreateFromTessellatedSolid(TessellatedSolid ts, CartesianDirections direction, int numberOfLayers)
@@ -117,8 +125,9 @@ namespace TVGL
             var layerDict = new Dictionary<int, List<PolygonLight>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
-
-            var cs = new CrossSectionSolid(stepDistances, layerDict, bounds, ts.Units);
+            var directionVector = new double[3];
+            directionVector[intDir] = Math.Sign((int)direction);
+            var cs = new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
             //var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
             cs.TranformMatrix = StarMath.makeIdentity(4);
             return cs;
@@ -188,14 +197,14 @@ namespace TVGL
         /// n-1 extrusion will have ended on at the distance of the final cross section). 
         /// If reversed, it will simply extrude backward instead of forward.
         /// </summary>
-        public void ConvertToTessellatedExtrusions(bool extrudeBack = true)
+        public IReadOnlyCollection<PolygonalFace> ConvertToTessellatedExtrusions(bool extrudeBack = true)
         {
             if (!Layer3D.Any()) SetAllVertices();
             var start = Layer3D.Where(p => p.Value.Any()).FirstOrDefault().Key;
             var stop = Layer3D.Where(p => p.Value.Any()).LastOrDefault().Key;
             var reverse = start < stop ? 1 : -1;
             var direction = reverse == 1 ? Direction : Direction.multiply(-1);
-            Faces = new List<PolygonalFace>();
+            var faces = new List<PolygonalFace>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
             //Which of these extrusion options you choose depends on how the cross sections were defined.
@@ -212,10 +221,11 @@ namespace TVGL
                 double distance;
                 if (extrudeBack) distance = Math.Abs(StepDistances[i] - StepDistances[i - reverse]);//current - prior (reverse extrusion)        
                 else distance = Math.Abs(StepDistances[i + reverse] - StepDistances[i]); //next - current (forward extrusion)
-                var faces = Extrude.ReturnFacesFromLoops(Layer3D[i], direction, distance, false);
-                if (faces == null) continue;
-                Faces.AddRange(faces);
+                var layerfaces = Extrude.ReturnFacesFromLoops(Layer3D[i], direction, distance, false);
+                if (layerfaces == null) continue;
+                faces.AddRange(layerfaces);
             }
+            return faces;
         }
 
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes()
@@ -262,5 +272,34 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
+
+
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
+        {
+            serializationData = new Dictionary<string, JToken>();
+            serializationData.Add("CrossSections",
+                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => p.ConvertToDoublesArray()))));
+        }
+
+
+        [OnDeserialized]
+        protected void OnDeserializedMethod(StreamingContext context)
+        {
+            JArray jArray = (JArray)serializationData["CrossSections"];
+            var layerArray = jArray.ToObject<double[][][]>();
+            Layer2D = new Dictionary<int, List<PolygonLight>>();
+            var keysArray = StepDistances.Keys.ToArray();
+            for (int i = 0; i < layerArray.Length; i++)
+            {
+                var layer = new List<PolygonLight>();
+                var key = keysArray[i];
+                foreach (var coordinates in layerArray[i])
+                    layer.Add(PolygonLight.MakeFromBinaryString(coordinates));
+                Layer2D.Add(key, layer);
+            }
+
+        }
+
     }
 }

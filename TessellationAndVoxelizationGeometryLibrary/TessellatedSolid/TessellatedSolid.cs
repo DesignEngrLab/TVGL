@@ -99,12 +99,6 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     The tolerance is set during the initiation (constructor phase). This is based on the maximum
-        ///     length of the axis-aligned bounding box times Constants.
-        /// </summary>
-        /// <value>The same tolerance.</value>
-        public double SameTolerance { get; internal set; }
-        /// <summary>
         ///     Errors in the tesselated solid
         /// </summary>
         [JsonIgnore]
@@ -173,7 +167,7 @@ namespace TVGL
             serializationData.Add("FaceIndices",
                 JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
             serializationData.Add("VertexCoords",
-                JToken.FromObject(Vertices.SelectMany(v => v.Position)));
+               JToken.FromObject(Vertices.SelectMany(v => v.Position)));
             serializationData.Add("Colors",
             (HasUniformColor || Faces.All(f => f.Color.Equals(Faces[0].Color)))
             ? SolidColor.ToString()
@@ -525,7 +519,7 @@ namespace TVGL
         internal void MakeVertices(IList<double[]> vertices, IList<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
-            //Gets the number og decimal places, with the maximum being the StarMath Equality (1E-15)
+            //Gets the number of decimal places, with the maximum being the StarMath Equality (1E-15)
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var listOfVertices = new List<double[]>();
             var simpleCompareDict = new Dictionary<string, int>();

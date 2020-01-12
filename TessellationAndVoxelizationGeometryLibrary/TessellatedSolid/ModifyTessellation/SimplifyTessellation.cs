@@ -44,24 +44,14 @@ namespace TVGL
                 if (flat.InnerEdges.Count < flat.Faces.Count) continue;
                 var newFaces = new List<PolygonalFace>();
                 var outerEdgeHashSet = new HashSet<Edge>(flat.OuterEdges);
-                if (ts.Primitives != null && ts.Primitives.Contains(flat)) ts.Primitives.Remove(flat);
                 facesToRemove.AddRange(flat.Faces);
                 edgesToRemove.AddRange(flat.InnerEdges);
                 var innerVertices = new HashSet<Vertex>(flat.InnerEdges.Select(e => e.To));
                 innerVertices.UnionWith(flat.InnerEdges.Select(e => e.From));
                 innerVertices.RemoveWhere(v => outerEdgeHashSet.Overlaps(v.Edges));
                 verticesToRemove.AddRange(innerVertices);
-                var loops = TessellatedSolid.OrganizeIntoLoops(flat.OuterEdges, out var remainingEdges);
-                var vertexLoops = new List<List<Vertex>>();
-                foreach (var loop in loops)
-                {
-                    var reverseLoop = (loop.Item2.dotProduct(flat.Normal) < 0);
-                    vertexLoops.Add(reverseLoop
-                        ? loop.Item1.Select(edge => edge.To).Reverse().ToList()
-                        : loop.Item1.Select(edge => edge.To).ToList());
-                }
-                List<List<Vertex[]>> triangulatedListofLists =
-                TriangulatePolygon.Run(vertexLoops, flat.Normal);
+                var vertexLoops = OrganizeIntoLoop(flat.OuterEdges, flat.Normal);
+                List<List<Vertex[]>> triangulatedListofLists = TriangulatePolygon.Run(new[] { vertexLoops }, flat.Normal);
                 var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                 var oldEdgeDictionary = flat.OuterEdges.ToDictionary(TessellatedSolid.SetAndGetEdgeChecksum);
                 Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();
@@ -104,6 +94,61 @@ namespace TVGL
             ts.AddFaces(facesToAdd);
             ts.RemoveEdges(edgesToRemove);
             ts.AddEdges(edgesToAdd);
+        }
+
+
+        internal static List<Vertex> OrganizeIntoLoop(List<Edge> singleSidedEdges, double[] normal)
+        {
+            var edgesHashSet = new HashSet<Edge>(singleSidedEdges);
+            var loop = new List<Vertex>();
+            var currentEdge = edgesHashSet.First();
+            Vertex startVertex, currentVertex;
+            if (normal.dotProduct(currentEdge.OwnedFace.Normal,3).IsPracticallySame(1))
+            {
+                startVertex = currentEdge.From;
+                currentVertex = currentEdge.To;
+            }
+            else
+            {
+                startVertex = currentEdge.To;
+                currentVertex = currentEdge.From;
+            }
+            edgesHashSet.Remove(currentEdge);
+            loop.Add(startVertex);
+            loop.Add(currentVertex);
+            while (edgesHashSet.Any())
+            {
+                if (startVertex == currentVertex) return loop;
+                var possibleNextEdges = currentVertex.Edges.Where(e => e != currentEdge && edgesHashSet.Contains(e));
+                if (!possibleNextEdges.Any()) throw new Exception();
+                var lastEdge = currentEdge;
+                currentEdge = (possibleNextEdges.Count() == 1) ? possibleNextEdges.First()
+                    : pickBestEdge(possibleNextEdges, currentEdge.Vector, normal);
+                currentVertex = currentEdge.OtherVertex(currentVertex);
+                loop.Add(currentVertex);
+                edgesHashSet.Remove(currentEdge);
+            }
+            throw new Exception();
+        }
+
+
+        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, double[] refEdge, double[] normal)
+        {
+            var unitRefEdge = refEdge.normalize(3);
+            var min = 2.0;
+            Edge bestEdge = null;
+            foreach (var candEdge in possibleNextEdges)
+            {
+                var unitCandEdge = candEdge.Vector.normalize(3);
+                var cross = unitRefEdge.crossProduct(unitCandEdge);
+                var temp = cross.dotProduct(normal, 3);
+                if (min > temp)
+                {
+                    min = temp;
+                    bestEdge = candEdge;
+                }
+            }
+            return bestEdge;
         }
 
         /// <summary>

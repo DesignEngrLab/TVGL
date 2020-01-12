@@ -3,48 +3,44 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
 using StarMathLib;
+using TVGL.IOFunctions;
 
 namespace TVGL
 {
-    [DataContract]
     [KnownType(typeof(List<PointLight>))]
     public readonly struct PolygonLight
     {
         /// <summary>
         /// Gets the PointLights that make up the polygon
         /// </summary>
-        [DataMember]
+        [JsonIgnore]
         public readonly List<PointLight> Path;
 
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
-        [DataMember]
         public readonly double Area;
 
         /// <summary>
         /// Maximum X value
         /// </summary>
-        [DataMember]
         public readonly double MaxX;
 
         /// <summary>
         /// Minimum X value
         /// </summary>
-        [DataMember]
         public readonly double MinX;
 
         /// <summary>
-        /// Maxiumum Y value
+        /// Maximum Y value
         /// </summary>
-        [DataMember]
         public readonly double MaxY;
 
         /// <summary>
         /// Minimum Y value
         /// </summary>
-        [DataMember]
         public readonly double MinY;
 
         public PolygonLight(Polygon polygon)
@@ -107,6 +103,19 @@ namespace TVGL
                 var ser = new DataContractSerializer(typeof(PolygonLight));
                 return (PolygonLight)ser.ReadObject(reader);
             }
+        }
+
+        internal IEnumerable<double> ConvertToDoublesArray()
+        {
+            return Path.SelectMany(p => new[] { p.X, p.Y });
+        }
+
+        internal static PolygonLight MakeFromBinaryString(double[] coordinates)
+        {
+            var points = new List<PointLight>();
+            for (int i = 0; i < coordinates.Length; i += 2)
+                points.Add(new PointLight(coordinates[i], coordinates[i + 1]));
+            return new PolygonLight(points);
         }
     }
 

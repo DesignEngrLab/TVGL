@@ -97,28 +97,34 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            //var fileNames = dir.GetFiles("*").ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i++)
+            for (var i = 76; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
-                TessellatedSolid ts;
-                if (!File.Exists(filename)) continue;
-                using (fileStream = File.OpenRead(filename))
-                    IO.Open(fileStream, filename, out ts);
-                if (ts.Errors != null) continue;
+                var solid = (TessellatedSolid)IO.Open(filename);
+                if (solid.Errors != null) continue;
+                Presenter.ShowAndHang(solid);
+                var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 10);
+                Presenter.ShowAndHang(xs);
+                //if (!File.Exists(filename)) continue;
+                //using (fileStream = File.OpenRead(filename))
+                //    IO.Open(fileStream, filename);
+                IO.Save(xs, solid.FileName+".XS", FileType.TVGL);
                 Color color = new Color(KnownColors.AliceBlue);
-                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
-                {
-                    Af = 0.25f
-                };
-                //Presenter.ShowAndHang(ts);
-                TestCrossSectionSolidToTessellated(ts);
+                var xs2 = (CrossSectionSolid)IO.Open(solid.FileName + ".tvgl");
+                Presenter.ShowAndHang(xs2);
+                //ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
+                //{
+                //    Af = 0.25f
+                //};
+                //Presenter.ShowAndHang(solid);
+               // TestCrossSectionSolidToTessellated(ts);
                 //TestSlice(ts);
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -160,14 +166,16 @@ namespace TVGLPresenterDX
         public static void TestCrossSectionSolidToTessellated(TessellatedSolid ts)
         {
             //Presenter.ShowAndHang(new ImplicitSolid());
-            var xs = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.ZPositive,100);
+            var xs = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.ZPositive,10);
             //Presenter.ShowAndHang(ts);
             Presenter.ShowAndHang(xs);
             stopwatch.Restart();
             TessellatedSolid ts1 = xs.ConvertToTessellatedSolidMarchingCubes();
+            //ts1.SimplifyFlatPatches();
             Console.WriteLine("time elapsed = {0}", stopwatch.Elapsed);
             //ts1.SimplifyFlatPatches();
             Presenter.ShowAndHang(ts1);
+            IO.Save(xs, ts.FileName + "XSections", FileType.TVGL);
             return;
             //var res = 600;
             //stopwatch.Restart();
@@ -184,27 +192,7 @@ namespace TVGLPresenterDX
             Presenter.ShowAndHang(silhouette);
         }
 
-        private static void TestOBB(string InputDir)
-        {
-            var di = new DirectoryInfo(InputDir);
-            var fis = di.EnumerateFiles();
-            var numVertices = new List<int>();
-            var data = new List<double[]>();
-            foreach (var fileInfo in fis)
-            {
-                try
-                {
-                    IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name, out TessellatedSolid tessellatedSolid);
-                    List<double> times, volumes;
-                    MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
-                    data.Add(new[] { tessellatedSolid.ConvexHull.Vertices.Count(), tessellatedSolid.Volume,
-                            times[0], times[1],times[2], volumes[0],  volumes[1], volumes[2] });
-                }
-                catch { }
-            }
-            // TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
-            TVGLTest.ExcelInterface.CreateNewGraph(new[] { data }, "", "Methods", "Volume", new[] { "PCA", "ChanTan" });
-        }
+   
 
         private static void TestSimplify(TessellatedSolid ts)
         {

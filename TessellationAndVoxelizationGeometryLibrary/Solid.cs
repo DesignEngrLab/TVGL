@@ -135,8 +135,10 @@ namespace TVGL
         /// <summary>
         ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
-        
+        [JsonProperty(ItemTypeNameHandling = TypeNameHandling.Auto, TypeNameHandling = TypeNameHandling.Auto)]
         public List<PrimitiveSurface> Primitives { get; set; }
+
+        public double SameTolerance { get; set; }
 
         #endregion
 

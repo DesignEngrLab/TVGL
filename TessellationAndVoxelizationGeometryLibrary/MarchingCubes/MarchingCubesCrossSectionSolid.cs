@@ -36,7 +36,7 @@ namespace TVGL
         {
             var distanceForGridLayers = new double[gridLayers.Length];
             var start = 0;
-            // while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
+            while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
             var startingDistance = distanceForGridLayers[0] = solid.StepDistances[start];
             distanceForGridLayers[1] = solid.StepDistances[start + 1];
             if (!onLayers)
@@ -48,12 +48,12 @@ namespace TVGL
                 if (!onLayers) distanceForGridLayers[3] = solid.StepDistances[start + 1];
             }
             var last = solid.NumLayers - 1;
-            //while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
+            while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
             for (int k = 1; k < numGridLayersToStore; k++)
-                gridLayers[k] = CreateDistanceGrid(solid.Layer2D[k]);
-            for (var k = start; k <= last; k++)
+                gridLayers[k] = CreateDistanceGrid(solid.Layer2D[k+start]);
+            for (var k = 0; k <= last; k++)
             {
-                gridLayers[k % numGridLayersToStore] = CreateDistanceGrid(solid.Layer2D[k]);
+                gridLayers[k % numGridLayersToStore] = CreateDistanceGrid(solid.Layer2D[k+start]);
                 for (var i = 0; i < numGridX - 1; i++)
                     for (var j = 0; j < numGridY - 1; j++)
                         MakeFacesInCube(i, j, k);
