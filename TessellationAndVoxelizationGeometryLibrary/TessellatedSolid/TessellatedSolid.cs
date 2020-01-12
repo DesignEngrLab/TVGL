@@ -99,12 +99,6 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     The tolerance is set during the initiation (constructor phase). This is based on the maximum
-        ///     length of the axis-aligned bounding box times Constants.
-        /// </summary>
-        /// <value>The same tolerance.</value>
-        public double SameTolerance { get; private set; }
-        /// <summary>
         ///     Errors in the tesselated solid
         /// </summary>
         [JsonIgnore]

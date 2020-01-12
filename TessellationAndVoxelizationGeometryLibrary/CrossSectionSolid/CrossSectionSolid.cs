@@ -45,16 +45,14 @@ namespace TVGL
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
-        public double[] Direction;
+        public double[] Direction { get; set; }
+        // in the future, wouldn't this just be
+        // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
         public double[,] TranformMatrix { get; set; } = StarMath.makeIdentity(4);
-        public double[] DirectionOfLayers
-        { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
-
-        public double SameTolerance;
 
 
-        public int NumLayers { get; }
+        public int NumLayers { get; set; }
 
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
