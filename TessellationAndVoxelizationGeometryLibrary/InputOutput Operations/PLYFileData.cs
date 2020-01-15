@@ -445,7 +445,7 @@ namespace TVGL.IOFunctions
             float a = 0, r = 0, g = 0, b = 0;
             for (var j = 0; j < uniformColorDescriptor.Count; j++)
             {
-                var value = readNumberAsFloat(words[j], uniformColorElementType[j]);
+                var value = ReadNumberAsFloat(words[j], uniformColorElementType[j]);
                 if (float.IsNaN(value)) return false;
                 if (uniformColorElementType[j] != typeof(float) && uniformColorElementType[j] != typeof(double))
                     value = value / 255f;
@@ -488,10 +488,10 @@ namespace TVGL.IOFunctions
             {
                 var line = ReadLine(reader);
                 var words = line.Split(' ');
-                var numVerts = readNumberAsInt(words[0], vertexAmountType);
+                var numVerts = ReadNumberAsInt(words[0], vertexAmountType);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = readNumberAsInt(words[1 + j], vertexIndexType);
+                    vertIndices[j] = ReadNumberAsInt(words[1 + j], vertexIndexType);
                 faceToVertexIndices.Add(vertIndices);
 
                 if (faceColorDescriptor != null)
@@ -501,7 +501,7 @@ namespace TVGL.IOFunctions
                         float a = 0, r = 0, g = 0, b = 0;
                         for (var j = 0; j < faceColorDescriptor.Count; j++)
                         {
-                            var value = readNumberAsFloat(words[1 + numVerts + j], faceColorElementType[j]);
+                            var value = ReadNumberAsFloat(words[1 + numVerts + j], faceColorElementType[j]);
                             if (faceColorElementType[j] != typeof(float) && faceColorElementType[j] != typeof(double))
                                 value = value / 255f;
                             switch (faceColorDescriptor[j])
@@ -547,10 +547,10 @@ namespace TVGL.IOFunctions
                 for (int j = 0; j < numD; j++)
                 {
                     if (vertexCoordinateOrder[j] >= 0)
-                        point[vertexCoordinateOrder[j]] = readNumberAsDouble(words[j], vertexTypes[j]);
+                        point[vertexCoordinateOrder[j]] = ReadNumberAsDouble(words[j], vertexTypes[j]);
                     else if (vertexColorDescriptor != null)
                     {
-                        var value = readNumberAsFloat(words[j], vertexColorElementType[colorIndexer]);
+                        var value = ReadNumberAsFloat(words[j], vertexColorElementType[colorIndexer]);
                         if (vertexColorElementType[colorIndexer] != typeof(float)
                             && vertexColorElementType[colorIndexer] != typeof(double))
                             value = value / 255f;
@@ -603,7 +603,7 @@ namespace TVGL.IOFunctions
             float a = 0, r = 0, g = 0, b = 0;
             for (var j = 0; j < uniformColorDescriptor.Count; j++)
             {
-                var value = readNumberAsFloat(reader, uniformColorElementType[j], endiannessType);
+                var value = ReadNumberAsFloat(reader, uniformColorElementType[j], endiannessType);
                 if (float.IsNaN(value)) return false;
                 if (uniformColorElementType[j] != typeof(float) && uniformColorElementType[j] != typeof(double))
                     value = value / 255f;
@@ -629,10 +629,10 @@ namespace TVGL.IOFunctions
             faceToVertexIndices = new List<int[]>();
             for (var i = 0; i < numFaces; i++)
             {
-                var numVerts = readNumberAsInt(reader, vertexAmountType, endiannessType);
+                var numVerts = ReadNumberAsInt(reader, vertexAmountType, endiannessType);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = readNumberAsInt(reader, vertexIndexType, endiannessType);
+                    vertIndices[j] = ReadNumberAsInt(reader, vertexIndexType, endiannessType);
                 faceToVertexIndices.Add(vertIndices);
 
                 if (faceColorDescriptor != null)
@@ -640,7 +640,7 @@ namespace TVGL.IOFunctions
                     float a = 0, r = 0, g = 0, b = 0;
                     for (var j = 0; j < faceColorDescriptor.Count; j++)
                     {
-                        var value = readNumberAsFloat(reader, faceColorElementType[j], endiannessType);
+                        var value = ReadNumberAsFloat(reader, faceColorElementType[j], endiannessType);
                         if (faceColorElementType[j] != typeof(float) && faceColorElementType[j] != typeof(double))
                             value = value / 255f;
                         switch (faceColorDescriptor[j])
@@ -673,10 +673,10 @@ namespace TVGL.IOFunctions
                 for (int j = 0; j < numD; j++)
                 {
                     if (vertexCoordinateOrder[j] >= 0)
-                        point[vertexCoordinateOrder[j]] = readNumberAsDouble(reader, vertexTypes[j], endiannessType);
+                        point[vertexCoordinateOrder[j]] = ReadNumberAsDouble(reader, vertexTypes[j], endiannessType);
                     else if (vertexColorDescriptor != null)
                     {
-                        var value = readNumberAsFloat(reader, vertexColorElementType[colorIndexer], endiannessType);
+                        var value = ReadNumberAsFloat(reader, vertexColorElementType[colorIndexer], endiannessType);
                         if (vertexColorElementType[colorIndexer] != typeof(float)
                             && vertexColorElementType[colorIndexer] != typeof(double))
                             value = value / 255f;
@@ -825,7 +825,7 @@ namespace TVGL.IOFunctions
             if (isBinary)
                 writer.WriteLine("format binary_little_endian 1.0");
             else writer.WriteLine("format ascii 1.0");
-            writer.WriteLine("comment  " + tvglDateMarkText);
+            writer.WriteLine("comment  " + TvglDateMarkText);
             if (!string.IsNullOrWhiteSpace(solid.Name))
                 writer.WriteLine("comment  Name : " + solid.Name);
             if (!string.IsNullOrWhiteSpace(solid.FileName))

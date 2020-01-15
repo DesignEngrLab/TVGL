@@ -453,8 +453,8 @@ namespace TVGL
             // compute area of the 2D projection
             // -1 so as to not include the vertex that was added to the end of the list
             var n = vertices.Count - 1;
-            var i = 1;
             var area = 0.0;
+            int i;
             switch (coord)
             {
                 case 1:
@@ -531,8 +531,8 @@ namespace TVGL
             // compute area of the 2D projection
             // -1 so as to not include the vertex that was added to the end of the list
             var n = vertices.Count - 1;
-            var i = 1;
             var area = 0.0;
+            int i;
             switch (coord)
             {
                 case 1:
@@ -617,7 +617,7 @@ namespace TVGL
             foreach (var seperateSolid in seperateSolids)
             {
                 solids.Add(new TessellatedSolid(seperateSolid));
-                count = count + seperateSolid.Count;
+                count += seperateSolid.Count;
             }
             return solids;
         }
@@ -635,10 +635,9 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="backTransform"></param>
         /// <param name="tolerance"></param>
-        /// <param name="mergeDuplicateReferences"></param>
+        /// 
         /// <returns></returns>
-        public static List<PointLight> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
-            bool mergeDuplicateReferences = false)
+        public static List<PointLight> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<Vertex> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -794,10 +793,9 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="backTransform"></param>
         /// <param name="tolerance"></param>
-        /// <param name="mergeDuplicateReferences"></param>
+        /// 
         /// <returns></returns>
-        public static List<PointLight> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
-            bool mergeDuplicateReferences = false)
+        public static List<PointLight> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<Vertex> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -838,10 +836,7 @@ namespace TVGL
                     attempts++;
                 }
             }
-
-            if (attempts > 0 && attempts < 4) ;//Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
-            else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
-
+            if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
             return path;
         }
 
@@ -855,10 +850,9 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="backTransform"></param>
         /// <param name="tolerance"></param>
-        /// <param name="mergeDuplicateReferences"></param>
+        /// 
         /// <returns></returns>
-        public static List<PointLight> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<double[]> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
-            bool mergeDuplicateReferences = false)
+        public static List<PointLight> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<double[]> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<double[]> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -1106,8 +1100,7 @@ namespace TVGL
         /// <returns>System.Double[].</returns>
         public static double[,] TransformToXYPlane(IList<double> direction)
         {
-            double[,] backTransformStandIn;
-            return TransformToXYPlane(direction, out backTransformStandIn);
+            return TransformToXYPlane(direction, out _);
         }
 
         /// <summary>
@@ -1711,7 +1704,7 @@ namespace TVGL
             var a = b1 * c2 - b2 * c1;
             var b = a2 * c1 - a1 * c2;
             var c = a1 * b2 - b1 * a2;
-            var normal = new []{ a, b, c}.normalize();
+            var normal = new[] { a, b, c }.normalize();
             var flat2 = new Flat(p1, normal);
             return flat2;
         }
@@ -1765,10 +1758,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2)
         {
-            double[] center;
-            double[] interSect1, interSect2;
-            double t1, t2;
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
+            return SkewedLineIntersection(p1, n1, p2, n2, out _, out _, out _, out _, out _);
         }
 
         /// <summary>
@@ -1783,9 +1773,7 @@ namespace TVGL
         internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2,
             out double[] center)
         {
-            double[] interSect1, interSect2;
-            double t1, t2;
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
+            return SkewedLineIntersection(p1, n1, p2, n2, out center, out _, out _, out _, out _);
         }
 
         /// <summary>
@@ -1802,9 +1790,7 @@ namespace TVGL
             out double[] interSect1,
             out double[] interSect2)
         {
-            double[] center;
-            double t1, t2;
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
+            return SkewedLineIntersection(p1, n1, p2, n2, out _, out interSect1, out interSect2, out _, out _);
         }
 
         /// <summary>
@@ -1822,8 +1808,7 @@ namespace TVGL
             out double[] center,
             out double t1, out double t2)
         {
-            double[] interSect1, interSect2;
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
+            return SkewedLineIntersection(p1, n1, p2, n2, out center, out _, out _, out t1, out t2);
         }
 
         /// <summary>
@@ -1874,8 +1859,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double DistancePointToLine(double[] qPoint, double[] lineRefPt, double[] lineVector)
         {
-            double[] dummy;
-            return DistancePointToLine(qPoint, lineRefPt, lineVector, out dummy);
+            return DistancePointToLine(qPoint, lineRefPt, lineVector, out _);
         }
 
         /// <summary>
@@ -2248,10 +2232,10 @@ namespace TVGL
         /// <param name="vertex">The vertex.</param>
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// 
         /// <returns>Vertex.</returns>
         public static double[] PointOnTriangleFromLine(PolygonalFace face, Vertex vertex, double[] direction,
-            out double signedDistance, bool onBoundaryIsInside = true)
+            out double signedDistance)
         {
             return PointOnTriangleFromLine(face, vertex.Position, direction, out signedDistance);
         }
@@ -2290,7 +2274,7 @@ namespace TVGL
         public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, CartesianDirections direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            var newPoint = (double[])point3D.Clone();
+            double[] newPoint;
             signedDistance = double.NaN;
             var d = face.Normal.dotProduct(face.Vertices[0].Position, 3);
             var n = face.Normal;
@@ -2714,8 +2698,7 @@ namespace TVGL
                 else
                 {
                     //If reached the point in question, then find intercepts on the lineList 
-                    bool isOnLine;
-                    var numberOfLinesAbove = NumberOfLinesAbovePoint(pointInQuestion, lineList, out closestLineAbove, out isOnLine);
+                    var numberOfLinesAbove = NumberOfLinesAbovePoint(pointInQuestion, lineList, out closestLineAbove, out bool isOnLine);
                     //Check if the point is on the left line or right line (note that one direction search is sufficient).
                     if (isOnLine)
                     {

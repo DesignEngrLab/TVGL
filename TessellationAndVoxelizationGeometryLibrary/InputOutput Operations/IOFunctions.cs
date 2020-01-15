@@ -17,6 +17,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -353,7 +354,7 @@ namespace TVGL.IOFunctions
 
         private static FileType GetFileTypeFromExtension(string extension)
         {
-            extension = extension.ToLower().Trim(' ', '.');
+            extension = extension.ToLower(CultureInfo.InvariantCulture).Trim(' ', '.');
             switch (extension)
             {
                 case "stl": return FileType.STL_ASCII;
@@ -403,7 +404,7 @@ namespace TVGL.IOFunctions
             }
             else
             {
-                id = line.Substring(0, idx).ToLower();
+                id = line.Substring(0, idx).ToLower(CultureInfo.InvariantCulture);
                 values = line.Substring(idx + 1);
             }
         }
@@ -549,7 +550,7 @@ namespace TVGL.IOFunctions
         }
 
 
-        internal static int readNumberAsInt(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        internal static int ReadNumberAsInt(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
             var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
 
@@ -608,7 +609,7 @@ namespace TVGL.IOFunctions
             }
             return int.MinValue;
         }
-        internal static float readNumberAsFloat(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        internal static float ReadNumberAsFloat(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
             var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
 
@@ -667,7 +668,7 @@ namespace TVGL.IOFunctions
             }
             return float.NaN;
         }
-        internal static double readNumberAsDouble(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        internal static double ReadNumberAsDouble(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
             var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
 
@@ -754,7 +755,7 @@ namespace TVGL.IOFunctions
         /// <param name="type">The type.</param>
         /// <returns>Type.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        protected bool TryParseNumberTypeFromString(string typeString, out Type type)
+        protected static bool TryParseNumberTypeFromString(string typeString, out Type type)
         {
             if (typeString.StartsWith("float", StringComparison.CurrentCultureIgnoreCase)
                 || typeString.StartsWith("single", StringComparison.CurrentCultureIgnoreCase))
@@ -792,7 +793,7 @@ namespace TVGL.IOFunctions
             return true;
         }
 
-        internal static int readNumberAsInt(string text, Type type)
+        internal static int ReadNumberAsInt(string text, Type type)
         {
             if (type == typeof(double))
             {
@@ -832,7 +833,7 @@ namespace TVGL.IOFunctions
             }
             return int.MinValue;
         }
-        internal static float readNumberAsFloat(string text, Type type)
+        internal static float ReadNumberAsFloat(string text, Type type)
         {
             if (type == typeof(double))
             {
@@ -872,7 +873,7 @@ namespace TVGL.IOFunctions
             }
             return float.NaN;
         }
-        internal static double readNumberAsDouble(string text, Type type)
+        internal static double ReadNumberAsDouble(string text, Type type)
         {
             if (type == typeof(double))
             {
@@ -1045,10 +1046,12 @@ namespace TVGL.IOFunctions
         /// <returns>System.String.</returns>
         public static string SaveToString(Solid solid, FileType fileType = FileType.unspecified)
         {
-            var stream = new MemoryStream();
-            if (!Save(stream, solid, fileType)) return "";
-            var byteArray = stream.ToArray();
-            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
+            using (var stream = new MemoryStream())
+            {
+                if (!Save(stream, solid, fileType)) return "";
+                var byteArray = stream.ToArray();
+                return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
+            }
         }
 
         /// <summary>
@@ -1059,10 +1062,12 @@ namespace TVGL.IOFunctions
         /// <returns>System.String.</returns>
         public static string SaveToString(IList<Solid> solids, FileType fileType = FileType.unspecified)
         {
-            var stream = new MemoryStream();
-            if (!Save(stream, solids, fileType)) return "";
-            var byteArray = stream.ToArray();
-            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
+            using (var stream = new MemoryStream())
+            {
+                if (!Save(stream, solids, fileType)) return "";
+                var byteArray = stream.ToArray();
+                return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
+            }
         }
 
 
@@ -1070,7 +1075,7 @@ namespace TVGL.IOFunctions
         /// Gets the TVGL date mark text.
         /// </summary>
         /// <value>The TVGL date mark text.</value>
-        protected static string tvglDateMarkText
+        protected static string TvglDateMarkText
         {
             get
             {

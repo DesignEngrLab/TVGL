@@ -76,7 +76,7 @@ namespace TVGL
             {
                 if (Faces != null)
                     return Faces.Select(f => f.IndexInList).ToArray();
-                return new int[0];
+                return Array.Empty<int>();
             }
             set { _faceIndices = value; }
         }
@@ -95,7 +95,7 @@ namespace TVGL
             {
                 if (Vertices != null)
                     return Vertices.Select(v => v.IndexInList).ToArray();
-                return new int[0];
+                return Array.Empty<int>();
             }
             set { _vertexIndices = value; }
         }
@@ -122,7 +122,7 @@ namespace TVGL
             {
                 if (Faces != null)
                     return InnerEdges.Select(e => e.IndexInList).ToArray();
-                return new int[0];
+                return Array.Empty<int>();
             }
             set { _innerEdgeIndices = value; }
         }
@@ -147,7 +147,7 @@ namespace TVGL
             {
                 if (Faces != null)
                     return OuterEdges.Select(e => e.IndexInList).ToArray();
-                return new int[0];
+                return Array.Empty<int>();
             }
             set { _outerEdgeIndices = value; }
         }

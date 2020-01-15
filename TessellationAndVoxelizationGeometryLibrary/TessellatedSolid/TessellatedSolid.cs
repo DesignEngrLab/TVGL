@@ -112,7 +112,6 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
         /// matches with the STL format.
         /// </summary>
-        /// <param name="normals">The normals.</param>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="units">The units.</param>
@@ -120,16 +119,16 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<double[]> normals, IList<List<double[]>> vertsPerFace,
-            IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "")
+        /// 
+        public TessellatedSolid(IList<List<double[]>> vertsPerFace, IList<Color> colors,
+            UnitType units = UnitType.unspecified, string name = "", string filename = "", List<string> comments = null,
+            string language = "")
             : base(units, name, filename, comments, language)
         {
-            List<int[]> faceToVertexIndices;
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
-            MakeVertices(vertsPerFace, out faceToVertexIndices);
+            MakeVertices(vertsPerFace, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
-            MakeFaces(faceToVertexIndices, colors, normals);
+            MakeFaces(faceToVertexIndices, colors);
             CompleteInitiation();
         }
 
@@ -319,15 +318,10 @@ namespace TVGL
 
         private void CompleteInitiation()
         {
-            List<PolygonalFace> newFaces;
-            List<Vertex> removedVertices;
-            MakeEdges(out newFaces, out removedVertices);
+            MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices);
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
-            double[] center;
-            double volume;
-            double surfaceArea;
-            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea);
+            DefineCenterVolumeAndSurfaceArea(Faces, out double[] center, out double volume, out double surfaceArea);
             Center = center;
             Volume = volume;
             SurfaceArea = surfaceArea;
@@ -374,10 +368,10 @@ namespace TVGL
         /// </summary>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
-        /// <param name="normals">The normals.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
+        /// 
         internal void MakeFaces(IList<int[]> faceToVertexIndices, IList<Color> colors,
-            IList<double[]> normals = null, bool doublyLinkToVertices = true)
+            bool doublyLinkToVertices = true)
         {
             var duplicateFaceCheck = true;
             HasUniformColor = true;
@@ -415,9 +409,8 @@ namespace TVGL
                 }
                 var faceVertices =
                     faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToList();
-                bool reverseVertexOrder;
                 //We do not trust .STL file normals to be accurate enough. Recalculate.
-                var normal = PolygonalFace.DetermineNormal(faceVertices, out reverseVertexOrder);
+                var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
                 if (reverseVertexOrder) faceVertices.Reverse();
 
                 var color = SolidColor;
@@ -926,7 +919,7 @@ namespace TVGL
         /// <returns></returns>
         public void SetToOriginAndSquare(out double[,] backTransform)
         {
-            var transformationMatrix = getSquaredandOriginTransform(out backTransform);
+            var transformationMatrix = GetSquaredandOriginTransform(out backTransform);
             Transform(transformationMatrix);
         }
 
@@ -937,17 +930,17 @@ namespace TVGL
         /// <returns></returns>
         public void SetToOriginAndSquare(BoundingBox obb, out double[,] backTransform)
         {
-            var transformationMatrix = getSquaredandOriginTransform(obb, out backTransform);
+            var transformationMatrix = GetSquaredandOriginTransform(obb, out backTransform);
             Transform(transformationMatrix);
         }
 
-        private double[,] getSquaredandOriginTransform(out double[,] backTransform)
+        private double[,] GetSquaredandOriginTransform(out double[,] backTransform)
         {
             var obb = MinimumEnclosure.OrientedBoundingBox(this);
-            return getSquaredandOriginTransform(obb, out backTransform);
+            return GetSquaredandOriginTransform(obb, out backTransform);
         }
 
-        private double[,] getSquaredandOriginTransform(BoundingBox obb, out double[,] backTransform)
+        private double[,] GetSquaredandOriginTransform(BoundingBox obb, out double[,] backTransform)
         {
             //First, get the oriented bounding box directions. 
             var obbDirections = obb.Directions.ToList();

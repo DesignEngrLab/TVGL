@@ -336,7 +336,7 @@ namespace TVGL.IOFunctions
             {
                 using (var writer = XmlWriter.Create(stream))
                 {
-                    writer.WriteComment(tvglDateMarkText);
+                    writer.WriteComment(TvglDateMarkText);
                     if (!string.IsNullOrWhiteSpace(solids[0].FileName))
                         writer.WriteComment("Originally loaded from " + solids[0].FileName);
                     var serializer = new XmlSerializer(typeof(ThreeMFFileData), defXMLNameSpaceModel);

@@ -117,9 +117,9 @@ namespace TVGL.IOFunctions
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Normals, stlFileData.Vertices,
-                    stlFileData.HasColorSpecified ? stlFileData.Colors : null, stlFileData.Units,
-                    stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
+                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.HasColorSpecified ? stlFileData.Colors : null,
+                    stlFileData.Units, stlFileData.Name,
+                    filename, stlFileData.Comments, stlFileData.Language);
             }
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
@@ -251,7 +251,7 @@ namespace TVGL.IOFunctions
                 stlSolid1.Name = Path.GetFileNameWithoutExtension(filename);
             do
             {
-                var numFaces = readNumberAsInt(reader, typeof(uint),FormatEndiannessType.binary_little_endian);
+                var numFaces = ReadNumberAsInt(reader, typeof(uint),FormatEndiannessType.binary_little_endian);
                 if (length - 84 != numFaces * 50)
                     return false;
                 for (var i = 0; i < numFaces; i++)
@@ -275,28 +275,28 @@ namespace TVGL.IOFunctions
         /// <param name="reader">The reader.</param>
         private void ReadFacet(BinaryReader reader)
         {
-            var ni = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var nj = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var nk = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var ni = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var nj = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var nk = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
 
             var n = new[] { ni, nj, nk };
 
-            var x1 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var y1 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var z1 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var x1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var y1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var z1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var v1 = new[] { x1, y1, z1 };
 
-            var x2 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var y2 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var z2 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var x2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var y2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var z2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var v2 = new[] { x2, y2, z2 };
 
-            var x3 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var y3 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var z3 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var x3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var y3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var z3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var v3 = new[] { x3, y3, z3 };
 
-            var attrib = Convert.ToString(readNumberAsInt(reader, typeof(ushort), FormatEndiannessType.binary_little_endian),
+            var attrib = Convert.ToString(ReadNumberAsInt(reader, typeof(ushort), FormatEndiannessType.binary_little_endian),
                 2).PadLeft(16, '0').ToCharArray();
             var hasColor = attrib[0].Equals('1');
 
@@ -351,7 +351,7 @@ namespace TVGL.IOFunctions
             {
                 foreach (var solid in solids)
                     if (!SaveASCII(writer, solid)) return false;
-                writer.WriteLine("#  " + tvglDateMarkText);
+                writer.WriteLine("#  " + TvglDateMarkText);
                 if (!string.IsNullOrWhiteSpace(solids[0].FileName))
                     writer.WriteLine("#  Originally loaded from : " + solids[0].FileName);
                 if (solids[0].Units != UnitType.unspecified)
@@ -407,7 +407,7 @@ namespace TVGL.IOFunctions
             {
                 var headerString = Path.GetFileNameWithoutExtension(solids[0].FileName);
                 if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
-                headerString += tvglDateMarkText;
+                headerString += TvglDateMarkText;
                 if (solids[0].Units != UnitType.unspecified)
                     headerString += solids[0].Units.ToString();
                 foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))

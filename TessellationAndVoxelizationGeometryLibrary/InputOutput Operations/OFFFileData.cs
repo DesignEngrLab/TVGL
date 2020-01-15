@@ -283,7 +283,7 @@ namespace TVGL.IOFunctions
                     writer.WriteLine("off C");
                 else
                     writer.WriteLine("off");
-                writer.WriteLine("#  " + tvglDateMarkText);
+                writer.WriteLine("#  " + TvglDateMarkText);
                 if (!string.IsNullOrWhiteSpace(solid.Name))
                     writer.WriteLine("#  Name : " + solid.Name);
                 if (!string.IsNullOrWhiteSpace(solid.FileName))
