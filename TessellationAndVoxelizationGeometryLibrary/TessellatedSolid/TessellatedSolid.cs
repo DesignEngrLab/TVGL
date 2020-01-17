@@ -275,7 +275,6 @@ namespace TVGL
             foreach (var origVertex in vertices)
             {
                 var vertex = copyElements ? origVertex.Copy() : origVertex;
-                vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
                 vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
                 Vertices[i] = vertex;
