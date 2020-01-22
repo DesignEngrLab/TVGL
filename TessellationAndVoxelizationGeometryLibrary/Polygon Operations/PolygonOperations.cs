@@ -1082,6 +1082,10 @@ namespace TVGL
         private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject,
             IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
+            //Remove any polygons that are only a line.
+            subject = subject.Where(p => p.Count > 2);
+            clip = clip?.Where(p => p.Count > 2);
+
             if (simplifyPriorToBooleanOperation)
             {
                 subject = subject.Select(SimplifyFuzzy);
@@ -1092,6 +1096,20 @@ namespace TVGL
                 clip = clip?.Select(SimplifyFuzzy);
             }
 
+            if (!subject.Any())
+            {
+                if(clip == null || !clip.Any())
+                {
+                    return new List<List<PointLight>>();
+                }
+                //Use the clip as the subject if this is a union operation and the clip is not null.
+                if (clipType == ClipType.ctUnion)
+                {
+                    subject = clip;
+                    clip = null;
+                }
+            }
+           
             var clipperSolution = new List<List<IntPoint>>();
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject =

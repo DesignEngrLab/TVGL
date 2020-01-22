@@ -138,14 +138,6 @@ namespace TVGL
         internal long EdgeReference { get; set; }
 
         /// <summary>
-        ///     Gets or sets an index to be used in any abitrary function.
-        ///     This is a local property available to any function, not a
-        ///     global property. 
-        /// </summary>
-        /// <value>To.</value>
-        public int ArbitraryReferenceIndex { get; set; }
-
-        /// <summary>
         ///     Gets the owned face (the face in which the from-to direction makes sense
         ///     - that is, produces the proper cross-product normal).
         /// </summary>

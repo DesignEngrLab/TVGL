@@ -150,13 +150,6 @@ namespace TVGL
         [JsonIgnore]
         public List<PolygonalFace> Faces { get; private set; }
 
-        /// <summary>
-        ///     Gets or sets an arbitrary ReferenceIndex to track vertex
-        /// </summary>
-        /// <value>The reference index.</value>
-        [JsonIgnore]
-        public int ReferenceIndex { get; set; }
-
         #endregion
     }
 }
