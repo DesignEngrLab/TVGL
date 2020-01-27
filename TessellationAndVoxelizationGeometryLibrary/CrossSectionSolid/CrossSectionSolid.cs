@@ -71,11 +71,10 @@ namespace TVGL
                 Bounds = new[] { (double[])bounds[0].Clone(), (double[])bounds[1].Clone() };
             Units = units;
             SameTolerance = sameTolerance;
-        }
+        }  
 
         public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<PolygonLight>> Layer2D, double[][] bounds = null,
             UnitType units = UnitType.unspecified)
-        //public CrossSectionSolid(double[] stepDistances, List<PolygonLight>[] Layer2D, double[][] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances;

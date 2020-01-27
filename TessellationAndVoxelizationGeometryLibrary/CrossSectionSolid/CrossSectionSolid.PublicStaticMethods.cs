@@ -7,6 +7,29 @@ namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double[] startPoint, double extrudeDistance, 
+            List<PolygonLight> shape, double sameTolerance, UnitType units)
+        {
+            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
+            var endPoint = startPoint.add(buildDirection.multiply(extrudeDistance));
+            var stepDistances = new Dictionary<int, double> { { 0, startPoint.dotProduct(buildDirection) }, { 1, endPoint.dotProduct(buildDirection) } };
+            var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, shape }, { 1, shape } };
+            return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
+        }
+
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,  
+           double sameTolerance, UnitType units)
+        {
+            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
+            var start = layer3DAtStart.First().Position.dotProduct(buildDirection);
+            var endPoint = layer3DAtStart.First().Position.add(buildDirection.multiply(extrudeDistance));
+            var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.dotProduct(buildDirection) } };
+            var shape = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(layer3DAtStart, buildDirection));
+            if (shape.Area < 0) shape = PolygonLight.Reverse(shape);
+            var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, new List<PolygonLight> { shape } }, { 1, new List<PolygonLight> { shape } } };
+            return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
+        }
+
         public static List<PolygonLight>[] GetUniformlySpacedSlices(TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
             double stepSize = double.NaN)
         {
