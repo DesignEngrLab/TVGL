@@ -227,9 +227,25 @@ namespace TVGL
             return faces;
         }
 
-        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes()
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)
         {
-            var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
+            var marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this, gridSize);
+            return marchingCubesAlgorithm.Generate();
+        }
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int approximateNumberOfTriangles = -1)
+        {
+            MarchingCubesCrossSectionSolid marchingCubesAlgorithm;
+            if (approximateNumberOfTriangles == -1)
+                marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
+            else
+            {
+                var solidDimensions = Bounds[1].subtract(Bounds[0]);
+                var bbVolume = solidDimensions.Aggregate(1.0, (acc, val) => acc * val);
+                var biggestSideArea = bbVolume / solidDimensions.Min();
+                var areaPerTriangle = biggestSideArea / (MarchingCubesCrossSectionSolid.NumTrianglesOnSideFactor * approximateNumberOfTriangles);
+                var discretization = 2 * Math.Sqrt(areaPerTriangle);
+                marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this, discretization);
+            }
             return marchingCubesAlgorithm.Generate();
         }
 

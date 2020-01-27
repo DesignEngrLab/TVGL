@@ -8,24 +8,56 @@ namespace TVGL
 {
     internal class MarchingCubesCrossSectionSolid : MarchingCubes<CrossSectionSolid, double>
     {
+        internal const double NumTrianglesOnSideFactor = 0.5;
+        internal const double ToleranceForSnappingToLayers = 0.517;
         private readonly double[][,] gridLayers;
         private readonly bool onLayers;
+        private readonly int deltaLayer;
         private readonly double discretization;
+        private readonly int start;
         private readonly int numGridLayersToStore;
+        private readonly double startDistance;
+        private readonly int last;
+        private readonly int numLayers;
 
         internal MarchingCubesCrossSectionSolid(CrossSectionSolid solid)
             : this(solid, (solid.StepDistances[solid.NumLayers - 1] - solid.StepDistances[0]) / (solid.NumLayers - 1))
         { }
+
         internal MarchingCubesCrossSectionSolid(CrossSectionSolid solid, double discretization)
             : base(solid, discretization)
         {
             this.discretization = discretization;
-            var distanceBetweenLayers = (solid.StepDistances[solid.NumLayers - 1] - solid.StepDistances[0]) / (solid.NumLayers - 1);
-            onLayers = distanceBetweenLayers.IsPracticallySame(discretization);
-            numGridLayersToStore =
-            (distanceBetweenLayers <= discretization) ? 2
-            : (2 * distanceBetweenLayers <= discretization) ? 3 : 4;
+            start = 0;
+            while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
+            startDistance = solid.StepDistances[start];
+            last = solid.NumLayers - 1;
+            while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
+            var length = solid.StepDistances[last] - solid.StepDistances[start];
+            numLayers = last - start;
+            var distanceBetweenLayers = length / numLayers;
+            var remainderError = (discretization/distanceBetweenLayers) % 1.0;
+            onLayers = (remainderError < ToleranceForSnappingToLayers || remainderError > (1 - ToleranceForSnappingToLayers));
+            // if the distanceBetweenLayers is some integer multiple of the discretization (well, within the tolerance)
+            // then simply use the layers - it's quicker and more accurate.  
+            numGridLayersToStore = onLayers ? 2 : (distanceBetweenLayers > discretization) ? 3 : 4;
+            // well, it's possible that the number to store be only 3 but no point in 
             gridLayers = new double[numGridLayersToStore][,];
+            if (onLayers)
+            {
+                deltaLayer = (int)Math.Round(discretization/distanceBetweenLayers);
+                var offsetInt = (numLayers % deltaLayer) / 2;
+                start += offsetInt;
+                numLayers /= deltaLayer;
+            }
+            else
+            {
+                numLayers = (int)(length / discretization);
+                var sampledLength = numLayers * discretization;
+                var offset = 0.5 * (length - sampledLength);
+                startDistance += offset;
+                deltaLayer = (int)(distanceBetweenLayers / discretization);
+            }
         }
 
         /// <summary>
@@ -34,26 +66,17 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         internal TessellatedSolid Generate()
         {
-            var distanceForGridLayers = new double[gridLayers.Length];
-            var start = 0;
-            while (solid.Layer2D[start] == null || !solid.Layer2D[start].Any()) start++;
-            var startingDistance = distanceForGridLayers[0] = solid.StepDistances[start];
-            distanceForGridLayers[1] = solid.StepDistances[start + 1];
-            if (!onLayers)
+            if (onLayers) return GenerateOnLayers();
+            else return GenerateBetweenLayers();
+        }
+
+        private TessellatedSolid GenerateOnLayers()
+        {
+            //for (int k = 1; k < numGridLayersToStore; k++)
+            gridLayers[0] = CreateDistanceGrid(solid.Layer2D[start]);
+            for (var k = 1; k <= numLayers; k++)
             {
-                var nextXSection = startingDistance + discretization;
-                //okay, need to work on this logic for 2, 3, and 4 layers
-                while (solid.StepDistances[start] < nextXSection) start++;
-                distanceForGridLayers[onLayers ? 1 : 2] = solid.StepDistances[start];
-                if (!onLayers) distanceForGridLayers[3] = solid.StepDistances[start + 1];
-            }
-            var last = solid.NumLayers - 1;
-            while (solid.Layer2D[last] == null || !solid.Layer2D[last].Any()) last--;
-            for (int k = 1; k < numGridLayersToStore; k++)
-                gridLayers[k] = CreateDistanceGrid(solid.Layer2D[k+start]);
-            for (var k = 0; k <= last; k++)
-            {
-                gridLayers[k % numGridLayersToStore] = CreateDistanceGrid(solid.Layer2D[k+start]);
+                gridLayers[k % numGridLayersToStore] = CreateDistanceGrid(solid.Layer2D[start+k*deltaLayer]);
                 for (var i = 0; i < numGridX - 1; i++)
                     for (var j = 0; j < numGridY - 1; j++)
                         MakeFacesInCube(i, j, k);
@@ -63,7 +86,30 @@ namespace TVGL
             //call marching cubes function for this z-layer
             // for (var k = 0; k < numGridZ - 1; k++)
             var comments = new List<string>(solid.Comments);
-            comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
+            comments.Add("tessellation (via marching cubes) of the cross-section solid, " + solid.Name);
+            return new TessellatedSolid(faces);
+        }
+
+        private TessellatedSolid GenerateBetweenLayers()
+        {
+            throw new NotImplementedException();
+            var nextXSection = startDistance + discretization;
+
+            for (int k = 1; k < numGridLayersToStore; k++)
+                gridLayers[k] = CreateDistanceGrid(solid.Layer2D[k + start]);
+            for (var k = 0; k <= last; k++)
+            {
+                gridLayers[k % numGridLayersToStore] = CreateDistanceGrid(solid.Layer2D[k + start]);
+                for (var i = 0; i < numGridX - 1; i++)
+                    for (var j = 0; j < numGridY - 1; j++)
+                        MakeFacesInCube(i, j, k);
+            }
+            //Calculate new grid
+            //interpolate points for grid
+            //call marching cubes function for this z-layer
+            // for (var k = 0; k < numGridZ - 1; k++)
+            var comments = new List<string>(solid.Comments);
+            comments.Add("tessellation (via marching cubes) of the cross-section solid, " + solid.Name);
             return new TessellatedSolid(faces);
         }
 

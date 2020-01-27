@@ -97,11 +97,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*").ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 76; i < fileNames.Count(); i++)
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -109,16 +109,19 @@ namespace TVGLPresenterDX
                 Stream fileStream;
                 var solid = (TessellatedSolid)IO.Open(filename);
                 if (solid.Errors != null) continue;
-                Presenter.ShowAndHang(solid);
-                var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 10);
-                Presenter.ShowAndHang(xs);
+                //Presenter.ShowAndHang(solid);
+                var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive,150);
+                //Presenter.ShowAndHang(xs);
+                var ts2 = xs.ConvertToTessellatedSolidMarchingCubes(10000);
+                Console.WriteLine("number of faces = {0}", ts2.NumberOfFaces);
+                //Presenter.ShowAndHang(ts2);
                 //if (!File.Exists(filename)) continue;
                 //using (fileStream = File.OpenRead(filename))
                 //    IO.Open(fileStream, filename);
-                IO.Save(xs, solid.FileName+".XS", FileType.TVGL);
-                Color color = new Color(KnownColors.AliceBlue);
-                var xs2 = (CrossSectionSolid)IO.Open(solid.FileName + ".tvgl");
-                Presenter.ShowAndHang(xs2);
+                //IO.Save(xs, solid.FileName+".XS", FileType.TVGL);
+                //Color color = new Color(KnownColors.AliceBlue);
+                //var xs2 = (CrossSectionSolid)IO.Open(solid.FileName + ".tvgl");
+               // Presenter.ShowAndHang(xs2);
                 //ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
                 //{
                 //    Af = 0.25f
