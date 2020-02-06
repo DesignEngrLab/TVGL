@@ -23,9 +23,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The new vector with elements selected based on the mask.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector<float> ConditionalSelect(Vector<int> condition, Vector<float> left, Vector<float> right)
+        public static Vector<double> ConditionalSelect(Vector<int> condition, Vector<double> left, Vector<double> right)
         {
-            return (Vector<float>)Vector<float>.ConditionalSelect((Vector<float>)condition, left, right);
+            return (Vector<double>)Vector<double>.ConditionalSelect((Vector<double>)condition, left, right);
         }
 
         /// <summary>
@@ -80,9 +80,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The resultant vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector<int> Equals(Vector<float> left, Vector<float> right)
+        public static Vector<int> Equals(Vector<double> left, Vector<double> right)
         {
-            return (Vector<int>)Vector<float>.Equals(left, right);
+            return (Vector<int>)Vector<double>.Equals(left, right);
         }
 
         /// <summary>
@@ -173,9 +173,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The resultant integral vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector<int> LessThan(Vector<float> left, Vector<float> right)
+        public static Vector<int> LessThan(Vector<double> left, Vector<double> right)
         {
-            return (Vector<int>)Vector<float>.LessThan(left, right);
+            return (Vector<int>)Vector<double>.LessThan(left, right);
         }
 
         /// <summary>
@@ -271,9 +271,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The resultant integral vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector<int> LessThanOrEqual(Vector<float> left, Vector<float> right)
+        public static Vector<int> LessThanOrEqual(Vector<double> left, Vector<double> right)
         {
-            return (Vector<int>)Vector<float>.LessThanOrEqual(left, right);
+            return (Vector<int>)Vector<double>.LessThanOrEqual(left, right);
         }
 
         /// <summary>
@@ -369,9 +369,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The resultant integral vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector<int> GreaterThan(Vector<float> left, Vector<float> right)
+        public static Vector<int> GreaterThan(Vector<double> left, Vector<double> right)
         {
-            return (Vector<int>)Vector<float>.GreaterThan(left, right);
+            return (Vector<int>)Vector<double>.GreaterThan(left, right);
         }
 
         /// <summary>
@@ -468,9 +468,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The resultant integral vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector<int> GreaterThanOrEqual(Vector<float> left, Vector<float> right)
+        public static Vector<int> GreaterThanOrEqual(Vector<double> left, Vector<double> right)
         {
-            return (Vector<int>)Vector<float>.GreaterThanOrEqual(left, right);
+            return (Vector<int>)Vector<double>.GreaterThanOrEqual(left, right);
         }
 
         /// <summary>
@@ -876,9 +876,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector<float> AsVectorSingle<T>(Vector<T> value) where T : struct
+        public static Vector<double> AsVectorSingle<T>(Vector<T> value) where T : struct
         {
-            return (Vector<float>)value;
+            return (Vector<double>)value;
         }
 
         /// <summary>

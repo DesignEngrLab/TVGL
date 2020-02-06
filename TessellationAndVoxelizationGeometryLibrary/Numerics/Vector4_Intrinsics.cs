@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.CompilerServices;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
@@ -16,19 +17,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// The X component of the vector.
         /// </summary>
-        public float X;
+        public double X;
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
-        public float Y;
+        public double Y;
         /// <summary>
         /// The Z component of the vector.
         /// </summary>
-        public float Z;
+        public double Z;
         /// <summary>
         /// The W component of the vector.
         /// </summary>
-        public float W;
+        public double W;
 
         #region Constructors
 
@@ -37,7 +38,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The element to fill the vector with.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector4(float value)
+        public Vector4(double value)
             : this(value, value, value, value)
         {
         }
@@ -49,7 +50,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="y">Y component.</param>
         /// <param name="z">Z component.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector4(float x, float y, float z, float w)
+        public Vector4(double x, double y, double z, double w)
         {
             W = w;
             X = x;
@@ -64,7 +65,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="z">The Z component.</param>
         /// <param name="w">The W component.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector4(Vector2 value, float z, float w)
+        public Vector4(Vector2 value, double z, double w)
         {
             X = value.X;
             Y = value.Y;
@@ -78,7 +79,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The vector to use as the X, Y, and Z components.</param>
         /// <param name="w">The W component.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector4(Vector3 value, float w)
+        public Vector4(Vector3 value, double w)
         {
             X = value.X;
             Y = value.Y;
@@ -93,7 +94,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void CopyTo(float[] array)
+        public readonly void CopyTo(double[] array)
         {
             CopyTo(array, 0);
         }
@@ -107,7 +108,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array.</exception>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void CopyTo(float[] array, int index)
+        public readonly void CopyTo(double[] array, int index)
         {
             if (array == null)
             {
@@ -152,7 +153,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The dot product.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Dot(Vector4 vector1, Vector4 vector2)
+        public static double Dot(Vector4 vector1, Vector4 vector2)
         {
             return vector1.X * vector2.X +
                    vector1.Y * vector2.Y +
@@ -203,7 +204,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Abs(Vector4 value)
         {
-            return new Vector4(MathF.Abs(value.X), MathF.Abs(value.Y), MathF.Abs(value.Z), MathF.Abs(value.W));
+            return new Vector4(Math.Abs(value.X), Math.Abs(value.Y), Math.Abs(value.Z), Math.Abs(value.W));
         }
 
         /// <summary>
@@ -215,7 +216,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 SquareRoot(Vector4 value)
         {
-            return new Vector4(MathF.Sqrt(value.X), MathF.Sqrt(value.Y), MathF.Sqrt(value.Z), MathF.Sqrt(value.W));
+            return new Vector4(Math.Sqrt(value.X), Math.Sqrt(value.Y), Math.Sqrt(value.Z), Math.Sqrt(value.W));
         }
         #endregion Public Static Methods
 
@@ -267,7 +268,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The scaled vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator *(Vector4 left, float right)
+        public static Vector4 operator *(Vector4 left, double right)
         {
             return left * new Vector4(right);
         }
@@ -280,7 +281,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The scaled vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator *(float left, Vector4 right)
+        public static Vector4 operator *(double left, Vector4 right)
         {
             return new Vector4(left) * right;
         }
@@ -305,7 +306,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value2">The scalar value.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator /(Vector4 value1, float value2)
+        public static Vector4 operator /(Vector4 value1, double value2)
         {
             return value1 / new Vector4(value2);
         }

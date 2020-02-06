@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -12,7 +13,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// </summary>
     public struct Plane : IEquatable<Plane>
     {
-        private const float NormalizeEpsilon = 1.192092896e-07f; // smallest such that 1.0+NormalizeEpsilon != 1.0
+        private const double NormalizeEpsilon = 1.192092896e-07f; // smallest such that 1.0+NormalizeEpsilon != 1.0
 
         /// <summary>
         /// The normal vector of the Plane.
@@ -21,7 +22,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// The distance of the Plane along its normal from the origin.
         /// </summary>
-        public float D;
+        public double D;
 
         /// <summary>
         /// Constructs a Plane from the X, Y, and Z components of its normal, and its distance from the origin on that normal.
@@ -30,7 +31,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="y">The Y-component of the normal.</param>
         /// <param name="z">The Z-component of the normal.</param>
         /// <param name="d">The distance of the Plane along its normal from the origin.</param>
-        public Plane(float x, float y, float z, float d)
+        public Plane(double x, double y, double z, double d)
         {
             Normal = new Vector3(x, y, z);
             this.D = d;
@@ -41,7 +42,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="normal">The Plane's normal vector.</param>
         /// <param name="d">The Plane's distance from the origin along its normal vector.</param>
-        public Plane(Vector3 normal, float d)
+        public Plane(Vector3 normal, double d)
         {
             this.Normal = normal;
             this.D = d;
@@ -78,28 +79,28 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 Vector3 normal = Vector3.Normalize(n);
 
                 // D = - Dot(N, point1)
-                float d = -Vector3.Dot(normal, point1);
+                double d = -Vector3.Dot(normal, point1);
 
                 return new Plane(normal, d);
             }
             else
             {
-                float ax = point2.X - point1.X;
-                float ay = point2.Y - point1.Y;
-                float az = point2.Z - point1.Z;
+                double ax = point2.X - point1.X;
+                double ay = point2.Y - point1.Y;
+                double az = point2.Z - point1.Z;
 
-                float bx = point3.X - point1.X;
-                float by = point3.Y - point1.Y;
-                float bz = point3.Z - point1.Z;
+                double bx = point3.X - point1.X;
+                double by = point3.Y - point1.Y;
+                double bz = point3.Z - point1.Z;
 
                 // N=Cross(a,b)
-                float nx = ay * bz - az * by;
-                float ny = az * bx - ax * bz;
-                float nz = ax * by - ay * bx;
+                double nx = ay * bz - az * by;
+                double ny = az * bx - ax * bz;
+                double nz = ax * by - ay * bx;
 
                 // Normalize(N)
-                float ls = nx * nx + ny * ny + nz * nz;
-                float invNorm = 1.0f / MathF.Sqrt(ls);
+                double ls = nx * nx + ny * ny + nz * nz;
+                double invNorm = 1.0f / Math.Sqrt(ls);
 
                 Vector3 normal = new Vector3(
                     nx * invNorm,
@@ -122,27 +123,27 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             if (Vector.IsHardwareAccelerated)
             {
-                float normalLengthSquared = value.Normal.LengthSquared();
-                if (MathF.Abs(normalLengthSquared - 1.0f) < NormalizeEpsilon)
+                double normalLengthSquared = value.Normal.LengthSquared();
+                if (Math.Abs(normalLengthSquared - 1.0f) < NormalizeEpsilon)
                 {
                     // It already normalized, so we don't need to farther process.
                     return value;
                 }
-                float normalLength = MathF.Sqrt(normalLengthSquared);
+                double normalLength = Math.Sqrt(normalLengthSquared);
                 return new Plane(
                     value.Normal / normalLength,
                     value.D / normalLength);
             }
             else
             {
-                float f = value.Normal.X * value.Normal.X + value.Normal.Y * value.Normal.Y + value.Normal.Z * value.Normal.Z;
+                double f = value.Normal.X * value.Normal.X + value.Normal.Y * value.Normal.Y + value.Normal.Z * value.Normal.Z;
 
-                if (MathF.Abs(f - 1.0f) < NormalizeEpsilon)
+                if (Math.Abs(f - 1.0f) < NormalizeEpsilon)
                 {
                     return value; // It already normalized, so we don't need to further process.
                 }
 
-                float fInv = 1.0f / MathF.Sqrt(f);
+                double fInv = 1.0f / Math.Sqrt(f);
 
                 return new Plane(
                     value.Normal.X * fInv,
@@ -165,7 +166,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Matrix4x4 m;
             Matrix4x4.Invert(matrix, out m);
 
-            float x = plane.Normal.X, y = plane.Normal.Y, z = plane.Normal.Z, w = plane.D;
+            double x = plane.Normal.X, y = plane.Normal.Y, z = plane.Normal.Z, w = plane.D;
 
             return new Plane(
                 x * m.M11 + y * m.M12 + z * m.M13 + w * m.M14,
@@ -185,33 +186,33 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public static Plane Transform(Plane plane, Quaternion rotation)
         {
             // Compute rotation matrix.
-            float x2 = rotation.X + rotation.X;
-            float y2 = rotation.Y + rotation.Y;
-            float z2 = rotation.Z + rotation.Z;
+            double x2 = rotation.X + rotation.X;
+            double y2 = rotation.Y + rotation.Y;
+            double z2 = rotation.Z + rotation.Z;
 
-            float wx2 = rotation.W * x2;
-            float wy2 = rotation.W * y2;
-            float wz2 = rotation.W * z2;
-            float xx2 = rotation.X * x2;
-            float xy2 = rotation.X * y2;
-            float xz2 = rotation.X * z2;
-            float yy2 = rotation.Y * y2;
-            float yz2 = rotation.Y * z2;
-            float zz2 = rotation.Z * z2;
+            double wx2 = rotation.W * x2;
+            double wy2 = rotation.W * y2;
+            double wz2 = rotation.W * z2;
+            double xx2 = rotation.X * x2;
+            double xy2 = rotation.X * y2;
+            double xz2 = rotation.X * z2;
+            double yy2 = rotation.Y * y2;
+            double yz2 = rotation.Y * z2;
+            double zz2 = rotation.Z * z2;
 
-            float m11 = 1.0f - yy2 - zz2;
-            float m21 = xy2 - wz2;
-            float m31 = xz2 + wy2;
+            double m11 = 1.0f - yy2 - zz2;
+            double m21 = xy2 - wz2;
+            double m31 = xz2 + wy2;
 
-            float m12 = xy2 + wz2;
-            float m22 = 1.0f - xx2 - zz2;
-            float m32 = yz2 - wx2;
+            double m12 = xy2 + wz2;
+            double m22 = 1.0f - xx2 - zz2;
+            double m32 = yz2 - wx2;
 
-            float m13 = xz2 - wy2;
-            float m23 = yz2 + wx2;
-            float m33 = 1.0f - xx2 - yy2;
+            double m13 = xz2 - wy2;
+            double m23 = yz2 + wx2;
+            double m33 = 1.0f - xx2 - yy2;
 
-            float x = plane.Normal.X, y = plane.Normal.Y, z = plane.Normal.Z;
+            double x = plane.Normal.X, y = plane.Normal.Y, z = plane.Normal.Z;
 
             return new Plane(
                 x * m11 + y * m21 + z * m31,
@@ -227,7 +228,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The Vector4.</param>
         /// <returns>The dot product.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Dot(Plane plane, Vector4 value)
+        public static double Dot(Plane plane, Vector4 value)
         {
             return plane.Normal.X * value.X +
                    plane.Normal.Y * value.Y +
@@ -242,7 +243,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The Vector3.</param>
         /// <returns>The resulting value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float DotCoordinate(Plane plane, Vector3 value)
+        public static double DotCoordinate(Plane plane, Vector3 value)
         {
             if (Vector.IsHardwareAccelerated)
             {
@@ -264,7 +265,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The Vector3.</param>
         /// <returns>The resulting dot product.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float DotNormal(Plane plane, Vector3 value)
+        public static double DotNormal(Plane plane, Vector3 value)
         {
             if (Vector.IsHardwareAccelerated)
             {

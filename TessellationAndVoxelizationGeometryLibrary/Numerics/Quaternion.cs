@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Globalization;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
@@ -12,24 +13,24 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// </summary>
     public struct Quaternion : IEquatable<Quaternion>
     {
-        private const float SlerpEpsilon = 1e-6f;
+        private const double SlerpEpsilon = 1e-6f;
 
         /// <summary>
         /// Specifies the X-value of the vector component of the Quaternion.
         /// </summary>
-        public float X;
+        public double X;
         /// <summary>
         /// Specifies the Y-value of the vector component of the Quaternion.
         /// </summary>
-        public float Y;
+        public double Y;
         /// <summary>
         /// Specifies the Z-value of the vector component of the Quaternion.
         /// </summary>
-        public float Z;
+        public double Z;
         /// <summary>
         /// Specifies the rotation component of the Quaternion.
         /// </summary>
-        public float W;
+        public double W;
 
         /// <summary>
         /// Returns a Quaternion representing no rotation.
@@ -54,7 +55,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="y">The Y component of the Quaternion.</param>
         /// <param name="z">The Z component of the Quaternion.</param>
         /// <param name="w">The W component of the Quaternion.</param>
-        public Quaternion(float x, float y, float z, float w)
+        public Quaternion(double x, double y, double z, double w)
         {
             this.X = x;
             this.Y = y;
@@ -67,7 +68,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="vectorPart">The vector part of the Quaternion.</param>
         /// <param name="scalarPart">The rotation part of the Quaternion.</param>
-        public Quaternion(Vector3 vectorPart, float scalarPart)
+        public Quaternion(Vector3 vectorPart, double scalarPart)
         {
             X = vectorPart.X;
             Y = vectorPart.Y;
@@ -79,18 +80,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Calculates the length of the Quaternion.
         /// </summary>
         /// <returns>The computed length of the Quaternion.</returns>
-        public readonly float Length()
+        public readonly double Length()
         {
-            float ls = X * X + Y * Y + Z * Z + W * W;
+            double ls = X * X + Y * Y + Z * Z + W * W;
 
-            return MathF.Sqrt(ls);
+            return Math.Sqrt(ls);
         }
 
         /// <summary>
         /// Calculates the length squared of the Quaternion. This operation is cheaper than Length().
         /// </summary>
         /// <returns>The length squared of the Quaternion.</returns>
-        public readonly float LengthSquared()
+        public readonly double LengthSquared()
         {
             return X * X + Y * Y + Z * Z + W * W;
         }
@@ -104,9 +105,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Quaternion ans;
 
-            float ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z + value.W * value.W;
+            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z + value.W * value.W;
 
-            float invNorm = 1.0f / MathF.Sqrt(ls);
+            double invNorm = 1.0f / Math.Sqrt(ls);
 
             ans.X = value.X * invNorm;
             ans.Y = value.Y * invNorm;
@@ -146,8 +147,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             Quaternion ans;
 
-            float ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z + value.W * value.W;
-            float invNorm = 1.0f / ls;
+            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z + value.W * value.W;
+            double invNorm = 1.0f / ls;
 
             ans.X = -value.X * invNorm;
             ans.Y = -value.Y * invNorm;
@@ -164,13 +165,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// This vector must be normalized before calling this function or the resulting Quaternion will be incorrect.</param>
         /// <param name="angle">The angle, in radians, to rotate around the vector.</param>
         /// <returns>The created Quaternion.</returns>
-        public static Quaternion CreateFromAxisAngle(Vector3 axis, float angle)
+        public static Quaternion CreateFromAxisAngle(Vector3 axis, double angle)
         {
             Quaternion ans;
 
-            float halfAngle = angle * 0.5f;
-            float s = MathF.Sin(halfAngle);
-            float c = MathF.Cos(halfAngle);
+            double halfAngle = angle * 0.5f;
+            double s = Math.Sin(halfAngle);
+            double c = Math.Cos(halfAngle);
 
             ans.X = axis.X * s;
             ans.Y = axis.Y * s;
@@ -187,23 +188,23 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="pitch">The pitch angle, in radians, around the X-axis.</param>
         /// <param name="roll">The roll angle, in radians, around the Z-axis.</param>
         /// <returns></returns>
-        public static Quaternion CreateFromYawPitchRoll(float yaw, float pitch, float roll)
+        public static Quaternion CreateFromYawPitchRoll(double yaw, double pitch, double roll)
         {
             //  Roll first, about axis the object is facing, then
             //  pitch upward, then yaw to face into the new heading
-            float sr, cr, sp, cp, sy, cy;
+            double sr, cr, sp, cp, sy, cy;
 
-            float halfRoll = roll * 0.5f;
-            sr = MathF.Sin(halfRoll);
-            cr = MathF.Cos(halfRoll);
+            double halfRoll = roll * 0.5f;
+            sr = Math.Sin(halfRoll);
+            cr = Math.Cos(halfRoll);
 
-            float halfPitch = pitch * 0.5f;
-            sp = MathF.Sin(halfPitch);
-            cp = MathF.Cos(halfPitch);
+            double halfPitch = pitch * 0.5f;
+            sp = Math.Sin(halfPitch);
+            cp = Math.Cos(halfPitch);
 
-            float halfYaw = yaw * 0.5f;
-            sy = MathF.Sin(halfYaw);
-            cy = MathF.Cos(halfYaw);
+            double halfYaw = yaw * 0.5f;
+            sy = Math.Sin(halfYaw);
+            cy = Math.Cos(halfYaw);
 
             Quaternion result;
 
@@ -222,13 +223,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The created Quaternion.</returns>
         public static Quaternion CreateFromRotationMatrix(Matrix4x4 matrix)
         {
-            float trace = matrix.M11 + matrix.M22 + matrix.M33;
+            double trace = matrix.M11 + matrix.M22 + matrix.M33;
 
             Quaternion q = default;
 
             if (trace > 0.0f)
             {
-                float s = MathF.Sqrt(trace + 1.0f);
+                double s = Math.Sqrt(trace + 1.0f);
                 q.W = s * 0.5f;
                 s = 0.5f / s;
                 q.X = (matrix.M23 - matrix.M32) * s;
@@ -239,8 +240,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 if (matrix.M11 >= matrix.M22 && matrix.M11 >= matrix.M33)
                 {
-                    float s = MathF.Sqrt(1.0f + matrix.M11 - matrix.M22 - matrix.M33);
-                    float invS = 0.5f / s;
+                    double s = Math.Sqrt(1.0f + matrix.M11 - matrix.M22 - matrix.M33);
+                    double invS = 0.5f / s;
                     q.X = 0.5f * s;
                     q.Y = (matrix.M12 + matrix.M21) * invS;
                     q.Z = (matrix.M13 + matrix.M31) * invS;
@@ -248,8 +249,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 }
                 else if (matrix.M22 > matrix.M33)
                 {
-                    float s = MathF.Sqrt(1.0f + matrix.M22 - matrix.M11 - matrix.M33);
-                    float invS = 0.5f / s;
+                    double s = Math.Sqrt(1.0f + matrix.M22 - matrix.M11 - matrix.M33);
+                    double invS = 0.5f / s;
                     q.X = (matrix.M21 + matrix.M12) * invS;
                     q.Y = 0.5f * s;
                     q.Z = (matrix.M32 + matrix.M23) * invS;
@@ -257,8 +258,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 }
                 else
                 {
-                    float s = MathF.Sqrt(1.0f + matrix.M33 - matrix.M11 - matrix.M22);
-                    float invS = 0.5f / s;
+                    double s = Math.Sqrt(1.0f + matrix.M33 - matrix.M11 - matrix.M22);
+                    double invS = 0.5f / s;
                     q.X = (matrix.M31 + matrix.M13) * invS;
                     q.Y = (matrix.M32 + matrix.M23) * invS;
                     q.Z = 0.5f * s;
@@ -275,7 +276,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="quaternion1">The first source Quaternion.</param>
         /// <param name="quaternion2">The second source Quaternion.</param>
         /// <returns>The dot product of the Quaternions.</returns>
-        public static float Dot(Quaternion quaternion1, Quaternion quaternion2)
+        public static double Dot(Quaternion quaternion1, Quaternion quaternion2)
         {
             return quaternion1.X * quaternion2.X +
                    quaternion1.Y * quaternion2.Y +
@@ -290,11 +291,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="quaternion2">The second source Quaternion.</param>
         /// <param name="amount">The relative weight of the second source Quaternion in the interpolation.</param>
         /// <returns>The interpolated Quaternion.</returns>
-        public static Quaternion Slerp(Quaternion quaternion1, Quaternion quaternion2, float amount)
+        public static Quaternion Slerp(Quaternion quaternion1, Quaternion quaternion2, double amount)
         {
-            float t = amount;
+            double t = amount;
 
-            float cosOmega = quaternion1.X * quaternion2.X + quaternion1.Y * quaternion2.Y +
+            double cosOmega = quaternion1.X * quaternion2.X + quaternion1.Y * quaternion2.Y +
                              quaternion1.Z * quaternion2.Z + quaternion1.W * quaternion2.W;
 
             bool flip = false;
@@ -305,7 +306,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 cosOmega = -cosOmega;
             }
 
-            float s1, s2;
+            double s1, s2;
 
             if (cosOmega > (1.0f - SlerpEpsilon))
             {
@@ -315,13 +316,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
             else
             {
-                float omega = MathF.Acos(cosOmega);
-                float invSinOmega = 1 / MathF.Sin(omega);
+                double omega = Math.Acos(cosOmega);
+                double invSinOmega = 1 / Math.Sin(omega);
 
-                s1 = MathF.Sin((1.0f - t) * omega) * invSinOmega;
+                s1 = Math.Sin((1.0f - t) * omega) * invSinOmega;
                 s2 = (flip)
-                    ? -MathF.Sin(t * omega) * invSinOmega
-                    : MathF.Sin(t * omega) * invSinOmega;
+                    ? -Math.Sin(t * omega) * invSinOmega
+                    : Math.Sin(t * omega) * invSinOmega;
             }
 
             Quaternion ans;
@@ -341,14 +342,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="quaternion2">The second source Quaternion.</param>
         /// <param name="amount">The relative weight of the second source Quaternion in the interpolation.</param>
         /// <returns>The interpolated Quaternion.</returns>
-        public static Quaternion Lerp(Quaternion quaternion1, Quaternion quaternion2, float amount)
+        public static Quaternion Lerp(Quaternion quaternion1, Quaternion quaternion2, double amount)
         {
-            float t = amount;
-            float t1 = 1.0f - t;
+            double t = amount;
+            double t1 = 1.0f - t;
 
             Quaternion r = default;
 
-            float dot = quaternion1.X * quaternion2.X + quaternion1.Y * quaternion2.Y +
+            double dot = quaternion1.X * quaternion2.X + quaternion1.Y * quaternion2.Y +
                         quaternion1.Z * quaternion2.Z + quaternion1.W * quaternion2.W;
 
             if (dot >= 0.0f)
@@ -367,8 +368,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
 
             // Normalize it.
-            float ls = r.X * r.X + r.Y * r.Y + r.Z * r.Z + r.W * r.W;
-            float invNorm = 1.0f / MathF.Sqrt(ls);
+            double ls = r.X * r.X + r.Y * r.Y + r.Z * r.Z + r.W * r.W;
+            double invNorm = 1.0f / Math.Sqrt(ls);
 
             r.X *= invNorm;
             r.Y *= invNorm;
@@ -390,22 +391,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             // Concatenate rotation is actually q2 * q1 instead of q1 * q2.
             // So that's why value2 goes q1 and value1 goes q2.
-            float q1x = value2.X;
-            float q1y = value2.Y;
-            float q1z = value2.Z;
-            float q1w = value2.W;
+            double q1x = value2.X;
+            double q1y = value2.Y;
+            double q1z = value2.Z;
+            double q1w = value2.W;
 
-            float q2x = value1.X;
-            float q2y = value1.Y;
-            float q2z = value1.Z;
-            float q2w = value1.W;
+            double q2x = value1.X;
+            double q2y = value1.Y;
+            double q2z = value1.Z;
+            double q2w = value1.W;
 
             // cross(av, bv)
-            float cx = q1y * q2z - q1z * q2y;
-            float cy = q1z * q2x - q1x * q2z;
-            float cz = q1x * q2y - q1y * q2x;
+            double cx = q1y * q2z - q1z * q2y;
+            double cy = q1z * q2x - q1x * q2z;
+            double cz = q1x * q2y - q1y * q2x;
 
-            float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+            double dot = q1x * q2x + q1y * q2y + q1z * q2z;
 
             ans.X = q1x * q2w + q2x * q1w + cx;
             ans.Y = q1y * q2w + q2y * q1w + cy;
@@ -478,22 +479,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Quaternion ans;
 
-            float q1x = value1.X;
-            float q1y = value1.Y;
-            float q1z = value1.Z;
-            float q1w = value1.W;
+            double q1x = value1.X;
+            double q1y = value1.Y;
+            double q1z = value1.Z;
+            double q1w = value1.W;
 
-            float q2x = value2.X;
-            float q2y = value2.Y;
-            float q2z = value2.Z;
-            float q2w = value2.W;
+            double q2x = value2.X;
+            double q2y = value2.Y;
+            double q2z = value2.Z;
+            double q2w = value2.W;
 
             // cross(av, bv)
-            float cx = q1y * q2z - q1z * q2y;
-            float cy = q1z * q2x - q1x * q2z;
-            float cz = q1x * q2y - q1y * q2x;
+            double cx = q1y * q2z - q1z * q2y;
+            double cy = q1z * q2x - q1x * q2z;
+            double cz = q1x * q2y - q1y * q2x;
 
-            float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+            double dot = q1x * q2x + q1y * q2y + q1z * q2z;
 
             ans.X = q1x * q2w + q2x * q1w + cx;
             ans.Y = q1y * q2w + q2y * q1w + cy;
@@ -509,7 +510,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The source Quaternion.</param>
         /// <param name="value2">The scalar value.</param>
         /// <returns>The result of the multiplication.</returns>
-        public static Quaternion Multiply(Quaternion value1, float value2)
+        public static Quaternion Multiply(Quaternion value1, double value2)
         {
             Quaternion ans;
 
@@ -531,31 +532,31 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Quaternion ans;
 
-            float q1x = value1.X;
-            float q1y = value1.Y;
-            float q1z = value1.Z;
-            float q1w = value1.W;
+            double q1x = value1.X;
+            double q1y = value1.Y;
+            double q1z = value1.Z;
+            double q1w = value1.W;
 
             //-------------------------------------
             // Inverse part.
-            float ls = value2.X * value2.X + value2.Y * value2.Y +
+            double ls = value2.X * value2.X + value2.Y * value2.Y +
                        value2.Z * value2.Z + value2.W * value2.W;
-            float invNorm = 1.0f / ls;
+            double invNorm = 1.0f / ls;
 
-            float q2x = -value2.X * invNorm;
-            float q2y = -value2.Y * invNorm;
-            float q2z = -value2.Z * invNorm;
-            float q2w = value2.W * invNorm;
+            double q2x = -value2.X * invNorm;
+            double q2y = -value2.Y * invNorm;
+            double q2z = -value2.Z * invNorm;
+            double q2w = value2.W * invNorm;
 
             //-------------------------------------
             // Multiply part.
 
             // cross(av, bv)
-            float cx = q1y * q2z - q1z * q2y;
-            float cy = q1z * q2x - q1x * q2z;
-            float cz = q1x * q2y - q1y * q2x;
+            double cx = q1y * q2z - q1z * q2y;
+            double cy = q1z * q2x - q1x * q2z;
+            double cz = q1x * q2y - q1y * q2x;
 
-            float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+            double dot = q1x * q2x + q1y * q2y + q1z * q2z;
 
             ans.X = q1x * q2w + q2x * q1w + cx;
             ans.Y = q1y * q2w + q2y * q1w + cy;
@@ -628,22 +629,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Quaternion ans;
 
-            float q1x = value1.X;
-            float q1y = value1.Y;
-            float q1z = value1.Z;
-            float q1w = value1.W;
+            double q1x = value1.X;
+            double q1y = value1.Y;
+            double q1z = value1.Z;
+            double q1w = value1.W;
 
-            float q2x = value2.X;
-            float q2y = value2.Y;
-            float q2z = value2.Z;
-            float q2w = value2.W;
+            double q2x = value2.X;
+            double q2y = value2.Y;
+            double q2z = value2.Z;
+            double q2w = value2.W;
 
             // cross(av, bv)
-            float cx = q1y * q2z - q1z * q2y;
-            float cy = q1z * q2x - q1x * q2z;
-            float cz = q1x * q2y - q1y * q2x;
+            double cx = q1y * q2z - q1z * q2y;
+            double cy = q1z * q2x - q1x * q2z;
+            double cz = q1x * q2y - q1y * q2x;
 
-            float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+            double dot = q1x * q2x + q1y * q2y + q1z * q2z;
 
             ans.X = q1x * q2w + q2x * q1w + cx;
             ans.Y = q1y * q2w + q2y * q1w + cy;
@@ -659,7 +660,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The source Quaternion.</param>
         /// <param name="value2">The scalar value.</param>
         /// <returns>The result of the multiplication.</returns>
-        public static Quaternion operator *(Quaternion value1, float value2)
+        public static Quaternion operator *(Quaternion value1, double value2)
         {
             Quaternion ans;
 
@@ -681,31 +682,31 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Quaternion ans;
 
-            float q1x = value1.X;
-            float q1y = value1.Y;
-            float q1z = value1.Z;
-            float q1w = value1.W;
+            double q1x = value1.X;
+            double q1y = value1.Y;
+            double q1z = value1.Z;
+            double q1w = value1.W;
 
             //-------------------------------------
             // Inverse part.
-            float ls = value2.X * value2.X + value2.Y * value2.Y +
+            double ls = value2.X * value2.X + value2.Y * value2.Y +
                        value2.Z * value2.Z + value2.W * value2.W;
-            float invNorm = 1.0f / ls;
+            double invNorm = 1.0f / ls;
 
-            float q2x = -value2.X * invNorm;
-            float q2y = -value2.Y * invNorm;
-            float q2z = -value2.Z * invNorm;
-            float q2w = value2.W * invNorm;
+            double q2x = -value2.X * invNorm;
+            double q2y = -value2.Y * invNorm;
+            double q2z = -value2.Z * invNorm;
+            double q2w = value2.W * invNorm;
 
             //-------------------------------------
             // Multiply part.
 
             // cross(av, bv)
-            float cx = q1y * q2z - q1z * q2y;
-            float cy = q1z * q2x - q1x * q2z;
-            float cz = q1x * q2y - q1y * q2x;
+            double cx = q1y * q2z - q1z * q2y;
+            double cy = q1z * q2x - q1x * q2z;
+            double cz = q1x * q2y - q1y * q2x;
 
-            float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+            double dot = q1x * q2x + q1y * q2y + q1z * q2z;
 
             ans.X = q1x * q2w + q2x * q1w + cx;
             ans.Y = q1y * q2w + q2y * q1w + cy;

@@ -154,13 +154,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         // Internal System.Single Fields
         [FieldOffset(0)]
-        internal float single_0;
+        internal double single_0;
         [FieldOffset(4)]
-        internal float single_1;
+        internal double single_1;
         [FieldOffset(8)]
-        internal float single_2;
+        internal double single_2;
         [FieldOffset(12)]
-        internal float single_3;
+        internal double single_3;
 
         // Internal System.Double Fields
         [FieldOffset(0)]

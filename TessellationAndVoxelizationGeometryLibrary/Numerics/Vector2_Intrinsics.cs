@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.CompilerServices;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
@@ -16,11 +17,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// The X component of the vector.
         /// </summary>
-        public float X;
+        public double X;
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
-        public float Y;
+        public double Y;
 
         #region Constructors
         /// <summary>
@@ -28,7 +29,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The element to fill the vector with.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector2(float value) : this(value, value) { }
+        public Vector2(double value) : this(value, value) { }
 
         /// <summary>
         /// Constructs a vector with the given individual elements.
@@ -36,7 +37,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="x">The X component.</param>
         /// <param name="y">The Y component.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector2(float x, float y)
+        public Vector2(double x, double y)
         {
             X = x;
             Y = y;
@@ -50,7 +51,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="array">The destination array.</param>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void CopyTo(float[] array)
+        public readonly void CopyTo(double[] array)
         {
             CopyTo(array, 0);
         }
@@ -64,7 +65,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array
         /// or if there are not enough elements to copy.</exception>
         // COMMENTEDCHANGE [Intrinsic]
-        public readonly void CopyTo(float[] array, int index)
+        public readonly void CopyTo(double[] array, int index)
         {
             if (array == null)
             {
@@ -104,7 +105,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The dot product.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Dot(Vector2 value1, Vector2 value2)
+        public static double Dot(Vector2 value1, Vector2 value2)
         {
             return value1.X * value2.X +
                    value1.Y * value2.Y;
@@ -149,7 +150,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Abs(Vector2 value)
         {
-            return new Vector2(MathF.Abs(value.X), MathF.Abs(value.Y));
+            return new Vector2(Math.Abs(value.X), Math.Abs(value.Y));
         }
 
         /// <summary>
@@ -161,7 +162,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 SquareRoot(Vector2 value)
         {
-            return new Vector2(MathF.Sqrt(value.X), MathF.Sqrt(value.Y));
+            return new Vector2(Math.Sqrt(value.X), Math.Sqrt(value.Y));
         }
         #endregion Public Static Methods
 
@@ -213,7 +214,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The scaled vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator *(float left, Vector2 right)
+        public static Vector2 operator *(double left, Vector2 right)
         {
             return new Vector2(left, left) * right;
         }
@@ -226,7 +227,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The scaled vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator *(Vector2 left, float right)
+        public static Vector2 operator *(Vector2 left, double right)
         {
             return left * new Vector2(right, right);
         }
@@ -251,7 +252,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value2">The scalar value.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator /(Vector2 value1, float value2)
+        public static Vector2 operator /(Vector2 value1, double value2)
         {
             return value1 / new Vector2(value2);
         }

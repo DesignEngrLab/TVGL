@@ -23,7 +23,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     *
     * PATTERN:
     *    if (typeof(T) == typeof(int)) { ... }
-    *    else if (typeof(T) == typeof(float)) { ... }
+    *    else if (typeof(T) == typeof(double)) { ... }
     * EXPLANATION:
     *    At runtime, each instantiation of Vector<T> will be type-specific, and each of these typeof blocks will be eliminated,
     *    as typeof(T) is a (JIT) compile-time constant for each instantiation. This design was chosen to eliminate any overhead from
@@ -189,13 +189,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         }
                     }
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    fixed (float* basePtr = &this.register.single_0)
+                    fixed (double* basePtr = &this.register.single_0)
                     {
                         for (nint g = 0; g < Count; g++)
                         {
-                            *(basePtr + g) = (float)(object)value;
+                            *(basePtr + g) = (double)(object)value;
                         }
                     }
                 }
@@ -296,12 +296,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     register.int64_0 = (long)(object)value;
                     register.int64_1 = (long)(object)value;
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    register.single_0 = (float)(object)value;
-                    register.single_1 = (float)(object)value;
-                    register.single_2 = (float)(object)value;
-                    register.single_3 = (float)(object)value;
+                    register.single_0 = (double)(object)value;
+                    register.single_1 = (double)(object)value;
+                    register.single_2 = (double)(object)value;
+                    register.single_3 = (double)(object)value;
                 }
                 else if (typeof(T) == typeof(double))
                 {
@@ -605,7 +605,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         this.register.int64_0 == other.register.int64_0
                         && this.register.int64_1 == other.register.int64_1;
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
                     return
                         this.register.single_0 == other.register.single_0
@@ -648,11 +648,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     hashCode.Add(Unsafe.Add(ref Unsafe.As<Vector<T>, int>(ref Unsafe.AsRef<Vector<T>>(in this)), (IntPtr)g));
                 }
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
                 for (nint g = 0; g < Count; g++)
                 {
-                    hashCode.Add(Unsafe.Add(ref Unsafe.As<Vector<T>, float>(ref Unsafe.AsRef<Vector<T>>(in this)), (IntPtr)g));
+                    hashCode.Add(Unsafe.Add(ref Unsafe.As<Vector<T>, double>(ref Unsafe.AsRef<Vector<T>>(in this)), (IntPtr)g));
                 }
             }
             else if (typeof(T) == typeof(double))
@@ -835,12 +835,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         }
                         return new Vector<T>(dataPtr);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        float* dataPtr = stackalloc float[Count];
+                        double* dataPtr = stackalloc double[Count];
                         for (int g = 0; g < Count; g++)
                         {
-                            dataPtr[g] = (float)(object)ScalarAdd(left[g], right[g]);
+                            dataPtr[g] = (double)(object)ScalarAdd(left[g], right[g]);
                         }
                         return new Vector<T>(dataPtr);
                     }
@@ -945,12 +945,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         sum.register.int64_0 = (long)(left.register.int64_0 + right.register.int64_0);
                         sum.register.int64_1 = (long)(left.register.int64_1 + right.register.int64_1);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        sum.register.single_0 = (float)(left.register.single_0 + right.register.single_0);
-                        sum.register.single_1 = (float)(left.register.single_1 + right.register.single_1);
-                        sum.register.single_2 = (float)(left.register.single_2 + right.register.single_2);
-                        sum.register.single_3 = (float)(left.register.single_3 + right.register.single_3);
+                        sum.register.single_0 = (double)(left.register.single_0 + right.register.single_0);
+                        sum.register.single_1 = (double)(left.register.single_1 + right.register.single_1);
+                        sum.register.single_2 = (double)(left.register.single_2 + right.register.single_2);
+                        sum.register.single_3 = (double)(left.register.single_3 + right.register.single_3);
                     }
                     else if (typeof(T) == typeof(double))
                     {
@@ -1047,12 +1047,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         }
                         return new Vector<T>(dataPtr);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        float* dataPtr = stackalloc float[Count];
+                        double* dataPtr = stackalloc double[Count];
                         for (int g = 0; g < Count; g++)
                         {
-                            dataPtr[g] = (float)(object)ScalarSubtract(left[g], right[g]);
+                            dataPtr[g] = (double)(object)ScalarSubtract(left[g], right[g]);
                         }
                         return new Vector<T>(dataPtr);
                     }
@@ -1157,12 +1157,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         difference.register.int64_0 = (long)(left.register.int64_0 - right.register.int64_0);
                         difference.register.int64_1 = (long)(left.register.int64_1 - right.register.int64_1);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        difference.register.single_0 = (float)(left.register.single_0 - right.register.single_0);
-                        difference.register.single_1 = (float)(left.register.single_1 - right.register.single_1);
-                        difference.register.single_2 = (float)(left.register.single_2 - right.register.single_2);
-                        difference.register.single_3 = (float)(left.register.single_3 - right.register.single_3);
+                        difference.register.single_0 = (double)(left.register.single_0 - right.register.single_0);
+                        difference.register.single_1 = (double)(left.register.single_1 - right.register.single_1);
+                        difference.register.single_2 = (double)(left.register.single_2 - right.register.single_2);
+                        difference.register.single_3 = (double)(left.register.single_3 - right.register.single_3);
                     }
                     else if (typeof(T) == typeof(double))
                     {
@@ -1260,12 +1260,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         }
                         return new Vector<T>(dataPtr);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        float* dataPtr = stackalloc float[Count];
+                        double* dataPtr = stackalloc double[Count];
                         for (int g = 0; g < Count; g++)
                         {
-                            dataPtr[g] = (float)(object)ScalarMultiply(left[g], right[g]);
+                            dataPtr[g] = (double)(object)ScalarMultiply(left[g], right[g]);
                         }
                         return new Vector<T>(dataPtr);
                     }
@@ -1370,12 +1370,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         product.register.int64_0 = (long)(left.register.int64_0 * right.register.int64_0);
                         product.register.int64_1 = (long)(left.register.int64_1 * right.register.int64_1);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        product.register.single_0 = (float)(left.register.single_0 * right.register.single_0);
-                        product.register.single_1 = (float)(left.register.single_1 * right.register.single_1);
-                        product.register.single_2 = (float)(left.register.single_2 * right.register.single_2);
-                        product.register.single_3 = (float)(left.register.single_3 * right.register.single_3);
+                        product.register.single_0 = (double)(left.register.single_0 * right.register.single_0);
+                        product.register.single_1 = (double)(left.register.single_1 * right.register.single_1);
+                        product.register.single_2 = (double)(left.register.single_2 * right.register.single_2);
+                        product.register.single_3 = (double)(left.register.single_3 * right.register.single_3);
                     }
                     else if (typeof(T) == typeof(double))
                     {
@@ -1493,12 +1493,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         }
                         return new Vector<T>(dataPtr);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        float* dataPtr = stackalloc float[Count];
+                        double* dataPtr = stackalloc double[Count];
                         for (int g = 0; g < Count; g++)
                         {
-                            dataPtr[g] = (float)(object)ScalarDivide(left[g], right[g]);
+                            dataPtr[g] = (double)(object)ScalarDivide(left[g], right[g]);
                         }
                         return new Vector<T>(dataPtr);
                     }
@@ -1603,12 +1603,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         quotient.register.int64_0 = (long)(left.register.int64_0 / right.register.int64_0);
                         quotient.register.int64_1 = (long)(left.register.int64_1 / right.register.int64_1);
                     }
-                    else if (typeof(T) == typeof(float))
+                    else if (typeof(T) == typeof(double))
                     {
-                        quotient.register.single_0 = (float)(left.register.single_0 / right.register.single_0);
-                        quotient.register.single_1 = (float)(left.register.single_1 / right.register.single_1);
-                        quotient.register.single_2 = (float)(left.register.single_2 / right.register.single_2);
-                        quotient.register.single_3 = (float)(left.register.single_3 / right.register.single_3);
+                        quotient.register.single_0 = (double)(left.register.single_0 / right.register.single_0);
+                        quotient.register.single_1 = (double)(left.register.single_1 / right.register.single_1);
+                        quotient.register.single_2 = (double)(left.register.single_2 / right.register.single_2);
+                        quotient.register.single_3 = (double)(left.register.single_3 / right.register.single_3);
                     }
                     else if (typeof(T) == typeof(double))
                     {
@@ -1838,8 +1838,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
-        public static explicit operator Vector<float>(Vector<T> value) =>
-            new Vector<float>(ref value.register);
+        public static explicit operator Vector<double>(Vector<T> value) =>
+            new Vector<double>(ref value.register);
 
         /// <summary>
         /// Reinterprets the bits of the given vector into those of another type.
@@ -1931,12 +1931,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     }
                     return new Vector<T>(dataPtr);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float* dataPtr = stackalloc float[Count];
+                    double* dataPtr = stackalloc double[Count];
                     for (int g = 0; g < Count; g++)
                     {
-                        dataPtr[g] = ScalarEquals(left[g], right[g]) ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
+                        dataPtr[g] = ScalarEquals(left[g], right[g]) ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
                     }
                     return new Vector<T>(dataPtr);
                 }
@@ -2049,12 +2049,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     register.int64_1 = left.register.int64_1 == right.register.int64_1 ? ConstantHelper.GetInt64WithAllBitsSet() : (long)0;
                     return new Vector<T>(ref register);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    register.single_0 = left.register.single_0 == right.register.single_0 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_1 = left.register.single_1 == right.register.single_1 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_2 = left.register.single_2 == right.register.single_2 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_3 = left.register.single_3 == right.register.single_3 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
+                    register.single_0 = left.register.single_0 == right.register.single_0 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_1 = left.register.single_1 == right.register.single_1 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_2 = left.register.single_2 == right.register.single_2 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_3 = left.register.single_3 == right.register.single_3 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
                     return new Vector<T>(ref register);
                 }
                 else if (typeof(T) == typeof(double))
@@ -2148,12 +2148,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     }
                     return new Vector<T>(dataPtr);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float* dataPtr = stackalloc float[Count];
+                    double* dataPtr = stackalloc double[Count];
                     for (int g = 0; g < Count; g++)
                     {
-                        dataPtr[g] = ScalarLessThan(left[g], right[g]) ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
+                        dataPtr[g] = ScalarLessThan(left[g], right[g]) ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
                     }
                     return new Vector<T>(dataPtr);
                 }
@@ -2266,12 +2266,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     register.int64_1 = left.register.int64_1 < right.register.int64_1 ? ConstantHelper.GetInt64WithAllBitsSet() : (long)0;
                     return new Vector<T>(ref register);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    register.single_0 = left.register.single_0 < right.register.single_0 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_1 = left.register.single_1 < right.register.single_1 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_2 = left.register.single_2 < right.register.single_2 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_3 = left.register.single_3 < right.register.single_3 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
+                    register.single_0 = left.register.single_0 < right.register.single_0 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_1 = left.register.single_1 < right.register.single_1 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_2 = left.register.single_2 < right.register.single_2 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_3 = left.register.single_3 < right.register.single_3 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
                     return new Vector<T>(ref register);
                 }
                 else if (typeof(T) == typeof(double))
@@ -2365,12 +2365,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     }
                     return new Vector<T>(dataPtr);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float* dataPtr = stackalloc float[Count];
+                    double* dataPtr = stackalloc double[Count];
                     for (int g = 0; g < Count; g++)
                     {
-                        dataPtr[g] = ScalarGreaterThan(left[g], right[g]) ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
+                        dataPtr[g] = ScalarGreaterThan(left[g], right[g]) ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
                     }
                     return new Vector<T>(dataPtr);
                 }
@@ -2483,12 +2483,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     register.int64_1 = left.register.int64_1 > right.register.int64_1 ? ConstantHelper.GetInt64WithAllBitsSet() : (long)0;
                     return new Vector<T>(ref register);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    register.single_0 = left.register.single_0 > right.register.single_0 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_1 = left.register.single_1 > right.register.single_1 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_2 = left.register.single_2 > right.register.single_2 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
-                    register.single_3 = left.register.single_3 > right.register.single_3 ? ConstantHelper.GetSingleWithAllBitsSet() : (float)0;
+                    register.single_0 = left.register.single_0 > right.register.single_0 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_1 = left.register.single_1 > right.register.single_1 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_2 = left.register.single_2 > right.register.single_2 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
+                    register.single_3 = left.register.single_3 > right.register.single_3 ? ConstantHelper.GetSingleWithAllBitsSet() : (double)0;
                     return new Vector<T>(ref register);
                 }
                 else if (typeof(T) == typeof(double))
@@ -2581,12 +2581,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     }
                     return new Vector<T>(dataPtr);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float* dataPtr = stackalloc float[Count];
+                    double* dataPtr = stackalloc double[Count];
                     for (int g = 0; g < Count; g++)
                     {
-                        dataPtr[g] = (float)(object)(Math.Abs((float)(object)value[g]));
+                        dataPtr[g] = (double)(object)(Math.Abs((double)(object)value[g]));
                     }
                     return new Vector<T>(dataPtr);
                 }
@@ -2652,12 +2652,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     value.register.int64_1 = (long)(Math.Abs(value.register.int64_1));
                     return value;
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    value.register.single_0 = (float)(Math.Abs(value.register.single_0));
-                    value.register.single_1 = (float)(Math.Abs(value.register.single_1));
-                    value.register.single_2 = (float)(Math.Abs(value.register.single_2));
-                    value.register.single_3 = (float)(Math.Abs(value.register.single_3));
+                    value.register.single_0 = (double)(Math.Abs(value.register.single_0));
+                    value.register.single_1 = (double)(Math.Abs(value.register.single_1));
+                    value.register.single_2 = (double)(Math.Abs(value.register.single_2));
+                    value.register.single_3 = (double)(Math.Abs(value.register.single_3));
                     return value;
                 }
                 else if (typeof(T) == typeof(double))
@@ -2750,12 +2750,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     }
                     return new Vector<T>(dataPtr);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float* dataPtr = stackalloc float[Count];
+                    double* dataPtr = stackalloc double[Count];
                     for (int g = 0; g < Count; g++)
                     {
-                        dataPtr[g] = ScalarLessThan(left[g], right[g]) ? (float)(object)left[g] : (float)(object)right[g];
+                        dataPtr[g] = ScalarLessThan(left[g], right[g]) ? (double)(object)left[g] : (double)(object)right[g];
                     }
                     return new Vector<T>(dataPtr);
                 }
@@ -2868,7 +2868,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     vec.register.int64_1 = left.register.int64_1 < right.register.int64_1 ? left.register.int64_1 : right.register.int64_1;
                     return vec;
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
                     vec.register.single_0 = left.register.single_0 < right.register.single_0 ? left.register.single_0 : right.register.single_0;
                     vec.register.single_1 = left.register.single_1 < right.register.single_1 ? left.register.single_1 : right.register.single_1;
@@ -2966,12 +2966,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     }
                     return new Vector<T>(dataPtr);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float* dataPtr = stackalloc float[Count];
+                    double* dataPtr = stackalloc double[Count];
                     for (int g = 0; g < Count; g++)
                     {
-                        dataPtr[g] = ScalarGreaterThan(left[g], right[g]) ? (float)(object)left[g] : (float)(object)right[g];
+                        dataPtr[g] = ScalarGreaterThan(left[g], right[g]) ? (double)(object)left[g] : (double)(object)right[g];
                     }
                     return new Vector<T>(dataPtr);
                 }
@@ -3084,7 +3084,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     vec.register.int64_1 = left.register.int64_1 > right.register.int64_1 ? left.register.int64_1 : right.register.int64_1;
                     return vec;
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
                     vec.register.single_0 = left.register.single_0 > right.register.single_0 ? left.register.single_0 : right.register.single_0;
                     vec.register.single_1 = left.register.single_1 > right.register.single_1 ? left.register.single_1 : right.register.single_1;
@@ -3219,13 +3219,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     product += (long)(left.register.int64_1 * right.register.int64_1);
                     return (T)(object)product;
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float product = 0;
-                    product += (float)(left.register.single_0 * right.register.single_0);
-                    product += (float)(left.register.single_1 * right.register.single_1);
-                    product += (float)(left.register.single_2 * right.register.single_2);
-                    product += (float)(left.register.single_3 * right.register.single_3);
+                    double product = 0;
+                    product += (double)(left.register.single_0 * right.register.single_0);
+                    product += (double)(left.register.single_1 * right.register.single_1);
+                    product += (double)(left.register.single_2 * right.register.single_2);
+                    product += (double)(left.register.single_3 * right.register.single_3);
                     return (T)(object)product;
                 }
                 else if (typeof(T) == typeof(double))
@@ -3319,12 +3319,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     }
                     return new Vector<T>(dataPtr);
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    float* dataPtr = stackalloc float[Count];
+                    double* dataPtr = stackalloc double[Count];
                     for (int g = 0; g < Count; g++)
                     {
-                        dataPtr[g] = unchecked((float)Math.Sqrt((float)(object)value[g]));
+                        dataPtr[g] = unchecked((double)Math.Sqrt((double)(object)value[g]));
                     }
                     return new Vector<T>(dataPtr);
                 }
@@ -3436,12 +3436,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     value.register.int64_1 = (long)Math.Sqrt(value.register.int64_1);
                     return value;
                 }
-                else if (typeof(T) == typeof(float))
+                else if (typeof(T) == typeof(double))
                 {
-                    value.register.single_0 = (float)Math.Sqrt(value.register.single_0);
-                    value.register.single_1 = (float)Math.Sqrt(value.register.single_1);
-                    value.register.single_2 = (float)Math.Sqrt(value.register.single_2);
-                    value.register.single_3 = (float)Math.Sqrt(value.register.single_3);
+                    value.register.single_0 = (double)Math.Sqrt(value.register.single_0);
+                    value.register.single_1 = (double)Math.Sqrt(value.register.single_1);
+                    value.register.single_2 = (double)Math.Sqrt(value.register.single_2);
+                    value.register.single_3 = (double)Math.Sqrt(value.register.single_3);
                     return value;
                 }
                 else if (typeof(T) == typeof(double))
@@ -3494,9 +3494,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (long)(object)left == (long)(object)right;
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                return (float)(object)left == (float)(object)right;
+                return (double)(object)left == (double)(object)right;
             }
             else if (typeof(T) == typeof(double))
             {
@@ -3543,9 +3543,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (long)(object)left < (long)(object)right;
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                return (float)(object)left < (float)(object)right;
+                return (double)(object)left < (double)(object)right;
             }
             else if (typeof(T) == typeof(double))
             {
@@ -3592,9 +3592,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (long)(object)left > (long)(object)right;
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                return (float)(object)left > (float)(object)right;
+                return (double)(object)left > (double)(object)right;
             }
             else if (typeof(T) == typeof(double))
             {
@@ -3641,9 +3641,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (T)(object)unchecked((long)((long)(object)left + (long)(object)right));
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                return (T)(object)unchecked((float)((float)(object)left + (float)(object)right));
+                return (T)(object)unchecked((double)((double)(object)left + (double)(object)right));
             }
             else if (typeof(T) == typeof(double))
             {
@@ -3690,9 +3690,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (T)(object)(long)((long)(object)left - (long)(object)right);
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                return (T)(object)(float)((float)(object)left - (float)(object)right);
+                return (T)(object)(double)((double)(object)left - (double)(object)right);
             }
             else if (typeof(T) == typeof(double))
             {
@@ -3739,9 +3739,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (T)(object)unchecked((long)((long)(object)left * (long)(object)right));
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                return (T)(object)unchecked((float)((float)(object)left * (float)(object)right));
+                return (T)(object)unchecked((double)((double)(object)left * (double)(object)right));
             }
             else if (typeof(T) == typeof(double))
             {
@@ -3788,9 +3788,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (T)(object)(long)((long)(object)left / (long)(object)right);
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                return (T)(object)(float)((float)(object)left / (float)(object)right);
+                return (T)(object)(double)((double)(object)left / (double)(object)right);
             }
             else if (typeof(T) == typeof(double))
             {
@@ -3845,9 +3845,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 long value = 1;
                 return (T)(object)value;
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
-                float value = 1;
+                double value = 1;
                 return (T)(object)value;
             }
             else if (typeof(T) == typeof(double))
@@ -3896,7 +3896,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return (T)(object)ConstantHelper.GetInt64WithAllBitsSet();
             }
-            else if (typeof(T) == typeof(float))
+            else if (typeof(T) == typeof(double))
             {
                 return (T)(object)ConstantHelper.GetSingleWithAllBitsSet();
             }
@@ -4077,9 +4077,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
         // COMMENTEDCHANGE [Intrinsic]
-        public static unsafe void Widen(Vector<float> source, out Vector<double> low, out Vector<double> high)
+        public static unsafe void Widen(Vector<double> source, out Vector<double> low, out Vector<double> high)
         {
-            int elements = Vector<float>.Count;
+            int elements = Vector<double>.Count;
             double* lowPtr = stackalloc double[elements / 2];
             for (int i = 0; i < elements / 2; i++)
             {
@@ -4262,22 +4262,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>A Vector{Single} containing elements narrowed from the source vectors.</returns>
         /// </summary>
         // COMMENTEDCHANGE [Intrinsic]
-        public static unsafe Vector<float> Narrow(Vector<double> low, Vector<double> high)
+        public static unsafe Vector<double> Narrow(Vector<double> low, Vector<double> high)
         {
             unchecked
             {
-                int elements = Vector<float>.Count;
-                float* retPtr = stackalloc float[elements];
+                int elements = Vector<double>.Count;
+                double* retPtr = stackalloc double[elements];
                 for (int i = 0; i < elements / 2; i++)
                 {
-                    retPtr[i] = (float)low[i];
+                    retPtr[i] = (double)low[i];
                 }
                 for (int i = 0; i < elements / 2; i++)
                 {
-                    retPtr[i + (elements / 2)] = (float)high[i];
+                    retPtr[i + (elements / 2)] = (double)high[i];
                 }
 
-                return new Vector<float>(retPtr);
+                return new Vector<double>(retPtr);
             }
         }
 
@@ -4290,18 +4290,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
-        public static unsafe Vector<float> ConvertToSingle(Vector<int> value)
+        public static unsafe Vector<double> ConvertToSingle(Vector<int> value)
         {
             unchecked
             {
-                int elements = Vector<float>.Count;
-                float* retPtr = stackalloc float[elements];
+                int elements = Vector<double>.Count;
+                double* retPtr = stackalloc double[elements];
                 for (int i = 0; i < elements; i++)
                 {
-                    retPtr[i] = (float)value[i];
+                    retPtr[i] = (double)value[i];
                 }
 
-                return new Vector<float>(retPtr);
+                return new Vector<double>(retPtr);
             }
         }
 
@@ -4312,18 +4312,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The converted vector.</returns>
         [CLSCompliant(false)]
         // COMMENTEDCHANGE [Intrinsic]
-        public static unsafe Vector<float> ConvertToSingle(Vector<uint> value)
+        public static unsafe Vector<double> ConvertToSingle(Vector<uint> value)
         {
             unchecked
             {
-                int elements = Vector<float>.Count;
-                float* retPtr = stackalloc float[elements];
+                int elements = Vector<double>.Count;
+                double* retPtr = stackalloc double[elements];
                 for (int i = 0; i < elements; i++)
                 {
-                    retPtr[i] = (float)value[i];
+                    retPtr[i] = (double)value[i];
                 }
 
-                return new Vector<float>(retPtr);
+                return new Vector<double>(retPtr);
             }
         }
 
@@ -4376,7 +4376,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
-        public static unsafe Vector<int> ConvertToInt32(Vector<float> value)
+        public static unsafe Vector<int> ConvertToInt32(Vector<double> value)
         {
             unchecked
             {
@@ -4398,7 +4398,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The converted vector.</returns>
         [CLSCompliant(false)]
         // COMMENTEDCHANGE [Intrinsic]
-        public static unsafe Vector<uint> ConvertToUInt32(Vector<float> value)
+        public static unsafe Vector<uint> ConvertToUInt32(Vector<double> value)
         {
             unchecked
             {

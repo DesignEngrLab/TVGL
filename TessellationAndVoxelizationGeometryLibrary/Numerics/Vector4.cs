@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -128,18 +129,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <returns>The vector's length.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float Length()
+        public readonly double Length()
         {
             if (Vector.IsHardwareAccelerated)
             {
-                float ls = Vector4.Dot(this, this);
-                return MathF.Sqrt(ls);
+                double ls = Vector4.Dot(this, this);
+                return Math.Sqrt(ls);
             }
             else
             {
-                float ls = X * X + Y * Y + Z * Z + W * W;
+                double ls = X * X + Y * Y + Z * Z + W * W;
 
-                return MathF.Sqrt(ls);
+                return Math.Sqrt(ls);
             }
         }
 
@@ -148,7 +149,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <returns>The vector's length squared.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float LengthSquared()
+        public readonly double LengthSquared()
         {
             if (Vector.IsHardwareAccelerated)
             {
@@ -169,24 +170,24 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value2">The second point.</param>
         /// <returns>The distance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Distance(Vector4 value1, Vector4 value2)
+        public static double Distance(Vector4 value1, Vector4 value2)
         {
             if (Vector.IsHardwareAccelerated)
             {
                 Vector4 difference = value1 - value2;
-                float ls = Vector4.Dot(difference, difference);
-                return MathF.Sqrt(ls);
+                double ls = Vector4.Dot(difference, difference);
+                return Math.Sqrt(ls);
             }
             else
             {
-                float dx = value1.X - value2.X;
-                float dy = value1.Y - value2.Y;
-                float dz = value1.Z - value2.Z;
-                float dw = value1.W - value2.W;
+                double dx = value1.X - value2.X;
+                double dy = value1.Y - value2.Y;
+                double dz = value1.Z - value2.Z;
+                double dw = value1.W - value2.W;
 
-                float ls = dx * dx + dy * dy + dz * dz + dw * dw;
+                double ls = dx * dx + dy * dy + dz * dz + dw * dw;
 
-                return MathF.Sqrt(ls);
+                return Math.Sqrt(ls);
             }
         }
 
@@ -197,7 +198,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value2">The second point.</param>
         /// <returns>The distance squared.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float DistanceSquared(Vector4 value1, Vector4 value2)
+        public static double DistanceSquared(Vector4 value1, Vector4 value2)
         {
             if (Vector.IsHardwareAccelerated)
             {
@@ -206,10 +207,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
             else
             {
-                float dx = value1.X - value2.X;
-                float dy = value1.Y - value2.Y;
-                float dz = value1.Z - value2.Z;
-                float dw = value1.W - value2.W;
+                double dx = value1.X - value2.X;
+                double dy = value1.Y - value2.Y;
+                double dz = value1.Z - value2.Z;
+                double dw = value1.W - value2.W;
 
                 return dx * dx + dy * dy + dz * dz + dw * dw;
             }
@@ -225,13 +226,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             if (Vector.IsHardwareAccelerated)
             {
-                float length = vector.Length();
+                double length = vector.Length();
                 return vector / length;
             }
             else
             {
-                float ls = vector.X * vector.X + vector.Y * vector.Y + vector.Z * vector.Z + vector.W * vector.W;
-                float invNorm = 1.0f / MathF.Sqrt(ls);
+                double ls = vector.X * vector.X + vector.Y * vector.Y + vector.Z * vector.Z + vector.W * vector.W;
+                double invNorm = 1.0f / Math.Sqrt(ls);
 
                 return new Vector4(
                     vector.X * invNorm,
@@ -253,19 +254,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             // This compare order is very important!!!
             // We must follow HLSL behavior in the case user specified min value is bigger than max value.
-            float x = value1.X;
+            double x = value1.X;
             x = (min.X > x) ? min.X : x;  // max(x, minx)
             x = (max.X < x) ? max.X : x;  // min(x, maxx)
 
-            float y = value1.Y;
+            double y = value1.Y;
             y = (min.Y > y) ? min.Y : y;  // max(y, miny)
             y = (max.Y < y) ? max.Y : y;  // min(y, maxy)
 
-            float z = value1.Z;
+            double z = value1.Z;
             z = (min.Z > z) ? min.Z : z;  // max(z, minz)
             z = (max.Z < z) ? max.Z : z;  // min(z, maxz)
 
-            float w = value1.W;
+            double w = value1.W;
             w = (min.W > w) ? min.W : w;  // max(w, minw)
             w = (max.W < w) ? max.W : w;  // min(w, minw)
 
@@ -280,7 +281,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="amount">Value between 0 and 1 indicating the weight of the second source vector.</param>
         /// <returns>The interpolated vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Lerp(Vector4 value1, Vector4 value2, float amount)
+        public static Vector4 Lerp(Vector4 value1, Vector4 value2, double amount)
         {
             return new Vector4(
                 value1.X + (value2.X - value1.X) * amount,
@@ -346,19 +347,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Transform(Vector2 value, Quaternion rotation)
         {
-            float x2 = rotation.X + rotation.X;
-            float y2 = rotation.Y + rotation.Y;
-            float z2 = rotation.Z + rotation.Z;
+            double x2 = rotation.X + rotation.X;
+            double y2 = rotation.Y + rotation.Y;
+            double z2 = rotation.Z + rotation.Z;
 
-            float wx2 = rotation.W * x2;
-            float wy2 = rotation.W * y2;
-            float wz2 = rotation.W * z2;
-            float xx2 = rotation.X * x2;
-            float xy2 = rotation.X * y2;
-            float xz2 = rotation.X * z2;
-            float yy2 = rotation.Y * y2;
-            float yz2 = rotation.Y * z2;
-            float zz2 = rotation.Z * z2;
+            double wx2 = rotation.W * x2;
+            double wy2 = rotation.W * y2;
+            double wz2 = rotation.W * z2;
+            double xx2 = rotation.X * x2;
+            double xy2 = rotation.X * y2;
+            double xz2 = rotation.X * z2;
+            double yy2 = rotation.Y * y2;
+            double yz2 = rotation.Y * z2;
+            double zz2 = rotation.Z * z2;
 
             return new Vector4(
                 value.X * (1.0f - yy2 - zz2) + value.Y * (xy2 - wz2),
@@ -376,19 +377,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Transform(Vector3 value, Quaternion rotation)
         {
-            float x2 = rotation.X + rotation.X;
-            float y2 = rotation.Y + rotation.Y;
-            float z2 = rotation.Z + rotation.Z;
+            double x2 = rotation.X + rotation.X;
+            double y2 = rotation.Y + rotation.Y;
+            double z2 = rotation.Z + rotation.Z;
 
-            float wx2 = rotation.W * x2;
-            float wy2 = rotation.W * y2;
-            float wz2 = rotation.W * z2;
-            float xx2 = rotation.X * x2;
-            float xy2 = rotation.X * y2;
-            float xz2 = rotation.X * z2;
-            float yy2 = rotation.Y * y2;
-            float yz2 = rotation.Y * z2;
-            float zz2 = rotation.Z * z2;
+            double wx2 = rotation.W * x2;
+            double wy2 = rotation.W * y2;
+            double wz2 = rotation.W * z2;
+            double xx2 = rotation.X * x2;
+            double xy2 = rotation.X * y2;
+            double xz2 = rotation.X * z2;
+            double yy2 = rotation.Y * y2;
+            double yz2 = rotation.Y * z2;
+            double zz2 = rotation.Z * z2;
 
             return new Vector4(
                 value.X * (1.0f - yy2 - zz2) + value.Y * (xy2 - wz2) + value.Z * (xz2 + wy2),
@@ -406,19 +407,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Transform(Vector4 value, Quaternion rotation)
         {
-            float x2 = rotation.X + rotation.X;
-            float y2 = rotation.Y + rotation.Y;
-            float z2 = rotation.Z + rotation.Z;
+            double x2 = rotation.X + rotation.X;
+            double y2 = rotation.Y + rotation.Y;
+            double z2 = rotation.Z + rotation.Z;
 
-            float wx2 = rotation.W * x2;
-            float wy2 = rotation.W * y2;
-            float wz2 = rotation.W * z2;
-            float xx2 = rotation.X * x2;
-            float xy2 = rotation.X * y2;
-            float xz2 = rotation.X * z2;
-            float yy2 = rotation.Y * y2;
-            float yz2 = rotation.Y * z2;
-            float zz2 = rotation.Z * z2;
+            double wx2 = rotation.W * x2;
+            double wy2 = rotation.W * y2;
+            double wz2 = rotation.W * z2;
+            double xx2 = rotation.X * x2;
+            double xy2 = rotation.X * y2;
+            double xz2 = rotation.X * z2;
+            double yy2 = rotation.Y * y2;
+            double yz2 = rotation.Y * z2;
+            double zz2 = rotation.Z * z2;
 
             return new Vector4(
                 value.X * (1.0f - yy2 - zz2) + value.Y * (xy2 - wz2) + value.Z * (xz2 + wy2),
@@ -475,7 +476,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The scalar value.</param>
         /// <returns>The scaled vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Multiply(Vector4 left, float right)
+        public static Vector4 Multiply(Vector4 left, double right)
         {
             return left * new Vector4(right, right, right, right);
         }
@@ -487,7 +488,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The source vector.</param>
         /// <returns>The scaled vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Multiply(float left, Vector4 right)
+        public static Vector4 Multiply(double left, Vector4 right)
         {
             return new Vector4(left, left, left, left) * right;
         }
@@ -511,7 +512,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="divisor">The scalar value.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Divide(Vector4 left, float divisor)
+        public static Vector4 Divide(Vector4 left, double divisor)
         {
             return left / divisor;
         }

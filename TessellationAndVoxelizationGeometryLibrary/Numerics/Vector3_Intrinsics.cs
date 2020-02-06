@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.CompilerServices;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
@@ -17,15 +18,15 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// The X component of the vector.
         /// </summary>
-        public float X;
+        public double X;
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
-        public float Y;
+        public double Y;
         /// <summary>
         /// The Z component of the vector.
         /// </summary>
-        public float Z;
+        public double Z;
 
         #region Constructors
         /// <summary>
@@ -33,7 +34,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The element to fill the vector with.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector3(float value) : this(value, value, value) { }
+        public Vector3(double value) : this(value, value, value) { }
 
         /// <summary>
         /// Constructs a Vector3 from the given Vector2 and a third value.
@@ -41,7 +42,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The Vector to extract X and Y components from.</param>
         /// <param name="z">The Z component.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector3(Vector2 value, float z) : this(value.X, value.Y, z) { }
+        public Vector3(Vector2 value, double z) : this(value.X, value.Y, z) { }
 
         /// <summary>
         /// Constructs a vector with the given individual elements.
@@ -50,7 +51,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="y">The Y component.</param>
         /// <param name="z">The Z component.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector3(float x, float y, float z)
+        public Vector3(double x, double y, double z)
         {
             X = x;
             Y = y;
@@ -64,7 +65,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void CopyTo(float[] array)
+        public readonly void CopyTo(double[] array)
         {
             CopyTo(array, 0);
         }
@@ -78,7 +79,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array.</exception>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void CopyTo(float[] array, int index)
+        public readonly void CopyTo(double[] array, int index)
         {
             if (array == null)
             {
@@ -121,7 +122,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The dot product.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Dot(Vector3 vector1, Vector3 vector2)
+        public static double Dot(Vector3 vector1, Vector3 vector2)
         {
             return vector1.X * vector2.X +
                    vector1.Y * vector2.Y +
@@ -168,7 +169,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Abs(Vector3 value)
         {
-            return new Vector3(MathF.Abs(value.X), MathF.Abs(value.Y), MathF.Abs(value.Z));
+            return new Vector3(Math.Abs(value.X), Math.Abs(value.Y), Math.Abs(value.Z));
         }
 
         /// <summary>
@@ -180,7 +181,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 SquareRoot(Vector3 value)
         {
-            return new Vector3(MathF.Sqrt(value.X), MathF.Sqrt(value.Y), MathF.Sqrt(value.Z));
+            return new Vector3(Math.Sqrt(value.X), Math.Sqrt(value.Y), Math.Sqrt(value.Z));
         }
         #endregion Public Static Methods
 
@@ -232,7 +233,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The scaled vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(Vector3 left, float right)
+        public static Vector3 operator *(Vector3 left, double right)
         {
             return left * new Vector3(right);
         }
@@ -245,7 +246,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The scaled vector.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(float left, Vector3 right)
+        public static Vector3 operator *(double left, Vector3 right)
         {
             return new Vector3(left) * right;
         }
@@ -270,7 +271,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value2">The scalar value.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator /(Vector3 value1, float value2)
+        public static Vector3 operator /(Vector3 value1, double value2)
         {
             return value1 / new Vector3(value2);
         }

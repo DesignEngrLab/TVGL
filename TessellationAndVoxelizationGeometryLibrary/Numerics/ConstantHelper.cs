@@ -114,9 +114,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             return value;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetSingleWithAllBitsSet()
+        public static double GetSingleWithAllBitsSet()
         {
-            float value = 0;
+            double value = 0;
             unsafe
             {
                 unchecked

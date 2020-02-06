@@ -4,7 +4,7 @@
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
+// COMMENTEDCHANGE using System.Runtime.Intrinsics.X86;
 
 using Internal.Runtime.CompilerServices;
 
