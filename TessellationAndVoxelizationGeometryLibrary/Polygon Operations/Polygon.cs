@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
-using StarMathLib;
+
 using TVGL.IOFunctions;
 
 namespace TVGL

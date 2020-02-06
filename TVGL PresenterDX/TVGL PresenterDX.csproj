@@ -110,9 +110,6 @@
     <Reference Include="SharpDX.Mathematics, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.Mathematics.4.2.0\lib\net45\SharpDX.Mathematics.dll</HintPath>
     </Reference>
-    <Reference Include="StarMath, Version=1.0.17.725, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.17.1019\lib\netstandard1.0\StarMath.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.AppContext.4.3.0\lib\net46\System.AppContext.dll</HintPath>
@@ -261,9 +258,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="x64\d3dcompiler_47.dll" />

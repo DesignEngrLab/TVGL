@@ -12,7 +12,7 @@ using System;
 using System.Linq;
 using HelixToolkit.Wpf.SharpDX.Core;
 using SharpDX;
-using StarMathLib;
+
 using TVGL;
 using TVGL.Voxelization;
 using Color = TVGL.Color;

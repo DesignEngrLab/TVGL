@@ -21,7 +21,7 @@ using System.Threading;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
-using StarMathLib;
+
 using TVGL.Voxelization;
 using System;
 

@@ -20,7 +20,7 @@ using System.Runtime.Serialization;
 using MIConvexHull;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using StarMathLib;
+
 using TVGL.IOFunctions;
 
 namespace TVGL

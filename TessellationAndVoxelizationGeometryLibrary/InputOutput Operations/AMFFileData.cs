@@ -19,7 +19,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using StarMathLib;
+
 using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.IOFunctions

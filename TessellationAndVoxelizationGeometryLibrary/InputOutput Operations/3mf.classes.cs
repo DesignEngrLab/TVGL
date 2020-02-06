@@ -12,7 +12,7 @@ using System.ComponentModel;
 using System.Dynamic;
 using System.Linq;
 using System.Xml.Serialization;
-using StarMathLib;
+
 using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.IOFunctions.threemfclasses

@@ -86,9 +86,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ReachFramework" />
-    <Reference Include="StarMath, Version=1.0.17.725, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.17.1019\lib\netstandard1.0\StarMath.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -134,7 +131,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
-    <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
