@@ -6,12 +6,12 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace TVGL.Numerics  //namespace System.Numerics
+namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating four single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    [Intrinsic]
+    // COMMENTEDCHANGE [Intrinsic]
     public partial struct Vector4 : IEquatable<Vector4>, IFormattable
     {
         #region Public Static Properties
@@ -20,7 +20,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public static Vector4 Zero
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get
             {
                 return default;
@@ -31,7 +31,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public static Vector4 One
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get
             {
                 return new Vector4(1.0f, 1.0f, 1.0f, 1.0f);

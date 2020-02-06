@@ -4,7 +4,7 @@
 
 using System.Globalization;
 
-namespace TVGL.Numerics  //namespace System.Numerics
+namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating a 3x2 matrix.

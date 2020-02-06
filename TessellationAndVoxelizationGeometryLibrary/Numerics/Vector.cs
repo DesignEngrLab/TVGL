@@ -17,7 +17,7 @@ using nint = System.Int64;
 using nint = System.Int32;
 #endif
 
-namespace TVGL.Numerics  //namespace System.Numerics
+namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
     /* Note: The following patterns are used throughout the code here and are described here
     *
@@ -48,7 +48,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
     /// This struct only supports numerical types. This type is intended to be used as a building block for vectorizing
     /// large algorithms. This type is immutable, individual elements cannot be modified.
     /// </summary>
-    [Intrinsic]
+    // COMMENTEDCHANGE [Intrinsic]
     public struct Vector<T> : IEquatable<Vector<T>>, IFormattable where T : struct
     {
         #region Fields
@@ -61,7 +61,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public static int Count
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get
             {
                 ThrowHelper.ThrowForUnsupportedVectorBaseType<T>();
@@ -74,7 +74,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public static Vector<T> Zero
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get => s_zero;
         }
 #pragma warning disable 0649 // never assigned to
@@ -86,14 +86,14 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public static Vector<T> One
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get => s_one;
         }
         private static readonly Vector<T> s_one = new Vector<T>(GetOneValue());
 
         internal static Vector<T> AllOnes
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get => s_allOnes;
         }
         private static readonly Vector<T> s_allOnes = new Vector<T>(GetAllBitsSetValue());
@@ -103,7 +103,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <summary>
         /// Constructs a vector whose components are all <code>value</code>
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public unsafe Vector(T value)
             : this()
         {
@@ -314,14 +314,14 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <summary>
         /// Constructs a vector from the given array. The size of the given array must be at least Vector'T.Count.
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public unsafe Vector(T[] values) : this(values, 0) { }
 
         /// <summary>
         /// Constructs a vector from the given array, starting from the given index.
         /// The array must contain at least Vector'T.Count from the given index.
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public unsafe Vector(T[] values, int index)
         {
             if (values == null)
@@ -426,7 +426,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="destination">The destination array which the values are copied into</param>
         /// <exception cref="ArgumentNullException">If the destination array is null</exception>
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array</exception>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public readonly void CopyTo(T[] destination)
         {
             CopyTo(destination, 0);
@@ -440,7 +440,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <exception cref="ArgumentNullException">If the destination array is null</exception>
         /// <exception cref="ArgumentOutOfRangeException">If index is greater than end of the array or index is less than zero</exception>
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array</exception>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public readonly unsafe void CopyTo(T[] destination, int startIndex)
         {
             if (destination == null)
@@ -465,7 +465,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public readonly unsafe T this[int index]
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get
             {
                 if ((uint)index >= (uint)Count)
@@ -497,7 +497,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="other">The vector to compare this instance to.</param>
         /// <returns>True if the other vector is equal to this instance; False otherwise.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public readonly bool Equals(Vector<T> other)
         {
             if (Vector.IsHardwareAccelerated)
@@ -756,7 +756,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<T> operator +(Vector<T> left, Vector<T> right)
         {
             unchecked
@@ -968,7 +968,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<T> operator -(Vector<T> left, Vector<T> right)
         {
             unchecked
@@ -1181,7 +1181,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The product vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<T> operator *(Vector<T> left, Vector<T> right)
         {
             unchecked
@@ -1414,7 +1414,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The vector resulting from the division.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<T> operator /(Vector<T> left, Vector<T> right)
         {
             unchecked
@@ -1635,7 +1635,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The resultant vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<T> operator &(Vector<T> left, Vector<T> right)
         {
             Vector<T> result = default;
@@ -1666,7 +1666,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The resultant vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<T> operator |(Vector<T> left, Vector<T> right)
         {
             Vector<T> result = default;
@@ -1697,7 +1697,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The resultant vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<T> operator ^(Vector<T> left, Vector<T> right)
         {
             Vector<T> result = default;
@@ -1739,7 +1739,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The first vector to compare.</param>
         /// <returns>True if all elements are equal; False otherwise.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector<T> left, Vector<T> right) =>
             left.Equals(right);
@@ -1750,7 +1750,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if left and right are not equal; False otherwise.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector<T> left, Vector<T> right) => !(left == right);
         #endregion Logical Operators
@@ -1761,7 +1761,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<byte>(Vector<T> value) =>
             new Vector<byte>(ref value.register);
 
@@ -1771,7 +1771,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<sbyte>(Vector<T> value) =>
             new Vector<sbyte>(ref value.register);
 
@@ -1781,7 +1781,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<ushort>(Vector<T> value) =>
             new Vector<ushort>(ref value.register);
 
@@ -1790,7 +1790,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<short>(Vector<T> value) =>
             new Vector<short>(ref value.register);
 
@@ -1800,7 +1800,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<uint>(Vector<T> value) =>
             new Vector<uint>(ref value.register);
 
@@ -1809,7 +1809,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<int>(Vector<T> value) =>
             new Vector<int>(ref value.register);
 
@@ -1819,7 +1819,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<ulong>(Vector<T> value) =>
             new Vector<ulong>(ref value.register);
 
@@ -1828,7 +1828,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<long>(Vector<T> value) =>
             new Vector<long>(ref value.register);
 
@@ -1837,7 +1837,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<float>(Vector<T> value) =>
             new Vector<float>(ref value.register);
 
@@ -1846,14 +1846,14 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector</param>
         /// <returns>The reinterpreted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static explicit operator Vector<double>(Vector<T> value) =>
             new Vector<double>(ref value.register);
 
         #endregion Conversions
 
         #region Internal Comparison Methods
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe Vector<T> Equals(Vector<T> left, Vector<T> right)
         {
@@ -2070,7 +2070,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
             }
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe Vector<T> LessThan(Vector<T> left, Vector<T> right)
         {
@@ -2287,7 +2287,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
             }
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe Vector<T> GreaterThan(Vector<T> left, Vector<T> right)
         {
@@ -2504,19 +2504,19 @@ namespace TVGL.Numerics  //namespace System.Numerics
             }
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static Vector<T> GreaterThanOrEqual(Vector<T> left, Vector<T> right)
         {
             return Equals(left, right) | GreaterThan(left, right);
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static Vector<T> LessThanOrEqual(Vector<T> left, Vector<T> right)
         {
             return Equals(left, right) | LessThan(left, right);
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static Vector<T> ConditionalSelect(Vector<T> condition, Vector<T> left, Vector<T> right)
         {
             return (left & condition) | (Vector.AndNot(right, condition));
@@ -2524,7 +2524,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         #endregion Comparison Methods
 
         #region Internal Math Methods
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static unsafe Vector<T> Abs(Vector<T> value)
         {
             if (typeof(T) == typeof(byte))
@@ -2673,7 +2673,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
             }
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static unsafe Vector<T> Min(Vector<T> left, Vector<T> right)
         {
             if (Vector.IsHardwareAccelerated)
@@ -2889,7 +2889,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
             }
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static unsafe Vector<T> Max(Vector<T> left, Vector<T> right)
         {
             if (Vector.IsHardwareAccelerated)
@@ -3105,7 +3105,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
             }
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static T Dot(Vector<T> left, Vector<T> right)
         {
             if (Vector.IsHardwareAccelerated)
@@ -3242,7 +3242,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
             }
         }
 
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         internal static unsafe Vector<T> SquareRoot(Vector<T> value)
         {
             if (Vector.IsHardwareAccelerated)
@@ -3912,7 +3912,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         #endregion
     }
 
-    [Intrinsic]
+    // COMMENTEDCHANGE [Intrinsic]
     public static partial class Vector
     {
         #region Widen/Narrow
@@ -3923,7 +3923,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe void Widen(Vector<byte> source, out Vector<ushort> low, out Vector<ushort> high)
         {
             int elements = Vector<byte>.Count;
@@ -3949,7 +3949,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe void Widen(Vector<ushort> source, out Vector<uint> low, out Vector<uint> high)
         {
             int elements = Vector<ushort>.Count;
@@ -3975,7 +3975,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe void Widen(Vector<uint> source, out Vector<ulong> low, out Vector<ulong> high)
         {
             int elements = Vector<uint>.Count;
@@ -4001,7 +4001,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe void Widen(Vector<sbyte> source, out Vector<short> low, out Vector<short> high)
         {
             int elements = Vector<sbyte>.Count;
@@ -4026,7 +4026,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="low">The first output vector, whose elements will contain the widened elements from lower indices in the source vector.</param>
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe void Widen(Vector<short> source, out Vector<int> low, out Vector<int> high)
         {
             int elements = Vector<short>.Count;
@@ -4051,7 +4051,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="low">The first output vector, whose elements will contain the widened elements from lower indices in the source vector.</param>
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe void Widen(Vector<int> source, out Vector<long> low, out Vector<long> high)
         {
             int elements = Vector<int>.Count;
@@ -4076,7 +4076,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="low">The first output vector, whose elements will contain the widened elements from lower indices in the source vector.</param>
         /// <param name="high">The second output vector, whose elements will contain the widened elements from higher indices in the source vector.</param>
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe void Widen(Vector<float> source, out Vector<double> low, out Vector<double> high)
         {
             int elements = Vector<float>.Count;
@@ -4102,7 +4102,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <returns>A Vector{Byte} containing elements narrowed from the source vectors.</returns>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<byte> Narrow(Vector<ushort> low, Vector<ushort> high)
         {
             unchecked
@@ -4129,7 +4129,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <returns>A Vector{UInt16} containing elements narrowed from the source vectors.</returns>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<ushort> Narrow(Vector<uint> low, Vector<uint> high)
         {
             unchecked
@@ -4156,7 +4156,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <returns>A Vector{UInt32} containing elements narrowed from the source vectors.</returns>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<uint> Narrow(Vector<ulong> low, Vector<ulong> high)
         {
             unchecked
@@ -4183,7 +4183,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <returns>A Vector{SByte} containing elements narrowed from the source vectors.</returns>
         /// </summary>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<sbyte> Narrow(Vector<short> low, Vector<short> high)
         {
             unchecked
@@ -4209,7 +4209,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="high">The second source vector, whose elements become the higher-index elements of the return value.</param>
         /// <returns>A Vector{Int16} containing elements narrowed from the source vectors.</returns>
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<short> Narrow(Vector<int> low, Vector<int> high)
         {
             unchecked
@@ -4235,7 +4235,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="high">The second source vector, whose elements become the higher-index elements of the return value.</param>
         /// <returns>A Vector{Int32} containing elements narrowed from the source vectors.</returns>
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<int> Narrow(Vector<long> low, Vector<long> high)
         {
             unchecked
@@ -4261,7 +4261,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="high">The second source vector, whose elements become the higher-index elements of the return value.</param>
         /// <returns>A Vector{Single} containing elements narrowed from the source vectors.</returns>
         /// </summary>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<float> Narrow(Vector<double> low, Vector<double> high)
         {
             unchecked
@@ -4289,7 +4289,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<float> ConvertToSingle(Vector<int> value)
         {
             unchecked
@@ -4311,7 +4311,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<float> ConvertToSingle(Vector<uint> value)
         {
             unchecked
@@ -4332,7 +4332,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<double> ConvertToDouble(Vector<long> value)
         {
             unchecked
@@ -4354,7 +4354,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<double> ConvertToDouble(Vector<ulong> value)
         {
             unchecked
@@ -4375,7 +4375,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<int> ConvertToInt32(Vector<float> value)
         {
             unchecked
@@ -4397,7 +4397,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<uint> ConvertToUInt32(Vector<float> value)
         {
             unchecked
@@ -4418,7 +4418,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<long> ConvertToInt64(Vector<double> value)
         {
             unchecked
@@ -4440,7 +4440,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value">The source vector.</param>
         /// <returns>The converted vector.</returns>
         [CLSCompliant(false)]
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public static unsafe Vector<ulong> ConvertToUInt64(Vector<double> value)
         {
             unchecked

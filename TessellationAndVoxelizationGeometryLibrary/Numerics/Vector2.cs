@@ -2,16 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace TVGL.Numerics  //namespace System.Numerics
+namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    [Intrinsic]
+    // COMMENTEDCHANGE [Intrinsic]
     public partial struct Vector2 : IEquatable<Vector2>, IFormattable
     {
         #region Public Static Properties
@@ -20,7 +21,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public static Vector2 Zero
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get
             {
                 return default;
@@ -31,7 +32,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         public static Vector2 One
         {
-            [Intrinsic]
+            // COMMENTEDCHANGE [Intrinsic]
             get
             {
                 return new Vector2(1.0f, 1.0f);

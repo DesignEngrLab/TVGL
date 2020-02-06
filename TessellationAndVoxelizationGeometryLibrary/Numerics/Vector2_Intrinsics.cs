@@ -4,7 +4,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace TVGL.Numerics  //namespace System.Numerics
+namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
     // This file contains the definitions for all of the JIT intrinsic methods and properties that are recognized by the current x64 JIT compiler.
     // The implementation defined here is used in any circumstance where the JIT fails to recognize these members as intrinsic.
@@ -27,7 +27,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// Constructs a vector whose elements are all the single specified value.
         /// </summary>
         /// <param name="value">The element to fill the vector with.</param>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public Vector2(float value) : this(value, value) { }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="x">The X component.</param>
         /// <param name="y">The Y component.</param>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public Vector2(float x, float y)
         {
             X = x;
@@ -48,7 +48,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// Copies the contents of the vector into the given array.
         /// </summary>
         /// <param name="array">The destination array.</param>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void CopyTo(float[] array)
         {
@@ -63,7 +63,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <exception cref="ArgumentOutOfRangeException">If index is greater than end of the array or index is less than zero.</exception>
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array
         /// or if there are not enough elements to copy.</exception>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public readonly void CopyTo(float[] array, int index)
         {
             if (array == null)
@@ -88,7 +88,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="other">The Vector2 to compare this instance to.</param>
         /// <returns>True if the other Vector2 is equal to this instance; False otherwise.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         public readonly bool Equals(Vector2 other)
         {
             return this.X == other.X && this.Y == other.Y;
@@ -102,7 +102,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value1">The first vector.</param>
         /// <param name="value2">The second vector.</param>
         /// <returns>The dot product.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Dot(Vector2 value1, Vector2 value2)
         {
@@ -116,7 +116,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value1">The first source vector.</param>
         /// <param name="value2">The second source vector.</param>
         /// <returns>The minimized vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Min(Vector2 value1, Vector2 value2)
         {
@@ -131,7 +131,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="value1">The first source vector</param>
         /// <param name="value2">The second source vector</param>
         /// <returns>The maximized vector</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Max(Vector2 value1, Vector2 value2)
         {
@@ -145,7 +145,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The absolute value vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Abs(Vector2 value)
         {
@@ -157,7 +157,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The square root vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 SquareRoot(Vector2 value)
         {
@@ -172,7 +172,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator +(Vector2 left, Vector2 right)
         {
@@ -185,7 +185,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator -(Vector2 left, Vector2 right)
         {
@@ -198,7 +198,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The product vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(Vector2 left, Vector2 right)
         {
@@ -211,7 +211,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The scalar value.</param>
         /// <param name="right">The source vector.</param>
         /// <returns>The scaled vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(float left, Vector2 right)
         {
@@ -224,7 +224,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The source vector.</param>
         /// <param name="right">The scalar value.</param>
         /// <returns>The scaled vector.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(Vector2 left, float right)
         {
@@ -237,7 +237,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The vector resulting from the division.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator /(Vector2 left, Vector2 right)
         {
@@ -273,7 +273,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are equal; False otherwise.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector2 left, Vector2 right)
         {
@@ -286,7 +286,7 @@ namespace TVGL.Numerics  //namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are not equal; False if they are equal.</returns>
-        [Intrinsic]
+        // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector2 left, Vector2 right)
         {

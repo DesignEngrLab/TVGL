@@ -34,6 +34,14 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Numerics\BitOperations.cs" />
+    <Compile Remove="Numerics\ConstantHelper.cs" />
+    <Compile Remove="Numerics\Register.cs" />
+    <Compile Remove="Numerics\Vector.cs" />
+    <Compile Remove="Numerics\Vector_Operations.cs" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />

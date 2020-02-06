@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -2637,7 +2637,7 @@ namespace TVGL
             bool onBoundaryIsInside = true)
         {
             //This function has three layers of checks. 
-            //(1) Check if the point is inside the axis aligned bouning box. If it is not, then return false.
+            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
             //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
             //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
             closestLineAbove = null;
