@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
-
+using TVGL.Numerics;
 
 namespace TVGL
 {

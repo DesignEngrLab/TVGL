@@ -94,7 +94,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void CopyTo(double[] array)
+        public void CopyTo(double[] array)
         {
             CopyTo(array, 0);
         }
@@ -108,20 +108,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array.</exception>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void CopyTo(double[] array, int index)
+        public void CopyTo(double[] array, int index)
         {
             if (array == null)
             {
                 // Match the JIT's exception type here. For perf, a NullReference is thrown instead of an ArgumentNull.
-                throw new NullReferenceException(SR.Arg_NullArgumentNullRef);
+                throw new NullReferenceException(); // COMMENTEDCHANGE SR.Arg_NullArgumentNullRef);
             }
             if (index < 0 || index >= array.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), SR.Format(SR.Arg_ArgumentOutOfRangeException, index));
+                throw new ArgumentOutOfRangeException(); // COMMENTEDCHANGE nameof(index), SR.Format(SR.Arg_ArgumentOutOfRangeException, index));
             }
             if ((array.Length - index) < 4)
             {
-                throw new ArgumentException(SR.Format(SR.Arg_ElementsInSourceIsGreaterThanDestination, index));
+                throw new ArgumentException(); // COMMENTEDCHANGE SR.Format(SR.Arg_ElementsInSourceIsGreaterThanDestination, index));
             }
             array[index] = X;
             array[index + 1] = Y;
@@ -135,7 +135,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The Vector4 to compare this instance to.</param>
         /// <returns>True if the other Vector4 is equal to this instance; False otherwise.</returns>
         // COMMENTEDCHANGE [Intrinsic]
-        public readonly bool Equals(Vector4 other)
+        public bool Equals(Vector4 other)
         {
             return this.X == other.X
                 && this.Y == other.Y
@@ -159,6 +159,25 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                    vector1.Y * vector2.Y +
                    vector1.Z * vector2.Z +
                    vector1.W * vector2.W;
+        }
+
+        /// <summary>
+        /// Computes the cross product of two vectors. For homogeneous
+        /// coordinates, the product of the weights is the new weight
+        /// for the resulting product.
+        /// </summary>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector.</param>
+        /// <returns>The cross product.</returns>
+        // COMMENTEDCHANGE [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Cross(Vector4 vector1, Vector4 vector2)
+        {
+            return new Vector4(
+                vector1.Y * vector2.Z - vector1.Z * vector2.Y,
+                vector1.Z * vector2.X - vector1.X * vector2.Z,
+                vector1.X * vector2.Y - vector1.Y * vector2.X,
+                vector1.W * vector2.W);
         }
 
         /// <summary>

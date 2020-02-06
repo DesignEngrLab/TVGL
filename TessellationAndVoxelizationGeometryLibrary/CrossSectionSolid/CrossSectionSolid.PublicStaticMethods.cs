@@ -1,23 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.Numerics;
 
 namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double[] startPoint, double extrudeDistance, 
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, Vector3 startPoint, double extrudeDistance,
             List<PolygonLight> shape, double sameTolerance, UnitType units)
         {
             //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var endPoint = startPoint.add(buildDirection.multiply(extrudeDistance));
+            var endPoint = startPoint + (buildDirection * extrudeDistance);
             var stepDistances = new Dictionary<int, double> { { 0, startPoint.dotProduct(buildDirection) }, { 1, endPoint.dotProduct(buildDirection) } };
             var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, shape }, { 1, shape } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,  
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,
            double sameTolerance, UnitType units)
         {
             //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
@@ -98,7 +98,7 @@ namespace TVGL
                     thisVertex = sortedVertices[vIndex];
                 }
                 if (needToOffset)
-                    z += Math.Min(stepSize, sortedVertices[vIndex + 1].Z-z) / 10.0;
+                    z += Math.Min(stepSize, sortedVertices[vIndex + 1].Z - z) / 10.0;
                 if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
                 else loopsAlongZ[step] = new List<PolygonLight>();
             }

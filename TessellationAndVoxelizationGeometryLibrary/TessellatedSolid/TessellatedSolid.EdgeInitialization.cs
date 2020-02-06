@@ -179,7 +179,7 @@ namespace TVGL
                     {
                         var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
                             ? -2 //edge cannot be owned by both faces, thus this is not a good candidate for this.
-                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal, 3);
+                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal);
                         //  To take it "out of the running", we simply give it a value of -2
                         if (dotProductScore > highestDotProduct)
                         {

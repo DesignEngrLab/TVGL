@@ -13,7 +13,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// </summary>
     public struct Quaternion : IEquatable<Quaternion>
     {
-        private const double SlerpEpsilon = 1e-6f;
+        private const double SlerpEpsilon = 1e-6;
 
         /// <summary>
         /// Specifies the X-value of the vector component of the Quaternion.
@@ -43,9 +43,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns whether the Quaternion is the identity Quaternion.
         /// </summary>
-        public readonly bool IsIdentity
+        public bool IsIdentity
         {
-            get { return X == 0f && Y == 0f && Z == 0f && W == 1f; }
+            get { return X == 0.0 && Y == 0.0 && Z == 0.0 && W == 1.0; }
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Calculates the length of the Quaternion.
         /// </summary>
         /// <returns>The computed length of the Quaternion.</returns>
-        public readonly double Length()
+        public double Length()
         {
             double ls = X * X + Y * Y + Z * Z + W * W;
 
@@ -91,7 +91,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Calculates the length squared of the Quaternion. This operation is cheaper than Length().
         /// </summary>
         /// <returns>The length squared of the Quaternion.</returns>
-        public readonly double LengthSquared()
+        public double LengthSquared()
         {
             return X * X + Y * Y + Z * Z + W * W;
         }
@@ -107,7 +107,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z + value.W * value.W;
 
-            double invNorm = 1.0f / Math.Sqrt(ls);
+            double invNorm = 1.0 / Math.Sqrt(ls);
 
             ans.X = value.X * invNorm;
             ans.Y = value.Y * invNorm;
@@ -148,7 +148,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Quaternion ans;
 
             double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z + value.W * value.W;
-            double invNorm = 1.0f / ls;
+            double invNorm = 1.0 / ls;
 
             ans.X = -value.X * invNorm;
             ans.Y = -value.Y * invNorm;
@@ -169,7 +169,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Quaternion ans;
 
-            double halfAngle = angle * 0.5f;
+            double halfAngle = angle * 0.5;
             double s = Math.Sin(halfAngle);
             double c = Math.Cos(halfAngle);
 
@@ -194,15 +194,15 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             //  pitch upward, then yaw to face into the new heading
             double sr, cr, sp, cp, sy, cy;
 
-            double halfRoll = roll * 0.5f;
+            double halfRoll = roll * 0.5;
             sr = Math.Sin(halfRoll);
             cr = Math.Cos(halfRoll);
 
-            double halfPitch = pitch * 0.5f;
+            double halfPitch = pitch * 0.5;
             sp = Math.Sin(halfPitch);
             cp = Math.Cos(halfPitch);
 
-            double halfYaw = yaw * 0.5f;
+            double halfYaw = yaw * 0.5;
             sy = Math.Sin(halfYaw);
             cy = Math.Cos(halfYaw);
 
@@ -227,11 +227,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             Quaternion q = default;
 
-            if (trace > 0.0f)
+            if (trace > 0.0)
             {
-                double s = Math.Sqrt(trace + 1.0f);
-                q.W = s * 0.5f;
-                s = 0.5f / s;
+                double s = Math.Sqrt(trace + 1.0);
+                q.W = s * 0.5;
+                s = 0.5 / s;
                 q.X = (matrix.M23 - matrix.M32) * s;
                 q.Y = (matrix.M31 - matrix.M13) * s;
                 q.Z = (matrix.M12 - matrix.M21) * s;
@@ -240,29 +240,29 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 if (matrix.M11 >= matrix.M22 && matrix.M11 >= matrix.M33)
                 {
-                    double s = Math.Sqrt(1.0f + matrix.M11 - matrix.M22 - matrix.M33);
-                    double invS = 0.5f / s;
-                    q.X = 0.5f * s;
+                    double s = Math.Sqrt(1.0 + matrix.M11 - matrix.M22 - matrix.M33);
+                    double invS = 0.5 / s;
+                    q.X = 0.5 * s;
                     q.Y = (matrix.M12 + matrix.M21) * invS;
                     q.Z = (matrix.M13 + matrix.M31) * invS;
                     q.W = (matrix.M23 - matrix.M32) * invS;
                 }
                 else if (matrix.M22 > matrix.M33)
                 {
-                    double s = Math.Sqrt(1.0f + matrix.M22 - matrix.M11 - matrix.M33);
-                    double invS = 0.5f / s;
+                    double s = Math.Sqrt(1.0 + matrix.M22 - matrix.M11 - matrix.M33);
+                    double invS = 0.5 / s;
                     q.X = (matrix.M21 + matrix.M12) * invS;
-                    q.Y = 0.5f * s;
+                    q.Y = 0.5 * s;
                     q.Z = (matrix.M32 + matrix.M23) * invS;
                     q.W = (matrix.M31 - matrix.M13) * invS;
                 }
                 else
                 {
-                    double s = Math.Sqrt(1.0f + matrix.M33 - matrix.M11 - matrix.M22);
-                    double invS = 0.5f / s;
+                    double s = Math.Sqrt(1.0 + matrix.M33 - matrix.M11 - matrix.M22);
+                    double invS = 0.5 / s;
                     q.X = (matrix.M31 + matrix.M13) * invS;
                     q.Y = (matrix.M32 + matrix.M23) * invS;
-                    q.Z = 0.5f * s;
+                    q.Z = 0.5 * s;
                     q.W = (matrix.M12 - matrix.M21) * invS;
                 }
             }
@@ -300,7 +300,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             bool flip = false;
 
-            if (cosOmega < 0.0f)
+            if (cosOmega < 0.0)
             {
                 flip = true;
                 cosOmega = -cosOmega;
@@ -308,10 +308,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             double s1, s2;
 
-            if (cosOmega > (1.0f - SlerpEpsilon))
+            if (cosOmega > (1.0 - SlerpEpsilon))
             {
                 // Too close, do straight linear interpolation.
-                s1 = 1.0f - t;
+                s1 = 1.0 - t;
                 s2 = (flip) ? -t : t;
             }
             else
@@ -319,7 +319,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 double omega = Math.Acos(cosOmega);
                 double invSinOmega = 1 / Math.Sin(omega);
 
-                s1 = Math.Sin((1.0f - t) * omega) * invSinOmega;
+                s1 = Math.Sin((1.0 - t) * omega) * invSinOmega;
                 s2 = (flip)
                     ? -Math.Sin(t * omega) * invSinOmega
                     : Math.Sin(t * omega) * invSinOmega;
@@ -345,14 +345,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public static Quaternion Lerp(Quaternion quaternion1, Quaternion quaternion2, double amount)
         {
             double t = amount;
-            double t1 = 1.0f - t;
+            double t1 = 1.0 - t;
 
             Quaternion r = default;
 
             double dot = quaternion1.X * quaternion2.X + quaternion1.Y * quaternion2.Y +
                         quaternion1.Z * quaternion2.Z + quaternion1.W * quaternion2.W;
 
-            if (dot >= 0.0f)
+            if (dot >= 0.0)
             {
                 r.X = t1 * quaternion1.X + t * quaternion2.X;
                 r.Y = t1 * quaternion1.Y + t * quaternion2.Y;
@@ -369,7 +369,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             // Normalize it.
             double ls = r.X * r.X + r.Y * r.Y + r.Z * r.Z + r.W * r.W;
-            double invNorm = 1.0f / Math.Sqrt(ls);
+            double invNorm = 1.0 / Math.Sqrt(ls);
 
             r.X *= invNorm;
             r.Y *= invNorm;
@@ -541,7 +541,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // Inverse part.
             double ls = value2.X * value2.X + value2.Y * value2.Y +
                        value2.Z * value2.Z + value2.W * value2.W;
-            double invNorm = 1.0f / ls;
+            double invNorm = 1.0 / ls;
 
             double q2x = -value2.X * invNorm;
             double q2y = -value2.Y * invNorm;
@@ -691,7 +691,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // Inverse part.
             double ls = value2.X * value2.X + value2.Y * value2.Y +
                        value2.Z * value2.Z + value2.W * value2.W;
-            double invNorm = 1.0f / ls;
+            double invNorm = 1.0 / ls;
 
             double q2x = -value2.X * invNorm;
             double q2y = -value2.Y * invNorm;
@@ -749,7 +749,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="other">The Quaternion to compare this instance to.</param>
         /// <returns>True if the other Quaternion is equal to this instance; False otherwise.</returns>
-        public readonly bool Equals(Quaternion other)
+        public bool Equals(Quaternion other)
         {
             return (X == other.X &&
                     Y == other.Y &&
@@ -762,7 +762,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal to this Quaternion; False otherwise.</returns>
-        public override readonly bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if (obj is Quaternion)
             {
@@ -776,7 +776,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns a String representing this Quaternion instance.
         /// </summary>
         /// <returns>The string representation.</returns>
-        public override readonly string ToString()
+        public override string ToString()
         {
             return string.Format(CultureInfo.CurrentCulture, "{{X:{0} Y:{1} Z:{2} W:{3}}}", X, Y, Z, W);
         }
@@ -785,7 +785,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override readonly int GetHashCode()
+        public override int GetHashCode()
         {
             return unchecked(X.GetHashCode() + Y.GetHashCode() + Z.GetHashCode() + W.GetHashCode());
         }

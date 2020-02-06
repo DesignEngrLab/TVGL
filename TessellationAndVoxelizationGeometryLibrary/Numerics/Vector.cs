@@ -30,7 +30,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     *    delegates and other patterns.
     *
     * PATTERN:
-    *    if (Vector.IsHardwareAccelerated) { ... }
+    *    if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated) { ... }
     *    else { ... }
     * EXPLANATION
     *    This pattern solves two problems:
@@ -107,7 +107,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public unsafe Vector(T value)
             : this()
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(byte))
                 {
@@ -500,7 +500,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         // COMMENTEDCHANGE [Intrinsic]
         public readonly bool Equals(Vector<T> other)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 for (int g = 0; g < Count; g++)
                 {
@@ -761,7 +761,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             unchecked
             {
-                if (Vector.IsHardwareAccelerated)
+                if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
                 {
                     if (typeof(T) == typeof(byte))
                     {
@@ -973,7 +973,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             unchecked
             {
-                if (Vector.IsHardwareAccelerated)
+                if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
                 {
                     if (typeof(T) == typeof(byte))
                     {
@@ -1186,7 +1186,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             unchecked
             {
-                if (Vector.IsHardwareAccelerated)
+                if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
                 {
                     if (typeof(T) == typeof(byte))
                     {
@@ -1419,7 +1419,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             unchecked
             {
-                if (Vector.IsHardwareAccelerated)
+                if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
                 {
                     if (typeof(T) == typeof(byte))
                     {
@@ -1641,7 +1641,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Vector<T> result = default;
             unchecked
             {
-                if (Vector.IsHardwareAccelerated)
+                if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
                 {
                     long* resultBase = &result.register.int64_0;
                     long* leftBase = &left.register.int64_0;
@@ -1672,7 +1672,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Vector<T> result = default;
             unchecked
             {
-                if (Vector.IsHardwareAccelerated)
+                if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
                 {
                     long* resultBase = &result.register.int64_0;
                     long* leftBase = &left.register.int64_0;
@@ -1703,7 +1703,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Vector<T> result = default;
             unchecked
             {
-                if (Vector.IsHardwareAccelerated)
+                if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
                 {
                     long* resultBase = &result.register.int64_0;
                     long* leftBase = &left.register.int64_0;
@@ -1857,7 +1857,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe Vector<T> Equals(Vector<T> left, Vector<T> right)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(byte))
                 {
@@ -2074,7 +2074,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe Vector<T> LessThan(Vector<T> left, Vector<T> right)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(byte))
                 {
@@ -2291,7 +2291,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe Vector<T> GreaterThan(Vector<T> left, Vector<T> right)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(byte))
                 {
@@ -2543,7 +2543,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 return value;
             }
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(sbyte))
                 {
@@ -2676,7 +2676,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         // COMMENTEDCHANGE [Intrinsic]
         internal static unsafe Vector<T> Min(Vector<T> left, Vector<T> right)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(byte))
                 {
@@ -2892,7 +2892,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         // COMMENTEDCHANGE [Intrinsic]
         internal static unsafe Vector<T> Max(Vector<T> left, Vector<T> right)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(byte))
                 {
@@ -3108,7 +3108,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         // COMMENTEDCHANGE [Intrinsic]
         internal static T Dot(Vector<T> left, Vector<T> right)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 T product = default;
                 for (int g = 0; g < Count; g++)
@@ -3245,7 +3245,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         // COMMENTEDCHANGE [Intrinsic]
         internal static unsafe Vector<T> SquareRoot(Vector<T> value)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 if (typeof(T) == typeof(byte))
                 {

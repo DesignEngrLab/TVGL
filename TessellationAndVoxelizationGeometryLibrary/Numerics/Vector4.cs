@@ -35,25 +35,25 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // COMMENTEDCHANGE [Intrinsic]
             get
             {
-                return new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                return new Vector4(1.0, 1.0, 1.0, 1.0);
             }
         }
         /// <summary>
         /// Returns the vector (1,0,0,0).
         /// </summary>
-        public static Vector4 UnitX { get { return new Vector4(1.0f, 0.0f, 0.0f, 0.0f); } }
+        public static Vector4 UnitX { get { return new Vector4(1.0, 0.0, 0.0, 0.0); } }
         /// <summary>
         /// Returns the vector (0,1,0,0).
         /// </summary>
-        public static Vector4 UnitY { get { return new Vector4(0.0f, 1.0f, 0.0f, 0.0f); } }
+        public static Vector4 UnitY { get { return new Vector4(0.0, 1.0, 0.0, 0.0); } }
         /// <summary>
         /// Returns the vector (0,0,1,0).
         /// </summary>
-        public static Vector4 UnitZ { get { return new Vector4(0.0f, 0.0f, 1.0f, 0.0f); } }
+        public static Vector4 UnitZ { get { return new Vector4(0.0, 0.0, 1.0, 0.0); } }
         /// <summary>
         /// Returns the vector (0,0,0,1).
         /// </summary>
-        public static Vector4 UnitW { get { return new Vector4(0.0f, 0.0f, 0.0f, 1.0f); } }
+        public static Vector4 UnitW { get { return new Vector4(0.0, 0.0, 0.0, 1.0); } }
         #endregion Public Static Properties
 
         #region Public instance methods
@@ -61,7 +61,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override readonly int GetHashCode()
+        public override int GetHashCode()
         {
             return HashCode.Combine(this.X.GetHashCode(), this.Y.GetHashCode(), this.Z.GetHashCode(), this.W.GetHashCode());
         }
@@ -72,7 +72,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal to this Vector4; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override readonly bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if (!(obj is Vector4))
                 return false;
@@ -83,7 +83,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns a String representing this Vector4 instance.
         /// </summary>
         /// <returns>The string representation.</returns>
-        public override readonly string ToString()
+        public override string ToString()
         {
             return ToString("G", CultureInfo.CurrentCulture);
         }
@@ -93,7 +93,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="format">The format of individual elements.</param>
         /// <returns>The string representation.</returns>
-        public readonly string ToString(string? format)
+        public string ToString(string format)
         {
             return ToString(format, CultureInfo.CurrentCulture);
         }
@@ -105,7 +105,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="format">The format of individual elements.</param>
         /// <param name="formatProvider">The format provider to use when formatting elements.</param>
         /// <returns>The string representation.</returns>
-        public readonly string ToString(string? format, IFormatProvider? formatProvider)
+        public string ToString(string format, IFormatProvider formatProvider)
         {
             StringBuilder sb = new StringBuilder();
             string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
@@ -129,9 +129,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <returns>The vector's length.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly double Length()
+        public double Length()
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double ls = Vector4.Dot(this, this);
                 return Math.Sqrt(ls);
@@ -149,9 +149,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <returns>The vector's length squared.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly double LengthSquared()
+        public double LengthSquared()
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector4.Dot(this, this);
             }
@@ -172,7 +172,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Distance(Vector4 value1, Vector4 value2)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector4 difference = value1 - value2;
                 double ls = Vector4.Dot(difference, difference);
@@ -200,7 +200,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DistanceSquared(Vector4 value1, Vector4 value2)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector4 difference = value1 - value2;
                 return Vector4.Dot(difference, difference);
@@ -224,7 +224,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Normalize(Vector4 vector)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double length = vector.Length();
                 return vector / length;
@@ -232,7 +232,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             else
             {
                 double ls = vector.X * vector.X + vector.Y * vector.Y + vector.Z * vector.Z + vector.W * vector.W;
-                double invNorm = 1.0f / Math.Sqrt(ls);
+                double invNorm = 1.0 / Math.Sqrt(ls);
 
                 return new Vector4(
                     vector.X * invNorm,
@@ -362,10 +362,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double zz2 = rotation.Z * z2;
 
             return new Vector4(
-                value.X * (1.0f - yy2 - zz2) + value.Y * (xy2 - wz2),
-                value.X * (xy2 + wz2) + value.Y * (1.0f - xx2 - zz2),
+                value.X * (1.0 - yy2 - zz2) + value.Y * (xy2 - wz2),
+                value.X * (xy2 + wz2) + value.Y * (1.0 - xx2 - zz2),
                 value.X * (xz2 - wy2) + value.Y * (yz2 + wx2),
-                1.0f);
+                1.0);
         }
 
         /// <summary>
@@ -392,10 +392,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double zz2 = rotation.Z * z2;
 
             return new Vector4(
-                value.X * (1.0f - yy2 - zz2) + value.Y * (xy2 - wz2) + value.Z * (xz2 + wy2),
-                value.X * (xy2 + wz2) + value.Y * (1.0f - xx2 - zz2) + value.Z * (yz2 - wx2),
-                value.X * (xz2 - wy2) + value.Y * (yz2 + wx2) + value.Z * (1.0f - xx2 - yy2),
-                1.0f);
+                value.X * (1.0 - yy2 - zz2) + value.Y * (xy2 - wz2) + value.Z * (xz2 + wy2),
+                value.X * (xy2 + wz2) + value.Y * (1.0 - xx2 - zz2) + value.Z * (yz2 - wx2),
+                value.X * (xz2 - wy2) + value.Y * (yz2 + wx2) + value.Z * (1.0 - xx2 - yy2),
+                1.0);
         }
 
         /// <summary>
@@ -422,9 +422,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double zz2 = rotation.Z * z2;
 
             return new Vector4(
-                value.X * (1.0f - yy2 - zz2) + value.Y * (xy2 - wz2) + value.Z * (xz2 + wy2),
-                value.X * (xy2 + wz2) + value.Y * (1.0f - xx2 - zz2) + value.Z * (yz2 - wx2),
-                value.X * (xz2 - wy2) + value.Y * (yz2 + wx2) + value.Z * (1.0f - xx2 - yy2),
+                value.X * (1.0 - yy2 - zz2) + value.Y * (xy2 - wz2) + value.Z * (xz2 + wy2),
+                value.X * (xy2 + wz2) + value.Y * (1.0 - xx2 - zz2) + value.Z * (yz2 - wx2),
+                value.X * (xz2 - wy2) + value.Y * (yz2 + wx2) + value.Z * (1.0 - xx2 - yy2),
                 value.W);
         }
         #endregion Public Static Methods

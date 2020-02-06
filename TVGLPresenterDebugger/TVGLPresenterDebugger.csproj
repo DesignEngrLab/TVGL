@@ -263,6 +263,42 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Proximity.cs">
       <Link>TVGL\Miscellaneous Functions\Proximity.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Matrix3x2.cs">
+      <Link>TVGL\Numerics\Matrix3x2.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Matrix4x4.cs">
+      <Link>TVGL\Numerics\Matrix4x4.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Plane.cs">
+      <Link>TVGL\Numerics\Plane.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Quaternion.cs">
+      <Link>TVGL\Numerics\Quaternion.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs">
+      <Link>TVGL\Numerics\Vector2.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2_Intrinsics.cs">
+      <Link>TVGL\Numerics\Vector2_Intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs">
+      <Link>TVGL\Numerics\Vector3.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3_Intrinsics.cs">
+      <Link>TVGL\Numerics\Vector3_Intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4.cs">
+      <Link>TVGL\Numerics\Vector4.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4_Intrinsics.cs">
+      <Link>TVGL\Numerics\Vector4_Intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\VectorMath.cs">
+      <Link>TVGL\Numerics\VectorMath.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector_Operations.cs">
+      <Link>TVGL\Numerics\Vector_Operations.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs">
       <Link>TVGL\Polygon Operations\Clipper\clipper.cs</Link>
     </Compile>

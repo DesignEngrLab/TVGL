@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using TVGL.IOFunctions;
+using TVGL.Numerics;
 
 namespace TVGL
 {

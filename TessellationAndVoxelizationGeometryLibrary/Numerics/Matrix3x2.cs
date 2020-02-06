@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Globalization;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
@@ -11,7 +12,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// </summary>
     public struct Matrix3x2 : IEquatable<Matrix3x2>
     {
-        private const double RotationEpsilon = 0.001f * Math.PI / 180f;     // 0.1% of a degree
+        private const double RotationEpsilon = 0.001 * Math.PI / 180.0;     // 0.1% of a degree
 
         #region Public Fields
         /// <summary>
@@ -42,9 +43,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         private static readonly Matrix3x2 _identity = new Matrix3x2
         (
-            1f, 0f,
-            0f, 1f,
-            0f, 0f
+            1.0, 0.0,
+            0.0, 1.0,
+            0.0, 0.0
         );
 
         /// <summary>
@@ -58,14 +59,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
-        public readonly bool IsIdentity
+        public bool IsIdentity
         {
             get
             {
-                return M11 == 1f && M22 == 1f && // Check diagonal element first for early out.
-                                    M12 == 0f &&
-                       M21 == 0f &&
-                       M31 == 0f && M32 == 0f;
+                return M11 == 1.0 && M22 == 1.0 && // Check diagonal element first for early out.
+                                    M12 == 0.0 &&
+                       M21 == 0.0 &&
+                       M31 == 0.0 && M32 == 0.0;
             }
         }
 
@@ -74,7 +75,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public Vector2 Translation
         {
-            readonly get
+            get
             {
                 return new Vector2(M31, M32);
             }
@@ -110,10 +111,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Matrix3x2 result;
 
-            result.M11 = 1.0f;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
-            result.M22 = 1.0f;
+            result.M11 = 1.0;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
+            result.M22 = 1.0;
 
             result.M31 = position.X;
             result.M32 = position.Y;
@@ -131,10 +132,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Matrix3x2 result;
 
-            result.M11 = 1.0f;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
-            result.M22 = 1.0f;
+            result.M11 = 1.0;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
+            result.M22 = 1.0;
 
             result.M31 = xPosition;
             result.M32 = yPosition;
@@ -153,11 +154,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Matrix3x2 result;
 
             result.M11 = xScale;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
             result.M22 = yScale;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
 
             return result;
         }
@@ -177,8 +178,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double ty = centerPoint.Y * (1 - yScale);
 
             result.M11 = xScale;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
             result.M22 = yScale;
             result.M31 = tx;
             result.M32 = ty;
@@ -196,11 +197,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Matrix3x2 result;
 
             result.M11 = scales.X;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scales.Y;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
 
             return result;
         }
@@ -219,8 +220,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double ty = centerPoint.Y * (1 - scales.Y);
 
             result.M11 = scales.X;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scales.Y;
             result.M31 = tx;
             result.M32 = ty;
@@ -238,11 +239,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Matrix3x2 result;
 
             result.M11 = scale;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scale;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
 
             return result;
         }
@@ -261,8 +262,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double ty = centerPoint.Y * (1 - scale);
 
             result.M11 = scale;
-            result.M12 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scale;
             result.M31 = tx;
             result.M32 = ty;
@@ -283,12 +284,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double xTan = Math.Tan(radiansX);
             double yTan = Math.Tan(radiansY);
 
-            result.M11 = 1.0f;
+            result.M11 = 1.0;
             result.M12 = yTan;
             result.M21 = xTan;
-            result.M22 = 1.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M22 = 1.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
 
             return result;
         }
@@ -310,10 +311,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double tx = -centerPoint.Y * xTan;
             double ty = -centerPoint.X * yTan;
 
-            result.M11 = 1.0f;
+            result.M11 = 1.0;
             result.M12 = yTan;
             result.M21 = xTan;
-            result.M22 = 1.0f;
+            result.M22 = 1.0;
             result.M31 = tx;
             result.M32 = ty;
 
@@ -371,8 +372,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             result.M12 = s;
             result.M21 = -s;
             result.M22 = c;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
 
             return result;
         }
@@ -443,7 +444,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// The determinant is calculated by expanding the matrix with a third column whose values are (0,0,1).
         /// </summary>
         /// <returns>The determinant.</returns>
-        public readonly double GetDeterminant()
+        public double GetDeterminant()
         {
             // There isn't actually any such thing as a determinant for a non-square matrix,
             // but this 3x2 type is really just an optimization of a 3x3 where we happen to
@@ -480,7 +481,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 return false;
             }
 
-            double invDet = 1.0f / det;
+            double invDet = 1.0 / det;
 
             result.M11 = matrix.M22 * invDet;
             result.M12 = -matrix.M12 * invDet;
@@ -758,7 +759,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="other">The other matrix to test equality against.</param>
         /// <returns>True if this matrix is equal to other; False otherwise.</returns>
-        public readonly bool Equals(Matrix3x2 other)
+        public bool Equals(Matrix3x2 other)
         {
             return (M11 == other.M11 && M22 == other.M22 && // Check diagonal element first for early out.
                                         M12 == other.M12 &&
@@ -771,7 +772,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal to this matrix; False otherwise.</returns>
-        public override readonly bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if (obj is Matrix3x2)
             {
@@ -785,7 +786,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns a String representing this matrix instance.
         /// </summary>
         /// <returns>The string representation.</returns>
-        public override readonly string ToString()
+        public override string ToString()
         {
             return string.Format(CultureInfo.CurrentCulture, "{{ {{M11:{0} M12:{1}}} {{M21:{2} M22:{3}}} {{M31:{4} M32:{5}}} }}",
                                  M11, M12,
@@ -797,7 +798,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override readonly int GetHashCode()
+        public override int GetHashCode()
         {
             return unchecked(M11.GetHashCode() + M12.GetHashCode() +
                              M21.GetHashCode() + M22.GetHashCode() +

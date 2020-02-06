@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
     <RootNamespace>TVGL</RootNamespace>
     <Version>1.0.17.1019</Version>
@@ -34,11 +34,16 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Numerics\BitOperations.cs" />
     <Compile Remove="Numerics\ConstantHelper.cs" />
     <Compile Remove="Numerics\Register.cs" />
     <Compile Remove="Numerics\Vector.cs" />
+    <Compile Remove="Numerics\VectorMath.cs" />
     <Compile Remove="Numerics\Vector_Operations.cs" />
   </ItemGroup>
 

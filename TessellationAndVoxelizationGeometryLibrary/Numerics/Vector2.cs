@@ -35,17 +35,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // COMMENTEDCHANGE [Intrinsic]
             get
             {
-                return new Vector2(1.0f, 1.0f);
+                return new Vector2(1.0, 1.0);
             }
         }
         /// <summary>
         /// Returns the vector (1,0).
         /// </summary>
-        public static Vector2 UnitX { get { return new Vector2(1.0f, 0.0f); } }
+        public static Vector2 UnitX { get { return new Vector2(1.0, 0.0); } }
         /// <summary>
         /// Returns the vector (0,1).
         /// </summary>
-        public static Vector2 UnitY { get { return new Vector2(0.0f, 1.0f); } }
+        public static Vector2 UnitY { get { return new Vector2(0.0, 1.0); } }
         #endregion Public Static Properties
 
         #region Public instance methods
@@ -53,7 +53,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override readonly int GetHashCode()
+        public override int GetHashCode()
         {
             return HashCode.Combine(this.X.GetHashCode(), this.Y.GetHashCode());
         }
@@ -64,7 +64,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal to this Vector2; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override readonly bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if (!(obj is Vector2))
                 return false;
@@ -75,7 +75,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns a String representing this Vector2 instance.
         /// </summary>
         /// <returns>The string representation.</returns>
-        public override readonly string ToString()
+        public override string ToString()
         {
             return ToString("G", CultureInfo.CurrentCulture);
         }
@@ -85,7 +85,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="format">The format of individual elements.</param>
         /// <returns>The string representation.</returns>
-        public readonly string ToString(string? format)
+        public string ToString(string format)
         {
             return ToString(format, CultureInfo.CurrentCulture);
         }
@@ -97,7 +97,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="format">The format of individual elements.</param>
         /// <param name="formatProvider">The format provider to use when formatting elements.</param>
         /// <returns>The string representation.</returns>
-        public readonly string ToString(string? format, IFormatProvider? formatProvider)
+        public string ToString(string format, IFormatProvider formatProvider)
         {
             StringBuilder sb = new StringBuilder();
             string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
@@ -115,9 +115,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <returns>The vector's length.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly double Length()
+        public double Length()
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double ls = Vector2.Dot(this, this);
                 return Math.Sqrt(ls);
@@ -134,9 +134,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <returns>The vector's length squared.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly double LengthSquared()
+        public double LengthSquared()
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector2.Dot(this, this);
             }
@@ -157,7 +157,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Distance(Vector2 value1, Vector2 value2)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector2 difference = value1 - value2;
                 double ls = Vector2.Dot(difference, difference);
@@ -183,7 +183,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DistanceSquared(Vector2 value1, Vector2 value2)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector2 difference = value1 - value2;
                 return Vector2.Dot(difference, difference);
@@ -205,7 +205,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Normalize(Vector2 value)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double length = value.Length();
                 return value / length;
@@ -213,7 +213,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             else
             {
                 double ls = value.X * value.X + value.Y * value.Y;
-                double invNorm = 1.0f / Math.Sqrt(ls);
+                double invNorm = 1.0 / Math.Sqrt(ls);
 
                 return new Vector2(
                     value.X * invNorm,
@@ -230,7 +230,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Reflect(Vector2 vector, Vector2 normal)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double dot = Vector2.Dot(vector, normal);
                 return vector - (2 * dot * normal);
@@ -240,8 +240,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 double dot = vector.X * normal.X + vector.Y * normal.Y;
 
                 return new Vector2(
-                    vector.X - 2.0f * dot * normal.X,
-                    vector.Y - 2.0f * dot * normal.Y);
+                    vector.X - 2.0 * dot * normal.X,
+                    vector.Y - 2.0 * dot * normal.Y);
             }
         }
 
@@ -358,8 +358,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double zz2 = rotation.Z * z2;
 
             return new Vector2(
-                value.X * (1.0f - yy2 - zz2) + value.Y * (xy2 - wz2),
-                value.X * (xy2 + wz2) + value.Y * (1.0f - xx2 - zz2));
+                value.X * (1.0 - yy2 - zz2) + value.Y * (xy2 - wz2),
+                value.X * (xy2 + wz2) + value.Y * (1.0 - xx2 - zz2));
         }
         #endregion Public Static Methods
 

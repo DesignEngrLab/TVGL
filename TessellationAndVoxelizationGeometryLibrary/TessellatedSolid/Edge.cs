@@ -15,7 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -118,7 +118,7 @@ namespace TVGL
         ///     Gets the vector.
         /// </summary>
         /// <value>The vector.</value>
-        public double[] Vector { get; internal set; }
+        public Vector3 Vector { get; internal set; }
 
         /// <summary>
         ///     The _other face

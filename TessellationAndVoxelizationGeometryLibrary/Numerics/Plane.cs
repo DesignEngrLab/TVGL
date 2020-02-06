@@ -13,7 +13,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// </summary>
     public struct Plane : IEquatable<Plane>
     {
-        private const double NormalizeEpsilon = 1.192092896e-07f; // smallest such that 1.0+NormalizeEpsilon != 1.0
+        private const double NormalizeEpsilon = 1.192092896e-07; // smallest such that 1.0+NormalizeEpsilon != 1.0
 
         /// <summary>
         /// The normal vector of the Plane.
@@ -69,7 +69,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Plane CreateFromVertices(Vector3 point1, Vector3 point2, Vector3 point3)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector3 a = point2 - point1;
                 Vector3 b = point3 - point1;
@@ -100,7 +100,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
                 // Normalize(N)
                 double ls = nx * nx + ny * ny + nz * nz;
-                double invNorm = 1.0f / Math.Sqrt(ls);
+                double invNorm = 1.0 / Math.Sqrt(ls);
 
                 Vector3 normal = new Vector3(
                     nx * invNorm,
@@ -121,10 +121,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Plane Normalize(Plane value)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double normalLengthSquared = value.Normal.LengthSquared();
-                if (Math.Abs(normalLengthSquared - 1.0f) < NormalizeEpsilon)
+                if (Math.Abs(normalLengthSquared - 1.0) < NormalizeEpsilon)
                 {
                     // It already normalized, so we don't need to farther process.
                     return value;
@@ -138,12 +138,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 double f = value.Normal.X * value.Normal.X + value.Normal.Y * value.Normal.Y + value.Normal.Z * value.Normal.Z;
 
-                if (Math.Abs(f - 1.0f) < NormalizeEpsilon)
+                if (Math.Abs(f - 1.0) < NormalizeEpsilon)
                 {
                     return value; // It already normalized, so we don't need to further process.
                 }
 
-                double fInv = 1.0f / Math.Sqrt(f);
+                double fInv = 1.0 / Math.Sqrt(f);
 
                 return new Plane(
                     value.Normal.X * fInv,
@@ -200,17 +200,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double yz2 = rotation.Y * z2;
             double zz2 = rotation.Z * z2;
 
-            double m11 = 1.0f - yy2 - zz2;
+            double m11 = 1.0 - yy2 - zz2;
             double m21 = xy2 - wz2;
             double m31 = xz2 + wy2;
 
             double m12 = xy2 + wz2;
-            double m22 = 1.0f - xx2 - zz2;
+            double m22 = 1.0 - xx2 - zz2;
             double m32 = yz2 - wx2;
 
             double m13 = xz2 - wy2;
             double m23 = yz2 + wx2;
-            double m33 = 1.0f - xx2 - yy2;
+            double m33 = 1.0 - xx2 - yy2;
 
             double x = plane.Normal.X, y = plane.Normal.Y, z = plane.Normal.Z;
 
@@ -245,7 +245,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotCoordinate(Plane plane, Vector3 value)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector3.Dot(plane.Normal, value) + plane.D;
             }
@@ -267,7 +267,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotNormal(Plane plane, Vector3 value)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector3.Dot(plane.Normal, value);
             }
@@ -315,9 +315,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The Plane to compare this instance to.</param>
         /// <returns>True if the other Plane is equal to this instance; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly bool Equals(Plane other)
+        public bool Equals(Plane other)
         {
-            if (Vector.IsHardwareAccelerated)
+            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return this.Normal.Equals(other.Normal) && this.D == other.D;
             }
@@ -336,7 +336,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal to this Plane; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override readonly bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if (obj is Plane)
             {
@@ -350,7 +350,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns a String representing this Plane instance.
         /// </summary>
         /// <returns>The string representation.</returns>
-        public override readonly string ToString()
+        public override string ToString()
         {
             CultureInfo ci = CultureInfo.CurrentCulture;
 
@@ -361,7 +361,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override readonly int GetHashCode()
+        public override int GetHashCode()
         {
             return Normal.GetHashCode() + D.GetHashCode();
         }

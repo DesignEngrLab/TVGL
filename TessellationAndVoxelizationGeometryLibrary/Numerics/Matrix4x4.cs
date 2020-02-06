@@ -16,9 +16,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     [StructLayout(LayoutKind.Sequential)]
     public struct Matrix4x4 : IEquatable<Matrix4x4>
     {
-        private const double BillboardEpsilon = 1e-4f;
-        private const double BillboardMinAngle = 1.0f - (0.1f * (Math.PI / 180.0f)); // 0.1 degrees
-        private const double DecomposeEpsilon = 0.0001f;
+        private const double BillboardEpsilon = 1e-4;
+        private const double BillboardMinAngle = 1.0 - (0.1 * (Math.PI / 180.0)); // 0.1 degrees
+        private const double DecomposeEpsilon = 0.0001;
 
         #region Public Fields
         /// <summary>
@@ -90,12 +90,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public double M44;
         #endregion Public Fields
 
-        private static readonly Matrix4x4 _identity = new Matrix4x4
+        private static Matrix4x4 _identity = new Matrix4x4
         (
-            1f, 0f, 0f, 0f,
-            0f, 1f, 0f, 0f,
-            0f, 0f, 1f, 0f,
-            0f, 0f, 0f, 1f
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0
         );
 
         /// <summary>
@@ -109,15 +109,15 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
-        public readonly bool IsIdentity
+        public bool IsIdentity
         {
             get
             {
-                return M11 == 1f && M22 == 1f && M33 == 1f && M44 == 1f && // Check diagonal element first for early out.
-                                    M12 == 0f && M13 == 0f && M14 == 0f &&
-                       M21 == 0f && M23 == 0f && M24 == 0f &&
-                       M31 == 0f && M32 == 0f && M34 == 0f &&
-                       M41 == 0f && M42 == 0f && M43 == 0f;
+                return M11 == 1.0 && M22 == 1.0 && M33 == 1.0 && M44 == 1.0 && // Check diagonal element first for early out.
+                                    M12 == 0.0 && M13 == 0.0 && M14 == 0.0 &&
+                       M21 == 0.0 && M23 == 0.0 && M24 == 0.0 &&
+                       M31 == 0.0 && M32 == 0.0 && M34 == 0.0 &&
+                       M41 == 0.0 && M42 == 0.0 && M43 == 0.0;
             }
         }
 
@@ -126,7 +126,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public Vector3 Translation
         {
-            readonly get
+            get
             {
                 return new Vector3(M41, M42, M43);
             }
@@ -175,20 +175,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             M11 = value.M11;
             M12 = value.M12;
-            M13 = 0f;
-            M14 = 0f;
+            M13 = 0.0;
+            M14 = 0.0;
             M21 = value.M21;
             M22 = value.M22;
-            M23 = 0f;
-            M24 = 0f;
-            M31 = 0f;
-            M32 = 0f;
-            M33 = 1f;
-            M34 = 0f;
+            M23 = 0.0;
+            M24 = 0.0;
+            M31 = 0.0;
+            M32 = 0.0;
+            M33 = 1.0;
+            M34 = 0.0;
             M41 = value.M31;
             M42 = value.M32;
-            M43 = 0f;
-            M44 = 1f;
+            M43 = 0.0;
+            M44 = 1.0;
         }
 
         /// <summary>
@@ -214,7 +214,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
             else
             {
-                zaxis = Vector3.Multiply(zaxis, 1.0f / Math.Sqrt(norm));
+                zaxis = Vector3.Multiply(zaxis, 1.0 / Math.Sqrt(norm));
             }
 
             Vector3 xaxis = Vector3.Normalize(Vector3.Cross(cameraUpVector, zaxis));
@@ -226,20 +226,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             result.M11 = xaxis.X;
             result.M12 = xaxis.Y;
             result.M13 = xaxis.Z;
-            result.M14 = 0.0f;
+            result.M14 = 0.0;
             result.M21 = yaxis.X;
             result.M22 = yaxis.Y;
             result.M23 = yaxis.Z;
-            result.M24 = 0.0f;
+            result.M24 = 0.0;
             result.M31 = zaxis.X;
             result.M32 = zaxis.Y;
             result.M33 = zaxis.Z;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
 
             result.M41 = objectPosition.X;
             result.M42 = objectPosition.Y;
             result.M43 = objectPosition.Z;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -269,7 +269,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
             else
             {
-                faceDir = Vector3.Multiply(faceDir, (1.0f / Math.Sqrt(norm)));
+                faceDir = Vector3.Multiply(faceDir, (1.0 / Math.Sqrt(norm)));
             }
 
             Vector3 yaxis = rotateAxis;
@@ -305,20 +305,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             result.M11 = xaxis.X;
             result.M12 = xaxis.Y;
             result.M13 = xaxis.Z;
-            result.M14 = 0.0f;
+            result.M14 = 0.0;
             result.M21 = yaxis.X;
             result.M22 = yaxis.Y;
             result.M23 = yaxis.Z;
-            result.M24 = 0.0f;
+            result.M24 = 0.0;
             result.M31 = zaxis.X;
             result.M32 = zaxis.Y;
             result.M33 = zaxis.Z;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
 
             result.M41 = objectPosition.X;
             result.M42 = objectPosition.Y;
             result.M43 = objectPosition.Z;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -332,23 +332,23 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Matrix4x4 result;
 
-            result.M11 = 1.0f;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
-            result.M22 = 1.0f;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
-            result.M33 = 1.0f;
-            result.M34 = 0.0f;
+            result.M11 = 1.0;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
+            result.M22 = 1.0;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
+            result.M33 = 1.0;
+            result.M34 = 0.0;
 
             result.M41 = position.X;
             result.M42 = position.Y;
             result.M43 = position.Z;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -364,23 +364,23 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Matrix4x4 result;
 
-            result.M11 = 1.0f;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
-            result.M22 = 1.0f;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
-            result.M33 = 1.0f;
-            result.M34 = 0.0f;
+            result.M11 = 1.0;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
+            result.M22 = 1.0;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
+            result.M33 = 1.0;
+            result.M34 = 0.0;
 
             result.M41 = xPosition;
             result.M42 = yPosition;
             result.M43 = zPosition;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -397,21 +397,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Matrix4x4 result;
 
             result.M11 = xScale;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = yScale;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
             result.M33 = zScale;
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -433,21 +433,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double tz = centerPoint.Z * (1 - zScale);
 
             result.M11 = xScale;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = yScale;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
             result.M33 = zScale;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
             result.M41 = tx;
             result.M42 = ty;
             result.M43 = tz;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -462,21 +462,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Matrix4x4 result;
 
             result.M11 = scales.X;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scales.Y;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
             result.M33 = scales.Z;
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -496,21 +496,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double tz = centerPoint.Z * (1 - scales.Z);
 
             result.M11 = scales.X;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scales.Y;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
             result.M33 = scales.Z;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
             result.M41 = tx;
             result.M42 = ty;
             result.M43 = tz;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -525,21 +525,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Matrix4x4 result;
 
             result.M11 = scale;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scale;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
             result.M33 = scale;
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -559,21 +559,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double tz = centerPoint.Z * (1 - scale);
 
             result.M11 = scale;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = scale;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
             result.M33 = scale;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
             result.M41 = tx;
             result.M42 = ty;
             result.M43 = tz;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -594,22 +594,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // [  0  c  s  0 ]
             // [  0 -s  c  0 ]
             // [  0  0  0  1 ]
-            result.M11 = 1.0f;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M11 = 1.0;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = c;
             result.M23 = s;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
             result.M32 = -s;
             result.M33 = c;
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -634,22 +634,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // [  0  c  s  0 ]
             // [  0 -s  c  0 ]
             // [  0  y  z  1 ]
-            result.M11 = 1.0f;
-            result.M12 = 0.0f;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
+            result.M11 = 1.0;
+            result.M12 = 0.0;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
             result.M22 = c;
             result.M23 = s;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
             result.M32 = -s;
             result.M33 = c;
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
+            result.M34 = 0.0;
+            result.M41 = 0.0;
             result.M42 = y;
             result.M43 = z;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -671,21 +671,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // [  s  0  c  0 ]
             // [  0  0  0  1 ]
             result.M11 = c;
-            result.M12 = 0.0f;
+            result.M12 = 0.0;
             result.M13 = -s;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
-            result.M22 = 1.0f;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
+            result.M22 = 1.0;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
             result.M31 = s;
-            result.M32 = 0.0f;
+            result.M32 = 0.0;
             result.M33 = c;
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -711,21 +711,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // [  s  0  c  0 ]
             // [  x  0  z  1 ]
             result.M11 = c;
-            result.M12 = 0.0f;
+            result.M12 = 0.0;
             result.M13 = -s;
-            result.M14 = 0.0f;
-            result.M21 = 0.0f;
-            result.M22 = 1.0f;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
+            result.M14 = 0.0;
+            result.M21 = 0.0;
+            result.M22 = 1.0;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
             result.M31 = s;
-            result.M32 = 0.0f;
+            result.M32 = 0.0;
             result.M33 = c;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
             result.M41 = x;
-            result.M42 = 0.0f;
+            result.M42 = 0.0;
             result.M43 = z;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -748,20 +748,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // [  0  0  0  1 ]
             result.M11 = c;
             result.M12 = s;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
             result.M21 = -s;
             result.M22 = c;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
-            result.M33 = 1.0f;
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
+            result.M33 = 1.0;
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -788,20 +788,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             // [  x  y  0  1 ]
             result.M11 = c;
             result.M12 = s;
-            result.M13 = 0.0f;
-            result.M14 = 0.0f;
+            result.M13 = 0.0;
+            result.M14 = 0.0;
             result.M21 = -s;
             result.M22 = c;
-            result.M23 = 0.0f;
-            result.M24 = 0.0f;
-            result.M31 = 0.0f;
-            result.M32 = 0.0f;
-            result.M33 = 1.0f;
-            result.M34 = 0.0f;
+            result.M23 = 0.0;
+            result.M24 = 0.0;
+            result.M31 = 0.0;
+            result.M32 = 0.0;
+            result.M33 = 1.0;
+            result.M34 = 0.0;
             result.M41 = x;
             result.M42 = y;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -846,22 +846,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             Matrix4x4 result;
 
-            result.M11 = xx + ca * (1.0f - xx);
+            result.M11 = xx + ca * (1.0 - xx);
             result.M12 = xy - ca * xy + sa * z;
             result.M13 = xz - ca * xz - sa * y;
-            result.M14 = 0.0f;
+            result.M14 = 0.0;
             result.M21 = xy - ca * xy - sa * z;
-            result.M22 = yy + ca * (1.0f - yy);
+            result.M22 = yy + ca * (1.0 - yy);
             result.M23 = yz - ca * yz + sa * x;
-            result.M24 = 0.0f;
+            result.M24 = 0.0;
             result.M31 = xz - ca * xz + sa * y;
             result.M32 = yz - ca * yz - sa * x;
-            result.M33 = zz + ca * (1.0f - zz);
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M33 = zz + ca * (1.0 - zz);
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -876,35 +876,35 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The perspective projection matrix.</returns>
         public static Matrix4x4 CreatePerspectiveFieldOfView(double fieldOfView, double aspectRatio, double nearPlaneDistance, double farPlaneDistance)
         {
-            if (fieldOfView <= 0.0f || fieldOfView >= Math.PI)
+            if (fieldOfView <= 0.0 || fieldOfView >= Math.PI)
                 throw new ArgumentOutOfRangeException(nameof(fieldOfView));
 
-            if (nearPlaneDistance <= 0.0f)
+            if (nearPlaneDistance <= 0.0)
                 throw new ArgumentOutOfRangeException(nameof(nearPlaneDistance));
 
-            if (farPlaneDistance <= 0.0f)
+            if (farPlaneDistance <= 0.0)
                 throw new ArgumentOutOfRangeException(nameof(farPlaneDistance));
 
             if (nearPlaneDistance >= farPlaneDistance)
                 throw new ArgumentOutOfRangeException(nameof(nearPlaneDistance));
 
-            double yScale = 1.0f / Math.Tan(fieldOfView * 0.5f);
+            double yScale = 1.0 / Math.Tan(fieldOfView * 0.5);
             double xScale = yScale / aspectRatio;
 
             Matrix4x4 result;
 
             result.M11 = xScale;
-            result.M12 = result.M13 = result.M14 = 0.0f;
+            result.M12 = result.M13 = result.M14 = 0.0;
 
             result.M22 = yScale;
-            result.M21 = result.M23 = result.M24 = 0.0f;
+            result.M21 = result.M23 = result.M24 = 0.0;
 
-            result.M31 = result.M32 = 0.0f;
-            var negFarRange = double.IsPositiveInfinity(farPlaneDistance) ? -1.0f : farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
+            result.M31 = result.M32 = 0.0;
+            var negFarRange = double.IsPositiveInfinity(farPlaneDistance) ? -1.0 : farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
             result.M33 = negFarRange;
-            result.M34 = -1.0f;
+            result.M34 = -1.0;
 
-            result.M41 = result.M42 = result.M44 = 0.0f;
+            result.M41 = result.M42 = result.M44 = 0.0;
             result.M43 = nearPlaneDistance * negFarRange;
 
             return result;
@@ -920,10 +920,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The perspective projection matrix.</returns>
         public static Matrix4x4 CreatePerspective(double width, double height, double nearPlaneDistance, double farPlaneDistance)
         {
-            if (nearPlaneDistance <= 0.0f)
+            if (nearPlaneDistance <= 0.0)
                 throw new ArgumentOutOfRangeException(nameof(nearPlaneDistance));
 
-            if (farPlaneDistance <= 0.0f)
+            if (farPlaneDistance <= 0.0)
                 throw new ArgumentOutOfRangeException(nameof(farPlaneDistance));
 
             if (nearPlaneDistance >= farPlaneDistance)
@@ -931,18 +931,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             Matrix4x4 result;
 
-            result.M11 = 2.0f * nearPlaneDistance / width;
-            result.M12 = result.M13 = result.M14 = 0.0f;
+            result.M11 = 2.0 * nearPlaneDistance / width;
+            result.M12 = result.M13 = result.M14 = 0.0;
 
-            result.M22 = 2.0f * nearPlaneDistance / height;
-            result.M21 = result.M23 = result.M24 = 0.0f;
+            result.M22 = 2.0 * nearPlaneDistance / height;
+            result.M21 = result.M23 = result.M24 = 0.0;
 
-            var negFarRange = double.IsPositiveInfinity(farPlaneDistance) ? -1.0f : farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
+            var negFarRange = double.IsPositiveInfinity(farPlaneDistance) ? -1.0 : farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
             result.M33 = negFarRange;
-            result.M31 = result.M32 = 0.0f;
-            result.M34 = -1.0f;
+            result.M31 = result.M32 = 0.0;
+            result.M34 = -1.0;
 
-            result.M41 = result.M42 = result.M44 = 0.0f;
+            result.M41 = result.M42 = result.M44 = 0.0;
             result.M43 = nearPlaneDistance * negFarRange;
 
             return result;
@@ -960,10 +960,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The perspective projection matrix.</returns>
         public static Matrix4x4 CreatePerspectiveOffCenter(double left, double right, double bottom, double top, double nearPlaneDistance, double farPlaneDistance)
         {
-            if (nearPlaneDistance <= 0.0f)
+            if (nearPlaneDistance <= 0.0)
                 throw new ArgumentOutOfRangeException(nameof(nearPlaneDistance));
 
-            if (farPlaneDistance <= 0.0f)
+            if (farPlaneDistance <= 0.0)
                 throw new ArgumentOutOfRangeException(nameof(farPlaneDistance));
 
             if (nearPlaneDistance >= farPlaneDistance)
@@ -971,20 +971,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             Matrix4x4 result;
 
-            result.M11 = 2.0f * nearPlaneDistance / (right - left);
-            result.M12 = result.M13 = result.M14 = 0.0f;
+            result.M11 = 2.0 * nearPlaneDistance / (right - left);
+            result.M12 = result.M13 = result.M14 = 0.0;
 
-            result.M22 = 2.0f * nearPlaneDistance / (top - bottom);
-            result.M21 = result.M23 = result.M24 = 0.0f;
+            result.M22 = 2.0 * nearPlaneDistance / (top - bottom);
+            result.M21 = result.M23 = result.M24 = 0.0;
 
             result.M31 = (left + right) / (right - left);
             result.M32 = (top + bottom) / (top - bottom);
-            var negFarRange = double.IsPositiveInfinity(farPlaneDistance) ? -1.0f : farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
+            var negFarRange = double.IsPositiveInfinity(farPlaneDistance) ? -1.0 : farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
             result.M33 = negFarRange;
-            result.M34 = -1.0f;
+            result.M34 = -1.0;
 
             result.M43 = nearPlaneDistance * negFarRange;
-            result.M41 = result.M42 = result.M44 = 0.0f;
+            result.M41 = result.M42 = result.M44 = 0.0;
 
             return result;
         }
@@ -1001,18 +1001,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Matrix4x4 result;
 
-            result.M11 = 2.0f / width;
-            result.M12 = result.M13 = result.M14 = 0.0f;
+            result.M11 = 2.0 / width;
+            result.M12 = result.M13 = result.M14 = 0.0;
 
-            result.M22 = 2.0f / height;
-            result.M21 = result.M23 = result.M24 = 0.0f;
+            result.M22 = 2.0 / height;
+            result.M21 = result.M23 = result.M24 = 0.0;
 
-            result.M33 = 1.0f / (zNearPlane - zFarPlane);
-            result.M31 = result.M32 = result.M34 = 0.0f;
+            result.M33 = 1.0 / (zNearPlane - zFarPlane);
+            result.M31 = result.M32 = result.M34 = 0.0;
 
-            result.M41 = result.M42 = 0.0f;
+            result.M41 = result.M42 = 0.0;
             result.M43 = zNearPlane / (zNearPlane - zFarPlane);
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -1031,19 +1031,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             Matrix4x4 result;
 
-            result.M11 = 2.0f / (right - left);
-            result.M12 = result.M13 = result.M14 = 0.0f;
+            result.M11 = 2.0 / (right - left);
+            result.M12 = result.M13 = result.M14 = 0.0;
 
-            result.M22 = 2.0f / (top - bottom);
-            result.M21 = result.M23 = result.M24 = 0.0f;
+            result.M22 = 2.0 / (top - bottom);
+            result.M21 = result.M23 = result.M24 = 0.0;
 
-            result.M33 = 1.0f / (zNearPlane - zFarPlane);
-            result.M31 = result.M32 = result.M34 = 0.0f;
+            result.M33 = 1.0 / (zNearPlane - zFarPlane);
+            result.M31 = result.M32 = result.M34 = 0.0;
 
             result.M41 = (left + right) / (left - right);
             result.M42 = (top + bottom) / (bottom - top);
             result.M43 = zNearPlane / (zNearPlane - zFarPlane);
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -1066,19 +1066,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             result.M11 = xaxis.X;
             result.M12 = yaxis.X;
             result.M13 = zaxis.X;
-            result.M14 = 0.0f;
+            result.M14 = 0.0;
             result.M21 = xaxis.Y;
             result.M22 = yaxis.Y;
             result.M23 = zaxis.Y;
-            result.M24 = 0.0f;
+            result.M24 = 0.0;
             result.M31 = xaxis.Z;
             result.M32 = yaxis.Z;
             result.M33 = zaxis.Z;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
             result.M41 = -Vector3.Dot(xaxis, cameraPosition);
             result.M42 = -Vector3.Dot(yaxis, cameraPosition);
             result.M43 = -Vector3.Dot(zaxis, cameraPosition);
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -1101,19 +1101,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             result.M11 = xaxis.X;
             result.M12 = xaxis.Y;
             result.M13 = xaxis.Z;
-            result.M14 = 0.0f;
+            result.M14 = 0.0;
             result.M21 = yaxis.X;
             result.M22 = yaxis.Y;
             result.M23 = yaxis.Z;
-            result.M24 = 0.0f;
+            result.M24 = 0.0;
             result.M31 = zaxis.X;
             result.M32 = zaxis.Y;
             result.M33 = zaxis.Z;
-            result.M34 = 0.0f;
+            result.M34 = 0.0;
             result.M41 = position.X;
             result.M42 = position.Y;
             result.M43 = position.Z;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -1138,22 +1138,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double yz = quaternion.Y * quaternion.Z;
             double wx = quaternion.X * quaternion.W;
 
-            result.M11 = 1.0f - 2.0f * (yy + zz);
-            result.M12 = 2.0f * (xy + wz);
-            result.M13 = 2.0f * (xz - wy);
-            result.M14 = 0.0f;
-            result.M21 = 2.0f * (xy - wz);
-            result.M22 = 1.0f - 2.0f * (zz + xx);
-            result.M23 = 2.0f * (yz + wx);
-            result.M24 = 0.0f;
-            result.M31 = 2.0f * (xz + wy);
-            result.M32 = 2.0f * (yz - wx);
-            result.M33 = 1.0f - 2.0f * (yy + xx);
-            result.M34 = 0.0f;
-            result.M41 = 0.0f;
-            result.M42 = 0.0f;
-            result.M43 = 0.0f;
-            result.M44 = 1.0f;
+            result.M11 = 1.0 - 2.0 * (yy + zz);
+            result.M12 = 2.0 * (xy + wz);
+            result.M13 = 2.0 * (xz - wy);
+            result.M14 = 0.0;
+            result.M21 = 2.0 * (xy - wz);
+            result.M22 = 1.0 - 2.0 * (zz + xx);
+            result.M23 = 2.0 * (yz + wx);
+            result.M24 = 0.0;
+            result.M31 = 2.0 * (xz + wy);
+            result.M32 = 2.0 * (yz - wx);
+            result.M33 = 1.0 - 2.0 * (yy + xx);
+            result.M34 = 0.0;
+            result.M41 = 0.0;
+            result.M42 = 0.0;
+            result.M43 = 0.0;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -1205,9 +1205,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             result.M33 = c * lightDirection.Z + dot;
             result.M43 = d * lightDirection.Z;
 
-            result.M14 = 0.0f;
-            result.M24 = 0.0f;
-            result.M34 = 0.0f;
+            result.M14 = 0.0;
+            result.M24 = 0.0;
+            result.M34 = 0.0;
             result.M44 = dot;
 
             return result;
@@ -1226,31 +1226,31 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double b = value.Normal.Y;
             double c = value.Normal.Z;
 
-            double fa = -2.0f * a;
-            double fb = -2.0f * b;
-            double fc = -2.0f * c;
+            double fa = -2.0 * a;
+            double fb = -2.0 * b;
+            double fc = -2.0 * c;
 
             Matrix4x4 result;
 
-            result.M11 = fa * a + 1.0f;
+            result.M11 = fa * a + 1.0;
             result.M12 = fb * a;
             result.M13 = fc * a;
-            result.M14 = 0.0f;
+            result.M14 = 0.0;
 
             result.M21 = fa * b;
-            result.M22 = fb * b + 1.0f;
+            result.M22 = fb * b + 1.0;
             result.M23 = fc * b;
-            result.M24 = 0.0f;
+            result.M24 = 0.0;
 
             result.M31 = fa * c;
             result.M32 = fb * c;
-            result.M33 = fc * c + 1.0f;
-            result.M34 = 0.0f;
+            result.M33 = fc * c + 1.0;
+            result.M34 = 0.0;
 
             result.M41 = fa * value.D;
             result.M42 = fb * value.D;
             result.M43 = fc * value.D;
-            result.M44 = 1.0f;
+            result.M44 = 1.0;
 
             return result;
         }
@@ -1259,7 +1259,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Calculates the determinant of the matrix.
         /// </summary>
         /// <returns>The determinant of the matrix.</returns>
-        public readonly double GetDeterminant()
+        public double GetDeterminant()
         {
             // | a b c d |     | f g h |     | e g h |     | e f h |     | e f g |
             // | e f g h | = a | j k l | - b | i k l | + c | i j l | - d | i j k |
@@ -1434,7 +1434,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 return false;
             }
 
-            double invDet = 1.0f / det;
+            double invDet = 1.0 / det;
 
             result.M11 = a11 * invDet;
             result.M21 = a12 * invDet;
@@ -1516,9 +1516,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     CanonicalBasis canonicalBasis = default;
                     Vector3* pCanonicalBasis = &canonicalBasis.Row0;
 
-                    canonicalBasis.Row0 = new Vector3(1.0f, 0.0f, 0.0f);
-                    canonicalBasis.Row1 = new Vector3(0.0f, 1.0f, 0.0f);
-                    canonicalBasis.Row2 = new Vector3(0.0f, 0.0f, 1.0f);
+                    canonicalBasis.Row0 = new Vector3(1.0, 0.0, 0.0);
+                    canonicalBasis.Row1 = new Vector3(0.0, 1.0, 0.0);
+                    canonicalBasis.Row2 = new Vector3(0.0, 0.0, 1.0);
 
                     translation = new Vector3(
                         matrix.M41,
@@ -1660,7 +1660,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                     det = matTemp.GetDeterminant();
 
                     // use Kramer's rule to check for handedness of coordinate system
-                    if (det < 0.0f)
+                    if (det < 0.0)
                     {
                         // switch coordinate system by negating the scale and inverting the basis vector on the x-axis
                         pfScales[a] = -pfScales[a];
@@ -1669,7 +1669,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                         det = -det;
                     }
 
-                    det -= 1.0f;
+                    det -= 1.0;
                     det *= det;
 
                     if ((DecomposeEpsilon < det))
@@ -1712,17 +1712,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double yz2 = rotation.Y * z2;
             double zz2 = rotation.Z * z2;
 
-            double q11 = 1.0f - yy2 - zz2;
+            double q11 = 1.0 - yy2 - zz2;
             double q21 = xy2 - wz2;
             double q31 = xz2 + wy2;
 
             double q12 = xy2 + wz2;
-            double q22 = 1.0f - xx2 - zz2;
+            double q22 = 1.0 - xx2 - zz2;
             double q32 = yz2 - wx2;
 
             double q13 = xz2 - wy2;
             double q23 = yz2 + wx2;
-            double q33 = 1.0f - xx2 - yy2;
+            double q33 = 1.0 - xx2 - yy2;
 
             Matrix4x4 result;
 
@@ -1760,24 +1760,24 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The transposed matrix.</returns>
         public static unsafe Matrix4x4 Transpose(Matrix4x4 matrix)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                var row1 = Sse.LoadVector128(&matrix.M11);
-                var row2 = Sse.LoadVector128(&matrix.M21);
-                var row3 = Sse.LoadVector128(&matrix.M31);
-                var row4 = Sse.LoadVector128(&matrix.M41);
+                //var row1 = Sse.LoadVector128(&matrix.M11);
+                //var row2 = Sse.LoadVector128(&matrix.M21);
+                //var row3 = Sse.LoadVector128(&matrix.M31);
+                //var row4 = Sse.LoadVector128(&matrix.M41);
 
-                var l12 = Sse.UnpackLow(row1, row2);
-                var l34 = Sse.UnpackLow(row3, row4);
-                var h12 = Sse.UnpackHigh(row1, row2);
-                var h34 = Sse.UnpackHigh(row3, row4);
+                //var l12 = Sse.UnpackLow(row1, row2);
+                //var l34 = Sse.UnpackLow(row3, row4);
+                //var h12 = Sse.UnpackHigh(row1, row2);
+                //var h34 = Sse.UnpackHigh(row3, row4);
 
-                Sse.Store(&matrix.M11, Sse.MoveLowToHigh(l12, l34));
-                Sse.Store(&matrix.M21, Sse.MoveHighToLow(l34, l12));
-                Sse.Store(&matrix.M31, Sse.MoveLowToHigh(h12, h34));
-                Sse.Store(&matrix.M41, Sse.MoveHighToLow(h34, h12));
+                //Sse.Store(&matrix.M11, Sse.MoveLowToHigh(l12, l34));
+                //Sse.Store(&matrix.M21, Sse.MoveHighToLow(l34, l12));
+                //Sse.Store(&matrix.M31, Sse.MoveLowToHigh(h12, h34));
+                //Sse.Store(&matrix.M41, Sse.MoveHighToLow(h34, h12));
 
-                return matrix;
+                //return matrix;
             }
 
             Matrix4x4 result;
@@ -1811,14 +1811,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The interpolated matrix.</returns>
         public static unsafe Matrix4x4 Lerp(Matrix4x4 matrix1, Matrix4x4 matrix2, double amount)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                Vector128<double> amountVec = Vector128.Create(amount);
-                Sse.Store(&matrix1.M11, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M11), Sse.LoadVector128(&matrix2.M11), amountVec));
-                Sse.Store(&matrix1.M21, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M21), Sse.LoadVector128(&matrix2.M21), amountVec));
-                Sse.Store(&matrix1.M31, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M31), Sse.LoadVector128(&matrix2.M31), amountVec));
-                Sse.Store(&matrix1.M41, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M41), Sse.LoadVector128(&matrix2.M41), amountVec));
-                return matrix1;
+                //Vector128<double> amountVec = Vector128.Create(amount);
+                //Sse.Store(&matrix1.M11, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M11), Sse.LoadVector128(&matrix2.M11), amountVec));
+                //Sse.Store(&matrix1.M21, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M21), Sse.LoadVector128(&matrix2.M21), amountVec));
+                //Sse.Store(&matrix1.M31, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M31), Sse.LoadVector128(&matrix2.M31), amountVec));
+                //Sse.Store(&matrix1.M41, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M41), Sse.LoadVector128(&matrix2.M41), amountVec));
+                //return matrix1;
             }
 
             Matrix4x4 result;
@@ -1896,15 +1896,15 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The negated matrix.</returns>
         public static unsafe Matrix4x4 operator -(Matrix4x4 value)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                Vector128<double> zero = Vector128<double>.Zero;
-                Sse.Store(&value.M11, Sse.Subtract(zero, Sse.LoadVector128(&value.M11)));
-                Sse.Store(&value.M21, Sse.Subtract(zero, Sse.LoadVector128(&value.M21)));
-                Sse.Store(&value.M31, Sse.Subtract(zero, Sse.LoadVector128(&value.M31)));
-                Sse.Store(&value.M41, Sse.Subtract(zero, Sse.LoadVector128(&value.M41)));
+                //Vector128<double> zero = Vector128<double>.Zero;
+                //Sse.Store(&value.M11, Sse.Subtract(zero, Sse.LoadVector128(&value.M11)));
+                //Sse.Store(&value.M21, Sse.Subtract(zero, Sse.LoadVector128(&value.M21)));
+                //Sse.Store(&value.M31, Sse.Subtract(zero, Sse.LoadVector128(&value.M31)));
+                //Sse.Store(&value.M41, Sse.Subtract(zero, Sse.LoadVector128(&value.M41)));
 
-                return value;
+                //return value;
             }
 
             Matrix4x4 m;
@@ -1937,13 +1937,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The resulting matrix.</returns>
         public static unsafe Matrix4x4 operator +(Matrix4x4 value1, Matrix4x4 value2)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                Sse.Store(&value1.M11, Sse.Add(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
-                Sse.Store(&value1.M21, Sse.Add(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
-                Sse.Store(&value1.M31, Sse.Add(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
-                Sse.Store(&value1.M41, Sse.Add(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
-                return value1;
+                //Sse.Store(&value1.M11, Sse.Add(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
+                //Sse.Store(&value1.M21, Sse.Add(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
+                //Sse.Store(&value1.M31, Sse.Add(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
+                //Sse.Store(&value1.M41, Sse.Add(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
+                //return value1;
             }
 
             Matrix4x4 m;
@@ -1976,13 +1976,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The result of the subtraction.</returns>
         public static unsafe Matrix4x4 operator -(Matrix4x4 value1, Matrix4x4 value2)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                Sse.Store(&value1.M11, Sse.Subtract(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
-                Sse.Store(&value1.M21, Sse.Subtract(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
-                Sse.Store(&value1.M31, Sse.Subtract(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
-                Sse.Store(&value1.M41, Sse.Subtract(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
-                return value1;
+                //Sse.Store(&value1.M11, Sse.Subtract(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
+                //Sse.Store(&value1.M21, Sse.Subtract(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
+                //Sse.Store(&value1.M31, Sse.Subtract(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
+                //Sse.Store(&value1.M41, Sse.Subtract(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
+                //return value1;
             }
 
             Matrix4x4 m;
@@ -2015,39 +2015,39 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The result of the multiplication.</returns>
         public static unsafe Matrix4x4 operator *(Matrix4x4 value1, Matrix4x4 value2)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                var row = Sse.LoadVector128(&value1.M11);
-                Sse.Store(&value1.M11,
-                    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //var row = Sse.LoadVector128(&value1.M11);
+                //Sse.Store(&value1.M11,
+                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
-                // 0x00 is _MM_SHUFFLE(0,0,0,0), 0x55 is _MM_SHUFFLE(1,1,1,1), etc.
-                // TODO: Replace with a method once it's added to the API.
+                //// 0x00 is _MM_SHUFFLE(0,0,0,0), 0x55 is _MM_SHUFFLE(1,1,1,1), etc.
+                //// TODO: Replace with a method once it's added to the API.
 
-                row = Sse.LoadVector128(&value1.M21);
-                Sse.Store(&value1.M21,
-                    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //row = Sse.LoadVector128(&value1.M21);
+                //Sse.Store(&value1.M21,
+                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
-                row = Sse.LoadVector128(&value1.M31);
-                Sse.Store(&value1.M31,
-                    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //row = Sse.LoadVector128(&value1.M31);
+                //Sse.Store(&value1.M31,
+                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
-                row = Sse.LoadVector128(&value1.M41);
-                Sse.Store(&value1.M41,
-                    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
-                return value1;
+                //row = Sse.LoadVector128(&value1.M41);
+                //Sse.Store(&value1.M41,
+                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //return value1;
             }
 
             Matrix4x4 m;
@@ -2087,14 +2087,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The scaled matrix.</returns>
         public static unsafe Matrix4x4 operator *(Matrix4x4 value1, double value2)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                Vector128<double> value2Vec = Vector128.Create(value2);
-                Sse.Store(&value1.M11, Sse.Multiply(Sse.LoadVector128(&value1.M11), value2Vec));
-                Sse.Store(&value1.M21, Sse.Multiply(Sse.LoadVector128(&value1.M21), value2Vec));
-                Sse.Store(&value1.M31, Sse.Multiply(Sse.LoadVector128(&value1.M31), value2Vec));
-                Sse.Store(&value1.M41, Sse.Multiply(Sse.LoadVector128(&value1.M41), value2Vec));
-                return value1;
+                //Vector128<double> value2Vec = Vector128.Create(value2);
+                //Sse.Store(&value1.M11, Sse.Multiply(Sse.LoadVector128(&value1.M11), value2Vec));
+                //Sse.Store(&value1.M21, Sse.Multiply(Sse.LoadVector128(&value1.M21), value2Vec));
+                //Sse.Store(&value1.M31, Sse.Multiply(Sse.LoadVector128(&value1.M31), value2Vec));
+                //Sse.Store(&value1.M41, Sse.Multiply(Sse.LoadVector128(&value1.M41), value2Vec));
+                //return value1;
             }
 
             Matrix4x4 m;
@@ -2126,13 +2126,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>True if the given matrices are equal; False otherwise.</returns>
         public static unsafe bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                return
-                    VectorMath.Equal(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) &&
-                    VectorMath.Equal(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) &&
-                    VectorMath.Equal(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) &&
-                    VectorMath.Equal(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
+                //return
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
             }
 
             return (value1.M11 == value2.M11 && value1.M22 == value2.M22 && value1.M33 == value2.M33 && value1.M44 == value2.M44 && // Check diagonal element first for early out.
@@ -2149,13 +2149,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>True if the given matrices are not equal; False if they are equal.</returns>
         public static unsafe bool operator !=(Matrix4x4 value1, Matrix4x4 value2)
         {
-            if (Sse.IsSupported)
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
-                return
-                    VectorMath.NotEqual(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) ||
-                    VectorMath.NotEqual(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) ||
-                    VectorMath.NotEqual(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) ||
-                    VectorMath.NotEqual(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
+                //return
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
             }
 
             return (value1.M11 != value2.M11 || value1.M12 != value2.M12 || value1.M13 != value2.M13 || value1.M14 != value2.M14 ||
@@ -2169,20 +2169,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="other">The matrix to compare this instance to.</param>
         /// <returns>True if the matrices are equal; False otherwise.</returns>
-        public readonly bool Equals(Matrix4x4 other) => this == other;
+        public bool Equals(Matrix4x4 other) => this == other;
 
         /// <summary>
         /// Returns a boolean indicating whether the given Object is equal to this matrix instance.
         /// </summary>
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal to this matrix; False otherwise.</returns>
-        public override readonly bool Equals(object? obj) => (obj is Matrix4x4 other) && (this == other);
+        public override bool Equals(object obj) => (obj is Matrix4x4 other) && (this == other);
 
         /// <summary>
         /// Returns a String representing this matrix instance.
         /// </summary>
         /// <returns>The string representation.</returns>
-        public override readonly string ToString()
+        public override string ToString()
         {
             return string.Format(CultureInfo.CurrentCulture, "{{ {{M11:{0} M12:{1} M13:{2} M14:{3}}} {{M21:{4} M22:{5} M23:{6} M24:{7}}} {{M31:{8} M32:{9} M33:{10} M34:{11}}} {{M41:{12} M42:{13} M43:{14} M44:{15}}} }}",
                                  M11, M12, M13, M14,
@@ -2195,7 +2195,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override readonly int GetHashCode()
+        public override int GetHashCode()
         {
             unchecked
             {

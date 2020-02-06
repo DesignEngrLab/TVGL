@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using TVGL.IOFunctions;
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -59,10 +60,10 @@ namespace TVGL
 
         private double Evaluate(double x, double y, double z)
         {
-            var center = new double[] { 5, 5, 5 };
-            var queriedPoint = new[] { x, y, z };
+            var center = new Vector3(5, 5, 5 );
+            var queriedPoint = new Vector3(x, y, z);
             var radius = 3.0;
-            return queriedPoint.subtract(center).norm2() - radius;
+            return (queriedPoint-center).Length() - radius;
         }
 
         public TessellatedSolid ConvertToTessellatedSolid()

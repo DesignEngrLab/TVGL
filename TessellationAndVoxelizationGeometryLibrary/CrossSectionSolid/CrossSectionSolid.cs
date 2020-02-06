@@ -49,7 +49,7 @@ namespace TVGL
         // in the future, wouldn't this just be
         // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
-        public double[,] TranformMatrix { get; set; } = StarMath.makeIdentity(4);
+        public Matrix4x4 TranformMatrix { get; set; } = Matrix4x4.Identity;
 
 
         public int NumLayers { get; set; }
@@ -128,7 +128,7 @@ namespace TVGL
             directionVector[intDir] = Math.Sign((int)direction);
             var cs = new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
             //var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
-            cs.TranformMatrix = StarMath.makeIdentity(4);
+            cs.TranformMatrix = Matrix4x4.Identity;
             return cs;
         }
 

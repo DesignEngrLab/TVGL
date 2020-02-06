@@ -78,7 +78,7 @@ namespace TVGL
             foreach (var vertex in vertices)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place to match StarMath
-                var d = Math.Round(direction.dotProduct(vertex.Position, 3), tolerance);
+                var d = Math.Round(direction.dotProduct(vertex.Position), tolerance);
                 vertexDistances.Add((vertex, d));
             }
             return vertexDistances;
@@ -262,8 +262,8 @@ namespace TVGL
                 distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
                 for (var i = distinctList.Count - 1; i > 0; i--)
                 {
-                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal, 3).IsPracticallySame(1.0, tolerance) ||
-                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal, 3).IsPracticallySame(-1, tolerance)))
+                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(1.0, tolerance) ||
+                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(-1, tolerance)))
                     {
                         if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
                         else distinctList.RemoveAt(i - 1);
@@ -1238,7 +1238,7 @@ namespace TVGL
         {
             var edge1 = new[] { b.X - a.X, b.Y - a.Y };
             var edge2 = new[] { c.X - b.X, c.Y - b.Y };
-            return Math.Acos(edge1.dotProduct(edge2, 3) / (edge1.norm2() * edge2.norm2()));
+            return Math.Acos(edge1.dotProduct(edge2) / (edge1.norm2() * edge2.norm2()));
         }
 
         /// <summary>
@@ -1990,7 +1990,7 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double[] positionOnPlane)
         {
-            return DistancePointToPlane(point, normalOfPlane, positionOnPlane.dotProduct(normalOfPlane, 3));
+            return DistancePointToPlane(point, normalOfPlane, positionOnPlane.dotProduct(normalOfPlane));
         }
 
         /// <summary>
@@ -2004,7 +2004,7 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double signedDistanceToPlane)
         {
-            return normalOfPlane.dotProduct(point, 3) - signedDistanceToPlane;
+            return normalOfPlane.dotProduct(point) - signedDistanceToPlane;
         }
 
         /// <summary>
@@ -2038,9 +2038,9 @@ namespace TVGL
         public static double[] PointOnFaceFromIntersectingLine(List<double[]> vertices, double[] normal, double[] point1,
             double[] point2)
         {
-            var distanceToOrigin = normal.dotProduct(vertices[0], 3);
-            var d1 = normal.dotProduct(point1, 3);
-            var d2 = normal.dotProduct(point2, 3);
+            var distanceToOrigin = normal.dotProduct(vertices[0]);
+            var d1 = normal.dotProduct(point1);
+            var d2 = normal.dotProduct(point2);
             if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
             var denominator = d1 - d2;
             if (denominator == 0) return null; //The points form a perpendicular line to the face
@@ -2141,8 +2141,8 @@ namespace TVGL
         public static double[] PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, double[] point1,
             double[] point2)
         {
-            var d1 = normalOfPlane.dotProduct(point1, 3);
-            var d2 = normalOfPlane.dotProduct(point2, 3);
+            var d1 = normalOfPlane.dotProduct(point1);
+            var d2 = normalOfPlane.dotProduct(point2);
             var fraction = (d1 - distOfPlane) / (d1 - d2);
             var position = new double[3];
             for (var i = 0; i < 3; i++)
@@ -2212,7 +2212,7 @@ namespace TVGL
         public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition,
             double[] rayDirection, out double signedDistance)
         {
-            var dot = rayDirection.dotProduct(normalOfPlane, 3);
+            var dot = rayDirection.dotProduct(normalOfPlane);
             signedDistance = 0.0;
             if (dot == 0) return null;
 
@@ -2254,7 +2254,7 @@ namespace TVGL
         public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, double[] direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position, 3);
+            var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
             if (newPoint == null) return null;
             return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
@@ -2276,7 +2276,7 @@ namespace TVGL
         {
             double[] newPoint;
             signedDistance = double.NaN;
-            var d = face.Normal.dotProduct(face.Vertices[0].Position, 3);
+            var d = face.Normal.dotProduct(face.Vertices[0].Position);
             var n = face.Normal;
             switch (direction)
             {
@@ -2494,9 +2494,9 @@ namespace TVGL
                         return onBoundaryIsInside;
                     }
 
-                    var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position, 3);
-                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal, 3) - distanceToOrigin) /
-                            direction.dotProduct(face.Normal, 3);
+                    var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
+                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin) /
+                            direction.dotProduct(face.Normal);
                     //Note that if t == 0, then it is on the face
                     //else, find the intersection point and determine if it is inside the polygon (face)
                     var newVertex = t.IsNegligible()

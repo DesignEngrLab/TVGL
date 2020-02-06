@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -60,14 +60,14 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<double[]>> loops, double[] extrudeDirection,
+        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<double[]>> loops, Vector3 extrudeDirection,
         double distance, bool midPlane = false)
         {
             //This simplifies the cases we have to handle by always extruding in the positive direction
             if (distance < 0)
             {
                 distance = -distance;
-                extrudeDirection = extrudeDirection.multiply(-1);
+                extrudeDirection = -1*extrudeDirection;
             }
 
             //First, make sure we are using "clean" loops. (e.g. not connected to any faces or edges)
