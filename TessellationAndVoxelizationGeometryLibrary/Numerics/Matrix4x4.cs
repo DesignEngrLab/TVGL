@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating a 4x4 matrix.

@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.

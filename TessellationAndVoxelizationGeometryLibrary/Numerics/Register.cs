@@ -5,7 +5,7 @@
 #nullable enable
 using System.Runtime.InteropServices;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     /// <summary>
     /// A structure describing the layout of an SSE2-sized register.

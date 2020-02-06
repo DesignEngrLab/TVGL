@@ -4,7 +4,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     /// <summary>
     /// Contains various methods useful for creating, manipulating, combining, and converting generic vectors with one another.

@@ -17,7 +17,7 @@ using nint = System.Int64;
 using nint = System.Int32;
 #endif
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     /* Note: The following patterns are used throughout the code here and are described here
     *

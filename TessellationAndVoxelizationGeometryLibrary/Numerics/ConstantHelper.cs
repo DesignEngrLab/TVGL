@@ -5,7 +5,7 @@
 #nullable enable
 using System.Runtime.CompilerServices;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     internal static class ConstantHelper
     {

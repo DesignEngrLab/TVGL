@@ -5,7 +5,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating a 3D Plane

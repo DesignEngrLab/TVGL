@@ -4,7 +4,7 @@
 
 using System.Globalization;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating a four-dimensional vector (x,y,z,w),

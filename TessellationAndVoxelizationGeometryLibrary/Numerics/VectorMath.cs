@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
-namespace System.Numerics
+namespace TVGL.Numerics  //namespace System.Numerics
 {
     internal static class VectorMath
     {
