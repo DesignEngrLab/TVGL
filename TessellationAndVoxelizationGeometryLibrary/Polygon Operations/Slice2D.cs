@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TVGL.Numerics;
 
 
 namespace TVGL._2D
@@ -16,7 +17,7 @@ namespace TVGL._2D
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static List<PolygonLight> OnLine(List<PolygonLight> shape, double[] direction2D, double distanceAlongDirection,
+        public static List<PolygonLight> OnLine(List<PolygonLight> shape, Vector2 direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, out List<Point> intersectionPoints,
             double offsetAtLine = 0.0, List<(Point, double)> sortedPoints = null)
         {
@@ -65,11 +66,11 @@ namespace TVGL._2D
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static List<List<PointLight>> OnLine(List<List<Point>> shape, double[] direction2D, double distanceAlongDirection,
+        public static List<List<Vector2>> OnLine(List<List<Point>> shape, Vector2 direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, out List<Point> intersectionPoints,
             double offsetAtLine = 0.0, List<(Point, double)> sortedPoints = null)
         {
-            var partialShape = new List<List<PointLight>>();
+            var partialShape = new List<List<Vector2>>();
             intersectionPoints = new List<Point>();
             var shallowPolygonsTrees = ShallowPolygonTree.GetShallowPolygonTrees(shape);
             var dirX = direction2D[0];
@@ -121,7 +122,7 @@ namespace TVGL._2D
         /// <param name="sortedIntersectionPoints"></param>
         /// <param name="offsetAtLine"></param>
         /// <returns></returns>
-        public static List<PolygonLight> OnLine(ShallowPolygonTree polyTree, double[] direction2D, double distanceAlongDirection,
+        public static List<PolygonLight> OnLine(ShallowPolygonTree polyTree, Vector2 direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, IEnumerable<(Point, double)> sortedPoints, out List<Point> sortedIntersectionPoints,
             double offsetAtLine = 0.0)
         {
@@ -178,7 +179,7 @@ namespace TVGL._2D
                 var currentPolygon = polyTree.AllPolygons[endPoint.PolygonIndex];
                 var endPolygonIndex = currentPolygon.Index;
                 var endLineIndex = endLine.IndexInPath;
-                var path = new List<PointLight> { endPoint.Light };
+                var path = new List<Vector2> { endPoint.Light };
 
                 var nextLineIndex = currentPolygon.NextLineIndex(endLineIndex);
                 //Since the line index can be duplicated between polygons, we also need to check the polygon index
@@ -245,7 +246,7 @@ namespace TVGL._2D
             return partialShape;
         }
 
-        private static List<Point> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, double[] direction2D,
+        private static List<Point> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, Vector2 direction2D,
             double distance, out Dictionary<int, Line> intersectionLinesByRef, out Dictionary<int, Point> intersectionPointsByRef)
         {
             intersectionLinesByRef = new Dictionary<int, Line>(intersectionLines.Count);
@@ -396,7 +397,7 @@ namespace TVGL._2D
             return intersectionPoints;
         }
 
-        private static double[] GetYIntersectionsSortedAlongY(HashSet<Line> intersectionLines, double x)
+        private static Vector2 GetYIntersectionsSortedAlongY(HashSet<Line> intersectionLines, double x)
         {
             var n = intersectionLines.Count;
             var intersectionPoints = new List<double>(n);
@@ -409,7 +410,7 @@ namespace TVGL._2D
             return intersectionPoints.OrderBy(p => p).ToArray();
         }
 
-        private static double[] GetXIntersectionsSortedAlongX(HashSet<Line> intersectionLines, double y)
+        private static Vector2 GetXIntersectionsSortedAlongX(HashSet<Line> intersectionLines, double y)
         {
             var n = intersectionLines.Count;
             var intersectionPoints = new List<double>(n);

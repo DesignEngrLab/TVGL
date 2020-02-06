@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
 
 namespace TVGL
@@ -97,13 +98,13 @@ namespace TVGL
         }
 
 
-        internal static List<Vertex> OrganizeIntoLoop(List<Edge> singleSidedEdges, double[] normal)
+        internal static List<Vertex> OrganizeIntoLoop(List<Edge> singleSidedEdges, Vector2 normal)
         {
             var edgesHashSet = new HashSet<Edge>(singleSidedEdges);
             var loop = new List<Vertex>();
             var currentEdge = edgesHashSet.First();
             Vertex startVertex, currentVertex;
-            if (normal.dotProduct(currentEdge.OwnedFace.Normal,3).IsPracticallySame(1))
+            if (normal.Dot(currentEdge.OwnedFace.Normal,3).IsPracticallySame(1))
             {
                 startVertex = currentEdge.From;
                 currentVertex = currentEdge.To;
@@ -132,7 +133,7 @@ namespace TVGL
         }
 
 
-        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, double[] refEdge, double[] normal)
+        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector2 refEdge, Vector2 normal)
         {
             var unitRefEdge = refEdge.normalize(3);
             var min = 2.0;
@@ -140,8 +141,8 @@ namespace TVGL
             foreach (var candEdge in possibleNextEdges)
             {
                 var unitCandEdge = candEdge.Vector.normalize(3);
-                var cross = unitRefEdge.crossProduct(unitCandEdge);
-                var temp = cross.dotProduct(normal, 3);
+                var cross = unitRefEdge.Cross(unitCandEdge);
+                var temp = cross.Dot(normal, 3);
                 if (min > temp)
                 {
                     min = temp;

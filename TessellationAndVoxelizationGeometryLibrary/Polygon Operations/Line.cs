@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TVGL.Numerics;
 
 
 namespace TVGL
@@ -23,7 +24,7 @@ namespace TVGL
         ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
-        public double[] Center => new[] { (ToPoint.X + FromPoint.X) / 2, (ToPoint.Y + FromPoint.Y) / 2 };
+        public Vector2 Center => new[] { (ToPoint.X + FromPoint.X) / 2, (ToPoint.Y + FromPoint.Y) / 2 };
 
         /// <summary>
         ///     Gets the Pointwhich the line is pointing away from. Set is through the constructor.
@@ -82,7 +83,7 @@ namespace TVGL
         /// </summary>
         public bool IsInfinite = false;
 
-        public double[] LineVector;
+        public Vector2 LineVector;
         #endregion
 
         #region Constructor
@@ -92,7 +93,7 @@ namespace TVGL
         /// </summary>
         /// <param name="fromPoint"></param>
         /// <param name="lineVector"></param>
-        internal Line(Point fromPoint, double[] lineVector)
+        internal Line(Point fromPoint, Vector2 lineVector)
         {
             //This line has an infinite length
             IsInfinite = true;

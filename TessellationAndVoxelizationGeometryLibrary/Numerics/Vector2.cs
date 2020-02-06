@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using MIConvexHull;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -13,7 +14,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
     // COMMENTEDCHANGE [Intrinsic]
-    public partial struct Vector2 : IEquatable<Vector2>, IFormattable
+    public partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D
     {
         #region Public Static Properties
         /// <summary>
@@ -46,6 +47,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,1).
         /// </summary>
         public static Vector2 UnitY { get { return new Vector2(0.0, 1.0); } }
+
+        double IVertex2D.X => X;
+
+        double IVertex2D.Y => Y;
         #endregion Public Static Properties
 
         #region Public instance methods

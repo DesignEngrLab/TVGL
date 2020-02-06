@@ -21,7 +21,7 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vertex>> loops, double[] normal,
+        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vertex>> loops, Numerics.Vector2 normal,
             double distance, bool midPlane = false)
         {
             var enumerable = loops as IEnumerable<Vertex>[] ?? loops.ToArray();
@@ -38,14 +38,14 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<double[]>> loops, double[] extrudeDirection,
+        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Numerics.Vector2>> loops, Numerics.Vector2 extrudeDirection,
             double distance, bool midPlane = false)
         {
             return new TessellatedSolid(ReturnFacesFromLoops(loops, extrudeDirection, distance, midPlane), null, false);
         }
 
         public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vertex>> loops,
-            double[] extrudeDirection, double distance, bool midPlane = false)
+            Numerics.Vector2 extrudeDirection, double distance, bool midPlane = false)
         {
             var positionLoops = loops.Select(loop => loop.Select(vertex => vertex.Position).ToList()).ToList();
             return ReturnFacesFromLoops(positionLoops, extrudeDirection, distance, midPlane);
@@ -60,7 +60,7 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<double[]>> loops, Vector3 extrudeDirection,
+        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Numerics.Vector2>> loops, Vector3 extrudeDirection,
         double distance, bool midPlane = false)
         {
             //This simplifies the cases we have to handle by always extruding in the positive direction
@@ -91,13 +91,13 @@ namespace TVGL
                 }
                 cleanLoops.Add(cleanLoop);
             }
-            var distanceFromOriginAlongDirection = extrudeDirection.dotProduct(cleanLoops.First().First().Position, 3);
+            var distanceFromOriginAlongDirection = extrudeDirection.Dot(cleanLoops.First().First().Position, 3);
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
             var backTransform = new double[,] { };
             var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
-            List<PointLight[]> points2D;
+            List<Vector2[]> points2D;
             List<Vertex[]> triangles;
             try
             {
@@ -113,11 +113,11 @@ namespace TVGL
                 //This also means we need to recreate cleanLoops
                 //Also, give the vertices indices.
                 cleanLoops = new List<List<Vertex>>();
-                points2D = new List<PointLight[]>();
+                points2D = new List<Vector2[]>();
                 var j = 0;
                 foreach (var path in paths)
                 {
-                    var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y, true)).ToArray();
+                    var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y, true)).ToArray();
                     var area = new PolygonLight(path).Area;
                     points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
@@ -164,11 +164,11 @@ namespace TVGL
                     //This also means we need to recreate cleanLoops
                     //Also, give the vertices indices.
                     cleanLoops = new List<List<Vertex>>();
-                    points2D = new List<PointLight[]>();
+                    points2D = new List<Vector2[]>();
                     var j = 0;
                     foreach (var path in paths)
                     {
-                        var pathAsPoints = path.Select(p => new PointLight(p.X, p.Y, true)).ToArray();
+                        var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y, true)).ToArray();
                         points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
                         foreach (var point in pathAsPoints)
@@ -227,7 +227,7 @@ namespace TVGL
                 var v2 = triangle[2].Position.subtract(triangle[0].Position, 3);
 
                 //This model reverses the triangle vertex ordering as necessary to line up with the normal.
-                var topTriangle = v1.crossProduct(v2).dotProduct(extrudeDirection.multiply(-1), 3) < 0
+                var topTriangle = v1.Cross(v2).Dot(extrudeDirection.multiply(-1), 3) < 0
                     ? new PolygonalFace(triangle.Reverse(), extrudeDirection.multiply(-1), true)
                     : new PolygonalFace(triangle, extrudeDirection.multiply(-1), true);
                 topFaces.Add(topTriangle);

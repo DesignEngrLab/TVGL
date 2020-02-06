@@ -15,7 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -32,7 +32,7 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.dotProduct(face.Center.subtract(Center, 3)) - 1) >
+            if (Math.Abs(face.Normal.Dot(face.Center.subtract(Center, 3)) - 1) >
                 Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
@@ -48,7 +48,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
-            double[] pointOnLine;
+            Vector2 pointOnLine;
             var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
             var fractionToMove = 1/Faces.Count;
             var moveVector = pointOnLine.subtract(Center, 3);
@@ -87,8 +87,8 @@ namespace TVGL
             Type = PrimitiveSurfaceType.Sphere;
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
-            var centers = new List<double[]>();
-            double[] center;
+            var centers = new List<Vector2>();
+            Vector2 center;
             double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
@@ -154,7 +154,7 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get;  set; }
+        public Vector2 Center { get;  set; }
 
         /// <summary>
         ///     Gets the radius.

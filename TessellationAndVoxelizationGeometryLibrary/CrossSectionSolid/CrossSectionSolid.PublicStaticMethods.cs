@@ -12,18 +12,18 @@ namespace TVGL
         {
             //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
             var endPoint = startPoint + (buildDirection * extrudeDistance);
-            var stepDistances = new Dictionary<int, double> { { 0, startPoint.dotProduct(buildDirection) }, { 1, endPoint.dotProduct(buildDirection) } };
+            var stepDistances = new Dictionary<int, double> { { 0, startPoint.Dot(buildDirection) }, { 1, endPoint.Dot(buildDirection) } };
             var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, shape }, { 1, shape } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(Numerics.Vector2 buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,
            double sameTolerance, UnitType units)
         {
             //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var start = layer3DAtStart.First().Position.dotProduct(buildDirection);
+            var start = layer3DAtStart.First().Position.Dot(buildDirection);
             var endPoint = layer3DAtStart.First().Position.add(buildDirection.multiply(extrudeDistance));
-            var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.dotProduct(buildDirection) } };
+            var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.Dot(buildDirection) } };
             var shape = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(layer3DAtStart, buildDirection));
             if (shape.Area < 0) shape = PolygonLight.Reverse(shape);
             var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, new List<PolygonLight> { shape } }, { 1, new List<PolygonLight> { shape } } };
@@ -112,7 +112,7 @@ namespace TVGL
             var unusedEdges = new HashSet<Edge>(penetratingEdges);
             while (unusedEdges.Any())
             {
-                var loop = new List<PointLight>();
+                var loop = new List<Vector2>();
                 var firstEdgeInLoop = unusedEdges.First();
                 var finishedLoop = false;
                 var currentEdge = firstEdgeInLoop;

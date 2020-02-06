@@ -15,7 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.Numerics;
 using TVGL.Enclosure_Operations;
 
 namespace TVGL
@@ -35,7 +35,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         //private
         public static BoundingBox OrientedBoundingBox_Test(TessellatedSolid ts, out List<double> times,
-            out List<double> volumes) //, out List<List<double[]>> volumeData2)
+            out List<double> volumes) //, out List<List<Vector2>> volumeData2)
         {
             var vertices = ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices;
             times = new List<double>();
@@ -88,7 +88,7 @@ namespace TVGL
             {
             }
 
-            internal BoundingBoxData(double[] startDir, double[] yDir, Edge rotatorEdge, double[] rotatorVector,
+            internal BoundingBoxData(Vector2 startDir, Vector2 yDir, Edge rotatorEdge, Vector2 rotatorVector,
                 TVGLConvexHull convexHull)
             {
                 Direction = startDir;
@@ -103,7 +103,7 @@ namespace TVGL
                 {
                     var face = convexHull.Faces[i];
                     face.IndexInList = i;
-                    startingDots[i] = face.Normal.dotProduct(startDir, 3);
+                    startingDots[i] = face.Normal.Dot(startDir, 3);
                 }
                 foreach (var edge in convexHull.Edges)
                 {
@@ -111,8 +111,8 @@ namespace TVGL
                     var otherX = startingDots[edge.OtherFace.IndexInList];
                     if (otherX*ownedX <= 0)
                     {
-                        var ownedY = edge.OwnedFace.Normal.dotProduct(yDir, 3);
-                        var otherY = edge.OtherFace.Normal.dotProduct(yDir, 3);
+                        var ownedY = edge.OwnedFace.Normal.Dot(yDir, 3);
+                        var otherY = edge.OtherFace.Normal.Dot(yDir, 3);
                         //if ((ownedX < 0 && ownedY > 0) || (ownedX > 0 && ownedY < 0))
                         //    OrthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OwnedFace));
                         //else if ((otherX < 0 && otherY > 0) || (otherX > 0 && otherY < 0))
@@ -128,7 +128,7 @@ namespace TVGL
                 var maxDistance = double.NegativeInfinity;
                 foreach (var v in convexHull.Vertices)
                 {
-                    var distance = rotatorEdge.From.Position.subtract(v.Position, 3).dotProduct(startDir, 3);
+                    var distance = rotatorEdge.From.Position.subtract(v.Position, 3).Dot(startDir, 3);
                     if (distance > maxDistance)
                     {
                         maxDistance = distance;
@@ -138,14 +138,14 @@ namespace TVGL
             }
 
             public BoundingBox Box { get; set; }
-            public double[] Direction { get; set; }
+            public Vector2 Direction { get; set; }
             public double Angle { get; set; }
             public List<Vertex> OrthVertices { get; private set; }
             public List<GaussSphereArc> OrthGaussSphereArcs { get; private set; }
             public Vertex BackVertex { get; set; }
             public Edge BackEdge { get; set; }
-            public double[] PosYDir { get; set; }
-            public double[] RotatorVector { get; private set; }
+            public Vector2 PosYDir { get; set; }
+            public Vector2 RotatorVector { get; private set; }
             public Edge RotatorEdge { get; private set; }
 
             public BoundingBoxData Copy()
@@ -159,16 +159,16 @@ namespace TVGL
                     {
                         CornerVertices = Box.CornerVertices != null ? (Vertex[]) Box.CornerVertices.Clone() : null,
                         Center = Box.Center != null ? new Vertex(Box.Center.Position) : null,
-                        Dimensions = Box.Dimensions != null ? (double[]) Box.Dimensions.Clone() : null,
-                        Directions = Box.Directions != null ? (double[][]) Box.Directions.Clone() : null,
+                        Dimensions = Box.Dimensions != null ? (Vector2) Box.Dimensions.Clone() : null,
+                        Directions = Box.Directions != null ? (Vector2[]) Box.Directions.Clone() : null,
                         PointsOnFaces = Box.PointsOnFaces != null ? (List<Vertex>[]) Box.PointsOnFaces.Clone() : null,
                         Volume = Box.Volume
                     },
-                    Direction = (double[]) Direction.Clone(),
+                    Direction = (Vector2) Direction.Clone(),
                     OrthGaussSphereArcs = new List<GaussSphereArc>(OrthGaussSphereArcs),
                     OrthVertices = new List<Vertex>(OrthVertices),
-                    PosYDir = (double[]) PosYDir.Clone(),
-                    RotatorVector = (double[]) RotatorVector.Clone(),
+                    PosYDir = (Vector2) PosYDir.Clone(),
+                    RotatorVector = (Vector2) RotatorVector.Clone(),
                     RotatorEdge = RotatorEdge
                 };
             }
@@ -228,7 +228,7 @@ namespace TVGL
             C[0, 2] = C[2, 0] = cxz;
             C[1, 2] = C[2, 1] = cyz;
             //Find eigenvalues of covariance matrix
-            double[][] eigenVectors;
+            Vector2[] eigenVectors;
             C.GetEigenValuesAndVectors(out eigenVectors);
 
             var minOBB = new BoundingBox
@@ -292,7 +292,7 @@ namespace TVGL
             }
 
             //Find eigenvalues of covariance matrix
-            double[][] eigenVectors;
+            Vector2[] eigenVectors;
             covariance.GetEigenValuesAndVectors(out eigenVectors);
 
             var bestOBB = new BoundingBox {Volume = double.PositiveInfinity};
@@ -342,7 +342,7 @@ namespace TVGL
                 // posYDir is the vector for the positive y-Direction. Well, this is a simplification of the 
                 //gauss sphere to a 2D circle. The Direction (such as startDir) represents the x-axis and this
                 //, which is the orthogonal is the y Direction
-                var origPosYDir = rotatorVector.crossProduct(startDir).normalize(3);
+                var origPosYDir = rotatorVector.Cross(startDir).normalize(3);
                 var totalAngle = Math.PI - rotateEdge.InternalAngle;
                 var thisBoxData = new BoundingBoxData(startDir, origPosYDir, rotateEdge, rotatorVector, convexHull);
 
@@ -390,7 +390,7 @@ namespace TVGL
                     }
                     if (angle > totalAngle)
                     {
-                        // nextBoxData = new BoundingBoxData(endDir, rotatorVector.crossProduct(endDir).normalize(), rotateEdge, rotatorVector, convexHull);
+                        // nextBoxData = new BoundingBoxData(endDir, rotatorVector.Cross(endDir).normalize(), rotateEdge, rotatorVector, convexHull);
                         nextBoxData.Angle = totalAngle;
                         nextBoxData.Direction = endDir;
                     }
@@ -399,7 +399,7 @@ namespace TVGL
                         nextBoxData.Angle = angle;
                         nextBoxData.Direction = UpdateDirection(startDir, rotatorVector, origPosYDir, angle);
                     }
-                    nextBoxData.PosYDir = nextBoxData.RotatorVector.crossProduct(nextBoxData.Direction).normalize(3);
+                    nextBoxData.PosYDir = nextBoxData.RotatorVector.Cross(nextBoxData.Direction).normalize(3);
 
                     /****************/
                     FindOBBAlongDirection(nextBoxData);
@@ -435,11 +435,11 @@ namespace TVGL
         {
             GaussSphereArc arcToRemove = null;
             var minSlope = double.PositiveInfinity;
-            boxData.PosYDir = boxData.RotatorVector.crossProduct(boxData.Direction).normalize(3);
+            boxData.PosYDir = boxData.RotatorVector.Cross(boxData.Direction).normalize(3);
             foreach (var arc in boxData.OrthGaussSphereArcs)
             {
-                var x = boxData.Direction.dotProduct(arc.ToFace.Normal, 3);
-                var y = boxData.PosYDir.dotProduct(arc.ToFace.Normal, 3);
+                var x = boxData.Direction.Dot(arc.ToFace.Normal, 3);
+                var y = boxData.PosYDir.Dot(arc.ToFace.Normal, 3);
                 if (y == 0.0) continue;
                 var tempSlope = -x/y;
                 if (!(tempSlope < minSlope)) continue;
@@ -473,17 +473,17 @@ namespace TVGL
         private static double UpdateBackAngle(BoundingBoxData boxData)
         {
             Edge nextEdge = null;
-            var yDir = boxData.RotatorVector.crossProduct(boxData.Direction);
+            var yDir = boxData.RotatorVector.Cross(boxData.Direction);
             var minSlope = double.PositiveInfinity;
             foreach (var edge in boxData.BackVertex.Edges)
             {
                 var otherVertex = edge.OtherVertex(boxData.BackVertex);
                 var vector = otherVertex.Position.subtract(boxData.BackVertex.Position, 3);
-                var y = yDir.dotProduct(vector, 3);
+                var y = yDir.Dot(vector, 3);
                 if (y < 0)
                 {
-                    // the x-value is boxData.Direction.dotProduct(vector) and it's positive for all edges since it's the back vertex
-                    var slope = -boxData.Direction.dotProduct(vector, 3)/y;
+                    // the x-value is boxData.Direction.Dot(vector) and it's positive for all edges since it's the back vertex
+                    var slope = -boxData.Direction.Dot(vector, 3)/y;
                     if (slope < minSlope)
                     {
                         minSlope = slope;
@@ -511,7 +511,7 @@ namespace TVGL
         }
 
 
-        private static double[] UpdateDirection(double[] startDir, double[] rotator, double[] posYDir, double angle)
+        private static Vector2 UpdateDirection(Vector2 startDir, Vector2 rotator, Vector2 posYDir, double angle)
         {
             var a = new double[3, 3];
             a.SetRow(0, rotator);

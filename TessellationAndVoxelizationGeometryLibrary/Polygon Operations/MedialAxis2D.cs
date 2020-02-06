@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TVGL.Numerics;
 
 
 namespace TVGL._2D
@@ -13,7 +14,7 @@ namespace TVGL._2D
         /// Best way to show is using "Presenter.ShowAndHang(silhouette, medialAxis, "", Plot2DType.Line, false);"
         /// </summary>
         /// <param name="silhouette"></param>
-        public static List<List<PointLight>> Run(IEnumerable<List<PointLight>> silhouette)
+        public static List<List<Vector2>> Run(IEnumerable<List<Vector2>> silhouette)
         {
             //To Get the 2D Medial Axis:
             //The first four steps create a medial axis and the next three steps sort the axis lines into branches
@@ -24,7 +25,7 @@ namespace TVGL._2D
             //5) Merge the points from the lines. Note: there seems to be an error with duplicate edges and disconnected branches
             //6) Get all the nodes (3+ lines)
             //7) Connect all the nodes to form branches with the lines
-            var allBranches = new List<List<PointLight>>();
+            var allBranches = new List<List<Vector2>>();
             foreach (var positivePolygon in silhouette.Where(p => MiscFunctions.AreaOfPolygon(p) > 0))
             {
                 var sampled = PolygonOperations.SampleWithEdgeLength(positivePolygon, MiscFunctions.Perimeter(positivePolygon) / 600);

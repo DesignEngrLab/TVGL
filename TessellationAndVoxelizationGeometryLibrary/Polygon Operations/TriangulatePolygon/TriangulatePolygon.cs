@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.Numerics;
 using System.Diagnostics;
 
 namespace TVGL
@@ -29,7 +29,7 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, bool ignoreNegativeSpace = false)
+        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, Vector2 normal, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
@@ -47,7 +47,7 @@ namespace TVGL
         /// <param name="isPositive">The is positive.</param>
         /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal,
+        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, Vector2 normal,
             out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
@@ -84,7 +84,7 @@ namespace TVGL
         /// </exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vertex[]>> Run2D(IList<PointLight[]> points2D, out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
+        public static List<List<Vertex[]>> Run2D(IList<Vector2[]> points2D, out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -141,16 +141,16 @@ namespace TVGL
                     var values = new List<double>() {0.82348, 0.13905, 0.78932, 0.37510 };
                     var theta = values[attempts - 1];
                     var points2Dtemp = points2D;
-                    points2D = new List<PointLight[]>();
+                    points2D = new List<Vector2[]>();
                     foreach (var loop in points2Dtemp)
                     {
-                        var newLoop = new List<PointLight>();
+                        var newLoop = new List<Vector2>();
                         var pHighest = double.NegativeInfinity;
                         foreach (var point in loop)
                         {
                             var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
                             var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
-                            var newPoint = new PointLight(point.References, pointX, pointY) ;
+                            var newPoint = new Vector2(point.References, pointX, pointY) ;
                             newLoop.Add(newPoint);
                             if (point.Y > pHighest)
                             {
@@ -742,7 +742,7 @@ namespace TVGL
                         #endregion
 
                         #region DEBUG: Find a chain containing a particular vertex
-                        //var vertexInQuestion = new Vertex(new double[] { 200.0, 100.0, 750.0 });
+                        //var vertexInQuestion = new Vertex(new Vector2 { 200.0, 100.0, 750.0 });
                         //foreach (var monotonePolygon in monotonePolygons)
                         //{
                         //    foreach (var node in monotonePolygon.SortedNodes)
@@ -781,9 +781,9 @@ namespace TVGL
 
                     #region DEBUG: Find a particular triangle or all triangles with a particular vertex
                     //Find all triangles with a particular vertex
-                    //var vertexInQuestion1 = new Vertex(new double[] { 200.0, 100.0, 750.0 });
-                    //var vertexInQuestion2 = new Vertex(new double[] { 50.0, 100.0, 784.99993896484375 });
-                    //var vertexInQuestion3 = new Vertex(new double[] { 250.0, 100.0, 657.68762588382879 });
+                    //var vertexInQuestion1 = new Vertex(new Vector2 { 200.0, 100.0, 750.0 });
+                    //var vertexInQuestion2 = new Vertex(new Vector2 { 50.0, 100.0, 784.99993896484375 });
+                    //var vertexInQuestion3 = new Vertex(new Vector2 { 250.0, 100.0, 657.68762588382879 });
                     //var trianglesInQuestion = new List<Vertex[]>();
                     //foreach (var triangle in triangles)
                     //{
@@ -859,7 +859,7 @@ namespace TVGL
         ///// <param name="isPositive"></param>
         ///// <param name="isDirectionalityKnown"></param>
         ///// <returns></returns>
-        //public static List<List<List<Point>>> OrderLoops(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, ref bool[] isPositive, bool isDirectionalityKnown = false)
+        //public static List<List<List<Point>>> OrderLoops(IEnumerable<IEnumerable<Vertex>> loops, Vector2 normal, ref bool[] isPositive, bool isDirectionalityKnown = false)
         //{
         //    //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
         //    var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
@@ -1598,7 +1598,7 @@ namespace TVGL
             {
                 var edge1 = triangle[1].Position.subtract(triangle[0].Position, 3);
                 var edge2 = triangle[2].Position.subtract(triangle[0].Position, 3);
-                var area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
+                var area = Math.Abs(edge1.Cross(edge2).norm2()) / 2;
                 if (area.IsNegligible()) Message.output("Neglible Area Traingle Created", 2); //CANNOT output a 0.0 area triangle. It will break other functions!
                 //Could collapse whichever edge vector is giving 0 area and ignore this triangle. 
             }

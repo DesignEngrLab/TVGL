@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -34,8 +35,8 @@ namespace TVGL.IOFunctions
         /// </summary>
         internal STLFileData()
         {
-            Normals = new List<double[]>();
-            Vertices = new List<List<double[]>>();
+            Normals = new List<Vector2>();
+            Vertices = new List<List<Vector2>>();
             Colors = new List<Color>();
         }
 
@@ -74,13 +75,13 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<List<double[]>> Vertices { get; }
+        private List<List<Vector2>> Vertices { get; }
 
         /// <summary>
         ///     Gets or sets the normals.
         /// </summary>
         /// <value>The normals.</value>
-        private List<double[]> Normals { get; }
+        private List<Vector2> Normals { get; }
 
         #endregion
 
@@ -187,16 +188,16 @@ namespace TVGL.IOFunctions
         /// </exception>
         private void ReadFacet(StreamReader reader, string normal)
         {
-            double[] n;
+            Vector2 n;
             if (!TryParseDoubleArray(NormalRegex, normal, out n))
                 throw new IOException("Unexpected line.");
-            var points = new List<double[]>();
+            var points = new List<Vector2>();
             if (!ReadExpectedLine(reader, "outer loop"))
                 throw new IOException("Unexpected line.");
             while (true)
             {
                 var line = ReadLine(reader);
-                double[] point;
+                Vector2 point;
                 if (TryParseDoubleArray(VertexRegex, line, out point))
                 {
                     points.Add(point);
@@ -330,7 +331,7 @@ namespace TVGL.IOFunctions
             }
             Colors.Add(_lastColor);
             Normals.Add(n);
-            Vertices.Add(new List<double[]> { v1, v2, v3 });
+            Vertices.Add(new List<Vector2> { v1, v2, v3 });
         }
         #endregion
 

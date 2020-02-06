@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using System.Collections.Generic;
+using TVGL.Numerics;
 
 
 namespace TVGL
@@ -139,7 +140,7 @@ namespace TVGL
         /// </summary>
         /// <param name="currentPoint">The current point.</param>
         /// <param name="loopID">The loop identifier.</param>
-        internal Node(PointLight currentPoint, int loopID)
+        internal Node(Vector2 currentPoint, int loopID)
         {
             LoopID = loopID;
             Point =new Point(currentPoint);

@@ -6,6 +6,7 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using MIConvexHull;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
@@ -13,7 +14,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
     // COMMENTEDCHANGE [Intrinsic]
-    public partial struct Vector3 : IEquatable<Vector3>, IFormattable
+    public partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex
     {
         #region Public Static Properties
         /// <summary>
@@ -50,6 +51,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,0,1).
         /// </summary>
         public static Vector3 UnitZ { get { return new Vector3(0.0, 0.0, 1.0); } }
+
+        public double[] Position => new[] { X, Y, Z };
         #endregion Public Static Properties
 
         #region Public Instance Methods

@@ -18,6 +18,7 @@ using System.Linq;
 using MIConvexHull;
 using Newtonsoft.Json;
 using TVGL.Voxelization;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -46,7 +47,7 @@ namespace TVGL
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
                 Faces = new List<PolygonalFace>(),
-                Position = (double[])Position.Clone(),
+                Position = (Vector2)Position.Clone(),
                 IndexInList = IndexInList
             };
         }
@@ -74,7 +75,7 @@ namespace TVGL
         /// </summary>
         /// <param name="position">The position.</param>
         /// <param name="indexInListOfVertices">The index in list of vertices.</param>
-        public Vertex(double[] position, int indexInListOfVertices)
+        public Vertex(Vector2 position, int indexInListOfVertices)
             : this(position)
         {
             IndexInList = indexInListOfVertices;
@@ -84,7 +85,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Vertex" /> class.
         /// </summary>
         /// <param name="position">The position.</param>
-        public Vertex(double[] position)
+        public Vertex(Vector2 position)
         {
             if (position.Length == 3) Position = position;
             else if (position.Length > 3) Position = position.Take(3).ToArray();
@@ -104,7 +105,7 @@ namespace TVGL
         ///     Gets the position.
         /// </summary>
         /// <value>The position.</value>
-        public double[] Position { get; set; }
+        public Vector3 Position { get; set; }
 
         /// <summary>
         ///     Gets the x.

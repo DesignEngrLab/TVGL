@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
 
 namespace TVGL
@@ -49,12 +50,12 @@ namespace TVGL
             return new PolygonalFace
             {
                 Area = Area,
-                Center = (double[])Center.Clone(),
+                Center = (Vector2)Center.Clone(),
                 Curvature = Curvature,
                 Color = Color,
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
-                Normal = (double[])Normal.Clone(),
+                Normal = (Vector2)Normal.Clone(),
                 Vertices = new List<Vertex>()
             };
         }
@@ -69,7 +70,7 @@ namespace TVGL
             var centerX = Vertices.Average(v => v.X);
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
-            Center = new[] { centerX, centerY, centerZ };
+            Center = new Vector3(centerX, centerY, centerZ);
             bool reverseVertexOrder;
             Normal = DetermineNormal(this.Vertices, out reverseVertexOrder, Normal);
             if (reverseVertexOrder) Vertices.Reverse();
@@ -155,7 +156,7 @@ namespace TVGL
         /// </summary>
         /// <param name="normal">The normal.</param>
         /// <param name="color">The color.</param>
-        public PolygonalFace(double[] normal, Color color)
+        public PolygonalFace(Vector2 normal, Color color)
             : this(normal)
         {
             Color = color;
@@ -165,7 +166,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
         /// <param name="normal">The normal.</param>
-        public PolygonalFace(double[] normal)
+        public PolygonalFace(Vector2 normal)
             : this()
         {
             Normal = normal;
@@ -197,7 +198,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, double[] normal, bool connectVerticesBackToFace = true)
+        public PolygonalFace(IEnumerable<Vertex> vertices, Vector2 normal, bool connectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
@@ -209,7 +210,7 @@ namespace TVGL
             var centerX = Vertices.Average(v => v.X);
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
-            Center = new[] { centerX, centerY, centerZ };
+            Center = new Vector3( centerX, centerY, centerZ };
             bool reverseVertexOrder;
             Normal = DetermineNormal(Vertices, out reverseVertexOrder, normal);
             if (reverseVertexOrder) Vertices.Reverse();
@@ -228,7 +229,7 @@ namespace TVGL
                 var edge1 = Vertices[1].Position.subtract(Vertices[0].Position, 3);
                 var edge2 = Vertices[2].Position.subtract(Vertices[0].Position, 3);
                 // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(Normal, 3)) / 2;
+                area += Math.Abs(edge1.Cross(edge2).Dot(Normal, 3)) / 2;
             }
             //If not a number, the triangle is actually a straight line. Set the area = 0, and let repair function fix this.
             return double.IsNaN(area) ? 0.0 : area;
@@ -240,20 +241,20 @@ namespace TVGL
         /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">The normal.</param>
-        /// <returns>System.Double[].</returns>
-        public static double[] DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, double[] normal = null)
+        /// <returns>System.Vector2.</returns>
+        public static Vector2 DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, Vector2 normal = null)
         {
             reverseVertexOrder = false;
             var n = vertices.Count;
             if (normal != null && normal.Contains(double.NaN)) normal = null;
             else if (normal != null) normal.normalizeInPlace(3);
             var edgeVectors = new double[n][];
-            var normals = new List<double[]>();
+            var normals = new List<Vector2>();
             edgeVectors[0] = vertices[0].Position.subtract(vertices[n - 1].Position, 3);
             for (var i = 1; i < n; i++)
             {
                 edgeVectors[i] = vertices[i].Position.subtract(vertices[i - 1].Position, 3);
-                var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize(3);
+                var tempCross = edgeVectors[i - 1].Cross(edgeVectors[i]).normalize(3);
                 if (!tempCross.Any(double.IsNaN))
                 {
                     if (!normals.Any())
@@ -276,18 +277,18 @@ namespace TVGL
                     normals.Add(tempCross);
                 }
             }
-            var lastCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize(3);
+            var lastCross = edgeVectors[n - 1].Cross(edgeVectors[0]).normalize(3);
             if (!lastCross.Any(double.IsNaN)) normals.Add(lastCross);
 
             n = normals.Count;
             if (n == 0) // this would happen if the face collapse to a line.
-                return new[] { double.NaN, double.NaN, double.NaN };
+                return new Vector3( double.NaN, double.NaN, double.NaN );
             // before we just average these normals, let's check that they agree.
             // the dotProductsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
             var dotProductsOfNormals = new List<double>();
-            dotProductsOfNormals.Add(normals[0].dotProduct(normals[n - 1], 3));
-            for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1], 3));
+            dotProductsOfNormals.Add(normals[0].Dot(normals[n - 1], 3));
+            for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].Dot(normals[i - 1], 3));
             // if all are close to one (or at least positive), then the face is a convex polygon. Now,
             // we can simply average and return the answer.
             var isConvex = dotProductsOfNormals.All(x => x > 0);
@@ -296,7 +297,7 @@ namespace TVGL
                 var newNormal = normals.Aggregate((current, c) => current.add(c, 3)).normalize(3);
                 // even though the normal provide was wrong above (or nonexistent)
                 // we still check it to see if this is the correct direction.
-                if (normal == null || newNormal.dotProduct(normal, 3) >= 0) return newNormal;
+                if (normal == null || newNormal.Dot(normal, 3) >= 0) return newNormal;
                 // else reverse the order 
                 reverseVertexOrder = true;
                 return newNormal.multiply(-1);
@@ -307,8 +308,8 @@ namespace TVGL
                 //
                 // well, here the guess may be useful. We'll insert it into the list of dotProducts
                 // and then do a tally
-                dotProductsOfNormals[0] = normal.dotProduct(normals[0], 3);
-                dotProductsOfNormals.Insert(0, normal.dotProduct(normals[n - 1], 3));
+                dotProductsOfNormals[0] = normal.Dot(normals[0], 3);
+                dotProductsOfNormals.Insert(0, normal.Dot(normals[n - 1], 3));
             }
             var likeFirstNormal = true;
             var numLikeFirstNormal = 1;
@@ -366,7 +367,7 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; internal set; }
+        public Vector2 Center { get; internal set; }
 
         /// <summary>
         ///     Gets the area.

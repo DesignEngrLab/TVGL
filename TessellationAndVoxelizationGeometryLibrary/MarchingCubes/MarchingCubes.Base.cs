@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
 using System;
 
@@ -56,7 +57,7 @@ namespace TVGL
         protected readonly SolidT solid;
         protected readonly double gridToCoordinateFactor;
         protected readonly double coordToGridFactor;
-        protected readonly double[][] GridOffsetTable;
+        protected readonly Vector2[] GridOffsetTable;
         readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         protected readonly List<PolygonalFace> faces;
         protected const double fractionOfGridToExpand = 1.05;
@@ -250,7 +251,7 @@ namespace TVGL
         /// EdgeDirectionTable lists the direction vector (vertexFrom-vertexTo) for each edge in the cube.
         /// edgeDirection[12][3]
         /// </summary>
-        protected static readonly double[][] EdgeDirectionTable = new double[][]
+        protected static readonly Vector2[] EdgeDirectionTable = new Vector2[]
         {
             new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
             new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},

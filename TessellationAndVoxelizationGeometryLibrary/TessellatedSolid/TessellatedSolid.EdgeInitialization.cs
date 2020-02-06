@@ -15,7 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.Numerics;
 using TVGL.IOFunctions;
 
 namespace TVGL
@@ -76,8 +76,8 @@ namespace TVGL
                 SetAndGetEdgeChecksum(edge);
                 // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
                 // face has no area (collapsed to a line).
-                if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (double[])ownedFace.Normal.Clone();
-                if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (double[])otherFace.Normal.Clone();
+                if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (Vector2)ownedFace.Normal.Clone();
+                if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (Vector2)otherFace.Normal.Clone();
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;
@@ -179,7 +179,7 @@ namespace TVGL
                     {
                         var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
                             ? -2 //edge cannot be owned by both faces, thus this is not a good candidate for this.
-                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal);
+                            : refFace.Normal.Dot(candidateMatchingFace.Normal);
                         //  To take it "out of the running", we simply give it a value of -2
                         if (dotProductScore > highestDotProduct)
                         {
@@ -229,8 +229,8 @@ namespace TVGL
         private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
         {
             var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Position.subtract(edge.To.Position, 3);
-            var isThisNormal = edge.Vector.crossProduct(otherEdgeVector);
-            return face.Normal.dotProduct(isThisNormal, 3) > 0;
+            var isThisNormal = edge.Vector.Cross(otherEdgeVector);
+            return face.Normal.Dot(isThisNormal, 3) > 0;
         }
 
 
@@ -326,10 +326,10 @@ namespace TVGL
         }
 
 
-        internal static List<(List<Edge>, double[])> OrganizeIntoLoops(List<Edge> singleSidedEdges,
+        internal static List<(List<Edge>, Vector2)> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
-            var listOfLoops = new List<(List<Edge>, double[])>();
+            var listOfLoops = new List<(List<Edge>, Vector2)>();
             remainingEdges = new List<Edge>(singleSidedEdges);
             if (!singleSidedEdges.Any()) return listOfLoops;
             var attempts = 0;
@@ -351,10 +351,10 @@ namespace TVGL
                         var bestNext = pickBestEdge(possibleNextEdges, loop.Last().Vector, normal);
                         if (bestNext == null) break;
                         loop.Add(bestNext);
-                        var n1 = loop[loop.Count - 1].Vector.crossProduct(loop[loop.Count - 2].Vector).normalize(3);
+                        var n1 = loop[loop.Count - 1].Vector.Cross(loop[loop.Count - 2].Vector).normalize(3);
                         if (!n1.Contains(double.NaN))
                         {
-                            n1 = n1.dotProduct(normal, 3) < 0 ? n1.multiply(-1) : n1;
+                            n1 = n1.Dot(normal, 3) < 0 ? n1.multiply(-1) : n1;
                             normal = loop.Count == 2
                                 ? n1
                                 : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
@@ -371,10 +371,10 @@ namespace TVGL
                                 normal);
                             if (bestPrev == null) break;
                             loop.Insert(0, bestPrev);
-                            var n1 = loop[1].Vector.crossProduct(loop[0].Vector).normalize(3);
+                            var n1 = loop[1].Vector.Cross(loop[0].Vector).normalize(3);
                             if (!n1.Contains(double.NaN))
                             {
-                                n1 = n1.dotProduct(normal, 3) < 0 ? n1.multiply(-1) : n1;
+                                n1 = n1.Dot(normal, 3) < 0 ? n1.multiply(-1) : n1;
                                 normal = loop.Count == 2
                                     ? n1
                                     : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
@@ -401,7 +401,7 @@ namespace TVGL
         }
 
         private static IEnumerable<(Edge, List<PolygonalFace>)> CreateMissingEdgesAndFaces(
-                    List<(List<Edge>, double[])> loops,
+                    List<(List<Edge>, Vector2)> loops,
                     out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
         {
             var completedEdges = new List<(Edge, List<PolygonalFace>)>();
@@ -473,7 +473,7 @@ namespace TVGL
             return completedEdges;
         }
 
-        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, double[] refEdge, double[] normal)
+        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector2 refEdge, Vector2 normal)
         {
             var unitRefEdge = refEdge.normalize(3);
             var max = -2.0;
@@ -481,8 +481,8 @@ namespace TVGL
             foreach (var candEdge in possibleNextEdges)
             {
                 var unitCandEdge = candEdge.Vector.normalize(3);
-                var cross = unitRefEdge.crossProduct(unitCandEdge);
-                var temp = cross.dotProduct(normal, 3);
+                var cross = unitRefEdge.Cross(unitCandEdge);
+                var temp = cross.Dot(normal, 3);
                 if (max < temp)
                 {
                     max = temp;
@@ -496,7 +496,7 @@ namespace TVGL
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {
             var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
-            score += 1 - Math.Abs(e1.Vector.normalize(3).dotProduct(e2.Vector.normalize(3), 3));
+            score += 1 - Math.Abs(e1.Vector.normalize(3).Dot(e2.Vector.normalize(3), 3));
             score += Math.Min(e2.From.Position.subtract(e1.To.Position, 3).norm2()
                               + e2.To.Position.subtract(e1.From.Position, 3).norm2(),
                 e2.From.Position.subtract(e1.From.Position, 3).norm2()

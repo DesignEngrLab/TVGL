@@ -14,6 +14,7 @@ using System.Linq;
 using System.Xml.Serialization;
 
 using TVGL.IOFunctions.amfclasses;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions.threemfclasses
 {
@@ -67,7 +68,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The transform.</value>
         [XmlAttribute]
         public string transform { get; set; }
-        internal double[] transformArray => MakeTransformArray(transform);
+        internal Vector2 transformArray => MakeTransformArray(transform);
         internal double[,] transformMatrix => MakeTransformMatrix(transformArray);
 
         /// <summary>
@@ -77,7 +78,7 @@ namespace TVGL.IOFunctions.threemfclasses
         public string itemref { get; set; }
 
 
-        internal static double[] MakeTransformArray(string transform)
+        internal static Vector2 MakeTransformArray(string transform)
         {
 
             if (string.IsNullOrWhiteSpace(transform)) return null;
@@ -95,7 +96,7 @@ namespace TVGL.IOFunctions.threemfclasses
         }
 
 
-        internal static double[,] MakeTransformMatrix(double[] transformArray)
+        internal static double[,] MakeTransformMatrix(Vector2 transformArray)
         {
             if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return null;
             var result = StarMath.makeIdentity(4);
@@ -175,7 +176,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The transform.</value>
         [XmlAttribute]
         public string transform { get; set; }
-        internal double[] transformArray => Item.MakeTransformArray(transform);
+        internal Vector2 transformArray => Item.MakeTransformArray(transform);
         internal double[,] transformMatrix => Item.MakeTransformMatrix(transformArray);
     }
 

@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -40,13 +41,13 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get;  set; }
+        public Vector2 Center { get;  set; }
 
         /// <summary>
         ///     Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
-        public double[] Axis { get;  set; }
+        public Vector2 Axis { get;  set; }
 
         /// <summary>
         ///     Gets the major radius.

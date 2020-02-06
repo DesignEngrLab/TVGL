@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
-
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL.MathOperations
@@ -26,8 +26,8 @@ namespace TVGL.MathOperations
         /// <param name="p"></param>
         /// <param name="uvw"></param>
         /// <returns></returns>
-        public static double[] ClosestVertexOnTriangleToVertex(double[] a, double[] b, double[] c, double[] p,
-            out double[] uvw)
+        public static Vector2 ClosestVertexOnTriangleToVertex(Vector2 a, Vector2 b, Vector2 c, Vector2 p,
+            out Vector2 uvw)
         {
             //UVW is the vector of the point in question (p) to the nearest point on the triangle (a,b,c), I think.
             uvw = new[] { 0.0, 0.0, 0.0 };
@@ -42,7 +42,7 @@ namespace TVGL.MathOperations
             var ab = b.subtract(a, 3);
             var ac = c.subtract(a, 3);
             var ap = p.subtract(a, 3);
-            double d1 = ab.dotProduct(ap, 3), d2 = ac.dotProduct(ap, 3);
+            double d1 = ab.Dot(ap, 3), d2 = ac.Dot(ap, 3);
 
             // degenerate triangle edges
             if (MiscFunctions.DistancePointToPoint(a, b).IsNegligible())
@@ -73,7 +73,7 @@ namespace TVGL.MathOperations
 
             // Check if P in vertex region outside B
             var bp = p.subtract(b, 3);
-            double d3 = ab.dotProduct(bp, 3), d4 = ac.dotProduct(bp, 3);
+            double d3 = ab.Dot(bp, 3), d4 = ac.Dot(bp, 3);
             if (d3 >= 0.0 && d4 <= d3)
             {
                 uvw[1] = 1.0;
@@ -91,7 +91,7 @@ namespace TVGL.MathOperations
 
             // Check if P in vertex region outside C
             var cp = p.subtract(c, 3);
-            double d5 = ab.dotProduct(cp, 3), d6 = ac.dotProduct(cp, 3);
+            double d5 = ab.Dot(cp, 3), d6 = ac.Dot(cp, 3);
             if (d6 >= 0.0 && d5 <= d6)
             {
                 uvw[2] = 1.0;
@@ -137,10 +137,10 @@ namespace TVGL.MathOperations
         /// <param name="p"></param>
         /// <param name="distanceToSegment"></param>
         /// <returns></returns>
-        public static double[] ClosestVertexOnSegmentToVertex(double[] a, double[] b, double[] p, out double distanceToSegment)
+        public static Vector2 ClosestVertexOnSegmentToVertex(Vector2 a, Vector2 b, Vector2 p, out double distanceToSegment)
         {
             var ab = b.subtract(a, 3);
-            distanceToSegment = p.subtract(a, 3).dotProduct(ab, 3);
+            distanceToSegment = p.subtract(a, 3).Dot(ab, 3);
 
             if (distanceToSegment <= 0.0)
             {
@@ -152,7 +152,7 @@ namespace TVGL.MathOperations
             {
 
                 // always nonnegative since denom = ||ab||^2
-                double denom = ab.dotProduct(ab, 3);
+                double denom = ab.Dot(ab, 3);
 
                 if (distanceToSegment >= denom)
                 {
@@ -175,7 +175,7 @@ namespace TVGL.MathOperations
         /// <param name="line"></param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public static PointLight ClosestPointOnLineSegmentToPoint(Line line, PointLight p)
+        public static Vector2 ClosestPointOnLineSegmentToPoint(Line line, Vector2 p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
             //the line.FromPoint
@@ -185,7 +185,7 @@ namespace TVGL.MathOperations
             //(3) Otherwise, the infinite line intersection is inside the line segment interval.
             var fromPoint = line.FromPoint.Light;
             var lineVector = line.ToPoint - line.FromPoint;
-            var distanceToSegment = (p - fromPoint).dotProduct(lineVector) / line.Length;
+            var distanceToSegment = (p - fromPoint).Dot(lineVector) / line.Length;
 
             if (distanceToSegment <= 0.0)
             {
@@ -196,7 +196,7 @@ namespace TVGL.MathOperations
                 return line.ToPoint.Light;
             }
             distanceToSegment = distanceToSegment / line.Length;
-            return new PointLight(fromPoint.X + lineVector[0] * distanceToSegment,
+            return new Vector2(fromPoint.X + lineVector[0] * distanceToSegment,
                 fromPoint.Y + lineVector[1] * distanceToSegment);
         }
     }

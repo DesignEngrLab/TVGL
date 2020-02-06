@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using MIConvexHull;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -49,7 +50,7 @@ namespace TVGL
             return 0.5 * totalArea;
         }
 
-        public static List<PointLight> ConvexHull2D(IList<PointLight> points) 
+        public static List<Vector2> ConvexHull2D(IList<Vector2> points) 
         {
             return MIConvexHull.ConvexHull.Create2D(points).Result.ToList();
         }

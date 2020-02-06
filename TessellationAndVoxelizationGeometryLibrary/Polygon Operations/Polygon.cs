@@ -4,19 +4,20 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using TVGL.Numerics;
 
 using TVGL.IOFunctions;
 
 namespace TVGL
 {
-    [KnownType(typeof(List<PointLight>))]
+    [KnownType(typeof(List<Vector2>))]
     public readonly struct PolygonLight
     {
         /// <summary>
         /// Gets the PointLights that make up the polygon
         /// </summary>
         [JsonIgnore]
-        public readonly List<PointLight> Path;
+        public readonly List<Vector2> Path;
 
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
@@ -46,10 +47,10 @@ namespace TVGL
         public PolygonLight(Polygon polygon)
         {
             Area = polygon.Area;
-            Path = new List<PointLight>();
+            Path = new List<Vector2>();
             foreach (var point in polygon.Path)
             {
-                Path.Add(new PointLight(point));
+                Path.Add(new Vector2(point));
             }
 
             MaxX = polygon.MaxX;
@@ -58,9 +59,9 @@ namespace TVGL
             MinY = polygon.MinY;
         }
 
-        public PolygonLight(IEnumerable<PointLight> points)
+        public PolygonLight(IEnumerable<Vector2> points)
         {
-            Path = new List<PointLight>(points);
+            Path = new List<Vector2>(points);
             Area = MiscFunctions.AreaOfPolygon(Path);
             MaxX = double.MinValue;
             MinX = double.MaxValue;
@@ -77,7 +78,7 @@ namespace TVGL
 
         public static PolygonLight Reverse(PolygonLight original)
         {
-            var path = new List<PointLight>(original.Path);
+            var path = new List<Vector2>(original.Path);
             path.Reverse();
             var newPoly = new PolygonLight(path);
             return newPoly;
@@ -110,11 +111,11 @@ namespace TVGL
             return Path.SelectMany(p => new[] { p.X, p.Y });
         }
 
-        internal static PolygonLight MakeFromBinaryString(double[] coordinates)
+        internal static PolygonLight MakeFromBinaryString(Vector2 coordinates)
         {
-            var points = new List<PointLight>();
+            var points = new List<Vector2>();
             for (int i = 0; i < coordinates.Length; i += 2)
-                points.Add(new PointLight(coordinates[i], coordinates[i + 1]));
+                points.Add(new Vector2(coordinates[i], coordinates[i + 1]));
             return new PolygonLight(points);
         }
     }
@@ -138,7 +139,7 @@ namespace TVGL
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
-        public List<PointLight> PathAsLight => Path.Select(p => p.Light).ToList();
+        public List<Vector2> PathAsLight => Path.Select(p => p.Light).ToList();
 
         /// <summary>
         /// The list of 2D points that make up a polygon.

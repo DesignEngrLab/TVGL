@@ -15,7 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -37,7 +37,7 @@ namespace TVGL
         /// <param name="facesAll">The faces all.</param>
         /// <param name="axis">The axis.</param>
         /// <param name="aperture">The aperture.</param>
-        public Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
+        public Cone(List<PolygonalFace> facesAll, Vector2 axis, double aperture)
             : base(facesAll)
         {
             Type = PrimitiveSurfaceType.Cone;
@@ -45,20 +45,20 @@ namespace TVGL
             Aperture = aperture;
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
-            var axisRefPoints = new List<double[]>();
-            double[] axisRefPoint;
-            var n1 = faces[0].Normal.crossProduct(axis);
-            var n2 = faces[numFaces - 1].Normal.crossProduct(axis);
-            MiscFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.dotProduct(n1, 3),
-                n2, faces[numFaces - 1].Center.dotProduct(n2, 3), axis, out axisRefPoint);
+            var axisRefPoints = new List<Vector2>();
+            Vector2 axisRefPoint;
+            var n1 = faces[0].Normal.Cross(axis);
+            var n2 = faces[numFaces - 1].Normal.Cross(axis);
+            MiscFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.Dot(n1, 3),
+                n2, faces[numFaces - 1].Center.Dot(n2, 3), axis, out axisRefPoint);
             if (!axisRefPoint.Any(double.IsNaN) && !axisRefPoint.IsNegligible())
                 axisRefPoints.Add(axisRefPoint);
             for (var i = 1; i < numFaces; i++)
             {
-                n1 = faces[i].Normal.crossProduct(axis);
-                n2 = faces[i - 1].Normal.crossProduct(axis);
-                MiscFunctions.LineIntersectingTwoPlanes(n1, faces[i].Center.dotProduct(n1, 3),
-                    n2, faces[i - 1].Center.dotProduct(n2, 3), axis, out axisRefPoint);
+                n1 = faces[i].Normal.Cross(axis);
+                n2 = faces[i - 1].Normal.Cross(axis);
+                MiscFunctions.LineIntersectingTwoPlanes(n1, faces[i].Center.Dot(n1, 3),
+                    n2, faces[i - 1].Center.Dot(n2, 3), axis, out axisRefPoint);
                 if (!axisRefPoint.Any(double.IsNaN) && !axisRefPoint.IsNegligible())
                     axisRefPoints.Add(axisRefPoint);
             }
@@ -66,7 +66,7 @@ namespace TVGL
             axisRefPoint = axisRefPoints.Aggregate(axisRefPoint, (current, c) => current.add(c, 3));
             axisRefPoint = axisRefPoint.divide(axisRefPoints.Count);
             /*re-attach to plane through origin */
-            var distBackToOrigin = -1 * axis.dotProduct(axisRefPoint, 3);
+            var distBackToOrigin = -1 * axis.Dot(axisRefPoint, 3);
             axisRefPoint = axisRefPoint.subtract(axis.multiply(distBackToOrigin), 3);
             // approach to find  Apex    
             var numApices = 0;
@@ -74,7 +74,7 @@ namespace TVGL
             for (var i = 1; i < numFaces; i++)
             {
                 var distToAxis = MiscFunctions.DistancePointToLine(faces[i].Center, axisRefPoint, axis);
-                var distAlongAxis = axis.dotProduct(faces[i].Center, 3);
+                var distAlongAxis = axis.Dot(faces[i].Center, 3);
                 distAlongAxis += distToAxis / Math.Tan(aperture);
                 if (double.IsNaN(distAlongAxis)) continue;
                 numApices++;
@@ -84,7 +84,7 @@ namespace TVGL
             Apex = axisRefPoint.add(axis.multiply(apexDistance), 3);
             /* determine is positive or negative */
             var v2Apex = Apex.subtract(faces[0].Center, 3);
-            IsPositive = v2Apex.dotProduct(axis, 3) >= 0;
+            IsPositive = v2Apex.Dot(axis, 3) >= 0;
         }
 
         /// <summary>
@@ -97,13 +97,13 @@ namespace TVGL
         ///     Gets the apex.
         /// </summary>
         /// <value>The apex.</value>
-        public double[] Apex { get;  set; }
+        public Vector2 Apex { get;  set; }
 
         /// <summary>
         ///     Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
-        public double[] Axis { get;  set; }
+        public Vector2 Axis { get;  set; }
 
 
         /// <summary>

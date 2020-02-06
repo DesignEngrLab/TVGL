@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -53,7 +54,7 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<double[]> vertices;
+        private List<Vector2> vertices;
 
         /// <summary>
         ///     Gets the face to vertex indices.
@@ -536,7 +537,7 @@ namespace TVGL.IOFunctions
         private bool ReadVertices(StreamReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
-            vertices = new List<double[]>();
+            vertices = new List<Vector2>();
             var numD = vertexTypes.Count;
             for (var i = 0; i < numVertices; i++)
             {
@@ -664,7 +665,7 @@ namespace TVGL.IOFunctions
         private bool ReadVertices(BinaryReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
-            vertices = new List<double[]>();
+            vertices = new List<Vector2>();
             var numD = vertexTypes.Count;
             for (var i = 0; i < numVertices; i++)
             {

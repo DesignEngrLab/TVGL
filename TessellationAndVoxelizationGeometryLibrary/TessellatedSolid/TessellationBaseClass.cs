@@ -29,7 +29,7 @@ namespace TVGL
         ///     Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        public double[] Normal { get; internal set; }
+        public Vector2 Normal { get; internal set; }
 
     }
 }

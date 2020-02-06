@@ -20,7 +20,7 @@ using System.Runtime.Serialization;
 using MIConvexHull;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
+using TVGL.Numerics;
 using TVGL.IOFunctions;
 
 namespace TVGL
@@ -43,14 +43,14 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; set; }
+        public Vector2 Center { get; set; }
 
 
         /// <summary>
         ///     Gets the bounds.
         /// </summary>
         /// <value>The bounds.</value>
-        public double[][] Bounds { get; set; } = new double[2][];
+        public Vector2[] Bounds { get; set; } = new double[2][];
 
         public double XMin { get => Bounds[0][0]; protected set => Bounds[0][0] = value; }
         public double XMax { get => Bounds[1][0]; protected set => Bounds[1][0] = value; }

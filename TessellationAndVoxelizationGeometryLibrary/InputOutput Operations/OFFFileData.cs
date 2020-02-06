@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -33,7 +33,7 @@ namespace TVGL.IOFunctions
         /// </summary>
         private OFFFileData()
         {
-            Vertices = new List<double[]>();
+            Vertices = new List<Vector2>();
             FaceToVertexIndices = new List<int[]>();
             Colors = new List<Color>();
         }
@@ -63,7 +63,7 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<double[]> Vertices { get; }
+        private List<Vector2> Vertices { get; }
 
         /// <summary>
         ///     Gets the face to vertex indices.
@@ -169,7 +169,7 @@ namespace TVGL.IOFunctions
             offData.ContainsTextureCoordinates = line.Contains("ST");
             offData.ContainsHomogeneousCoordinates = line.Contains("4");
 
-            double[] point;
+            Vector2 point;
             line = ReadLine(reader);
             while (line.StartsWith("#"))
             {
@@ -220,7 +220,7 @@ namespace TVGL.IOFunctions
                         offData.Comments.Add(line.Substring(1));
                     line = ReadLine(reader);
                 }
-                double[] numbers;
+                Vector2 numbers;
                 if (!TryParseDoubleArray(line, out numbers)) return false;
 
                 var numVerts = (int)Math.Round(numbers[0], 0);

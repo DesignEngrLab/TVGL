@@ -41,11 +41,11 @@ namespace TVGL
         /// <summary>
         public Dictionary<int, double> StepDistances { get; }
         // an alternate approach without using dictionaries should be pursued
-        //public double[] StepDistances { get; }
+        //public Vector2 StepDistances { get; }
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
-        public double[] Direction { get; set; }
+        public Numerics.Vector2 Direction { get; set; }
         // in the future, wouldn't this just be
         // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
@@ -62,25 +62,25 @@ namespace TVGL
             StepDistances = stepDistances;
         }
 
-        public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, double[][] bounds = null, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(Numerics.Vector2 direction, Dictionary<int, double> stepDistances, double sameTolerance, Numerics.Vector2[] bounds = null, UnitType units = UnitType.unspecified)
             : this(stepDistances)
         {
-            Direction = (double[])direction.Clone();
+            Direction = (Numerics.Vector2)direction.Clone();
             NumLayers = stepDistances.Count;
             if (bounds != null)
-                Bounds = new[] { (double[])bounds[0].Clone(), (double[])bounds[1].Clone() };
+                Bounds = new[] { (Numerics.Vector2)bounds[0].Clone(), (Numerics.Vector2)bounds[1].Clone() };
             Units = units;
             SameTolerance = sameTolerance;
         }  
 
-        public CrossSectionSolid(double[] direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<PolygonLight>> Layer2D, double[][] bounds = null,
+        public CrossSectionSolid(Numerics.Vector2 direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<PolygonLight>> Layer2D, Numerics.Vector2[] bounds = null,
             UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
-            Direction = (double[])direction.Clone();
+            Direction = (Numerics.Vector2)direction.Clone();
             this.Layer2D = Layer2D;
             Layer3D = new Dictionary<int, List<List<Vertex>>>();
             if (bounds == null)
@@ -103,7 +103,7 @@ namespace TVGL
                 new[] {xmax, ymax, StepDistances[NumLayers-1]}
                 };
             }
-            else Bounds = new[] { (double[])bounds[0].Clone(), (double[])bounds[1].Clone() };
+            else Bounds = new[] { (Numerics.Vector2)bounds[0].Clone(), (Numerics.Vector2)bounds[1].Clone() };
         }
 
         public static CrossSectionSolid CreateFromTessellatedSolid(TessellatedSolid ts, CartesianDirections direction, int numberOfLayers)
@@ -118,7 +118,7 @@ namespace TVGL
             for (int i = 1; i < numberOfLayers; i++)
                 stepDistances.Add(i, stepDistances[i - 1] + stepSize);
             //stepDistances[i] = stepDistances[i - 1] + stepSize;
-            var bounds = new[] { (double[])ts.Bounds[0].Clone(), (double[])ts.Bounds[1].Clone() };
+            var bounds = new[] { (Numerics.Vector2)ts.Bounds[0].Clone(), (Numerics.Vector2)ts.Bounds[1].Clone() };
 
             var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, List<PolygonLight>>();
@@ -302,7 +302,7 @@ namespace TVGL
         protected void OnDeserializedMethod(StreamingContext context)
         {
             JArray jArray = (JArray)serializationData["CrossSections"];
-            var layerArray = jArray.ToObject<double[][][]>();
+            var layerArray = jArray.ToObject<Numerics.Vector2[][]>();
             Layer2D = new Dictionary<int, List<PolygonLight>>();
             var keysArray = StepDistances.Keys.ToArray();
             for (int i = 0; i < layerArray.Length; i++)

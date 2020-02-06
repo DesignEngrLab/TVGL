@@ -13,7 +13,7 @@
 // ***********************************************************************
 
 using System;
-
+using TVGL.Numerics;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,7 +33,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertexA">The keep vertex.</param>
         /// <param name="vertexB">The other vertex.</param>
-        internal static double[] DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
+        internal static Vector2 DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
         {
             //average positions
             var newPosition = vertexA.Position.add(vertexB.Position, 3);
@@ -56,9 +56,9 @@ namespace TVGL
             keepVertex.Position = newPosition.divide(2);
             var avgNormal = removeFace1.Normal.add(removeFace2.Normal, 3).normalize(3);
             var otherVertexAvgDistanceToEdgePlane =
-                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal, 3)).Sum() /
+                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.Dot(avgNormal, 3)).Sum() /
                 (keepVertex.Edges.Count - 1);
-            var distanceOfEdgePlane = keepVertex.Position.dotProduct(avgNormal, 3);
+            var distanceOfEdgePlane = keepVertex.Position.Dot(avgNormal, 3);
 
             // use a sigmoid function to determine how far out to move the vertex
             var x = 0.05 * (distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane) / radius;

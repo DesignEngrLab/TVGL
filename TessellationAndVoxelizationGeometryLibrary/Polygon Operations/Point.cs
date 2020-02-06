@@ -17,94 +17,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using MIConvexHull;
-
+using TVGL.Numerics;
 
 namespace TVGL
 {
-    /// <summary>
-    ///     The Point light struct is a low memory version of the Point class. 
-    /// </summary>
-    [DataContract]
-    public struct PointLight : IVertex2D
-    {
-        [DataMember]
-        public double X { get; set; }
-        [DataMember]
-        public double Y { get; set; }
-        public List<Vertex> References { get; set; }
-
-        public PointLight(double x, double y, bool initializeRefList = false)
-        {
-            X = x;
-            Y = y;
-            References = initializeRefList ? new List<Vertex>() : null;
-        }
-        public PointLight(Vertex v, double x, double y)
-        {
-            X = x;
-            Y = y;
-            References = new List<Vertex> { v };
-        }
-        public PointLight(IEnumerable<Vertex> vertices, double x, double y)
-        {
-            X = x;
-            Y = y;
-            References = vertices?.ToList();
-        }
-
-        public PointLight(Point point)
-        {
-            X = point.X;
-            Y = point.Y;
-            References = point.References;
-        }
-
-        public PointLight(double[] position)
-        {
-            X = position[0];
-            Y = position[1];
-            References = null;
-        }
-
-        public double[] Subtract(PointLight b)
-        {
-            return new[] { X - b.X, Y - b.Y };
-        }
-
-        //Note: This equality operator CANNOT use references, since this is a struct.
-        public static bool operator ==(PointLight a, PointLight b)
-        {
-            return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
-        }
-        public override bool Equals(object obj)
-        {
-            return this == (PointLight)obj;
-        }
-
-        public static bool operator !=(PointLight a, PointLight b)
-        {
-            return !(a == b);
-        }
-        public static double[] operator -(PointLight a, PointLight b)
-        {
-            return new[] { a.X - b.X, a.Y - b.Y };
-        }
-        public static double[] operator +(PointLight a, PointLight b)
-        {
-            return new[] { a.X + b.X, a.Y + b.Y };
-        }
-        public static double[] operator -(PointLight a, double[] b)
-        {
-            return new[] { a.X - b[0], a.Y - b[1] };
-        }
-        public static double[] operator +(PointLight a, double[] b)
-        {
-            return new[] { a.X + b[0], a.Y + b[1] };
-        }
-
-
-    }
-
     /// <summary>
     ///     The Point class is used to indicate a 2D or 3D location that may be outside
     ///     of a solid (hence making Vertex an inappropriate choice).
@@ -157,7 +73,7 @@ namespace TVGL
         public IList<Line> Lines { get; set; }
 
         [DataMember]
-        public PointLight Light { get; set; }
+        public Vector2 Light { get; set; }
 
         /// <summary>
         ///     Gets or sets an arbitrary ReferenceIndex to track point
@@ -205,9 +121,9 @@ namespace TVGL
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
         /// </summary>
-        public Point(PointLight p)
+        public Point(Vector2 p)
         {
-            Light = new PointLight(p.X, p.Y);
+            Light = new Vector2(p.X, p.Y);
             Lines = new List<Line>();
             if (p.References != null)
                 References = new List<Vertex>(p.References);
@@ -221,7 +137,7 @@ namespace TVGL
         /// <param name="point"></param>
         public Point(Point point)
         {
-            Light = new PointLight(point.X, point.Y);
+            Light = new Vector2(point.X, point.Y);
             Lines = new List<Line>(point.Lines);
             References = new List<Vertex>(point.References);
         }
@@ -235,7 +151,7 @@ namespace TVGL
         /// <param name="z">The z.</param>
         public Point(Vertex vertex, double x, double y, double z)
         {
-            Light = new PointLight(x, y);
+            Light = new Vector2(x, y);
             Lines = new List<Line>();
             References = new List<Vertex>();
             if (vertex == null) return;
@@ -283,21 +199,21 @@ namespace TVGL
             return !(a == b);
         }
 
-        public static double[] operator -(Point a, Point b)
+        public static Vector2 operator -(Point a, Point b)
         {
-            return new[] { a.X - b.X, a.Y - b.Y };
+            return new Vector2(a.X - b.X, a.Y - b.Y);
         }
-        public static double[] operator +(Point a, Point b)
+        public static Vector2 operator +(Point a, Point b)
         {
-            return new[] { a.X + b.X, a.Y + b.Y };
+            return new Vector2(a.X + b.X, a.Y + b.Y);
         }
-        public static double[] operator -(Point a, double[] b)
+        public static Vector2 operator -(Point a, Vector2 b)
         {
-            return new[] { a.X - b[0], a.Y - b[1] };
+            return new Vector2(a.X - b.X, a.Y - b.Y);
         }
-        public static double[] operator +(Point a, double[] b)
+        public static Vector2 operator +(Point a, Vector2 b)
         {
-            return new[] { a.X + b[0], a.Y + b[1] };
+            return new Vector2(a.X + b.X, a.Y + b.Y);
         }
 
 

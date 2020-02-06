@@ -261,7 +261,7 @@ namespace TVGL
 
         public void SetCrossSection2D(Flat plane)
         {
-            var paths = new List<List<PointLight>>();
+            var paths = new List<List<Vector2>>();
             var positivePath = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(PositiveLoop.VertexLoop, plane.Normal).ToList());
             if (positivePath.Area < 0) positivePath.Path.Reverse();
             paths.Add(positivePath.Path);
@@ -387,7 +387,7 @@ namespace TVGL
         /// <param name="fromPositiveSide"></param>
         /// <param name="straddleEdgeOnSideVertices"></param>
         /// <param name="isClosed">is closed.</param>
-        internal Loop(IList<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, double[] normal, 
+        internal Loop(IList<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, Numerics.Vector2 normal, 
             IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool fromPositiveSide,
             IEnumerable<Vertex> straddleEdgeOnSideVertices, bool isClosed = true)
         {

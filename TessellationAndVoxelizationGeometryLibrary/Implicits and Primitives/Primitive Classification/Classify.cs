@@ -15,7 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
+using TVGL.Numerics;
 using TVGL.PrimitiveClassificationDetail;
 
 namespace TVGL
@@ -287,7 +287,7 @@ namespace TVGL
 
             if (Double.IsNaN(ABN))
             {
-                var eee = eachEdge.Edge.OwnedFace.Normal.dotProduct(eachEdge.Edge.OtherFace.Normal, 3);
+                var eee = eachEdge.Edge.OwnedFace.Normal.Dot(eachEdge.Edge.OtherFace.Normal, 3);
                 if (eee > 1)
                     eee = 1;
                 ABN = Math.Acos(eee);
@@ -301,8 +301,8 @@ namespace TVGL
             var cenMass2 = eachEdge.Edge.OtherFace.Center;
             var vector1 = new[] { cenMass1[0] - eachEdge.Edge.From.Position[0], cenMass1[1] - eachEdge.Edge.From.Position[1], cenMass1[2] - eachEdge.Edge.From.Position[2] };
             var vector2 = new[] { cenMass2[0] - eachEdge.Edge.From.Position[0], cenMass2[1] - eachEdge.Edge.From.Position[1], cenMass2[2] - eachEdge.Edge.From.Position[2] };
-            var distance1 = eachEdge.Edge.Vector.normalize(3).dotProduct(vector1, 3);
-            var distance2 = eachEdge.Edge.Vector.normalize(3).dotProduct(vector2, 3);
+            var distance1 = eachEdge.Edge.Vector.normalize(3).Dot(vector1, 3);
+            var distance2 = eachEdge.Edge.Vector.normalize(3).Dot(vector2, 3);
             //Mapped Center of Mass
             var MCM = (Math.Abs(distance1 - distance2)) / eachEdge.Edge.Length;
             return MCM;
@@ -342,7 +342,7 @@ namespace TVGL
         }
 
 
-        private static int EdgeClassifier2(double[] ABNProbs, double[] MCMProbs, double[] SMProbs,
+        private static int EdgeClassifier2(Vector2 ABNProbs, Vector2 MCMProbs, Vector2 SMProbs,
             List<List<int>> rulesArray, out double prob)
         {
             // go to the rules and and return an int corresponding to each region.
@@ -379,25 +379,25 @@ namespace TVGL
             return rulesArray[3][t];
         }
 
-        private static List<double[]> CatAndProbFinder(double metric, List<double> listOfLimits)
+        private static List<Vector2> CatAndProbFinder(double metric, List<double> listOfLimits)
         {
-            var CatAndProb = new List<double[]>();
+            var CatAndProb = new List<Vector2>();
             //Case 1
             if (metric <= listOfLimits[0])
             {
-                CatAndProb.Add(new double[] { 0, 1 });
+                CatAndProb.Add(new Vector2 { 0, 1 });
                 return CatAndProb;
             }
             //Case 3
             if (metric >= listOfLimits[3] && metric <= listOfLimits[4])
             {
-                CatAndProb.Add(new double[] { 1, 1 });
+                CatAndProb.Add(new Vector2 { 1, 1 });
                 return CatAndProb;
             }
             //Case 5
             if (metric >= listOfLimits[7])
             {
-                CatAndProb.Add(new double[] { 2, 1 });
+                CatAndProb.Add(new Vector2 { 2, 1 });
                 return CatAndProb;
             }
             //Case 2
@@ -417,9 +417,9 @@ namespace TVGL
             return CatAndProb;
         }
 
-        private static List<double[]> CatAndProbForCases2and4(double p1, double p2, double p3, double p4, double metric, double Case)
+        private static List<Vector2> CatAndProbForCases2and4(double p1, double p2, double p3, double p4, double metric, double Case)
         {
-            var catAndProb = new List<double[]>();
+            var catAndProb = new List<Vector2>();
             var prob1 = ((0 - 1) / (p2 - p1)) * (metric - p1) + 1;
             var prob2 = ((1 - 0) / (p4 - p3)) * (metric - p3) + 1;
             if (Case == 2)
@@ -719,7 +719,7 @@ namespace TVGL
                                               && p.Faces.Contains(newSeed.Faces[0])));
         }
 
-        public static double DistanceBetweenTwoVertices(double[] vertex1, double[] vertex2)
+        public static double DistanceBetweenTwoVertices(Vector2 vertex1, Vector2 vertex2)
         {
             return
                 Math.Sqrt((Math.Pow(vertex1[0] - vertex2[0], 2)) +
@@ -835,7 +835,7 @@ namespace TVGL
                 case PrimitiveSurfaceType.Flat:
                     return new Flat(faces);
                 case PrimitiveSurfaceType.Cylinder:
-                    double[] axis;
+                    Vector2 axis;
                     double coneAngle;
                     if (IsReallyACone(faces, out axis, out coneAngle))
                         return new Cone(faces, axis, coneAngle);
@@ -854,7 +854,7 @@ namespace TVGL
             return (MiscFunctions.FacesWithDistinctNormals(faces.ToList()).Count == 1);
         }
 
-        public static bool IsReallyACone(IEnumerable<PolygonalFace> facesAll, out double[] axis, out double coneAngle)
+        public static bool IsReallyACone(IEnumerable<PolygonalFace> facesAll, out Vector2 axis, out double coneAngle)
         {
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
@@ -866,7 +866,7 @@ namespace TVGL
             }
             if (faces.Count == 2)
             {
-                axis = faces[0].Normal.crossProduct(faces[1].Normal).normalize(3);
+                axis = faces[0].Normal.Cross(faces[1].Normal).normalize(3);
                 coneAngle = 0.0;
                 return false;
             }
@@ -876,7 +876,7 @@ namespace TVGL
 
             /*var r = new Random();
             var rndList = new List<int>();
-            var crossProd = new List<double[]>();
+            var crossProd = new List<Vector2>();
             var c = 0;
             while (c < 20)
             {
@@ -888,7 +888,7 @@ namespace TVGL
             {
                 for (var j = i + 1; j < rndList.Count; j++)
                 {
-                    crossProd.Add(facesAll[i].Normal.crossProduct(facesAll[j].Normal).normalize());
+                    crossProd.Add(facesAll[i].Normal.Cross(facesAll[j].Normal).normalize());
                 }
             }
             axis = crossProd[0];
@@ -897,7 +897,7 @@ namespace TVGL
             {
                 for (var j = i + 1; j < crossProd.Count; j++)
                 {
-                    if (Math.Abs(crossProd[i].dotProduct(crossProd[j]) - 1) < 0.00000008) return true;
+                    if (Math.Abs(crossProd[i].Dot(crossProd[j]) - 1) < 0.00000008) return true;
                 }
             }
             return false;*/
@@ -911,15 +911,15 @@ namespace TVGL
             for (int i = 1; i < n; i++)
                 inPlaneVectors[i] = faces[i].Normal.subtract(faces[i - 1].Normal, 3);
 
-            var normalsOfGaussPlane = new List<double[]>();
-            var tempCross = inPlaneVectors[0].crossProduct(inPlaneVectors[n - 1]).normalize();
+            var normalsOfGaussPlane = new List<Vector2>();
+            var tempCross = inPlaneVectors[0].Cross(inPlaneVectors[n - 1]).normalize();
             if (!tempCross.Any(double.IsNaN))
                 normalsOfGaussPlane.Add(tempCross);
             for (int i = 1; i < n; i++)
             {
-                tempCross = inPlaneVectors[i].crossProduct(inPlaneVectors[i - 1]).normalize();
+                tempCross = inPlaneVectors[i].Cross(inPlaneVectors[i - 1]).normalize();
                 if (!tempCross.Any(double.IsNaN))
-                    if (tempCross.dotProduct(normalsOfGaussPlane[0], 3) >= 0)
+                    if (tempCross.Dot(normalsOfGaussPlane[0], 3) >= 0)
                         normalsOfGaussPlane.Add(tempCross);
                     else normalsOfGaussPlane.Add(tempCross.multiply(-1));
             }
@@ -927,7 +927,7 @@ namespace TVGL
             normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current.add(c, 3));
             normalOfGaussPlane = normalOfGaussPlane.divide(normalsOfGaussPlane.Count);
 
-            var distance = faces.Sum(face => face.Normal.dotProduct(normalOfGaussPlane, 3));
+            var distance = faces.Sum(face => face.Normal.Dot(normalOfGaussPlane, 3));
             if (distance < 0)
             {
                 axis = normalOfGaussPlane.multiply(-1);

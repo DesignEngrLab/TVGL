@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
 
 namespace TVGL
@@ -36,7 +37,7 @@ namespace TVGL
         ///     If this was a bounding box along a given direction, the first dimension will
         ///     correspond with the distance along that direction.
         /// </summary>
-        public double[] Dimensions;
+        public Vector2 Dimensions;
 
         /// <summary>
         ///     The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid that are on the faces
@@ -50,7 +51,7 @@ namespace TVGL
         ///     If this was a bounding box along a given direction, the first direction will
         ///     correspond with that direction.
         /// </summary>
-        public double[][] Directions;
+        public Vector2[] Directions;
 
         /// <summary>
         ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
@@ -95,11 +96,11 @@ namespace TVGL
             }
         }
 
-        private IList<double[]> _sortedDirectionsByLength;
+        private IList<Vector2> _sortedDirectionsByLength;
         /// <summary>
         ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
         /// </summary>
-        public IList<double[]> SortedDirectionsByLength
+        public IList<Vector2> SortedDirectionsByLength
         {
             get
             {
@@ -150,7 +151,7 @@ namespace TVGL
 
             //Set the sorted lists
             _sortedDirectionIndicesByLength = sortedDimensions.Select(pair => pair.Key).ToList();
-            _sortedDirectionsByLength = new List<double[]>();
+            _sortedDirectionsByLength = new List<Vector2>();
             _sortedDimensions = new List<double>();
             foreach (var index in _sortedDirectionIndicesByLength)
             {
@@ -205,12 +206,12 @@ namespace TVGL
 
             //Start with v0 and move along direction[1] by projection
             var vector0To1 = v1.Position.subtract(v0.Position, 3);
-            var projectionOntoD1 = Directions[1].multiply(Directions[1].dotProduct(vector0To1, 3));
+            var projectionOntoD1 = Directions[1].multiply(Directions[1].Dot(vector0To1, 3));
             var v4 = v0.Position.add(projectionOntoD1, 3);
 
             //Move along direction[2] by projection
             var vector4To2 = v2.Position.subtract(v4, 3);
-            var projectionOntoD2 = Directions[2].multiply(Directions[2].dotProduct(vector4To2, 3));
+            var projectionOntoD2 = Directions[2].multiply(Directions[2].Dot(vector4To2, 3));
             var bottomCorner = new Vertex(v4.add(projectionOntoD2, 3));
 
             //Double Check to make sure it is the bottom corner
@@ -287,13 +288,13 @@ namespace TVGL
             return copy;
         }
 
-        public static BoundingBox ExtendAlongDirection(BoundingBox original, double[] direction, double distance)
+        public static BoundingBox ExtendAlongDirection(BoundingBox original, Vector2 direction, double distance)
         {
             int sign = 0;
             var updateIndex = -1;
             for (var i = 0; i <= 2; i++)
             {
-                var dot = direction.dotProduct(original.Directions[i]);
+                var dot = direction.Dot(original.Directions[i]);
                 sign = Math.Sign(dot);
                 if (Math.Abs(dot).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance))
                 {
@@ -355,7 +356,7 @@ namespace TVGL
 
         //Note: Corner vertices must be ordered correctly. See below where - = low and + = high along directions 0, 1, and 2 respectively.
         // [0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
-        public static BoundingBox FromCornerVertices(double[][] directions, Vertex[] cornerVertices, bool areVerticesInCorrectOrder)
+        public static BoundingBox FromCornerVertices(Vector2[] directions, Vertex[] cornerVertices, bool areVerticesInCorrectOrder)
         {
             if(!areVerticesInCorrectOrder) throw new Exception("Not implemented exception. Vertices must be in correct order for OBB");
             if(cornerVertices.Length != 8) throw new Exception("Must set Bounding Box using eight corner vertices in correct order");
@@ -395,7 +396,7 @@ namespace TVGL
         /// <summary>
         ///     Gets the four points of the bounding rectangle, ordered CCW positive
         /// </summary>
-        public PointLight[] CornerPoints;
+        public Vector2[] CornerPoints;
 
         /// <summary>
         ///     The point pairs that define the bounding rectangle limits
@@ -405,12 +406,12 @@ namespace TVGL
         /// <summary>
         ///     Vector direction of length 
         /// </summary>
-        public double[] LengthDirection;
+        public Vector2 LengthDirection;
 
         /// <summary>
         ///     Vector direction of  width
         /// </summary>
-        public double[] WidthDirection;
+        public Vector2 WidthDirection;
 
         /// <summary>
         ///     Maximum distance along Direction 1 (length)
@@ -445,7 +446,7 @@ namespace TVGL
         /// <summary>
         ///     2D Center Position of the Bounding Rectangle
         /// </summary>
-        public double[] CenterPosition;
+        public Vector2 CenterPosition;
 
         /// <summary>
         /// Sets the corner points and center position for the bounding rectangle
@@ -457,10 +458,10 @@ namespace TVGL
             var v1Min = LengthDirection.multiply(LengthDirectionMin);
             var v2Max = WidthDirection.multiply(WidthDirectionMax);
             var v2Min = WidthDirection.multiply(WidthDirectionMin);
-            var p1 = new PointLight(v1Max.add(v2Max));
-            var p2 = new PointLight(v1Min.add(v2Max));
-            var p3 = new PointLight(v1Min.add(v2Min));
-            var p4 = new PointLight(v1Max.add(v2Min));
+            var p1 = new Vector2(v1Max.add(v2Max));
+            var p2 = new Vector2(v1Min.add(v2Max));
+            var p3 = new Vector2(v1Min.add(v2Min));
+            var p4 = new Vector2(v1Max.add(v2Min));
             CornerPoints = new[] { p1, p2, p3, p4 };
             var areaCheck = MiscFunctions.AreaOfPolygon(CornerPoints);
             if (areaCheck < 0.0)
@@ -495,7 +496,7 @@ namespace TVGL
         /// <summary>
         ///     Center Point of circle
         /// </summary>
-        public PointLight Center;
+        public Vector2 Center;
 
         /// <summary>
         ///     Radius of circle
@@ -517,7 +518,7 @@ namespace TVGL
         /// </summary>
         /// <param name="radius">The radius.</param>
         /// <param name="center">The center.</param>
-        public BoundingCircle(double radius, PointLight center)
+        public BoundingCircle(double radius, Vector2 center)
         {
             Center = center;
             Radius = radius;
@@ -534,7 +535,7 @@ namespace TVGL
         /// <summary>
         ///     Center axis along depth
         /// </summary>
-        public double[] Axis;
+        public Vector2 Axis;
 
         /// <summary>
         ///     Bounding Circle on one end of the cylinder

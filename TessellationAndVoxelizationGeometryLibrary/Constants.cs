@@ -166,24 +166,6 @@ namespace TVGL
             return -1;
         }
 
-        public static double dotProduct(this Point a, double[] b)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-        public static double dotProduct(this double[] b, Point a)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-
-        public static double dotProduct(this PointLight a, double[] b)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-        public static double dotProduct(this double[] b, PointLight a)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-
 
         #region new known colors
 

@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL.IOFunctions
@@ -416,7 +417,7 @@ namespace TVGL.IOFunctions
         /// <param name="line">The input string.</param>
         /// <param name="doubles">The vertex point.</param>
         /// <returns>True if parsing was successful.</returns>
-        protected static bool TryParseDoubleArray(string line, out double[] doubles)
+        protected static bool TryParseDoubleArray(string line, out Vector2 doubles)
         {
             var strings = line.Split(' ', '\t').ToList();
             strings.RemoveAll(String.IsNullOrWhiteSpace);
@@ -436,7 +437,7 @@ namespace TVGL.IOFunctions
         /// <param name="line">The input string.</param>
         /// <param name="doubles">The vertex point.</param>
         /// <returns>True if parsing was successful.</returns>
-        protected static bool TryParseDoubleArray(Regex parser, string line, out double[] doubles)
+        protected static bool TryParseDoubleArray(Regex parser, string line, out Vector2 doubles)
         {
             var match = parser.Match(line);
             if (!match.Success)
@@ -739,10 +740,10 @@ namespace TVGL.IOFunctions
             var byteArray = doubles.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
             return System.Text.Encoding.Unicode.GetString(byteArray);
         }
-        internal static double[] ConvertStringToDoubleArray(string doublesAsString)
+        internal static Vector2 ConvertStringToDoubleArray(string doublesAsString)
         {
             var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
-            double[] values = new double[bytes.Length / 8];
+            Vector2 values = new double[bytes.Length / 8];
             for (int i = 0; i < values.Length; i++)
                 values[i] = BitConverter.ToDouble(bytes, i * 8);
             return values;

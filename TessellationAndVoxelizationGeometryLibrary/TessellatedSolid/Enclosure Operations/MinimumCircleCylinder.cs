@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using TVGL.Numerics;
 
 
 namespace TVGL
@@ -31,7 +32,7 @@ namespace TVGL
         /// </summary>
         public static BoundingCircle MinimumCircle(IList<Point> points)
         {
-            return MinimumCircle(points.Select(p => new PointLight(p)).ToList());
+            return MinimumCircle(points.Select(p => new Vector2(p)).ToList());
         }
 
         /// <summary>
@@ -48,7 +49,7 @@ namespace TVGL
         ///     (doesn't care about multiple points on a line and fewer rounding functions)
         ///     and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
-        public static BoundingCircle MinimumCircle(IList<PointLight> points)
+        public static BoundingCircle MinimumCircle(IList<Vector2> points)
         {
             #region Algorithm 1
 
@@ -115,7 +116,7 @@ namespace TVGL
             //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
             //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
             var circle = new InternalCircle(points[0], points[points.Count / 2]);
-            var dummyPoint = new PointLight(double.NaN, double.NaN);
+            var dummyPoint = new Vector2(double.NaN, double.NaN);
             var stallCounter = 0;
             var successful = false;
             var stallLimit = points.Count * 1.5;
@@ -224,7 +225,7 @@ namespace TVGL
             #endregion
 
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
-            return new BoundingCircle(radius, new PointLight(centerX, centerY));
+            return new BoundingCircle(radius, new Vector2(centerX, centerY));
         }
 
         /// <summary>
@@ -232,7 +233,7 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<List<PointLight>> paths, PointLight centerPoint)
+        public static BoundingCircle MaximumInnerCircle(IList<List<Vector2>> paths, Vector2 centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path.Select(p => new Point(p)))).ToList();
             return MaximumInnerCircle(polygons, new Point(centerPoint));
@@ -243,7 +244,7 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, PointLight centerPoint)
+        public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, Vector2 centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
             return MaximumInnerCircle(polygons, new Point(centerPoint));
@@ -383,7 +384,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="line">The line.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool MEC_Center(List<Point> points, double[] line)
+        public static bool MEC_Center(List<Point> points, Vector2 line)
         {
             return false;
         }
@@ -396,7 +397,7 @@ namespace TVGL
         public static BoundingBox MinimumBoundingCylinder(IList<Vertex> convexHullVertices)
         {
             // here we create 13 directions. just like for bounding box
-            var directions = new List<double[]>();
+            var directions = new List<Vector2>();
             for (var i = -1; i <= 1; i++)
                 for (var j = -1; j <= 1; j++)
                     directions.Add(new[] {1.0, i, j});
@@ -491,7 +492,7 @@ namespace TVGL
             /// <param name="p0"></param>
             /// <param name="p1"></param>
             /// <param name="p2"></param>
-            internal InternalCircle(PointLight p0, PointLight p1, PointLight p2)
+            internal InternalCircle(Vector2 p0, Vector2 p1, Vector2 p2)
             {
                 NumPointsDefiningCircle = 3;
                 Point0 = p0;
@@ -590,7 +591,7 @@ namespace TVGL
                 SqRadius = dx * dx + dy * dy;
             }
 
-            internal InternalCircle(PointLight p0, PointLight p1)
+            internal InternalCircle(Vector2 p0, Vector2 p1)
             {
                 NumPointsDefiningCircle = 2;
                 Point0 = p0;
@@ -605,7 +606,7 @@ namespace TVGL
             }
             #endregion
 
-            private readonly PointLight _dummyPoint = new PointLight(double.NaN, double.NaN);
+            private readonly Vector2 _dummyPoint = new Vector2(double.NaN, double.NaN);
 
             /// <summary>
             ///     Finds the furthest the specified point.
@@ -615,7 +616,7 @@ namespace TVGL
             /// <param name="previousPoint1"></param>
             /// <param name="previousPoint2"></param>
             /// <exception cref="ArgumentNullException">previousPoints cannot be null</exception>
-            internal void Furthest(PointLight point, out PointLight furthestPoint, out PointLight previousPoint1, out PointLight previousPoint2, out int numPreviousPoints)
+            internal void Furthest(Vector2 point, out Vector2 furthestPoint, out Vector2 previousPoint1, out Vector2 previousPoint2, out int numPreviousPoints)
             {
                 //Distance between point and center is greater than radius, it is outside the circle
                 //DO P0, then P1, then P2
@@ -676,19 +677,19 @@ namespace TVGL
             ///     Gets one point of the circle.
             /// </summary>
             /// <value>The points.</value>
-            internal PointLight Point0 { get; }
+            internal Vector2 Point0 { get; }
 
             /// <summary>
             ///     Gets one point of the circle.
             /// </summary>
             /// <value>The points.</value>
-            internal PointLight Point1 { get; }
+            internal Vector2 Point1 { get; }
 
             /// <summary>
             ///     Gets one point of the circle. This point may not exist.
             /// </summary>
             /// <value>The points.</value>
-            internal PointLight Point2 { get; }
+            internal Vector2 Point2 { get; }
 
             /// <summary>
             ///     Gets the number of points that define the circle. 2 or 3.

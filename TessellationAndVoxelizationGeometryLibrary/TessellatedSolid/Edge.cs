@@ -225,7 +225,7 @@ namespace TVGL
             var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
             var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
-            var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal, 3);
+            var dotOfCross = Vector.Cross(nextEdgeVector).Dot(_ownedFace.Normal, 3);
             if (dotOfCross <= 0)
             {
                 /* then switch the direction of the edge to match the ownership.
@@ -241,7 +241,7 @@ namespace TVGL
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
+                var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal, 3);
                 if (dotOfCross2 < 0)
                 // neither faces appear to own the edge...must be something wrong
                 {
@@ -258,7 +258,7 @@ namespace TVGL
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
+                var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal, 3);
                 if (dotOfCross2 > 0)
                 // both faces appear to own the edge...must be something wrong
                 {
@@ -267,7 +267,7 @@ namespace TVGL
                     return;
                 }
             }
-            var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
+            var dot = _ownedFace.Normal.Dot(_otherFace.Normal, 3);
             if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance))
             {
                 InternalAngle = Math.PI;
@@ -300,7 +300,7 @@ namespace TVGL
                     }
                 }
                 otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
-                if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector, 3) < 0)
+                if (ownedNeighborAvgNormals.Cross(otherNeighborAvgNormals).Dot(Vector, 3) < 0)
                 {
                     InternalAngle = Constants.TwoPi;
                     Curvature = CurvatureType.Concave;
@@ -313,7 +313,7 @@ namespace TVGL
             }
             else
             {
-                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal).dotProduct(Vector, 3);
+                var cross = _ownedFace.Normal.Cross(_otherFace.Normal).Dot(Vector, 3);
                 if (cross < 0)
                 {
                     InternalAngle = Math.PI + Math.Acos(dot);
@@ -348,7 +348,7 @@ namespace TVGL
             var v2 = face1.Vertices.First(v => v.IndexInList != to && v.IndexInList != from);
             var vector1 = v1.Position.subtract(v0.Position);
             var vector2 = v2.Position.subtract(v1.Position);
-            var dot = vector1.crossProduct(vector2).dotProduct(face1.Normal);
+            var dot = vector1.Cross(vector2).Dot(face1.Normal);
             //The owned face(the face in which the from-to direction makes sense
             // - that is, produces the proper cross-product normal).
             return Math.Sign(dot) > 0 ? (face1, face2) : (face2, face1);

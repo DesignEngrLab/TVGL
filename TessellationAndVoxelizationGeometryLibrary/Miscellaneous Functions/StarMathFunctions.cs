@@ -49,7 +49,7 @@ namespace TVGL.Numerics
         /// <param name="y">The y.</param>
         /// <param name="optionalTolerance">An optional tolerance.</param>
         /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
-        public static bool IsPracticallySame(this double[] x, double[] y, double optionalTolerance = double.NaN)
+        public static bool IsPracticallySame(this Vector2 x, Vector2 y, double optionalTolerance = double.NaN)
         {
             if (double.IsNaN(optionalTolerance)) optionalTolerance = EqualityTolerance;
             var n = x.GetLength(0);
@@ -63,7 +63,7 @@ namespace TVGL.Numerics
         /// <param name="x">The x.</param>
         /// <param name="optionalTolerance">An optional tolerance.</param>
         /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
-        public static bool IsNegligible(this double[] x, double optionalTolerance = DefaultEqualityTolerance)
+        public static bool IsNegligible(this Vector2 x, double optionalTolerance = DefaultEqualityTolerance)
         {
             return (x.norm2(true) <= optionalTolerance);
         }

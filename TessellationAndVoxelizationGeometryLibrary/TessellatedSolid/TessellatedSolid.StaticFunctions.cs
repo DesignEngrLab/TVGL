@@ -38,7 +38,7 @@ namespace TVGL
         /// <summary>
         /// Defines the center, the volume and the surface area.
         /// </summary>
-        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out double[] center,
+        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out Numerics.Vector2 center,
             out double volume, out double surfaceArea)
         {
             surfaceArea = faces.Sum(face => face.Area);
@@ -51,7 +51,7 @@ namespace TVGL
         /// <param name="faces"></param>
         /// <param name="center"></param>
         /// <returns></returns>
-        public static double CalculateVolume(IList<PolygonalFace> faces, out double[] center)
+        public static double CalculateVolume(IList<PolygonalFace> faces, out Numerics.Vector2 center)
         {
             double oldVolume;
             var volume = 0.0;
@@ -69,9 +69,9 @@ namespace TVGL
                 foreach (var face in faces)
                 {
                     if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1, 3), 3)) / 3;
+                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Position.subtract(oldCenter1, 3), 3)) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                    // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
+                    // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                     // on the volume.
                     volume += tetrahedronVolume;
@@ -92,7 +92,7 @@ namespace TVGL
         const double oneSixtieth = 1.0 / 60.0;
 
 
-        private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, double[] Center, double Volume)
+        private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, Numerics.Vector2 Center, double Volume)
         {
             var matrixA = StarMath.makeZero(3, 3);
             var matrixCtotal = StarMath.makeZero(3, 3);

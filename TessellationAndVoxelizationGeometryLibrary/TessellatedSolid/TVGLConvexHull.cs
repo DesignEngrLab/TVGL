@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
-
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -65,7 +65,7 @@ namespace TVGL
 
 
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
-            IList<int> convexHullFaceIndices, double[] center = null, double volume = double.NaN,
+            IList<int> convexHullFaceIndices, Vector2 center = null, double volume = double.NaN,
             double surfaceArea = double.NaN)
         {
             Vertices = convexHullPoints.ToArray();
@@ -144,7 +144,7 @@ namespace TVGL
         /// <summary>
         ///     The center
         /// </summary>
-        public readonly double[] Center;
+        public readonly Vector2 Center;
 
         /// <summary>
         ///     The volume of the Convex Hull.

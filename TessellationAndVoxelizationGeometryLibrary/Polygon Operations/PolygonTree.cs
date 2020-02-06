@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -34,7 +35,7 @@ namespace TVGL
         /// <summary>
         /// A list of all the polygons in this tree.
         /// </summary>
-        public IList<List<PointLight>> AllPathsAsLight =>
+        public IList<List<Vector2>> AllPathsAsLight =>
             AllPolygons.Select(polygon => polygon.Path.Select(point => point.Light).ToList()).ToList();
 
         /// <summary>

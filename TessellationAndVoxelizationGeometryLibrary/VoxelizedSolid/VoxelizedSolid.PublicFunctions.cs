@@ -130,11 +130,11 @@ namespace TVGL.Voxelization
                     Count += rowCount;
                 }
             Volume = Count * Math.Pow(VoxelSideLength, 3);
-            Center = new double[]
+            Center = new Numerics.Vector2
             {
-                VoxelSideLength*xTotal / Count,
-                VoxelSideLength*yTotal /Count,
-                VoxelSideLength*zTotal / Count
+                VoxelSideLength* xTotal / Count,
+                VoxelSideLength* yTotal / Count,
+                VoxelSideLength* zTotal / Count
             };
         }
 
@@ -464,7 +464,7 @@ namespace TVGL.Voxelization
         /// <param name="maskSize">Size of the mask.</param>
         /// <param name="maskOptions">The mask options.</param>
         /// <returns></returns>
-        public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, double[] dir,
+        public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, Numerics.Vector2 dir,
             double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
             var copy = (VoxelizedSolid)Copy();
@@ -502,7 +502,7 @@ namespace TVGL.Voxelization
         /// <param name="tLimit">The t limit.</param>
         /// <param name="maskSize">The tool dia.</param>
         /// <param name="toolOptions">The tool options.</param>
-        private void DirectionalErodeToConstraint(VoxelizedSolid constraintSolid, double[] dir,
+        private void DirectionalErodeToConstraint(VoxelizedSolid constraintSolid, Numerics.Vector2 dir,
             double tLimit, double maskSize, params string[] maskOptions)
         {
             var dirX = dir[0];
@@ -669,7 +669,7 @@ namespace TVGL.Voxelization
 
 
         #region Functions for Dilation (3D Offsetting)
-        private static int[][] GetVoxelsWithinCircle(double[] center, double[] dir, double radius, bool edge = false)
+        private static int[][] GetVoxelsWithinCircle(Numerics.Vector2 center, Numerics.Vector2 dir, double radius, bool edge = false)
         {
             var voxels = new HashSet<int[]>(new SameCoordinates());
 
@@ -681,7 +681,7 @@ namespace TVGL.Voxelization
             var a = Math.Abs(dir[0]) < 1e-5
                 ? new[] { .0, -dir[2], dir[1] }.normalize(3)
                 : new[] { dir[1], -dir[0], 0 }.normalize(3);
-            var b = a.crossProduct(dir);
+            var b = a.Cross(dir);
 
             foreach (var r in radii)
             {
@@ -698,7 +698,7 @@ namespace TVGL.Voxelization
             return voxels.ToArray();
         }
 
-        private static int[][] GetVoxelsOnCone(int[] center, double[] dir, double radius, double angle)
+        private static int[][] GetVoxelsOnCone(int[] center, Numerics.Vector2 dir, double radius, double angle)
         {
             var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
@@ -709,7 +709,7 @@ namespace TVGL.Voxelization
             var tStep = lStep * Math.Cos(a);
             var rStep = lStep * Math.Sin(a);
 
-            var centerDouble = new double[] { center[0], center[1], center[2] };
+            var centerDouble = new Numerics.Vector2 { center[0], center[1], center[2] };
             var c = centerDouble.ToArray();
             var cStep = dir.multiply(tStep, 3);
 
@@ -725,11 +725,11 @@ namespace TVGL.Voxelization
             return voxels.ToArray();
         }
 
-        private static int[][] GetVoxelsOnHemisphere(int[] center, double[] dir, double radius)
+        private static int[][] GetVoxelsOnHemisphere(int[] center, Numerics.Vector2 dir, double radius)
         {
             var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
-            var centerDouble = new double[] { center[0], center[1], center[2] };
+            var centerDouble = new Numerics.Vector2 { center[0], center[1], center[2] };
 
             var numSteps = (int)Math.Ceiling(Math.PI * radius / 2 / 0.5);
             var aStep = Math.PI / 2 / numSteps;
@@ -748,7 +748,7 @@ namespace TVGL.Voxelization
             return voxels.ToArray();
         }
 
-        private int[][] ThickenMask(int[] vox, double[] dir, double toolDia, params string[] maskOptions)
+        private int[][] ThickenMask(int[] vox, Numerics.Vector2 dir, double toolDia, params string[] maskOptions)
         {
             if (toolDia <= 0) return new[] { vox };
 
@@ -766,12 +766,12 @@ namespace TVGL.Voxelization
                         angle = 118;
                     return GetVoxelsOnCone(vox, dir, radius, angle);
                 default:
-                    var voxDouble = new double[] { vox[0], vox[1], vox[2] };
+                    var voxDouble = new Numerics.Vector2 { vox[0], vox[1], vox[2] };
                     return GetVoxelsWithinCircle(voxDouble, dir, radius);
             }
         }
 
-        private int[][] CreateProjectionMask(double[] dir, double tLimit)
+        private int[][] CreateProjectionMask(Numerics.Vector2 dir, double tLimit)
         {
             var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
@@ -789,7 +789,7 @@ namespace TVGL.Voxelization
         }
 
         //Exclusive by default (i.e. if line passes through vertex/edge it ony includes two voxels that are actually passed through)
-        private static int[] GetNextVoxelCoord(double[] cInt, double[] direction)
+        private static int[] GetNextVoxelCoord(Numerics.Vector2 cInt, Numerics.Vector2 direction)
         {
             var searchDirs = new List<int>();
             for (var i = 0; i < 3; i++)
@@ -809,7 +809,7 @@ namespace TVGL.Voxelization
         }
 
         //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
-        private double[] FindIntersectionDistances(double[] firstVoxel, double[] direction, double tLimit)
+        private Numerics.Vector2 FindIntersectionDistances(Numerics.Vector2 firstVoxel, Numerics.Vector2 direction, double tLimit)
         {
             var intersections = new ConcurrentBag<double>();
             var searchDirs = new List<int>();

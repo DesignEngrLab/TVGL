@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -20,7 +21,7 @@ namespace TVGL.IOFunctions
 
         private ShellFileData()
         {
-            Vertices = new List<double[]>();
+            Vertices = new List<Vector2>();
             FaceToVertexIndices = new List<int[]>();
         }
 
@@ -33,7 +34,7 @@ namespace TVGL.IOFunctions
         private static bool startofFacets;
         private static bool endofFacets;
         private List<Color> Colors { get; set; }
-        private List<double[]> Vertices { get; }
+        private List<Vector2> Vertices { get; }
         private List<int[]> FaceToVertexIndices { get; }
         private ShellMaterial Material { get; set; }
 
@@ -133,7 +134,7 @@ namespace TVGL.IOFunctions
 
         private bool ReadFaces(string line)
         {
-            double[] numbers;
+            Vector2 numbers;
             if (!TryParseDoubleArray(line, out numbers)) return false;
             var vertIndices = new int[3];
             for (var j = 0; j < 3; j++)
@@ -146,7 +147,7 @@ namespace TVGL.IOFunctions
         {
             float r = 0, g = 0, b = 0;
             string id, values, shellName, colorString;
-            double[] shellColor;
+            Vector2 shellColor;
             ParseLine(line, out id, out values);
             ParseLine(values, out shellName, out colorString);
             TryParseDoubleArray(colorString, out shellColor);
@@ -159,7 +160,7 @@ namespace TVGL.IOFunctions
 
         private bool ReadVertices(string line)
         {
-            double[] point;
+            Vector2 point;
             if (TryParseDoubleArray(line, out point))
                 Vertices.Add(point);
             else return false;

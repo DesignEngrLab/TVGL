@@ -121,7 +121,7 @@ namespace TVGL
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
         /// 
-        public TessellatedSolid(IList<List<double[]>> vertsPerFace, IList<Color> colors,
+        public TessellatedSolid(IList<List<Numerics.Vector2>> vertsPerFace, IList<Color> colors,
             UnitType units = UnitType.unspecified, string name = "", string filename = "", List<string> comments = null,
             string language = "")
             : base(units, name, filename, comments, language)
@@ -145,7 +145,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<double[]> vertices, IList<int[]> faceToVertexIndices,
+        public TessellatedSolid(IList<Numerics.Vector2> vertices, IList<int[]> faceToVertexIndices,
             IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
@@ -179,7 +179,7 @@ namespace TVGL
         protected void OnDeserializedMethod(StreamingContext context)
         {
             JArray jArray = (JArray)serializationData["VertexCoords"];
-            var vertexArray = jArray.ToObject<double[]>();
+            var vertexArray = jArray.ToObject<Numerics.Vector2>();
             var coords = new double[vertexArray.Length / 3][];
             for (int i = 0; i < vertexArray.Length / 3; i++)
                 coords[i] = new[] { vertexArray[3 * i], vertexArray[3 * i + 1], vertexArray[3 * i + 2] };
@@ -321,7 +321,7 @@ namespace TVGL
             MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices);
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
-            DefineCenterVolumeAndSurfaceArea(Faces, out double[] center, out double volume, out double surfaceArea);
+            DefineCenterVolumeAndSurfaceArea(Faces, out Numerics.Vector2 center, out double volume, out double surfaceArea);
             Center = center;
             Volume = volume;
             SurfaceArea = surfaceArea;
@@ -351,7 +351,7 @@ namespace TVGL
         ///     because the tolerance is used in making the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<double[]> vertices)
+        private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<Numerics.Vector2> vertices)
         {
             XMin = vertices.Min(v => v[0]);
             XMax = vertices.Max(v => v[0]);
@@ -432,7 +432,7 @@ namespace TVGL
                     {
                         var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position, 3);
                         var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position, 3);
-                        var face = v1.crossProduct(v2).dotProduct(normal, 3) < 0
+                        var face = v1.Cross(v2).Dot(normal, 3) < 0
                             ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
                             : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
                         listOfFaces.Add(face);
@@ -453,7 +453,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        private void MakeVertices(IEnumerable<List<double[]>> vertsPerFace, out List<int[]> faceToVertexIndices)
+        private void MakeVertices(IEnumerable<List<Numerics.Vector2>> vertsPerFace, out List<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
             //Gets the number of decimal places, with the maximum being the StarMath Equality (1E-15)
@@ -463,7 +463,7 @@ namespace TVGL
              * you can find each vertex in the new array of vertices. This is essentially what is built in 
              * the remainder of this method. */
             faceToVertexIndices = new List<int[]>();
-            var listOfVertices = new List<double[]>();
+            var listOfVertices = new List<Numerics.Vector2>();
             var simpleCompareDict = new Dictionary<string, int>();
             //We used fixed-point to be able to specify the number of decimal places. 
             var stringFormat = "F" + numDecimalPoints;
@@ -509,12 +509,12 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices"></param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        internal void MakeVertices(IList<double[]> vertices, IList<int[]> faceToVertexIndices)
+        internal void MakeVertices(IList<Numerics.Vector2> vertices, IList<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
             //Gets the number of decimal places, with the maximum being the StarMath Equality (1E-15)
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
-            var listOfVertices = new List<double[]>();
+            var listOfVertices = new List<Numerics.Vector2>();
             var simpleCompareDict = new Dictionary<string, int>();
             //We used fixed-point to be able to specify the number of decimal places. 
             var stringFormat = "F" + numDecimalPoints;
@@ -560,7 +560,7 @@ namespace TVGL
         ///     Makes the vertices, and set CheckSum multiplier
         /// </summary>
         /// <param name="listOfVertices">The list of vertices.</param>
-        private void MakeVertices(IList<double[]> listOfVertices)
+        private void MakeVertices(IList<Numerics.Vector2> listOfVertices)
         {
             NumberOfVertices = listOfVertices.Count;
             Vertices = new Vertex[NumberOfVertices];
@@ -889,7 +889,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public override Solid Copy()
         {
-            return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
+            return new TessellatedSolid(Vertices.Select(vertex => (Vector2)vertex.Position.Clone()).ToList(),
                 Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
                 Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
                 FileName, Comments, Language);
@@ -956,14 +956,14 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
             {
                 var direction = obbDirections[i];
-                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 }, 3);
+                var dotX1 = direction.Dot(new List<double>() { 1.0, 0.0, 0.0 }, 3);
                 if (dotX1 > minDot)
                 {
                     minDot = dotX1;
                     xPrime = direction;
                     xPrimeIndex = i;
                 }
-                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() { 1.0, 0.0, 0.0 }, 3);
+                var dotX2 = direction.multiply(-1).Dot(new List<double>() { 1.0, 0.0, 0.0 }, 3);
                 if (dotX2 > minDot)
                 {
                     minDot = dotX2;
@@ -978,13 +978,13 @@ namespace TVGL
             for (var i = 0; i < 2; i++)
             {
                 var direction = obbDirections[i];
-                var dotY1 = direction.dotProduct(new List<double>() { 0.0, 1.0, 0.0 }, 3);
+                var dotY1 = direction.Dot(new List<double>() { 0.0, 1.0, 0.0 }, 3);
                 if (dotY1 > minDot)
                 {
                     minDot = dotY1;
                     yPrime = direction;
                 }
-                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() { 0.0, 1.0, 0.0 }, 3);
+                var dotY2 = direction.multiply(-1).Dot(new List<double>() { 0.0, 1.0, 0.0 }, 3);
                 if (dotY2 > minDot)
                 {
                     minDot = dotY2;
@@ -992,7 +992,7 @@ namespace TVGL
                 }
             }
 
-            var zPrime = xPrime.crossProduct(yPrime);
+            var zPrime = xPrime.Cross(yPrime);
 
             //Now find the local origin. This will be the corner of the box furthest backward along
             //the X', Y', Z' axis.
@@ -1000,7 +1000,7 @@ namespace TVGL
             var dotXs = new Dictionary<Vertex, double>();
             foreach (var vertex in obb.CornerVertices)
             {
-                var dot = vertex.Position.dotProduct(xPrime, 3);
+                var dot = vertex.Position.Dot(xPrime, 3);
                 dotXs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest four values. Then get the those four vertices.
@@ -1011,7 +1011,7 @@ namespace TVGL
             var dotYs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom4Vertices)
             {
-                var dot = vertex.Position.dotProduct(yPrime, 3);
+                var dot = vertex.Position.Dot(yPrime, 3);
                 dotYs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -1022,7 +1022,7 @@ namespace TVGL
             var dotZs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom2Vertices)
             {
-                var dot = vertex.Position.dotProduct(zPrime, 3);
+                var dot = vertex.Position.Dot(zPrime, 3);
                 dotZs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -1059,7 +1059,7 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public override void Transform(double[,] transformMatrix)
         {
-            double[] tempCoord;
+            Numerics.Vector2 tempCoord;
             XMin = YMin = ZMin = double.PositiveInfinity;
             XMax = YMax = ZMax = double.NegativeInfinity;
             //Update the vertices
