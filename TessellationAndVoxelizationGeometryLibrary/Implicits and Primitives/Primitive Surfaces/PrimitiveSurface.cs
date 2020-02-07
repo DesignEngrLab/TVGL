@@ -307,5 +307,36 @@ namespace TVGL
             }
             return (allLoopsClosed, edgeLoops, loops);
         }
+
+        public bool BoundsHaveBeenSet = false;
+        public double MaxX;
+        public double MinX;
+        public double MaxY;
+        public double MinY;
+        public double MaxZ;
+        public double MinZ;
+        public void SetBounds(bool ignoreIfAlreadySet = true)
+        {
+            if (BoundsHaveBeenSet && ignoreIfAlreadySet) return;
+            BoundsHaveBeenSet = true;
+            MaxX = double.MinValue;
+            MinX = double.MaxValue;
+            MaxY = double.MinValue;
+            MinY = double.MaxValue;
+            MaxZ = double.MinValue;
+            MinZ = double.MaxValue;
+            foreach (var v in Vertices)
+            {
+                var x = v.X;
+                var y = v.Y;
+                var z = v.Z;
+                if (x > MaxX) MaxX = x;
+                if (x < MinX) MinX = x;
+                if (y > MaxY) MaxY = y;
+                if (y < MinY) MinY = y;
+                if (z > MaxZ) MaxZ = z;
+                if (z < MinZ) MinZ = z;
+            }
+        }
     }
 }
