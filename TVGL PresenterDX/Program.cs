@@ -115,7 +115,7 @@ namespace TVGLPresenterDX
                 {
                     Af = 0.25f
                 };
-                //Presenter.ShowAndHang(ts);
+                PresenterShowAndHang(ts);
                 TestVoxelization(ts, filename);
 
                 // var stopWatch = new Stopwatch();
@@ -260,6 +260,7 @@ namespace TVGLPresenterDX
         {
             var mainWindow = new MainWindow();
             mainWindow.AddSolids(solids);
+            mainWindow.view1.ZoomExtents();
             mainWindow.ShowDialog();
         }
 
