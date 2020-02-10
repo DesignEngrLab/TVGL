@@ -117,8 +117,8 @@ namespace TVGL
             var (allLoopsClosed, edgeLoops, loops) = GetLoops(edges, true);
             if (loops.Count != 2) return false; //There must be two and only two loops.
 
-            Loop1 = loops[0];
-            Loop2 = loops[1];
+            Loop1 = new HashSet<Vertex>(loops[0]);
+            Loop2 = new HashSet<Vertex>(loops[1]);
             EdgeLoop1 = edgeLoops[0];
             EdgeLoop2 = edgeLoops[1];
 
@@ -279,9 +279,9 @@ namespace TVGL
         /// <value>The radius.</value>
         public double Radius { get;  set; }
 
-        public List<Vertex> Loop1 { get; set; }
+        public HashSet<Vertex> Loop1 { get; set; }
 
-        public List<Vertex> Loop2 { get; set; }
+        public HashSet<Vertex> Loop2 { get; set; }
 
         public List<Edge> EdgeLoop1 { get; set; }
 

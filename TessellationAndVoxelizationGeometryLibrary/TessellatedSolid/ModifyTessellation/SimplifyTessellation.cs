@@ -97,7 +97,7 @@ namespace TVGL
         }
 
 
-        internal static List<Vertex> OrganizeIntoLoop(List<Edge> singleSidedEdges, double[] normal)
+        internal static List<Vertex> OrganizeIntoLoop(HashSet<Edge> singleSidedEdges, double[] normal)
         {
             var edgesHashSet = new HashSet<Edge>(singleSidedEdges);
             var loop = new List<Vertex>();
