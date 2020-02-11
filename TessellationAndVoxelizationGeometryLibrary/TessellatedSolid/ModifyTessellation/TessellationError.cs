@@ -178,7 +178,7 @@ namespace TVGL
             if (FacesWithOneVertex != null) report += "FacesWithOneVertex: " + FacesWithOneVertex.Count + "\n";
             if (FacesWithTwoEdges != null) report += "FacesWithTwoEdge: " + FacesWithTwoEdges.Count + "\n";
             if (FacesWithTwoVertices != null) report += "FacesWithTwoVertices: " + FacesWithTwoVertices.Count + "\n";
-            report += "ModelIsInsideOut: " + ModelIsInsideOut + "\n";
+            if(ModelIsInsideOut) report += "ModelIsInsideOut: " + ModelIsInsideOut + "\n";
             if (OverusedEdges != null) report += "OverusedEdges: " + OverusedEdges.Count + "\n";
             if (SingledSidedEdges != null) report += "SingledSidedEdges: " + SingledSidedEdges.Count + "\n";
             if (VertsThatDoNotLinkBackToEdge != null) report += "VertsThatDoNotLinkBackToEdge: " + VertsThatDoNotLinkBackToEdge.Count + "\n";
