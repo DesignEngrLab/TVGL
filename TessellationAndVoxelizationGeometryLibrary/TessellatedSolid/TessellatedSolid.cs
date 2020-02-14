@@ -963,11 +963,11 @@ namespace TVGL
                     xPrime = direction;
                     xPrimeIndex = i;
                 }
-                var dotX2 = direction.multiply(-1).Dot(new List<double>() { 1.0, 0.0, 0.0 }, 3);
+                var dotX2 = (direction * -1).Dot(new List<double>() { 1.0, 0.0, 0.0 }, 3);
                 if (dotX2 > minDot)
                 {
                     minDot = dotX2;
-                    xPrime = direction.multiply(-1);
+                    xPrime = direction * -1;
                     xPrimeIndex = i;
                 }
             }
@@ -984,11 +984,11 @@ namespace TVGL
                     minDot = dotY1;
                     yPrime = direction;
                 }
-                var dotY2 = direction.multiply(-1).Dot(new List<double>() { 0.0, 1.0, 0.0 }, 3);
+                var dotY2 = (direction * -1).Dot(new List<double>() { 0.0, 1.0, 0.0 }, 3);
                 if (dotY2 > minDot)
                 {
                     minDot = dotY2;
-                    yPrime = direction.multiply(-1);
+                    yPrime = direction * -1;
                 }
             }
 
@@ -1065,7 +1065,7 @@ namespace TVGL
             //Update the vertices
             foreach (var vert in Vertices)
             {
-                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
+                tempCoord = transformMatrix * new[] { vert.X, vert.Y, vert.Z, 1 };
                 vert.Position[0] = tempCoord[0];
                 vert.Position[1] = tempCoord[1];
                 vert.Position[2] = tempCoord[2];
@@ -1086,7 +1086,7 @@ namespace TVGL
             {
                 edge.Update(true);
             }
-            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 }).Take(3).ToArray();
+            Center = (transformMatrix * new[] { Center[0], Center[1], Center[2], 1 }).Take(3).ToArray();
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             if (_inertiaTensor != null)
             {
@@ -1094,7 +1094,7 @@ namespace TVGL
                 for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
                         rotMatrix[i, j] = transformMatrix[i, j];
-                _inertiaTensor = rotMatrix.multiply(_inertiaTensor);
+                _inertiaTensor = rotMatrix * _inertiaTensor;
             }
             if (Primitives != null)
                 foreach (var primitive in Primitives)

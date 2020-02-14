@@ -135,7 +135,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The Vector4 to compare this instance to.</param>
         /// <returns>True if the other Vector4 is equal to this instance; False otherwise.</returns>
         // COMMENTEDCHANGE [Intrinsic]
-        public bool Equals(Vector4 other)
+        public bool Equals(this Vector4 other)
         {
             return this.X == other.X
                 && this.Y == other.Y
@@ -153,7 +153,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The dot product.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double Dot(Vector4 vector1, Vector4 vector2)
+        public static double Dot(this Vector4 vector1, Vector4 vector2)
         {
             return vector1.X * vector2.X +
                    vector1.Y * vector2.Y +
@@ -171,7 +171,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The cross product.</returns>
         // COMMENTEDCHANGE [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Cross(Vector4 vector1, Vector4 vector2)
+        public static Vector4 Cross(this Vector4 vector1, Vector4 vector2)
         {
             return new Vector4(
                 vector1.Y * vector2.Z - vector1.Z * vector2.Y,

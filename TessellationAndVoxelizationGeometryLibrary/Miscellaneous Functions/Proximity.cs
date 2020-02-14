@@ -86,7 +86,7 @@ namespace TVGL.MathOperations
             {
                 uvw[1] = d1 / (d1 - d3);
                 uvw[0] = 1.0 - uvw[1];
-                return a.add(ab.multiply(uvw[1]), 3); // barycentric coordinates (1-v,v,0)
+                return a + (ab * uvw[1]); // barycentric coordinates (1-v,v,0)
             }
 
             // Check if P in vertex region outside C
@@ -104,7 +104,7 @@ namespace TVGL.MathOperations
             {
                 uvw[2] = d2 / (d2 - d6);
                 uvw[0] = 1.0 - uvw[2];
-                return a.add(ac.multiply(uvw[2]), 3); // barycentric coordinates (1-w,0,w)
+                return a + (ac * uvw[2]); // barycentric coordinates (1-w,0,w)
             }
 
             // Check if P in edge region of BC, if so return projection of P onto BC
@@ -113,7 +113,7 @@ namespace TVGL.MathOperations
             {
                 uvw[2] = (d4 - d3) / ((d4 - d3) + (d5 - d6));
                 uvw[1] = 1.0 - uvw[2];
-                return b.add(c.subtract(b, 3).multiply(uvw[2]), 3); // b + uvw[2] * (c - b), barycentric coordinates (0,1-w,w)
+                return b + ((c-b) * uvw[2]); // b + uvw[2] * (c - b), barycentric coordinates (0,1-w,w)
             }
 
             // P inside face region. Compute Q through its barycentric coordinates (u,v,w)
@@ -122,7 +122,7 @@ namespace TVGL.MathOperations
             uvw[1] = vb * denom;
             uvw[0] = 1.0 - uvw[1] - uvw[2];
 
-            return a.add(ab.multiply(uvw[1]).add(ac.multiply(uvw[2]), 3), 3);
+            return a + (ab * uvw[1]) + (ac * uvw[2]);
             //a + ab*uvw[1] + ac*uvw[2]; // = u*a + v*b + w*c , u= va*denom = 1.0-v-w
         }
 
@@ -164,7 +164,7 @@ namespace TVGL.MathOperations
                 {
                     // c projects inside the [a,b] interval.
                     distanceToSegment = distanceToSegment / denom;
-                    return a.add(ab.multiply(distanceToSegment), 3); // a + (ab * t);
+                    return a + (ab * distanceToSegment); // a + (ab * t);
                 }
             }
         }

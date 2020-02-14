@@ -32,7 +32,7 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.Dot(face.Center.subtract(Center, 3)) - 1) >
+            if (Math.Abs(face.Normal.Dot(face.Center -Center) - 1) >
                 Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
@@ -53,14 +53,13 @@ namespace TVGL
             var fractionToMove = 1/Faces.Count;
             var moveVector = pointOnLine.subtract(Center, 3);
             Center =
-                Center.add(new[]
-                {
+                Center + new Vector3(
                     moveVector[0]*fractionToMove*distance, moveVector[1]*fractionToMove*distance,
                     moveVector[2]*fractionToMove*distance
-                }, 3);
+                );
 
 
-            var totalOfRadii = Vertices.Sum(v => MiscFunctions.DistancePointToPoint(Center, v.Position));
+            var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Position);
             Radius = totalOfRadii/Vertices.Count;
             base.UpdateWith(face);
         }
@@ -111,7 +110,7 @@ namespace TVGL
                 }
             }
             center = new double[3];
-            center = centers.Aggregate(center, (current, c) => current.add(c, 3));
+            center = centers.Aggregate(center, (current, c) => current + c);
             center = center.divide(centers.Count);
             /* determine is positive or negative */
             var numNeg = signedDistances.Count(d => d < 0);
@@ -154,7 +153,7 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector2 Center { get;  set; }
+        public Vector3 Center { get;  set; }
 
         /// <summary>
         ///     Gets the radius.

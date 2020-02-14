@@ -189,7 +189,7 @@ namespace TVGL
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
         public PolygonalFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true)
             : this(vertices, null, connectVerticesBackToFace)
-        {           
+        {
         }
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, Vector2 normal, bool connectVerticesBackToFace = true)
+        public PolygonalFace(IEnumerable<Vertex> vertices, Vector3 normal, bool connectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
@@ -210,7 +210,7 @@ namespace TVGL
             var centerX = Vertices.Average(v => v.X);
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
-            Center = new Vector3( centerX, centerY, centerZ };
+            Center = new Vector3(centerX, centerY, centerZ);
             bool reverseVertexOrder;
             Normal = DetermineNormal(Vertices, out reverseVertexOrder, normal);
             if (reverseVertexOrder) Vertices.Reverse();
@@ -242,7 +242,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">The normal.</param>
         /// <returns>System.Vector2.</returns>
-        public static Vector2 DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, Vector2 normal = null)
+        public static Vector3 DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, Vector3 normal = null)
         {
             reverseVertexOrder = false;
             var n = vertices.Count;
@@ -267,10 +267,10 @@ namespace TVGL
                         {
                             if (tempCross.IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance))
                                 return tempCross;
-                            if (tempCross.multiply(-1).IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance))
+                            if ((tempCross * -1).IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance))
                             {
                                 reverseVertexOrder = true;
-                                return tempCross.multiply(-1);
+                                return tempCross * -1;
                             }
                         }
                     }
@@ -282,7 +282,7 @@ namespace TVGL
 
             n = normals.Count;
             if (n == 0) // this would happen if the face collapse to a line.
-                return new Vector3( double.NaN, double.NaN, double.NaN );
+                return new Vector3(double.NaN, double.NaN, double.NaN);
             // before we just average these normals, let's check that they agree.
             // the dotProductsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
@@ -294,13 +294,13 @@ namespace TVGL
             var isConvex = dotProductsOfNormals.All(x => x > 0);
             if (isConvex)
             {
-                var newNormal = normals.Aggregate((current, c) => current.add(c, 3)).normalize(3);
+                var newNormal = normals.Aggregate((current, c) => current + c).normalize(3);
                 // even though the normal provide was wrong above (or nonexistent)
                 // we still check it to see if this is the correct direction.
                 if (normal == null || newNormal.Dot(normal, 3) >= 0) return newNormal;
                 // else reverse the order 
                 reverseVertexOrder = true;
-                return newNormal.multiply(-1);
+                return newNormal * -1;
             }
             // now, the rare case in which the polygon face is not convex, the only .
             if (normal != null)
@@ -323,7 +323,7 @@ namespace TVGL
             // if the majority are like the first one, then use that one (which may have been the guess).
             if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize(3);
             // otherwise, go with the opposite (so long as there isn't an original guess)
-            if (normal == null) return normals[0].normalize(3).multiply(-1);
+            if (normal == null) return normals[0].normalize(3) * -1;
             //finally, assume the original guess is right, and reverse the order
             reverseVertexOrder = true;
             return normals[0].normalize(3);
@@ -367,7 +367,7 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector2 Center { get; internal set; }
+        public Vector3 Center { get; internal set; }
 
         /// <summary>
         ///     Gets the area.
@@ -380,7 +380,7 @@ namespace TVGL
         /// </summary>
         /// <value>The color.</value>
         public Color Color { get; set; }
-        
+
 
         public PrimitiveSurface BelongsToPrimitive { get; internal set; }
 

@@ -48,6 +48,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public static Vector2 UnitY { get { return new Vector2(0.0, 1.0); } }
 
+        /// <summary>
+        /// Makes a copy of the current Vector.
+        /// </summary>
+        public Vector2 Copy()
+        {
+            return new Vector2(X, Y);
+        }
         double IVertex2D.X => X;
 
         double IVertex2D.Y => Y;

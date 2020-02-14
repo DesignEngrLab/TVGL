@@ -354,10 +354,10 @@ namespace TVGL
                         var n1 = loop[loop.Count - 1].Vector.Cross(loop[loop.Count - 2].Vector).normalize(3);
                         if (!n1.Contains(double.NaN))
                         {
-                            n1 = n1.Dot(normal, 3) < 0 ? n1.multiply(-1) : n1;
+                            n1 = n1.Dot(normal, 3) < 0 ? n1 * -1 : n1;
                             normal = loop.Count == 2
                                 ? n1
-                                : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
+                                : ((normal * loop.Count) + n1).divide(loop.Count + 1).normalize(3);
                         }
                         removedEdges.Add(bestNext);
                         remainingEdges.Remove(bestNext);
@@ -367,17 +367,17 @@ namespace TVGL
                         possibleNextEdges = remainingEdges.Where(e => e.From == loop[0].To);
                         if (possibleNextEdges.Any())
                         {
-                            var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector.multiply(-1),
+                            var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector * -1,
                                 normal);
                             if (bestPrev == null) break;
                             loop.Insert(0, bestPrev);
                             var n1 = loop[1].Vector.Cross(loop[0].Vector).normalize(3);
                             if (!n1.Contains(double.NaN))
                             {
-                                n1 = n1.Dot(normal, 3) < 0 ? n1.multiply(-1) : n1;
+                                n1 = n1.Dot(normal, 3) < 0 ? n1 * -1 : n1;
                                 normal = loop.Count == 2
                                     ? n1
-                                    : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
+                                    : ((normal * loop.Count) + n1).divide(loop.Count + 1).normalize(3);
                             }
                             removedEdges.Add(bestPrev);
                             remainingEdges.Remove(bestPrev);

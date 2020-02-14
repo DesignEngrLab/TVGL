@@ -207,7 +207,7 @@ namespace TVGL.Boolean_Operations
             var negSideGroups = new List<GroupOfLoops>();
             for (var k = -1; k < 2; k += 2) //-1 for positive side and 1 for negative side.
             {
-                var direction = plane.Normal.multiply(k);
+                var direction = plane.Normal * k;
                 var loops = k == -1 ? posSideLoops : negSideLoops;
                 var vertexLoops = loops.Select(loop => loop.VertexLoop);
 
@@ -393,7 +393,7 @@ namespace TVGL.Boolean_Operations
             var distancesToPosPlane = new List<double>();
             var distancesToNegPlane = new List<double>();
             var atLeastOneVertexOnPlane = false;
-            var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
+            var pointOnPlane = plane.Normal * plane.DistanceToOrigin;
             foreach (var vertex in ts.Vertices)
             {
                 var distance = vertex.Position.subtract(pointOnPlane, 3).Dot(plane.Normal, 3);

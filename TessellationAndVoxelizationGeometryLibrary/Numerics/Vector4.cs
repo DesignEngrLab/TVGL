@@ -170,7 +170,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value2">The second point.</param>
         /// <returns>The distance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double Distance(Vector4 value1, Vector4 value2)
+        public static double Distance(this Vector4 value1, Vector4 value2)
         {
             if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
@@ -198,7 +198,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value2">The second point.</param>
         /// <returns>The distance squared.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double DistanceSquared(Vector4 value1, Vector4 value2)
+        public static double DistanceSquared(this Vector4 value1, Vector4 value2)
         {
             if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
@@ -222,7 +222,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="vector">The vector to normalize.</param>
         /// <returns>The normalized vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Normalize(Vector4 vector)
+        public static Vector4 Normalize(this Vector4 vector)
         {
             if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
@@ -250,7 +250,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="max">The maximum value.</param>
         /// <returns>The restricted vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Clamp(Vector4 value1, Vector4 min, Vector4 max)
+        public static Vector4 Clamp(this Vector4 value1, Vector4 min, Vector4 max)
         {
             // This compare order is very important!!!
             // We must follow HLSL behavior in the case user specified min value is bigger than max value.
@@ -281,7 +281,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="amount">Value between 0 and 1 indicating the weight of the second source vector.</param>
         /// <returns>The interpolated vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Lerp(Vector4 value1, Vector4 value2, double amount)
+        public static Vector4 Lerp(this Vector4 value1, Vector4 value2, double amount)
         {
             return new Vector4(
                 value1.X + (value2.X - value1.X) * amount,
@@ -329,7 +329,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Transform(Vector4 vector, Matrix4x4 matrix)
+        public static Vector4 Transform(this Vector4 vector, Matrix4x4 matrix)
         {
             return new Vector4(
                 vector.X * matrix.M11 + vector.Y * matrix.M21 + vector.Z * matrix.M31 + vector.W * matrix.M41,
@@ -405,7 +405,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="rotation">The rotation to apply.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Transform(Vector4 value, Quaternion rotation)
+        public static Vector4 Transform(this Vector4 value, Quaternion rotation)
         {
             double x2 = rotation.X + rotation.X;
             double y2 = rotation.Y + rotation.Y;
@@ -440,7 +440,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Add(Vector4 left, Vector4 right)
+        public static Vector4 Add(this Vector4 left, Vector4 right)
         {
             return left + right;
         }
@@ -452,7 +452,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Subtract(Vector4 left, Vector4 right)
+        public static Vector4 Subtract(this Vector4 left, Vector4 right)
         {
             return left - right;
         }
@@ -464,7 +464,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second source vector.</param>
         /// <returns>The product vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Multiply(Vector4 left, Vector4 right)
+        public static Vector4 Multiply(this Vector4 left, Vector4 right)
         {
             return left * right;
         }
@@ -476,7 +476,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The scalar value.</param>
         /// <returns>The scaled vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Multiply(Vector4 left, double right)
+        public static Vector4 Multiply(this Vector4 left, double right)
         {
             return left * new Vector4(right, right, right, right);
         }
@@ -500,7 +500,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second source vector.</param>
         /// <returns>The vector resulting from the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Divide(Vector4 left, Vector4 right)
+        public static Vector4 Divide(this Vector4 left, Vector4 right)
         {
             return left / right;
         }
@@ -512,7 +512,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="divisor">The scalar value.</param>
         /// <returns>The result of the division.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Divide(Vector4 left, double divisor)
+        public static Vector4 Divide(this Vector4 left, double divisor)
         {
             return left / divisor;
         }
@@ -523,7 +523,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The source vector.</param>
         /// <returns>The negated vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Negate(Vector4 value)
+        public static Vector4 Negate(this Vector4 value)
         {
             return -value;
         }

@@ -610,7 +610,7 @@ namespace TVGL.Enclosure_Operations
                     var x = Math.Cos(theta)*Math.Sin(phi);
                     var y = Math.Sin(theta)*Math.Sin(phi);
                     var z = Math.Cos(phi);
-                    var point = new[] {x, y, z};
+                    var point = new Vector3(x, y, z);
                     //Create two planes given the great circle and this new temporary arc
                     var tempNorm = point.Cross(node.Vector);
                     //Find points of intersection between two planes

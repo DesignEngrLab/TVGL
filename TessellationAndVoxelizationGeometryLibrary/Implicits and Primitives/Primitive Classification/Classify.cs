@@ -906,12 +906,12 @@ namespace TVGL
             // centered at 0 then you have a cone.
             // since the vectors that are the difference of two normals (v = n1 - n2) would
             // be in the plane, let's first figure out the average plane of this normal
-            var inPlaneVectors = new double[n][];
+            var inPlaneVectors = new Vector3[n];
             inPlaneVectors[0] = faces[0].Normal.subtract(faces[n - 1].Normal, 3);
             for (int i = 1; i < n; i++)
                 inPlaneVectors[i] = faces[i].Normal.subtract(faces[i - 1].Normal, 3);
 
-            var normalsOfGaussPlane = new List<Vector2>();
+            var normalsOfGaussPlane = new List<Vector3>();
             var tempCross = inPlaneVectors[0].Cross(inPlaneVectors[n - 1]).normalize();
             if (!tempCross.Any(double.IsNaN))
                 normalsOfGaussPlane.Add(tempCross);
@@ -921,16 +921,16 @@ namespace TVGL
                 if (!tempCross.Any(double.IsNaN))
                     if (tempCross.Dot(normalsOfGaussPlane[0], 3) >= 0)
                         normalsOfGaussPlane.Add(tempCross);
-                    else normalsOfGaussPlane.Add(tempCross.multiply(-1));
+                    else normalsOfGaussPlane.Add(-1*tempCross);
             }
             var normalOfGaussPlane = new double[3];
-            normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current.add(c, 3));
+            normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current + c);
             normalOfGaussPlane = normalOfGaussPlane.divide(normalsOfGaussPlane.Count);
 
             var distance = faces.Sum(face => face.Normal.Dot(normalOfGaussPlane, 3));
             if (distance < 0)
             {
-                axis = normalOfGaussPlane.multiply(-1);
+                axis = normalOfGaussPlane * -1;
                 distance = -distance / n;
             }
             else

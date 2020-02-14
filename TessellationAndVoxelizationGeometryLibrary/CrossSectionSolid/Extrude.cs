@@ -45,7 +45,7 @@ namespace TVGL
         }
 
         public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vertex>> loops,
-            Numerics.Vector2 extrudeDirection, double distance, bool midPlane = false)
+            Vector3 extrudeDirection, double distance, bool midPlane = false)
         {
             var positionLoops = loops.Select(loop => loop.Select(vertex => vertex.Position).ToList()).ToList();
             return ReturnFacesFromLoops(positionLoops, extrudeDirection, distance, midPlane);
@@ -60,7 +60,7 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Numerics.Vector2>> loops, Vector3 extrudeDirection,
+        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
         double distance, bool midPlane = false)
         {
             //This simplifies the cases we have to handle by always extruding in the positive direction
@@ -83,7 +83,7 @@ namespace TVGL
                     //entire extrude distance.
                     if (midPlane)
                     {
-                        var midPlaneVertexPosition = vertexPosition.add(extrudeDirection.multiply(-distance / 2), 3);
+                        var midPlaneVertexPosition = vertexPosition + (extrudeDirection * (-distance / 2));
                         cleanLoop.Add(new Vertex(midPlaneVertexPosition, i));
                     }
                     else cleanLoop.Add(new Vertex(vertexPosition, i));
@@ -124,11 +124,11 @@ namespace TVGL
                     foreach (var point in pathAsPoints)
                     {
                         var position = new[] { point.X, point.Y, 0.0, 1.0 };
-                        var vertexPosition1 = backTransform.multiply(position).Take(3).ToArray();
+                        var vertexPosition1 = (backTransform * position).Take(3).ToArray();
                         //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
                         //So, we must move it to be on the plane
                         //This next line gets a second vertex to use for the point on plane function
-                        var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5), 3);
+                        var vertexPosition2 = vertexPosition1 + (extrudeDirection * 5);
                         var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
                             distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
                             new Vertex(vertexPosition2));
@@ -174,11 +174,11 @@ namespace TVGL
                         foreach (var point in pathAsPoints)
                         {
                             var position = new[] { point.X, point.Y, 0.0, 1.0 };
-                            var vertexPosition1 = backTransform.multiply(position).Take(3).ToArray();
+                            var vertexPosition1 = (backTransform * position).Take(3).ToArray();
                             //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
                             //So, we must move it to be on the plane
                             //This next line gets a second vertex to use for the point on plane function
-                            var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5), 3);
+                            var vertexPosition2 = vertexPosition1 + (extrudeDirection * 5);
                             var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
                                 distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
                                 new Vertex(vertexPosition2));
@@ -213,7 +213,7 @@ namespace TVGL
             var pairedVertices = new Dictionary<Vertex, Vertex>();
             foreach (var vertex in vertices)
             {
-                var newVertex = new Vertex(vertex.Position.add(extrudeDirection.multiply(distance), 3));
+                var newVertex = new Vertex(vertex.Position + (extrudeDirection * distance));
                 pairedVertices.Add(vertex, newVertex);
             }
 
@@ -227,9 +227,9 @@ namespace TVGL
                 var v2 = triangle[2].Position.subtract(triangle[0].Position, 3);
 
                 //This model reverses the triangle vertex ordering as necessary to line up with the normal.
-                var topTriangle = v1.Cross(v2).Dot(extrudeDirection.multiply(-1), 3) < 0
-                    ? new PolygonalFace(triangle.Reverse(), extrudeDirection.multiply(-1), true)
-                    : new PolygonalFace(triangle, extrudeDirection.multiply(-1), true);
+                var topTriangle = v1.Cross(v2).Dot(extrudeDirection * -1) < 0
+                    ? new PolygonalFace(triangle.Reverse(), extrudeDirection * -1, true)
+                    : new PolygonalFace(triangle, extrudeDirection * -1, true);
                 topFaces.Add(topTriangle);
                 listOfFaces.Add(topTriangle);
 

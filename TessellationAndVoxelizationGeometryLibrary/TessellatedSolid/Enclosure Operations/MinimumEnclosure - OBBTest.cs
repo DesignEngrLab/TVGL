@@ -159,8 +159,8 @@ namespace TVGL
                     {
                         CornerVertices = Box.CornerVertices != null ? (Vertex[]) Box.CornerVertices.Clone() : null,
                         Center = Box.Center != null ? new Vertex(Box.Center.Position) : null,
-                        Dimensions = Box.Dimensions != null ? (Vector2) Box.Dimensions.Clone() : null,
-                        Directions = Box.Directions != null ? (Vector2[]) Box.Directions.Clone() : null,
+                        Dimensions = Box.Dimensions != null ? (Vector3) Box.Dimensions.Clone() : Vector3.Null,
+                        Directions = Box.Directions != null ? (Vector3[]) Box.Directions.Clone() : Vector3.Null,
                         PointsOnFaces = Box.PointsOnFaces != null ? (List<Vertex>[]) Box.PointsOnFaces.Clone() : null,
                         Volume = Box.Volume
                     },
@@ -198,7 +198,7 @@ namespace TVGL
         {
             var m = new double[3];
             // loop over the points to find the mean point location
-            m = convexHullVertices.Aggregate(m, (current, point) => current.add(point.Position, 3));
+            m = convexHullVertices.Aggregate(m, (current, point) => current + point.Position);
             m = m.divide(convexHullVertices.Count);
             var C = new double[3, 3];
             var m00 = m[0]*m[0];
@@ -261,7 +261,7 @@ namespace TVGL
                 //Find the triangle weight based proportional to area
                 var w = triangle.Area/totalArea;
                 //Find the center of gravity
-                c = c.add(triangle.Center.multiply(w), 3);
+                c = c + (triangle.Center * w);
             }
 
             //Find the covariance matrix  of the convex hull
@@ -281,14 +281,14 @@ namespace TVGL
                     {
                         var vector2 = triangle.Vertices[k].Position.subtract(c, 3);
                         var term2 = new[,] {{vector2[0]}, {vector2[1]}, {vector2[2]}};
-                        jTerm1 = term2.multiply(term1);
-                        jTerm1Total = jTerm1Total.add(jTerm1);
+                        jTerm1 = term2 * term1;
+                        jTerm1Total = jTerm1Total + jTerm1;
                     }
-                    var jTerm2 = term4.multiply(term3);
-                    var jTermTotal = jTerm1.add(jTerm2);
-                    covarianceI = covarianceI.add(jTermTotal);
+                    var jTerm2 = term4 * term3;
+                    var jTermTotal = jTerm1 + jTerm2;
+                    covarianceI = covarianceI + jTermTotal;
                 }
-                covariance = covariance.add(covarianceI.multiply(1.0/12.0));
+                covariance = covariance + (covarianceI * 1.0/12.0);
             }
 
             //Find eigenvalues of covariance matrix
@@ -411,7 +411,7 @@ namespace TVGL
                         var midBox = thisBoxData.Copy();
                         while (!lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBAngleTolerance))
                         {
-                            midBox.Direction = lowerBox.Direction.add(upperBox.Direction, 3).divide(2).normalize(3);
+                            midBox.Direction = (lowerBox.Direction + upperBox.Direction).divide(2).normalize(3);
                             midBox.Angle = (lowerBox.Angle + upperBox.Angle)/2.0;
                             FindOBBAlongDirection(midBox);
                             if (midBox.Box.Volume > lowerBox.Box.Volume && midBox.Box.Volume > upperBox.Box.Volume)

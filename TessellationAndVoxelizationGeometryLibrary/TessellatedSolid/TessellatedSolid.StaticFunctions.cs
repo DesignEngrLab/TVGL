@@ -80,7 +80,7 @@ namespace TVGL
                     center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
-                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2, 3).divide(2);
+                if (iterations > 10 || volume < 0) center = 0.5*(oldCenter1 + oldCenter2);
                 else center = center.divide(volume);
                 iterations++;
             } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);
@@ -122,21 +122,21 @@ namespace TVGL
                         face.Vertices[2].Position[2] - Center[2]
                     });
 
-                var matrixC = matrixA.transpose().multiply(canonicalMatrix);
-                matrixC = matrixC.multiply(matrixA).multiply(matrixA.determinant());
-                matrixCtotal = matrixCtotal.add(matrixC);
+                var matrixC = matrixA.transpose() * canonicalMatrix;
+                matrixC = matrixC * matrixA * matrixA.determinant();
+                matrixCtotal = matrixCtotal + matrixC;
             }
 
             var translateMatrix = new double[,] { { 0 }, { 0 }, { 0 } };
+            //what is this crazy equations?
             var matrixCprime =
-                translateMatrix.multiply(-1)
-                    .multiply(translateMatrix.transpose())
-                    .add(translateMatrix.multiply(translateMatrix.multiply(-1).transpose()))
-                    .add(translateMatrix.multiply(-1).multiply(translateMatrix.multiply(-1).transpose()))
-                    .multiply(Volume);
-            matrixCprime = matrixCprime.add(matrixCtotal);
-            var result =
-                StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
+                (translateMatrix * -1)
+                     * (translateMatrix.transpose())
+                     + (translateMatrix * ((translateMatrix * -1).transpose()))
+                     + ((translateMatrix * -1) * ((translateMatrix * -1).transpose())
+                     * Volume);
+            matrixCprime = matrixCprime + matrixCtotal;
+            var result = Matrix4x4.Identity * (matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
             return result.subtract(matrixCprime);
         }
         #endregion

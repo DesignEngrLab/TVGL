@@ -206,13 +206,13 @@ namespace TVGL
 
             //Start with v0 and move along direction[1] by projection
             var vector0To1 = v1.Position.subtract(v0.Position, 3);
-            var projectionOntoD1 = Directions[1].multiply(Directions[1].Dot(vector0To1, 3));
-            var v4 = v0.Position.add(projectionOntoD1, 3);
+            var projectionOntoD1 = Directions[1] * Directions[1].Dot(vector0To1);
+            var v4 = v0.Position + projectionOntoD1;
 
             //Move along direction[2] by projection
             var vector4To2 = v2.Position.subtract(v4, 3);
-            var projectionOntoD2 = Directions[2].multiply(Directions[2].Dot(vector4To2, 3));
-            var bottomCorner = new Vertex(v4.add(projectionOntoD2, 3));
+            var projectionOntoD2 = Directions[2] * Directions[2].Dot(vector4To2);
+            var bottomCorner = new Vertex(v4 + projectionOntoD2);
 
             //Double Check to make sure it is the bottom corner
             verticesOfInterest.Add(bottomCorner);
@@ -226,14 +226,14 @@ namespace TVGL
             //Create the vertices that make up the box and add them to the corner vertices array
             for (var i = 0; i < 2; i++)
             {
-                var d0Vector = i == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[0].multiply(Dimensions[0]);
+                var d0Vector = i == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[0] * Dimensions[0];
                 for (var j = 0; j < 2; j++)
                 {
-                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[1].multiply(Dimensions[1]);
+                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[1] * Dimensions[1];
                     for (var k = 0; k < 2; k++)
                     {
-                        var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[2].multiply(Dimensions[2]);
-                        var newVertex = new Vertex(bottomCorner.Position.add(d0Vector, 3).add(d1Vector, 3).add(d2Vector, 3));
+                        var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[2] * Dimensions[2];
+                        var newVertex = new Vertex(bottomCorner.Position + d0Vector + d1Vector + d2Vector);
 
                         //
                         var b = k == 0 ? 0 : 4;
@@ -310,7 +310,7 @@ namespace TVGL
 
             var result = new BoundingBox
             {
-                Center = new Vertex(original.Center.Position.add(direction.multiply(distance / 2))),
+                Center = new Vertex(original.Center.Position + (direction * distance / 2)),
                 Dimensions = dimensions,
                 Volume = volume,
                 Directions = original.Directions, //If these change, then the copy is useless anyways
@@ -325,7 +325,7 @@ namespace TVGL
             }
 
             //And then move the vertices furthest along the direction by the given distance
-            var vectorOffset = direction.multiply(distance);
+            var vectorOffset = direction * distance;
             //Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
             //[0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
             int[] indicesToUpdate;
@@ -346,7 +346,7 @@ namespace TVGL
             }           
             foreach (var i in indicesToUpdate)
             {
-                result.CornerVertices[i] = new Vertex(result.CornerVertices[i].Position.add(vectorOffset));
+                result.CornerVertices[i] = new Vertex(result.CornerVertices[i].Position + vectorOffset);
             }        
 
             //Recreate the solid representation if one existing in the original
@@ -368,8 +368,8 @@ namespace TVGL
 
             //Add in the center
             var centerPosition = new[] { 0.0, 0.0, 0.0 };
-            centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c.add(v.Position, 3))
-                .divide(cornerVertices.Count(), 3);
+            centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c + v.Position)
+                .divide(cornerVertices.Count());
             
             return new BoundingBox
             {
@@ -454,14 +454,14 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public void SetCornerPoints()
         {
-            var v1Max = LengthDirection.multiply(LengthDirectionMax);
-            var v1Min = LengthDirection.multiply(LengthDirectionMin);
-            var v2Max = WidthDirection.multiply(WidthDirectionMax);
-            var v2Min = WidthDirection.multiply(WidthDirectionMin);
-            var p1 = new Vector2(v1Max.add(v2Max));
-            var p2 = new Vector2(v1Min.add(v2Max));
-            var p3 = new Vector2(v1Min.add(v2Min));
-            var p4 = new Vector2(v1Max.add(v2Min));
+            var v1Max = LengthDirection * LengthDirectionMax;
+            var v1Min = LengthDirection * LengthDirectionMin;
+            var v2Max = WidthDirection * WidthDirectionMax;
+            var v2Min = WidthDirection * WidthDirectionMin;
+            var p1 = new Vector2(v1Max + v2Max);
+            var p2 = new Vector2(v1Min + v2Max);
+            var p3 = new Vector2(v1Min + v2Min);
+            var p4 = new Vector2(v1Max + v2Min);
             CornerPoints = new[] { p1, p2, p3, p4 };
             var areaCheck = MiscFunctions.AreaOfPolygon(CornerPoints);
             if (areaCheck < 0.0)

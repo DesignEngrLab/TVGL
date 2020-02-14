@@ -711,7 +711,7 @@ namespace TVGL.Voxelization
 
             var centerDouble = new Numerics.Vector2 { center[0], center[1], center[2] };
             var c = centerDouble.ToArray();
-            var cStep = dir.multiply(tStep, 3);
+            var cStep = dir * tStep;
 
             for (var i = 1; i <= numSteps; i++)
             {
@@ -739,7 +739,7 @@ namespace TVGL.Voxelization
                 var a = aStep * i;
                 var r = radius * Math.Sin(a);
                 var tStep = radius * (1 - Math.Cos(a));
-                var c = centerDouble.subtract(dir.multiply(tStep, 3), 3);
+                var c = centerDouble.subtract(dir * tStep);
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
                     voxels.Add(voxel);
@@ -777,11 +777,11 @@ namespace TVGL.Voxelization
             for (var i = 0; i < 3; i++)
                 if (dir[i] < 0) initCoord[i] = VoxelsPerSide[i] - 1;
             var voxels = new List<int[]>(new[] { initCoord });
-            var c = initCoord.add(new[] { 0.5, 0.5, 0.5 }, 3);
+            var c = initCoord + new[] { 0.5, 0.5, 0.5 };
             var ts = FindIntersectionDistances(c, dir, tLimit);
             foreach (var t in ts)
             {
-                var cInt = c.add(dir.multiply(t, 3), 3);
+                var cInt = c + (dir * t);
                 for (var i = 0; i < 3; i++) cInt[i] = Math.Round(cInt[i], 5);
                 voxels.Add(GetNextVoxelCoord(cInt, dir));
             }

@@ -17,12 +17,12 @@ namespace TVGL
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(Numerics.Vector2 buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,
            double sameTolerance, UnitType units)
         {
             //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
             var start = layer3DAtStart.First().Position.Dot(buildDirection);
-            var endPoint = layer3DAtStart.First().Position.add(buildDirection.multiply(extrudeDistance));
+            var endPoint = layer3DAtStart.First().Position + buildDirection * extrudeDistance;
             var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.Dot(buildDirection) } };
             var shape = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(layer3DAtStart, buildDirection));
             if (shape.Area < 0) shape = PolygonLight.Reverse(shape);

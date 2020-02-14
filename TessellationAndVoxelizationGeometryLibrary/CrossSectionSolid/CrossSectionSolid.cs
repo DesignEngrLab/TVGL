@@ -45,7 +45,7 @@ namespace TVGL
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
-        public Numerics.Vector2 Direction { get; set; }
+        public Vector3 Direction { get; set; }
         // in the future, wouldn't this just be
         // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
@@ -62,25 +62,25 @@ namespace TVGL
             StepDistances = stepDistances;
         }
 
-        public CrossSectionSolid(Numerics.Vector2 direction, Dictionary<int, double> stepDistances, double sameTolerance, Numerics.Vector2[] bounds = null, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
             : this(stepDistances)
         {
-            Direction = (Numerics.Vector2)direction.Clone();
+            Direction = direction.Copy();
             NumLayers = stepDistances.Count;
             if (bounds != null)
-                Bounds = new[] { (Numerics.Vector2)bounds[0].Clone(), (Numerics.Vector2)bounds[1].Clone() };
+                Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
             Units = units;
             SameTolerance = sameTolerance;
-        }  
+        }
 
-        public CrossSectionSolid(Numerics.Vector2 direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<PolygonLight>> Layer2D, Numerics.Vector2[] bounds = null,
+        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<PolygonLight>> Layer2D, Vector3[] bounds = null,
             UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
-            Direction = (Numerics.Vector2)direction.Clone();
+            Direction = direction.Copy();
             this.Layer2D = Layer2D;
             Layer3D = new Dictionary<int, List<List<Vertex>>>();
             if (bounds == null)
@@ -99,26 +99,28 @@ namespace TVGL
                             if (ymax < point.Y) ymax = point.Y;
                         }
                 Bounds = new[] {
-                new[] {xmin, ymin, StepDistances[0]},
-                new[] {xmax, ymax, StepDistances[NumLayers-1]}
+                new Vector3(xmin, ymin, StepDistances[0]),
+                new Vector3(xmax, ymax, StepDistances[NumLayers-1])
                 };
             }
-            else Bounds = new[] { (Numerics.Vector2)bounds[0].Clone(), (Numerics.Vector2)bounds[1].Clone() };
+            else Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
         }
 
         public static CrossSectionSolid CreateFromTessellatedSolid(TessellatedSolid ts, CartesianDirections direction, int numberOfLayers)
         {
             var intDir = Math.Abs((int)direction) - 1;
-            var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
+            var max = intDir == 0 ? ts.Bounds[1].X : intDir == 1 ? ts.Bounds[1].Y : ts.Bounds[1].Z;
+            var min = intDir == 0 ? ts.Bounds[0].X : intDir == 1 ? ts.Bounds[0].Y : ts.Bounds[0].Z;
+            var lengthAlongDir = max - min;
             var stepSize = lengthAlongDir / numberOfLayers;
             var stepDistances = new Dictionary<int, double>();
             //var stepDistances = new double[numberOfLayers];
-            stepDistances.Add(0, ts.Bounds[0][intDir] + 0.5 * stepSize);
+            stepDistances.Add(0, min + 0.5 * stepSize);
             //stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
             for (int i = 1; i < numberOfLayers; i++)
                 stepDistances.Add(i, stepDistances[i - 1] + stepSize);
             //stepDistances[i] = stepDistances[i - 1] + stepSize;
-            var bounds = new[] { (Numerics.Vector2)ts.Bounds[0].Clone(), (Numerics.Vector2)ts.Bounds[1].Clone() };
+            var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
             var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, List<PolygonLight>>();
@@ -126,7 +128,7 @@ namespace TVGL
                 layerDict.Add(i, layers[i]);
             var directionVector = new double[3];
             directionVector[intDir] = Math.Sign((int)direction);
-            var cs = new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
+            var cs = new CrossSectionSolid(new Vector3(directionVector), stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
             //var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
             cs.TranformMatrix = Matrix4x4.Identity;
             return cs;
@@ -202,7 +204,7 @@ namespace TVGL
             var start = Layer3D.Where(p => p.Value.Any()).FirstOrDefault().Key;
             var stop = Layer3D.Where(p => p.Value.Any()).LastOrDefault().Key;
             var reverse = start < stop ? 1 : -1;
-            var direction = reverse == 1 ? Direction : Direction.multiply(-1);
+            var direction = reverse == 1 ? Direction : -1 * Direction;
             var faces = new List<PolygonalFace>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
@@ -210,7 +212,7 @@ namespace TVGL
             //But both methods, only result in material between the cross sections.
             if (extrudeBack)
             {
-                direction = direction.multiply(-1);
+                direction = -1 * direction;
                 start += reverse;
             }
             else stop -= reverse;
@@ -239,9 +241,9 @@ namespace TVGL
                 marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this);
             else
             {
-                var solidDimensions = Bounds[1].subtract(Bounds[0]);
-                var bbVolume = solidDimensions.Aggregate(1.0, (acc, val) => acc * val);
-                var biggestSideArea = bbVolume / solidDimensions.Min();
+                var solidDimensions = Bounds[1] - Bounds[0];
+                var bbVolume = solidDimensions.X * solidDimensions.Y * solidDimensions.Z;
+                var biggestSideArea = bbVolume / Math.Min(solidDimensions.X, Math.Min(solidDimensions.Y, solidDimensions.Z));
                 var areaPerTriangle = biggestSideArea / (MarchingCubesCrossSectionSolid.NumTrianglesOnSideFactor * approximateNumberOfTriangles);
                 var discretization = 2 * Math.Sqrt(areaPerTriangle);
                 marchingCubesAlgorithm = new MarchingCubesCrossSectionSolid(this, discretization);

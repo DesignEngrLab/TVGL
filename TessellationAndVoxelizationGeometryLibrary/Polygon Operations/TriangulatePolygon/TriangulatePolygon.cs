@@ -29,7 +29,7 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, Vector2 normal, bool ignoreNegativeSpace = false)
+        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, Vector3 normal, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
@@ -47,7 +47,7 @@ namespace TVGL
         /// <param name="isPositive">The is positive.</param>
         /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, Vector2 normal,
+        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, Vector3 normal,
             out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight

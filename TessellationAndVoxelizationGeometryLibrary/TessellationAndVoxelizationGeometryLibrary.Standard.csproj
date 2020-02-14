@@ -75,9 +75,4 @@
   </ItemGroup>
 
 
-  <ItemGroup>
-    <Folder Include="Numerics\" />
-  </ItemGroup>
-
-
 </Project>

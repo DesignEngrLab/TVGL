@@ -33,7 +33,7 @@ namespace TVGL
         /// Gets or sets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        public Vector2 Normal { get; set; }
+        public Vector3 Normal { get; set; }
 
         /// <summary>
         /// Tolerance used to determine whether faces should be part of this flat
@@ -46,7 +46,7 @@ namespace TVGL
         /// Gets the closest point on the plane to the origin.
         /// </summary>
         /// <value>The closest point to origin.</value>
-        public Vector2 ClosestPointToOrigin => Normal.multiply(DistanceToOrigin);
+        public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
 
         /// <summary>
         /// Determines whether [is new member of] [the specified face].
@@ -70,8 +70,8 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
-            Normal = Normal.multiply(Faces.Count).add(face.Normal, 3).divide(Faces.Count + 1);
-            Normal.normalizeInPlace();
+            Normal = (Faces.Count * Normal) + face.Normal;
+            Normal = Vector3.Normalize(Normal);
             var newVerts = new List<Vertex>();
             var newDistanceToPlane = 0.0;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
@@ -109,7 +109,7 @@ namespace TVGL
             var normalSum = new double[3];
             foreach(var face in faces)
             {
-                var weightedNormal = face.Normal.multiply(face.Area);
+                var weightedNormal = face.Normal * face.Area;
                 normalSum[0] += weightedNormal[0];
                 normalSum[1] += weightedNormal[1];
                 normalSum[2] += weightedNormal[2];

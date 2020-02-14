@@ -54,15 +54,15 @@ namespace TVGL
             var fractionToMove = 1 / numFaces;
             var moveVector = Anchor.Cross(face.Normal);
             if (moveVector.Dot(face.Center.subtract(inBetweenPoint, 3)) < 0)
-                moveVector = moveVector.multiply(-1);
+                moveVector = moveVector * -1;
             moveVector.normalizeInPlace(3);
             /**** set new Anchor (by averaging in with last n values) ****/
             Anchor =
-                Anchor.add(new[]
+                Anchor + new[]
                 {
                     moveVector[0]*fractionToMove*distance, moveVector[1]*fractionToMove*distance,
                     moveVector[2]*fractionToMove*distance
-                }, 3);
+                };
 
             /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
             var totalAxis = new double[3];
@@ -70,11 +70,11 @@ namespace TVGL
             {
                 var newAxis = face.Normal.Cross(oldFace.Normal);
                 if (newAxis.Dot(Axis, 3) < 0)
-                    newAxis.multiply(-1);
-                totalAxis = totalAxis.add(newAxis, 3);
+                    newAxis * -1;
+                totalAxis = totalAxis + newAxis;
             }
             var numPrevCrossProducts = numFaces * (numFaces - 1) / 2;
-            totalAxis = totalAxis.add(Axis.multiply(numPrevCrossProducts), 3);
+            totalAxis = totalAxis + (Axis * numPrevCrossProducts);
             /**** set new Axis (by averaging in with last n values) ****/
             Axis = totalAxis.divide(numFaces + numPrevCrossProducts).normalize(3);
             foreach (var v in face.Vertices)
@@ -205,7 +205,7 @@ namespace TVGL
             var edgeVectors = new List<Vector2>(throughEdgeVectors.Values);
             var numEdges = edgeVectors.Count;
             var axis = new Vector2 { 0.0, 0.0, 0.0 };
-            foreach(var edgeVector in edgeVectors) axis = axis.add(edgeVector);
+            foreach(var edgeVector in edgeVectors) axis = axis + edgeVector;
             Axis = axis.normalize();
 
             /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
@@ -238,11 +238,11 @@ namespace TVGL
         public override void Transform(double[,] transformMatrix)
         {
             var homoCoord = new[] { Anchor[0], Anchor[1], Anchor[2], 1.0 };
-            homoCoord = transformMatrix.multiply(homoCoord);
+            homoCoord = transformMatrix * homoCoord;
             Anchor[0] = homoCoord[0]; Anchor[1] = homoCoord[1]; Anchor[2] = homoCoord[2];
 
             homoCoord = new[] { Axis[0], Axis[1], Axis[2], 1.0 };
-            homoCoord = transformMatrix.multiply(homoCoord);
+            homoCoord = transformMatrix * homoCoord;
             Axis[0] = homoCoord[0]; Axis[1] = homoCoord[1]; Axis[2] = homoCoord[2];
 
             //how to adjust the radii?
@@ -347,11 +347,11 @@ namespace TVGL
                 }
             }
             center = new double[3];
-            center = centers.Aggregate(center, (current, c) => current.add(c, 3));
+            center = centers.Aggregate(center, (current, c) => current + c, 3);
             center = center.divide(centers.Count);
             /* move center to origin plane */
             var distBackToOrigin = -1 * axis.Dot(center, 3);
-            center = center.subtract(axis.multiply(distBackToOrigin), 3);
+            center = center-(axis * distBackToOrigin);
             /* determine is positive or negative */
             var numNeg = signedDistances.Count(d => d < 0);
             var numPos = signedDistances.Count(d => d > 0);
@@ -394,7 +394,7 @@ namespace TVGL
             if (distToOrigin < 0)
             {
                 distToOrigin *= -1;
-                axis.multiply(-1);
+                axis * -1;
             }
             center = new[]
             {
@@ -427,7 +427,7 @@ namespace TVGL
         //    foreach(var face in Faces)
         //    {
         //        var vertices = new Vertex[] { face.C, face.B, face.A }; //reverse the vertices
-        //        faces.Add(new PolygonalFace(vertices, face.Normal.multiply(-1)));
+        //        faces.Add(new PolygonalFace(vertices, face.Normal * -1)));
         //    }
         //    //Add the top and bottom faces
         //    //Build the cylinder along the axis

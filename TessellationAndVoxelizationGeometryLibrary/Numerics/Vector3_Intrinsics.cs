@@ -57,6 +57,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Y = y;
             Z = z;
         }
+
+        public Vector3(double[] d) : this()
+        {
+            X = d[0];
+            Y = d[1];
+            Z = d[2];
+        }
         #endregion Constructors
 
         #region Public Instance Methods
@@ -69,6 +76,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             CopyTo(array, 0);
         }
+
+
 
         /// <summary>
         /// Copies the contents of the vector into the given array, starting from index.

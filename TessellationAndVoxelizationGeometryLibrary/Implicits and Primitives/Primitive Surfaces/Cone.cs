@@ -62,12 +62,12 @@ namespace TVGL
                 if (!axisRefPoint.Any(double.IsNaN) && !axisRefPoint.IsNegligible())
                     axisRefPoints.Add(axisRefPoint);
             }
-            axisRefPoint = new double[3];
-            axisRefPoint = axisRefPoints.Aggregate(axisRefPoint, (current, c) => current.add(c, 3));
+            axisRefPoint = Vector3.Zero;
+            axisRefPoint = axisRefPoints.Aggregate(axisRefPoint, (current, c) => current + c);
             axisRefPoint = axisRefPoint.divide(axisRefPoints.Count);
             /*re-attach to plane through origin */
             var distBackToOrigin = -1 * axis.Dot(axisRefPoint, 3);
-            axisRefPoint = axisRefPoint.subtract(axis.multiply(distBackToOrigin), 3);
+            axisRefPoint = axisRefPoint-(axis * distBackToOrigin);
             // approach to find  Apex    
             var numApices = 0;
             var apexDistance = 0.0;
@@ -81,7 +81,7 @@ namespace TVGL
                 apexDistance += distAlongAxis;
             }
             apexDistance /= numApices;
-            Apex = axisRefPoint.add(axis.multiply(apexDistance), 3);
+            Apex = axisRefPoint + (axis * apexDistance);
             /* determine is positive or negative */
             var v2Apex = Apex.subtract(faces[0].Center, 3);
             IsPositive = v2Apex.Dot(axis, 3) >= 0;

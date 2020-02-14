@@ -234,7 +234,7 @@ namespace TVGL
                 var temp = From;
                 From = To;
                 To = temp;
-                Vector = Vector.multiply(-1);
+                Vector = Vector * -1;
                 // it would be messed up if both faces thought they owned this edge. If this is the 
                 // case, return the edge has no angle.
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
@@ -284,7 +284,7 @@ namespace TVGL
                 {
                     if (face != null && face != _otherFace)
                     {
-                        ownedNeighborAvgNormals = ownedNeighborAvgNormals.add(face.Normal, 3);
+                        ownedNeighborAvgNormals = ownedNeighborAvgNormals + face.Normal;
                         numNeighbors++;
                     }
                 }
@@ -295,7 +295,7 @@ namespace TVGL
                 {
                     if (face != null && face != _ownedFace)
                     {
-                        otherNeighborAvgNormals = otherNeighborAvgNormals.add(face.Normal, 3);
+                        otherNeighborAvgNormals = otherNeighborAvgNormals + face.Normal;
                         numNeighbors++;
                     }
                 }

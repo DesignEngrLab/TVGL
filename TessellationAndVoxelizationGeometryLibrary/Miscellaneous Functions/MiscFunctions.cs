@@ -165,6 +165,7 @@ namespace TVGL
             return PointLightDistances;
         }
 
+        
         public static Vector2 GetPerpendicularDirection(Vector2 direction)
         {
             //If any of the normal terms (X, Y, or Z) are zero, then that will be direction 2
@@ -188,7 +189,7 @@ namespace TVGL
                 var v2 = new Vector3(-direction[2], 0.0, direction[0]);
 
                 //Any linear combination of them is also perpendicular to the original vector
-                return v1.add(v2).normalize();
+                return (v1 + v2).normalize();
             }
         }
         #endregion
@@ -693,7 +694,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector2 direction,
+        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction);
@@ -795,7 +796,8 @@ namespace TVGL
         /// <param name="tolerance"></param>
         /// 
         /// <returns></returns>
-        public static List<Vector2> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, Vector2 direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance)
+        public static List<Vector2> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction, 
+            out double[,] backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<Vertex> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -909,7 +911,7 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector2 direction,
+        public static List<Vector3> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector3 direction,
             out double[,] backTransform,
             bool mergeDuplicateReferences = false)
         {
@@ -1052,7 +1054,7 @@ namespace TVGL
             pointAs4[0] = vertex[0];
             pointAs4[1] = vertex[1];
             pointAs4[2] = vertex[2];
-            pointAs4 = transform.multiply(pointAs4);
+            pointAs4 = transform * pointAs4;
             return new[] { pointAs4[0], pointAs4[1] };
         }
 
@@ -1074,7 +1076,7 @@ namespace TVGL
                 pointAs4[0] = vertices[i][0];
                 pointAs4[1] = vertices[i][1];
                 pointAs4[2] = vertices[i][2];
-                pointAs4 = transform.multiply(pointAs4);
+                pointAs4 = transform * pointAs4;
                 points[i] = new[] { pointAs4[0], pointAs4[1] };
             }
             return points;
@@ -1089,7 +1091,7 @@ namespace TVGL
         public static Vector2 Get2DProjectionVector(Vector2 vector3D, Vector2 direction)
         {
             var transform = TransformToXYPlane(direction);
-            var vectorAs4 = transform.multiply(new[] { vector3D[0], vector3D[1], vector3D[2], 1.0 });
+            var vectorAs4 = transform * new[] { vector3D[0], vector3D[1], vector3D[2], 1.0 };
             return new[] { vectorAs4[0], vectorAs4[1] };
         }
 
@@ -1140,8 +1142,8 @@ namespace TVGL
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
             }
-            backTransform = backRotateY.multiply(backRotateX);
-            return rotateX.multiply(rotateY);
+            backTransform = backRotateY * backRotateX;
+            return rotateX * rotateY;
         }
 
         /// <summary>
@@ -1153,28 +1155,29 @@ namespace TVGL
         public static Vector2 Convert2DVectorTo3DVector(Vector2 direction2D, double[,] backTransform)
         {
             var tempVector = new[] { direction2D[0], direction2D[1], 0.0, 1.0 };
-            return backTransform.multiply(tempVector).Take(3).ToArray().normalize(3);
+            return (backTransform * tempVector).Take(3).ToArray().normalize(3);
         }
 
-        /// <summary>
-        /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
-        /// </summary>
-        /// <param name="points"></param>
-        /// <param name="direction"></param>
-        /// <param name="distanceAlongDirection"></param>
-        /// <returns></returns>
-        public static List<Vertex> GetVerticesFrom2DPoints(IEnumerable<Point> points, Vector2 direction, double distanceAlongDirection)
+
+    /// <summary>
+    /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
+    /// </summary>
+    /// <param name="points"></param>
+    /// <param name="direction"></param>
+    /// <param name="distanceAlongDirection"></param>
+    /// <returns></returns>
+    public static List<Vertex> GetVerticesFrom2DPoints(IEnumerable<Point> points, Vector3 direction, double distanceAlongDirection)
         {
             //Rotate axis back to the original, and then transform points along the given direction.
             //If you try to transform first, it will shift the vertices incorrectly
             TransformToXYPlane(direction, out var backTransform);
-            var directionVector = direction.multiply(distanceAlongDirection);
+            var directionVector = direction * distanceAlongDirection;
             var contour = new List<Vertex>();
             foreach (var point in points)
             {
                 var position = new[] { point.X, point.Y, 0.0, 1.0 };
-                var untransformedPosition = backTransform.multiply(position).Take(3).ToArray();
-                var vertexPosition = untransformedPosition.add(directionVector, 3);
+                var untransformedPosition = (backTransform * position).Take(3).ToArray();
+                var vertexPosition = untransformedPosition + directionVector;
 
                 contour.Add(new Vertex(vertexPosition));
             }
@@ -1189,18 +1192,18 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="distanceAlongDirection"></param>
         /// <returns></returns>
-        public static List<Vertex> GetVerticesFrom2DPoints(List<Vector2> points, Vector2 direction, double distanceAlongDirection)
+        public static List<Vertex> GetVerticesFrom2DPoints(List<Vector2> points, Vector3 direction, double distanceAlongDirection)
         {
             //Rotate axis back to the original, and then transform points along the given direction.
             //If you try to transform first, it will shift the vertices incorrectly
             TransformToXYPlane(direction, out var backTransform);
-            var directionVector = direction.multiply(distanceAlongDirection);
+            var directionVector = direction * distanceAlongDirection;
             var contour = new List<Vertex>();
             foreach (var point in points)
             {
                 var position = new[] { point.X, point.Y, 0.0, 1.0 };
-                var untransformedPosition = backTransform.multiply(position).Take(3).ToArray();
-                var vertexPosition = untransformedPosition.add(directionVector, 3);
+                var untransformedPosition = (backTransform * position).Take(3).ToArray();
+                var vertexPosition = untransformedPosition + directionVector;
 
                 contour.Add(new Vertex(vertexPosition));
             }
@@ -1259,7 +1262,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector2 axis)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
             return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
@@ -1272,7 +1275,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector2 axis)
+        internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
             return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
@@ -1348,7 +1351,7 @@ namespace TVGL
         /// <param name="c">The c.</param>
         /// <param name="positiveNormal">The positive normal.</param>
         /// <returns>System.Double.</returns>
-        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector2 positiveNormal)
+        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
             var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
             return InteriorAngleBetweenEdgesInCCWList(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y },
@@ -1961,7 +1964,7 @@ namespace TVGL
         /// <param name="normalOfPlane">The normal of plane.</param>
         /// <param name="positionOnPlane">The position on plane.</param>
         /// <returns>the distance between the two 3D points.</returns>
-        public static double DistancePointToPlane(Vector2 point, Vector2 normalOfPlane, Vector2 positionOnPlane)
+        public static double DistancePointToPlane(Vector3 point, Vector3 normalOfPlane, Vector3 positionOnPlane)
         {
             return DistancePointToPlane(point, normalOfPlane, positionOnPlane.Dot(normalOfPlane));
         }
@@ -2056,8 +2059,8 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 PointOnPlaneFromIntersectingLineSegment(Vector2 normalOfPlane, double distOfPlane, Vector2 point1,
-            Vector2 point2)
+        public static Vector3 PointOnPlaneFromIntersectingLineSegment(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
+            Vector3 point2)
         {
             var position = PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1, point2);
             var d1 = point2.subtract(point1).norm2();
@@ -2076,7 +2079,7 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vertex PointOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Vertex point1,
+        public static Vertex PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vertex point1,
             Vertex point2)
         {
             return new Vertex(PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1.Position, point2.Position));
@@ -2091,7 +2094,7 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 PointLightOnZPlaneFromIntersectingLine(double distOfPlane, Vertex point1,
+        public static Vector3 PointLightOnZPlaneFromIntersectingLine(double distOfPlane, Vertex point1,
             Vertex point2)
         {
             var toFactor = (distOfPlane - point1.Z) / (point2.Z - point1.Z);
@@ -2182,8 +2185,8 @@ namespace TVGL
         /// <param name="rayDirection">The ray direction.</param>
         /// <param name="signedDistance"></param>
         /// <returns>Vertex.</returns>
-        public static Vector2 PointOnPlaneFromRay(Vector2 normalOfPlane, double distOfPlane, Vector2 rayPosition,
-            Vector2 rayDirection, out double signedDistance)
+        public static Vector3 PointOnPlaneFromRay(Vector3 normalOfPlane, double distOfPlane, Vector3 rayPosition,
+            Vector3 rayDirection, out double signedDistance)
         {
             var dot = rayDirection.Dot(normalOfPlane);
             signedDistance = 0.0;
@@ -2192,7 +2195,7 @@ namespace TVGL
             var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
             if (signedDistance.IsNegligible()) return rayPosition;
-            return rayPosition.add(rayDirection.multiply(signedDistance), 3);
+            return rayPosition + (rayDirection * signedDistance);
         }
 
         /// <summary>
@@ -2224,13 +2227,13 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static Vector2 PointOnTriangleFromLine(PolygonalFace face, Vector2 point3D, Vector2 direction,
+        public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vector2 point3D, Vector2 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Position);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
-            if (newPoint == null) return null;
-            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+            if (newPoint == null) return Vector3.Null;
+            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
 
         /// <summary>
@@ -2244,10 +2247,10 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static Vector2 PointOnTriangleFromLine(PolygonalFace face, Vector2 point3D, CartesianDirections direction,
+        public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vector3 point3D, CartesianDirections direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            Vector2 newPoint;
+            Vector3 newPoint;
             signedDistance = double.NaN;
             var d = face.Normal.Dot(face.Vertices[0].Position);
             var n = face.Normal;
@@ -2272,7 +2275,7 @@ namespace TVGL
                     break;
             }
 
-            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
         #endregion
 
@@ -2474,7 +2477,7 @@ namespace TVGL
                     //else, find the intersection point and determine if it is inside the polygon (face)
                     var newVertex = t.IsNegligible()
                         ? vertexInQuestion
-                        : new Vertex(vertexInQuestion.Position.add(direction.multiply(t), 3));
+                        : new Vertex(vertexInQuestion.Position + (direction * t));
                     if (!IsVertexInsideTriangle(face, newVertex)) continue;
                     //If the distance between the vertex and a plane is neglible and the vertex is inside that face
                     if (t.IsNegligible())

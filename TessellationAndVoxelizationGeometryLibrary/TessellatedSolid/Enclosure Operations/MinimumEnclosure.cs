@@ -665,14 +665,14 @@ namespace TVGL
                 };
 
                 var angleVector1 = new[] { -direction[1], direction[0] };
-                var length = Math.Abs(vectorLength.Dot(angleVector1, 2));
+                var length = Math.Abs(vectorLength.Dot(angleVector1));
                 var vectorWidth = new[]
                 {
                     cvxPoints[extremeIndices[3]].X - cvxPoints[extremeIndices[1]].X,
                     cvxPoints[extremeIndices[3]].Y - cvxPoints[extremeIndices[1]].Y
                 };
                 var angleVector2 = new[] { direction[0], direction[1] };
-                var width = Math.Abs(vectorWidth.Dot(angleVector2, 2));
+                var width = Math.Abs(vectorWidth.Dot(angleVector2));
                 var area = length * width;
 
                 #endregion
@@ -821,14 +821,14 @@ namespace TVGL
                 boundingRectangle.LengthDirection[0], boundingRectangle.LengthDirection[1],
                 0.0, 1.0
             };
-            tempDirection = backTransform.multiply(tempDirection);
+            tempDirection = backTransform * tempDirection;
             var direction2 = new[] {tempDirection[0], tempDirection[1], tempDirection[2]};
             tempDirection = new[]
             {
                 boundingRectangle.WidthDirection[0], boundingRectangle.WidthDirection[1],
                 0.0, 1.0
             };
-            tempDirection = backTransform.multiply(tempDirection);
+            tempDirection = backTransform * tempDirection;
             var direction3 = new[] {tempDirection[0], tempDirection[1], tempDirection[2]};
             var pointsOnFaces = new List<List<Vertex>>
             {
@@ -870,13 +870,13 @@ namespace TVGL
                 boundingRectangle.LengthDirection[0], boundingRectangle.LengthDirection[1],
                 0.0, 1.0
             };
-            var direction1 = backTransform.multiply(tempDirection).Take(3).ToArray();
+            var direction1 = (backTransform * tempDirection).Take(3).ToArray();
             tempDirection = new[]
             {
                 boundingRectangle.WidthDirection[0], boundingRectangle.WidthDirection[1],
                 0.0, 1.0
             };
-            var direction2 = backTransform.multiply(tempDirection).Take(3).ToArray();
+            var direction2 = (backTransform * tempDirection).Take(3).ToArray();
             boxData.Box =
                 new BoundingBox
                 {

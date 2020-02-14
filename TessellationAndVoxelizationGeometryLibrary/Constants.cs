@@ -457,6 +457,7 @@ namespace TVGL
                         { "Auburn", new Color(109, 53, 26) }
                     } }
             };
+        internal const double DegreesToRadiansFactor = Math.PI / 180.0;
         #endregion
     }
 

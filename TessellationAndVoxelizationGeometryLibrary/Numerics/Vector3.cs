@@ -39,6 +39,30 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 return new Vector3(1.0, 1.0, 1.0);
             }
         }
+
+        /// <summary>
+        /// Returns the vector (1,1,1).
+        /// </summary>
+        public static Vector3 Null
+        {
+            // COMMENTEDCHANGE [Intrinsic]
+            get
+            {
+                return new Vector3(double.NaN, double.NaN, double.NaN);
+            }
+        }
+        public bool IsNull()
+        {
+            return double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z);
+        }
+        /// <summary>
+        /// Makes a copy of the current Vector.
+        /// </summary>
+        public Vector3 Copy()
+        {
+            return new Vector3(X, Y, Z);
+        }
+
         /// <summary>
         /// Returns the vector (1,0,0).
         /// </summary>
@@ -255,7 +279,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Reflect(Vector3 vector, Vector3 normal)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double dot = Vector3.Dot(vector, normal);
                 Vector3 temp = normal * dot * 2.0;
@@ -308,7 +332,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Lerp(Vector3 value1, Vector3 value2, double amount)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector3 firstInfluence = value1 * (1.0 - amount);
                 Vector3 secondInfluence = value2 * amount;
@@ -482,6 +506,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             return -value;
         }
+
+
         #endregion Public operator methods
     }
 }

@@ -114,7 +114,7 @@ namespace TVGL
         [JsonIgnore]
         public double X
         {
-            get { return Position[0]; }
+            get { return Position.X; }
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace TVGL
         [JsonIgnore]
         public double Y
         {
-            get { return Position[1]; }
+            get { return Position.Y; }
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace TVGL
         [JsonIgnore]
         public double Z
         {
-            get { return Position[2]; }
+            get { return Position.Z; }
         }
 
         /// <summary>

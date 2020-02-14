@@ -555,7 +555,7 @@ namespace TVGL
                     if (needsReversal > correct) loop.Reverse();
                     //if(needsReversal*correct != 0) Debug.WriteLine("Reversed Loop Count: " + needsReversal + " Forward Loop Count: " + correct);
 
-                    //Get2DProjections does not project directionally (normal and normal.multiply(-1) return the same transform)
+                    //Get2DProjections does not project directionally (normal and normal * -1) return the same transform)
                     //However, the way we are unioning the polygons and eliminating overhand polygons seems to be taking care of this
                     var surfacePath = MiscFunctions.Get2DProjectionPointsAsLight(loop, normal).ToList();
                     var area2D = MiscFunctions.AreaOfPolygon(surfacePath);

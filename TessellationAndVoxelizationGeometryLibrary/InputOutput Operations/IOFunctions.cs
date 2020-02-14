@@ -417,7 +417,7 @@ namespace TVGL.IOFunctions
         /// <param name="line">The input string.</param>
         /// <param name="doubles">The vertex point.</param>
         /// <returns>True if parsing was successful.</returns>
-        protected static bool TryParseDoubleArray(string line, out Vector2 doubles)
+        protected static bool TryParseDoubleArray(string line, out double[] doubles)
         {
             var strings = line.Split(' ', '\t').ToList();
             strings.RemoveAll(String.IsNullOrWhiteSpace);

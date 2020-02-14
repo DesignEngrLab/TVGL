@@ -48,7 +48,7 @@ namespace TVGL
             faces = new List<PolygonalFace>();
             GridOffsetTable = new double[8][];
             for (int i = 0; i < 8; i++)
-                GridOffsetTable[i] = _unitOffsetTable[i].multiply(this.gridToCoordinateFactor);
+                GridOffsetTable[i] = _unitOffsetTable[i] * this.gridToCoordinateFactor;
         }
         #endregion
 
@@ -251,11 +251,11 @@ namespace TVGL
         /// EdgeDirectionTable lists the direction vector (vertexFrom-vertexTo) for each edge in the cube.
         /// edgeDirection[12][3]
         /// </summary>
-        protected static readonly Vector2[] EdgeDirectionTable = new Vector2[]
+        protected static readonly Vector3[] EdgeDirectionTable = new Vector3[]
         {
-            new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
-            new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
-            new[]{0.0, 0.0, 1.0},new[]{0.0, 0.0, 1.0},new[]{ 0.0, 0.0, 1.0},new[]{0.0,  0.0, 1.0}
+            new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
+             new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
+             new Vector3(0.0, 0.0, 1.0),new Vector3(0.0, 0.0, 1.0),new Vector3( 0.0, 0.0, 1.0),new Vector3(0.0,  0.0, 1.0)
         };
         protected static readonly CartesianDirections[] directionTable = new CartesianDirections[]
           {

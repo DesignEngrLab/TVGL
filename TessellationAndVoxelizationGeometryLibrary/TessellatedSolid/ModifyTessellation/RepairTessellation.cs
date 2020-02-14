@@ -420,7 +420,7 @@ namespace TVGL
             ts._inertiaTensor = null;
             foreach (var face in ts.Faces)
             {
-                face.Normal = face.Normal.multiply(-1);
+                face.Normal = face.Normal * -1;
                 //var firstVertex = face.Vertices[0];
                 //face.Vertices.RemoveAt(0);
                 //face.Vertices.Insert(1, firstVertex);
@@ -464,7 +464,7 @@ namespace TVGL
                     else break;
                 }
                 if (edgesToUpdate.Count < face.Edges.Count) continue;
-                face.Normal = face.Normal.multiply(-1);
+                face.Normal = face.Normal * -1;
                 face.Edges.Reverse();
                 face.Vertices.Reverse();
                 foreach (var edge in edgesToUpdate)

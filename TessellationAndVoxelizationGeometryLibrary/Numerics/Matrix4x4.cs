@@ -2019,34 +2019,34 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             {
                 //var row = Sse.LoadVector128(&value1.M11);
                 //Sse.Store(&value1.M11,
-                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
                 //// 0x00 is _MM_SHUFFLE(0,0,0,0), 0x55 is _MM_SHUFFLE(1,1,1,1), etc.
                 //// TODO: Replace with a method once it's added to the API.
 
                 //row = Sse.LoadVector128(&value1.M21);
                 //Sse.Store(&value1.M21,
-                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
                 //row = Sse.LoadVector128(&value1.M31);
                 //Sse.Store(&value1.M31,
-                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
                 //row = Sse.LoadVector128(&value1.M41);
                 //Sse.Store(&value1.M41,
-                //    Sse.Add(Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-                //            Sse.Add(Sse.Multiply(Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-                //                    Sse.Multiply(Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
                 //return value1;
             }
 
@@ -2090,10 +2090,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)
             {
                 //Vector128<double> value2Vec = Vector128.Create(value2);
-                //Sse.Store(&value1.M11, Sse.Multiply(Sse.LoadVector128(&value1.M11), value2Vec));
-                //Sse.Store(&value1.M21, Sse.Multiply(Sse.LoadVector128(&value1.M21), value2Vec));
-                //Sse.Store(&value1.M31, Sse.Multiply(Sse.LoadVector128(&value1.M31), value2Vec));
-                //Sse.Store(&value1.M41, Sse.Multiply(Sse.LoadVector128(&value1.M41), value2Vec));
+                //Sse.Store(&value1.M11, Sse * Sse.LoadVector128(&value1.M11), value2Vec));
+                //Sse.Store(&value1.M21, Sse * Sse.LoadVector128(&value1.M21), value2Vec));
+                //Sse.Store(&value1.M31, Sse * Sse.LoadVector128(&value1.M31), value2Vec));
+                //Sse.Store(&value1.M41, Sse * Sse.LoadVector128(&value1.M41), value2Vec));
                 //return value1;
             }
 
