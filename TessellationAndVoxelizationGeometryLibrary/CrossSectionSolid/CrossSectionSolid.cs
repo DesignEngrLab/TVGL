@@ -30,6 +30,7 @@ namespace TVGL
         public Dictionary<int, List<List<Vertex>>> Layer3D;
         [JsonIgnore]
         public Dictionary<int, List<PolygonLight>> Layer2D;
+
         // an alternate approach without using dictionaries should be pursued
         //public List<List<Vertex>>[] Layer3D { get; set; }
         //public List<PolygonLight>[] Layer2D { get; }
@@ -288,6 +289,11 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        [JsonProperty]
+        private int FirstIndex { get; set; }
+        [JsonProperty]
+        private int LastIndex { get; set; }
+
 
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
@@ -295,8 +301,9 @@ namespace TVGL
             serializationData = new Dictionary<string, JToken>();
             serializationData.Add("CrossSections",
                 JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => p.ConvertToDoublesArray()))));
+            FirstIndex = Layer2D.Keys.First();
+            LastIndex = Layer2D.Keys.Last();
         }
-
 
         [OnDeserialized]
         protected void OnDeserializedMethod(StreamingContext context)
@@ -304,17 +311,15 @@ namespace TVGL
             JArray jArray = (JArray)serializationData["CrossSections"];
             var layerArray = jArray.ToObject<double[][][]>();
             Layer2D = new Dictionary<int, List<PolygonLight>>();
-            var keysArray = StepDistances.Keys.ToArray();
-            for (int i = 0; i < layerArray.Length; i++)
+            var j = 0;
+            for (int i = FirstIndex; i <= LastIndex; i++)
             {
                 var layer = new List<PolygonLight>();
-                var key = keysArray[i];
-                foreach (var coordinates in layerArray[i])
+                foreach (var coordinates in layerArray[j])
                     layer.Add(PolygonLight.MakeFromBinaryString(coordinates));
-                Layer2D.Add(key, layer);
+                Layer2D.Add(i, layer);
+                j++;
             }
-
         }
-
     }
 }
