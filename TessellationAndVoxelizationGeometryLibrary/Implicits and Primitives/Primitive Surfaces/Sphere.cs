@@ -48,18 +48,18 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
-            Vector2 pointOnLine;
+            Vector3 pointOnLine;
             var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
             var fractionToMove = 1/Faces.Count;
-            var moveVector = pointOnLine.subtract(Center, 3);
+            var moveVector = pointOnLine.Subtract(Center);
             Center =
                 Center + new Vector3(
-                    moveVector[0]*fractionToMove*distance, moveVector[1]*fractionToMove*distance,
-                    moveVector[2]*fractionToMove*distance
+                    moveVector.X*fractionToMove*distance, moveVector.Y*fractionToMove*distance,
+                    moveVector.Z*fractionToMove*distance
                 );
 
 
-            var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Position);
+            var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Position));
             Radius = totalOfRadii/Vertices.Count;
             base.UpdateWith(face);
         }
@@ -69,10 +69,12 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }
+
+
 
         #region Constructor
 
@@ -86,8 +88,8 @@ namespace TVGL
             Type = PrimitiveSurfaceType.Sphere;
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
-            var centers = new List<Vector2>();
-            Vector2 center;
+            var centers = new List<Vector3>();
+            Vector3 center;
             double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
@@ -111,7 +113,7 @@ namespace TVGL
             }
             center = new double[3];
             center = centers.Aggregate(center, (current, c) => current + c);
-            center = center.divide(centers.Count);
+            center = center.Divide(centers.Count);
             /* determine is positive or negative */
             var numNeg = signedDistances.Count(d => d < 0);
             var numPos = signedDistances.Count(d => d > 0);

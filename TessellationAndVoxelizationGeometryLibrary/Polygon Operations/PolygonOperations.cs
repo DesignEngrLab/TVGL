@@ -435,7 +435,7 @@ namespace TVGL
                 if (length > edgeLength)
                 {
                     var n = (int)(length / edgeLength);
-                    var vector = (next - current).normalize() * edgeLength;
+                    var vector = (next - current).Normalize() * edgeLength;
                     newPath.Add(current);
                     for (var p = 0; p < n; p++)
                     {

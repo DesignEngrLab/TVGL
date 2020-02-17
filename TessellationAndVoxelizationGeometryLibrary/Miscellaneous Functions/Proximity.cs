@@ -39,10 +39,10 @@ namespace TVGL.MathOperations
                 return a;
             }
 
-            var ab = b.subtract(a, 3);
-            var ac = c.subtract(a, 3);
-            var ap = p.subtract(a, 3);
-            double d1 = ab.Dot(ap, 3), d2 = ac.Dot(ap, 3);
+            var ab = b.Subtract(a);
+            var ac = c.Subtract(a);
+            var ap = p.Subtract(a);
+            double d1 = ab.Dot(ap), d2 = ac.Dot(ap);
 
             // degenerate triangle edges
             if (MiscFunctions.DistancePointToPoint(a, b).IsNegligible())
@@ -72,8 +72,8 @@ namespace TVGL.MathOperations
             }
 
             // Check if P in vertex region outside B
-            var bp = p.subtract(b, 3);
-            double d3 = ab.Dot(bp, 3), d4 = ac.Dot(bp, 3);
+            var bp = p.Subtract(b);
+            double d3 = ab.Dot(bp), d4 = ac.Dot(bp);
             if (d3 >= 0.0 && d4 <= d3)
             {
                 uvw[1] = 1.0;
@@ -90,8 +90,8 @@ namespace TVGL.MathOperations
             }
 
             // Check if P in vertex region outside C
-            var cp = p.subtract(c, 3);
-            double d5 = ab.Dot(cp, 3), d6 = ac.Dot(cp, 3);
+            var cp = p.Subtract(c);
+            double d5 = ab.Dot(cp), d6 = ac.Dot(cp);
             if (d6 >= 0.0 && d5 <= d6)
             {
                 uvw[2] = 1.0;
@@ -139,8 +139,8 @@ namespace TVGL.MathOperations
         /// <returns></returns>
         public static Vector2 ClosestVertexOnSegmentToVertex(Vector2 a, Vector2 b, Vector2 p, out double distanceToSegment)
         {
-            var ab = b.subtract(a, 3);
-            distanceToSegment = p.subtract(a, 3).Dot(ab, 3);
+            var ab = b.Subtract(a);
+            distanceToSegment = p.Subtract(a).Dot(ab);
 
             if (distanceToSegment <= 0.0)
             {
@@ -152,7 +152,7 @@ namespace TVGL.MathOperations
             {
 
                 // always nonnegative since denom = ||ab||^2
-                double denom = ab.Dot(ab, 3);
+                double denom = ab.Dot(ab);
 
                 if (distanceToSegment >= denom)
                 {

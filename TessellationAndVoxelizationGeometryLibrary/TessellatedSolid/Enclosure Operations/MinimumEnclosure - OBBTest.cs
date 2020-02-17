@@ -103,7 +103,7 @@ namespace TVGL
                 {
                     var face = convexHull.Faces[i];
                     face.IndexInList = i;
-                    startingDots[i] = face.Normal.Dot(startDir, 3);
+                    startingDots[i] = face.Normal.Dot(startDir);
                 }
                 foreach (var edge in convexHull.Edges)
                 {
@@ -111,8 +111,8 @@ namespace TVGL
                     var otherX = startingDots[edge.OtherFace.IndexInList];
                     if (otherX*ownedX <= 0)
                     {
-                        var ownedY = edge.OwnedFace.Normal.Dot(yDir, 3);
-                        var otherY = edge.OtherFace.Normal.Dot(yDir, 3);
+                        var ownedY = edge.OwnedFace.Normal.Dot(yDir);
+                        var otherY = edge.OtherFace.Normal.Dot(yDir);
                         //if ((ownedX < 0 && ownedY > 0) || (ownedX > 0 && ownedY < 0))
                         //    OrthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OwnedFace));
                         //else if ((otherX < 0 && otherY > 0) || (otherX > 0 && otherY < 0))
@@ -128,7 +128,7 @@ namespace TVGL
                 var maxDistance = double.NegativeInfinity;
                 foreach (var v in convexHull.Vertices)
                 {
-                    var distance = rotatorEdge.From.Position.subtract(v.Position, 3).Dot(startDir, 3);
+                    var distance = rotatorEdge.From.Position.Subtract(v.Position).Dot(startDir);
                     if (distance > maxDistance)
                     {
                         maxDistance = distance;
@@ -138,7 +138,7 @@ namespace TVGL
             }
 
             public BoundingBox Box { get; set; }
-            public Vector2 Direction { get; set; }
+            public Vector3 Direction { get; set; }
             public double Angle { get; set; }
             public List<Vertex> OrthVertices { get; private set; }
             public List<GaussSphereArc> OrthGaussSphereArcs { get; private set; }
@@ -174,139 +174,7 @@ namespace TVGL
             }
         }
 
-        #region PCA Approaches
 
-        /// <summary>
-        ///     Finds the minimum bounding box using a direct approach called PCA.
-        ///     Variants include All-PCA, Min-PCA, Max-PCA, and continuous PCA [http://dl.acm.org/citation.cfm?id=2019641]
-        ///     The one implemented looks at Min-PCA, Max-PCA and Mid-PCA (considers all three of the eigen vectors).
-        ///     The most accurate is continuous PCA, and Dimitrov 2009 has some improvements
-        ///     Dimitrov, Holst, and Kriegel. "Closed-Form Solutions for Continuous PCA and Bounding Box Algorithms"
-        ///     http://link.springer.com/chapter/10.1007%2F978-3-642-10226-4_3
-        ///     Simple implementation (2/5)
-        /// </summary>
-        /// <timeDomain>
-        ///     O(nlog(n)) time
-        /// </timeDomain>
-        /// <accuracy>
-        ///     Generally fairly accurate, but suboptimal solutions.
-        ///     Particular cases can yield very poor results.
-        ///     Ex. Dimitrov showed in 2009 that continuous PCA yields a volume 4x optimal for a octahedron
-        ///     http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
-        /// </accuracy>
-        private static BoundingBox Find_via_PCA_ApproachNR(IList<Vertex> convexHullVertices)
-        {
-            var m = new double[3];
-            // loop over the points to find the mean point location
-            m = convexHullVertices.Aggregate(m, (current, point) => current + point.Position);
-            m = m.divide(convexHullVertices.Count);
-            var C = new double[3, 3];
-            var m00 = m[0]*m[0];
-            var m01 = m[0]*m[1];
-            var m02 = m[0]*m[2];
-            var m11 = m[1]*m[1];
-            var m12 = m[1]*m[2];
-            var m22 = m[2]*m[2];
-            // loop over the points again to build the covariance matrix.  
-            // Note that we only have to build terms for the upper 
-            // triangular portion since the matrix is symmetric
-            double cxx = 0.0, cxy = 0.0, cxz = 0.0, cyy = 0.0, cyz = 0.0, czz = 0.0;
-            foreach (var p in convexHullVertices.Select(point => point.Position))
-            {
-                cxx += p[0]*p[0] - m00;
-                cxy += p[0]*p[1] - m01;
-                cxz += p[0]*p[2] - m02;
-                cyy += p[1]*p[1] - m11;
-                cyz += p[1]*p[2] - m12;
-                czz += p[2]*p[2] - m22;
-            }
-            // now build the covariance matrix
-            C[0, 0] = cxx;
-            C[1, 1] = cyy;
-            C[2, 2] = czz;
-            C[0, 1] = C[1, 0] = cxy;
-            C[0, 2] = C[2, 0] = cxz;
-            C[1, 2] = C[2, 1] = cyz;
-            //Find eigenvalues of covariance matrix
-            Vector2[] eigenVectors;
-            C.GetEigenValuesAndVectors(out eigenVectors);
-
-            var minOBB = new BoundingBox
-            {
-                Directions = eigenVectors,
-                Volume = double.PositiveInfinity
-            };
-
-            //Perform a 2D caliper along each eigenvector. 
-            for (var i = 0; i < 3; i++)
-            {
-                var newObb = FindOBBAlongDirection(convexHullVertices, minOBB.Directions[i]);
-                if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
-                    minOBB = newObb;
-            }
-            return minOBB;
-        }
-
-        private static BoundingBox Find_via_PCA_ApproachBM(IList<Vertex> convexHullVertices,
-            IEnumerable<PolygonalFace> convexHullFaces)
-        {
-            //Find a continuous set of 3 dimensional vectors with constant density
-            var triangles = new List<PolygonalFace>(convexHullFaces);
-            var totalArea = triangles.Sum(t => t.Area);
-
-            //Calculate the center of gravity of combined triangles
-            var c = new[] {0.0, 0.0, 0.0};
-            foreach (var triangle in triangles)
-            {
-                //Find the triangle weight based proportional to area
-                var w = triangle.Area/totalArea;
-                //Find the center of gravity
-                c = c + (triangle.Center * w);
-            }
-
-            //Find the covariance matrix  of the convex hull
-            var covariance = new double[3, 3];
-            foreach (var triangle in triangles)
-            {
-                var covarianceI = new[,] {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
-                for (var j = 0; j < 3; j++)
-                {
-                    var jTerm1 = new double[3, 3];
-                    var jTerm1Total = new double[3, 3];
-                    var vector1 = triangle.Vertices[j].Position.subtract(c, 3);
-                    var term1 = new[,] {{vector1[0], vector1[1], vector1[2]}};
-                    var term3 = term1;
-                    var term4 = new[,] {{vector1[0]}, {vector1[1]}, {vector1[2]}};
-                    for (var k = 0; k < 3; k++)
-                    {
-                        var vector2 = triangle.Vertices[k].Position.subtract(c, 3);
-                        var term2 = new[,] {{vector2[0]}, {vector2[1]}, {vector2[2]}};
-                        jTerm1 = term2 * term1;
-                        jTerm1Total = jTerm1Total + jTerm1;
-                    }
-                    var jTerm2 = term4 * term3;
-                    var jTermTotal = jTerm1 + jTerm2;
-                    covarianceI = covarianceI + jTermTotal;
-                }
-                covariance = covariance + (covarianceI * 1.0/12.0);
-            }
-
-            //Find eigenvalues of covariance matrix
-            Vector2[] eigenVectors;
-            covariance.GetEigenValuesAndVectors(out eigenVectors);
-
-            var bestOBB = new BoundingBox {Volume = double.PositiveInfinity};
-            // Perform a 2D caliper along each eigenvector. 
-            foreach (var eigenVector in eigenVectors)
-            {
-                var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize(3));
-                if (OBB.Volume < bestOBB.Volume)
-                    bestOBB = OBB;
-            }
-            return bestOBB;
-        }
-
-        #endregion
 
         #region MC ApproachOne
 
@@ -333,7 +201,7 @@ namespace TVGL
 
                 //Initialize variables
                 //rotatorVector is basically the edge in question - the vector that is being rotated about
-                var rotatorVector = rotateEdge.Vector.normalize(3);
+                var rotatorVector = rotateEdge.Vector.Normalize();
                 // startDir is the starting Direction - based on the OtherFace
                 var startDir = rotateEdge.OtherFace.Normal;
                 // endDir is the OwnedFace final Direction - we go from Other to Owned since in order to be about
@@ -342,7 +210,7 @@ namespace TVGL
                 // posYDir is the vector for the positive y-Direction. Well, this is a simplification of the 
                 //gauss sphere to a 2D circle. The Direction (such as startDir) represents the x-axis and this
                 //, which is the orthogonal is the y Direction
-                var origPosYDir = rotatorVector.Cross(startDir).normalize(3);
+                var origPosYDir = rotatorVector.Cross(startDir).Normalize();
                 var totalAngle = Math.PI - rotateEdge.InternalAngle;
                 var thisBoxData = new BoundingBoxData(startDir, origPosYDir, rotateEdge, rotatorVector, convexHull);
 
@@ -390,7 +258,7 @@ namespace TVGL
                     }
                     if (angle > totalAngle)
                     {
-                        // nextBoxData = new BoundingBoxData(endDir, rotatorVector.Cross(endDir).normalize(), rotateEdge, rotatorVector, convexHull);
+                        // nextBoxData = new BoundingBoxData(endDir, rotatorVector.Cross(endDir).Normalize(), rotateEdge, rotatorVector, convexHull);
                         nextBoxData.Angle = totalAngle;
                         nextBoxData.Direction = endDir;
                     }
@@ -399,7 +267,7 @@ namespace TVGL
                         nextBoxData.Angle = angle;
                         nextBoxData.Direction = UpdateDirection(startDir, rotatorVector, origPosYDir, angle);
                     }
-                    nextBoxData.PosYDir = nextBoxData.RotatorVector.Cross(nextBoxData.Direction).normalize(3);
+                    nextBoxData.PosYDir = nextBoxData.RotatorVector.Cross(nextBoxData.Direction).Normalize();
 
                     /****************/
                     FindOBBAlongDirection(nextBoxData);
@@ -411,7 +279,7 @@ namespace TVGL
                         var midBox = thisBoxData.Copy();
                         while (!lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBAngleTolerance))
                         {
-                            midBox.Direction = (lowerBox.Direction + upperBox.Direction).divide(2).normalize(3);
+                            midBox.Direction = (lowerBox.Direction + upperBox.Direction).Divide(2).Normalize();
                             midBox.Angle = (lowerBox.Angle + upperBox.Angle)/2.0;
                             FindOBBAlongDirection(midBox);
                             if (midBox.Box.Volume > lowerBox.Box.Volume && midBox.Box.Volume > upperBox.Box.Volume)
@@ -435,11 +303,11 @@ namespace TVGL
         {
             GaussSphereArc arcToRemove = null;
             var minSlope = double.PositiveInfinity;
-            boxData.PosYDir = boxData.RotatorVector.Cross(boxData.Direction).normalize(3);
+            boxData.PosYDir = boxData.RotatorVector.Cross(boxData.Direction).Normalize();
             foreach (var arc in boxData.OrthGaussSphereArcs)
             {
-                var x = boxData.Direction.Dot(arc.ToFace.Normal, 3);
-                var y = boxData.PosYDir.Dot(arc.ToFace.Normal, 3);
+                var x = boxData.Direction.Dot(arc.ToFace.Normal);
+                var y = boxData.PosYDir.Dot(arc.ToFace.Normal);
                 if (y == 0.0) continue;
                 var tempSlope = -x/y;
                 if (!(tempSlope < minSlope)) continue;
@@ -478,12 +346,12 @@ namespace TVGL
             foreach (var edge in boxData.BackVertex.Edges)
             {
                 var otherVertex = edge.OtherVertex(boxData.BackVertex);
-                var vector = otherVertex.Position.subtract(boxData.BackVertex.Position, 3);
-                var y = yDir.Dot(vector, 3);
+                var vector = otherVertex.Position.Subtract(boxData.BackVertex.Position);
+                var y = yDir.Dot(vector);
                 if (y < 0)
                 {
                     // the x-value is boxData.Direction.Dot(vector) and it's positive for all edges since it's the back vertex
-                    var slope = -boxData.Direction.Dot(vector, 3)/y;
+                    var slope = -boxData.Direction.Dot(vector)/y;
                     if (slope < minSlope)
                     {
                         minSlope = slope;
@@ -518,7 +386,7 @@ namespace TVGL
             a.SetRow(1, startDir);
             a.SetRow(2, posYDir);
             var b = new[] {0.0, Math.Cos(angle), Math.Cos(angle + Math.PI/2)};
-            return StarMath.solve(a, b);
+            return EqualityExtensions.solve(a, b);
         }
 
         #endregion

@@ -64,6 +64,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Y = d[1];
             Z = d[2];
         }
+        public Vector3(Vector4 vector4) : this()
+        {
+            var multiplier = 1 / vector4.W;
+            X = vector4.X * multiplier;
+            Y = vector4.Y * multiplier;
+            Z = vector4.Z * multiplier;
+        }
         #endregion Constructors
 
         #region Public Instance Methods

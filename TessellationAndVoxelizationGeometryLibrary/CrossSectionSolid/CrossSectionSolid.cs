@@ -279,13 +279,13 @@ namespace TVGL
             return solid;
         }
 
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             //It is really easy to rotate Layer2D, just change the direction. But, it is more complicated to get the transform distances correct.
             throw new NotImplementedException();
         }
 
-        public override Solid TransformToNewSolid(double[,] transformationMatrix)
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
         }

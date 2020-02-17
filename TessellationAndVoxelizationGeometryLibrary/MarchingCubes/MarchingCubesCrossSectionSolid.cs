@@ -149,13 +149,13 @@ namespace TVGL
                             var dot_from = segment.Dot(vFrom, 2);
                             if (dot_from >= 0)
                             {
-                                var d = StarMath.crossProduct2(vFrom, segment.normalize());
+                                var d = EqualityExtensions.crossProduct2(vFrom, segment.Normalize());
                                 if (Math.Abs(d) < Math.Abs(grid[i, j]))
                                     grid[i, j] = d;
                             }
                             else if (lastSegment.Dot(vFrom) > 0)
                             {
-                                var sign = Math.Sign(StarMath.crossProduct2(lastSegment, segment));
+                                var sign = Math.Sign(EqualityExtensions.crossProduct2(lastSegment, segment));
                                 var d = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
                                 if (d < Math.Abs(grid[i, j]))
                                     grid[i, j] = sign * d;
@@ -230,7 +230,7 @@ namespace TVGL
             var segmentHalfWidth = 0.5 * segment[0];
             var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
             var lastSegment = fromPoint - lastPoint;
-            var convexSign = Math.Sign(StarMath.crossProduct2(lastSegment, segment));
+            var convexSign = Math.Sign(EqualityExtensions.crossProduct2(lastSegment, segment));
             var xStart = fromPoint.X + segmentHalfWidth;
             var iStart = (int)((xStart - _xMin) * coordToGridFactor);
             var numStepsInHalfWidth = (int)(segmentHalfWidth * coordToGridFactor) + 1;
@@ -299,7 +299,7 @@ namespace TVGL
             var segmentHalfHeight = 0.5 * segment[1];
             var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
             var lastSegment = fromPoint - lastPoint;
-            var convexSign = Math.Sign(StarMath.crossProduct2(lastSegment, segment));
+            var convexSign = Math.Sign(EqualityExtensions.crossProduct2(lastSegment, segment));
             var yStart = fromPoint.Y + segmentHalfHeight;
             var jStart = (int)((yStart - _yMin) * coordToGridFactor);
             var numStepsInHalfHeight = (int)(segmentHalfHeight * coordToGridFactor) + 1;

@@ -32,7 +32,7 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.Dot(Axis, 3)) > Constants.ErrorForFaceInSurface)
+            if (Math.Abs(face.Normal.Dot(Axis)) > Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
                 if (Math.Abs(MiscFunctions.DistancePointToLine(v.Position, Anchor, Axis) - Radius) >
@@ -48,35 +48,34 @@ namespace TVGL
         public override void UpdateWith(PolygonalFace face)
         {
             var numFaces = Faces.Count;
-            Vector2 inBetweenPoint;
+            Vector3 inBetweenPoint;
             var distance = MiscFunctions.SkewedLineIntersection(face.Center, face.Normal, Anchor, Axis,
                 out inBetweenPoint);
             var fractionToMove = 1 / numFaces;
             var moveVector = Anchor.Cross(face.Normal);
-            if (moveVector.Dot(face.Center.subtract(inBetweenPoint, 3)) < 0)
+            if (moveVector.Dot(face.Center.Subtract(inBetweenPoint)) < 0)
                 moveVector = moveVector * -1;
-            moveVector.normalizeInPlace(3);
+            moveVector = moveVector.Normalize();
             /**** set new Anchor (by averaging in with last n values) ****/
             Anchor =
-                Anchor + new[]
-                {
-                    moveVector[0]*fractionToMove*distance, moveVector[1]*fractionToMove*distance,
-                    moveVector[2]*fractionToMove*distance
-                };
+                Anchor + new Vector3(
+                    moveVector.X * fractionToMove * distance, moveVector.Y * fractionToMove * distance,
+                    moveVector.Z * fractionToMove * distance
+               );
 
             /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
-            var totalAxis = new double[3];
+            var totalAxis = new Vector3();
             foreach (var oldFace in Faces)
             {
                 var newAxis = face.Normal.Cross(oldFace.Normal);
-                if (newAxis.Dot(Axis, 3) < 0)
-                    newAxis * -1;
+                if (newAxis.Dot(Axis) < 0)
+                    newAxis = -1 * newAxis;
                 totalAxis = totalAxis + newAxis;
             }
             var numPrevCrossProducts = numFaces * (numFaces - 1) / 2;
             totalAxis = totalAxis + (Axis * numPrevCrossProducts);
             /**** set new Axis (by averaging in with last n values) ****/
-            Axis = totalAxis.divide(numFaces + numPrevCrossProducts).normalize(3);
+            Axis = totalAxis.Divide(numFaces + numPrevCrossProducts).Normalize();
             foreach (var v in face.Vertices)
                 if (!Vertices.Contains(v))
                     Vertices.Add(v);
@@ -130,7 +129,7 @@ namespace TVGL
             //This is more precise than taking a bunch of cross products with the faces.
             //And it is more universal than creating a plane from the loops, since it works 
             //for holes that enter and exit at an angle.
-            var throughEdgeVectors = new Dictionary<Vertex, Vector2>();
+            var throughEdgeVectors = new Dictionary<Vertex, Vector3>();
             var dotFromSharpestEdgesConnectedToVertex = new Dictionary<Vertex, double>();
             foreach (var edge in InnerEdges)
             {
@@ -138,7 +137,7 @@ namespace TVGL
                 var dot = edge.OwnedFace.Normal.Dot(edge.OtherFace.Normal);
                 if (dot.IsPracticallySame(1.0, Constants.ErrorForFaceInSurface)) continue;
                 //This uses a for loop to remove duplicate code, to decide which vertex to check with which loop
-                for (var i = 0; i < 2; i++) 
+                for (var i = 0; i < 2; i++)
                 {
                     var A = i == 0 ? edge.To : edge.From;
                     var B = i == 0 ? edge.From : edge.To;
@@ -146,19 +145,19 @@ namespace TVGL
                     {
                         bool reachedEnd = Loop2.Contains(B);
                         if (!reachedEnd)
-                        {                           
+                        {
                             //Check if this edge needs to "extended" to reach the end of the cylinder
                             var previousEdge = edge;
                             var previousVertex = B;
                             while (!reachedEnd)
-                            {                          
+                            {
                                 var maxDot = 0.0;
                                 Edge extensionEdge = null;
                                 foreach (var otherEdge in previousVertex.Edges.Where(e => e != previousEdge))
                                 {
                                     //This other edge must be contained in the InnerEdges and along the same direction
                                     if (!InnerEdges.Contains(otherEdge)) continue;
-                                    var edgeDot = Math.Abs(otherEdge.Vector.normalize().Dot(previousEdge.Vector.normalize()));
+                                    var edgeDot = Math.Abs(otherEdge.Vector.Normalize().Dot(previousEdge.Vector.Normalize()));
                                     if (!edgeDot.IsPracticallySame(1.0, Constants.ErrorForFaceInSurface)) continue;
                                     //Choose the edge that is most along the previous edge
                                     if (edgeDot > maxDot)
@@ -178,19 +177,19 @@ namespace TVGL
                                     previousVertex = extensionEdge.OtherVertex(previousVertex);
                                     previousEdge = extensionEdge;
                                 }
-                            }                           
+                            }
                         }
                         //If there was a vertex from the edge or edges in the second loop.
-                        if (reachedEnd) 
-                        { 
+                        if (reachedEnd)
+                        {
                             if (!dotFromSharpestEdgesConnectedToVertex.ContainsKey(A))
                             {
-                                throughEdgeVectors.Add(A, B.Position.subtract(A.Position));
+                                throughEdgeVectors.Add(A, B.Position.Subtract(A.Position));
                                 dotFromSharpestEdgesConnectedToVertex.Add(A, edge.InternalAngle);
                             }
                             else if (dot < dotFromSharpestEdgesConnectedToVertex[A])
                             {
-                                throughEdgeVectors[A] = B.Position.subtract(A.Position);
+                                throughEdgeVectors[A] = B.Position.Subtract(A.Position);
                                 dotFromSharpestEdgesConnectedToVertex[A] = dot;
                             }
                             break; //Go to the next edge
@@ -202,11 +201,11 @@ namespace TVGL
 
             //Estimate the axis from the sum of the through edge vectors
             //The axis points from loop 1 to loop 2, since we always start the edge vector from Loop1
-            var edgeVectors = new List<Vector2>(throughEdgeVectors.Values);
+            var edgeVectors = new List<Vector3>(throughEdgeVectors.Values);
             var numEdges = edgeVectors.Count;
-            var axis = new Vector2 { 0.0, 0.0, 0.0 };
-            foreach(var edgeVector in edgeVectors) axis = axis + edgeVector;
-            Axis = axis.normalize();
+            var axis = new Vector3();
+            foreach (var edgeVector in edgeVectors) axis = axis + edgeVector;
+            Axis = axis.Normalize();
 
             /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
             //Since we will be taking cross products, we need to be sure not to have faces along the same normal
@@ -235,15 +234,10 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
-            var homoCoord = new[] { Anchor[0], Anchor[1], Anchor[2], 1.0 };
-            homoCoord = transformMatrix * homoCoord;
-            Anchor[0] = homoCoord[0]; Anchor[1] = homoCoord[1]; Anchor[2] = homoCoord[2];
-
-            homoCoord = new[] { Axis[0], Axis[1], Axis[2], 1.0 };
-            homoCoord = transformMatrix * homoCoord;
-            Axis[0] = homoCoord[0]; Axis[1] = homoCoord[1]; Axis[2] = homoCoord[2];
+            Anchor = new Vector3(Vector4.Transform(Anchor, transformMatrix));
+            Axis = new Vector3(Vector4.Transform(Axis, transformMatrix));
 
             //how to adjust the radii?
             throw new NotImplementedException();
@@ -265,19 +259,19 @@ namespace TVGL
         ///     Gets the anchor.
         /// </summary>
         /// <value>The anchor.</value>
-        public Vector2 Anchor { get;  set; }
+        public Vector3 Anchor { get; set; }
 
         /// <summary>
         ///     Gets the direction.
         /// </summary>
         /// <value>The direction.</value>
-        public Vector2 Axis { get;  set; }
+        public Vector3 Axis { get; set; }
 
         /// <summary>
         ///     Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
-        public double Radius { get;  set; }
+        public double Radius { get; set; }
 
         public List<Vertex> Loop1 { get; set; }
 
@@ -317,19 +311,19 @@ namespace TVGL
         /// </summary>
         /// <param name="facesAll">The faces all.</param>
         /// <param name="axis">The axis.</param>
-        public Cylinder(IEnumerable<PolygonalFace> facesAll, Vector2 axis)
+        public Cylinder(IEnumerable<PolygonalFace> facesAll, Vector3 axis)
             : base(facesAll)
         {
             Type = PrimitiveSurfaceType.Cylinder;
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
-            var centers = new List<Vector2>();
-            Vector2 center;
+            var centers = new List<Vector3>();
+            Vector3 center;
             double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
                 faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
-            if (!center.Any(double.IsNaN) || center.IsNegligible())
+            if (!center.IsNull() && !center.IsNegligible())
             {
                 centers.Add(center);
                 signedDistances.Add(t1);
@@ -339,19 +333,19 @@ namespace TVGL
             {
                 MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
                     faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
-                if (!center.Any(double.IsNaN) || center.IsNegligible())
+                if (!center.IsNull() && !center.IsNegligible())
                 {
                     centers.Add(center);
                     signedDistances.Add(t1);
                     signedDistances.Add(t2);
                 }
             }
-            center = new double[3];
-            center = centers.Aggregate(center, (current, c) => current + c, 3);
-            center = center.divide(centers.Count);
+            center = new Vector3();
+            center = centers.Aggregate(center, (current, c) => current + c);
+            center = center.Divide(centers.Count);
             /* move center to origin plane */
-            var distBackToOrigin = -1 * axis.Dot(center, 3);
-            center = center-(axis * distBackToOrigin);
+            var distBackToOrigin = -1 * axis.Dot(center);
+            center = center - (axis * distBackToOrigin);
             /* determine is positive or negative */
             var numNeg = signedDistances.Count(d => d < 0);
             var numPos = signedDistances.Count(d => d > 0);
@@ -379,28 +373,28 @@ namespace TVGL
             var axis = edge.OwnedFace.Normal.Cross(edge.OtherFace.Normal);
             var length = axis.norm2();
             if (length.IsNegligible()) throw new Exception("Edge used to define cylinder is flat.");
-            axis.normalizeInPlace(3);
+            axis = axis.Normalize();
             var v1 = edge.From;
             var v2 = edge.To;
             var v3 = edge.OwnedFace.Vertices.First(v => v != v1 && v != v2);
             var v4 = edge.OtherFace.Vertices.First(v => v != v1 && v != v2);
-            Vector2 center;
+            Vector3 center;
             MiscFunctions.SkewedLineIntersection(edge.OwnedFace.Center, edge.OwnedFace.Normal,
                 edge.OtherFace.Center, edge.OtherFace.Normal, out center);
             /* determine is positive or negative */
             var isPositive = edge.Curvature == CurvatureType.Convex;
             /* move center to origin plane */
-            var distToOrigin = axis.Dot(center, 3);
+            var distToOrigin = axis.Dot(center);
             if (distToOrigin < 0)
             {
                 distToOrigin *= -1;
-                axis * -1;
+                axis=-1*axis;
             }
             center = new[]
             {
-                center[0] - distToOrigin*axis[0],
-                center[1] - distToOrigin*axis[1],
-                center[2] - distToOrigin*axis[2]
+                center.X - distToOrigin*axis.X,
+                center.Y - distToOrigin*axis.Y,
+                center.Z - distToOrigin*axis.Z
             };
             var d1 = MiscFunctions.DistancePointToLine(v1.Position, center, axis);
             var d2 = MiscFunctions.DistancePointToLine(v2.Position, center, axis);

@@ -37,7 +37,7 @@ namespace TVGL
         /// <param name="facesAll">The faces all.</param>
         /// <param name="axis">The axis.</param>
         /// <param name="aperture">The aperture.</param>
-        public Cone(List<PolygonalFace> facesAll, Vector2 axis, double aperture)
+        public Cone(List<PolygonalFace> facesAll, Vector3 axis, double aperture)
             : base(facesAll)
         {
             Type = PrimitiveSurfaceType.Cone;
@@ -45,28 +45,28 @@ namespace TVGL
             Aperture = aperture;
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
-            var axisRefPoints = new List<Vector2>();
-            Vector2 axisRefPoint;
+            var axisRefPoints = new List<Vector3>();
+            Vector3 axisRefPoint;
             var n1 = faces[0].Normal.Cross(axis);
             var n2 = faces[numFaces - 1].Normal.Cross(axis);
-            MiscFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.Dot(n1, 3),
-                n2, faces[numFaces - 1].Center.Dot(n2, 3), axis, out axisRefPoint);
-            if (!axisRefPoint.Any(double.IsNaN) && !axisRefPoint.IsNegligible())
+            MiscFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.Dot(n1),
+                n2, faces[numFaces - 1].Center.Dot(n2), axis, out axisRefPoint);
+            if (!axisRefPoint.IsNull() && !axisRefPoint.IsNegligible())
                 axisRefPoints.Add(axisRefPoint);
             for (var i = 1; i < numFaces; i++)
             {
                 n1 = faces[i].Normal.Cross(axis);
                 n2 = faces[i - 1].Normal.Cross(axis);
-                MiscFunctions.LineIntersectingTwoPlanes(n1, faces[i].Center.Dot(n1, 3),
-                    n2, faces[i - 1].Center.Dot(n2, 3), axis, out axisRefPoint);
-                if (!axisRefPoint.Any(double.IsNaN) && !axisRefPoint.IsNegligible())
+                MiscFunctions.LineIntersectingTwoPlanes(n1, faces[i].Center.Dot(n1),
+                    n2, faces[i - 1].Center.Dot(n2), axis, out axisRefPoint);
+                if (!axisRefPoint.IsNull() && !axisRefPoint.IsNegligible())
                     axisRefPoints.Add(axisRefPoint);
             }
             axisRefPoint = Vector3.Zero;
             axisRefPoint = axisRefPoints.Aggregate(axisRefPoint, (current, c) => current + c);
-            axisRefPoint = axisRefPoint.divide(axisRefPoints.Count);
+            axisRefPoint = axisRefPoint.Divide(axisRefPoints.Count);
             /*re-attach to plane through origin */
-            var distBackToOrigin = -1 * axis.Dot(axisRefPoint, 3);
+            var distBackToOrigin = -1 * axis.Dot(axisRefPoint);
             axisRefPoint = axisRefPoint-(axis * distBackToOrigin);
             // approach to find  Apex    
             var numApices = 0;
@@ -74,7 +74,7 @@ namespace TVGL
             for (var i = 1; i < numFaces; i++)
             {
                 var distToAxis = MiscFunctions.DistancePointToLine(faces[i].Center, axisRefPoint, axis);
-                var distAlongAxis = axis.Dot(faces[i].Center, 3);
+                var distAlongAxis = axis.Dot(faces[i].Center);
                 distAlongAxis += distToAxis / Math.Tan(aperture);
                 if (double.IsNaN(distAlongAxis)) continue;
                 numApices++;
@@ -83,8 +83,8 @@ namespace TVGL
             apexDistance /= numApices;
             Apex = axisRefPoint + (axis * apexDistance);
             /* determine is positive or negative */
-            var v2Apex = Apex.subtract(faces[0].Center, 3);
-            IsPositive = v2Apex.Dot(axis, 3) >= 0;
+            var v2Apex = Apex.Subtract(faces[0].Center);
+            IsPositive = v2Apex.Dot(axis) >= 0;
         }
 
         /// <summary>
@@ -97,13 +97,13 @@ namespace TVGL
         ///     Gets the apex.
         /// </summary>
         /// <value>The apex.</value>
-        public Vector2 Apex { get;  set; }
+        public Vector3 Apex { get;  set; }
 
         /// <summary>
         ///     Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
-        public Vector2 Axis { get;  set; }
+        public Vector3 Axis { get;  set; }
 
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }

@@ -51,7 +51,7 @@ namespace TVGL
         ///     If this was a bounding box along a given direction, the first direction will
         ///     correspond with that direction.
         /// </summary>
-        public Vector2[] Directions;
+        public Vector3[] Directions;
 
         /// <summary>
         ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
@@ -96,11 +96,11 @@ namespace TVGL
             }
         }
 
-        private IList<Vector2> _sortedDirectionsByLength;
+        private IList<Vector3> _sortedDirectionsByLength;
         /// <summary>
         ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
         /// </summary>
-        public IList<Vector2> SortedDirectionsByLength
+        public IList<Vector3> SortedDirectionsByLength
         {
             get
             {
@@ -205,12 +205,12 @@ namespace TVGL
             var v2 = new Vertex(vLows.First().Position);
 
             //Start with v0 and move along direction[1] by projection
-            var vector0To1 = v1.Position.subtract(v0.Position, 3);
+            var vector0To1 = v1.Position.Subtract(v0.Position);
             var projectionOntoD1 = Directions[1] * Directions[1].Dot(vector0To1);
             var v4 = v0.Position + projectionOntoD1;
 
             //Move along direction[2] by projection
-            var vector4To2 = v2.Position.subtract(v4, 3);
+            var vector4To2 = v2.Position.Subtract(v4);
             var projectionOntoD2 = Directions[2] * Directions[2].Dot(vector4To2);
             var bottomCorner = new Vertex(v4 + projectionOntoD2);
 
@@ -369,7 +369,7 @@ namespace TVGL
             //Add in the center
             var centerPosition = new[] { 0.0, 0.0, 0.0 };
             centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c + v.Position)
-                .divide(cornerVertices.Count());
+                .Divide(cornerVertices.Count());
             
             return new BoundingBox
             {

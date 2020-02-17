@@ -69,9 +69,9 @@ namespace TVGL
                 foreach (var face in faces)
                 {
                     if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Position.subtract(oldCenter1, 3), 3)) / 3;
+                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Position.Subtract(oldCenter1))) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                    // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
+                    // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position.Subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                     // on the volume.
                     volume += tetrahedronVolume;
@@ -81,7 +81,7 @@ namespace TVGL
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
                 if (iterations > 10 || volume < 0) center = 0.5*(oldCenter1 + oldCenter2);
-                else center = center.divide(volume);
+                else center = center.Divide(volume);
                 iterations++;
             } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);
             return volume;
@@ -94,8 +94,8 @@ namespace TVGL
 
         private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, Numerics.Vector2 Center, double Volume)
         {
-            var matrixA = StarMath.makeZero(3, 3);
-            var matrixCtotal = StarMath.makeZero(3, 3);
+            var matrixA = new double[3, 3];
+            var matrixCtotal = new double[3, 3];
             var canonicalMatrix = new[,]
             {
                 {oneSixtieth, 0.5*oneSixtieth, 0.5*oneSixtieth},
@@ -137,7 +137,7 @@ namespace TVGL
                      * Volume);
             matrixCprime = matrixCprime + matrixCtotal;
             var result = Matrix4x4.Identity * (matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
-            return result.subtract(matrixCprime);
+            return result.Subtract(matrixCprime);
         }
         #endregion
 

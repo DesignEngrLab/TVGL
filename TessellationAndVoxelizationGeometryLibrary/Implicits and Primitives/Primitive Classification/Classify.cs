@@ -287,7 +287,7 @@ namespace TVGL
 
             if (Double.IsNaN(ABN))
             {
-                var eee = eachEdge.Edge.OwnedFace.Normal.Dot(eachEdge.Edge.OtherFace.Normal, 3);
+                var eee = eachEdge.Edge.OwnedFace.Normal.Dot(eachEdge.Edge.OtherFace.Normal);
                 if (eee > 1)
                     eee = 1;
                 ABN = Math.Acos(eee);
@@ -301,8 +301,8 @@ namespace TVGL
             var cenMass2 = eachEdge.Edge.OtherFace.Center;
             var vector1 = new[] { cenMass1[0] - eachEdge.Edge.From.Position[0], cenMass1[1] - eachEdge.Edge.From.Position[1], cenMass1[2] - eachEdge.Edge.From.Position[2] };
             var vector2 = new[] { cenMass2[0] - eachEdge.Edge.From.Position[0], cenMass2[1] - eachEdge.Edge.From.Position[1], cenMass2[2] - eachEdge.Edge.From.Position[2] };
-            var distance1 = eachEdge.Edge.Vector.normalize(3).Dot(vector1, 3);
-            var distance2 = eachEdge.Edge.Vector.normalize(3).Dot(vector2, 3);
+            var distance1 = eachEdge.Edge.Vector.Normalize().Dot(vector1);
+            var distance2 = eachEdge.Edge.Vector.Normalize().Dot(vector2);
             //Mapped Center of Mass
             var MCM = (Math.Abs(distance1 - distance2)) / eachEdge.Edge.Length;
             return MCM;
@@ -866,7 +866,7 @@ namespace TVGL
             }
             if (faces.Count == 2)
             {
-                axis = faces[0].Normal.Cross(faces[1].Normal).normalize(3);
+                axis = faces[0].Normal.Cross(faces[1].Normal).Normalize();
                 coneAngle = 0.0;
                 return false;
             }
@@ -888,7 +888,7 @@ namespace TVGL
             {
                 for (var j = i + 1; j < rndList.Count; j++)
                 {
-                    crossProd.Add(facesAll[i].Normal.Cross(facesAll[j].Normal).normalize());
+                    crossProd.Add(facesAll[i].Normal.Cross(facesAll[j].Normal).Normalize());
                 }
             }
             axis = crossProd[0];
@@ -907,27 +907,27 @@ namespace TVGL
             // since the vectors that are the difference of two normals (v = n1 - n2) would
             // be in the plane, let's first figure out the average plane of this normal
             var inPlaneVectors = new Vector3[n];
-            inPlaneVectors[0] = faces[0].Normal.subtract(faces[n - 1].Normal, 3);
+            inPlaneVectors[0] = faces[0].Normal.Subtract(faces[n - 1].Normal);
             for (int i = 1; i < n; i++)
-                inPlaneVectors[i] = faces[i].Normal.subtract(faces[i - 1].Normal, 3);
+                inPlaneVectors[i] = faces[i].Normal.Subtract(faces[i - 1].Normal);
 
             var normalsOfGaussPlane = new List<Vector3>();
-            var tempCross = inPlaneVectors[0].Cross(inPlaneVectors[n - 1]).normalize();
+            var tempCross = inPlaneVectors[0].Cross(inPlaneVectors[n - 1]).Normalize();
             if (!tempCross.Any(double.IsNaN))
                 normalsOfGaussPlane.Add(tempCross);
             for (int i = 1; i < n; i++)
             {
-                tempCross = inPlaneVectors[i].Cross(inPlaneVectors[i - 1]).normalize();
+                tempCross = inPlaneVectors[i].Cross(inPlaneVectors[i - 1]).Normalize();
                 if (!tempCross.Any(double.IsNaN))
-                    if (tempCross.Dot(normalsOfGaussPlane[0], 3) >= 0)
+                    if (tempCross.Dot(normalsOfGaussPlane[0]) >= 0)
                         normalsOfGaussPlane.Add(tempCross);
                     else normalsOfGaussPlane.Add(-1*tempCross);
             }
             var normalOfGaussPlane = new double[3];
             normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current + c);
-            normalOfGaussPlane = normalOfGaussPlane.divide(normalsOfGaussPlane.Count);
+            normalOfGaussPlane = normalOfGaussPlane.Divide(normalsOfGaussPlane.Count);
 
-            var distance = faces.Sum(face => face.Normal.Dot(normalOfGaussPlane, 3));
+            var distance = faces.Sum(face => face.Normal.Dot(normalOfGaussPlane));
             if (distance < 0)
             {
                 axis = normalOfGaussPlane * -1;

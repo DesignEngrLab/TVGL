@@ -96,10 +96,10 @@ namespace TVGL.IOFunctions.threemfclasses
         }
 
 
-        internal static double[,] MakeTransformMatrix(Vector2 transformArray)
+        internal static Matrix4x4 MakeTransformMatrix(Vector2 transformArray)
         {
             if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return null;
-            var result = StarMath.makeIdentity(4);
+            var result = EqualityExtensions.makeIdentity(4);
             if (transformArray.Length == 3)
             {
                 result[0, 3] = transformArray[0];

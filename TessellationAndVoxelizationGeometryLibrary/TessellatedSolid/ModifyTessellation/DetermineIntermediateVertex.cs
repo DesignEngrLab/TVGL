@@ -37,7 +37,7 @@ namespace TVGL
         {
             //average positions
             var newPosition = vertexA.Position + vertexB.Position;
-            return newPosition.divide(2);
+            return newPosition.Divide(2);
         }
 
         /// <summary>
@@ -52,13 +52,13 @@ namespace TVGL
         {
             //average positions
             var newPosition = keepVertex.Position + removedVertex.Position;
-            var radius = keepVertex.Position.subtract(removedVertex.Position, 3).norm2() / 2.0;
-            keepVertex.Position = newPosition.divide(2);
-            var avgNormal = (removeFace1.Normal + removeFace2.Normal).normalize(3);
+            var radius = keepVertex.Position.Subtract(removedVertex.Position).norm2() / 2.0;
+            keepVertex.Position = newPosition.Divide(2);
+            var avgNormal = (removeFace1.Normal + removeFace2.Normal).Normalize();
             var otherVertexAvgDistanceToEdgePlane =
-                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.Dot(avgNormal, 3)).Sum() /
+                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.Dot(avgNormal)).Sum() /
                 (keepVertex.Edges.Count - 1);
-            var distanceOfEdgePlane = keepVertex.Position.Dot(avgNormal, 3);
+            var distanceOfEdgePlane = keepVertex.Position.Dot(avgNormal);
 
             // use a sigmoid function to determine how far out to move the vertex
             var x = 0.05 * (distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane) / radius;

@@ -18,9 +18,8 @@ namespace TVGL.Numerics
     /// The main class in the StarMathLib. All functions are static
     /// functions located here.
     /// </summary>
-    public static partial class StarMath
+    public static class EqualityExtensions
     {
-
         /// <summary>
         ///     Gets or sets the  tolerance for the equality functions: IsPracticallySame, IsNegligible, IsGreaterThanNonNegligible
         ///     IsLessThanNonNegligible.
@@ -42,30 +41,50 @@ namespace TVGL.Numerics
         }
 
         /// <summary>
-        /// Determines whether [is practically same] [the specified x].
+        /// Determines whether [is practically same] [the specified v1].
         /// the norm is within 1e-15
         /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
+        /// <param name="v1">The first vector.</param>
+        /// <param name="v2">The second vector.</param>
         /// <param name="optionalTolerance">An optional tolerance.</param>
         /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
-        public static bool IsPracticallySame(this Vector2 x, Vector2 y, double optionalTolerance = double.NaN)
+        public static bool IsPracticallySame(this Vector2 v1, Vector2 v2, double optionalTolerance = double.NaN)
         {
-            if (double.IsNaN(optionalTolerance)) optionalTolerance = EqualityTolerance;
-            var n = x.GetLength(0);
-            if (n != y.GetLength(0)) return false;
-            return IsNegligible(x.subtract(y), optionalTolerance);
+            return IsNegligible(v1 - v2, optionalTolerance);
         }
 
         /// <summary>
-        /// Determines whether the specified x is negligible (|x| lte 1e-15).
+        /// Determines whether [is practically same] [the specified x].
+        /// the norm is within 1e-15
         /// </summary>
-        /// <param name="x">The x.</param>
+        /// <param name="v1">The v1.</param>
+        /// <param name="v2">The v2.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
+        public static bool IsPracticallySame(this Vector3 v1, Vector3 v2, double optionalTolerance = double.NaN)
+        {
+            return IsNegligible(v1 - v2, optionalTolerance);
+        }
+
+        /// <summary>
+        /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
+        /// </summary>
+        /// <param name="v1">The vector.</param>
         /// <param name="optionalTolerance">An optional tolerance.</param>
         /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
-        public static bool IsNegligible(this Vector2 x, double optionalTolerance = DefaultEqualityTolerance)
+        public static bool IsNegligible(this Vector2 v1, double optionalTolerance = DefaultEqualityTolerance)
         {
-            return (x.norm2(true) <= optionalTolerance);
+            return Math.Abs(v1.X) <= optionalTolerance && Math.Abs(v1.Y) <= optionalTolerance;
+        }
+        /// <summary>
+        /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
+        /// </summary>
+        /// <param name="v1">The vector.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
+        public static bool IsNegligible(this Vector3 v1, double optionalTolerance = DefaultEqualityTolerance)
+        {
+            return Math.Abs(v1.X) <= optionalTolerance && Math.Abs(v1.Y) <= optionalTolerance && Math.Abs(v1.Z) <= optionalTolerance;
         }
 
         /// <summary>
@@ -76,7 +95,7 @@ namespace TVGL.Numerics
         /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
         public static bool IsNegligible(this double x, double optionalTolerance = DefaultEqualityTolerance)
         {
-            return (Math.Abs(x) <= optionalTolerance);
+            return Math.Abs(x) <= optionalTolerance;
         }
 
         /// <summary>

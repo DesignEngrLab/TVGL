@@ -129,7 +129,7 @@ namespace TVGL.Voxelization
                     zTotal += rowCount * k;
                     Count += rowCount;
                 }
-            Volume = Count * Math.Pow(VoxelSideLength, 3);
+            Volume = Count * Math.Pow(VoxelSideLength);
             Center = new Numerics.Vector2
             {
                 VoxelSideLength* xTotal / Count,
@@ -468,7 +468,7 @@ namespace TVGL.Voxelization
             double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.DirectionalErodeToConstraint(constraintSolid, dir.normalize(3), tLimit, maskSize, maskOptions);
+            copy.DirectionalErodeToConstraint(constraintSolid, dir.Normalize(), tLimit, maskSize, maskOptions);
             return copy;
         }
 
@@ -490,7 +490,7 @@ namespace TVGL.Voxelization
             var tDir = new[] { .0, .0, .0 };
             tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
 
-            copy.DirectionalErodeToConstraint(constraintSolid, tDir.normalize(3), tLimit, maskSize, maskOptions);
+            copy.DirectionalErodeToConstraint(constraintSolid, tDir.Normalize(), tLimit, maskSize, maskOptions);
             return copy;
         }
 
@@ -679,8 +679,8 @@ namespace TVGL.Voxelization
                     radii.Add(i);
             radii.Add(radius);
             var a = Math.Abs(dir[0]) < 1e-5
-                ? new[] { .0, -dir[2], dir[1] }.normalize(3)
-                : new[] { dir[1], -dir[0], 0 }.normalize(3);
+                ? new[] { .0, -dir[2], dir[1] }.Normalize()
+                : new[] { dir[1], -dir[0], 0 }.Normalize();
             var b = a.Cross(dir);
 
             foreach (var r in radii)
@@ -716,7 +716,7 @@ namespace TVGL.Voxelization
             for (var i = 1; i <= numSteps; i++)
             {
                 var r = rStep * i;
-                c = c.subtract(cStep, 3);
+                c = c.Subtract(cStep);
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
                     voxels.Add(voxel);
@@ -739,7 +739,7 @@ namespace TVGL.Voxelization
                 var a = aStep * i;
                 var r = radius * Math.Sin(a);
                 var tStep = radius * (1 - Math.Cos(a));
-                var c = centerDouble.subtract(dir * tStep);
+                var c = centerDouble.Subtract(dir * tStep);
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
                     voxels.Add(voxel);

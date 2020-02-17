@@ -47,7 +47,7 @@ namespace TVGL
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
                 Faces = new List<PolygonalFace>(),
-                Position = (Vector2)Position.Clone(),
+                Position = new Vector3(Position.X, Position.Y, Position.Z),
                 IndexInList = IndexInList
             };
         }
@@ -75,7 +75,7 @@ namespace TVGL
         /// </summary>
         /// <param name="position">The position.</param>
         /// <param name="indexInListOfVertices">The index in list of vertices.</param>
-        public Vertex(Vector2 position, int indexInListOfVertices)
+        public Vertex(Vector3 position, int indexInListOfVertices)
             : this(position)
         {
             IndexInList = indexInListOfVertices;
@@ -85,13 +85,9 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Vertex" /> class.
         /// </summary>
         /// <param name="position">The position.</param>
-        public Vertex(Vector2 position)
+        public Vertex(Vector3 position)
         {
-            if (position.Length == 3) Position = position;
-            else if (position.Length > 3) Position = position.Take(3).ToArray();
-            else
-                throw new ArgumentException(
-                    "Vertex constructor given a position array with fewer than 3 values (all vertices must be 3D).");
+            Position = position;
             Edges = new List<Edge>();
             Faces = new List<PolygonalFace>();
             IndexInList = -1;

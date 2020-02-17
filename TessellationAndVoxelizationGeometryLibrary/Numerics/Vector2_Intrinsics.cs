@@ -42,6 +42,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             X = x;
             Y = y;
         }
+
+        internal bool IsNull()
+        {
+            return double.IsNaN(X) || double.IsNaN(Y);
+        }
         #endregion Constructors
 
         #region Public Instance Methods

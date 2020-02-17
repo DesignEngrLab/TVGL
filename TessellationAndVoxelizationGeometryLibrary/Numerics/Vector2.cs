@@ -129,7 +129,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double Length()
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double ls = Vector2.Dot(this, this);
                 return Math.Sqrt(ls);
@@ -148,7 +148,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double LengthSquared()
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector2.Dot(this, this);
             }
@@ -169,7 +169,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Distance(Vector2 value1, Vector2 value2)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector2 difference = value1 - value2;
                 double ls = Vector2.Dot(difference, difference);
@@ -195,7 +195,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DistanceSquared(Vector2 value1, Vector2 value2)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector2 difference = value1 - value2;
                 return Vector2.Dot(difference, difference);
@@ -217,7 +217,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Normalize(Vector2 value)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double length = value.Length();
                 return value / length;
@@ -242,7 +242,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Reflect(Vector2 vector, Vector2 normal)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double dot = Vector2.Dot(vector, normal);
                 return vector - (2 * dot * normal);

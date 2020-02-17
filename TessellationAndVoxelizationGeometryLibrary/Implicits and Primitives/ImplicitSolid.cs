@@ -41,12 +41,12 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }
 
-        public override Solid TransformToNewSolid(double[,] transformationMatrix)
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
         }

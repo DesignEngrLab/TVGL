@@ -41,9 +41,9 @@ namespace TVGL.Voxelization
         public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         public int[][] VoxelBounds { get; }
         public double VoxelSideLength { get; private set; }
-        public Vector2 TessToVoxSpace { get; }
-        public Vector2 Dimensions { get; private set; }
-        public Vector2 Offset => Bounds[0];
+        public Vector3 TessToVoxSpace { get; }
+        public Vector3 Dimensions { get; private set; }
+        public Vector3 Offset => Bounds[0];
         public int numVoxelsX { get; private set; }
         public int numVoxelsY { get; private set; }
         public int numVoxelsZ { get; private set; }
@@ -60,9 +60,9 @@ namespace TVGL.Voxelization
         public VoxelizedSolid(VoxelizedSolid vs) : this()
         {
             Bounds = new double[2][];
-            Bounds[0] = (Vector2)vs.Bounds[0].Clone();
-            Bounds[1] = (Vector2)vs.Bounds[1].Clone();
-            Dimensions = Bounds[1].subtract(Bounds[0]);
+            Bounds[0] = (Vector3)vs.Bounds[0].Clone();
+            Bounds[1] = (Vector3)vs.Bounds[1].Clone();
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(vs.SolidColor.A, vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B);
             VoxelSideLength = vs.VoxelSideLength;
             numVoxelsX = vs.numVoxelsX;
@@ -83,20 +83,20 @@ namespace TVGL.Voxelization
         /// <param name="ts">The ts.</param>
         /// <param name="voxelsOnLongSide">The voxels on long side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<Vector2> bounds = null) : this()
+        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<Vector3> bounds = null) : this()
         {
             Bounds = new double[2][];
             if (bounds != null)
             {
-                Bounds[0] = (Vector2)bounds[0].Clone();
-                Bounds[1] = (Vector2)bounds[1].Clone();
+                Bounds[0] = (Vector3)bounds[0].Clone();
+                Bounds[1] = (Vector3)bounds[1].Clone();
             }
             else
             {
-                Bounds[0] = (Vector2)ts.Bounds[0].Clone();
-                Bounds[1] = (Vector2)ts.Bounds[1].Clone();
+                Bounds[0] = (Vector3)ts.Bounds[0].Clone();
+                Bounds[1] = (Vector3)ts.Bounds[1].Clone();
             }
-            Dimensions = Bounds[1].subtract(Bounds[0]);
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
             VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
             var voxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
@@ -116,20 +116,20 @@ namespace TVGL.Voxelization
         /// <param name="ts">The ts.</param>
         /// <param name="voxelSideLength">Length of the voxel side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<Vector2> bounds = null) : this()
+        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<Vector3> bounds = null) : this()
         {
             Bounds = new double[2][];
             if (bounds != null)
             {
-                Bounds[0] = (Vector2)bounds[0].Clone();
-                Bounds[1] = (Vector2)bounds[1].Clone();
+                Bounds[0] = (Vector3)bounds[0].Clone();
+                Bounds[1] = (Vector3)bounds[1].Clone();
             }
             else
             {
-                Bounds[0] = (Vector2)ts.Bounds[0].Clone();
-                Bounds[1] = (Vector2)ts.Bounds[1].Clone();
+                Bounds[0] = (Vector3)ts.Bounds[0].Clone();
+                Bounds[1] = (Vector3)ts.Bounds[1].Clone();
             }
-            Dimensions = Bounds[1].subtract(Bounds[0]);
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(Constants.DefaultColor);
             VoxelSideLength = voxelSideLength;
             var voxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
@@ -186,13 +186,13 @@ namespace TVGL.Voxelization
         {
             return CreateFullBlock(vs.VoxelSideLength, vs.Bounds);
         }
-        public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<Vector2> bounds)
+        public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<Vector3> bounds)
         {
             var fullBlock = new VoxelizedSolid();
             fullBlock.Bounds = new double[2][];
-            fullBlock.Bounds[0] = (Vector2)bounds[0].Clone();
-            fullBlock.Bounds[1] = (Vector2)bounds[1].Clone();
-            fullBlock.Dimensions = fullBlock.Bounds[1].subtract(fullBlock.Bounds[0]);
+            fullBlock.Bounds[0] = (Vector3)bounds[0];
+            fullBlock.Bounds[1] = (Vector3)bounds[1];
+            fullBlock.Dimensions = fullBlock.Bounds[1].Subtract(fullBlock.Bounds[0]);
             fullBlock.SolidColor = new Color(Constants.DefaultColor);
             fullBlock.VoxelSideLength = voxelSideLength;
             var voxelsPerSide = fullBlock.Dimensions.Select(d => (int)Math.Ceiling(d / fullBlock.VoxelSideLength)).ToArray();
@@ -275,11 +275,11 @@ namespace TVGL.Voxelization
             return new VoxelizedSolid(this);
         }
 
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }
-        public override Solid TransformToNewSolid(double[,] transformationMatrix)
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
         }

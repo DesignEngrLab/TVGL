@@ -135,14 +135,14 @@ namespace TVGL
 
         private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector2 refEdge, Vector2 normal)
         {
-            var unitRefEdge = refEdge.normalize(3);
+            var unitRefEdge = refEdge.Normalize();
             var min = 2.0;
             Edge bestEdge = null;
             foreach (var candEdge in possibleNextEdges)
             {
-                var unitCandEdge = candEdge.Vector.normalize(3);
+                var unitCandEdge = candEdge.Vector.Normalize();
                 var cross = unitRefEdge.Cross(unitCandEdge);
-                var temp = cross.Dot(normal, 3);
+                var temp = cross.Dot(normal);
                 if (min > temp)
                 {
                     min = temp;

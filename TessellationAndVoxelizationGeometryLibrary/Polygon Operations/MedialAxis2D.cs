@@ -38,21 +38,21 @@ namespace TVGL._2D
                 {
                     var triangleCenterLineVertices = new List<Point>();
                     var edge1Center = new Point(triangle.Vertices[0].Position.add(triangle.Vertices[1].Position)
-                        .divide(2));
+                        .Divide(2));
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge1Center);
                     }
 
                     var edge2Center = new Point(triangle.Vertices[1].Position.add(triangle.Vertices[2].Position)
-                        .divide(2));
+                        .Divide(2));
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge2Center);
                     }
 
                     var edge3Center = new Point(triangle.Vertices[2].Position.add(triangle.Vertices[0].Position)
-                        .divide(2));
+                        .Divide(2));
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge3Center);
@@ -103,15 +103,15 @@ namespace TVGL._2D
                                 //Create a new center point on the shortest line and set three point sets
                                 if (d0 < d1 && d0 < d2)
                                 {
-                                    newPoint = new Point((edge1Center + edge2Center).divide(2.0, 2));
+                                    newPoint = new Point((edge1Center + edge2Center).Divide(2.0));
                                 }
                                 else if (d1 < d2)
                                 {
-                                    newPoint = new Point((edge2Center + edge3Center).divide(2.0, 2));
+                                    newPoint = new Point((edge2Center + edge3Center).Divide(2.0));
                                 }
                                 else
                                 {
-                                    newPoint = new Point((edge3Center + edge1Center).divide(2.0, 2));
+                                    newPoint = new Point((edge3Center + edge1Center).Divide(2.0));
                                 }
 
                                 lines.Add(new List<Point> { edge1Center, newPoint });
@@ -246,7 +246,7 @@ namespace TVGL._2D
                         for (var j = 0; j < lines.Count; j++)
                         {
                             var line = lines[j];
-                            if (line[0] == p1) //.Position.subtract(p1.Position).norm2().IsNegligible(0.0001))
+                            if (line[0] == p1) //.Position.Subtract(p1.Position).norm2().IsNegligible(0.0001))
                             {
                                 if (line[1] == p0)
                                 {
@@ -258,7 +258,7 @@ namespace TVGL._2D
                                 lines.RemoveAt(j);
                                 break;
                             }
-                            if (line[1] == p1) // .Position.subtract(p1.Position).norm2().IsNegligible(0.0001))
+                            if (line[1] == p1) // .Position.Subtract(p1.Position).norm2().IsNegligible(0.0001))
                             {
                                 if (line[0] == p0)
                                 {

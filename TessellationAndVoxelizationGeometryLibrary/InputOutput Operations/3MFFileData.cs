@@ -156,7 +156,7 @@ namespace TVGL.IOFunctions
         }
 
         private IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid,
-            double[,] transformMatrix, string name)
+            Matrix4x4 transformMatrix, string name)
         {
             var solid = resources.objects.First(obj => obj.id == objectid);
             var result = TessellatedSolidsFromObject(solid, name);

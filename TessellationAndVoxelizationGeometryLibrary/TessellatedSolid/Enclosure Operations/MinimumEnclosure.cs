@@ -86,11 +86,11 @@ namespace TVGL
             var directions = new List<Numerics.Vector2>();
             for (var i = -1; i <= 1; i++)
                 for (var j = -1; j <= 1; j++)
-                    directions.Add(new[] {1.0, i, j}.normalize(3));
-            directions.Add(new[] {0.0, 0, 1}.normalize(3));
-            directions.Add(new[] {0.0, 1, 0}.normalize(3));
-            directions.Add(new[] {0.0, 1, 1}.normalize(3));
-            directions.Add(new[] {0.0, -1, 1}.normalize(3));
+                    directions.Add(new[] {1.0, i, j}.Normalize());
+            directions.Add(new[] {0.0, 0, 1}.Normalize());
+            directions.Add(new[] {0.0, 1, 0}.Normalize());
+            directions.Add(new[] {0.0, 1, 1}.Normalize());
+            directions.Add(new[] {0.0, -1, 1}.Normalize());
 
             var boxes = directions.Select(v => new BoundingBox
             {
@@ -158,14 +158,14 @@ namespace TVGL
             out List<Vertex> bottomVertices,
             out List<Vertex> topVertices)
         {
-            var dir = direction.normalize(3);
+            var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
             bottomVertices = new List<Vertex>();
             topVertices = new List<Vertex>();
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.Dot(v.Position, 3);
+                var distance = dir.Dot(v.Position);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomVertices.Add(v);
                 else if (distance < minD)
@@ -199,14 +199,14 @@ namespace TVGL
             out Vertex bottomVertex,
             out Vertex topVertex)
         {
-            var dir = direction.normalize(3);
+            var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
             bottomVertex = null;
             topVertex = null;
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.Dot(v.Position, 3);
+                var distance = dir.Dot(v.Position);
                 if (distance < minD)
                 {
                     bottomVertex = v;
@@ -431,8 +431,8 @@ namespace TVGL
                 //Get unit normal for current edge
                 var otherIndex = extremeIndices[refIndex] == 0 ? numCvxPoints - 1 : extremeIndices[refIndex] - 1;
                 var direction =
-                    cvxPoints[extremeIndices[refIndex]].Position.subtract(cvxPoints[otherIndex].Position, 2)
-                        .normalize(2);
+                    cvxPoints[extremeIndices[refIndex]].Position.Subtract(cvxPoints[otherIndex].Position, 2)
+                        .Normalize(2);
                 //If point type = 1 or 3, then use inversed Direction
                 if (refIndex == 1 || refIndex == 3)
                 {
@@ -652,7 +652,7 @@ namespace TVGL
 
                 //Get unit normal for current edge
                 var otherIndex = extremeIndices[refIndex] == 0 ? numCvxPoints - 1 : extremeIndices[refIndex] - 1;
-                var direction = cvxPoints[extremeIndices[refIndex]].Subtract(cvxPoints[otherIndex]).normalize(2);
+                var direction = cvxPoints[extremeIndices[refIndex]].Subtract(cvxPoints[otherIndex]).Normalize(2);
                 //If point type = 1 or 3, then use inversed Direction
                 if (refIndex == 1 || refIndex == 3)
                 {
@@ -809,7 +809,7 @@ namespace TVGL
 
         private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, Numerics.Vector2 direction)
         {
-            var direction1 = direction.normalize(3);
+            var direction1 = direction.Normalize();
             var depth = GetLengthAndExtremeVertices(direction, vertices, out var bottomVertices, out var topVertices);
 
             var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out var backTransform, false);
@@ -860,8 +860,8 @@ namespace TVGL
         /// <param name="boxData">The box data.</param>
         private static void FindOBBAlongDirection(BoundingBoxData boxData)
         {
-            var direction0 = boxData.Direction = boxData.Direction.normalize(3);
-            var height = direction0.Dot(boxData.RotatorEdge.From.Position.subtract(boxData.BackVertex.Position, 3), 3);
+            var direction0 = boxData.Direction = boxData.Direction.Normalize();
+            var height = direction0.Dot(boxData.RotatorEdge.From.Position.Subtract(boxData.BackVertex.Position));
             var points = MiscFunctions.Get2DProjectionPoints(boxData.OrthVertices, direction0, out var backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
             //Get the Direction vectors from rotating caliper and projection.

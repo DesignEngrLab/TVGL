@@ -1596,9 +1596,9 @@ namespace TVGL
             }
             foreach (var triangle in triangles)
             {
-                var edge1 = triangle[1].Position.subtract(triangle[0].Position, 3);
-                var edge2 = triangle[2].Position.subtract(triangle[0].Position, 3);
-                var area = Math.Abs(edge1.Cross(edge2).norm2()) / 2;
+                var edge1 = triangle[1].Position.Subtract(triangle[0].Position);
+                var edge2 = triangle[2].Position.Subtract(triangle[0].Position);
+                var area = Math.Abs(edge1.Cross(edge2).Length()) / 2;
                 if (area.IsNegligible()) Message.output("Neglible Area Traingle Created", 2); //CANNOT output a 0.0 area triangle. It will break other functions!
                 //Could collapse whichever edge vector is giving 0 area and ignore this triangle. 
             }

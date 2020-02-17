@@ -11,7 +11,7 @@ double precision causes problems (convex hull, polygonal operations, etc.). Plus
 everything else is already doubles like area and bounds, and applications currently using
 TVGL use doubles, it seems problematic to go with this throughout TVGL. 
 
-However, the concept to use Vector2 and Vector3 structs everywhere versus Vector2 (which
+However, the concept to use Vector2 and Vector3 structs everywhere versus double arrays (which
 are reference types) is likely to be a speed and memory improvement.
 
 So, what we've done here is simply copy System.Numerics files and change all floats to doubles.

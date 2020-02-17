@@ -91,11 +91,11 @@ namespace TVGL
                 }
                 cleanLoops.Add(cleanLoop);
             }
-            var distanceFromOriginAlongDirection = extrudeDirection.Dot(cleanLoops.First().First().Position, 3);
+            var distanceFromOriginAlongDirection = extrudeDirection.Dot(cleanLoops.First().First().Position);
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
-            var backTransform = new double[,] { };
+            var backTransform = new Matrix4x4 { };
             var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
             List<Vector2[]> points2D;
             List<Vertex[]> triangles;
@@ -223,8 +223,8 @@ namespace TVGL
             foreach (var triangle in triangles)
             {
                 //Create the triangle in plane with the loops
-                var v1 = triangle[1].Position.subtract(triangle[0].Position, 3);
-                var v2 = triangle[2].Position.subtract(triangle[0].Position, 3);
+                var v1 = triangle[1].Position.Subtract(triangle[0].Position);
+                var v2 = triangle[2].Position.Subtract(triangle[0].Position);
 
                 //This model reverses the triangle vertex ordering as necessary to line up with the normal.
                 var topTriangle = v1.Cross(v2).Dot(extrudeDirection * -1) < 0

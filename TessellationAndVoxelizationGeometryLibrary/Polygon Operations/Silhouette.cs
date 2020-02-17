@@ -31,7 +31,7 @@ namespace TVGL
             var vertices = new HashSet<Vertex>();
             foreach (var face in faces)
             {
-                var dot = normal.Dot(face.Normal, 3);
+                var dot = normal.Dot(face.Normal);
                 if (dot.IsGreaterThanNonNegligible(angleTolerance))
                 {
                     positiveFaces.Add(face);
@@ -109,7 +109,7 @@ namespace TVGL
             foreach (var face in faces)
             {
                 if (face.Area.IsNegligible()) continue;
-                var dot = normal.Dot(face.Normal, 3);               
+                var dot = normal.Dot(face.Normal);               
                 if (dot.IsGreaterThanNonNegligible(angleTolerance2))
                 {
                     allPositives.Add(face.IndexInList, face);
@@ -540,9 +540,9 @@ namespace TVGL
                         if (isOwnedFace == isOtherFace) throw new Exception("Should be one and only one face for this edge on this surface");
                         var positiveFaceBelongingToEdge = isOwnedFace ? edge.OwnedFace : edge.OtherFace;
                         var vertex3 = positiveFaceBelongingToEdge.OtherVertex(edge);
-                        var v1 = vertex3.Position.subtract(edgeTuple.Item3.Position, 3); //To point according to our loop
-                        var v2 = edgeTuple.Item3.Position.subtract(edgeTuple.Item2.Position, 3); //To minus from
-                        var dot = v2.Cross(v1).Dot(positiveFaceBelongingToEdge.Normal, 3);
+                        var v1 = vertex3.Position.Subtract(edgeTuple.Item3.Position); //To point according to our loop
+                        var v2 = edgeTuple.Item3.Position.Subtract(edgeTuple.Item2.Position); //To minus from
+                        var dot = v2.Cross(v1).Dot(positiveFaceBelongingToEdge.Normal);
                         if (dot > 0)
                         {
                             correct++;

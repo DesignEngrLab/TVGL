@@ -156,9 +156,9 @@ namespace TVGL
             Units = units;
             HasUniformColor = true;
             SolidColor = new Color(Constants.DefaultColor);
-            Bounds = new double[2][];
-            Bounds[0] = new double[3];
-            Bounds[1] = new double[3];
+            Bounds = new Vector3[2];
+            Bounds[0] = Vector3.Null;
+            Bounds[1] = Vector3.Null;
         }
 
         #endregion
@@ -167,7 +167,7 @@ namespace TVGL
         /// Transforms the specified transform matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public abstract void Transform(double[,] transformMatrix);
+        public abstract void Transform(Matrix4x4 transformMatrix);
         // here's a good reference for this: http://www.cs.brandeis.edu/~cs155/Lecture_07_6.pdf
 
 
@@ -176,7 +176,7 @@ namespace TVGL
         /// </summary>
         /// <param name="transformationMatrix"></param>
         /// <returns></returns>
-        public abstract Solid TransformToNewSolid(double[,] transformationMatrix);
+        public abstract Solid TransformToNewSolid(Matrix4x4 transformationMatrix);
 
         public abstract Solid Copy();
 

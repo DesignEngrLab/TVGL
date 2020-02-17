@@ -57,11 +57,11 @@ namespace TVGL
         {
             if (Tolerance.IsPracticallySame(0.0)) Tolerance = Constants.ErrorForFaceInSurface;
             if (Faces.Contains(face)) return false;
-            if (!face.Normal.Dot(Normal, 3).IsPracticallySame(1.0, Tolerance)) return false;
+            if (!face.Normal.Dot(Normal).IsPracticallySame(1.0, Tolerance)) return false;
             //Return true if all the vertices are within the tolerance 
             //Note that the dotProduct term and distance to origin, must have the same sign, 
             //so there is no additional need moth absolute value methods.
-            return face.Vertices.All(v => Normal.Dot(v.Position, 3).IsPracticallySame(DistanceToOrigin, Tolerance));
+            return face.Vertices.All(v => Normal.Dot(v.Position).IsPracticallySame(DistanceToOrigin, Tolerance));
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace TVGL
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
             {
                 newVerts.Add(v);
-                newDistanceToPlane += v.Position.Dot(Normal, 3);
+                newDistanceToPlane += v.Position.Dot(Normal);
             }
             DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + newVerts.Count);
             base.UpdateWith(face);
@@ -88,7 +88,7 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
            // throw new NotImplementedException();
         }
@@ -110,13 +110,13 @@ namespace TVGL
             foreach(var face in faces)
             {
                 var weightedNormal = face.Normal * face.Area;
-                normalSum[0] += weightedNormal[0];
-                normalSum[1] += weightedNormal[1];
-                normalSum[2] += weightedNormal[2];
+                normalSum.X += weightedNormal.X;
+                normalSum.Y += weightedNormal.Y;
+                normalSum.Z += weightedNormal.Z;
             }
-            Normal = normalSum.normalize(3);
+            Normal = normalSum.Normalize();
 
-            DistanceToOrigin = Faces.Average(f => Normal.Dot(f.Vertices[0].Position, 3));
+            DistanceToOrigin = Faces.Average(f => Normal.Dot(f.Vertices[0].Position));
         }
 
         /// <summary>
@@ -132,10 +132,10 @@ namespace TVGL
         /// </summary>
         /// <param name="distanceToOrigin">The distance to origin.</param>
         /// <param name="normal">The normal.</param>
-        public Flat(double distanceToOrigin, Vector2 normal)
+        public Flat(double distanceToOrigin, Vector3 normal)
         {
             Type = PrimitiveSurfaceType.Flat;
-            Normal = normal.normalize(3);
+            Normal = normal.Normalize();
             DistanceToOrigin = distanceToOrigin;
         }
 
@@ -144,11 +144,11 @@ namespace TVGL
         /// </summary>
         /// <param name="pointOnPlane">a point on plane.</param>
         /// <param name="normal">The normal.</param>
-        public Flat(Vector2 pointOnPlane, Vector2 normal)
+        public Flat(Vector3 pointOnPlane, Vector3 normal)
         {
             Type = PrimitiveSurfaceType.Flat;
-            Normal = normal.normalize(3);
-            DistanceToOrigin = Normal.Dot(pointOnPlane, 3);
+            Normal = normal.Normalize();
+            DistanceToOrigin = Normal.Dot(pointOnPlane);
         }
 
         public HashSet<Flat> GetAdjacentFlats(List<Flat> allFlats)

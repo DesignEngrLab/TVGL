@@ -35,7 +35,7 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="sortedVertices">The sorted vertices.</param>
-        public static void SortAlongDirection(Vector2 direction, IEnumerable<Vertex> vertices,
+        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vertex> vertices,
             out List<(Vertex, double)> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
@@ -55,7 +55,7 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="sortedVertices">The sorted vertices.</param>
-        public static void SortAlongDirection(Vector2 direction, IEnumerable<Vertex> vertices,
+        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vertex> vertices,
             out List<Vertex> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
@@ -69,11 +69,11 @@ namespace TVGL
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<(Vertex, double)> GetVertexDistances(Vector2 direction, IEnumerable<Vertex> vertices)
+        private static IEnumerable<(Vertex, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vertex> vertices)
         {
             var vertexDistances = new List<(Vertex, double)>(vertices.Count());
             //Accuracy to the 15th decimal place
-            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var toleranceString = EqualityExtensions.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
             var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal) + 1)));
             foreach (var vertex in vertices)
             {
@@ -114,7 +114,7 @@ namespace TVGL
         {
             var pointDistances = new List<(Point, double)>(points.Count());
             //Accuracy to the 15th decimal place
-            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var toleranceString = EqualityExtensions.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
             var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
             foreach (var point in points)
             {
@@ -165,19 +165,19 @@ namespace TVGL
             return PointLightDistances;
         }
 
-        
-        public static Vector2 GetPerpendicularDirection(Vector2 direction)
+
+        public static Vector3 GetPerpendicularDirection(Vector3 direction)
         {
             //If any of the normal terms (X, Y, or Z) are zero, then that will be direction 2
-            if (direction[0].IsNegligible())
+            if (direction.X.IsNegligible())
             {
                 return new Vector3(1.0, 0.0, 0.0);
             }
-            else if (direction[1].IsNegligible())
+            else if (direction.Y.IsNegligible())
             {
                 return new Vector3(0.0, 1.0, 0.0);
             }
-            else if (direction[2].IsNegligible())
+            else if (direction.Z.IsNegligible())
             {
                 return new Vector3(0.0, 0.0, 1.0);
             }
@@ -185,11 +185,11 @@ namespace TVGL
             else
             {
                 //Choose two perpendicular vectors.
-                var v1 = new Vector3(direction[1], -direction[0], 0.0);
-                var v2 = new Vector3(-direction[2], 0.0, direction[0]);
+                var v1 = new Vector3(direction.Y, -direction.X, 0.0);
+                var v2 = new Vector3(-direction.Z, 0.0, direction.X);
 
                 //Any linear combination of them is also perpendicular to the original vector
-                return (v1 + v2).normalize();
+                return (v1 + v2).Normalize();
             }
         }
         #endregion
@@ -202,7 +202,7 @@ namespace TVGL
         /// <returns></returns>
         public static double Perimeter(IList<Vector2> polygon)
         {
-            double perimeter = DistancePointToPoint(polygon.Last(), polygon[0]);
+            double perimeter = DistancePointToPoint(polygon.Last(), polygon.X);
             for (var i = 1; i < polygon.Count; i++)
                 perimeter += DistancePointToPoint(polygon[i - 1], polygon[i]);
             return perimeter;
@@ -215,7 +215,7 @@ namespace TVGL
         /// <returns></returns>
         public static double Perimeter(IList<Point> polygon)
         {
-            double perimeter = DistancePointToPoint(polygon.Last(), polygon[0]);
+            double perimeter = DistancePointToPoint(polygon.Last(), polygon.X);
             for (var i = 1; i < polygon.Count; i++)
                 perimeter += DistancePointToPoint(polygon[i - 1], polygon[i]);
             return perimeter;
@@ -229,7 +229,7 @@ namespace TVGL
         public static double Perimeter(IList<Vertex> polygon3D)
         {
 
-            double perimeter = DistancePointToPoint(polygon3D.Last(), polygon3D[0]);
+            double perimeter = DistancePointToPoint(polygon3D.Last(), polygon3D.X);
             for (var i = 1; i < polygon3D.Count; i++)
                 perimeter += DistancePointToPoint(polygon3D[i - 1], polygon3D[i]);
             return perimeter;
@@ -384,14 +384,14 @@ namespace TVGL
             //Also check if all x are the same. The algorithm will catch all y's and output zero,
             //But it may output a small number, even if all the x's are the same
             var n = polygon.Count;
-            var p0 = polygon[0];
+            var p0 = polygon.X;
             var xval = p0.X;
 
             //Optimized version reduces get functions from arrays and point.X and point.Y
             // j == i - 1;
             // k == i + 1
             var area = 0.0;
-            var p1 = polygon[1];
+            var p1 = polygon.Y;
             var jY = p0.Y;
             var iX = p1.X;
             var iY = p1.Y;
@@ -431,11 +431,11 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double.</returns>
         /// <references>http://geomalgorithms.com/a01-_area.html </references>
-        public static double AreaOf3DPolygon(IEnumerable<Vertex> loop, Vector2 normal)
+        public static double AreaOf3DPolygon(IEnumerable<Vertex> loop, Vector3 normal)
         {
-            var ax = Math.Abs(normal[0]);
-            var ay = Math.Abs(normal[1]);
-            var az = Math.Abs(normal[2]);
+            var ax = Math.Abs(normal.X);
+            var ay = Math.Abs(normal.Y);
+            var az = Math.Abs(normal.Z);
 
             //Make a new list from the loop
             var vertices = new List<Vertex>(loop);
@@ -474,13 +474,13 @@ namespace TVGL
             switch (coord)
             {
                 case 1:
-                    area += vertices[n].Y * (vertices[1].Z - vertices[n - 1].Z);
+                    area += vertices[n].Y * (vertices.Y.Z - vertices[n - 1].Z);
                     break;
                 case 2:
-                    area += vertices[n].Z * (vertices[1].X - vertices[n - 1].X);
+                    area += vertices[n].Z * (vertices.Y.X - vertices[n - 1].X);
                     break;
                 case 3:
-                    area += vertices[n].X * (vertices[1].Y - vertices[n - 1].Y);
+                    area += vertices[n].X * (vertices.Y.Y - vertices[n - 1].Y);
                     break;
             }
 
@@ -489,13 +489,13 @@ namespace TVGL
             switch (coord)
             {
                 case 1:
-                    area *= an / (2 * normal[0]);
+                    area *= an / (2 * normal.X);
                     break;
                 case 2:
-                    area *= an / (2 * normal[1]);
+                    area *= an / (2 * normal.Y);
                     break;
                 case 3:
-                    area *= an / (2 * normal[2]);
+                    area *= an / (2 * normal.Z);
                     break;
             }
             return area;
@@ -509,14 +509,14 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double.</returns>
         /// <references>http://geomalgorithms.com/a01-_area.html </references>
-        public static double AreaOf3DPolygon(IEnumerable<Vector2> loop, Vector2 normal)
+        public static double AreaOf3DPolygon(IEnumerable<Vector3> loop, Vector3 normal)
         {
-            var ax = Math.Abs(normal[0]);
-            var ay = Math.Abs(normal[1]);
-            var az = Math.Abs(normal[2]);
+            var ax = Math.Abs(normal.X);
+            var ay = Math.Abs(normal.Y);
+            var az = Math.Abs(normal.Z);
 
             //Make a new list from the loop
-            var vertices = new List<Vector2>(loop);
+            var vertices = new List<Vector3>(loop);
             //Add the first vertex to the end
             vertices.Add(vertices.First());
 
@@ -538,27 +538,27 @@ namespace TVGL
             {
                 case 1:
                     for (i = 1; i < n; i++)
-                        area += vertices[i][1] * (vertices[i + 1][2] - vertices[i - 1][2]);
+                        area += vertices[i].Y * (vertices[i + 1].Z - vertices[i - 1].Z);
                     break;
                 case 2:
                     for (i = 1; i < n; i++)
-                        area += vertices[i][2] * (vertices[i + 1][0] - vertices[i - 1][0]);
+                        area += vertices[i].Z * (vertices[i + 1].X - vertices[i - 1].X);
                     break;
                 case 3:
                     for (i = 1; i < n; i++)
-                        area += vertices[i][0] * (vertices[i + 1][1] - vertices[i - 1][1]);
+                        area += vertices[i].X * (vertices[i + 1].Y - vertices[i - 1].Y);
                     break;
             }
             switch (coord)
             {
                 case 1:
-                    area += vertices[n][1] * (vertices[1][2] - vertices[n - 1][2]);
+                    area += vertices[n].Y * (vertices.Y.Z - vertices[n - 1].Z);
                     break;
                 case 2:
-                    area += vertices[n][2] * (vertices[1][0] - vertices[n - 1][0]);
+                    area += vertices[n].Z * (vertices.Y.X - vertices[n - 1].X);
                     break;
                 case 3:
-                    area += vertices[n][0] * (vertices[1][1] - vertices[n - 1][1]);
+                    area += vertices[n].X * (vertices.Y.Y - vertices[n - 1].Y);
                     break;
             }
 
@@ -567,13 +567,13 @@ namespace TVGL
             switch (coord)
             {
                 case 1:
-                    area *= an / (2 * normal[0]);
+                    area *= an / (2 * normal.X);
                     break;
                 case 2:
-                    area *= an / (2 * normal[1]);
+                    area *= an / (2 * normal.Y);
                     break;
                 case 3:
-                    area *= an / (2 * normal[2]);
+                    area *= an / (2 * normal.Z);
                     break;
             }
             return area;
@@ -638,7 +638,7 @@ namespace TVGL
         /// <param name="tolerance"></param>
         /// 
         /// <returns></returns>
-        public static List<Vector2> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, Vector2 direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance)
+        public static List<Vector2> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<Vertex> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -709,7 +709,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateTolerance">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector2 direction, double mergeDuplicateTolerance)
+        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction, double mergeDuplicateTolerance)
         {
             if (mergeDuplicateTolerance.IsNegligible()) mergeDuplicateTolerance = Constants.BaseTolerance; //Minimum allowed tolerance.
             var transform = TransformToXYPlane(direction);
@@ -725,8 +725,8 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector2 direction,
-            out double[,] backTransform,
+        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
+            out Matrix4x4 backTransform,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
@@ -742,7 +742,7 @@ namespace TVGL
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>Point[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[,] transform,
+        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Matrix4x4 transform,
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Vector2>();
@@ -755,14 +755,14 @@ namespace TVGL
                 var point = Get2DProjectionPoint(vertex, transform);
                 if (!mergeDuplicateReferences)
                 {
-                    points.Add(new Vector2(vertex, point[0], point[1]));
+                    points.Add(new Vector2(vertex, point.X, point.Y));
                 }
                 else
                 {
-                    point[0] = Math.Round(point[0], numDecimalPoints);
-                    point[1] = Math.Round(point[1], numDecimalPoints);
-                    var lookupString = point[0].ToString(stringformat) + "|"
-                                       + point[1].ToString(stringformat);
+                    point.X = Math.Round(point.X, numDecimalPoints);
+                    point.Y = Math.Round(point.Y, numDecimalPoints);
+                    var lookupString = point.X.ToString(stringformat) + "|"
+                                       + point.Y.ToString(stringformat);
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
                         /* if it's in the dictionary, Add reference and move to the next vertex */
@@ -775,7 +775,7 @@ namespace TVGL
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Vector2(vertex, point[0], point[1]);
+                        var point2D = new Vector2(vertex, point.X, point.Y);
                         simpleCompareDict.Add(lookupString, point2D);
                         points.Add(point2D);
                     }
@@ -796,8 +796,8 @@ namespace TVGL
         /// <param name="tolerance"></param>
         /// 
         /// <returns></returns>
-        public static List<Vector2> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction, 
-            out double[,] backTransform, double tolerance = Constants.BaseTolerance)
+        public static List<Vector2> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction,
+            out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<Vertex> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -854,7 +854,7 @@ namespace TVGL
         /// <param name="tolerance"></param>
         /// 
         /// <returns></returns>
-        public static List<Vector2> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vector2> loop, Vector2 direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance)
+        public static List<Vector2> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vector2> loop, Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<Vector2> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -911,15 +911,15 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static List<Vector3> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector3 direction,
-            out double[,] backTransform,
+        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector3 direction,
+            out Matrix4x4 backTransform,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
             return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
         }
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vector2> vertices, Vector2 direction,
-            out double[,] backTransform,
+        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vector2> vertices, Vector3 direction,
+            out Matrix4x4 backTransform,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
@@ -934,7 +934,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector2 direction,
+        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector3 direction,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction);
@@ -950,7 +950,7 @@ namespace TVGL
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>Point[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[,] transform,
+        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Matrix4x4 transform,
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Vector2>();
@@ -963,14 +963,14 @@ namespace TVGL
                 var point = Get2DProjectionPoint(vertex, transform);
                 if (!mergeDuplicateReferences)
                 {
-                    points.Add(new Vector2(point[0], point[1]));
+                    points.Add(new Vector2(point.X, point.Y));
                 }
                 else
                 {
-                    point[0] = Math.Round(point[0], numDecimalPoints);
-                    point[1] = Math.Round(point[1], numDecimalPoints);
-                    var lookupString = point[0].ToString(stringformat) + "|"
-                                       + point[1].ToString(stringformat);
+                    point.X = Math.Round(point.X, numDecimalPoints);
+                    point.Y = Math.Round(point.Y, numDecimalPoints);
+                    var lookupString = point.X.ToString(stringformat) + "|"
+                                       + point.Y.ToString(stringformat);
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
                         /* if it's in the dictionary, move to the next vertex */
@@ -980,7 +980,7 @@ namespace TVGL
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Vector2(point[0], point[1]);
+                        var point2D = new Vector2(point.X, point.Y);
                         simpleCompareDict.Add(lookupString, point2D);
                         points.Add(point2D);
                     }
@@ -998,7 +998,7 @@ namespace TVGL
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>Point[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vector2> vertices, double[,] transform,
+        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vector2> vertices, Matrix4x4 transform,
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Vector2>();
@@ -1011,14 +1011,14 @@ namespace TVGL
                 var point = Get2DProjectionPoint(vertex, transform);
                 if (!mergeDuplicateReferences)
                 {
-                    points.Add(new Vector2(point[0], point[1]));
+                    points.Add(new Vector2(point.X, point.Y));
                 }
                 else
                 {
-                    point[0] = Math.Round(point[0], numDecimalPoints);
-                    point[1] = Math.Round(point[1], numDecimalPoints);
-                    var lookupString = point[0].ToString(stringformat) + "|"
-                                       + point[1].ToString(stringformat);
+                    point.X = Math.Round(point.X, numDecimalPoints);
+                    point.Y = Math.Round(point.Y, numDecimalPoints);
+                    var lookupString = point.X.ToString(stringformat) + "|"
+                                       + point.Y.ToString(stringformat);
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
                         /* if it's in the dictionary, move to the next vertex */
@@ -1028,7 +1028,7 @@ namespace TVGL
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Vector2(point[0], point[1]);
+                        var point2D = new Vector2(point.X, point.Y);
                         simpleCompareDict.Add(lookupString, point2D);
                         points.Add(point2D);
                     }
@@ -1037,25 +1037,22 @@ namespace TVGL
             return points;
         }
 
-        public static Vector2 Get2DProjectionPointAsLight(Vertex vertex, double[,] transform)
+        public static Vector2 Get2DProjectionPointAsLight(Vertex vertex, Matrix4x4 transform)
         {
             var position = Get2DProjectionPoint(vertex, transform);
-            return new Vector2(position[0], position[1]);
+            return new Vector2(position.X, position.Y);
         }
 
-        public static Vector2 Get2DProjectionPoint(Vertex vertex, double[,] transform)
+        public static Vector2 Get2DProjectionPoint(Vertex vertex, Matrix4x4 transform)
         {
             return Get2DProjectionPoint(vertex.Position, transform);
         }
 
-        public static Vector2 Get2DProjectionPoint(Vector2 vertex, double[,] transform)
+        public static Vector2 Get2DProjectionPoint(Vector3 vertex, Matrix4x4 transform)
         {
-            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
-            pointAs4[0] = vertex[0];
-            pointAs4[1] = vertex[1];
-            pointAs4[2] = vertex[2];
+            var pointAs4 = new Vector4(vertex, 1.0);
             pointAs4 = transform * pointAs4;
-            return new[] { pointAs4[0], pointAs4[1] };
+            return new[] { pointAs4.X, pointAs4.Y };
         }
 
 
@@ -1066,18 +1063,15 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>System.Vector2[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IList<Vector2> vertices, Vector2 direction)
+        public static Vector2[] Get2DProjectionPoints(IList<Vector3> vertices, Vector3 direction)
         {
             var transform = TransformToXYPlane(direction);
-            var points = new double[vertices.Count][];
-            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
+            var points = new Vector2[vertices.Count];
             for (var i = 0; i < vertices.Count; i++)
             {
-                pointAs4[0] = vertices[i][0];
-                pointAs4[1] = vertices[i][1];
-                pointAs4[2] = vertices[i][2];
-                pointAs4 = transform * pointAs4;
-                points[i] = new[] { pointAs4[0], pointAs4[1] };
+                var pointAs4 = new Vector4(vertices[i],1.0);
+                pointAs4 = pointAs4 * transform;
+                points[i] = new Vector2(pointAs4.X, pointAs4.Y);
             }
             return points;
         }
@@ -1091,8 +1085,8 @@ namespace TVGL
         public static Vector2 Get2DProjectionVector(Vector2 vector3D, Vector2 direction)
         {
             var transform = TransformToXYPlane(direction);
-            var vectorAs4 = transform * new[] { vector3D[0], vector3D[1], vector3D[2], 1.0 };
-            return new[] { vectorAs4[0], vectorAs4[1] };
+            var vectorAs4 = transform * new[] { vector3D.X, vector3D.Y, vector3D.Z, 1.0 };
+            return new[] { vectorAs4.X, vectorAs4.Y };
         }
 
         /// <summary>
@@ -1100,7 +1094,7 @@ namespace TVGL
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <returns>System.Vector2.</returns>
-        public static double[,] TransformToXYPlane(IList<double> direction)
+        public static Matrix4x4 TransformToXYPlane(Vector3 direction)
         {
             return TransformToXYPlane(direction, out _);
         }
@@ -1111,36 +1105,36 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
         /// <returns>System.Vector2.</returns>
-        public static double[,] TransformToXYPlane(IList<double> direction, out double[,] backTransform)
+        public static Matrix4x4 TransformToXYPlane(Vector3 direction, out Matrix4x4 backTransform)
         {
-            var xDir = direction[0];
-            var yDir = direction[1];
-            var zDir = direction[2];
+            var xDir = direction.X;
+            var yDir = direction.Y;
+            var zDir = direction.Z;
 
-            double[,] rotateX, rotateY, backRotateX, backRotateY;
+            Matrix4x4 rotateX, rotateY, backRotateX, backRotateY;
             if (xDir.IsNegligible() && zDir.IsNegligible())
             {
-                rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
-                backRotateX = StarMath.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
-                backRotateY = rotateY = StarMath.makeIdentity(4);
+                rotateX = EqualityExtensions.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
+                backRotateX = EqualityExtensions.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
+                backRotateY = rotateY = EqualityExtensions.makeIdentity(4);
             }
             else if (zDir.IsNegligible())
             {
-                rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
-                backRotateY = StarMath.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
+                rotateY = EqualityExtensions.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
+                backRotateY = EqualityExtensions.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
                 var rotXAngle = Math.Atan(yDir / Math.Abs(xDir));
-                rotateX = StarMath.RotationX(rotXAngle, true);
-                backRotateX = StarMath.RotationX(-rotXAngle, true);
+                rotateX = EqualityExtensions.RotationX(rotXAngle, true);
+                backRotateX = EqualityExtensions.RotationX(-rotXAngle, true);
             }
             else
             {
                 var rotYAngle = -Math.Atan(xDir / zDir);
-                rotateY = StarMath.RotationY(rotYAngle, true);
-                backRotateY = StarMath.RotationY(-rotYAngle, true);
+                rotateY = EqualityExtensions.RotationY(rotYAngle, true);
+                backRotateY = EqualityExtensions.RotationY(-rotYAngle, true);
                 var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
                 var rotXAngle = Math.Sign(zDir) * Math.Atan(yDir / baseLength);
-                rotateX = StarMath.RotationX(rotXAngle, true);
-                backRotateX = StarMath.RotationX(-rotXAngle, true);
+                rotateX = EqualityExtensions.RotationX(rotXAngle, true);
+                backRotateX = EqualityExtensions.RotationX(-rotXAngle, true);
             }
             backTransform = backRotateY * backRotateX;
             return rotateX * rotateY;
@@ -1152,21 +1146,21 @@ namespace TVGL
         /// <param name="direction2D"></param>
         /// <param name="backTransform"></param>
         /// <returns></returns>
-        public static Vector2 Convert2DVectorTo3DVector(Vector2 direction2D, double[,] backTransform)
+        public static Vector2 Convert2DVectorTo3DVector(Vector2 direction2D, Matrix4x4 backTransform)
         {
-            var tempVector = new[] { direction2D[0], direction2D[1], 0.0, 1.0 };
-            return (backTransform * tempVector).Take(3).ToArray().normalize(3);
+            var tempVector = new[] { direction2D.X, direction2D.Y, 0.0, 1.0 };
+            return (backTransform * tempVector).Take(3).ToArray().Normalize();
         }
 
 
-    /// <summary>
-    /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
-    /// </summary>
-    /// <param name="points"></param>
-    /// <param name="direction"></param>
-    /// <param name="distanceAlongDirection"></param>
-    /// <returns></returns>
-    public static List<Vertex> GetVerticesFrom2DPoints(IEnumerable<Point> points, Vector3 direction, double distanceAlongDirection)
+        /// <summary>
+        /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceAlongDirection"></param>
+        /// <returns></returns>
+        public static List<Vertex> GetVerticesFrom2DPoints(IEnumerable<Point> points, Vector3 direction, double distanceAlongDirection)
         {
             //Rotate axis back to the original, and then transform points along the given direction.
             //If you try to transform first, it will shift the vertices incorrectly
@@ -1226,8 +1220,8 @@ namespace TVGL
         {
             var axis = edge1.Vector.Cross(edge2.Vector);
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]),
-                InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]));
+            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y),
+                InteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y));
         }
 
         /// <summary>
@@ -1239,9 +1233,9 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double SmallerAngleBetweenEdges(Point a, Point b, Point c)
         {
-            var edge1 = new[] { b.X - a.X, b.Y - a.Y };
-            var edge2 = new[] { c.X - b.X, c.Y - b.Y };
-            return Math.Acos(edge1.Dot(edge2) / (edge1.norm2() * edge2.norm2()));
+            var edge1 = new Vector2(b.X - a.X, b.Y - a.Y);
+            var edge2 = new Vector2(c.X - b.X, c.Y - b.Y);
+            return Math.Acos(edge1.Dot(edge2) / (edge1.Length() * edge2.Length()));
         }
 
         /// <summary>
@@ -1265,7 +1259,7 @@ namespace TVGL
         internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
         }
 
         /// <summary>
@@ -1278,7 +1272,7 @@ namespace TVGL
         internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return InteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
         }
 
         /// <summary>
@@ -1291,7 +1285,7 @@ namespace TVGL
         internal static double ExteriorAngleBetweenEdgesInCCWList(Vector2 edge1, Vector2 edge2, Vector2 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
-            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
         }
 
         /// <summary>
@@ -1304,7 +1298,7 @@ namespace TVGL
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 edge1, Vector2 edge2, Vector2 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
-            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return InteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
         }
 
         /// <summary>
@@ -1354,8 +1348,8 @@ namespace TVGL
         public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
             var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
-            return InteriorAngleBetweenEdgesInCCWList(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y },
-                new[] { points[2].X - points[1].X, points[2].Y - points[1].Y });
+            return InteriorAngleBetweenEdgesInCCWList(new[] { points.Y.X - points.X.X, points.Y.Y - points.X.Y },
+                new[] { points.Z.X - points.Y.X, points.Z.Y - points.Y.Y });
         }
 
         public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector2 positiveNormal)
@@ -1387,18 +1381,18 @@ namespace TVGL
 
             ////This is an alternative approach to the one that is not commented out
             ////Use law of cosines to find smaller angle between two vectors
-            //var aSq = v0[0] * v0[0] + v0[1] * v0[1];
-            //var bSq = v1[0] * v1[0] + v1[1] * v1[1];
-            //var cSq = (v0[0] + v1[0]) * (v0[0] + v1[0]) + (v0[1] + v1[1]) * (v0[1] + v1[1]);
+            //var aSq = v0.X * v0.X + v0.Y * v0.Y;
+            //var bSq = v1.X * v1.X + v1.Y * v1.Y;
+            //var cSq = (v0.X + v1.X) * (v0.X + v1.X) + (v0.Y + v1.Y) * (v0.Y + v1.Y);
             //var angle = Math.Acos((aSq + bSq - cSq) / (2 * Math.Sqrt(aSq) * Math.Sqrt(bSq)));
             ////Use cross product sign to determine if smaller angle is CCW from v0
-            //var cross = v0[0] * v1[1] - v0[1] * v1[0];
+            //var cross = v0.X * v1.Y - v0.Y * v1.X;
             //if (Math.Sign(cross) < 0) angle = 2 * Math.PI - angle;
 
             #endregion
 
-            var angleV0 = Math.Atan2(v0[1], v0[0]);
-            var angleV1 = Math.Atan2(v1[1], v1[0]);
+            var angleV0 = Math.Atan2(v0.Y, v0.X);
+            var angleV1 = Math.Atan2(v1.Y, v1.X);
             var angleChange = Math.PI - (angleV1 - angleV0);
             if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
             if (angleChange < 0) return angleChange + 2 * Math.PI;
@@ -1450,9 +1444,9 @@ namespace TVGL
             intersectionPoint = null;
             var r = p2 - p;
             var s = q2 - q;
-            var rxs = r[0] * s[1] - r[1] * s[0]; //2D cross product, determines if parallel
+            var rxs = r.X * s.Y - r.Y * s.X; //2D cross product, determines if parallel
             var qp = q - p;
-            var qpxr = qp[0] * r[1] - qp[1] * r[0];//2D cross product
+            var qpxr = qp.X * r.Y - qp.Y * r.X;//2D cross product
 
             // If r x s ~ 0 and (q - p) x r ~ 0, then the two lines are possibly collinear.
             // This is negigible tolerance of 0.00001 is not arbitary. It was chosen because of the second case within this if statement.
@@ -1462,10 +1456,10 @@ namespace TVGL
                 // then the two lines are overlapping,
                 // 2. If neither 0 <= (q - p) * r = r * r nor 0 <= (p - q) * s <= s * s
                 // then the two lines are collinear but disjoint.
-                var qpr = qp[0] * r[0] + qp[1] * r[1];
-                var pqs = (p - q)[0] * s[0] + (p - q)[1] * s[1];
-                var overlapping = (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) ||
-                                  (0 <= pqs && pqs <= s[0] * s[0] + s[1] * s[1]);
+                var qpr = qp.X * r.X + qp.Y * r.Y;
+                var pqs = (p - q).X * s.X + (p - q).Y * s.Y;
+                var overlapping = (0 <= qpr && qpr <= r.X * r.X + r.Y * r.Y) ||
+                                  (0 <= pqs && pqs <= s.X * s.X + s.Y * s.Y);
                 if (rxs.IsNegligible() && qpxr.IsNegligible())
                 // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
                 {
@@ -1528,17 +1522,17 @@ namespace TVGL
 
             // t = (q - p) x s / (r x s)
             //Note, the output of this will be t = [0,0,#] since this is a 2D cross product.
-            var t = (q - p).Cross(s).divide(rxs);
+            var t = (q - p).Cross(s) / rxs;
 
             // u = (q - p) x r / (r x s)
             //Note, the output of this will be u = [0,0,#] since this is a 2D cross product.
-            var u = (q - p).Cross(r).divide(rxs);
+            var u = (q - p).Cross(r) / rxs;
 
             // 5. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
             // the two line segments meet at the point p + t r = q + u s.
             if (!rxs.IsNegligible() &&
-                !t[2].IsLessThanNonNegligible() && !t[2].IsGreaterThanNonNegligible(1.0) &&
-                !u[2].IsLessThanNonNegligible() && !u[2].IsGreaterThanNonNegligible(1.0))
+                !t.IsLessThanNonNegligible() && !t.IsGreaterThanNonNegligible(1.0) &&
+                !u.IsLessThanNonNegligible() && !u.IsGreaterThanNonNegligible(1.0))
             {
 
                 ////Tthe intersection point may be one of the existing points
@@ -1588,10 +1582,10 @@ namespace TVGL
 
 
                 // We can calculate the intersection point using either t or u.
-                var x = p.X + t[2] * r[0];
-                var y = p.Y + t[2] * r[1];
-                var x2 = q.X + u[2] * s[0];
-                var y2 = q.Y + u[2] * s[1];
+                var x = p.X + t * r.X;
+                var y = p.Y + t * r.Y;
+                var x2 = q.X + u * s.X;
+                var y2 = q.Y + u * s.Y;
 
                 //If either is equal to any of the given points, return that point
                 if (x.IsPracticallySame(x2) && y.IsPracticallySame(y2))
@@ -1684,11 +1678,11 @@ namespace TVGL
         public static Vector2 PointCommonToThreePlanes(Vector2 n1, double d1, Vector2 n2, double d2, Vector2 n3,
             double d3)
         {
-            var matrixOfNormals = new[,] { { n1[0], n1[1], n1[2] }, { n2[0], n2[1], n2[2] }, { n3[0], n3[1], n3[2] } };
+            var matrixOfNormals = new[,] { { n1.X, n1.Y, n1.Z }, { n2.X, n2.Y, n2.Z }, { n3.X, n3.Y, n3.Z } };
             var distances = new[] { d1, d2, d3 };
             try
             {
-                return StarMath.solve(matrixOfNormals, distances);
+                return EqualityExtensions.solve(matrixOfNormals, distances);
             }
             catch
             {
@@ -1698,16 +1692,16 @@ namespace TVGL
 
         public static Flat GetPlaneFromThreePoints(Vector2 p1, Vector2 p2, Vector2 p3)
         {
-            var a1 = p2[0] - p1[0];
-            var b1 = p2[1] - p1[1];
-            var c1 = p2[2] - p1[2];
-            var a2 = p3[0] - p1[0];
-            var b2 = p3[1] - p1[1];
-            var c2 = p3[2] - p1[2];
+            var a1 = p2.X - p1.X;
+            var b1 = p2.Y - p1.Y;
+            var c1 = p2.Z - p1.Z;
+            var a2 = p3.X - p1.X;
+            var b2 = p3.Y - p1.Y;
+            var c2 = p3.Z - p1.Z;
             var a = b1 * c2 - b2 * c1;
             var b = a2 * c1 - a1 * c2;
             var c = a1 * b2 - b1 * a2;
-            var normal = new[] { a, b, c }.normalize();
+            var normal = new Vector3(a, b, c).Normalize();
             var flat2 = new Flat(p1, normal);
             return flat2;
         }
@@ -1721,10 +1715,10 @@ namespace TVGL
         /// <param name="d2">The d2.</param>
         /// <param name="directionOfLine">The direction of line.</param>
         /// <param name="pointOnLine">The point on line.</param>
-        public static void LineIntersectingTwoPlanes(Vector2 n1, double d1, Vector2 n2, double d2,
-            out Vector2 directionOfLine, out Vector2 pointOnLine)
+        public static void LineIntersectingTwoPlanes(Vector3 n1, double d1, Vector3 n2, double d2,
+            out Vector3 directionOfLine, out Vector3 pointOnLine)
         {
-            directionOfLine = n1.Cross(n2).normalize(3);
+            directionOfLine = n1.Cross(n2).Normalize();
             LineIntersectingTwoPlanes(n1, d1, n2, d2, directionOfLine, out pointOnLine);
         }
 
@@ -1737,8 +1731,8 @@ namespace TVGL
         /// <param name="d2">The d2.</param>
         /// <param name="directionOfLine">The direction of line.</param>
         /// <param name="pointOnLine">The point on line.</param>
-        internal static void LineIntersectingTwoPlanes(Vector2 n1, double d1, Vector2 n2, double d2,
-            Vector2 directionOfLine, out Vector2 pointOnLine)
+        internal static void LineIntersectingTwoPlanes(Vector3 n1, double d1, Vector3 n2, double d2,
+            Vector3 directionOfLine, out Vector3 pointOnLine)
         {
             /* to find the point on the line...well a point on the line, it turns out that one has three unknowns (px, py, pz)
              * and only two equations. Let's put the point on the plane going through the origin. So this plane would have a normal 
@@ -1748,7 +1742,7 @@ namespace TVGL
             a.SetRow(1, n2);
             a.SetRow(2, directionOfLine);
             var b = new[] { d1, d2, 0 };
-            pointOnLine = StarMath.solve(a, b);
+            pointOnLine = EqualityExtensions.solve(a, b);
         }
 
         /// <summary>
@@ -1831,21 +1825,21 @@ namespace TVGL
             out Vector2 center,
             out Vector2 interSect1, out Vector2 interSect2, out double t1, out double t2)
         {
-            var a00 = n1[0] * n1[0] + n1[1] * n1[1] + n1[2] * n1[2];
-            var a01 = -n1[0] * n2[0] - n1[1] * n2[1] - n1[2] * n2[2];
-            var a10 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
-            var a11 = -n2[0] * n2[0] - n2[1] * n2[1] - n2[2] * n2[2];
-            var b0 = n1[0] * (p2[0] - p1[0]) + n1[1] * (p2[1] - p1[1]) + n1[2] * (p2[2] - p1[2]);
-            var b1 = n2[0] * (p2[0] - p1[0]) + n2[1] * (p2[1] - p1[1]) + n2[2] * (p2[2] - p1[2]);
+            var a00 = n1.X * n1.X + n1.Y * n1.Y + n1.Z * n1.Z;
+            var a01 = -n1.X * n2.X - n1.Y * n2.Y - n1.Z * n2.Z;
+            var a10 = n1.X * n2.X + n1.Y * n2.Y + n1.Z * n2.Z;
+            var a11 = -n2.X * n2.X - n2.Y * n2.Y - n2.Z * n2.Z;
+            var b0 = n1.X * (p2.X - p1.X) + n1.Y * (p2.Y - p1.Y) + n1.Z * (p2.Z - p1.Z);
+            var b1 = n2.X * (p2.X - p1.X) + n2.Y * (p2.Y - p1.Y) + n2.Z * (p2.Z - p1.Z);
             var a = new[,] { { a00, a01 }, { a10, a11 } };
             var b = new[] { b0, b1 };
-            var t = StarMath.solve(a, b);
-            t1 = t[0];
-            t2 = t[1];
-            interSect1 = new[] { p1[0] + n1[0] * t1, p1[1] + n1[1] * t1, p1[2] + n1[2] * t1 };
-            interSect2 = new[] { p2[0] + n2[0] * t2, p2[1] + n2[1] * t2, p2[2] + n2[2] * t2 };
+            var t = EqualityExtensions.solve(a, b);
+            t1 = t.X;
+            t2 = t.Y;
+            interSect1 = new[] { p1.X + n1.X * t1, p1.Y + n1.Y * t1, p1.Z + n1.Z * t1 };
+            interSect2 = new[] { p2.X + n2.X * t2, p2.Y + n2.Y * t2, p2.Z + n2.Z * t2 };
             center = new[]
-            {(interSect1[0] + interSect2[0])/2, (interSect1[1] + interSect2[1])/2, (interSect1[2] + interSect2[2])/2};
+            {(interSect1.X + interSect2.X)/2, (interSect1.Y + interSect2.Y)/2, (interSect1.Z + interSect2.Z)/2};
             return DistancePointToPoint(interSect1, interSect2);
         }
 
@@ -1860,7 +1854,7 @@ namespace TVGL
         /// <param name="lineRefPt">The line reference point on the line.</param>
         /// <param name="lineVector">The line direction vector.</param>
         /// <returns>System.Double.</returns>
-        public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector)
+        public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector)
         {
             return DistancePointToLine(qPoint, lineRefPt, lineVector, out _);
         }
@@ -1881,18 +1875,18 @@ namespace TVGL
             {
                 /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
                 * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-                t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]))
-                        / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);
-                pointOnLine = new[] { lineRefPt[0] + lineVector[0] * t, lineRefPt[1] + lineVector[1] * t };
+                t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
+                        / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
+                pointOnLine = new[] { lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t };
                 return DistancePointToPoint(qPoint, pointOnLine);
             }
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]) +
-                     lineVector[2] * (qPoint[2] - lineRefPt[2]))
-                    / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1] + lineVector[2] * lineVector[2]);
+            t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y) +
+                     lineVector.Z * (qPoint.Z - lineRefPt.Z))
+                    / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y + lineVector.Z * lineVector.Z);
             pointOnLine = new[]
-            {lineRefPt[0] + lineVector[0]*t, lineRefPt[1] + lineVector[1]*t, lineRefPt[2] + lineVector[2]*t};
+            {lineRefPt.X + lineVector.X*t, lineRefPt.Y + lineVector.Y*t, lineRefPt.Z + lineVector.Z*t};
             return DistancePointToPoint(qPoint, pointOnLine);
         }
 
@@ -1910,9 +1904,9 @@ namespace TVGL
             double t;
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
             * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            t = (lineVector[0] * (qPoint.X - lineRefPt.X) + lineVector[1] * (qPoint.Y - lineRefPt.Y))
-                    / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);
-            pointOnLine = new Point(lineRefPt.X + lineVector[0] * t, lineRefPt.Y + lineVector[1] * t);
+            t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
+                    / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
+            pointOnLine = new Point(lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t);
             return DistancePointToPoint(qPoint, pointOnLine);
         }
 
@@ -1950,10 +1944,10 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double SquareDistancePointToPoint(Vector2 p1, Vector2 p2)
         {
-            var dX = p1[0] - p2[0];
-            var dY = p1[1] - p2[1];
+            var dX = p1.X - p2.X;
+            var dY = p1.Y - p2.Y;
             if (p1.Length == 2) return dX * dX + dY * dY;
-            var dZ = p1[2] - p2[2];
+            var dZ = p1.Z - p2.Z;
             return dX * dX + dY * dY + dZ * dZ;
         }
 
@@ -2014,7 +2008,7 @@ namespace TVGL
         public static Vector2 PointOnFaceFromIntersectingLine(List<Vector2> vertices, Vector2 normal, Vector2 point1,
             Vector2 point2)
         {
-            var distanceToOrigin = normal.Dot(vertices[0]);
+            var distanceToOrigin = normal.Dot(vertices.X);
             var d1 = normal.Dot(point1);
             var d2 = normal.Dot(point2);
             if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
@@ -2063,9 +2057,9 @@ namespace TVGL
             Vector3 point2)
         {
             var position = PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1, point2);
-            var d1 = point2.subtract(point1).norm2();
-            var d2 = point2.subtract(position).norm2();
-            var d3 = point1.subtract(position).norm2();
+            var d1 = point2.Subtract(point1).norm2();
+            var d2 = point2.Subtract(position).norm2();
+            var d3 = point1.Subtract(position).norm2();
             return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : null;
         }
 
@@ -2144,7 +2138,7 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Point PointOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
                 line.ToPoint.X, line.ToPoint.Y, out var x, out var y);
             return new Point(x, y);
         }
@@ -2160,7 +2154,7 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Vector2 PointLightOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
                 line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
             return new Vector2(x, y);
         }
@@ -2169,7 +2163,7 @@ namespace TVGL
             double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
         {
             var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product
-            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position[2] = 0.0
+            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position.Z = 0.0
             var fraction = (d1 - distOfPlane) / (d1 - d2);
             x = fromPointX * fraction + toPointX * (1 - fraction);
             y = fromPointY * fraction + toPointY * (1 - fraction);
@@ -2230,7 +2224,7 @@ namespace TVGL
         public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vector2 point3D, Vector2 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Position);
+            var distanceToOrigin = face.Normal.Dot(face.Vertices.X.Position);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
             if (newPoint == null) return Vector3.Null;
             return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
@@ -2252,26 +2246,26 @@ namespace TVGL
         {
             Vector3 newPoint;
             signedDistance = double.NaN;
-            var d = face.Normal.Dot(face.Vertices[0].Position);
+            var d = face.Normal.Dot(face.Vertices.X.Position);
             var n = face.Normal;
             switch (direction)
             {
                 case CartesianDirections.XNegative:
                 case CartesianDirections.XPositive:
-                    if (face.Normal[0].IsNegligible()) return null;
-                    newPoint = new Vector3((d - n[1] * point3D[1] - n[2] * point3D[2]) / n[0], point3D[1], point3D[2]);
-                    signedDistance = (Math.Sign((int)direction)) * (newPoint[0] - point3D[0]);
+                    if (face.Normal.X.IsNegligible()) return null;
+                    newPoint = new Vector3((d - n.Y * point3D.Y - n.Z * point3D.Z) / n.X, point3D.Y, point3D.Z);
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint.X - point3D.X);
                     break;
                 case CartesianDirections.YNegative:
                 case CartesianDirections.YPositive:
-                    if (face.Normal[1].IsNegligible()) return null;
-                    newPoint = new Vector3(point3D[0], (d - n[0] * point3D[0] - n[2] * point3D[2]) / n[1], point3D[2]);
-                    signedDistance = (Math.Sign((int)direction)) * (newPoint[1] - point3D[1]);
+                    if (face.Normal.Y.IsNegligible()) return null;
+                    newPoint = new Vector3(point3D.X, (d - n.X * point3D.X - n.Z * point3D.Z) / n.Y, point3D.Z);
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint.Y - point3D.Y);
                     break;
                 default:
-                    if (face.Normal[2].IsNegligible()) return null;
-                    newPoint = new Vector3(point3D[0], point3D[1], (d - n[0] * point3D[0] - n[1] * point3D[1]) / n[2]);
-                    signedDistance = (Math.Sign((int)direction)) * (newPoint[2] - point3D[2]);
+                    if (face.Normal.Z.IsNegligible()) return null;
+                    newPoint = new Vector3(point3D.X, point3D.Y, (d - n.X * point3D.X - n.Y * point3D.Y) / n.Z);
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint.Z - point3D.Z);
                     break;
             }
 
@@ -2371,9 +2365,9 @@ namespace TVGL
         {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
             var p = vertexInQuestion;
-            var a = vertices[0];
-            var b = vertices[1];
-            var c = vertices[2];
+            var a = vertices.X;
+            var b = vertices.Y;
+            var c = vertices.Z;
             return SameSide(p, a, b, c, onBoundaryIsInside) &&
                    SameSide(p, b, a, c, onBoundaryIsInside) &&
                    SameSide(p, c, a, b, onBoundaryIsInside);
@@ -2398,9 +2392,9 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool SameSide(Vector2 p1, Vector2 p2, Vector2 a, Vector2 b, bool onBoundaryIsInside = true)
         {
-            var cp1 = b.subtract(a, 3).Cross(p1.subtract(a, 3));
-            var cp2 = b.subtract(a, 3).Cross(p2.subtract(a, 3));
-            var dot = cp1.Dot(cp2, 3);
+            var cp1 = b.Subtract(a).Cross(p1.Subtract(a));
+            var cp2 = b.Subtract(a).Cross(p2.Subtract(a));
+            var dot = cp1.Dot(cp2);
             if (dot.IsNegligible()) return onBoundaryIsInside;
             if (Math.Abs(dot) < Constants.BaseTolerance) return onBoundaryIsInside;
             return dot > 0.0;
@@ -2408,18 +2402,18 @@ namespace TVGL
 
         internal static bool SameSideFast(Vector2 p1, Vector2 p2, Vector2 a, Vector2 b, bool onBoundaryIsInside = true)
         {
-            var aX = a[0];
-            var aY = a[1];
-            var aZ = a[2];
-            var v1x = b[0] - aX;
-            var v1y = b[1] - aY;
-            var v1z = b[2] - aZ;
-            var v2x = p1[0] - aX;
-            var v2y = p1[1] - aY;
-            var v2z = p1[2] - aZ;
-            var v3x = p2[0] - aX;
-            var v3y = p2[1] - aY;
-            var v3z = p2[2] - aZ;
+            var aX = a.X;
+            var aY = a.Y;
+            var aZ = a.Z;
+            var v1x = b.X - aX;
+            var v1y = b.Y - aY;
+            var v1z = b.Z - aZ;
+            var v2x = p1.X - aX;
+            var v2y = p1.Y - aY;
+            var v2z = p1.Z - aZ;
+            var v3x = p2.X - aX;
+            var v3y = p2.Y - aY;
+            var v3z = p2.Z - aZ;
             //The cross product split into its cofactor expansion
             var cp1x = v1y * v2z - v1z * v2y;
             var cp1y = v1x * v2z - v1z * v2x;
@@ -2470,7 +2464,7 @@ namespace TVGL
                         return onBoundaryIsInside;
                     }
 
-                    var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Position);
+                    var distanceToOrigin = face.Normal.Dot(face.Vertices.X.Position);
                     var t = -(vertexInQuestion.Position.Dot(face.Normal) - distanceToOrigin) /
                             direction.Dot(face.Normal);
                     //Note that if t == 0, then it is on the face
@@ -2851,11 +2845,11 @@ namespace TVGL
             for (var i = 0; i < clipPathLength - 1; i++) //-1 since we only need two lines
             {
                 var point1 = clip.Path[i];
-                var point2 = (i == clipPathLength - 1) ? clip.Path[0] : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
+                var point2 = (i == clipPathLength - 1) ? clip.Path.X : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
                 for (var j = 0; j < subjectPathLength; j++) //Need to consider all the lines
                 {
                     var point3 = subject.Path[j];
-                    var point4 = (j == subjectPathLength - 1) ? subject.Path[0] : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
+                    var point4 = (j == subjectPathLength - 1) ? subject.Path.X : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
                     if (LineLineIntersection(point1, point2, point3, point4, out var intersectionPoint, false))
                     {
                         if (intersectionPoint == point1 ||
