@@ -807,6 +807,31 @@ namespace TVGL
             return boundingBox;
         }
 
+        public static BoundingBox FindAxisAlignedBoundingBox(IList<Vertex> vertices)
+        {
+            var xD = GetLengthAndExtremeVertices(Constants.X, vertices, out var bottomVerticesX, out var topVerticesX);
+            var yD = GetLengthAndExtremeVertices(Constants.Y, vertices, out var bottomVerticesY, out var topVerticesY);
+            var zD = GetLengthAndExtremeVertices(Constants.Z, vertices, out var bottomVerticesZ, out var topVerticesZ);
+            var pointsOnFaces = new List<List<Vertex>>
+            {
+                bottomVerticesX,
+                topVerticesX,
+                bottomVerticesY,
+                topVerticesY,
+                bottomVerticesZ,
+                topVerticesZ
+            };
+            var boundingBox = new BoundingBox
+            {
+                Dimensions = new[] { xD, yD, zD },
+                Directions = new[] { Constants.X, Constants.Y, Constants.Z },
+                PointsOnFaces = pointsOnFaces.ToArray(),
+                Volume = xD * yD * zD
+            };
+            boundingBox.SetCornerVertices(); //This also sets the Center.
+            return boundingBox;
+        }
+
         private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)
         {
             var direction1 = direction.normalize(3);
