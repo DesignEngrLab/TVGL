@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using TVGL.Numerics;
 
 namespace TVGL
 {

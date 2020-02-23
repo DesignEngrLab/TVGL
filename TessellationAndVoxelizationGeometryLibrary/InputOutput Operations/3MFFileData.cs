@@ -20,6 +20,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 using TVGL.IOFunctions.threemfclasses;
+using TVGL.Numerics;
 using Object = TVGL.IOFunctions.threemfclasses.Object;
 
 namespace TVGL.IOFunctions

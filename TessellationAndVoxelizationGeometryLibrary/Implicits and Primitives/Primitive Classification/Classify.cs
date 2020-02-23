@@ -923,7 +923,7 @@ namespace TVGL
                         normalsOfGaussPlane.Add(tempCross);
                     else normalsOfGaussPlane.Add(-1*tempCross);
             }
-            var normalOfGaussPlane = new double[3];
+            var normalOfGaussPlane = new Vector3();
             normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current + c);
             normalOfGaussPlane = normalOfGaussPlane.Divide(normalsOfGaussPlane.Count);
 

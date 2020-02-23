@@ -90,7 +90,7 @@ namespace TVGL
         /// </summary>
         /// <param name="v">The v.</param>
         public Point(Vertex v)
-            : this(v, v.Position[0], v.Position[1], 0.0)
+            : this(v, v.Position.X, v.Position.Y)
         {
         }
 
@@ -101,33 +101,11 @@ namespace TVGL
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         public Point(Vertex vertex, double x, double y)
-            : this(vertex, x, y, 0.0)
+            : this(x, y)
         {
+            References.Add(vertex);
         }
 
-        /// <inheritdoc />
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        public Point(double x, double y)
-            : this(null, x, y, 0.0)
-        {
-            if (double.IsNaN(x) || double.IsNaN(y)) throw new Exception("Must be a number");
-        }
-
-        /// <inheritdoc />
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
-        /// </summary>
-        public Point(Vector2 p)
-        {
-            Light = new Vector2(p.X, p.Y);
-            Lines = new List<Line>();
-            if (p.References != null)
-                References = new List<Vertex>(p.References);
-        }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Point" /> class.
@@ -135,12 +113,22 @@ namespace TVGL
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         /// <param name="point"></param>
-        public Point(Point point)
+        public Point(Point point) : this(point.X, point.Y)
         {
-            Light = new Vector2(point.X, point.Y);
-            Lines = new List<Line>(point.Lines);
             References = new List<Vertex>(point.References);
         }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Point" /> class.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        public Point(IList<double> coordinates) : this(coordinates[0], coordinates[1]) { }
+
+        /// <inheritdoc />
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
+        /// </summary>
+        public Point(Vector2 p) : this(p.X, p.Y) { }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Point" /> class.
@@ -149,22 +137,13 @@ namespace TVGL
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         /// <param name="z">The z.</param>
-        public Point(Vertex vertex, double x, double y, double z)
+        public Point(double x, double y)
         {
             Light = new Vector2(x, y);
             Lines = new List<Line>();
             References = new List<Vertex>();
-            if (vertex == null) return;
-            References.Add(vertex);
         }
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Point" /> class.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        public Point(IList<double> coordinates) : this(null, coordinates[0], coordinates[1])
-        {
-        }
         #endregion
 
         #region Public Methods

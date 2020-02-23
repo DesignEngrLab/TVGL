@@ -202,9 +202,9 @@ namespace TVGL
         /// <returns></returns>
         public static double Perimeter(IList<Vector2> polygon)
         {
-            double perimeter = DistancePointToPoint(polygon.Last(), polygon.X);
+            double perimeter = Vector2.Distance(polygon.Last(), polygon[0]);
             for (var i = 1; i < polygon.Count; i++)
-                perimeter += DistancePointToPoint(polygon[i - 1], polygon[i]);
+                perimeter += Vector2.Distance(polygon[i - 1], polygon[i]);
             return perimeter;
         }
 
@@ -215,9 +215,9 @@ namespace TVGL
         /// <returns></returns>
         public static double Perimeter(IList<Point> polygon)
         {
-            double perimeter = DistancePointToPoint(polygon.Last(), polygon.X);
+            double perimeter = Vector2.Distance(polygon.Last().Light, polygon[0].Light);
             for (var i = 1; i < polygon.Count; i++)
-                perimeter += DistancePointToPoint(polygon[i - 1], polygon[i]);
+                perimeter += Vector2.Distance(polygon[i - 1].Light, polygon[i].Light);
             return perimeter;
         }
 
@@ -229,9 +229,9 @@ namespace TVGL
         public static double Perimeter(IList<Vertex> polygon3D)
         {
 
-            double perimeter = DistancePointToPoint(polygon3D.Last(), polygon3D.X);
+            double perimeter = Vector3.Distance(polygon3D.Last().Position, polygon3D[0].Position);
             for (var i = 1; i < polygon3D.Count; i++)
-                perimeter += DistancePointToPoint(polygon3D[i - 1], polygon3D[i]);
+                perimeter += Vector3.Distance(polygon3D[i - 1].Position, polygon3D[i].Position);
             return perimeter;
         }
         #endregion
@@ -384,14 +384,14 @@ namespace TVGL
             //Also check if all x are the same. The algorithm will catch all y's and output zero,
             //But it may output a small number, even if all the x's are the same
             var n = polygon.Count;
-            var p0 = polygon.X;
+            var p0 = polygon[0];
             var xval = p0.X;
 
             //Optimized version reduces get functions from arrays and point.X and point.Y
             // j == i - 1;
             // k == i + 1
             var area = 0.0;
-            var p1 = polygon.Y;
+            var p1 = polygon[1];
             var jY = p0.Y;
             var iX = p1.X;
             var iY = p1.Y;
@@ -474,13 +474,13 @@ namespace TVGL
             switch (coord)
             {
                 case 1:
-                    area += vertices[n].Y * (vertices.Y.Z - vertices[n - 1].Z);
+                    area += vertices[n].Y * (vertices[1].Z - vertices[n - 1].Z);
                     break;
                 case 2:
-                    area += vertices[n].Z * (vertices.Y.X - vertices[n - 1].X);
+                    area += vertices[n].Z * (vertices[1].X - vertices[n - 1].X);
                     break;
                 case 3:
-                    area += vertices[n].X * (vertices.Y.Y - vertices[n - 1].Y);
+                    area += vertices[n].X * (vertices[1].Y - vertices[n - 1].Y);
                     break;
             }
 
@@ -552,13 +552,13 @@ namespace TVGL
             switch (coord)
             {
                 case 1:
-                    area += vertices[n].Y * (vertices.Y.Z - vertices[n - 1].Z);
+                    area += vertices[n].Y * (vertices[1].Z - vertices[n - 1].Z);
                     break;
                 case 2:
-                    area += vertices[n].Z * (vertices.Y.X - vertices[n - 1].X);
+                    area += vertices[n].Z * (vertices[1].X - vertices[n - 1].X);
                     break;
                 case 3:
-                    area += vertices[n].X * (vertices.Y.Y - vertices[n - 1].Y);
+                    area += vertices[n].X * (vertices[1].Y - vertices[n - 1].Y);
                     break;
             }
 
@@ -745,8 +745,8 @@ namespace TVGL
         public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Matrix4x4 transform,
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
-            var points = new List<Vector2>();
-            var simpleCompareDict = new Dictionary<string, Vector2>();
+            var points = new List<Point>();
+            var simpleCompareDict = new Dictionary<string, Point>();
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var stringformat = "F" + numDecimalPoints;
@@ -755,7 +755,7 @@ namespace TVGL
                 var point = Get2DProjectionPoint(vertex, transform);
                 if (!mergeDuplicateReferences)
                 {
-                    points.Add(new Vector2(vertex, point.X, point.Y));
+                    points.Add(new Point(vertex, point.X, point.Y));
                 }
                 else
                 {
@@ -1069,7 +1069,7 @@ namespace TVGL
             var points = new Vector2[vertices.Count];
             for (var i = 0; i < vertices.Count; i++)
             {
-                var pointAs4 = new Vector4(vertices[i],1.0);
+                var pointAs4 = new Vector4(vertices[i], 1.0);
                 pointAs4 = pointAs4 * transform;
                 points[i] = new Vector2(pointAs4.X, pointAs4.Y);
             }
@@ -1082,11 +1082,11 @@ namespace TVGL
         /// <param name="vector3D"></param>
         /// <param name="direction">The direction.</param>
         /// <returns>System.Vector2[].</returns>
-        public static Vector2 Get2DProjectionVector(Vector2 vector3D, Vector2 direction)
+        public static Vector2 Get2DProjectionVector(Vector3 vector3D, Vector3 direction)
         {
             var transform = TransformToXYPlane(direction);
-            var vectorAs4 = transform * new[] { vector3D.X, vector3D.Y, vector3D.Z, 1.0 };
-            return new[] { vectorAs4.X, vectorAs4.Y };
+            var vProjected = Vector3.Transform(vector3D, transform);
+            return new Vector2(vProjected.X, vProjected.Y);
         }
 
         /// <summary>
@@ -1220,8 +1220,8 @@ namespace TVGL
         {
             var axis = edge1.Vector.Cross(edge2.Vector);
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y),
-                InteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y));
+            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1], axis),
+                InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1], axis));
         }
 
         /// <summary>
@@ -1259,7 +1259,7 @@ namespace TVGL
         internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
+            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -1272,7 +1272,7 @@ namespace TVGL
         internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return InteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
+            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -1285,7 +1285,7 @@ namespace TVGL
         internal static double ExteriorAngleBetweenEdgesInCCWList(Vector2 edge1, Vector2 edge2, Vector2 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
-            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
+            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -1295,10 +1295,10 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 edge1, Vector2 edge2, Vector2 axis)
+        internal static double InteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
-            return InteriorAngleBetweenEdgesInCCWList(twoDEdges.X, twoDEdges.Y);
+            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -1310,7 +1310,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double ExteriorAngleBetweenEdgesInCCWList(Point a, Point b, Point c)
         {
-            return ExteriorAngleBetweenEdgesInCCWList(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
+            return ExteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
 
         /// <summary>
@@ -1322,7 +1322,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Point a, Point b, Point c)
         {
-            return InteriorAngleBetweenEdgesInCCWList(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
+            return InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
 
         /// <summary>
@@ -1334,7 +1334,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
         {
-            return InteriorAngleBetweenEdgesInCCWList(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
+            return InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
 
         /// <summary>
@@ -1348,8 +1348,8 @@ namespace TVGL
         public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
             var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
-            return InteriorAngleBetweenEdgesInCCWList(new[] { points.Y.X - points.X.X, points.Y.Y - points.X.Y },
-                new[] { points.Z.X - points.Y.X, points.Z.Y - points.Y.Y });
+            return InteriorAngleBetweenEdgesInCCWList(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
+                new Vector2(points[2].X - points[1].X, points[2].Y - points[1].Y));
         }
 
         public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector2 positiveNormal)
@@ -1675,14 +1675,14 @@ namespace TVGL
         /// <param name="n3">The n3.</param>
         /// <param name="d3">The d3.</param>
         /// <returns>System.Vector2.</returns>
-        public static Vector2 PointCommonToThreePlanes(Vector2 n1, double d1, Vector2 n2, double d2, Vector2 n3,
+        public static Vector3 PointCommonToThreePlanes(Vector3 n1, double d1, Vector3 n2, double d2, Vector3 n3,
             double d3)
         {
             var matrixOfNormals = new[,] { { n1.X, n1.Y, n1.Z }, { n2.X, n2.Y, n2.Z }, { n3.X, n3.Y, n3.Z } };
-            var distances = new[] { d1, d2, d3 };
+            var distances = new Vector4(d1, d2, d3, 1.0);
             try
             {
-                return EqualityExtensions.solve(matrixOfNormals, distances);
+                return Vector3.Solve(matrixOfNormals, distances);
             }
             catch
             {
@@ -1690,7 +1690,7 @@ namespace TVGL
             }
         }
 
-        public static Flat GetPlaneFromThreePoints(Vector2 p1, Vector2 p2, Vector2 p3)
+        public static Flat GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)
         {
             var a1 = p2.X - p1.X;
             var b1 = p2.Y - p1.Y;
@@ -1821,9 +1821,9 @@ namespace TVGL
         /// <param name="t1">The t1.</param>
         /// <param name="t2">The t2.</param>
         /// <returns>System.Double.</returns>
-        internal static double SkewedLineIntersection(Vector2 p1, Vector2 n1, Vector2 p2, Vector2 n2,
-            out Vector2 center,
-            out Vector2 interSect1, out Vector2 interSect2, out double t1, out double t2)
+        internal static double SkewedLineIntersection(Vector3 p1, Vector3 n1, Vector3 p2, Vector3 n2,
+            out Vector3 center,
+            out Vector3 interSect1, out Vector3 interSect2, out double t1, out double t2)
         {
             var a00 = n1.X * n1.X + n1.Y * n1.Y + n1.Z * n1.Z;
             var a01 = -n1.X * n2.X - n1.Y * n2.Y - n1.Z * n2.Z;
@@ -1836,8 +1836,8 @@ namespace TVGL
             var t = EqualityExtensions.solve(a, b);
             t1 = t.X;
             t2 = t.Y;
-            interSect1 = new[] { p1.X + n1.X * t1, p1.Y + n1.Y * t1, p1.Z + n1.Z * t1 };
-            interSect2 = new[] { p2.X + n2.X * t2, p2.Y + n2.Y * t2, p2.Z + n2.Z * t2 };
+            interSect1 = new Vector3(p1.X + n1.X * t1, p1.Y + n1.Y * t1, p1.Z + n1.Z * t1);
+            interSect2 = new Vector3(p2.X + n2.X * t2, p2.Y + n2.Y * t2, p2.Z + n2.Z * t2);
             center = new[]
             {(interSect1.X + interSect2.X)/2, (interSect1.Y + interSect2.Y)/2, (interSect1.Z + interSect2.Z)/2};
             return DistancePointToPoint(interSect1, interSect2);
@@ -1867,26 +1867,29 @@ namespace TVGL
         /// <param name="lineVector">n is the vector of the line direction.</param>
         /// <param name="pointOnLine">The point on line closest to point, q.</param>
         /// <returns>System.Double.</returns>
-        public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector,
-            out Vector2 pointOnLine)
+        public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector,
+            out Vector3 pointOnLine)
         {
             double t;
-            if (qPoint.Count() == 2)
-            {
-                /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
-                * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-                t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
-                        / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
-                pointOnLine = new[] { lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t };
-                return DistancePointToPoint(qPoint, pointOnLine);
-            }
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
             t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y) +
                      lineVector.Z * (qPoint.Z - lineRefPt.Z))
                     / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y + lineVector.Z * lineVector.Z);
-            pointOnLine = new[]
-            {lineRefPt.X + lineVector.X*t, lineRefPt.Y + lineVector.Y*t, lineRefPt.Z + lineVector.Z*t};
+            pointOnLine = new Vector3(
+            lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t, lineRefPt.Z + lineVector.Z * t);
+            return DistancePointToPoint(qPoint, pointOnLine);
+        }
+
+        public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector,
+    out Vector2 pointOnLine)
+        {
+            double t;
+            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
+            * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
+            t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
+                    / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
+            pointOnLine = new Vector2(lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t);
             return DistancePointToPoint(qPoint, pointOnLine);
         }
 
@@ -1937,21 +1940,6 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Distances the point to point.
-        /// </summary>
-        /// <param name="p1">point, p1.</param>
-        /// <param name="p2">point, p2.</param>
-        /// <returns>the distance between the two 3D points.</returns>
-        public static double SquareDistancePointToPoint(Vector2 p1, Vector2 p2)
-        {
-            var dX = p1.X - p2.X;
-            var dY = p1.Y - p2.Y;
-            if (p1.Length == 2) return dX * dX + dY * dY;
-            var dZ = p1.Z - p2.Z;
-            return dX * dX + dY * dY + dZ * dZ;
-        }
-
-        /// <summary>
         ///     Returns the signed distance of the point to the plane.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -1972,7 +1960,7 @@ namespace TVGL
         /// <param name="normalOfPlane">The normal of plane.</param>
         /// <param name="signedDistanceToPlane">The signed distance to plane.</param>
         /// <returns>the distance between the two 3D points.</returns>
-        public static double DistancePointToPlane(Vector2 point, Vector2 normalOfPlane, double signedDistanceToPlane)
+        public static double DistancePointToPlane(Vector3 point, Vector3 normalOfPlane, double signedDistanceToPlane)
         {
             return normalOfPlane.Dot(point) - signedDistanceToPlane;
         }
@@ -2057,9 +2045,9 @@ namespace TVGL
             Vector3 point2)
         {
             var position = PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1, point2);
-            var d1 = point2.Subtract(point1).norm2();
-            var d2 = point2.Subtract(position).norm2();
-            var d3 = point1.Subtract(position).norm2();
+            var d1 = point2.Subtract(point1).Length();
+            var d2 = point2.Subtract(position).Length();
+            var d3 = point1.Subtract(position).Length();
             return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : null;
         }
 
@@ -2108,23 +2096,13 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 PointOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Vector2 point1,
-            Vector2 point2)
+        public static Vector3 PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
+            Vector3 point2)
         {
             var d1 = normalOfPlane.Dot(point1);
             var d2 = normalOfPlane.Dot(point2);
             var fraction = (d1 - distOfPlane) / (d1 - d2);
-            var position = new double[3];
-            for (var i = 0; i < 3; i++)
-            {
-                position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
-                if (double.IsNaN(position[i]))
-                {
-                    Debug.WriteLine("This should never occur. The line must parallel to the plane. Prevent this from happening");
-                    return null;
-                }
-            }
-            return position;
+            return Vector3.Lerp(point1, point2, fraction);
         }
 
         /// <summary>
@@ -2232,7 +2210,7 @@ namespace TVGL
 
         /// <summary>
         ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
-        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
+        ///     that triangle, then the result is comprise of NaN's. The signed distance is positive if the vertex points to
         ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
         ///     are considered "inside."
         /// </summary>
@@ -2323,19 +2301,16 @@ namespace TVGL
         ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
         ///     triangle are considered "inside."
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
+        /// <param name="triangle">The vertices.</param>
         /// <param name="vertexInQuestion">The vertex in question.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside triangle] [the specified vertices]; otherwise, <c>false</c>.</returns>
         /// <exception cref="Exception">Incorrect number of points in traingle</exception>
         /// <exception cref="ArgumentException"></exception>
-        /// <references>
-        ///     http://www.blackpawn.com/texts/pointinpoly/
-        /// </references>
-        public static bool IsVertexInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsVertexInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
+            return IsVertexInsideTriangle(triangle, vertexInQuestion.Position, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2343,11 +2318,10 @@ namespace TVGL
         ///     triangle are considered "inside." Assumes vertex in question is in the same plane
         ///     as the triangle.
         /// </summary>
-        public static bool IsVertexInsideTriangle(IList<Vertex> vertices, Vector2 vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vector3 vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            var positions = vertices.Select(vertex => vertex.Position).ToList();
-            return IsVertexInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
+            return IsVertexInsideTriangle(triangle.Select(vertex => vertex.Position), vertexInQuestion, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2355,19 +2329,19 @@ namespace TVGL
         ///     triangle are considered "inside." Assumes vertex in question is in the same plane
         ///     as the triangle.
         /// </summary>
-        /// <param name="vertices"></param>
+        /// <param name="triangle"></param>
         /// <param name="vertexInQuestion"></param>
         /// <param name="onBoundaryIsInside"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static bool IsVertexInsideTriangle(IList<Vector2> vertices, Vector2 vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vector3> triangle, Vector3 vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
+            if (triangle.Count != 3) throw new Exception("Incorrect number of points in traingle");
             var p = vertexInQuestion;
-            var a = vertices.X;
-            var b = vertices.Y;
-            var c = vertices.Z;
+            var a = triangle[0];
+            var b = triangle[1];
+            var c = triangle[2];
             return SameSide(p, a, b, c, onBoundaryIsInside) &&
                    SameSide(p, b, a, c, onBoundaryIsInside) &&
                    SameSide(p, c, a, b, onBoundaryIsInside);

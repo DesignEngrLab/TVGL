@@ -69,7 +69,7 @@ namespace TVGL.IOFunctions.threemfclasses
         [XmlAttribute]
         public string transform { get; set; }
         internal Vector2 transformArray => MakeTransformArray(transform);
-        internal double[,] transformMatrix => MakeTransformMatrix(transformArray);
+        internal Matrix4x4 transformMatrix => MakeTransformMatrix(transformArray);
 
         /// <summary>
         ///     Gets or sets the itemref.
@@ -96,611 +96,595 @@ namespace TVGL.IOFunctions.threemfclasses
         }
 
 
-        internal static Matrix4x4 MakeTransformMatrix(Vector2 transformArray)
+        internal static Matrix4x4 MakeTransformMatrix(double[] transformArray)
         {
-            if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return null;
-            var result = EqualityExtensions.makeIdentity(4);
+            if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return new Matrix4x4();
             if (transformArray.Length == 3)
-            {
-                result[0, 3] = transformArray[0];
-                result[1, 3] = transformArray[1];
-                result[2, 3] = transformArray[2];
-                return result;
-            }
-            result[0, 0] = transformArray[0];
-            result[1, 0] = transformArray[1];
-            result[2, 0] = transformArray[2];
-            result[0, 1] = transformArray[3];
-            result[1, 1] = transformArray[4];
-            result[2, 1] = transformArray[5];
-            result[0, 2] = transformArray[6];
-            result[1, 2] = transformArray[7];
-            result[2, 2] = transformArray[8];
-            result[0, 3] = transformArray[9];
-            result[1, 3] = transformArray[10];
-            result[2, 3] = transformArray[11];
-            return result;
+                return Matrix4x4.CreateTranslation(transformArray[0], transformArray[1], transformArray[2]);
+            return new Matrix4x4(transformArray[0], transformArray[3], transformArray[6], transformArray[9],
+                transformArray[1], transformArray[4], transformArray[7], transformArray[10],
+                transformArray[2], transformArray[5], transformArray[8], transformArray[11]
+                );
         }
-    }
 
-    #endregion
+        #endregion
 
-    #region just MetaData
+        #region just MetaData
 
-    /// <summary>
-    ///     Class Metadata is used in the header and potentially other places.
-    /// </summary>
+        /// <summary>
+        ///     Class Metadata is used in the header and potentially other places.
+        /// </summary>
 #if help
     internal class Metadata
 #else
-    public class Metadata
+        public class Metadata
 #endif
-    {
-        /// <summary>
-        ///     The type
-        /// </summary>
-        [XmlAttribute("name")]
-        public string type;
+        {
+            /// <summary>
+            ///     The type
+            /// </summary>
+            [XmlAttribute("name")]
+            public string type;
+
+            /// <summary>
+            ///     The value
+            /// </summary>
+            [XmlText]
+            public string Value;
+        }
+
+        #endregion
+
+        #region Objects: Component, Mesh, etc.
 
         /// <summary>
-        ///     The value
+        ///     Class Component.
         /// </summary>
-        [XmlText]
-        public string Value;
-    }
-
-    #endregion
-
-    #region Objects: Component, Mesh, etc.
-
-    /// <summary>
-    ///     Class Component.
-    /// </summary>
 #if help
     internal class Component
 #else
-    public class Component
+        public class Component
 #endif
-    {
-        /// <summary>
-        ///     Gets or sets the objectid.
-        /// </summary>
-        /// <value>The objectid.</value>
-        [XmlAttribute]
-        public int objectid
-        { get; set; }
+        {
+            /// <summary>
+            ///     Gets or sets the objectid.
+            /// </summary>
+            /// <value>The objectid.</value>
+            [XmlAttribute]
+            public int objectid
+            { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the transform.
+            /// </summary>
+            /// <value>The transform.</value>
+            [XmlAttribute]
+            public string transform { get; set; }
+            internal Vector2 transformArray => Item.MakeTransformArray(transform);
+            internal double[,] transformMatrix => Item.MakeTransformMatrix(transformArray);
+        }
 
         /// <summary>
-        ///     Gets or sets the transform.
+        ///     Class CT_Triangle.
         /// </summary>
-        /// <value>The transform.</value>
-        [XmlAttribute]
-        public string transform { get; set; }
-        internal Vector2 transformArray => Item.MakeTransformArray(transform);
-        internal double[,] transformMatrix => Item.MakeTransformMatrix(transformArray);
-    }
-
-    /// <summary>
-    ///     Class CT_Triangle.
-    /// </summary>
 #if help
     internal class Triangle
 #else
-    public class Triangle
+        public class Triangle
 #endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Triangle" /> class.
-        /// </summary>
-        public Triangle()
         {
-            p1 = p2 = p3 = pid = -1;
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Triangle" /> class.
+            /// </summary>
+            public Triangle()
+            {
+                p1 = p2 = p3 = pid = -1;
+            }
+            /// <summary>
+            ///     Gets or sets the v1.
+            /// </summary>
+            /// <value>The v1.</value>
+            [XmlAttribute]
+            public int v1 { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the v2.
+            /// </summary>
+            /// <value>The v2.</value>
+            [XmlAttribute]
+            public int v2 { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the v3.
+            /// </summary>
+            /// <value>The v3.</value>
+            [XmlAttribute]
+            public int v3 { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the p1.
+            /// </summary>
+            /// <value>The p1.</value>
+            [XmlAttribute]
+            [DefaultValue(-1)]
+            public int p1 { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the p2.
+            /// </summary>
+            /// <value>The p2.</value>
+            [XmlAttribute]
+            [DefaultValue(-1)]
+            public int p2 { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the p3.
+            /// </summary>
+            /// <value>The p3.</value>
+            [XmlAttribute]
+            [DefaultValue(-1)]
+            public int p3 { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the pid.
+            /// </summary>
+            /// <value>The pid.</value>
+            [XmlAttribute]
+            [DefaultValue(-1)]
+            public int pid { get; set; }
         }
-        /// <summary>
-        ///     Gets or sets the v1.
-        /// </summary>
-        /// <value>The v1.</value>
-        [XmlAttribute]
-        public int v1 { get; set; }
 
         /// <summary>
-        ///     Gets or sets the v2.
+        ///     Class CT_Vertex.
         /// </summary>
-        /// <value>The v2.</value>
-        [XmlAttribute]
-        public int v2 { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the v3.
-        /// </summary>
-        /// <value>The v3.</value>
-        [XmlAttribute]
-        public int v3 { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the p1.
-        /// </summary>
-        /// <value>The p1.</value>
-        [XmlAttribute]
-        [DefaultValue(-1)]
-        public int p1 { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the p2.
-        /// </summary>
-        /// <value>The p2.</value>
-        [XmlAttribute]
-        [DefaultValue(-1)]
-        public int p2 { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the p3.
-        /// </summary>
-        /// <value>The p3.</value>
-        [XmlAttribute]
-        [DefaultValue(-1)]
-        public int p3 { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the pid.
-        /// </summary>
-        /// <value>The pid.</value>
-        [XmlAttribute]
-        [DefaultValue(-1)]
-        public int pid { get; set; }
-    }
-
-    /// <summary>
-    ///     Class CT_Vertex.
-    /// </summary>
 #if help
     internal class Vertex
 #else
-    public class Vertex
+        public class Vertex
 #endif
-    {
-        /// <summary>
-        ///     Gets or sets the x.
-        /// </summary>
-        /// <value>The x.</value>
-        [XmlAttribute]
-        public double x { get; set; }
+        {
+            /// <summary>
+            ///     Gets or sets the x.
+            /// </summary>
+            /// <value>The x.</value>
+            [XmlAttribute]
+            public double x { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the y.
+            /// </summary>
+            /// <value>The y.</value>
+            [XmlAttribute]
+            public double y { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the z.
+            /// </summary>
+            /// <value>The z.</value>
+            [XmlAttribute]
+            public double z { get; set; }
+        }
 
         /// <summary>
-        ///     Gets or sets the y.
+        ///     Class CT_Mesh.
         /// </summary>
-        /// <value>The y.</value>
-        [XmlAttribute]
-        public double y { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the z.
-        /// </summary>
-        /// <value>The z.</value>
-        [XmlAttribute]
-        public double z { get; set; }
-    }
-
-    /// <summary>
-    ///     Class CT_Mesh.
-    /// </summary>
 #if help
     internal class Mesh
 #else
-    public class Mesh
+        public class Mesh
 #endif
-    {
-        /// <summary>
-        ///     Gets or sets the vertices.
-        /// </summary>
-        /// <value>The vertices.</value>
-        [XmlArrayItem("vertex", IsNullable = false)]
-        public List<Vertex> vertices { get; set; }
+        {
+            /// <summary>
+            ///     Gets or sets the vertices.
+            /// </summary>
+            /// <value>The vertices.</value>
+            [XmlArrayItem("vertex", IsNullable = false)]
+            public List<Vertex> vertices { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the triangles.
+            /// </summary>
+            /// <value>The triangles.</value>
+            [XmlArrayItem("triangle", IsNullable = false)]
+            public List<Triangle> triangles { get; set; }
+        }
 
         /// <summary>
-        ///     Gets or sets the triangles.
+        ///     Class Object.
         /// </summary>
-        /// <value>The triangles.</value>
-        [XmlArrayItem("triangle", IsNullable = false)]
-        public List<Triangle> triangles { get; set; }
-    }
-
-    /// <summary>
-    ///     Class Object.
-    /// </summary>
 #if help
     internal class Object
 #else
-    public class Object
+        public class Object
 #endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Object" /> class.
-        /// </summary>
-        public Object()
         {
-            MaterialID = -1;
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Object" /> class.
+            /// </summary>
+            public Object()
+            {
+                MaterialID = -1;
+            }
+            /// <summary>
+            /// Gets or sets the identifier.
+            /// </summary>
+            /// <value>The identifier.</value>
+            [XmlAttribute]
+            public int id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the type.
+            /// </summary>
+            /// <value>The type.</value>
+            [XmlAttribute]
+            //[DefaultValue(ObjectType.model)]
+            public ObjectType type { get; set; }
+
+            /// <summary>
+            /// Gets or sets the material identifier.
+            /// </summary>
+            /// <value>The material identifier.</value>
+            [XmlAttribute("materialid")]
+            [DefaultValue(-1)]
+            public int MaterialID { get; set; }
+
+            /// <summary>
+            /// Gets or sets the thumbnail.
+            /// </summary>
+            /// <value>The thumbnail.</value>
+            [XmlAttribute]
+            public string thumbnail { get; set; }
+
+            /// <summary>
+            /// Gets or sets the partnumber.
+            /// </summary>
+            /// <value>The partnumber.</value>
+            [XmlAttribute]
+            [DefaultValue(0)]
+            public int partnumber { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name.
+            /// </summary>
+            /// <value>The name.</value>
+            [XmlAttribute]
+            public string name { get; set; }
+
+            /// <summary>
+            /// Gets or sets the mesh.
+            /// </summary>
+            /// <value>The mesh.</value>
+            [XmlElement]
+            public Mesh mesh { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the components.
+            /// </summary>
+            /// <value>The components.</value>
+            [XmlArrayItem("component", IsNullable = false)]
+            public List<Component> components { get; set; }
         }
-        /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-        [XmlAttribute]
-        public int id { get; set; }
 
         /// <summary>
-        /// Gets or sets the type.
+        ///     Enum ST_ObjectType
         /// </summary>
-        /// <value>The type.</value>
-        [XmlAttribute]
-        //[DefaultValue(ObjectType.model)]
-        public ObjectType type { get; set; }
-
-        /// <summary>
-        /// Gets or sets the material identifier.
-        /// </summary>
-        /// <value>The material identifier.</value>
-        [XmlAttribute("materialid")]
-        [DefaultValue(-1)]
-        public int MaterialID { get; set; }
-
-        /// <summary>
-        /// Gets or sets the thumbnail.
-        /// </summary>
-        /// <value>The thumbnail.</value>
-        [XmlAttribute]
-        public string thumbnail { get; set; }
-
-        /// <summary>
-        /// Gets or sets the partnumber.
-        /// </summary>
-        /// <value>The partnumber.</value>
-        [XmlAttribute]
-        [DefaultValue(0)]
-        public int partnumber { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
-        [XmlAttribute]
-        public string name { get; set; }
-
-        /// <summary>
-        /// Gets or sets the mesh.
-        /// </summary>
-        /// <value>The mesh.</value>
-        [XmlElement]
-        public Mesh mesh { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the components.
-        /// </summary>
-        /// <value>The components.</value>
-        [XmlArrayItem("component", IsNullable = false)]
-        public List<Component> components { get; set; }
-    }
-
-    /// <summary>
-    ///     Enum ST_ObjectType
-    /// </summary>
 #if help
     internal enum ObjectType
 #else
-    public enum ObjectType
+        public enum ObjectType
 #endif
-    {
-        /// <summary>
-        ///     The model
-        /// </summary>
-        model,
+        {
+            /// <summary>
+            ///     The model
+            /// </summary>
+            model,
+
+            /// <summary>
+            ///     The support
+            /// </summary>
+            support,
+
+            /// <summary>
+            ///     The other
+            /// </summary>
+            other
+        }
+
+        #endregion
+
+        #region Resources
 
         /// <summary>
-        ///     The support
+        ///     Class CT_Resources.
         /// </summary>
-        support,
-
-        /// <summary>
-        ///     The other
-        /// </summary>
-        other
-    }
-
-    #endregion
-
-    #region Resources
-
-    /// <summary>
-    ///     Class CT_Resources.
-    /// </summary>
 #if help
     internal class Resources
 #else
-    public class Resources
+        public class Resources
 #endif
-    {
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Resources" /> class.
-        /// </summary>
-        public Resources()
         {
-            objects = new List<Object>();
-            materials = new List<Material>();
-            basematerials = new List<BaseMaterials>();
+            /// <summary>
+            ///     Initializes a new instance of the <see cref="Resources" /> class.
+            /// </summary>
+            public Resources()
+            {
+                objects = new List<Object>();
+                materials = new List<Material>();
+                basematerials = new List<BaseMaterials>();
+            }
+
+            /// <summary>
+            /// Gets or sets the basematerials.
+            /// </summary>
+            /// <value>The basematerials.</value>
+            [XmlElement("basematerials")]
+            public List<BaseMaterials> basematerials { get; set; }
+
+            /// <summary>
+            /// Gets or sets the materials.
+            /// </summary>
+            /// <value>The materials.</value>
+            [XmlElement("material")]
+            public List<Material> materials { get; set; }
+
+            /// <summary>
+            /// Gets or sets the colors.
+            /// </summary>
+            /// <value>The colors.</value>
+            [XmlElement("color")]
+            public List<Color3MF> colors { get; set; }
+
+            /// <summary>
+            ///     Gets or sets the object.
+            /// </summary>
+            /// <value>The object.</value>
+            [XmlElement("object")]
+            public List<Object> objects { get; set; }
         }
 
+        #endregion
+
+        #region Materials and Colors
+        #region the 2013/01 approach
         /// <summary>
-        /// Gets or sets the basematerials.
+        ///     Class Material.
         /// </summary>
-        /// <value>The basematerials.</value>
-        [XmlElement("basematerials")]
-        public List<BaseMaterials> basematerials { get; set; }
-
-        /// <summary>
-        /// Gets or sets the materials.
-        /// </summary>
-        /// <value>The materials.</value>
-        [XmlElement("material")]
-        public List<Material> materials { get; set; }
-
-        /// <summary>
-        /// Gets or sets the colors.
-        /// </summary>
-        /// <value>The colors.</value>
-        [XmlElement("color")]
-        public List<Color3MF> colors { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the object.
-        /// </summary>
-        /// <value>The object.</value>
-        [XmlElement("object")]
-        public List<Object> objects { get; set; }
-    }
-
-    #endregion
-
-    #region Materials and Colors
-    #region the 2013/01 approach
-    /// <summary>
-    ///     Class Material.
-    /// </summary>
 #if help
     internal class Material
 #else
-    public class Material
+        public class Material
 #endif
-    {
-        /// <summary>
-        /// Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
-        [XmlAttribute]
-        public string name { get; set; }
+        {
+            /// <summary>
+            /// Gets or sets the name.
+            /// </summary>
+            /// <value>The name.</value>
+            [XmlAttribute]
+            public string name { get; set; }
+
+            /// <summary>
+            /// Gets or sets the identifier.
+            /// </summary>
+            /// <value>The identifier.</value>
+            [XmlAttribute]
+            public int id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the colorid.
+            /// </summary>
+            /// <value>The colorid.</value>
+            [XmlAttribute]
+            public int colorid { get; set; }
+
+            /// <summary>
+            /// Gets or sets the type.
+            /// </summary>
+            /// <value>The type.</value>
+            [XmlAttribute]
+            public string type { get; set; }
+        }
 
         /// <summary>
-        /// Gets or sets the identifier.
+        ///     Class Color3MF.
         /// </summary>
-        /// <value>The identifier.</value>
-        [XmlAttribute]
-        public int id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the colorid.
-        /// </summary>
-        /// <value>The colorid.</value>
-        [XmlAttribute]
-        public int colorid { get; set; }
-
-        /// <summary>
-        /// Gets or sets the type.
-        /// </summary>
-        /// <value>The type.</value>
-        [XmlAttribute]
-        public string type { get; set; }
-    }
-
-    /// <summary>
-    ///     Class Color3MF.
-    /// </summary>
 #if help
     internal class Color3MF
 #else
-    public class Color3MF
+        public class Color3MF
 #endif
-    {
-        /// <summary>
-        /// Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
-        [XmlAttribute]
-        public string name { get; set; }
-
-        /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-        [XmlAttribute]
-        public int id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the color string.
-        /// </summary>
-        /// <value>The color string.</value>
-        [XmlAttribute("value")]
-        public string colorString { get; set; }
-
-        internal Color color
         {
-            get
+            /// <summary>
+            /// Gets or sets the name.
+            /// </summary>
+            /// <value>The name.</value>
+            [XmlAttribute]
+            public string name { get; set; }
+
+            /// <summary>
+            /// Gets or sets the identifier.
+            /// </summary>
+            /// <value>The identifier.</value>
+            [XmlAttribute]
+            public int id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the color string.
+            /// </summary>
+            /// <value>The color string.</value>
+            [XmlAttribute("value")]
+            public string colorString { get; set; }
+
+            internal Color color
             {
-                if (_color == null)
-                    _color = new Color(colorString);
-                return _color;
+                get
+                {
+                    if (_color == null)
+                        _color = new Color(colorString);
+                    return _color;
+                }
             }
+            private Color _color;
+
+
         }
-        private Color _color;
-
-
-    }
-    #endregion
-    #region the 2015/02 approach
-    /// <summary>
-    /// Class BaseMaterials.
-    /// </summary>
+        #endregion
+        #region the 2015/02 approach
+        /// <summary>
+        /// Class BaseMaterials.
+        /// </summary>
 #if help
     internal class BaseMaterials
 #else
-    public class BaseMaterials
+        public class BaseMaterials
 #endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BaseMaterials"/> class.
-        /// </summary>
-        public BaseMaterials()
         {
-            bases = new List<Base>();
-        }
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BaseMaterials"/> class.
+            /// </summary>
+            public BaseMaterials()
+            {
+                bases = new List<Base>();
+            }
 
+            /// <summary>
+            /// Gets or sets the base.
+            /// </summary>
+            /// <value>The base.</value>
+            [XmlElement("base")]
+            public List<Base> bases { get; set; }
+            /// <summary>
+            /// Gets or sets the identifier.
+            /// </summary>
+            /// <value>The identifier.</value>
+            [XmlAttribute]
+            public int id { get; set; }
+        }
         /// <summary>
-        /// Gets or sets the base.
+        ///     Class Base.
         /// </summary>
-        /// <value>The base.</value>
-        [XmlElement("base")]
-        public List<Base> bases { get; set; }
-        /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-        [XmlAttribute]
-        public int id { get; set; }
-    }
-    /// <summary>
-    ///     Class Base.
-    /// </summary>
 #if help
     internal class Base
 #else
-    public class Base
+        public class Base
 #endif
-    {
-        /// <summary>
-        ///     Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
-        [XmlAttribute]
-        public string name { get; set; } = "noname";
-
-        /// <summary>
-        /// Gets or sets the color string.
-        /// </summary>
-        /// <value>The color string.</value>
-        [XmlAttribute("displaycolor")]
-        public string colorString { get; set; }
-
-        internal Color color
         {
-            get
+            /// <summary>
+            ///     Gets or sets the name.
+            /// </summary>
+            /// <value>The name.</value>
+            [XmlAttribute]
+            public string name { get; set; } = "noname";
+
+            /// <summary>
+            /// Gets or sets the color string.
+            /// </summary>
+            /// <value>The color string.</value>
+            [XmlAttribute("displaycolor")]
+            public string colorString { get; set; }
+
+            internal Color color
             {
-                if (_color == null)
-                    _color = new Color(colorString);
-                return _color;
+                get
+                {
+                    if (_color == null)
+                        _color = new Color(colorString);
+                    return _color;
+                }
             }
+            private Color _color;
+
         }
-        private Color _color;
 
-    }
+        #endregion
+        #endregion
 
-    #endregion
-    #endregion
-
-    #region Content_Types
+        #region Content_Types
 #if help
     internal class Types
 #else
-    /// <summary>
-    /// Class Types.
-    /// </summary>
-    public class Types
+        /// <summary>
+        /// Class Types.
+        /// </summary>
+        public class Types
 #endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Types" /> class.
-        /// </summary>
-        public Types()
         {
-            Defaults = new List<Default>();
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Types" /> class.
+            /// </summary>
+            public Types()
+            {
+                Defaults = new List<Default>();
+            }
+
+            /// <summary>
+            /// Gets or sets the defaults.
+            /// </summary>
+            /// <value>The defaults.</value>
+            [XmlElement("Default")]
+            public List<Default> Defaults { get; set; }
+
+            /// <summary>
+            /// The rels
+            /// </summary>
+            [XmlElement("Relationship")]
+            public Relationship[] rels;
         }
-
-        /// <summary>
-        /// Gets or sets the defaults.
-        /// </summary>
-        /// <value>The defaults.</value>
-        [XmlElement("Default")]
-        public List<Default> Defaults { get; set; }
-
-        /// <summary>
-        /// The rels
-        /// </summary>
-        [XmlElement("Relationship")]
-        public Relationship[] rels;
-    }
 #if help
     internal class Default
 #else
-    /// <summary>
-    /// Class Default.
-    /// </summary>
-    public class Default
+        /// <summary>
+        /// Class Default.
+        /// </summary>
+        public class Default
 #endif
-    {
-        /// <summary>
-        /// Gets or sets the extension.
-        /// </summary>
-        /// <value>The extension.</value>
-        [XmlAttribute]
-        public string Extension { get; set; }
+        {
+            /// <summary>
+            /// Gets or sets the extension.
+            /// </summary>
+            /// <value>The extension.</value>
+            [XmlAttribute]
+            public string Extension { get; set; }
 
-        /// <summary>
-        /// Gets or sets the type of the content.
-        /// </summary>
-        /// <value>The type of the content.</value>
-        [XmlAttribute]
-        public string ContentType { get; set; }
-    }
-    #endregion
+            /// <summary>
+            /// Gets or sets the type of the content.
+            /// </summary>
+            /// <value>The type of the content.</value>
+            [XmlAttribute]
+            public string ContentType { get; set; }
+        }
+        #endregion
 
-    #region Relationships
+        #region Relationships
 
 
 #if help
     internal class Relationship
 #else
-    /// <summary>
-    /// Class Relationship.
-    /// </summary>
-    public class Relationship
+        /// <summary>
+        /// Class Relationship.
+        /// </summary>
+        public class Relationship
 #endif
-    {
-        /// <summary>
-        /// Gets or sets the target.
-        /// </summary>
-        /// <value>The target.</value>
-        [XmlAttribute]
-        public string Target { get; set; }
-        /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-        [XmlAttribute]
-        public string Id { get; set; }
-        /// <summary>
-        /// Gets or sets the type.
-        /// </summary>
-        /// <value>The type.</value>
-        [XmlAttribute]
-        public string Type { get; set; }
-    }
-    #endregion
+        {
+            /// <summary>
+            /// Gets or sets the target.
+            /// </summary>
+            /// <value>The target.</value>
+            [XmlAttribute]
+            public string Target { get; set; }
+            /// <summary>
+            /// Gets or sets the identifier.
+            /// </summary>
+            /// <value>The identifier.</value>
+            [XmlAttribute]
+            public string Id { get; set; }
+            /// <summary>
+            /// Gets or sets the type.
+            /// </summary>
+            /// <value>The type.</value>
+            [XmlAttribute]
+            public string Type { get; set; }
+        }
+        #endregion
 
-}
+    }

@@ -278,7 +278,7 @@ namespace TVGL
                 // is it a crack or a sharp edge?
                 // in order to find out we look to the other two faces connected to each
                 // face to find out
-                var ownedNeighborAvgNormals = new double[3];
+                var ownedNeighborAvgNormals = new Vector3();
                 var numNeighbors = 0;
                 foreach (var face in _ownedFace.AdjacentFaces)
                 {
@@ -289,7 +289,7 @@ namespace TVGL
                     }
                 }
                 ownedNeighborAvgNormals = ownedNeighborAvgNormals.Divide(numNeighbors);
-                var otherNeighborAvgNormals = new double[3];
+                var otherNeighborAvgNormals= new Vector3();
                 numNeighbors = 0;
                 foreach (var face in _otherFace.AdjacentFaces)
                 {
