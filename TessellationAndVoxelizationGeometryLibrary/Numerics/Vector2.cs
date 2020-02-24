@@ -301,8 +301,15 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 Transform(Vector2 position, Matrix3x2 matrix)
+        public static Vector2 Transform(Vector2 position, Matrix3x3 matrix)
         {
+            if (matrix.IsProjectiveTransform)
+            {
+                var factor = 1 / (position.X * matrix.M13 + position.Y * matrix.M23 + matrix.M33);
+                return new Vector2(
+                    factor * (position.X * matrix.M11 + position.Y * matrix.M21 + matrix.M31),
+                    factor * (position.X * matrix.M12 + position.Y * matrix.M22 + matrix.M32));
+            }
             return new Vector2(
                 position.X * matrix.M11 + position.Y * matrix.M21 + matrix.M31,
                 position.X * matrix.M12 + position.Y * matrix.M22 + matrix.M32);
@@ -329,8 +336,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 TransformNormal(Vector2 normal, Matrix3x2 matrix)
+        public static Vector2 TransformNormal(Vector2 normal, Matrix3x3 matrix)
         {
+            if (!Matrix3x3.Invert(matrix, out var invMatrix))
+                throw new ArgumentException("The matrix is singular. It needs to be inverted to find the normal transform.");
             return new Vector2(
                 normal.X * matrix.M11 + normal.Y * matrix.M21,
                 normal.X * matrix.M12 + normal.Y * matrix.M22);
@@ -345,6 +354,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 TransformNormal(Vector2 normal, Matrix4x4 matrix)
         {
+            if (!Matrix4x4.Invert(matrix, out var invMatrix))
+                throw new ArgumentException("The matrix is singular. It needs to be inverted to find the normal transform.");
             return new Vector2(
                 normal.X * matrix.M11 + normal.Y * matrix.M21,
                 normal.X * matrix.M12 + normal.Y * matrix.M22);

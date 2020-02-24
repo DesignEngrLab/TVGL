@@ -8,7 +8,7 @@ using System.Globalization;
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
-    /// A structure encapsulating a 3x2 matrix.
+    /// A structure encapsulating a 3x3 matrix.
     /// </summary>
     public readonly struct Matrix3x3 : IEquatable<Matrix3x3>
     {
@@ -41,6 +41,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public double M32 { get; }
 
         // Now the Projective Transform terms
+        /// <summary>
+        /// Gets a value indicating whether this instance is projective transform. This means that the third
+        /// column has non-trivia values MX3 are nonzero or M33 is not unity (1).
+        /// </summary>
+        /// <value><c>true</c> if this instance is projective transform; otherwise, <c>false</c>.</value>
         public bool IsProjectiveTransform { get; }
         /// <summary>
         /// The third element of the first row. This is the x-projective term.
@@ -158,7 +163,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             this.M31 = m31;
             this.M32 = m32;
 
-            if (m13.IsNegligible() && m23.IsNegligible() && m33.IsNegligible())
+            if (m13.IsNegligible() && m23.IsNegligible() && m33.IsPracticallySame(1.0))
             {
                 IsProjectiveTransform = false;
                 this.M13 = 0.0;
@@ -391,24 +396,39 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Attempts to invert the given matrix. If the operation succeeds, the inverted matrix is stored in the result parameter.
         /// </summary>
-        /// <param name="matrix">The source matrix.</param>
+        /// <param name="m">The source matrix.</param>
         /// <param name="result">The output matrix.</param>
         /// <returns>True if the operation succeeded, False otherwise.</returns>
-        public static bool Invert(Matrix3x3 matrix, out Matrix3x3 result)
+        public static bool Invert(Matrix3x3 m, out Matrix3x3 result)
         {
-            double det = matrix.GetDeterminant();
+            double det = m.GetDeterminant();
 
             if (Math.Abs(det) < double.Epsilon)
             {
                 result = new Matrix3x3(double.NaN, double.NaN, double.NaN, double.NaN, double.NaN, double.NaN);
                 return false;
             }
-
             double invDet = 1.0 / det;
-            result = new Matrix3x3(
-            matrix.M22 * invDet, -matrix.M12 * invDet,
-        -matrix.M21 * invDet, matrix.M11 * invDet,
-        (matrix.M21 * matrix.M32 - matrix.M31 * matrix.M22) * invDet, (matrix.M31 * matrix.M12 - matrix.M11 * matrix.M32) * invDet);
+            if (m.IsProjectiveTransform)
+                result = new Matrix3x3(
+                    m.M22 * invDet, -m.M12 * invDet,
+                    -m.M21 * invDet, m.M11 * invDet,
+                    (m.M21 * m.M32 - m.M31 * m.M22) * invDet, (m.M31 * m.M12 - m.M11 * m.M32) * invDet);
+            else
+                result = new Matrix3x3(
+                // First row
+                 (m.M22 * m.M33 - m.M23 * m.M32) * invDet,
+                 (m.M13 * m.M32 - m.M12 * m.M33) * invDet,
+                 (m.M12 * m.M23 - m.M13 * m.M22) * invDet,
+                // Second row
+                 (m.M23 * m.M31 - m.M21 * m.M33) * invDet,
+                 (m.M11 * m.M33 - m.M13 * m.M31) * invDet,
+                 (m.M13 * m.M21 - m.M11 * m.M23) * invDet,
+                 // Third row
+                 (m.M21 * m.M32 - m.M31 * m.M22) * invDet,
+                 (m.M31 * m.M12 - m.M11 * m.M32) * invDet,
+                 (m.M11 * m.M22 - m.M12 * m.M21) * invDet
+                 );
             return true;
         }
 
@@ -486,6 +506,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The product matrix.</returns>
         public static Matrix3x3 Multiply(Matrix3x3 value1, Matrix3x3 value2)
         {
+            if (value1.IsProjectiveTransform || value2.IsProjectiveTransform)
             return new Matrix3x3(
               // First row
               value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31,
@@ -501,6 +522,23 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
              value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31,
              value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32,
              value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33
+             );
+
+            return new Matrix3x3(
+              // First row
+              value1.M11 * value2.M11 + value1.M12 * value2.M21 ,
+              value1.M11 * value2.M12 + value1.M12 * value2.M22 ,
+              //0 ,
+
+             // Second row
+             value1.M21 * value2.M11 + value1.M22 * value2.M21 ,
+             value1.M21 * value2.M12 + value1.M22 * value2.M22 ,
+             // 0 ,
+
+             // Third row
+             value1.M31 * value2.M11 + value1.M32 * value2.M21 +  value2.M31,
+             value1.M31 * value2.M12 + value1.M32 * value2.M22 + value2.M32
+             //, 1
              );
         }
 
@@ -555,17 +593,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The matrix containing the summed values.</returns>
         public static Matrix3x3 operator +(Matrix3x3 value1, Matrix3x3 value2)
         {
-            if (value1.IsProjectiveTransform || value2.IsProjectiveTransform)
                 return new Matrix3x3(
                     value1.M11 + value2.M11, value1.M12 + value2.M12, value1.M13 + value2.M13,
                     value1.M21 + value2.M21, value1.M22 + value2.M22, value1.M23 + value2.M23,
                     value1.M31 + value2.M31, value1.M32 + value2.M32, value1.M33 + value2.M33
-                    );
-            else
-                return new Matrix3x3(
-                    value1.M11 + value2.M11, value1.M12 + value2.M12,
-                    value1.M21 + value2.M21, value1.M22 + value2.M22,
-                    value1.M31 + value2.M31, value1.M32 + value2.M32
                     );
         }
 
@@ -577,20 +608,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The matrix containing the resulting values.</returns>
         public static Matrix3x3 operator -(Matrix3x3 value1, Matrix3x3 value2)
         {
-            if (value1.IsProjectiveTransform || value2.IsProjectiveTransform)
-                return new Matrix3x3(
-                    value1.M11 - value2.M11, value1.M12 - value2.M12, value1.M13 - value2.M13,
-                    value1.M21 - value2.M21, value1.M22 - value2.M22, value1.M23 - value2.M23,
-                    value1.M31 - value2.M31, value1.M32 - value2.M32, value1.M33 - value2.M33
-                    );
-            else
-                return new Matrix3x3(
-                    value1.M11 - value2.M11, value1.M12 - value2.M12,
-                    value1.M21 - value2.M21, value1.M22 - value2.M22,
-                    value1.M31 - value2.M31, value1.M32 - value2.M32
-                    );
+            return new Matrix3x3(
+                value1.M11 - value2.M11, value1.M12 - value2.M12, value1.M13 - value2.M13,
+                value1.M21 - value2.M21, value1.M22 - value2.M22, value1.M23 - value2.M23,
+                value1.M31 - value2.M31, value1.M32 - value2.M32, value1.M33 - value2.M33
+                );
         }
-
         /// <summary>
         /// Multiplies two matrices together and returns the resulting matrix.
         /// </summary>

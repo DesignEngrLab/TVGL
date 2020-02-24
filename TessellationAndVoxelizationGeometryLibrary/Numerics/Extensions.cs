@@ -25,7 +25,7 @@ namespace TVGL.Numerics
         public static Vector2 Lerp(this Vector2 value1, Vector2 value2, double amount)
         { return Vector2.Lerp(value1, value2, amount); }
 
-        public static Vector2 Transform(this Vector2 position, Matrix3x2 matrix)
+        public static Vector2 Transform(this Vector2 position, Matrix3x3 matrix)
         { return Vector2.Transform(position, matrix); }
 
         public static Vector2 Transform(this Vector2 position, Matrix4x4 matrix)

@@ -638,7 +638,7 @@ namespace TVGL
         /// <param name="tolerance"></param>
         /// 
         /// <returns></returns>
-        public static List<Vector2> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
+        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
         {
             var enumerable = loop as IList<Vertex> ?? loop.ToList();
             var area1 = AreaOf3DPolygon(enumerable, direction);
@@ -694,7 +694,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction);
@@ -709,7 +709,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateTolerance">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction, double mergeDuplicateTolerance)
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction, double mergeDuplicateTolerance)
         {
             if (mergeDuplicateTolerance.IsNegligible()) mergeDuplicateTolerance = Constants.BaseTolerance; //Minimum allowed tolerance.
             var transform = TransformToXYPlane(direction);
@@ -725,7 +725,7 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
             out Matrix4x4 backTransform,
             bool mergeDuplicateReferences = false)
         {
@@ -742,7 +742,7 @@ namespace TVGL
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>Point[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Matrix4x4 transform,
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Matrix4x4 transform,
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Point>();
@@ -775,7 +775,7 @@ namespace TVGL
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Vector2(vertex, point.X, point.Y);
+                        var point2D = new Point(vertex, point.X, point.Y);
                         simpleCompareDict.Add(lookupString, point2D);
                         points.Add(point2D);
                     }
@@ -1050,9 +1050,8 @@ namespace TVGL
 
         public static Vector2 Get2DProjectionPoint(Vector3 vertex, Matrix4x4 transform)
         {
-            var pointAs4 = new Vector4(vertex, 1.0);
-            pointAs4 = transform * pointAs4;
-            return new[] { pointAs4.X, pointAs4.Y };
+            var point2D = Vector3.Transform(vertex, transform);
+            return new Vector2(point2D.X, point2D.Y);
         }
 
 
@@ -1069,9 +1068,8 @@ namespace TVGL
             var points = new Vector2[vertices.Count];
             for (var i = 0; i < vertices.Count; i++)
             {
-                var pointAs4 = new Vector4(vertices[i], 1.0);
-                pointAs4 = pointAs4 * transform;
-                points[i] = new Vector2(pointAs4.X, pointAs4.Y);
+                var pointAs2D = Vector3.Transform(vertices[i], transform);
+                points[i] = new Vector2(pointAs2D.X, pointAs2D.Y);
             }
             return points;
         }
@@ -1114,27 +1112,27 @@ namespace TVGL
             Matrix4x4 rotateX, rotateY, backRotateX, backRotateY;
             if (xDir.IsNegligible() && zDir.IsNegligible())
             {
-                rotateX = EqualityExtensions.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
-                backRotateX = EqualityExtensions.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
-                backRotateY = rotateY = EqualityExtensions.makeIdentity(4);
+                rotateX = Matrix4x4.CreateRotationX(Math.Sign(yDir) * Math.PI / 2);
+                backRotateX = Matrix4x4.CreateRotationX(-Math.Sign(yDir) * Math.PI / 2);
+                backRotateY = rotateY = Matrix4x4.Identity;
             }
             else if (zDir.IsNegligible())
             {
-                rotateY = EqualityExtensions.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
-                backRotateY = EqualityExtensions.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
+                rotateY = Matrix4x4.CreateRotationY(-Math.Sign(xDir) * Math.PI / 2);
+                backRotateY = Matrix4x4.CreateRotationY(Math.Sign(xDir) * Math.PI / 2);
                 var rotXAngle = Math.Atan(yDir / Math.Abs(xDir));
-                rotateX = EqualityExtensions.RotationX(rotXAngle, true);
-                backRotateX = EqualityExtensions.RotationX(-rotXAngle, true);
+                rotateX = Matrix4x4.CreateRotationX(rotXAngle);
+                backRotateX = Matrix4x4.CreateRotationX(-rotXAngle);
             }
             else
             {
                 var rotYAngle = -Math.Atan(xDir / zDir);
-                rotateY = EqualityExtensions.RotationY(rotYAngle, true);
-                backRotateY = EqualityExtensions.RotationY(-rotYAngle, true);
+                rotateY = Matrix4x4.CreateRotationY(rotYAngle);
+                backRotateY = Matrix4x4.CreateRotationY(-rotYAngle);
                 var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
                 var rotXAngle = Math.Sign(zDir) * Math.Atan(yDir / baseLength);
-                rotateX = EqualityExtensions.RotationX(rotXAngle, true);
-                backRotateX = EqualityExtensions.RotationX(-rotXAngle, true);
+                rotateX = Matrix4x4.CreateRotationX(rotXAngle);
+                backRotateX = Matrix4x4.CreateRotationX(-rotXAngle);
             }
             backTransform = backRotateY * backRotateX;
             return rotateX * rotateY;
@@ -1146,10 +1144,10 @@ namespace TVGL
         /// <param name="direction2D"></param>
         /// <param name="backTransform"></param>
         /// <returns></returns>
-        public static Vector2 Convert2DVectorTo3DVector(Vector2 direction2D, Matrix4x4 backTransform)
+        public static Vector3 Convert2DVectorTo3DVector(Vector2 direction2D, Matrix4x4 backTransform)
         {
-            var tempVector = new[] { direction2D.X, direction2D.Y, 0.0, 1.0 };
-            return (backTransform * tempVector).Take(3).ToArray().Normalize();
+            var tempVector = new Vector3(direction2D.X, direction2D.Y, 0);
+            return Vector3.Transform(tempVector, backTransform);
         }
 
 
