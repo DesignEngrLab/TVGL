@@ -18,7 +18,8 @@ So, what we've done here is simply copy System.Numerics files and change all flo
 The files are changed as little as possible so that changes to System.Numerics can be reflected here.
 
 
-A. error in TransformNormals - need to take the transpose of the inverse of the matrix
+A. error in TransformNormals - need to take the transpose of the inverse of the matrix. but maybe since this would be
+time consuming to apply to lots of vectors, it assumes that the input matrix already has this form
 B. change Matrix3x2 to Matrix3x3 and add a boolean to both Matrix3x3 and Matrix4x4 which is "IsProjectiveTransform"
 	why?
 		1. matrix3x3 should be useful in other situations where solving a small system of equations like Ax = b.
@@ -32,4 +33,3 @@ C. simplify some constructors. why do they not call one another? does this intro
 
 D. make these Matrix structs readonly
 
-E. Matrix4x4 sometimes acts like its transpose

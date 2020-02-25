@@ -14,7 +14,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
     // COMMENTEDCHANGE [Intrinsic]
-    public partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex
+    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex
     {
         #region Public Static Properties
         /// <summary>
@@ -76,7 +76,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public static Vector3 UnitZ { get { return new Vector3(0.0, 0.0, 1.0); } }
 
+        public double this[int i]
+        {
+            get
+            {
+                if (i == 0) return X;
+                else if (i == 1) return Y;
+                else return Z;
+            }
+        }
         public double[] Position => new[] { X, Y, Z };
+
         #endregion Public Static Properties
 
         #region Public Instance Methods
@@ -262,7 +272,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="vector2">The second vector.</param>
         /// <returns>The cross product.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Cross(Vector3 vector1, Vector3 vector2)
+        public static Vector3 Cross(in Vector3 vector1, Vector3 vector2)
         {
             return new Vector3(
                 vector1.Y * vector2.Z - vector1.Z * vector2.Y,
@@ -277,7 +287,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="normal">The normal of the surface being reflected off.</param>
         /// <returns>The reflected vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Reflect(Vector3 vector, Vector3 normal)
+        public static Vector3 Reflect(in Vector3 vector, Vector3 normal)
         {
             if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {

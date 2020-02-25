@@ -13,20 +13,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     // Some methods declared here are not strictly intrinsic, but delegate to an intrinsic method. For example, only one overload of CopyTo()
     // is actually recognized by the JIT, but both are here for simplicity.
 
-    public partial struct Vector3
+    public readonly partial struct Vector3
     {
         /// <summary>
         /// The X component of the vector.
         /// </summary>
-        public double X;
+        public double X { get; }
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
-        public double Y;
+        public double Y { get; }
         /// <summary>
         /// The Z component of the vector.
         /// </summary>
-        public double Z;
+        public double Z { get; }
 
         #region Constructors
         /// <summary>

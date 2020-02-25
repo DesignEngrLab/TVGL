@@ -1982,33 +1982,27 @@ namespace TVGL
 
         /// <summary>
         ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
-        ///     of triangle to return a valid intersection.
+        ///     with that face. If not intersection exists, then function returns a Vector3 with NaN's. Points must
+        ///     be on either side of triangle to return a valid intersection.
         /// </summary>
         /// <param name="normal"></param>
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
         /// <param name="vertices"></param>
         /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 PointOnFaceFromIntersectingLine(List<Vector2> vertices, Vector2 normal, Vector2 point1,
-            Vector2 point2)
+        public static Vector3 PointOnFaceFromIntersectingLine(List<Vector3> vertices, Vector3 normal, Vector3 point1,
+            Vector3 point2)
         {
-            var distanceToOrigin = normal.Dot(vertices.X);
+            var planeDistance = normal.Dot(vertices[0]);
             var d1 = normal.Dot(point1);
             var d2 = normal.Dot(point2);
-            if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
-            var denominator = d1 - d2;
-            if (denominator == 0) return null; //The points form a perpendicular line to the face
-            var fraction = (d1 - distanceToOrigin) / (denominator);
-            var position = new double[3];
-            for (var i = 0; i < 3; i++)
-            {
-                position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
-                if (double.IsNaN(position[i]))
-                    throw new Exception("This should never occur. Prevent this from happening");
-            }
-            return IsVertexInsideTriangle(vertices, position, true) ? position : null;
+            if (Math.Sign(planeDistance - d1) == Math.Sign(planeDistance - d2)) return Vector3.Null; //Points must be on either side of triangle
+            var denominator = d2 - d1;
+            if (denominator == 0) return Vector3.Null; //The points form a perpendicular line to the face
+            var fraction = (planeDistance - d1) / denominator;
+            var intersectionPoint = Vector3.Lerp(point1, point2, fraction);
+
+            return IsVertexInsideTriangle(vertices, intersectionPoint, true) ? intersectionPoint : null;
         }
 
         /// <summary>
@@ -2328,29 +2322,20 @@ namespace TVGL
         ///     as the triangle.
         /// </summary>
         /// <param name="triangle"></param>
-        /// <param name="vertexInQuestion"></param>
+        /// <param name="pointInQuestion"></param>
         /// <param name="onBoundaryIsInside"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static bool IsVertexInsideTriangle(IList<Vector3> triangle, Vector3 vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vector3> triangle, Vector3 pointInQuestion,
             bool onBoundaryIsInside = true)
         {
-            if (triangle.Count != 3) throw new Exception("Incorrect number of points in traingle");
-            var p = vertexInQuestion;
+            if (triangle.Count != 3) throw new Exception("Incorrect number of points in triangle");
+            var p = pointInQuestion;
             var a = triangle[0];
             var b = triangle[1];
             var c = triangle[2];
-            return SameSide(p, a, b, c, onBoundaryIsInside) &&
-                   SameSide(p, b, a, c, onBoundaryIsInside) &&
-                   SameSide(p, c, a, b, onBoundaryIsInside);
-        }
-
-        public static bool IsVertexInsideTriangleFast(Vector2 a, Vector2 b, Vector2 c, Vector2 p,
-           bool onBoundaryIsInside = true)
-        {
-            return SameSideFast(p, a, b, c, onBoundaryIsInside) &&
-                   SameSideFast(p, b, a, c, onBoundaryIsInside) &&
-                   SameSideFast(p, c, a, b, onBoundaryIsInside);
+            return  ((b-a).Cross(p-a).Dot((p-a).Dot(c-a))>=0)
+                && (c-b).Cross(p-b).Dot((p-b))
         }
 
         /// <summary>
@@ -2362,41 +2347,13 @@ namespace TVGL
         /// <param name="b">The b.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool SameSide(Vector2 p1, Vector2 p2, Vector2 a, Vector2 b, bool onBoundaryIsInside = true)
+        internal static bool SameSide(Vector3 p1, Vector3 p2, Vector3 a, Vector3 b, bool onBoundaryIsInside = true)
         {
-            var cp1 = b.Subtract(a).Cross(p1.Subtract(a));
-            var cp2 = b.Subtract(a).Cross(p2.Subtract(a));
+            var aTob = b - a;
+            var cp1 = aTob.Cross(p1 - a);
+            var cp2 = aTob.Cross(p2 - a);
             var dot = cp1.Dot(cp2);
-            if (dot.IsNegligible()) return onBoundaryIsInside;
-            if (Math.Abs(dot) < Constants.BaseTolerance) return onBoundaryIsInside;
-            return dot > 0.0;
-        }
-
-        internal static bool SameSideFast(Vector2 p1, Vector2 p2, Vector2 a, Vector2 b, bool onBoundaryIsInside = true)
-        {
-            var aX = a.X;
-            var aY = a.Y;
-            var aZ = a.Z;
-            var v1x = b.X - aX;
-            var v1y = b.Y - aY;
-            var v1z = b.Z - aZ;
-            var v2x = p1.X - aX;
-            var v2y = p1.Y - aY;
-            var v2z = p1.Z - aZ;
-            var v3x = p2.X - aX;
-            var v3y = p2.Y - aY;
-            var v3z = p2.Z - aZ;
-            //The cross product split into its cofactor expansion
-            var cp1x = v1y * v2z - v1z * v2y;
-            var cp1y = v1x * v2z - v1z * v2x;
-            var cp1z = v1x * v2y - v1y * v2x;
-            var cp2x = v1y * v3z - v1z * v3y;
-            var cp2y = v1x * v3z - v1z * v3x;
-            var cp2z = v1x * v3y - v1y * v3x;
-            //a · b = ax × bx + ay × by + az × bz
-            var dot = cp1x * cp2x + cp1y * cp2y + cp1z * cp2z;
-            if (dot.IsNegligible()) return onBoundaryIsInside;
-            if (Math.Abs(dot) < Constants.BaseTolerance) return onBoundaryIsInside;
+            if (dot.IsNegligible(Constants.BaseTolerance)) return onBoundaryIsInside;
             return dot > 0.0;
         }
 
