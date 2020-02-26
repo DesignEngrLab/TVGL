@@ -25,7 +25,7 @@ namespace TVGL
             double distance, bool midPlane = false)
         {
             var enumerable = loops as IEnumerable<Vertex>[] ?? loops.ToArray();
-            var loopsWithoutVertices = enumerable.Select(loop => loop.Select(vertex => vertex.Position).ToList()).ToList();
+            var loopsWithoutVertices = enumerable.Select(loop => loop.Select(vertex => vertex.Coordinates).ToList()).ToList();
             return FromLoops(loopsWithoutVertices, normal, distance, midPlane);
         }
 
@@ -47,7 +47,7 @@ namespace TVGL
         public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vertex>> loops,
             Vector3 extrudeDirection, double distance, bool midPlane = false)
         {
-            var positionLoops = loops.Select(loop => loop.Select(vertex => vertex.Position).ToList()).ToList();
+            var positionLoops = loops.Select(loop => loop.Select(vertex => vertex.Coordinates).ToList()).ToList();
             return ReturnFacesFromLoops(positionLoops, extrudeDirection, distance, midPlane);
         }
 
@@ -91,7 +91,7 @@ namespace TVGL
                 }
                 cleanLoops.Add(cleanLoop);
             }
-            var distanceFromOriginAlongDirection = extrudeDirection.Dot(cleanLoops.First().First().Position);
+            var distanceFromOriginAlongDirection = extrudeDirection.Dot(cleanLoops.First().First().Coordinates);
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
@@ -213,7 +213,7 @@ namespace TVGL
             var pairedVertices = new Dictionary<Vertex, Vertex>();
             foreach (var vertex in vertices)
             {
-                var newVertex = new Vertex(vertex.Position + (extrudeDirection * distance));
+                var newVertex = new Vertex(vertex.Coordinates + (extrudeDirection * distance));
                 pairedVertices.Add(vertex, newVertex);
             }
 
@@ -223,8 +223,8 @@ namespace TVGL
             foreach (var triangle in triangles)
             {
                 //Create the triangle in plane with the loops
-                var v1 = triangle[1].Position.Subtract(triangle[0].Position);
-                var v2 = triangle[2].Position.Subtract(triangle[0].Position);
+                var v1 = triangle[1].Coordinates.Subtract(triangle[0].Coordinates);
+                var v2 = triangle[2].Coordinates.Subtract(triangle[0].Coordinates);
 
                 //This model reverses the triangle vertex ordering as necessary to line up with the normal.
                 var topTriangle = v1.Cross(v2).Dot(extrudeDirection * -1) < 0

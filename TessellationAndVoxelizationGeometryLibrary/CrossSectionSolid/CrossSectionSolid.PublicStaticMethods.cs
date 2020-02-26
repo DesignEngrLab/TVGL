@@ -21,8 +21,8 @@ namespace TVGL
            double sameTolerance, UnitType units)
         {
             //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var start = layer3DAtStart.First().Position.Dot(buildDirection);
-            var endPoint = layer3DAtStart.First().Position + buildDirection * extrudeDistance;
+            var start = layer3DAtStart.First().Coordinates.Dot(buildDirection);
+            var endPoint = layer3DAtStart.First().Coordinates + buildDirection * extrudeDistance;
             var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.Dot(buildDirection) } };
             var shape = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(layer3DAtStart, buildDirection));
             if (shape.Area < 0) shape = PolygonLight.Reverse(shape);

@@ -128,7 +128,7 @@ namespace TVGL
                 var maxDistance = double.NegativeInfinity;
                 foreach (var v in convexHull.Vertices)
                 {
-                    var distance = rotatorEdge.From.Position.Subtract(v.Position).Dot(startDir);
+                    var distance = rotatorEdge.From.Coordinates.Subtract(v.Coordinates).Dot(startDir);
                     if (distance > maxDistance)
                     {
                         maxDistance = distance;
@@ -158,7 +158,7 @@ namespace TVGL
                     Box = new BoundingBox
                     {
                         CornerVertices = Box.CornerVertices != null ? (Vertex[]) Box.CornerVertices.Clone() : null,
-                        Center = Box.Center != null ? new Vertex(Box.Center.Position) : null,
+                        Center = Box.Center != null ? new Vertex(Box.Center.Coordinates) : null,
                         Dimensions = Box.Dimensions != null ? (Vector3) Box.Dimensions.Clone() : Vector3.Null,
                         Directions = Box.Directions != null ? (Vector3[]) Box.Directions.Clone() : Vector3.Null,
                         PointsOnFaces = Box.PointsOnFaces != null ? (List<Vertex>[]) Box.PointsOnFaces.Clone() : null,
@@ -346,7 +346,7 @@ namespace TVGL
             foreach (var edge in boxData.BackVertex.Edges)
             {
                 var otherVertex = edge.OtherVertex(boxData.BackVertex);
-                var vector = otherVertex.Position.Subtract(boxData.BackVertex.Position);
+                var vector = otherVertex.Coordinates.Subtract(boxData.BackVertex.Coordinates);
                 var y = yDir.Dot(vector);
                 if (y < 0)
                 {

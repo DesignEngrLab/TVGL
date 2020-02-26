@@ -89,7 +89,7 @@ namespace TVGL
         ///     The has uniform color
         /// </summary>
         [JsonIgnore]
-        public override double[,] InertiaTensor
+        public override Matrix3x3 InertiaTensor
         {
             get
             {
@@ -121,7 +121,7 @@ namespace TVGL
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
         /// 
-        public TessellatedSolid(IList<List<Vector3>> vertsPerFace, IList<Color> colors,
+        public TessellatedSolid(IList<List<double[]>> vertsPerFace, IList<Color> colors,
             UnitType units = UnitType.unspecified, string name = "", string filename = "", List<string> comments = null,
             string language = "")
             : base(units, name, filename, comments, language)
@@ -167,7 +167,7 @@ namespace TVGL
             serializationData.Add("FaceIndices",
                 JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
             serializationData.Add("VertexCoords",
-               JToken.FromObject(Vertices.SelectMany(v => v.Position.Position)));
+               JToken.FromObject(Vertices.SelectMany(v => v.Coordinates.Position)));
             serializationData.Add("Colors",
             (HasUniformColor || Faces.All(f => f.Color.Equals(Faces[0].Color)))
             ? SolidColor.ToString()
@@ -182,7 +182,7 @@ namespace TVGL
             var vertexArray = jArray.ToObject<double[]>();
             var coords = new Vector3[vertexArray.Length / 3];
             for (int i = 0; i < vertexArray.Length / 3; i++)
-                coords[i] = new Vector3(vertexArray[3 * i], vertexArray[3 * i + 1], vertexArray[3 * i + 2] );
+                coords[i] = new Vector3(vertexArray[3 * i], vertexArray[3 * i + 1], vertexArray[3 * i + 2]);
 
             jArray = (JArray)serializationData["FaceIndices"];
             var faceIndicesArray = jArray.ToObject<int[]>();
@@ -268,7 +268,7 @@ namespace TVGL
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
             }
             NumberOfVertices = vertices.Count();
-            DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
+            DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Coordinates));
             //Create a copy of the vertex and face (This is NON-Destructive!)
             Vertices = new Vertex[NumberOfVertices];
             var simpleCompareDict = new Dictionary<Vertex, Vertex>();
@@ -353,12 +353,22 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<Vector3> vertices)
         {
-            XMin = vertices.Min(v => v.X);
-            XMax = vertices.Max(v => v.X);
-            YMin = vertices.Min(v => v.Y);
-            YMax = vertices.Max(v => v.Y);
-            ZMin = vertices.Min(v => v.Z);
-            ZMax = vertices.Max(v => v.Z);
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            var zMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var zMax = double.NegativeInfinity;
+            foreach (var v in vertices)
+            {
+                if (xMin > v.X) xMin = v.X;
+                if (yMin > v.Y) yMin = v.Y;
+                if (zMin > v.Z) zMin = v.Z;
+                if (xMax < v.X) xMax = v.X;
+                if (yMax < v.Y) yMax = v.Y;
+                if (zMax < v.Z) zMax = v.Z;
+            }
+            Bounds = new[] { new Vector3(xMin, YMin, zMin), new Vector3(xMax, yMax, zMin) };
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
             SameTolerance = shortestDimension * Constants.BaseTolerance;
         }
@@ -430,8 +440,8 @@ namespace TVGL
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        var v1 = vertexSet[1].Position-(vertexSet[0].Position);
-                        var v2 = vertexSet[2].Position-(vertexSet[0].Position);
+                        var v1 = vertexSet[1].Coordinates - (vertexSet[0].Coordinates);
+                        var v2 = vertexSet[2].Coordinates - (vertexSet[0].Coordinates);
                         var face = v1.Cross(v2).Dot(normal) < 0
                             ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
                             : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
@@ -456,7 +466,7 @@ namespace TVGL
         private void MakeVertices(IEnumerable<List<Vector3>> vertsPerFace, out List<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
-            //Gets the number of decimal places, with the maximum being the StarMath Equality (1E-15)
+            //Gets the number of decimal places
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             /* vertexMatchingIndices will be used to speed up the linking of faces and edges to vertices
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
@@ -471,19 +481,18 @@ namespace TVGL
             foreach (var t in vertsPerFace)
             {
                 var locationIndices = new List<int>(); // this will become a row in faceToVertexIndices
-                foreach (var vertex in t)
+                for (int i = 0; i < t.Count; i++)
                 {
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    vertex = new Vector3(Math.Round(vertex.X, numDecimalPoints);
-                    vertex.Y = Math.Round(vertex.Y, numDecimalPoints);
-                    vertex.Z = Math.Round(vertex.Z, numDecimalPoints);
+                    t[i] = new Vector3(Math.Round(t[i].X, numDecimalPoints), Math.Round(t[i].Y, numDecimalPoints),
+                        Math.Round(t[i].Z, numDecimalPoints));
                     //Since negative zero and positive zero are both the same and can mess up the sign on the string,
                     //we need to check if negligible, and force to "0" if it is. Note: there is no need to have the extra 8 zeros in this case.
-                    var xString = vertex.X.IsNegligible(SameTolerance) ? "0" : vertex.X.ToString(stringFormat);
-                    var yString = vertex.Y.IsNegligible(SameTolerance) ? "0" : vertex.Y.ToString(stringFormat);
-                    var zString = vertex.Z.IsNegligible(SameTolerance) ? "0" : vertex.Z.ToString(stringFormat);
+                    var xString = t[i].X.IsNegligible(SameTolerance) ? "0" : t[i].X.ToString(stringFormat);
+                    var yString = t[i].Y.IsNegligible(SameTolerance) ? "0" : t[i].Y.ToString(stringFormat);
+                    var zString = t[i].Z.IsNegligible(SameTolerance) ? "0" : t[i].Z.ToString(stringFormat);
                     var lookupString = xString + "|" + yString + "|" + zString;
                     if (simpleCompareDict.ContainsKey(lookupString))
                         /* if it's in the dictionary, simply put the location in the locationIndices */
@@ -493,7 +502,7 @@ namespace TVGL
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
                         var newIndex = listOfVertices.Count;
-                        listOfVertices.Add(vertex);
+                        listOfVertices.Add(t[i]);
                         simpleCompareDict.Add(lookupString, newIndex);
                         locationIndices.Add(newIndex);
                     }
@@ -512,7 +521,7 @@ namespace TVGL
         internal void MakeVertices(IList<Vector3> vertices, IList<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
-            //Gets the number of decimal places, with the maximum being the StarMath Equality (1E-15)
+            //Gets the number of decimal places
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var listOfVertices = new List<Vector3>();
             var simpleCompareDict = new Dictionary<string, int>();
@@ -528,9 +537,8 @@ namespace TVGL
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    vertex.X = Math.Round(vertex.X, numDecimalPoints);
-                    vertex.Y = Math.Round(vertex.Y, numDecimalPoints);
-                    vertex.Z = Math.Round(vertex.Z, numDecimalPoints);
+                    vertex = new Vector3(Math.Round(vertex.X, numDecimalPoints),
+                        Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
                     //Since negative zero and positive zero are both the same and can mess up the sign on the string,
                     //we need to check if negligible, and force to "0" if it is. Note: there is no need to have the extra 8 zeros in this case.
                     var xString = vertex.X.IsNegligible(SameTolerance) ? "0" : vertex.X.ToString(stringFormat);
@@ -889,7 +897,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public override Solid Copy()
         {
-            return new TessellatedSolid(Vertices.Select(vertex => new Vector3(vertex.Position)).ToList(),
+            return new TessellatedSolid(Vertices.Select(vertex => new Vector3(vertex.Coordinates)).ToList(),
                 Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
                 Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
                 FileName, Comments, Language);
@@ -956,14 +964,14 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
             {
                 var direction = obbDirections[i];
-                var dotX1 = direction.Dot(new Vector3( 1.0, 0.0, 0.0 ));
+                var dotX1 = direction.Dot(new Vector3(1.0, 0.0, 0.0));
                 if (dotX1 > minDot)
                 {
                     minDot = dotX1;
                     xPrime = direction;
                     xPrimeIndex = i;
                 }
-                var dotX2 = (direction * -1).Dot(new Vector3( 1.0, 0.0, 0.0));
+                var dotX2 = (direction * -1).Dot(new Vector3(1.0, 0.0, 0.0));
                 if (dotX2 > minDot)
                 {
                     minDot = dotX2;
@@ -1000,7 +1008,7 @@ namespace TVGL
             var dotXs = new Dictionary<Vertex, double>();
             foreach (var vertex in obb.CornerVertices)
             {
-                var dot = vertex.Position.Dot(xPrime);
+                var dot = vertex.Coordinates.Dot(xPrime);
                 dotXs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest four values. Then get the those four vertices.
@@ -1011,7 +1019,7 @@ namespace TVGL
             var dotYs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom4Vertices)
             {
-                var dot = vertex.Position.Dot(yPrime);
+                var dot = vertex.Coordinates.Dot(yPrime);
                 dotYs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -1022,7 +1030,7 @@ namespace TVGL
             var dotZs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom2Vertices)
             {
-                var dot = vertex.Position.Dot(zPrime);
+                var dot = vertex.Coordinates.Dot(zPrime);
                 dotZs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -1049,66 +1057,69 @@ namespace TVGL
                xPrime.Z, yPrime.Z, zPrime.Z, 0.0,
               -localOrigin.X, -localOrigin.Y, -localOrigin.Z, 1.0
             );
-Matrix4x4.Invert(transformationMatrix, out backTransform );
+            Matrix4x4.Invert(transformationMatrix, out backTransform);
             return transformationMatrix;
         }
 
-    /// <summary>
-    /// Transforms the specified transform matrix.
-    /// </summary>
-    /// <param name="transformMatrix">The transform matrix.</param>
-    public override void Transform(Matrix4x4 transformMatrix)
-    {
-        Vector4 tempCoord;
-        XMin = YMin = ZMin = double.PositiveInfinity;
-        XMax = YMax = ZMax = double.NegativeInfinity;
-        //Update the vertices
-        foreach (var vert in Vertices)
+        /// <summary>
+        /// Transforms the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        public override void Transform(Matrix4x4 transformMatrix)
         {
-            tempCoord =Vector4.Transform(vert.Position,transformMatrix);
-                vert.Position = new Vector3(tempCoord);
-            if (tempCoord.X < XMin) XMin = tempCoord.X;
-            if (tempCoord.Y < YMin) YMin = tempCoord.Y;
-            if (tempCoord.Z < ZMin) ZMin = tempCoord.Z;
-            if (tempCoord.X > XMax) XMax = tempCoord.X;
-            if (tempCoord.Y > YMax) YMax = tempCoord.Y;
-            if (tempCoord.Z > ZMax) ZMax = tempCoord.Z;
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            var zMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var zMax = double.NegativeInfinity;
+            foreach (var v in Vertices)
+            {
+                v.Coordinates = v.Coordinates.Transform(transformMatrix);
+                if (xMin > v.Coordinates.X) xMin = v.Coordinates.X;
+                if (yMin > v.Coordinates.Y) yMin = v.Coordinates.Y;
+                if (zMin > v.Coordinates.Z) zMin = v.Coordinates.Z;
+                if (xMax < v.Coordinates.X) xMax = v.Coordinates.X;
+                if (yMax < v.Coordinates.Y) yMax = v.Coordinates.Y;
+                if (zMax < v.Coordinates.Z) zMax = v.Coordinates.Z;
+            }
+            Bounds = new[] { new Vector3(xMin, YMin, zMin), new Vector3(xMax, yMax, zMin) };
+
+
+            //Update the faces
+            foreach (var face in Faces)
+            {
+                face.Update();
+            }
+            //Update the edges
+            foreach (var edge in Edges)
+            {
+                edge.Update(true);
+            }
+            Center = Center.Transform(transformMatrix);
+            // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
+            if (_inertiaTensor != null)
+            {
+                var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
+                    transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
+                    transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
+                _inertiaTensor = _inertiaTensor * rotMatrix;
+            }
+            if (Primitives != null)
+                foreach (var primitive in Primitives)
+                    primitive.Transform(transformMatrix);
         }
-        //Update the faces
-        foreach (var face in Faces)
+        /// <summary>
+        /// Gets a new solid by transforming its vertices.
+        /// </summary>
+        /// <param name="transformationMatrix"></param>
+        /// <returns></returns>
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
-            face.Update();
+            var copy = this.Copy();
+            copy.Transform(transformationMatrix);
+            return copy;
         }
-        //Update the edges
-        foreach (var edge in Edges)
-        {
-            edge.Update(true);
-        }
-        Center = (transformMatrix * new[] { Center.X, Center.Y, Center.Z, 1 }).Take(3).ToArray();
-        // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
-        if (_inertiaTensor != null)
-        {
-            var rotMatrix = new double[3, 3];
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
-                    rotMatrix[i, j] = transformMatrix[i, j];
-            _inertiaTensor = rotMatrix * _inertiaTensor;
-        }
-        if (Primitives != null)
-            foreach (var primitive in Primitives)
-                primitive.Transform(transformMatrix);
+        #endregion
     }
-    /// <summary>
-    /// Gets a new solid by transforming its vertices.
-    /// </summary>
-    /// <param name="transformationMatrix"></param>
-    /// <returns></returns>
-    public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
-    {
-        var copy = this.Copy();
-        copy.Transform(transformationMatrix);
-        return copy;
-    }
-    #endregion
-}
 }

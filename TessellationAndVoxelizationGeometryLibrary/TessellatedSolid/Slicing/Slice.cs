@@ -396,7 +396,7 @@ namespace TVGL.Boolean_Operations
             var pointOnPlane = plane.Normal * plane.DistanceToOrigin;
             foreach (var vertex in ts.Vertices)
             {
-                var distance = vertex.Position.Subtract(pointOnPlane).Dot(plane.Normal);
+                var distance = vertex.Coordinates.Subtract(pointOnPlane).Dot(plane.Normal);
                 distancesToPlane.Add(distance);
                 if (distance > 0) distancesToPosPlane.Add(distance);
                 else if (distance < 0) distancesToNegPlane.Add(Math.Abs(distance));
@@ -579,13 +579,13 @@ namespace TVGL.Boolean_Operations
                 var adjOnsideFaceIndices = new HashSet<int>();
                 //Find a good starting edge. One with an intersect vertex far enough away from other intersection vertices.
                 var k = 0;
-                var length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges.Last().IntersectVertex.Position,
-                            loopOfStraddleEdges[k].IntersectVertex.Position);
+                var length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges.Last().IntersectVertex.Coordinates,
+                            loopOfStraddleEdges[k].IntersectVertex.Coordinates);
                 while (length1.IsNegligible(tolerance) && k + 1 != loopOfStraddleEdges.Count - 1)
                 {
                     k++;
-                    length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges[k - 1].IntersectVertex.Position,
-                        loopOfStraddleEdges[k].IntersectVertex.Position);
+                    length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges[k - 1].IntersectVertex.Coordinates,
+                        loopOfStraddleEdges[k].IntersectVertex.Coordinates);
                 }
                 if (k + 1 == loopOfStraddleEdges.Count - 1) throw new Exception("No good starting edge found. Rewrite the function to find a better edge");
                 var firstStraddleEdge = loopOfStraddleEdges[k];
@@ -597,8 +597,8 @@ namespace TVGL.Boolean_Operations
                     k++; //Update the index
                     if (k > loopOfStraddleEdges.Count - 1) k = 0; //Set back to start if necessary
                     var currentStraddleEdge = loopOfStraddleEdges[k];
-                    var length = MiscFunctions.DistancePointToPoint(currentStraddleEdge.IntersectVertex.Position,
-                            previousStraddleEdge.IntersectVertex.Position);
+                    var length = MiscFunctions.DistancePointToPoint(currentStraddleEdge.IntersectVertex.Coordinates,
+                            previousStraddleEdge.IntersectVertex.Coordinates);
 
                     //If finished, then create the final face and end
                     if (currentStraddleEdge == firstStraddleEdge)

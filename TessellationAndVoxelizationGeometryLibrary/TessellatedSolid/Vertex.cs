@@ -47,7 +47,7 @@ namespace TVGL
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
                 Faces = new List<PolygonalFace>(),
-                Position = new Vector3(Position.X, Position.Y, Position.Z),
+                Coordinates = new Vector3(Coordinates.X, Coordinates.Y, Coordinates.Z),
                 IndexInList = IndexInList
             };
         }
@@ -87,7 +87,7 @@ namespace TVGL
         /// <param name="position">The position.</param>
         public Vertex(Vector3 position)
         {
-            Position = position;
+            Coordinates = position;
             Edges = new List<Edge>();
             Faces = new List<PolygonalFace>();
             IndexInList = -1;
@@ -101,7 +101,7 @@ namespace TVGL
         ///     Gets the position.
         /// </summary>
         /// <value>The position.</value>
-        public Vector3 Position { get; set; }
+        public Vector3 Coordinates { get; set; }
 
         /// <summary>
         ///     Gets the x.
@@ -110,7 +110,7 @@ namespace TVGL
         [JsonIgnore]
         public double X
         {
-            get { return Position.X; }
+            get { return Coordinates.X; }
         }
 
         /// <summary>
@@ -120,7 +120,7 @@ namespace TVGL
         [JsonIgnore]
         public double Y
         {
-            get { return Position.Y; }
+            get { return Coordinates.Y; }
         }
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace TVGL
         [JsonIgnore]
         public double Z
         {
-            get { return Position.Z; }
+            get { return Coordinates.Z; }
         }
 
         /// <summary>
@@ -146,6 +146,8 @@ namespace TVGL
         /// <value>The faces.</value>
         [JsonIgnore]
         public List<PolygonalFace> Faces { get; private set; }
+
+        double[] IVertex.Position => throw new NotImplementedException();
 
         #endregion
     }

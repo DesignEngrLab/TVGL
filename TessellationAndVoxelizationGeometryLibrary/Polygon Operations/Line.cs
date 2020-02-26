@@ -12,7 +12,7 @@ namespace TVGL
     /// </summary>
     public class Line
     {
- 
+
         #region Public Properties
         /// <summary>
         ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
@@ -24,7 +24,7 @@ namespace TVGL
         ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
-        public Vector2 Center => new[] { (ToPoint.X + FromPoint.X) / 2, (ToPoint.Y + FromPoint.Y) / 2 };
+        public Vector2 Center => new Vector2((ToPoint.X + FromPoint.X) / 2, (ToPoint.Y + FromPoint.Y) / 2);
 
         /// <summary>
         ///     Gets the Pointwhich the line is pointing away from. Set is through the constructor.
@@ -71,7 +71,7 @@ namespace TVGL
         /// </summary>
         /// <value>The reference index.</value>
         public int ReferenceIndex { get; set; }
-   
+
         // ReSharper disable once InconsistentNaming
         public double dY; //Rise
 
@@ -100,8 +100,8 @@ namespace TVGL
             FromPoint = fromPoint;
             ToPoint = null;
             LineVector = lineVector;
-            dX = lineVector[0];
-            dY = lineVector[1];
+            dX = lineVector.X;
+            dY = lineVector.Y;
         }
 
         /// <summary>
@@ -113,19 +113,21 @@ namespace TVGL
         internal Line(Point fromPoint, Point toPoint, bool twoWayReference = true)
         {
             FromPoint = fromPoint;
-            ToPoint= toPoint;
+            ToPoint = toPoint;
             Length = MiscFunctions.DistancePointToPoint(FromPoint, ToPoint);
             IsHorizontal = false;
             IsVertical = false;
             dY = ToPoint.Y - FromPoint.Y;
             dX = ToPoint.X - FromPoint.X;
-            LineVector = new[] {dX, dY};
+            LineVector = new Vector2(dX, dY );
 
             //Solve for slope and y intercept. 
             if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
             {
-                Slope = double.MaxValue; //use maxvalue instead of infinity, since IsPracticallyTheSame comparison in StarMath does not work with infinity
-                Yintercept = double.MaxValue;//use maxvalue instead of infinity, since IsPracticallyTheSame comparison in StarMath does not work with infinity
+                Slope = double.MaxValue;
+                //use maxvalue instead of infinity, since IsPracticallyTheSame comparison does not work with infinity
+                Yintercept = double.MaxValue;
+                //use maxvalue instead of infinity, since IsPracticallyTheSame comparison does not work with infinity
                 IsVertical = true;
             }
 
@@ -167,9 +169,9 @@ namespace TVGL
         /// </summary>
         public void Reverse()
         {
-            var tempPoint= FromPoint;
-            FromPoint= ToPoint;
-            ToPoint= tempPoint;
+            var tempPoint = FromPoint;
+            FromPoint = ToPoint;
+            ToPoint = tempPoint;
         }
 
         /// <summary>

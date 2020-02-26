@@ -123,8 +123,8 @@ namespace TVGL
         /// </summary>
         /// <value>The inertia tensor.</value>
         [JsonIgnore]
-        public virtual double[,] InertiaTensor { get; set; }
-        internal double[,] _inertiaTensor;
+        public virtual Matrix3x3 InertiaTensor { get; set; }
+        internal Matrix3x3 _inertiaTensor;
 
 
         /// <summary>

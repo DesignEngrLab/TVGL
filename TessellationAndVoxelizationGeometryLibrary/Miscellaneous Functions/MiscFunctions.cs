@@ -78,7 +78,7 @@ namespace TVGL
             foreach (var vertex in vertices)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place to match StarMath
-                var d = Math.Round(direction.Dot(vertex.Position), tolerance);
+                var d = Math.Round(direction.Dot(vertex.Coordinates), tolerance);
                 vertexDistances.Add((vertex, d));
             }
             return vertexDistances;
@@ -229,9 +229,9 @@ namespace TVGL
         public static double Perimeter(IList<Vertex> polygon3D)
         {
 
-            double perimeter = Vector3.Distance(polygon3D.Last().Position, polygon3D[0].Position);
+            double perimeter = Vector3.Distance(polygon3D.Last().Coordinates, polygon3D[0].Coordinates);
             for (var i = 1; i < polygon3D.Count; i++)
-                perimeter += Vector3.Distance(polygon3D[i - 1].Position, polygon3D[i].Position);
+                perimeter += Vector3.Distance(polygon3D[i - 1].Coordinates, polygon3D[i].Coordinates);
             return perimeter;
         }
         #endregion
@@ -986,7 +986,7 @@ namespace TVGL
 
         public static Vector2 Get2DProjectionPoint(Vertex vertex, Matrix4x4 transform)
         {
-            return Get2DProjectionPoint(vertex.Position, transform);
+            return Get2DProjectionPoint(vertex.Coordinates, transform);
         }
 
         public static Vector2 Get2DProjectionPoint(Vector3 vertex, Matrix4x4 transform)
@@ -1865,7 +1865,7 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPoint(Vertex v1, Vertex v2)
         {
-            return v1.Position.Distance(v2.Position);
+            return v1.Coordinates.Distance(v2.Coordinates);
         }
 
         /// <summary>
@@ -1906,7 +1906,7 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Vector3 PointOnFaceFromIntersectingLine(PolygonalFace face, Vector3 point1, Vector3 point2)
         {
-            var positions = face.Vertices.Select(vertex => vertex.Position).ToList();
+            var positions = face.Vertices.Select(vertex => vertex.Coordinates).ToList();
             return PointOnFaceFromIntersectingLine(positions, face.Normal, point1, point2);
         }
 
@@ -1949,7 +1949,7 @@ namespace TVGL
             Vertex point2)
         {
             var position =
-                PointOnPlaneFromIntersectingLineSegment(normalOfPlane, distOfPlane, point1.Position, point2.Position);
+                PointOnPlaneFromIntersectingLineSegment(normalOfPlane, distOfPlane, point1.Coordinates, point2.Coordinates);
             return position == null ? null : new Vertex(position);
         }
 
@@ -1986,7 +1986,7 @@ namespace TVGL
         public static Vertex PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vertex point1,
             Vertex point2)
         {
-            return new Vertex(PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1.Position, point2.Position));
+            return new Vertex(PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1.Coordinates, point2.Coordinates));
         }
         /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
@@ -2107,7 +2107,7 @@ namespace TVGL
         public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vertex vertex, Vector3 direction,
             out double signedDistance)
         {
-            return PointOnTriangleFromLine(face, vertex.Position, direction, out signedDistance);
+            return PointOnTriangleFromLine(face, vertex.Coordinates, direction, out signedDistance);
         }
 
         /// <summary>
@@ -2124,7 +2124,7 @@ namespace TVGL
         public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vector3 point3D, Vector3 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Position);
+            var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Coordinates);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
             if (newPoint == null) return Vector3.Null;
             return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
@@ -2146,7 +2146,7 @@ namespace TVGL
         {
             Vector3 newPoint;
             signedDistance = double.NaN;
-            var d = face.Normal.Dot(face.Vertices[0].Position);
+            var d = face.Normal.Dot(face.Vertices[0].Coordinates);
             var n = face.Normal;
             switch (direction)
             {
@@ -2232,7 +2232,7 @@ namespace TVGL
         public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsVertexInsideTriangle(triangle, vertexInQuestion.Position, onBoundaryIsInside);
+            return IsVertexInsideTriangle(triangle, vertexInQuestion.Coordinates, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2243,7 +2243,7 @@ namespace TVGL
         public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vector3 vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsVertexInsideTriangle(new[] { triangle[0].Position, triangle[1].Position, triangle[2].Position }, 
+            return IsVertexInsideTriangle(new[] { triangle[0].Coordinates, triangle[1].Coordinates, triangle[2].Coordinates }, 
                 vertexInQuestion, onBoundaryIsInside);
         }
 
@@ -2307,14 +2307,14 @@ namespace TVGL
                         return onBoundaryIsInside;
                     }
 
-                    var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Position);
-                    var t = -(vertexInQuestion.Position.Dot(face.Normal) - distanceToOrigin) /
+                    var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Coordinates);
+                    var t = -(vertexInQuestion.Coordinates.Dot(face.Normal) - distanceToOrigin) /
                             direction.Dot(face.Normal);
                     //Note that if t == 0, then it is on the face
                     //else, find the intersection point and determine if it is inside the polygon (face)
                     var newVertex = t.IsNegligible()
                         ? vertexInQuestion
-                        : new Vertex(vertexInQuestion.Position + (direction * t));
+                        : new Vertex(vertexInQuestion.Coordinates + (direction * t));
                     if (!IsVertexInsideTriangle(face, newVertex)) continue;
                     //If the distance between the vertex and a plane is neglible and the vertex is inside that face
                     if (t.IsNegligible())

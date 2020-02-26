@@ -198,19 +198,19 @@ namespace TVGL
             //Get the low extreme vertices along each direction
             List<Vertex> vLows, vHighs;
             Dimensions[0] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
-            var v0 = new Vertex(vLows.First().Position);
+            var v0 = new Vertex(vLows.First().Coordinates);
             Dimensions[1] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
-            var v1 = new Vertex(vLows.First().Position);
+            var v1 = new Vertex(vLows.First().Coordinates);
             Dimensions[2] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
-            var v2 = new Vertex(vLows.First().Position);
+            var v2 = new Vertex(vLows.First().Coordinates);
 
             //Start with v0 and move along direction[1] by projection
-            var vector0To1 = v1.Position.Subtract(v0.Position);
+            var vector0To1 = v1.Coordinates.Subtract(v0.Coordinates);
             var projectionOntoD1 = Directions[1] * Directions[1].Dot(vector0To1);
-            var v4 = v0.Position + projectionOntoD1;
+            var v4 = v0.Coordinates + projectionOntoD1;
 
             //Move along direction[2] by projection
-            var vector4To2 = v2.Position.Subtract(v4);
+            var vector4To2 = v2.Coordinates.Subtract(v4);
             var projectionOntoD2 = Directions[2] * Directions[2].Dot(vector4To2);
             var bottomCorner = new Vertex(v4 + projectionOntoD2);
 
@@ -233,7 +233,7 @@ namespace TVGL
                     for (var k = 0; k < 2; k++)
                     {
                         var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[2] * Dimensions[2];
-                        var newVertex = new Vertex(bottomCorner.Position + d0Vector + d1Vector + d2Vector);
+                        var newVertex = new Vertex(bottomCorner.Coordinates + d0Vector + d1Vector + d2Vector);
 
                         //
                         var b = k == 0 ? 0 : 4;
@@ -255,9 +255,9 @@ namespace TVGL
             var centerPosition = new[] { 0.0, 0.0, 0.0 };
             foreach (var vertex in cornerVertices)
             {
-                centerPosition[0] += vertex.Position[0];
-                centerPosition[1] += vertex.Position[1];
-                centerPosition[2] += vertex.Position[2];
+                centerPosition[0] += vertex.Coordinates[0];
+                centerPosition[1] += vertex.Coordinates[1];
+                centerPosition[2] += vertex.Coordinates[2];
             }
             centerPosition[0] = centerPosition[0] / cornerVertices.Count();
             centerPosition[1] = centerPosition[1] / cornerVertices.Count();
@@ -310,7 +310,7 @@ namespace TVGL
 
             var result = new BoundingBox
             {
-                Center = new Vertex(original.Center.Position + (direction * distance / 2)),
+                Center = new Vertex(original.Center.Coordinates + (direction * distance / 2)),
                 Dimensions = dimensions,
                 Volume = volume,
                 Directions = original.Directions, //If these change, then the copy is useless anyways
@@ -346,7 +346,7 @@ namespace TVGL
             }           
             foreach (var i in indicesToUpdate)
             {
-                result.CornerVertices[i] = new Vertex(result.CornerVertices[i].Position + vectorOffset);
+                result.CornerVertices[i] = new Vertex(result.CornerVertices[i].Coordinates + vectorOffset);
             }        
 
             //Recreate the solid representation if one existing in the original
@@ -368,7 +368,7 @@ namespace TVGL
 
             //Add in the center
             var centerPosition = new[] { 0.0, 0.0, 0.0 };
-            centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c + v.Position)
+            centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c + v.Coordinates)
                 .Divide(cornerVertices.Count());
             
             return new BoundingBox

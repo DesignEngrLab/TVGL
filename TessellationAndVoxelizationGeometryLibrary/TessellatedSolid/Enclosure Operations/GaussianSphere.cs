@@ -329,12 +329,12 @@ namespace TVGL.Enclosure_Operations
             for (var i = 0; i < 2; i++)
             {
                 var l1 = arc1.ArcLength;
-                var l2 = Math.Acos(arc1.Nodes[0].Vector.Dot(vertices[i].Position));
-                var l3 = Math.Acos(arc1.Nodes[1].Vector.Dot(vertices[i].Position));
+                var l2 = Math.Acos(arc1.Nodes[0].Vector.Dot(vertices[i].Coordinates));
+                var l3 = Math.Acos(arc1.Nodes[1].Vector.Dot(vertices[i].Coordinates));
                 var total1 = l1 - l2 - l3;
                 l1 = arc2.ArcLength;
-                l2 = Math.Acos(arc2.Nodes[0].Vector.Dot(vertices[i].Position));
-                l3 = Math.Acos(arc2.Nodes[1].Vector.Dot(vertices[i].Position));
+                l2 = Math.Acos(arc2.Nodes[0].Vector.Dot(vertices[i].Coordinates));
+                l3 = Math.Acos(arc2.Nodes[1].Vector.Dot(vertices[i].Coordinates));
                 var total2 = l1 - l2 - l3;
                 if (!total1.IsNegligible() || !total2.IsNegligible()) continue;
                 intersection = vertices[i];

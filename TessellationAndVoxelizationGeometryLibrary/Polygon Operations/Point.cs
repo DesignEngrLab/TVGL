@@ -90,7 +90,7 @@ namespace TVGL
         /// </summary>
         /// <param name="v">The v.</param>
         public Point(Vertex v)
-            : this(v, v.Position.X, v.Position.Y)
+            : this(v, v.Coordinates.X, v.Coordinates.Y)
         {
         }
 

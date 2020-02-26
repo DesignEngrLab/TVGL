@@ -85,9 +85,9 @@ namespace TVGL
 
             Vector = new[]
             {
-                To.Position[0] - From.Position[0],
-                To.Position[1] - From.Position[1],
-                To.Position[2] - From.Position[2]
+                To.Coordinates[0] - From.Coordinates[0],
+                To.Coordinates[1] - From.Coordinates[1],
+                To.Coordinates[2] - From.Coordinates[2]
             };
             Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
         }
@@ -184,9 +184,9 @@ namespace TVGL
             //Reset the vector, since vertices may have been moved.
             Vector = new[]
             {
-                To.Position[0] - From.Position[0],
-                To.Position[1] - From.Position[1],
-                To.Position[2] - From.Position[2]
+                To.Coordinates[0] - From.Coordinates[0],
+                To.Coordinates[1] - From.Coordinates[1],
+                To.Coordinates[2] - From.Coordinates[2]
             };
 
             if (lengthAndAngleUnchanged) return; //Done. No need to update the length or the internal edge angle
@@ -224,7 +224,7 @@ namespace TVGL
             var faceToIndex = _ownedFace.Vertices.IndexOf(To);
             var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
-            var nextEdgeVector = nextFaceVertex.Position.Subtract(To.Position);
+            var nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
             var dotOfCross = Vector.Cross(nextEdgeVector).Dot(_ownedFace.Normal);
             if (dotOfCross <= 0)
             {
@@ -240,7 +240,7 @@ namespace TVGL
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.Subtract(To.Position);
+                nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
                 var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal);
                 if (dotOfCross2 < 0)
                 // neither faces appear to own the edge...must be something wrong
@@ -257,7 +257,7 @@ namespace TVGL
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.Subtract(To.Position);
+                nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
                 var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal);
                 if (dotOfCross2 > 0)
                 // both faces appear to own the edge...must be something wrong
@@ -346,8 +346,8 @@ namespace TVGL
             var v0 = face1.Vertices.First(v => v.IndexInList == from);
             var v1 = face1.Vertices.First(v => v.IndexInList == to);
             var v2 = face1.Vertices.First(v => v.IndexInList != to && v.IndexInList != from);
-            var vector1 = v1.Position.Subtract(v0.Position);
-            var vector2 = v2.Position.Subtract(v1.Position);
+            var vector1 = v1.Coordinates.Subtract(v0.Coordinates);
+            var vector2 = v2.Coordinates.Subtract(v1.Coordinates);
             var dot = vector1.Cross(vector2).Dot(face1.Normal);
             //The owned face(the face in which the from-to direction makes sense
             // - that is, produces the proper cross-product normal).

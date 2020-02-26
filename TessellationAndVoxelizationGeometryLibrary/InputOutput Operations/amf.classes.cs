@@ -339,7 +339,7 @@ namespace TVGL.IOFunctions.amfclasses
         ///     Gets as array.
         /// </summary>
         /// <value>As array.</value>
-        public Vector2 AsArray
+        public Vector3 AsVector3
         {
             get { return new Vector3(x, y, z); }
         }

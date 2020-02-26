@@ -540,8 +540,8 @@ namespace TVGL
                         if (isOwnedFace == isOtherFace) throw new Exception("Should be one and only one face for this edge on this surface");
                         var positiveFaceBelongingToEdge = isOwnedFace ? edge.OwnedFace : edge.OtherFace;
                         var vertex3 = positiveFaceBelongingToEdge.OtherVertex(edge);
-                        var v1 = vertex3.Position.Subtract(edgeTuple.Item3.Position); //To point according to our loop
-                        var v2 = edgeTuple.Item3.Position.Subtract(edgeTuple.Item2.Position); //To minus from
+                        var v1 = vertex3.Coordinates.Subtract(edgeTuple.Item3.Coordinates); //To point according to our loop
+                        var v2 = edgeTuple.Item3.Coordinates.Subtract(edgeTuple.Item2.Coordinates); //To minus from
                         var dot = v2.Cross(v1).Dot(positiveFaceBelongingToEdge.Normal);
                         if (dot > 0)
                         {

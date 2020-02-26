@@ -228,7 +228,7 @@ namespace TVGL
 
         private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
         {
-            var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Position.Subtract(edge.To.Position);
+            var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Coordinates.Subtract(edge.To.Coordinates);
             var isThisNormal = edge.Vector.Cross(otherEdgeVector);
             return face.Normal.Dot(isThisNormal) > 0;
         }
@@ -318,7 +318,7 @@ namespace TVGL
                 else if (edge.To == removedVertex) edge.To = keepVertex;
                 keepVertex.Edges.Add(edge);
             }
-            keepVertex.Position = ModifyTessellation.DetermineIntermediateVertexPosition(keepVertex, removedVertex);
+            keepVertex.Coordinates = ModifyTessellation.DetermineIntermediateVertexPosition(keepVertex, removedVertex);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)
@@ -497,10 +497,10 @@ namespace TVGL
         {
             var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
             score += 1 - Math.Abs(e1.Vector.Normalize().Dot(e2.Vector.Normalize()));
-            score += Math.Min(e2.From.Position.Subtract(e1.To.Position).norm2()
-                              + e2.To.Position.Subtract(e1.From.Position).norm2(),
-                e2.From.Position.Subtract(e1.From.Position).norm2()
-                + e2.To.Position.Subtract(e1.To.Position).norm2())
+            score += Math.Min(e2.From.Coordinates.Subtract(e1.To.Coordinates).norm2()
+                              + e2.To.Coordinates.Subtract(e1.From.Coordinates).norm2(),
+                e2.From.Coordinates.Subtract(e1.From.Coordinates).norm2()
+                + e2.To.Coordinates.Subtract(e1.To.Coordinates).norm2())
                      / e1.Length;
             return score;
         }

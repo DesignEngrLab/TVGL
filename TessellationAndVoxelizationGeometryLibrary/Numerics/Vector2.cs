@@ -18,6 +18,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     {
         #region Public Static Properties
         /// <summary>
+        /// Returns the vector (NaN,NaN). This is often used in place of null.
+        /// </summary>
+        public static Vector2 Null
+        {
+            // COMMENTEDCHANGE [Intrinsic]
+            get
+            {
+                return new Vector2(double.NaN, double.NaN);
+            }
+        }
+
+
+        /// <summary>
         /// Returns the vector (0,0).
         /// </summary>
         public static Vector2 Zero

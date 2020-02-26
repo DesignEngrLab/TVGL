@@ -163,17 +163,17 @@ namespace TVGL.IOFunctions
                 name = amfObject.metadata[nameIndex].Value;
                 amfObject.metadata.RemoveAt(nameIndex);
             }
-            var vertices = amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList();
+            var vertices = amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsVector3).ToList();
             if (amfInstance != null &&
                 (amfInstance.deltaxSpecified || amfInstance.deltaySpecified || amfInstance.deltazSpecified
                  || amfInstance.rxSpecified || amfInstance.rySpecified || amfInstance.rzSpecified))
             {
                 var tMatrix =
-                    Matrix4x4.CreateRotationX(Constants.DegreesToRadiansFactor* amfInstance.rx)
-                    * Matrix4x4.CreateRotationY(Constants.DegreesToRadiansFactor * amfInstance.ry) 
+                    Matrix4x4.CreateRotationX(Constants.DegreesToRadiansFactor * amfInstance.rx)
+                    * Matrix4x4.CreateRotationY(Constants.DegreesToRadiansFactor * amfInstance.ry)
                     * Matrix4x4.CreateRotationZ(Constants.DegreesToRadiansFactor * amfInstance.rz);
                 //do matrix multiplication go the other way?
-                tMatrix =Matrix4x4.CreateTranslation(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz) * tMatrix;
+                tMatrix = tMatrix * Matrix4x4.CreateTranslation(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz);
                 foreach (var coord in vertices)
                 {
                     var coordWith1 = new[] { coord[0], coord[1], coord[2], 1.0 };

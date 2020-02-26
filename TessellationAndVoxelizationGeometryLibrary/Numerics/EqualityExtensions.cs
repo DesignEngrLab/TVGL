@@ -1,17 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : StarMath
-// Author           : MICampbell
-// Created          : 05-14-2015
-//
-// Last Modified By : MICampbell
-// Last Modified On : 07-07-2015
-// ***********************************************************************
-// <copyright file="constants.cs" company="Design Engineering Lab -- MICampbell">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-using System;
+﻿using System;
 namespace TVGL.Numerics
 {
     /// <summary>

@@ -129,8 +129,8 @@ namespace TVGL
                         var del = new List<PolygonalFace>();
                         var cyl = (Cylinder)primitives[j];
                         // if the radius of the cylinder is very high, just continue;
-                        var d = DistanceBetweenTwoVertices(primitives[j].Faces.First().Vertices[0].Position,
-                            primitives[j].Faces.First().Vertices[1].Position);
+                        var d = DistanceBetweenTwoVertices(primitives[j].Faces.First().Vertices[0].Coordinates,
+                            primitives[j].Faces.First().Vertices[1].Coordinates);
                         if (Math.Abs(1 - (cyl.Radius - d) / (cyl.Radius)) < 0.001)
                             continue;
                         foreach (var f in primitives[i].Faces.Where(f => primitives[j].IsNewMemberOf(f)))
@@ -155,8 +155,8 @@ namespace TVGL
             var cylinders = primitives.Where(p => p is Cylinder).Cast<Cylinder>().ToList();
             foreach (var cy in cylinders)
             {
-                var d = DistanceBetweenTwoVertices(cy.Faces.First().Vertices[0].Position,
-                    cy.Faces.First().Vertices[1].Position);
+                var d = DistanceBetweenTwoVertices(cy.Faces.First().Vertices[0].Coordinates,
+                    cy.Faces.First().Vertices[1].Coordinates);
                 if (Math.Abs(1 - (cy.Radius - d) / (cy.Radius)) < 0.001)
                     continue;
                 foreach (var fl in flats)
@@ -299,8 +299,8 @@ namespace TVGL
         {
             var cenMass1 = eachEdge.Edge.OwnedFace.Center;
             var cenMass2 = eachEdge.Edge.OtherFace.Center;
-            var vector1 = new[] { cenMass1[0] - eachEdge.Edge.From.Position[0], cenMass1[1] - eachEdge.Edge.From.Position[1], cenMass1[2] - eachEdge.Edge.From.Position[2] };
-            var vector2 = new[] { cenMass2[0] - eachEdge.Edge.From.Position[0], cenMass2[1] - eachEdge.Edge.From.Position[1], cenMass2[2] - eachEdge.Edge.From.Position[2] };
+            var vector1 = new[] { cenMass1[0] - eachEdge.Edge.From.Coordinates[0], cenMass1[1] - eachEdge.Edge.From.Coordinates[1], cenMass1[2] - eachEdge.Edge.From.Coordinates[2] };
+            var vector2 = new[] { cenMass2[0] - eachEdge.Edge.From.Coordinates[0], cenMass2[1] - eachEdge.Edge.From.Coordinates[1], cenMass2[2] - eachEdge.Edge.From.Coordinates[2] };
             var distance1 = eachEdge.Edge.Vector.Normalize().Dot(vector1);
             var distance2 = eachEdge.Edge.Vector.Normalize().Dot(vector2);
             //Mapped Center of Mass

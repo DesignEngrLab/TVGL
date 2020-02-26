@@ -226,8 +226,8 @@ namespace TVGL
             var area = 0.0;
             for (var i = 2; i < Vertices.Count; i++)
             {
-                var edge1 = Vertices[1].Position.Subtract(Vertices[0].Position);
-                var edge2 = Vertices[2].Position.Subtract(Vertices[0].Position);
+                var edge1 = Vertices[1].Coordinates.Subtract(Vertices[0].Coordinates);
+                var edge2 = Vertices[2].Coordinates.Subtract(Vertices[0].Coordinates);
                 // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
                 area += Math.Abs(edge1.Cross(edge2).Dot(Normal)) / 2;
             }
@@ -250,10 +250,10 @@ namespace TVGL
             if (!normal.IsNull()) normal = normal.Normalize();
             var edgeVectors = new Vector3[n];
             var normals = new List<Vector2>();
-            edgeVectors[0] = vertices[0].Position.Subtract(vertices[n - 1].Position);
+            edgeVectors[0] = vertices[0].Coordinates.Subtract(vertices[n - 1].Coordinates);
             for (var i = 1; i < n; i++)
             {
-                edgeVectors[i] = vertices[i].Position.Subtract(vertices[i - 1].Position);
+                edgeVectors[i] = vertices[i].Coordinates.Subtract(vertices[i - 1].Coordinates);
                 var tempCross = edgeVectors[i - 1].Cross(edgeVectors[i]).Normalize();
                 if (!tempCross.IsNull())
                 {

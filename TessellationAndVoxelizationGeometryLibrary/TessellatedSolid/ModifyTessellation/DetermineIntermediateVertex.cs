@@ -36,7 +36,7 @@ namespace TVGL
         internal static Vector2 DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
         {
             //average positions
-            var newPosition = vertexA.Position + vertexB.Position;
+            var newPosition = vertexA.Coordinates + vertexB.Coordinates;
             return newPosition.Divide(2);
         }
 
@@ -51,19 +51,19 @@ namespace TVGL
             PolygonalFace removeFace1, PolygonalFace removeFace2)
         {
             //average positions
-            var newPosition = keepVertex.Position + removedVertex.Position;
-            var radius = keepVertex.Position.Subtract(removedVertex.Position).norm2() / 2.0;
-            keepVertex.Position = newPosition.Divide(2);
+            var newPosition = keepVertex.Coordinates + removedVertex.Coordinates;
+            var radius = keepVertex.Coordinates.Subtract(removedVertex.Coordinates).norm2() / 2.0;
+            keepVertex.Coordinates = newPosition.Divide(2);
             var avgNormal = (removeFace1.Normal + removeFace2.Normal).Normalize();
             var otherVertexAvgDistanceToEdgePlane =
-                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.Dot(avgNormal)).Sum() /
+                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Coordinates.Dot(avgNormal)).Sum() /
                 (keepVertex.Edges.Count - 1);
-            var distanceOfEdgePlane = keepVertex.Position.Dot(avgNormal);
+            var distanceOfEdgePlane = keepVertex.Coordinates.Dot(avgNormal);
 
             // use a sigmoid function to determine how far out to move the vertex
             var x = 0.05 * (distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane) / radius;
             var length = 2 * radius * x / Math.Sqrt(1 + x * x) - radius;
-            keepVertex.Position = keepVertex.Position + (avgNormal * length);
+            keepVertex.Coordinates = keepVertex.Coordinates + (avgNormal * length);
         }
     }
 }

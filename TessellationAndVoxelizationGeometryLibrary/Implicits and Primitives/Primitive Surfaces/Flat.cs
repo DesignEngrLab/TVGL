@@ -61,7 +61,7 @@ namespace TVGL
             //Return true if all the vertices are within the tolerance 
             //Note that the dotProduct term and distance to origin, must have the same sign, 
             //so there is no additional need moth absolute value methods.
-            return face.Vertices.All(v => Normal.Dot(v.Position).IsPracticallySame(DistanceToOrigin, Tolerance));
+            return face.Vertices.All(v => Normal.Dot(v.Coordinates).IsPracticallySame(DistanceToOrigin, Tolerance));
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace TVGL
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
             {
                 newVerts.Add(v);
-                newDistanceToPlane += v.Position.Dot(Normal);
+                newDistanceToPlane += v.Coordinates.Dot(Normal);
             }
             DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + newVerts.Count);
             base.UpdateWith(face);
@@ -116,7 +116,7 @@ namespace TVGL
             }
             Normal = normalSum.Normalize();
 
-            DistanceToOrigin = Faces.Average(f => Normal.Dot(f.Vertices[0].Position));
+            DistanceToOrigin = Faces.Average(f => Normal.Dot(f.Vertices[0].Coordinates));
         }
 
         /// <summary>

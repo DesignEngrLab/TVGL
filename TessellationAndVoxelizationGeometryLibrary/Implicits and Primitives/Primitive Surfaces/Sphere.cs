@@ -36,7 +36,7 @@ namespace TVGL
                 Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
-                if (Math.Abs(MiscFunctions.DistancePointToPoint(v.Position, Center) - Radius) >
+                if (Math.Abs(MiscFunctions.DistancePointToPoint(v.Coordinates, Center) - Radius) >
                     Constants.ErrorForFaceInSurface*Radius)
                     return false;
             return true;
@@ -59,7 +59,7 @@ namespace TVGL
                 );
 
 
-            var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Position));
+            var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Coordinates));
             Radius = totalOfRadii/Vertices.Count;
             base.UpdateWith(face);
         }
@@ -120,7 +120,7 @@ namespace TVGL
             var isPositive = numNeg > numPos;
             var radii = new List<double>();
             foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToPoint(v.Position, center)));
+                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToPoint(v.Coordinates, center)));
             var averageRadius = radii.Average();
 
             Center = center;

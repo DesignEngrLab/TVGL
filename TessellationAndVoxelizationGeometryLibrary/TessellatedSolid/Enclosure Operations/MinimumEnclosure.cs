@@ -165,7 +165,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.Dot(v.Position);
+                var distance = dir.Dot(v.Coordinates);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomVertices.Add(v);
                 else if (distance < minD)
@@ -206,7 +206,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.Dot(v.Position);
+                var distance = dir.Dot(v.Coordinates);
                 if (distance < minD)
                 {
                     bottomVertex = v;
@@ -855,7 +855,7 @@ namespace TVGL
         private static void FindOBBAlongDirection(BoundingBoxData boxData)
         {
             var direction0 = boxData.Direction = boxData.Direction.Normalize();
-            var height = direction0.Dot(boxData.RotatorEdge.From.Position.Subtract(boxData.BackVertex.Position));
+            var height = direction0.Dot(boxData.RotatorEdge.From.Coordinates.Subtract(boxData.BackVertex.Coordinates));
             var points = MiscFunctions.Get2DProjectionPoints(boxData.OrthVertices, direction0, out var backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
             //Get the Direction vectors from rotating caliper and projection.

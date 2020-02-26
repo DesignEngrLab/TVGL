@@ -65,7 +65,7 @@ namespace TVGL
 
 
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
-            IList<int> convexHullFaceIndices, Vector2 center = null, double volume = double.NaN,
+            IList<int> convexHullFaceIndices, Vector2 center = Vector2.Null, double volume = double.NaN,
             double surfaceArea = double.NaN)
         {
             Vertices = convexHullPoints.ToArray();

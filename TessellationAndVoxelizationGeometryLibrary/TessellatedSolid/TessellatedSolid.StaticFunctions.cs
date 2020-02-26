@@ -56,7 +56,7 @@ namespace TVGL
             double oldVolume;
             var volume = 0.0;
             var iterations = 0;
-            Vector3 oldCenter1 = new Vector3();
+            var oldCenter1 = new Vector3();
             center = new Vector3();
             do
             {
@@ -67,7 +67,7 @@ namespace TVGL
                 foreach (var face in faces)
                 {
                     if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Position.Subtract(oldCenter1))) / 3;
+                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Coordinates.Subtract(oldCenter1))) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
                     // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position.Subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
@@ -91,7 +91,7 @@ namespace TVGL
         const double oneSixtieth = 1.0 / 60.0;
 
 
-        private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, Vector3 Center, double Volume)
+        private static Matrix3x3 DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, in Vector3 Center, double Volume)
         {
             //var matrixA = new double[3, 3];
             var matrixCtotal = new Matrix3x3();
@@ -101,34 +101,35 @@ namespace TVGL
             foreach (var face in Faces)
             {
                 var matrixA = new Matrix3x3(
-                   face.Vertices[0].Position[0] - Center[0],
-                   face.Vertices[0].Position[1] - Center[1],
-                   face.Vertices[0].Position[2] - Center[2],
+                   face.Vertices[0].Coordinates[0] - Center[0],
+                   face.Vertices[0].Coordinates[1] - Center[1],
+                   face.Vertices[0].Coordinates[2] - Center[2],
 
-                   face.Vertices[1].Position[0] - Center[0],
-                   face.Vertices[1].Position[1] - Center[1],
-                   face.Vertices[1].Position[2] - Center[2],
+                   face.Vertices[1].Coordinates[0] - Center[0],
+                   face.Vertices[1].Coordinates[1] - Center[1],
+                   face.Vertices[1].Coordinates[2] - Center[2],
 
-                   face.Vertices[2].Position[0] - Center[0],
-                   face.Vertices[2].Position[1] - Center[1],
-                   face.Vertices[2].Position[2] - Center[2]);
+                   face.Vertices[2].Coordinates[0] - Center[0],
+                   face.Vertices[2].Coordinates[1] - Center[1],
+                   face.Vertices[2].Coordinates[2] - Center[2]);
 
                 var matrixC = matrixA.Transpose() * canonicalMatrix;
                 matrixC = matrixC * matrixA * matrixA.GetDeterminant();
                 matrixCtotal = matrixCtotal + matrixC;
             }
-
-            var translateMatrix = new double[,] { { 0 }, { 0 }, { 0 } };
-            //what is this crazy equations?
-            var matrixCprime =
-                (translateMatrix * -1)
-                     * (translateMatrix.transpose())
-                     + (translateMatrix * ((translateMatrix * -1).transpose()))
-                     + ((translateMatrix * -1) * ((translateMatrix * -1).transpose())
-                     * Volume);
-            matrixCprime = matrixCprime + matrixCtotal;
-            var result = Matrix4x4.Identity * (matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
-            return result.Subtract(matrixCprime);
+            // todo fix this and COM calculation
+            //var translateMatrix = new double[,] { { 0 }, { 0 }, { 0 } };
+            ////what is this crazy equations?
+            //var matrixCprime =
+            //    (translateMatrix * -1)
+            //         * (translateMatrix.Transpose())
+            //         + (translateMatrix * ((translateMatrix * -1).transpose()))
+            //         + ((translateMatrix * -1) * ((translateMatrix * -1).transpose())
+            //         * Volume);
+            //matrixCprime = matrixCprime + matrixCtotal;
+            //var result = Matrix4x4.Identity * (matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
+            //return result.Subtract(matrixCprime);
+            throw new NotImplementedException();
         }
         #endregion
 

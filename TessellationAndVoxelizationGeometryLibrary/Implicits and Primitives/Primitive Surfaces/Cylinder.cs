@@ -35,7 +35,7 @@ namespace TVGL
             if (Math.Abs(face.Normal.Dot(Axis)) > Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
-                if (Math.Abs(MiscFunctions.DistancePointToLine(v.Position, Anchor, Axis) - Radius) >
+                if (Math.Abs(MiscFunctions.DistancePointToLine(v.Coordinates, Anchor, Axis) - Radius) >
                     Constants.ErrorForFaceInSurface * Radius)
                     return false;
             return true;
@@ -79,7 +79,7 @@ namespace TVGL
             foreach (var v in face.Vertices)
                 if (!Vertices.Contains(v))
                     Vertices.Add(v);
-            var totalOfRadii = Vertices.Sum(v => MiscFunctions.DistancePointToLine(v.Position, Anchor, Axis));
+            var totalOfRadii = Vertices.Sum(v => MiscFunctions.DistancePointToLine(v.Coordinates, Anchor, Axis));
             /**** set new Radius (by averaging in with last n values) ****/
             Radius = totalOfRadii / Vertices.Count;
             base.UpdateWith(face);
@@ -184,12 +184,12 @@ namespace TVGL
                         {
                             if (!dotFromSharpestEdgesConnectedToVertex.ContainsKey(A))
                             {
-                                throughEdgeVectors.Add(A, B.Position.Subtract(A.Position));
+                                throughEdgeVectors.Add(A, B.Coordinates.Subtract(A.Coordinates));
                                 dotFromSharpestEdgesConnectedToVertex.Add(A, edge.InternalAngle);
                             }
                             else if (dot < dotFromSharpestEdgesConnectedToVertex[A])
                             {
-                                throughEdgeVectors[A] = B.Position.Subtract(A.Position);
+                                throughEdgeVectors[A] = B.Coordinates.Subtract(A.Coordinates);
                                 dotFromSharpestEdgesConnectedToVertex[A] = dot;
                             }
                             break; //Go to the next edge
@@ -352,7 +352,7 @@ namespace TVGL
             var isPositive = numNeg > numPos;
             var radii = new List<double>();
             foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToLine(v.Position, center, axis)));
+                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToLine(v.Coordinates, center, axis)));
             var averageRadius = radii.Average();
 
             Axis = axis;
@@ -396,10 +396,10 @@ namespace TVGL
                 center.Y - distToOrigin*axis.Y,
                 center.Z - distToOrigin*axis.Z
             };
-            var d1 = MiscFunctions.DistancePointToLine(v1.Position, center, axis);
-            var d2 = MiscFunctions.DistancePointToLine(v2.Position, center, axis);
-            var d3 = MiscFunctions.DistancePointToLine(v3.Position, center, axis);
-            var d4 = MiscFunctions.DistancePointToLine(v4.Position, center, axis);
+            var d1 = MiscFunctions.DistancePointToLine(v1.Coordinates, center, axis);
+            var d2 = MiscFunctions.DistancePointToLine(v2.Coordinates, center, axis);
+            var d3 = MiscFunctions.DistancePointToLine(v3.Coordinates, center, axis);
+            var d4 = MiscFunctions.DistancePointToLine(v4.Coordinates, center, axis);
             var averageRadius = (d1 + d2 + d3 + d4) / 4;
             var outerEdges = new List<Edge>(edge.OwnedFace.Edges);
             outerEdges.AddRange(edge.OtherFace.Edges);

@@ -230,7 +230,7 @@ namespace TVGL
                 {
                     iterations--; //now that we passed that test, we can be assured that the reduction will go through
                                   // move the keepVertex
-                    keepVertex.Position = DetermineIntermediateVertexPosition(removedVertex, keepVertex);
+                    keepVertex.Coordinates = DetermineIntermediateVertexPosition(removedVertex, keepVertex);
                     // add and remove to the lists at the top of this method
                     removedEdges.Add(edge);
                     removedEdges.Add(leftRemoveEdge);
@@ -413,7 +413,7 @@ namespace TVGL
             }
             if (keepEdge2 != null && keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
             else if (keepEdge2 != null) keepEdge2.OtherFace = fromFace;
-            keepVertex.Position = DetermineIntermediateVertexPosition(keepVertex, removedVertex);
+            keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex, removedVertex);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)
