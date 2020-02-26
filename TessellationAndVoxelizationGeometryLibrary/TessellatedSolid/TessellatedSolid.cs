@@ -476,7 +476,7 @@ namespace TVGL
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    vertex.X = Math.Round(vertex.X, numDecimalPoints);
+                    vertex = new Vector3(Math.Round(vertex.X, numDecimalPoints);
                     vertex.Y = Math.Round(vertex.Y, numDecimalPoints);
                     vertex.Z = Math.Round(vertex.Z, numDecimalPoints);
                     //Since negative zero and positive zero are both the same and can mess up the sign on the string,
@@ -889,7 +889,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public override Solid Copy()
         {
-            return new TessellatedSolid(Vertices.Select(vertex => (Vector2)vertex.Position.Clone()).ToList(),
+            return new TessellatedSolid(Vertices.Select(vertex => new Vector3(vertex.Position)).ToList(),
                 Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
                 Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
                 FileName, Comments, Language);

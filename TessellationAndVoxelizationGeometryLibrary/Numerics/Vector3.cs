@@ -366,10 +366,33 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Transform(Vector3 position, Matrix4x4 matrix)
         {
+            if (matrix.IsProjectiveTransform)
+            {
+                var factor = 1 / (position.X * matrix.M14 + position.Y * matrix.M24 + position.Z * matrix.M34 + matrix.M44);
+                return new Vector3(
+                  factor * (position.X * matrix.M11 + position.Y * matrix.M21 + position.Z * matrix.M31 + matrix.M41),
+                  factor * (position.X * matrix.M12 + position.Y * matrix.M22 + position.Z * matrix.M32 + matrix.M42),
+                  factor * (position.X * matrix.M13 + position.Y * matrix.M23 + position.Z * matrix.M33 + matrix.M43));
+            }
             return new Vector3(
                 position.X * matrix.M11 + position.Y * matrix.M21 + position.Z * matrix.M31 + matrix.M41,
                 position.X * matrix.M12 + position.Y * matrix.M22 + position.Z * matrix.M32 + matrix.M42,
                 position.X * matrix.M13 + position.Y * matrix.M23 + position.Z * matrix.M33 + matrix.M43);
+        }
+
+        /// <summary>
+        /// Transforms a vector by the given matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Transform(Vector3 position, Matrix3x3 matrix)
+        {
+            return new Vector3(
+                position.X * matrix.M11 + position.Y * matrix.M21 + position.Z * matrix.M31,
+                position.X * matrix.M12 + position.Y * matrix.M22 + position.Z * matrix.M32,
+                position.X * matrix.M13 + position.Y * matrix.M23 + position.Z * matrix.M33);
         }
 
         /// <summary>

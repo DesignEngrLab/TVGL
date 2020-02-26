@@ -43,6 +43,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="z">The Z component.</param>
         // COMMENTEDCHANGE [Intrinsic]
         public Vector3(Vector2 value, double z) : this(value.X, value.Y, z) { }
+        public Vector3(Vector3 value) : this(value.X, value.Y, value.Z) { }
 
         /// <summary>
         /// Constructs a vector with the given individual elements.
@@ -64,13 +65,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Y = d[1];
             Z = d[2];
         }
-        public Vector3(Vector4 vector4) : this()
-        {
-            var multiplier = 1 / vector4.W;
-            X = vector4.X * multiplier;
-            Y = vector4.Y * multiplier;
-            Z = vector4.Z * multiplier;
-        }
+        //public Vector3(Vector4 vector4) : this()
+        //{
+        //    var multiplier = 1 / vector4.W;
+        //    X = vector4.X * multiplier;
+        //    Y = vector4.Y * multiplier;
+        //    Z = vector4.Z * multiplier;
+        //}
         #endregion Constructors
 
         #region Public Instance Methods

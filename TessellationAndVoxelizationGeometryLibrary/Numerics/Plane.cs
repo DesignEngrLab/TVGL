@@ -53,11 +53,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">A vector whose first 3 elements describe the normal vector,
         /// and whose W component defines the distance along that normal from the origin.</param>
-        public Plane(Vector4 value)
-        {
-            Normal = new Vector3(value.X, value.Y, value.Z);
-            D = value.W;
-        }
+        //public Plane(Vector4 value)
+        //{
+        //    Normal = new Vector3(value.X, value.Y, value.Z);
+        //    D = value.W;
+        //}
 
         /// <summary>
         /// Creates a Plane that contains the three given points.
@@ -227,14 +227,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="plane">The Plane.</param>
         /// <param name="value">The Vector4.</param>
         /// <returns>The dot product.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double Dot(Plane plane, Vector4 value)
-        {
-            return plane.Normal.X * value.X +
-                   plane.Normal.Y * value.Y +
-                   plane.Normal.Z * value.Z +
-                   plane.D * value.W;
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public static double Dot(Plane plane, Vector4 value)
+        //{
+        //    return plane.Normal.X * value.X +
+        //           plane.Normal.Y * value.Y +
+        //           plane.Normal.Z * value.Z +
+        //           plane.D * value.W;
+        //}
 
         /// <summary>
         /// Returns the dot product of a specified Vector3 and the normal vector of this Plane plus the distance (D) value of the Plane.

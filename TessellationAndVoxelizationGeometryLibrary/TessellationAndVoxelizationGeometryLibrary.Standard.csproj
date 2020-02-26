@@ -43,6 +43,8 @@
     <Compile Remove="Numerics\ConstantHelper.cs" />
     <Compile Remove="Numerics\Register.cs" />
     <Compile Remove="Numerics\Vector.cs" />
+    <Compile Remove="Numerics\Vector4.cs" />
+    <Compile Remove="Numerics\Vector4_Intrinsics.cs" />
     <Compile Remove="Numerics\VectorMath.cs" />
     <Compile Remove="Numerics\Vector_Operations.cs" />
   </ItemGroup>

@@ -68,7 +68,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The transform.</value>
         [XmlAttribute]
         public string transform { get; set; }
-        internal Vector2 transformArray => MakeTransformArray(transform);
+        internal double[] transformArray => MakeTransformArray(transform);
         internal Matrix4x4 transformMatrix => MakeTransformMatrix(transformArray);
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace TVGL.IOFunctions.threemfclasses
         public string itemref { get; set; }
 
 
-        internal static Vector2 MakeTransformArray(string transform)
+        internal static double[] MakeTransformArray(string transform)
         {
 
             if (string.IsNullOrWhiteSpace(transform)) return null;
@@ -160,8 +160,8 @@ namespace TVGL.IOFunctions.threemfclasses
             /// <value>The transform.</value>
             [XmlAttribute]
             public string transform { get; set; }
-            internal Vector2 transformArray => Item.MakeTransformArray(transform);
-            internal double[,] transformMatrix => Item.MakeTransformMatrix(transformArray);
+            internal double[] transformArray => Item.MakeTransformArray(transform);
+            internal Matrix4x4 transformMatrix => Item.MakeTransformMatrix(transformArray);
         }
 
         /// <summary>
@@ -688,3 +688,4 @@ namespace TVGL.IOFunctions.threemfclasses
         #endregion
 
     }
+}

@@ -12,16 +12,16 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     // The JIT recognizes these methods and properties by name and signature: if either is changed, the JIT will no longer recognize the member.
     // Some methods declared here are not strictly intrinsic, but delegate to an intrinsic method. For example, only one overload of CopyTo()
 
-    public partial struct Vector2
+    public readonly partial struct Vector2
     {
         /// <summary>
         /// The X component of the vector.
         /// </summary>
-        public double X;
+        public double X { get; }
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
-        public double Y;
+        public double Y { get; }
 
         #region Constructors
         /// <summary>

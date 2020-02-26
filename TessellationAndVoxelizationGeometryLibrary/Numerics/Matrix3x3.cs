@@ -380,6 +380,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
         }
 
+        public static Matrix3x3 Transpose(Matrix3x3 m)
+        { return new Matrix3x3(m.M11, m.M21, m.M31, m.M12, m.M22, m.M32, m.M13, m.M23, m.M33); }
+
         /// <summary>
         /// Calculates the determinant for this matrix.
         /// The determinant is calculated by expanding the matrix with a third column whose values are (0,0,1).

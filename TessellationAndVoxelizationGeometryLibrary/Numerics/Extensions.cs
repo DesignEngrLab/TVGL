@@ -100,6 +100,9 @@ namespace TVGL.Numerics
         public static Vector3 Transform(this Vector3 position, Matrix4x4 matrix)
         { return Vector3.Transform(position, matrix); }
 
+        public static Vector3 Transform(this Vector3 position, Matrix3x3 matrix)
+        { return Vector3.Transform(position, matrix); }
+
         public static Vector3 TransformNormal(this Vector3 normal, Matrix4x4 matrix)
         { return Vector3.TransformNormal(normal, matrix); }
 
@@ -135,7 +138,12 @@ namespace TVGL.Numerics
         { return Vector3.Dot(vector1, vector2); }
 
 
+        public static Matrix3x3 Transpose(this Matrix3x3 matrix)
+        { return Matrix3x3.Transpose(matrix); }
 
+
+        public static Matrix4x4 Transpose(this Matrix4x4 matrix)
+        { return Matrix4x4.Transpose(matrix); }
 
 
 

@@ -43,7 +43,7 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector2 Center { get; set; }
+        public Vector3 Center { get; set; }
 
 
         /// <summary>
@@ -52,12 +52,12 @@ namespace TVGL
         /// <value>The bounds.</value>
         public Vector3[] Bounds { get; set; } = new Vector3[2];
 
-        public double XMin { get => Bounds[0].X; protected set => Bounds[0].X = value; }
-        public double XMax { get => Bounds[1].X; protected set => Bounds[1].X = value; }
-        public double YMin { get => Bounds[0].Y; protected set => Bounds[0].Y = value; }
-        public double YMax { get => Bounds[1].Y; protected set => Bounds[1].Y = value; }
-        public double ZMin { get => Bounds[0].Z; protected set => Bounds[0].Z = value; }
-        public double ZMax { get => Bounds[1].Z; protected set => Bounds[1].Z = value; }
+        public double XMin { get => Bounds[0].X;  }
+        public double XMax { get => Bounds[1].X; }
+        public double YMin { get => Bounds[0].Y; }
+        public double YMax { get => Bounds[1].Y; }
+        public double ZMin { get => Bounds[0].Z; }
+        public double ZMax { get => Bounds[1].Z; }
 
 
         /// <summary>

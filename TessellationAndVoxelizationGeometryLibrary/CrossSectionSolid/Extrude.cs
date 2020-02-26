@@ -21,7 +21,7 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vertex>> loops, Numerics.Vector2 normal,
+        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vertex>> loops, Vector3 normal,
             double distance, bool midPlane = false)
         {
             var enumerable = loops as IEnumerable<Vertex>[] ?? loops.ToArray();
@@ -38,7 +38,7 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Numerics.Vector2>> loops, Numerics.Vector2 extrudeDirection,
+        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double distance, bool midPlane = false)
         {
             return new TessellatedSolid(ReturnFacesFromLoops(loops, extrudeDirection, distance, midPlane), null, false);
@@ -117,14 +117,14 @@ namespace TVGL
                 var j = 0;
                 foreach (var path in paths)
                 {
-                    var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y, true)).ToArray();
+                    var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
                     var area = new PolygonLight(path).Area;
                     points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
                     foreach (var point in pathAsPoints)
                     {
-                        var position = new[] { point.X, point.Y, 0.0, 1.0 };
-                        var vertexPosition1 = (backTransform * position).Take(3).ToArray();
+                        var position = new Vector3(point.X, point.Y, 0.0);
+                        var vertexPosition1 = position.Transform(backTransform);
                         //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
                         //So, we must move it to be on the plane
                         //This next line gets a second vertex to use for the point on plane function
@@ -168,13 +168,13 @@ namespace TVGL
                     var j = 0;
                     foreach (var path in paths)
                     {
-                        var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y, true)).ToArray();
+                        var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
                         points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
                         foreach (var point in pathAsPoints)
                         {
-                            var position = new[] { point.X, point.Y, 0.0, 1.0 };
-                            var vertexPosition1 = (backTransform * position).Take(3).ToArray();
+                            var position = new Vector3(point.X, point.Y, 0.0);
+                            var vertexPosition1 = position.Transform(backTransform);
                             //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
                             //So, we must move it to be on the plane
                             //This next line gets a second vertex to use for the point on plane function

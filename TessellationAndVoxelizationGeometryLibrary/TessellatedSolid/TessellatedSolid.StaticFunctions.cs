@@ -38,7 +38,7 @@ namespace TVGL
         /// <summary>
         /// Defines the center, the volume and the surface area.
         /// </summary>
-        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out Numerics.Vector2 center,
+        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out Vector3 center,
             out double volume, out double surfaceArea)
         {
             surfaceArea = faces.Sum(face => face.Area);
@@ -51,21 +51,19 @@ namespace TVGL
         /// <param name="faces"></param>
         /// <param name="center"></param>
         /// <returns></returns>
-        public static double CalculateVolume(IList<PolygonalFace> faces, out Numerics.Vector2 center)
+        public static double CalculateVolume(IList<PolygonalFace> faces, out Vector3 center)
         {
             double oldVolume;
             var volume = 0.0;
             var iterations = 0;
-            center = new double[3];
-            var oldCenter1 = new double[3];
-            var oldCenter2 = new double[3];
+            Vector3 oldCenter1 = new Vector3();
+            center = new Vector3();
             do
             {
                 oldVolume = volume;
-                oldCenter2[0] = oldCenter1[0]; oldCenter2[1] = oldCenter1[1]; oldCenter2[2] = oldCenter1[2];
-                oldCenter1[0] = center[0]; oldCenter1[1] = center[1]; oldCenter1[2] = center[2];
+                var oldCenter2 = oldCenter1;
+                oldCenter1 = center;
                 volume = 0;
-                center[0] = 0.0; center[1] = 0.0; center[2] = 0.0;
                 foreach (var face in faces)
                 {
                     if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
@@ -75,12 +73,13 @@ namespace TVGL
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                     // on the volume.
                     volume += tetrahedronVolume;
-                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4;
-                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4;
-                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
+                    center = new Vector3(
+                        (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4,
+                        (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4,
+                        (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4);
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
-                if (iterations > 10 || volume < 0) center = 0.5*(oldCenter1 + oldCenter2);
+                if (iterations > 10 || volume < 0) center = 0.5 * (oldCenter1 + oldCenter2);
                 else center = center.Divide(volume);
                 iterations++;
             } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);
@@ -92,38 +91,30 @@ namespace TVGL
         const double oneSixtieth = 1.0 / 60.0;
 
 
-        private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, Numerics.Vector2 Center, double Volume)
+        private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, Vector3 Center, double Volume)
         {
-            var matrixA = new double[3, 3];
-            var matrixCtotal = new double[3, 3];
-            var canonicalMatrix = new[,]
-            {
-                {oneSixtieth, 0.5*oneSixtieth, 0.5*oneSixtieth},
-                {0.5*oneSixtieth, oneSixtieth, 0.5*oneSixtieth}, {0.5*oneSixtieth, 0.5*oneSixtieth, oneSixtieth}
-            };
+            //var matrixA = new double[3, 3];
+            var matrixCtotal = new Matrix3x3();
+            var canonicalMatrix = new Matrix3x3(oneSixtieth, 0.5 * oneSixtieth, 0.5 * oneSixtieth,
+                0.5 * oneSixtieth, oneSixtieth, 0.5 * oneSixtieth,
+                0.5 * oneSixtieth, 0.5 * oneSixtieth, oneSixtieth);
             foreach (var face in Faces)
             {
-                matrixA.SetRow(0,
-                    new[]
-                    {
-                        face.Vertices[0].Position[0] - Center[0], face.Vertices[0].Position[1] - Center[1],
-                        face.Vertices[0].Position[2] - Center[2]
-                    });
-                matrixA.SetRow(1,
-                    new[]
-                    {
-                        face.Vertices[1].Position[0] - Center[0], face.Vertices[1].Position[1] - Center[1],
-                        face.Vertices[1].Position[2] - Center[2]
-                    });
-                matrixA.SetRow(2,
-                    new[]
-                    {
-                        face.Vertices[2].Position[0] - Center[0], face.Vertices[2].Position[1] - Center[1],
-                        face.Vertices[2].Position[2] - Center[2]
-                    });
+                var matrixA = new Matrix3x3(
+                   face.Vertices[0].Position[0] - Center[0],
+                   face.Vertices[0].Position[1] - Center[1],
+                   face.Vertices[0].Position[2] - Center[2],
 
-                var matrixC = matrixA.transpose() * canonicalMatrix;
-                matrixC = matrixC * matrixA * matrixA.determinant();
+                   face.Vertices[1].Position[0] - Center[0],
+                   face.Vertices[1].Position[1] - Center[1],
+                   face.Vertices[1].Position[2] - Center[2],
+
+                   face.Vertices[2].Position[0] - Center[0],
+                   face.Vertices[2].Position[1] - Center[1],
+                   face.Vertices[2].Position[2] - Center[2]);
+
+                var matrixC = matrixA.Transpose() * canonicalMatrix;
+                matrixC = matrixC * matrixA * matrixA.GetDeterminant();
                 matrixCtotal = matrixCtotal + matrixC;
             }
 

@@ -14,7 +14,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
     // COMMENTEDCHANGE [Intrinsic]
-    public partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D
+    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D
     {
         #region Public Static Properties
         /// <summary>
@@ -324,25 +324,53 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Transform(Vector2 position, Matrix4x4 matrix)
         {
+            if (matrix.IsProjectiveTransform)
+            {
+                var factor = 1 / (position.X * matrix.M14 + position.Y * matrix.M24 + matrix.M44);
+                return new Vector2(
+                    factor * (position.X * matrix.M11 + position.Y * matrix.M21 + matrix.M41),
+                    factor * (position.X * matrix.M12 + position.Y * matrix.M22 + matrix.M42));
+            }
             return new Vector2(
                 position.X * matrix.M11 + position.Y * matrix.M21 + matrix.M41,
                 position.X * matrix.M12 + position.Y * matrix.M22 + matrix.M42);
+
         }
 
         /// <summary>
         /// Transforms a vector normal by the given matrix.
         /// </summary>
-        /// <param name="normal">The source vector.</param>
+        /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 TransformNormal(Vector2 normal, Matrix3x3 matrix)
+        public static Vector2 TransformNoTranslate(Vector2 position, Matrix3x3 matrix)
         {
-            if (!Matrix3x3.Invert(matrix, out var invMatrix))
-                throw new ArgumentException("The matrix is singular. It needs to be inverted to find the normal transform.");
+            if (matrix.IsProjectiveTransform)
+            {
+                var factor = 1 / (position.X * matrix.M13 + position.Y * matrix.M23);
+                return new Vector2(
+                    factor * (position.X * matrix.M11 + position.Y * matrix.M21),
+                    factor * (position.X * matrix.M12 + position.Y * matrix.M22));
+            }
             return new Vector2(
-                normal.X * matrix.M11 + normal.Y * matrix.M21,
-                normal.X * matrix.M12 + normal.Y * matrix.M22);
+                position.X * matrix.M11 + position.Y * matrix.M21,
+                position.X * matrix.M12 + position.Y * matrix.M22);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 TransformNoTranslate(Vector2 position, Matrix4x4 matrix)
+        {
+            if (matrix.IsProjectiveTransform)
+            {
+                var factor = 1 / (position.X * matrix.M14 + position.Y * matrix.M24);
+                return new Vector2(
+                    factor * (position.X * matrix.M11 + position.Y * matrix.M21),
+                    factor * (position.X * matrix.M12 + position.Y * matrix.M22));
+            }
+            return new Vector2(
+                position.X * matrix.M11 + position.Y * matrix.M21,
+                position.X * matrix.M12 + position.Y * matrix.M22);
         }
 
         /// <summary>
