@@ -35,8 +35,8 @@ namespace TVGL.IOFunctions
         /// </summary>
         internal STLFileData()
         {
-            Normals = new List<Vector2>();
-            Vertices = new List<List<Vector2>>();
+            Normals = new List<Vector3>();
+            Vertices = new List<List<Vector3>>();
             Colors = new List<Color>();
         }
 
@@ -75,13 +75,13 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<List<Vector2>> Vertices { get; }
+        private List<List<Vector3>> Vertices { get; }
 
         /// <summary>
         ///     Gets or sets the normals.
         /// </summary>
         /// <value>The normals.</value>
-        private List<Vector2> Normals { get; }
+        private List<Vector3> Normals { get; }
 
         #endregion
 
@@ -188,19 +188,17 @@ namespace TVGL.IOFunctions
         /// </exception>
         private void ReadFacet(StreamReader reader, string normal)
         {
-            Vector2 n;
-            if (!TryParseDoubleArray(NormalRegex, normal, out n))
+            if (!TryParseDoubleArray(NormalRegex, normal, out var n))
                 throw new IOException("Unexpected line.");
-            var points = new List<Vector2>();
+            var points = new List<Vector3>();
             if (!ReadExpectedLine(reader, "outer loop"))
                 throw new IOException("Unexpected line.");
             while (true)
             {
                 var line = ReadLine(reader);
-                Vector2 point;
-                if (TryParseDoubleArray(VertexRegex, line, out point))
+                if (TryParseDoubleArray(VertexRegex, line, out var point))
                 {
-                    points.Add(point);
+                    points.Add(new Vector3(point));
                     continue;
                 }
 
@@ -214,7 +212,7 @@ namespace TVGL.IOFunctions
             }
             if (!ReadExpectedLine(reader, "endfacet"))
                 throw new IOException("Unexpected line.");
-            Normals.Add(n);
+            Normals.Add(new Vector3(n));
             Vertices.Add(points);
         }
 
@@ -285,17 +283,17 @@ namespace TVGL.IOFunctions
             var x1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v1 = new[] { x1, y1, z1 };
+            var v1 = new Vector3(x1, y1, z1);
 
             var x2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v2 = new[] { x2, y2, z2 };
+            var v2 = new Vector3(x2, y2, z2);
 
             var x3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v3 = new[] { x3, y3, z3 };
+            var v3 = new Vector3(x3, y3, z3);
 
             var attrib = Convert.ToString(ReadNumberAsInt(reader, typeof(ushort), FormatEndiannessType.binary_little_endian),
                 2).PadLeft(16, '0').ToCharArray();
@@ -330,8 +328,8 @@ namespace TVGL.IOFunctions
                     _lastColor = currentColor;
             }
             Colors.Add(_lastColor);
-            Normals.Add(n);
-            Vertices.Add(new List<Vector2> { v1, v2, v3 });
+            Normals.Add(new Vector3(n));
+            Vertices.Add(new List<Vector3> { v1, v2, v3 });
         }
         #endregion
 

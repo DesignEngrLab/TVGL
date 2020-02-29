@@ -46,16 +46,16 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
-        public static List<Vector2> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonLight> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonLight> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, true)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<Vector2> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            var intersections = new List<Vector2>();
+            var intersections = new List<double[]>();
             var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.X).ToList();
             var currentLines = new HashSet<Line>();
             var nextDistance = sortedPoints.First().X;
@@ -89,16 +89,16 @@ namespace TVGL
             }
             return intersections;
         }
-        public static List<Vector2> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
             return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, true)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<Vector2> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)
         {
-            var intersections = new List<Vector2>();
+            var intersections = new List<double[]>();
             var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.Y).ToList();
             var currentLines = new HashSet<Line>();
             var nextDistance = sortedPoints.First().Y;
@@ -158,7 +158,7 @@ namespace TVGL
             var sqrRootTerm = Math.Sqrt(p * p - 16 * polygon.Area);
             var length = 0.25 * (p + sqrRootTerm);
             var width = 0.25 * (p - sqrRootTerm);
-            dimensions = new[] { length, width };
+            dimensions = new Vector2(length, width);
             var areaCheck = length * width;
             var perimeterCheck = 2 * length + 2 * width;
             if (!polygon.Area.IsPracticallySame(areaCheck, polygon.Area * tolerancePercentage) &&
@@ -205,7 +205,7 @@ namespace TVGL
             {
                 var p1 = editPath[i];
                 var p2 = editPath[i + 1];
-                length += MiscFunctions.DistancePointToPoint(p1, p2);
+                length += p1.Distance(p2);
             }
             return length;
         }
@@ -431,7 +431,7 @@ namespace TVGL
                 var current = simplePath[i];
                 var next = simplePath[j];
                 var nextNext = simplePath[k];
-                var length = MiscFunctions.DistancePointToPoint(current, next);
+                var length = current.Distance(next);
                 if (length > edgeLength)
                 {
                     var n = (int)(length / edgeLength);
@@ -439,7 +439,7 @@ namespace TVGL
                     newPath.Add(current);
                     for (var p = 0; p < n; p++)
                     {
-                        current = new Vector2(new[] { current.X + vector[0], current.Y + vector[1] });
+                        current = new Vector2(current.X + vector.X, current.Y + vector.Y);
                         newPath.Add(current);
                     }
                 }
@@ -1099,7 +1099,7 @@ namespace TVGL
 
             if (!subject.Any())
             {
-                if(clip == null || !clip.Any())
+                if (clip == null || !clip.Any())
                 {
                     return new List<List<Vector2>>();
                 }
@@ -1110,7 +1110,7 @@ namespace TVGL
                     clip = null;
                 }
             }
-           
+
             var clipperSolution = new List<List<IntPoint>>();
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject =
@@ -2176,7 +2176,7 @@ namespace TVGL
                     //Get the distance to the point along direction2D
                     //Then subtract 2X the distance along direction2D
                     var d = point.Dot(direction2D) - distanceFromOriginToClosestPoint;
-                    newPath.Add(new Vector2(point.X - direction2D[0] * 2 * d, point.Y - direction2D[1] * 2 * d));
+                    newPath.Add(new Vector2(point.X - direction2D.X * 2 * d, point.Y - direction2D.Y * 2 * d));
                 }
                 //Reverse the new path so that it retains the same CW/CCW direction of the original
                 newPath.Reverse();

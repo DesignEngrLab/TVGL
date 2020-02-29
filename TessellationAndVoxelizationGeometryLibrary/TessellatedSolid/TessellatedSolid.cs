@@ -121,7 +121,7 @@ namespace TVGL
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
         /// 
-        public TessellatedSolid(IList<List<double[]>> vertsPerFace, IList<Color> colors,
+        public TessellatedSolid(IList<List<Vector3>> vertsPerFace, IList<Color> colors,
             UnitType units = UnitType.unspecified, string name = "", string filename = "", List<string> comments = null,
             string language = "")
             : base(units, name, filename, comments, language)

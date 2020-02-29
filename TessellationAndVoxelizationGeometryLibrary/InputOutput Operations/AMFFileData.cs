@@ -174,14 +174,8 @@ namespace TVGL.IOFunctions
                     * Matrix4x4.CreateRotationZ(Constants.DegreesToRadiansFactor * amfInstance.rz);
                 //do matrix multiplication go the other way?
                 tMatrix = tMatrix * Matrix4x4.CreateTranslation(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz);
-                foreach (var coord in vertices)
-                {
-                    var coordWith1 = new[] { coord[0], coord[1], coord[2], 1.0 };
-                    coordWith1 = tMatrix * coordWith1;
-                    coord[0] = coordWith1[0];
-                    coord[1] = coordWith1[1];
-                    coord[2] = coordWith1[2];
-                }
+                for (int i = 0; i < vertices.Count; i++)
+                    vertices[i] = vertices[i].Transform(tMatrix);
             }
             return new TessellatedSolid(vertices,
                 amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),

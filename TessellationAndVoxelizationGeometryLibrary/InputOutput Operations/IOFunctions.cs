@@ -437,7 +437,7 @@ namespace TVGL.IOFunctions
         /// <param name="line">The input string.</param>
         /// <param name="doubles">The vertex point.</param>
         /// <returns>True if parsing was successful.</returns>
-        protected static bool TryParseDoubleArray(Regex parser, string line, out Vector2 doubles)
+        protected static bool TryParseDoubleArray(Regex parser, string line, out double[] doubles)
         {
             var match = parser.Match(line);
             if (!match.Success)
@@ -740,10 +740,10 @@ namespace TVGL.IOFunctions
             var byteArray = doubles.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
             return System.Text.Encoding.Unicode.GetString(byteArray);
         }
-        internal static Vector2 ConvertStringToDoubleArray(string doublesAsString)
+        internal static double[] ConvertStringToDoubleArray(string doublesAsString)
         {
             var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
-            Vector2 values = new double[bytes.Length / 8];
+            var values = new double[bytes.Length / 8];
             for (int i = 0; i < values.Length; i++)
                 values[i] = BitConverter.ToDouble(bytes, i * 8);
             return values;

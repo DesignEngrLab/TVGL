@@ -171,9 +171,7 @@ namespace TVGL.Voxelization
         public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<Vector3> bounds)
         {
             var fullBlock = new VoxelizedSolid();
-            fullBlock.Bounds = new double[2][];
-            fullBlock.Bounds[0] = (Vector3)bounds[0];
-            fullBlock.Bounds[1] = (Vector3)bounds[1];
+            fullBlock.Bounds = new[] { bounds[0], bounds[1] };
             fullBlock.Dimensions = fullBlock.Bounds[1].Subtract(fullBlock.Bounds[0]);
             fullBlock.SolidColor = new Color(Constants.DefaultColor);
             fullBlock.VoxelSideLength = voxelSideLength;

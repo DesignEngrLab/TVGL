@@ -197,7 +197,7 @@ namespace TVGL.IOFunctions
                     if (defaultColorXml != null) defaultColor = defaultColorXml.color;
                 }
             }
-            var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
+            var verts = mesh.vertices.Select(v => new Vector3(v.x, v.y, v.z)).ToList();
 
             Color[] colors = null;
             var uniformColor = true;

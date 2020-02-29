@@ -56,7 +56,7 @@ namespace TVGL
                 var checksum = orderedIndices.Select((t, j) => t * checkSumMultipliers[j]).Sum();
                 if (alreadyCreatedFaces.Contains(checksum)) continue;
                 alreadyCreatedFaces.Add(checksum);
-                convexHullFaceList.Add(new PolygonalFace(faceVertices, cvxFace.Normal, false));
+                convexHullFaceList.Add(new PolygonalFace(faceVertices, new Vector3(cvxFace.Normal), false));
             }
             Faces = convexHullFaceList.ToArray();
             Edges = MakeEdges(Faces, Vertices);
@@ -65,8 +65,8 @@ namespace TVGL
 
 
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
-            IList<int> convexHullFaceIndices, Vector2 center = Vector2.Null, double volume = double.NaN,
-            double surfaceArea = double.NaN)
+            IList<int> convexHullFaceIndices, 
+            double volume = double.NaN, double surfaceArea = double.NaN)
         {
             Vertices = convexHullPoints.ToArray();
             var numCvxHullFaces = convexHullFaceIndices.Count / 3;
@@ -92,11 +92,11 @@ namespace TVGL
                 Faces[i] = new PolygonalFace(faceVertices, false);
             }
             Edges = MakeEdges(Faces, Vertices);
-            if (center == null || double.IsNaN(volume) || double.IsNaN(surfaceArea))
-                TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+            if (double.IsNaN(volume) || double.IsNaN(surfaceArea))
+                TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out var Center, out Volume, out SurfaceArea);
             else
             {
-                Center = center;
+                Center = Vector3.Null;
                 Volume = volume;
                 SurfaceArea = surfaceArea;
             }
@@ -144,7 +144,7 @@ namespace TVGL
         /// <summary>
         ///     The center
         /// </summary>
-        public readonly Vector2 Center;
+        public readonly Vector3 Center;
 
         /// <summary>
         ///     The volume of the Convex Hull.
