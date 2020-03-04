@@ -33,8 +33,7 @@ namespace TVGL
 
         public ImplicitSolid()
         {
-            Bounds = new[] { new[] {0.0,0.0,0.0},
-            new[]{10.0,10.0,10.0}};
+            Bounds = new[] { new Vector3(0.0,0.0,0.0),new Vector3(10.0,10.0,10.0)};
         }
         public override Solid Copy()
         {

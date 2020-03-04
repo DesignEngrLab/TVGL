@@ -106,15 +106,17 @@ namespace TVGL
 
             //Set the normal by weighting each face's normal with its area
             //This makes small faces have less effect at shifting the normal
-            var normalSum = new double[3];
-            foreach(var face in faces)
+            var normalSumX = 0.0;
+            var normalSumY = 0.0;
+            var normalSumZ = 0.0;
+            foreach (var face in faces)
             {
                 var weightedNormal = face.Normal * face.Area;
-                normalSum.X += weightedNormal.X;
-                normalSum.Y += weightedNormal.Y;
-                normalSum.Z += weightedNormal.Z;
+                normalSumX += weightedNormal.X;
+                normalSumY += weightedNormal.Y;
+                normalSumZ += weightedNormal.Z;
             }
-            Normal = normalSum.Normalize();
+            Normal = new Vector3(normalSumX, normalSumY, normalSumZ).Normalize();
 
             DistanceToOrigin = Faces.Average(f => Normal.Dot(f.Vertices[0].Coordinates));
         }

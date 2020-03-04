@@ -129,7 +129,7 @@ namespace TVGL
                         var del = new List<PolygonalFace>();
                         var cyl = (Cylinder)primitives[j];
                         // if the radius of the cylinder is very high, just continue;
-                        var d = DistanceBetweenTwoVertices(primitives[j].Faces.First().Vertices[0].Coordinates,
+                        var d = primitives[j].Faces.First().Vertices[0].Coordinates.Distance(
                             primitives[j].Faces.First().Vertices[1].Coordinates);
                         if (Math.Abs(1 - (cyl.Radius - d) / (cyl.Radius)) < 0.001)
                             continue;
@@ -155,7 +155,7 @@ namespace TVGL
             var cylinders = primitives.Where(p => p is Cylinder).Cast<Cylinder>().ToList();
             foreach (var cy in cylinders)
             {
-                var d = DistanceBetweenTwoVertices(cy.Faces.First().Vertices[0].Coordinates,
+                var d = cy.Faces.First().Vertices[0].Coordinates.Distance(
                     cy.Faces.First().Vertices[1].Coordinates);
                 if (Math.Abs(1 - (cy.Radius - d) / (cy.Radius)) < 0.001)
                     continue;
@@ -342,7 +342,7 @@ namespace TVGL
         }
 
 
-        private static int EdgeClassifier2(Vector2 ABNProbs, Vector2 MCMProbs, Vector2 SMProbs,
+        private static int EdgeClassifier2(double[] ABNProbs, double[] MCMProbs, double[] SMProbs,
             List<List<int>> rulesArray, out double prob)
         {
             // go to the rules and and return an int corresponding to each region.
@@ -379,25 +379,25 @@ namespace TVGL
             return rulesArray[3][t];
         }
 
-        private static List<Vector2> CatAndProbFinder(double metric, List<double> listOfLimits)
+        private static List<double[]> CatAndProbFinder(double metric, List<double> listOfLimits)
         {
-            var CatAndProb = new List<Vector2>();
+            var CatAndProb = new List<double[]>();
             //Case 1
             if (metric <= listOfLimits[0])
             {
-                CatAndProb.Add(new Vector2 { 0, 1 });
+                CatAndProb.Add(new double[] { 0, 1 });
                 return CatAndProb;
             }
             //Case 3
             if (metric >= listOfLimits[3] && metric <= listOfLimits[4])
             {
-                CatAndProb.Add(new Vector2 { 1, 1 });
+                CatAndProb.Add(new double[] { 1, 1 });
                 return CatAndProb;
             }
             //Case 5
             if (metric >= listOfLimits[7])
             {
-                CatAndProb.Add(new Vector2 { 2, 1 });
+                CatAndProb.Add(new double[] { 2, 1 });
                 return CatAndProb;
             }
             //Case 2
@@ -417,9 +417,9 @@ namespace TVGL
             return CatAndProb;
         }
 
-        private static List<Vector2> CatAndProbForCases2and4(double p1, double p2, double p3, double p4, double metric, double Case)
+        private static List<double[]> CatAndProbForCases2and4(double p1, double p2, double p3, double p4, double metric, double Case)
         {
-            var catAndProb = new List<Vector2>();
+            var catAndProb = new List<double[]>();
             var prob1 = ((0 - 1) / (p2 - p1)) * (metric - p1) + 1;
             var prob2 = ((1 - 0) / (p4 - p3)) * (metric - p3) + 1;
             if (Case == 2)
@@ -719,14 +719,6 @@ namespace TVGL
                                               && p.Faces.Contains(newSeed.Faces[0])));
         }
 
-        public static double DistanceBetweenTwoVertices(Vector2 vertex1, Vector2 vertex2)
-        {
-            return
-                Math.Sqrt((Math.Pow(vertex1[0] - vertex2[0], 2)) +
-                          (Math.Pow(vertex1[1] - vertex2[1], 2)) +
-                          (Math.Pow(vertex1[2] - vertex2[2], 2)));
-        }
-
         #endregion
         #region Decide In Overlapping Patches
         private static IEnumerable<PlanningSurface> DecideOnOverlappingPatches(List<PlanningSurface> surfaces,
@@ -835,7 +827,7 @@ namespace TVGL
                 case PrimitiveSurfaceType.Flat:
                     return new Flat(faces);
                 case PrimitiveSurfaceType.Cylinder:
-                    Vector2 axis;
+                    Vector3 axis;
                     double coneAngle;
                     if (IsReallyACone(faces, out axis, out coneAngle))
                         return new Cone(faces, axis, coneAngle);
@@ -854,13 +846,13 @@ namespace TVGL
             return (MiscFunctions.FacesWithDistinctNormals(faces.ToList()).Count == 1);
         }
 
-        public static bool IsReallyACone(IEnumerable<PolygonalFace> facesAll, out Vector2 axis, out double coneAngle)
+        public static bool IsReallyACone(IEnumerable<PolygonalFace> facesAll, out Vector3 axis, out double coneAngle)
         {
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
             if (faces.Count <= 1)
             {
-                axis = null;
+                axis = Vector3.Null;
                 coneAngle = double.NaN;
                 return false;
             }
@@ -913,12 +905,12 @@ namespace TVGL
 
             var normalsOfGaussPlane = new List<Vector3>();
             var tempCross = inPlaneVectors[0].Cross(inPlaneVectors[n - 1]).Normalize();
-            if (!tempCross.Any(double.IsNaN))
+            if (!tempCross.IsNull())
                 normalsOfGaussPlane.Add(tempCross);
             for (int i = 1; i < n; i++)
             {
                 tempCross = inPlaneVectors[i].Cross(inPlaneVectors[i - 1]).Normalize();
-                if (!tempCross.Any(double.IsNaN))
+                if (!tempCross.IsNull())
                     if (tempCross.Dot(normalsOfGaussPlane[0]) >= 0)
                         normalsOfGaussPlane.Add(tempCross);
                     else normalsOfGaussPlane.Add(-1*tempCross);

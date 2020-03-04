@@ -36,7 +36,7 @@ namespace TVGL
                 Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
-                if (Math.Abs(MiscFunctions.DistancePointToPoint(v.Coordinates, Center) - Radius) >
+                if (Math.Abs(v.Coordinates.Distance(Center) - Radius) >
                     Constants.ErrorForFaceInSurface*Radius)
                     return false;
             return true;
@@ -94,7 +94,7 @@ namespace TVGL
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
                 faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
-            if (!center.Any(double.IsNaN) || center.IsNegligible())
+            if (!center.IsNull())
             {
                 centers.Add(center);
                 signedDistances.Add(t1);
@@ -104,14 +104,14 @@ namespace TVGL
             {
                 MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
                     faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
-                if (!center.Any(double.IsNaN) || center.IsNegligible())
+                if (!center.IsNull())
                 {
                     centers.Add(center);
                     signedDistances.Add(t1);
                     signedDistances.Add(t2);
                 }
             }
-            center = new double[3];
+            center = Vector3.Zero;
             center = centers.Aggregate(center, (current, c) => current + c);
             center = center.Divide(centers.Count);
             /* determine is positive or negative */
@@ -120,7 +120,7 @@ namespace TVGL
             var isPositive = numNeg > numPos;
             var radii = new List<double>();
             foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToPoint(v.Coordinates, center)));
+                radii.AddRange(face.Vertices.Select(v => v.Coordinates.Distance(center)));
             var averageRadius = radii.Average();
 
             Center = center;

@@ -236,8 +236,8 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            Anchor = new Vector3(Vector4.Transform(Anchor, transformMatrix));
-            Axis = new Vector3(Vector4.Transform(Axis, transformMatrix));
+            Anchor = Anchor.Transform(transformMatrix);
+            Axis = Axis.Transform(transformMatrix);
 
             //how to adjust the radii?
             throw new NotImplementedException();
@@ -371,7 +371,7 @@ namespace TVGL
         {
             Type = PrimitiveSurfaceType.Cylinder;
             var axis = edge.OwnedFace.Normal.Cross(edge.OtherFace.Normal);
-            var length = axis.norm2();
+            var length = axis.Length();
             if (length.IsNegligible()) throw new Exception("Edge used to define cylinder is flat.");
             axis = axis.Normalize();
             var v1 = edge.From;
@@ -390,12 +390,8 @@ namespace TVGL
                 distToOrigin *= -1;
                 axis=-1*axis;
             }
-            center = new[]
-            {
-                center.X - distToOrigin*axis.X,
-                center.Y - distToOrigin*axis.Y,
-                center.Z - distToOrigin*axis.Z
-            };
+            center = new Vector3(center.X - distToOrigin*axis.X, center.Y - distToOrigin*axis.Y,
+                center.Z - distToOrigin*axis.Z);
             var d1 = MiscFunctions.DistancePointToLine(v1.Coordinates, center, axis);
             var d2 = MiscFunctions.DistancePointToLine(v2.Coordinates, center, axis);
             var d3 = MiscFunctions.DistancePointToLine(v3.Coordinates, center, axis);
