@@ -126,8 +126,6 @@ namespace TVGL._2D
             bool returnFurtherThanSlice, IEnumerable<(Point, double)> sortedPoints, out List<Point> sortedIntersectionPoints,
             double offsetAtLine = 0.0)
         {
-            if (direction2D.Length != 2) throw new Exception("2D direction must have exactly 2 dimensions");
-
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersection points is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
@@ -397,7 +395,7 @@ namespace TVGL._2D
             return intersectionPoints;
         }
 
-        private static Vector2 GetYIntersectionsSortedAlongY(HashSet<Line> intersectionLines, double x)
+        private static double[] GetYIntersectionsSortedAlongY(HashSet<Line> intersectionLines, double x)
         {
             var n = intersectionLines.Count;
             var intersectionPoints = new List<double>(n);
@@ -410,7 +408,7 @@ namespace TVGL._2D
             return intersectionPoints.OrderBy(p => p).ToArray();
         }
 
-        private static Vector2 GetXIntersectionsSortedAlongX(HashSet<Line> intersectionLines, double y)
+        private static double[] GetXIntersectionsSortedAlongX(HashSet<Line> intersectionLines, double y)
         {
             var n = intersectionLines.Count;
             var intersectionPoints = new List<double>(n);

@@ -71,6 +71,16 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         double IVertex2D.X => X;
 
         double IVertex2D.Y => Y;
+
+
+        public double this[int i]
+        {
+            get
+            {
+                if (i == 0) return X;
+                else  return Y;
+            }
+        }
         #endregion Public Static Properties
 
         #region Public instance methods

@@ -83,13 +83,12 @@ namespace TVGL
             To = toVertex;
             if (doublyLinkedVertices) DoublyLinkVertices();
 
-            Vector = new[]
-            {
-                To.Coordinates[0] - From.Coordinates[0],
+            Vector = new Vector3(To.Coordinates[0] - From.Coordinates[0],
                 To.Coordinates[1] - From.Coordinates[1],
                 To.Coordinates[2] - From.Coordinates[2]
-            };
-            Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
+            );
+            Length =Vector.Length();
+            //todo make Length, and Internal Angle lazy
         }
 
         #endregion
@@ -182,12 +181,10 @@ namespace TVGL
         public void Update(bool lengthAndAngleUnchanged = false)
         {
             //Reset the vector, since vertices may have been moved.
-            Vector = new[]
-            {
-                To.Coordinates[0] - From.Coordinates[0],
+            Vector = new Vector3(To.Coordinates[0] - From.Coordinates[0],
                 To.Coordinates[1] - From.Coordinates[1],
                 To.Coordinates[2] - From.Coordinates[2]
-            };
+            );
 
             if (lengthAndAngleUnchanged) return; //Done. No need to update the length or the internal edge angle
             Length =

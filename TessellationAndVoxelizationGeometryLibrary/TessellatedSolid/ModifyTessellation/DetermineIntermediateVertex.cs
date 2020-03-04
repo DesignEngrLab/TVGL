@@ -33,7 +33,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertexA">The keep vertex.</param>
         /// <param name="vertexB">The other vertex.</param>
-        internal static Vector2 DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
+        internal static Vector3 DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
         {
             //average positions
             var newPosition = vertexA.Coordinates + vertexB.Coordinates;
@@ -52,7 +52,7 @@ namespace TVGL
         {
             //average positions
             var newPosition = keepVertex.Coordinates + removedVertex.Coordinates;
-            var radius = keepVertex.Coordinates.Subtract(removedVertex.Coordinates).norm2() / 2.0;
+            var radius = keepVertex.Coordinates.Distance(removedVertex.Coordinates) / 2.0;
             keepVertex.Coordinates = newPosition.Divide(2);
             var avgNormal = (removeFace1.Normal + removeFace2.Normal).Normalize();
             var otherVertexAvgDistanceToEdgePlane =

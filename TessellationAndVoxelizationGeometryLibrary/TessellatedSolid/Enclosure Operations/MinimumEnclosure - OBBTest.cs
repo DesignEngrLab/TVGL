@@ -77,7 +77,7 @@ namespace TVGL
         {
             return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox
             {
-                Directions = new[] {new[] {1.0, 0.0, 0.0}, new[] {0.0, 1.0, 0.0}, new[] {0.0, 0.0, 1.0}},
+                Directions = new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ }
                 Volume = double.PositiveInfinity
             });
         }
@@ -88,7 +88,7 @@ namespace TVGL
             {
             }
 
-            internal BoundingBoxData(Vector2 startDir, Vector2 yDir, Edge rotatorEdge, Vector2 rotatorVector,
+            internal BoundingBoxData(Vector3 startDir, Vector3 yDir, Edge rotatorEdge, Vector3 rotatorVector,
                 TVGLConvexHull convexHull)
             {
                 Direction = startDir;

@@ -150,7 +150,9 @@ namespace TVGL
                         {
                             var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
                             var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
-                            var newPoint = new Vector2(point.References, pointX, pointY) ;
+                            var newPoint = new Vector2(pointX, pointY) ;
+                            //var newPoint = new Vector2(point.References, pointX, pointY) ;
+                            //todo Point References
                             newLoop.Add(newPoint);
                             if (point.Y > pHighest)
                             {

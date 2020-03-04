@@ -36,6 +36,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         // COMMENTEDCHANGE [Intrinsic]
         public Vector3(double value) : this(value, value, value) { }
 
+
         /// <summary>
         /// Constructs a Vector3 from the given Vector2 and a third value.
         /// </summary>

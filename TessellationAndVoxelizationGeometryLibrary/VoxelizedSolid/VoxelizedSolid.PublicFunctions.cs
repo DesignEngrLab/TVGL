@@ -321,7 +321,7 @@ namespace TVGL.Voxelization
                     {
                         var y = yOff + (j + .5) * VoxelSideLength;
                         var z = zOff + (k + .5) * VoxelSideLength;
-                        var d = MiscFunctions.DistancePointToPlane(new Vector3(0, y, z ), normalOfPlane, distOfPlane);
+                        var d = MiscFunctions.DistancePointToPlane(new Vector3(0, y, z), normalOfPlane, distOfPlane);
                         if (d < 0)
                             vs1.voxels[j + zMultiplier * k].Clear();
                         else vs2.voxels[j + zMultiplier * k].Clear();
@@ -486,10 +486,7 @@ namespace TVGL.Voxelization
             double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
             var copy = (VoxelizedSolid)Copy();
-
-            var tDir = new Vector3();
-            tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
-
+            var tDir = Vector3.UnitVector(dir);
             copy.DirectionalErodeToConstraint(constraintSolid, tDir.Normalize(), tLimit, maskSize, maskOptions);
             return copy;
         }
@@ -515,8 +512,8 @@ namespace TVGL.Voxelization
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
 
-            tLimit = tLimit <= 0 ? VoxelsPerSide.norm2() : tLimit / VoxelSideLength;
-            var mLimit = tLimit + VoxelsPerSide.norm2();
+            tLimit = tLimit <= 0 ? Math.Sqrt(VoxelsPerSide.Sum(i => i * i)) : tLimit / VoxelSideLength;
+            var mLimit = tLimit + Math.Sqrt(VoxelsPerSide.Sum(i => i * i));
             var mask = CreateProjectionMask(dir, mLimit);
             var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, maskSize);
             var sliceMask = ThickenMask(mask[0], dir, maskSize, maskOptions);
@@ -709,14 +706,13 @@ namespace TVGL.Voxelization
             var tStep = lStep * Math.Cos(a);
             var rStep = lStep * Math.Sin(a);
 
-            var centerDouble = new Vector3(center[0], center[1], center[2]);
-            var c = centerDouble.ToArray();
+            var c = new Vector3(center[0], center[1], center[2]);
             var cStep = dir * tStep;
 
             for (var i = 1; i <= numSteps; i++)
             {
                 var r = rStep * i;
-                c = c.Subtract(cStep);
+                c = c - cStep;
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
                     voxels.Add(voxel);
@@ -766,7 +762,7 @@ namespace TVGL.Voxelization
                         angle = 118;
                     return GetVoxelsOnCone(vox, dir, radius, angle);
                 default:
-                    var voxDouble = new Vector3 { vox[0], vox[1], vox[2] };
+                    var voxDouble = new Vector3(vox[0], vox[1], vox[2]);
                     return GetVoxelsWithinCircle(voxDouble, dir, radius);
             }
         }
@@ -777,12 +773,13 @@ namespace TVGL.Voxelization
             for (var i = 0; i < 3; i++)
                 if (dir[i] < 0) initCoord[i] = VoxelsPerSide[i] - 1;
             var voxels = new List<int[]>(new[] { initCoord });
-            var c = initCoord + new[] { 0.5, 0.5, 0.5 };
+            var c = new Vector3(initCoord[0] + 0.5, initCoord[1] + 0.5, initCoord[2] + 0.5);
             var ts = FindIntersectionDistances(c, dir, tLimit);
             foreach (var t in ts)
             {
                 var cInt = c + (dir * t);
-                for (var i = 0; i < 3; i++) cInt[i] = Math.Round(cInt[i], 5);
+                cInt += new Vector3(
+                   Math.Round(cInt.X, 5), Math.Round(cInt.Y, 5), Math.Round(cInt.Z, 5));
                 voxels.Add(GetNextVoxelCoord(cInt, dir));
             }
             return voxels.ToArray();
@@ -809,7 +806,7 @@ namespace TVGL.Voxelization
         }
 
         //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
-        private Vector3 FindIntersectionDistances(Vector3 firstVoxel, Vector3 direction, double tLimit)
+        private double[] FindIntersectionDistances(Vector3 firstVoxel, Vector3 direction, double tLimit)
         {
             var intersections = new ConcurrentBag<double>();
             var searchDirs = new List<int>();

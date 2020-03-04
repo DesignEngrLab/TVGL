@@ -304,7 +304,7 @@ namespace TVGL
         protected void OnDeserializedMethod(StreamingContext context)
         {
             JArray jArray = (JArray)serializationData["CrossSections"];
-            var layerArray = jArray.ToObject<Vector2[][]>();
+            var layerArray = jArray.ToObject<double[][][]>();
             Layer2D = new Dictionary<int, List<PolygonLight>>();
             var keysArray = StepDistances.Keys.ToArray();
             for (int i = 0; i < layerArray.Length; i++)

@@ -76,6 +76,25 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public static Vector3 UnitZ { get { return new Vector3(0.0, 0.0, 1.0); } }
 
+        public static Vector3 UnitVector(CartesianDirections direction)
+        {
+            switch (direction)
+            {
+                case CartesianDirections.XNegative: return new Vector3(-1, 0, 0);
+                case CartesianDirections.XPositive: return new Vector3(1, 0, 0);
+                case CartesianDirections.YNegative: return new Vector3(0, -1, 0);
+                case CartesianDirections.YPositive: return new Vector3(0, 1, 0);
+                case CartesianDirections.ZNegative: return new Vector3(0, 0, -1);
+                default: return new Vector3(0, 0, 1);
+            }
+        }
+        public static Vector3 UnitVector(int direction)
+        {
+            if (direction == 0) return new Vector3(1, 0, 0);
+            if (direction == 1) return new Vector3(0, 1, 0);
+            return new Vector3(0, 0, 1);
+        }
+
         public double this[int i]
         {
             get

@@ -55,7 +55,7 @@ namespace TVGL
                 Color = Color,
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
-                Normal = (Vector2)Normal.Clone(),
+                Normal = Normal,
                 Vertices = new List<Vertex>()
             };
         }
@@ -156,7 +156,7 @@ namespace TVGL
         /// </summary>
         /// <param name="normal">The normal.</param>
         /// <param name="color">The color.</param>
-        public PolygonalFace(Vector2 normal, Color color)
+        public PolygonalFace(Vector3 normal, Color color)
             : this(normal)
         {
             Color = color;
@@ -166,7 +166,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
         /// <param name="normal">The normal.</param>
-        public PolygonalFace(Vector2 normal)
+        public PolygonalFace(Vector3 normal)
             : this()
         {
             Normal = normal;
@@ -188,7 +188,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
         public PolygonalFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true)
-            : this(vertices, null, connectVerticesBackToFace)
+            : this(vertices, Vector3.Null, connectVerticesBackToFace)
         {
         }
 
@@ -242,14 +242,14 @@ namespace TVGL
         /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">The normal.</param>
-        /// <returns>System.Vector2.</returns>
+        /// <returns>System.Vector3.</returns>
         public static Vector3 DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, Vector3 normal )
         {
             reverseVertexOrder = false;
             var n = vertices.Count;
             if (!normal.IsNull()) normal = normal.Normalize();
             var edgeVectors = new Vector3[n];
-            var normals = new List<Vector2>();
+            var normals = new List<Vector3>();
             edgeVectors[0] = vertices[0].Coordinates.Subtract(vertices[n - 1].Coordinates);
             for (var i = 1; i < n; i++)
             {
@@ -278,7 +278,7 @@ namespace TVGL
                 }
             }
             var lastCross = edgeVectors[n - 1].Cross(edgeVectors[0]).Normalize();
-            if (!lastCross.Any(double.IsNaN)) normals.Add(lastCross);
+            if (!lastCross.IsNull()) normals.Add(lastCross);
 
             n = normals.Count;
             if (n == 0) // this would happen if the face collapse to a line.

@@ -120,7 +120,7 @@ namespace TVGL.Enclosure_Operations
                         var j = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - otherNormal[0]) < 0.0001 &&
                                                      Math.Abs(p.Vector[1] - otherNormal[1]) < 0.0001 &&
                                                      Math.Abs(p.Vector[2] - otherNormal[2]) < 0.0001);
-                        var referenceIndex = new[] {i, j};
+                        var referenceIndex = new[] { i, j };
                         ReferenceEdges.Add(edge);
                         referenceIndices.Add(referenceIndex);
                     }
@@ -178,7 +178,7 @@ namespace TVGL.Enclosure_Operations
         /// <summary>
         ///     The vector
         /// </summary>
-        internal Vector2 Vector;
+        internal Vector3 Vector;
 
         /// <summary>
         ///     The x
@@ -201,7 +201,7 @@ namespace TVGL.Enclosure_Operations
         /// <param name="triangle">The triangle.</param>
         internal Node(PolygonalFace triangle)
         {
-            ReferenceFaces = new List<PolygonalFace> {triangle};
+            ReferenceFaces = new List<PolygonalFace> { triangle };
             ReferenceEdges = triangle.Edges.ToList();
             ReferenceVertices = new List<Vertex>(); //Create a null list, to build up later.
             Vector = triangle.Normal; //Set unit normal as location on sphere
@@ -214,15 +214,15 @@ namespace TVGL.Enclosure_Operations
             Theta = 0.0;
             if (triangle.Normal[0] < 0) //If both negative or just x, add 180 (Q2 and Q3)
             {
-                Theta = Math.Atan(triangle.Normal[1]/triangle.Normal[0]) + Math.PI;
+                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + Math.PI;
             }
             else if (triangle.Normal[1] < 0) //If only y is negative, add 360 (Q4)
             {
-                Theta = Math.Atan(triangle.Normal[1]/triangle.Normal[0]) + Constants.TwoPi;
+                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + Constants.TwoPi;
             }
             else //Everything is positive (Q1).
             {
-                Theta = Math.Atan(triangle.Normal[1]/triangle.Normal[0]);
+                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]);
             }
 
             //Calculate polar angle.  Note that Acos is bounded 0 <= φ <= 180. 
@@ -278,9 +278,9 @@ namespace TVGL.Enclosure_Operations
         /// <param name="edge">The edge.</param>
         internal Arc(Node node1, Node node2, Edge edge)
         {
-            Nodes = new List<Node> {node1, node2};
+            Nodes = new List<Node> { node1, node2 };
             ReferenceEdge = edge;
-            ReferenceVertices = new List<Vertex> {edge.To, edge.From};
+            ReferenceVertices = new List<Vertex> { edge.To, edge.From };
             //Calculate arc length. Base on the following answer, where r = 1 for our unit circle.
             //http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
             //Note that the arc length must be the smaller of the two directions around the sphere. Acos will take care of this.
@@ -293,7 +293,7 @@ namespace TVGL.Enclosure_Operations
             if (azimuthal > Math.PI) azimuthal = azimuthal - Constants.TwoPi;
             if (azimuthal <= -Math.PI) azimuthal = azimuthal + Constants.TwoPi;
             var polar = node2.Phi - node1.Phi;
-            Direction = new[] {azimuthal, polar};
+            Direction = new Vector2(azimuthal, polar);
         }
 
         /// <summary>
@@ -323,8 +323,8 @@ namespace TVGL.Enclosure_Operations
             //    norm1[2].IsPracticallySame(-norm2[2])) return true; //All points intersect
             //Find points of intersection between two planes
             var position1 = norm1.Cross(norm2).Normalize();
-            var position2 = new[] {-position1[0], -position1[1], -position1[2]};
-            var vertices = new[] {new Vertex(position1), new Vertex(position2)};
+            var position2 = -1 * position1;
+            var vertices = new[] { new Vertex(position1), new Vertex(position2) };
             //Check to see if the intersections are on the arcs
             for (var i = 0; i < 2; i++)
             {
@@ -401,9 +401,9 @@ namespace TVGL.Enclosure_Operations
         /// <param name="vector1">The vector1.</param>
         /// <param name="vector2">The vector2.</param>
         /// <param name="referenceArc">The reference arc.</param>
-        internal GreatCircleAlongArc(GaussianSphere gaussianSphere, Vector2 vector1, Vector2 vector2, Arc referenceArc)
+        internal GreatCircleAlongArc(GaussianSphere gaussianSphere, Vector3 vector1, Vector3 vector2, Arc referenceArc)
         {
-            var antiPoint1 = new[] {-referenceArc.Nodes[0].X, -referenceArc.Nodes[0].Y, -referenceArc.Nodes[0].Z};
+            var antiPoint1 = new Vector3(-referenceArc.Nodes[0].X, -referenceArc.Nodes[0].Y, -referenceArc.Nodes[0].Z);
             //var antiPoint2 = new[] { -referenceArc.Nodes[1].X, -referenceArc.Nodes[1].Y, -referenceArc.Nodes[1].Z };
             ArcList = new List<Arc>();
             Intersections = new List<Intersection>();
@@ -429,17 +429,17 @@ namespace TVGL.Enclosure_Operations
                 //if (Normal[0].IsPracticallySame(-norm2[0]) && Normal[1].IsPracticallySame(-norm2[1]) &&
                 //    Normal[2].IsPracticallySame(-norm2[2])) segmentBool = true; //All points intersect
                 //Set the intersection vertices 
-                Vector2[] vertices;
+                Vector3[] vertices;
                 if (segmentBool)
                 {
-                    vertices = new[] {arc.Nodes[0].Vector, arc.Nodes[1].Vector};
+                    vertices = new[] { arc.Nodes[0].Vector, arc.Nodes[1].Vector };
                 }
                 else
                 {
                     //Find points of intersection between two planes
                     var position1 = Normal.Cross(norm2).Normalize();
-                    var position2 = new[] {-position1[0], -position1[1], -position1[2]};
-                    vertices = new[] {position1, position2};
+                    var position2 = -1 * position1;
+                    vertices = new[] { position1, position2 };
                 }
 
 
@@ -512,7 +512,7 @@ namespace TVGL.Enclosure_Operations
         ///     Gets or sets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        internal Vector2 Normal { get; set; }
+        internal Vector3 Normal { get; set; }
 
         /// <summary>
         ///     Arcs the length.
@@ -520,7 +520,7 @@ namespace TVGL.Enclosure_Operations
         /// <param name="double1">The double1.</param>
         /// <param name="double2">The double2.</param>
         /// <returns>System.Double.</returns>
-        internal double ArcLength(Vector2 double1, Vector2 double2)
+        internal double ArcLength(Vector3 double1, Vector3 double2)
         {
             var arcLength = Math.Acos(double1.Dot(double2));
             if (double.IsNaN(arcLength)) arcLength = 0.0;
@@ -558,7 +558,7 @@ namespace TVGL.Enclosure_Operations
         /// <param name="vector1">The vector1.</param>
         /// <param name="vector2">The vector2.</param>
         /// <param name="referenceArc">The reference arc.</param>
-        internal GreatCircleOrthogonalToArc(GaussianSphere gaussianSphere, Vector2 vector1, Vector2 vector2,
+        internal GreatCircleOrthogonalToArc(GaussianSphere gaussianSphere, Vector3 vector1, Vector3 vector2,
             Arc referenceArc)
         {
             ArcList = new List<Arc>();
@@ -591,8 +591,8 @@ namespace TVGL.Enclosure_Operations
 
                 //Find points of intersection between two planes
                 var position1 = Normal.Cross(norm2).Normalize();
-                var position2 = new[] {-position1[0], -position1[1], -position1[2]};
-                var vertices = new[] {position1, position2};
+                var position2 = -1 * position1;
+                var vertices = new[] { position1, position2 };
                 //Check to see if the intersection is on the arc. We already know it is on the great circle.
                 for (var i = 0; i < 2; i++)
                 {
@@ -607,16 +607,16 @@ namespace TVGL.Enclosure_Operations
                     //Subtract the reference arc direction vector from the node and determine where it intersects the great circle
                     var theta = referenceArc.Direction[0] - node.Theta;
                     var phi = referenceArc.Direction[1] - node.Phi;
-                    var x = Math.Cos(theta)*Math.Sin(phi);
-                    var y = Math.Sin(theta)*Math.Sin(phi);
+                    var x = Math.Cos(theta) * Math.Sin(phi);
+                    var y = Math.Sin(theta) * Math.Sin(phi);
                     var z = Math.Cos(phi);
                     var point = new Vector3(x, y, z);
                     //Create two planes given the great circle and this new temporary arc
                     var tempNorm = point.Cross(node.Vector);
                     //Find points of intersection between two planes
                     var position3 = Normal.Cross(tempNorm).Normalize();
-                    var position4 = new[] {-position3[0], -position3[1], -position3[2]};
-                    var vertices2 = new[] {position3, position4};
+                    var position4 = -1 * position3;
+                    var vertices2 = new[] { position3, position4 };
                     for (var j = 0; j < 2; j++)
                     {
                         var tempL1 = ArcLength(node.Vector, point);
@@ -663,7 +663,7 @@ namespace TVGL.Enclosure_Operations
         ///     Gets or sets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        internal Vector2 Normal { get; set; }
+        internal Vector3 Normal { get; set; }
 
         /// <summary>
         ///     Arcs the length.
@@ -671,7 +671,7 @@ namespace TVGL.Enclosure_Operations
         /// <param name="a">a.</param>
         /// <param name="b">The b.</param>
         /// <returns>System.Double.</returns>
-        internal double ArcLength(Vector2 a, Vector2 b)
+        internal double ArcLength(Vector3 a, Vector3 b)
         {
             var arcLength = Math.Acos(a.Dot(b));
             if (double.IsNaN(arcLength)) arcLength = 0.0;

@@ -304,7 +304,7 @@ namespace TVGL
         #endregion
 
         #region 2D Rotating Calipers
-        private static readonly Vector3 CaliperOffsetAngles = { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
+        private static readonly double[] CaliperOffsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
 
         /// <summary>
         ///     Rotating the calipers 2D method. Convex hull must be a counter clockwise loop.
@@ -652,7 +652,7 @@ namespace TVGL
 
                 //Get unit normal for current edge
                 var otherIndex = extremeIndices[refIndex] == 0 ? numCvxPoints - 1 : extremeIndices[refIndex] - 1;
-                var direction = cvxPoints[extremeIndices[refIndex]].Subtract(cvxPoints[otherIndex]).Normalize(2);
+                var direction = (cvxPoints[extremeIndices[refIndex]] - cvxPoints[otherIndex]).Normalize();
                 //If point type = 1 or 3, then use inversed Direction
                 if (refIndex == 1 || refIndex == 3)
                 {
@@ -810,20 +810,11 @@ namespace TVGL
             var boundingRectangle = RotatingCalipers2DMethod(points);
 
             //Get the Direction vectors from rotating caliper and projection.
-            var tempDirection = new[]
-            {
-                boundingRectangle.LengthDirection[0], boundingRectangle.LengthDirection[1],
-                0.0, 1.0
-            };
-            tempDirection = backTransform * tempDirection;
-            var direction2 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
-            tempDirection = new[]
-            {
-                boundingRectangle.WidthDirection[0], boundingRectangle.WidthDirection[1],
-                0.0, 1.0
-            };
-            tempDirection = backTransform * tempDirection;
-            var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            var tempDirection = new Vector3(boundingRectangle.LengthDirection[0], boundingRectangle.LengthDirection[1], 0);
+            tempDirection = tempDirection.Transform(backTransform);
+            var direction2 = new Vector3(tempDirection[0], tempDirection[1], tempDirection[2]);
+            tempDirection = new Vector3(boundingRectangle.WidthDirection[0], boundingRectangle.WidthDirection[1], 0);
+            var direction3 = tempDirection.Transform(backTransform);
             var pointsOnFaces = new List<List<Vertex>>
             {
                 bottomVertices,
@@ -841,7 +832,7 @@ namespace TVGL
             //if (!dim3.IsPracticallySame(boundingRectangle.Dimensions[1], 0.000001)) throw new Exception("Error in implementation");
             return new BoundingBox
             {
-                Dimensions = new[] { depth, boundingRectangle.Length, boundingRectangle.Width },
+                Dimensions = new Vector3(depth, boundingRectangle.Length, boundingRectangle.Width),
                 Directions = new[] { direction1, direction2, direction3 },
                 PointsOnFaces = pointsOnFaces.ToArray(),
                 Volume = depth * boundingRectangle.Length * boundingRectangle.Width
@@ -874,8 +865,8 @@ namespace TVGL
             boxData.Box =
                 new BoundingBox
                 {
-                    Dimensions = new[] { height, boundingRectangle.Length, boundingRectangle.Width },
-                    Directions = new[] { direction0, direction1, direction2 },
+                    Dimensions = new Vector3(height, boundingRectangle.Length, boundingRectangle.Width),
+                    Directions = new Vector3[] { direction0, direction1, direction2 },
                     PointsOnFaces = new[]
                     {
                         new List<Vertex> {boxData.RotatorEdge.From, boxData.RotatorEdge.To},

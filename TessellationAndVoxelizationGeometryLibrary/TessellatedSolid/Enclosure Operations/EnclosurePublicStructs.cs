@@ -37,7 +37,7 @@ namespace TVGL
         ///     If this was a bounding box along a given direction, the first dimension will
         ///     correspond with the distance along that direction.
         /// </summary>
-        public Vector2 Dimensions;
+        public Vector3 Dimensions;
 
         /// <summary>
         ///     The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid that are on the faces
@@ -78,7 +78,7 @@ namespace TVGL
             {
                 SetCornerVertices();
             }
-            SolidRepresentation = Extrude.FromLoops(new List<List<Vertex>>() {CornerVertices.Take(4).ToList()}, Directions[2], Dimensions[2]);
+            SolidRepresentation = Extrude.FromLoops(new List<List<Vertex>>() { CornerVertices.Take(4).ToList() }, Directions[2], Dimensions[2]);
         }
 
         private IList<int> _sortedDirectionIndicesByLength;
@@ -146,12 +146,12 @@ namespace TVGL
 
             // Order by values. Use LINQ to specify sorting by value.
             var sortedDimensions = from pair in dimensions
-                        orderby pair.Value ascending
-                        select pair;
+                                   orderby pair.Value ascending
+                                   select pair;
 
             //Set the sorted lists
             _sortedDirectionIndicesByLength = sortedDimensions.Select(pair => pair.Key).ToList();
-            _sortedDirectionsByLength = new List<Vector2>();
+            _sortedDirectionsByLength = new List<Vector3>();
             _sortedDimensions = new List<double>();
             foreach (var index in _sortedDirectionIndicesByLength)
             {
@@ -180,8 +180,8 @@ namespace TVGL
                 allPointsOnFaces.AddRange(setOfPoints);
             }
 
-            if(!allPointsOnFaces.Any()) throw new Exception("Must set the points on the faces prior to setting the corner vertices " +
-                                                            "(Or set the corner vertices with the convex hull");
+            if (!allPointsOnFaces.Any()) throw new Exception("Must set the points on the faces prior to setting the corner vertices " +
+                                                             "(Or set the corner vertices with the convex hull");
             SetCornerVertices(allPointsOnFaces);
         }
 
@@ -197,11 +197,11 @@ namespace TVGL
 
             //Get the low extreme vertices along each direction
             List<Vertex> vLows, vHighs;
-            Dimensions[0] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
+            var dimension0 = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
             var v0 = new Vertex(vLows.First().Coordinates);
-            Dimensions[1] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
+            var dimension1 = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
             var v1 = new Vertex(vLows.First().Coordinates);
-            Dimensions[2] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
+            var dimension2 = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
             var v2 = new Vertex(vLows.First().Coordinates);
 
             //Start with v0 and move along direction[1] by projection
@@ -226,13 +226,13 @@ namespace TVGL
             //Create the vertices that make up the box and add them to the corner vertices array
             for (var i = 0; i < 2; i++)
             {
-                var d0Vector = i == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[0] * Dimensions[0];
+                var d0Vector = i == 0 ? new Vector3() : Directions[0] * dimension0;
                 for (var j = 0; j < 2; j++)
                 {
-                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[1] * Dimensions[1];
+                    var d1Vector = j == 0 ? new Vector3() : Directions[1] * dimension1;
                     for (var k = 0; k < 2; k++)
                     {
-                        var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[2] * Dimensions[2];
+                        var d2Vector = k == 0 ? new Vector3() : Directions[2] * dimension2;
                         var newVertex = new Vertex(bottomCorner.Coordinates + d0Vector + d1Vector + d2Vector);
 
                         //
@@ -250,21 +250,20 @@ namespace TVGL
                     }
                 }
             }
-
+            CornerVertices = cornerVertices;
             //Add in the center
-            var centerPosition = new[] { 0.0, 0.0, 0.0 };
+            var cX = 0.0;
+            var cY = 0.0;
+            var cZ = 0.0;
             foreach (var vertex in cornerVertices)
             {
-                centerPosition[0] += vertex.Coordinates[0];
-                centerPosition[1] += vertex.Coordinates[1];
-                centerPosition[2] += vertex.Coordinates[2];
+                cX += vertex.Coordinates[0];
+                cY += vertex.Coordinates[1];
+                cZ += vertex.Coordinates[2];
             }
-            centerPosition[0] = centerPosition[0] / cornerVertices.Count();
-            centerPosition[1] = centerPosition[1] / cornerVertices.Count();
-            centerPosition[2] = centerPosition[2] / cornerVertices.Count();
-
-            CornerVertices = cornerVertices;
-            Center = new Vertex(centerPosition);
+            var oneOverCornerCount = 1 / cornerVertices.Length;
+            Center = new Vertex(new Vector3(oneOverCornerCount * cX, oneOverCornerCount * cY,
+                oneOverCornerCount * cZ));
         }
 
         public static BoundingBox Copy(BoundingBox original)
@@ -273,22 +272,22 @@ namespace TVGL
             {
                 Center = original.Center.Copy(),
                 Volume = original.Volume,
-                Dimensions = new [] { original.Dimensions[0], original.Dimensions[1], original.Dimensions[2]},
+                Dimensions = new Vector3(original.Dimensions[0], original.Dimensions[1], original.Dimensions[2]),
                 Directions = original.Directions, //If these change, then the copy is useless anyways
                 PointsOnFaces = original.PointsOnFaces, //These are reference vertices, so they should not be copied
                 CornerVertices = new Vertex[8]
             };
             //Recreated the corner vertices
-            for(var i =0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
                 copy.CornerVertices[i] = original.CornerVertices[i].Copy();
             }
             //Recreate the solid representation if one existing in the original
-            if(original.SolidRepresentation != null) copy.SetSolidRepresentation();
+            if (original.SolidRepresentation != null) copy.SetSolidRepresentation();
             return copy;
         }
 
-        public static BoundingBox ExtendAlongDirection(BoundingBox original, Vector2 direction, double distance)
+        public static BoundingBox ExtendAlongDirection(BoundingBox original, Vector3 direction, double distance)
         {
             int sign = 0;
             var updateIndex = -1;
@@ -304,8 +303,8 @@ namespace TVGL
             }
             if (updateIndex == -1) throw new Exception("BoundingBox may only be extended along one of its three defining directions.");
 
-            var dimensions = new[] { original.Dimensions[0], original.Dimensions[1], original.Dimensions[2] };
-            dimensions[updateIndex] += distance;
+            var dimensions = new Vector3(original.Dimensions[0], original.Dimensions[1], original.Dimensions[2]);
+            dimensions += distance * Vector3.UnitVector(updateIndex);
             var volume = dimensions[0] * dimensions[1] * dimensions[2];
 
             var result = new BoundingBox
@@ -316,7 +315,7 @@ namespace TVGL
                 Directions = original.Directions, //If these change, then the copy is useless anyways
                 PointsOnFaces = null, // these reference vertices are no longer valid.
                 CornerVertices = new Vertex[8]
-            };   
+            };
 
             //Recreate the corner vertices  
             for (var i = 0; i < 8; i++)
@@ -329,12 +328,12 @@ namespace TVGL
             //Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
             //[0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
             int[] indicesToUpdate;
-            if(updateIndex == 0)
+            if (updateIndex == 0)
             {
                 if (sign == 1) indicesToUpdate = new int[] { 0, 1, 2, 3 };
                 else indicesToUpdate = new int[] { 4, 5, 6, 7 };
-            } 
-            else if(updateIndex == 1)
+            }
+            else if (updateIndex == 1)
             {
                 if (sign == 1) indicesToUpdate = new int[] { 0, 3, 4, 7 };
                 else indicesToUpdate = new int[] { 1, 2, 5, 6 };
@@ -343,11 +342,11 @@ namespace TVGL
             {
                 if (sign == 1) indicesToUpdate = new int[] { 0, 1, 4, 5 };
                 else indicesToUpdate = new int[] { 2, 3, 6, 7 };
-            }           
+            }
             foreach (var i in indicesToUpdate)
             {
                 result.CornerVertices[i] = new Vertex(result.CornerVertices[i].Coordinates + vectorOffset);
-            }        
+            }
 
             //Recreate the solid representation if one existing in the original
             if (original.SolidRepresentation != null) result.SetSolidRepresentation();
@@ -356,28 +355,28 @@ namespace TVGL
 
         //Note: Corner vertices must be ordered correctly. See below where - = low and + = high along directions 0, 1, and 2 respectively.
         // [0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
-        public static BoundingBox FromCornerVertices(Vector2[] directions, Vertex[] cornerVertices, bool areVerticesInCorrectOrder)
+        public static BoundingBox FromCornerVertices(Vector3[] directions, Vertex[] cornerVertices, bool areVerticesInCorrectOrder)
         {
-            if(!areVerticesInCorrectOrder) throw new Exception("Not implemented exception. Vertices must be in correct order for OBB");
-            if(cornerVertices.Length != 8) throw new Exception("Must set Bounding Box using eight corner vertices in correct order");
+            if (!areVerticesInCorrectOrder) throw new Exception("Not implemented exception. Vertices must be in correct order for OBB");
+            if (cornerVertices.Length != 8) throw new Exception("Must set Bounding Box using eight corner vertices in correct order");
 
-            var dimensions = new[] { 0.0, 0.0, 0.0 };
-            dimensions[0] = MinimumEnclosure.GetLengthAndExtremeVertices(directions[0], cornerVertices, out _, out _);
-            dimensions[1] = MinimumEnclosure.GetLengthAndExtremeVertices(directions[1], cornerVertices, out _, out  _);
-            dimensions[2] = MinimumEnclosure.GetLengthAndExtremeVertices(directions[2], cornerVertices, out _, out _);
+            var dimensions = new Vector3(
+                MinimumEnclosure.GetLengthAndExtremeVertices(directions[0], cornerVertices, out _, out _),
+                MinimumEnclosure.GetLengthAndExtremeVertices(directions[1], cornerVertices, out _, out _),
+                MinimumEnclosure.GetLengthAndExtremeVertices(directions[2], cornerVertices, out _, out _));
 
             //Add in the center
-            var centerPosition = new[] { 0.0, 0.0, 0.0 };
+            var centerPosition = new Vector3();
             centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c + v.Coordinates)
-                .Divide(cornerVertices.Count());
-            
+                .Divide(cornerVertices.Length);
+
             return new BoundingBox
             {
                 Center = new Vertex(centerPosition),
                 Volume = dimensions[0] * dimensions[1] * dimensions[2],
                 Dimensions = dimensions,
-                Directions = directions, 
-                PointsOnFaces = null, 
+                Directions = directions,
+                PointsOnFaces = null,
                 CornerVertices = cornerVertices
             };
         }
@@ -458,10 +457,10 @@ namespace TVGL
             var v1Min = LengthDirection * LengthDirectionMin;
             var v2Max = WidthDirection * WidthDirectionMax;
             var v2Min = WidthDirection * WidthDirectionMin;
-            var p1 = new Vector2(v1Max + v2Max);
-            var p2 = new Vector2(v1Min + v2Max);
-            var p3 = new Vector2(v1Min + v2Min);
-            var p4 = new Vector2(v1Max + v2Min);
+            var p1 = v1Max + v2Max;
+            var p2 = v1Min + v2Max;
+            var p3 = v1Min + v2Min;
+            var p4 = v1Max + v2Min;
             CornerPoints = new[] { p1, p2, p3, p4 };
             var areaCheck = MiscFunctions.AreaOfPolygon(CornerPoints);
             if (areaCheck < 0.0)
@@ -472,18 +471,18 @@ namespace TVGL
 
             //Add in the center
             var centerPosition = new[] { 0.0, 0.0 };
+            var cX = 0.0;
+            var cY = 0.0;
             foreach (var vertex in CornerPoints)
             {
-                centerPosition[0] += vertex.X;
-                centerPosition[1] += vertex.Y;
+                cX += vertex.X;
+                cY += vertex.Y;
             }
-            centerPosition[0] = centerPosition[0] / 4;
-            centerPosition[1] = centerPosition[1] / 4;          
 
             //Check to make sure the points are ordered correctly (within 1 %)
-            if(!areaCheck.IsPracticallySame(Area, 0.01*Area))
+            if (!areaCheck.IsPracticallySame(Area, 0.01 * Area))
                 throw new Exception("Points are ordered incorrectly");
-            CenterPosition = centerPosition;
+            CenterPosition = new Vector2(0.25 * cX, 0.25 * cY);
         }
     }
 
@@ -522,8 +521,8 @@ namespace TVGL
         {
             Center = center;
             Radius = radius;
-            Area = Math.PI*radius*radius;
-            Circumference = Constants.TwoPi*radius;
+            Area = Math.PI * radius * radius;
+            Circumference = Constants.TwoPi * radius;
         }
     }
 
@@ -535,7 +534,7 @@ namespace TVGL
         /// <summary>
         ///     Center axis along depth
         /// </summary>
-        public Vector2 Axis;
+        public Vector3 Axis;
 
         /// <summary>
         ///     Bounding Circle on one end of the cylinder

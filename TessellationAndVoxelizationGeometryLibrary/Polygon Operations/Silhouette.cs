@@ -21,7 +21,7 @@ namespace TVGL
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> Slow(IList<PolygonalFace> faces, Vector2 normal, double minAngle = 0.1,
+        public static List<List<Vector2>> Slow(IList<PolygonalFace> faces, Vector3 normal, double minAngle = 0.1,
             double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180);
@@ -76,7 +76,7 @@ namespace TVGL
         /// <param name="normal"></param>
         /// <param name="minAngle"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> Run(TessellatedSolid ts, Vector2 normal, double minAngle = 0.1)
+        public static List<List<Vector2>> Run(TessellatedSolid ts, Vector3 normal, double minAngle = 0.1)
         {
             var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out _, out _);
             return Run(ts.Faces, normal, ts, minAngle, ts.SameTolerance, depthOfPart);
@@ -92,7 +92,7 @@ namespace TVGL
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param> 
         /// <returns></returns>
-        public static List<List<Vector2>> Run(IList<PolygonalFace> faces, Vector2 normal, TessellatedSolid originalSolid, double minAngle = 0.1,
+        public static List<List<Vector2>> Run(IList<PolygonalFace> faces, Vector3 normal, TessellatedSolid originalSolid, double minAngle = 0.1,
         double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             //Get the positive faces into a dictionary
@@ -381,7 +381,7 @@ namespace TVGL
         #endregion
 
         #region GetSurfacePaths
-        private static IEnumerable<List<Vector2>> GetSurfacePaths(List<HashSet<PolygonalFace>> surfaces, Vector2 normal,
+        private static IEnumerable<List<Vector2>> GetSurfacePaths(List<HashSet<PolygonalFace>> surfaces, Vector3 normal,
             double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, List<Vector2>> projectedFacePolygons)
         {
             originalSolid.HasUniformColor = false;

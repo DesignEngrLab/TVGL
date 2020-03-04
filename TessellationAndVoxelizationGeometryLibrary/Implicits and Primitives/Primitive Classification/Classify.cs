@@ -299,8 +299,12 @@ namespace TVGL
         {
             var cenMass1 = eachEdge.Edge.OwnedFace.Center;
             var cenMass2 = eachEdge.Edge.OtherFace.Center;
-            var vector1 = new[] { cenMass1[0] - eachEdge.Edge.From.Coordinates[0], cenMass1[1] - eachEdge.Edge.From.Coordinates[1], cenMass1[2] - eachEdge.Edge.From.Coordinates[2] };
-            var vector2 = new[] { cenMass2[0] - eachEdge.Edge.From.Coordinates[0], cenMass2[1] - eachEdge.Edge.From.Coordinates[1], cenMass2[2] - eachEdge.Edge.From.Coordinates[2] };
+            var vector1 = new Vector3(cenMass1[0] - eachEdge.Edge.From.Coordinates[0],
+                cenMass1[1] - eachEdge.Edge.From.Coordinates[1],
+                cenMass1[2] - eachEdge.Edge.From.Coordinates[2]);
+            var vector2 = new Vector3(cenMass2[0] - eachEdge.Edge.From.Coordinates[0], 
+                cenMass2[1] - eachEdge.Edge.From.Coordinates[1], 
+                cenMass2[2] - eachEdge.Edge.From.Coordinates[2]);
             var distance1 = eachEdge.Edge.Vector.Normalize().Dot(vector1);
             var distance2 = eachEdge.Edge.Vector.Normalize().Dot(vector2);
             //Mapped Center of Mass

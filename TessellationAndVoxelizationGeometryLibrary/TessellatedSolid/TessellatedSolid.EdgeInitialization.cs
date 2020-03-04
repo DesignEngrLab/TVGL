@@ -76,8 +76,8 @@ namespace TVGL
                 SetAndGetEdgeChecksum(edge);
                 // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
                 // face has no area (collapsed to a line).
-                if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (Vector2)ownedFace.Normal.Clone();
-                if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (Vector2)otherFace.Normal.Clone();
+                if (otherFace.Normal.IsNull()) otherFace.Normal = ownedFace.Normal;
+                if (ownedFace.Normal.IsNull()) ownedFace.Normal = otherFace.Normal;
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;
@@ -326,10 +326,10 @@ namespace TVGL
         }
 
 
-        internal static List<(List<Edge>, Vector2)> OrganizeIntoLoops(List<Edge> singleSidedEdges,
+        internal static List<(List<Edge>, Vector3)> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
-            var listOfLoops = new List<(List<Edge>, Vector2)>();
+            var listOfLoops = new List<(List<Edge>, Vector3)>();
             remainingEdges = new List<Edge>(singleSidedEdges);
             if (!singleSidedEdges.Any()) return listOfLoops;
             var attempts = 0;
@@ -352,7 +352,7 @@ namespace TVGL
                         if (bestNext == null) break;
                         loop.Add(bestNext);
                         var n1 = loop[loop.Count - 1].Vector.Cross(loop[loop.Count - 2].Vector).Normalize();
-                        if (!n1.Contains(double.NaN))
+                        if (!n1.IsNull())
                         {
                             n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
                             normal = loop.Count == 2
@@ -372,7 +372,7 @@ namespace TVGL
                             if (bestPrev == null) break;
                             loop.Insert(0, bestPrev);
                             var n1 = loop[1].Vector.Cross(loop[0].Vector).Normalize();
-                            if (!n1.Contains(double.NaN))
+                            if (!n1.IsNull())
                             {
                                 n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
                                 normal = loop.Count == 2
@@ -401,7 +401,7 @@ namespace TVGL
         }
 
         private static IEnumerable<(Edge, List<PolygonalFace>)> CreateMissingEdgesAndFaces(
-                    List<(List<Edge>, Vector2)> loops,
+                    List<(List<Edge>, Vector3)> loops,
                     out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
         {
             var completedEdges = new List<(Edge, List<PolygonalFace>)>();
@@ -448,7 +448,7 @@ namespace TVGL
                         foreach (var triangle in triangles)
                         {
                             var newFace = new PolygonalFace(triangle, normal);
-                            if (newFace.Area.IsNegligible() && newFace.Normal.Any(double.IsNaN)) continue;
+                            if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;
                             newFaces.Add(newFace);
                             for (var j = 0; j < 3; j++)
                             {
@@ -473,7 +473,7 @@ namespace TVGL
             return completedEdges;
         }
 
-        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector2 refEdge, Vector2 normal)
+        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal)
         {
             var unitRefEdge = refEdge.Normalize();
             var max = -2.0;
@@ -497,10 +497,10 @@ namespace TVGL
         {
             var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
             score += 1 - Math.Abs(e1.Vector.Normalize().Dot(e2.Vector.Normalize()));
-            score += Math.Min(e2.From.Coordinates.Subtract(e1.To.Coordinates).norm2()
-                              + e2.To.Coordinates.Subtract(e1.From.Coordinates).norm2(),
-                e2.From.Coordinates.Subtract(e1.From.Coordinates).norm2()
-                + e2.To.Coordinates.Subtract(e1.To.Coordinates).norm2())
+            score += Math.Min(e2.From.Coordinates.Distance(e1.To.Coordinates)
+                              + e2.To.Coordinates.Distance(e1.From.Coordinates),
+                e2.From.Coordinates.Distance(e1.From.Coordinates)
+                + e2.To.Coordinates.Distance(e1.To.Coordinates))
                      / e1.Length;
             return score;
         }

@@ -1932,7 +1932,7 @@ namespace TVGL
             var fraction = (planeDistance - d1) / denominator;
             var intersectionPoint = Vector3.Lerp(point1, point2, fraction);
 
-            return IsVertexInsideTriangle(vertices, intersectionPoint, true) ? intersectionPoint : null;
+            return IsVertexInsideTriangle(vertices, intersectionPoint, true) ? intersectionPoint : Vector3.Null;
         }
 
         /// <summary>
@@ -1970,7 +1970,7 @@ namespace TVGL
             var d1 = point2.Subtract(point1).Length();
             var d2 = point2.Subtract(position).Length();
             var d3 = point1.Subtract(position).Length();
-            return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : null;
+            return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : Vector3.Null;
         }
 
         /// <summary>
