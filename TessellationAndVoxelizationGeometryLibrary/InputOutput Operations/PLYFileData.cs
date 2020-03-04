@@ -575,7 +575,7 @@ namespace TVGL.IOFunctions
                     }
                 }
                 if (point.Any(double.IsNaN)) return false;
-                vertices.Add(point);
+                vertices.Add(new Vector3(point));
             }
             return true;
         }
@@ -702,7 +702,7 @@ namespace TVGL.IOFunctions
                     else vertexColors.Add(null);
                 }
                 if (point.Any(double.IsNaN)) return false;
-                vertices.Add(point);
+                vertices.Add(new Vector3(point));
             }
             return true;
         }

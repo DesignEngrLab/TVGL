@@ -26,16 +26,15 @@ namespace TVGL.MathOperations
         /// <param name="p"></param>
         /// <param name="uvw"></param>
         /// <returns></returns>
-        public static Vector2 ClosestVertexOnTriangleToVertex(Vector2 a, Vector2 b, Vector2 c, Vector2 p,
-            out Vector2 uvw)
+        public static Vector3 ClosestVertexOnTriangleToVertex(Vector3 a, Vector3 b, Vector3 c, Vector3 p,
+            out Vector3 uvw)
         {
             //UVW is the vector of the point in question (p) to the nearest point on the triangle (a,b,c), I think.
-            uvw = new[] { 0.0, 0.0, 0.0 };
-
+            double uvw1, uvw2;
             // degenerate triangle, singular
-            if (MiscFunctions.DistancePointToPoint(a, b).IsNegligible() && MiscFunctions.DistancePointToPoint(a, c).IsNegligible())
+            if (a.Distance(b).IsNegligible() && a.Distance(c).IsNegligible())
             {
-                uvw[0] = 1.0;
+                uvw = new Vector3(1, 0, 0);
                 return a;
             }
 
@@ -45,29 +44,25 @@ namespace TVGL.MathOperations
             double d1 = ab.Dot(ap), d2 = ac.Dot(ap);
 
             // degenerate triangle edges
-            if (MiscFunctions.DistancePointToPoint(a, b).IsNegligible())
+            if (a.Distance(b).IsNegligible())
             {
                 double t;
                 var cps = ClosestVertexOnSegmentToVertex(a, c, p, out t);
-
-                uvw[0] = 1.0 - t;
-                uvw[2] = t;
-
+                uvw = new Vector3(1.0 - t, 0, t);
                 return cps;
 
             }
-            else if (MiscFunctions.DistancePointToPoint(a, c).IsNegligible() || MiscFunctions.DistancePointToPoint(b, c).IsNegligible())
+            else if (a.Distance(c).IsNegligible() || b.Distance(c).IsNegligible())
             {
                 double t;
                 var cps = ClosestVertexOnSegmentToVertex(a, b, p, out t);
-                uvw[0] = 1.0 - t;
-                uvw[1] = t;
+                uvw = new Vector3(1.0 - t, t, 0);
                 return cps;
             }
 
             if (d1 <= 0.0 && d2 <= 0.0)
             {
-                uvw[0] = 1.0;
+                uvw = new Vector3(1, 0, 0);
                 return a; // barycentric coordinates (1,0,0)
             }
 
@@ -76,7 +71,7 @@ namespace TVGL.MathOperations
             double d3 = ab.Dot(bp), d4 = ac.Dot(bp);
             if (d3 >= 0.0 && d4 <= d3)
             {
-                uvw[1] = 1.0;
+                uvw = new Vector3(0, 1, 0);
                 return b; // barycentric coordinates (0,1,0)
             }
 
@@ -84,9 +79,9 @@ namespace TVGL.MathOperations
             var vc = d1 * d4 - d3 * d2;
             if (vc <= 0.0 && d1 >= 0.0 && d3 <= 0.0)
             {
-                uvw[1] = d1 / (d1 - d3);
-                uvw[0] = 1.0 - uvw[1];
-                return a + (ab * uvw[1]); // barycentric coordinates (1-v,v,0)
+                uvw1 = d1 / (d1 - d3);
+                uvw = new Vector3(1.0 - uvw1, uvw1, 0);
+                return a + (ab * uvw1); // barycentric coordinates (1-v,v,0)
             }
 
             // Check if P in vertex region outside C
@@ -94,7 +89,7 @@ namespace TVGL.MathOperations
             double d5 = ab.Dot(cp), d6 = ac.Dot(cp);
             if (d6 >= 0.0 && d5 <= d6)
             {
-                uvw[2] = 1.0;
+                uvw = new Vector3(0, 0, 1);
                 return c; // barycentric coordinates (0,0,1)
             }
 
@@ -102,25 +97,25 @@ namespace TVGL.MathOperations
             var vb = d5 * d2 - d1 * d6;
             if (vb <= 0.0 && d2 >= 0.0 && d6 <= 0.0)
             {
-                uvw[2] = d2 / (d2 - d6);
-                uvw[0] = 1.0 - uvw[2];
-                return a + (ac * uvw[2]); // barycentric coordinates (1-w,0,w)
+                uvw2 = d2 / (d2 - d6);
+                uvw = new Vector3(1.0 - uvw2, 0, uvw2);
+                return a + (ac * uvw2); // barycentric coordinates (1-w,0,w)
             }
 
             // Check if P in edge region of BC, if so return projection of P onto BC
             var va = d3 * d6 - d5 * d4;
             if (va <= 0.0 && (d4 - d3) >= 0.0 && (d5 - d6) >= 0.0)
             {
-                uvw[2] = (d4 - d3) / ((d4 - d3) + (d5 - d6));
-                uvw[1] = 1.0 - uvw[2];
-                return b + ((c-b) * uvw[2]); // b + uvw[2] * (c - b), barycentric coordinates (0,1-w,w)
+                uvw2 = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+                uvw = new Vector3(0, 1.0 - uvw2, uvw2);
+                return b + ((c - b) * uvw[2]); // b + uvw[2] * (c - b), barycentric coordinates (0,1-w,w)
             }
 
             // P inside face region. Compute Q through its barycentric coordinates (u,v,w)
             var denom = 1.0 / (va + vb + vc);
-            uvw[2] = vc * denom;
-            uvw[1] = vb * denom;
-            uvw[0] = 1.0 - uvw[1] - uvw[2];
+            uvw2 = vc * denom;
+            uvw1 = vb * denom;
+            uvw = new Vector3(1.0 - uvw1 - uvw2, uvw1, uvw2);
 
             return a + (ab * uvw[1]) + (ac * uvw[2]);
             //a + ab*uvw[1] + ac*uvw[2]; // = u*a + v*b + w*c , u= va*denom = 1.0-v-w
@@ -137,7 +132,7 @@ namespace TVGL.MathOperations
         /// <param name="p"></param>
         /// <param name="distanceToSegment"></param>
         /// <returns></returns>
-        public static Vector2 ClosestVertexOnSegmentToVertex(Vector2 a, Vector2 b, Vector2 p, out double distanceToSegment)
+        public static Vector3 ClosestVertexOnSegmentToVertex(Vector3 a, Vector3 b, Vector3 p, out double distanceToSegment)
         {
             var ab = b.Subtract(a);
             distanceToSegment = p.Subtract(a).Dot(ab);
@@ -196,8 +191,8 @@ namespace TVGL.MathOperations
                 return line.ToPoint.Light;
             }
             distanceToSegment = distanceToSegment / line.Length;
-            return new Vector2(fromPoint.X + lineVector[0] * distanceToSegment,
-                fromPoint.Y + lineVector[1] * distanceToSegment);
+            return new Vector2(fromPoint.X + lineVector.X * distanceToSegment,
+                fromPoint.Y + lineVector.Y * distanceToSegment);
         }
     }
 }

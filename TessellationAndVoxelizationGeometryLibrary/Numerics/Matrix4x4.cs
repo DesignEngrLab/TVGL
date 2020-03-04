@@ -1206,13 +1206,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         };
 
 
-        private struct VectorBasis
-        {
-            public unsafe Vector3* Element0;
-            public unsafe Vector3* Element1;
-            public unsafe Vector3* Element2;
-        }
-
         /// <summary>
         /// Attempts to extract the scale, translation, and rotation components from the given scale/rotation/translation matrix.
         /// If successful, the out parameters will contained the extracted values.
@@ -1432,7 +1425,7 @@ public static Matrix4x4 Transform(Matrix4x4 value, Quaternion rotation)
 /// </summary>
 /// <param name="matrix">The source matrix.</param>
 /// <returns>The transposed matrix.</returns>
-public static unsafe Matrix4x4 Transpose(Matrix4x4 matrix)
+public static Matrix4x4 Transpose(Matrix4x4 matrix)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1468,7 +1461,7 @@ public static unsafe Matrix4x4 Transpose(Matrix4x4 matrix)
 /// <param name="matrix2">The second source matrix.</param>
 /// <param name="amount">The relative weight of the second source matrix.</param>
 /// <returns>The interpolated matrix.</returns>
-public static unsafe Matrix4x4 Lerp(Matrix4x4 matrix1, Matrix4x4 matrix2, double amount)
+public static Matrix4x4 Lerp(Matrix4x4 matrix1, Matrix4x4 matrix2, double amount)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1550,7 +1543,7 @@ public static Matrix4x4 Multiply(Matrix4x4 value1, double value2) => value1 * va
 /// </summary>
 /// <param name="value">The source matrix.</param>
 /// <returns>The negated matrix.</returns>
-public static unsafe Matrix4x4 operator -(Matrix4x4 value)
+public static Matrix4x4 operator -(Matrix4x4 value)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1576,7 +1569,7 @@ public static unsafe Matrix4x4 operator -(Matrix4x4 value)
 /// <param name="value1">The first source matrix.</param>
 /// <param name="value2">The second source matrix.</param>
 /// <returns>The resulting matrix.</returns>
-public static unsafe Matrix4x4 operator +(Matrix4x4 value1, Matrix4x4 value2)
+public static Matrix4x4 operator +(Matrix4x4 value1, Matrix4x4 value2)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1600,7 +1593,7 @@ public static unsafe Matrix4x4 operator +(Matrix4x4 value1, Matrix4x4 value2)
 /// <param name="value1">The first source matrix.</param>
 /// <param name="value2">The second source matrix.</param>
 /// <returns>The result of the subtraction.</returns>
-public static unsafe Matrix4x4 operator -(Matrix4x4 value1, Matrix4x4 value2)
+public static Matrix4x4 operator -(Matrix4x4 value1, Matrix4x4 value2)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1624,7 +1617,7 @@ public static unsafe Matrix4x4 operator -(Matrix4x4 value1, Matrix4x4 value2)
 /// <param name="value1">The first source matrix.</param>
 /// <param name="value2">The second source matrix.</param>
 /// <returns>The result of the multiplication.</returns>
-public static unsafe Matrix4x4 operator *(Matrix4x4 value1, Matrix4x4 value2)
+public static Matrix4x4 operator *(Matrix4x4 value1, Matrix4x4 value2)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1772,7 +1765,7 @@ value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + va
 /// <param name="value1">The source matrix.</param>
 /// <param name="value2">The scaling factor.</param>
 /// <returns>The scaled matrix.</returns>
-public static unsafe Matrix4x4 operator *(Matrix4x4 value1, double value2)
+public static Matrix4x4 operator *(Matrix4x4 value1, double value2)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1806,7 +1799,7 @@ public static unsafe Matrix4x4 operator *(Matrix4x4 value1, double value2)
 /// <param name="value1">The first matrix to compare.</param>
 /// <param name="value2">The second matrix to compare.</param>
 /// <returns>True if the given matrices are equal; False otherwise.</returns>
-public static unsafe bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
+public static bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {
@@ -1830,7 +1823,7 @@ public static unsafe bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
 /// <param name="value1">The first matrix to compare.</param>
 /// <param name="value2">The second matrix to compare.</param>
 /// <returns>True if the given matrices are not equal; False if they are equal.</returns>
-public static unsafe bool operator !=(Matrix4x4 value1, Matrix4x4 value2)
+public static bool operator !=(Matrix4x4 value1, Matrix4x4 value2)
 {
     if (false) // COMMENTEDCHANGE (Sse.IsSupported)
     {

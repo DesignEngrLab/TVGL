@@ -9,6 +9,12 @@ namespace TVGL._2D
 {
     public static class MedialAxis2D
     {
+      public  class Triangle<VertexType>
+        {
+           public VertexType A { get; }
+            public VertexType B { get; }
+            public VertexType C { get; }
+        }
         /// <summary>
         /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes. 
         /// Best way to show is using "Presenter.ShowAndHang(silhouette, medialAxis, "", Plot2DType.Line, false);"
@@ -32,27 +38,24 @@ namespace TVGL._2D
                 var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).Select(p => new PolygonLight(p)).First();
 
                 //Delaunay Medial Axis             
-                var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled.Select(p => new[] { p.X, p.Y }).ToList());
+                var delaunay = MIConvexHull.Triangulation.CreateDelaunay<Vector2,Triangle<Vector2>>(sampled);
                 var lines = new List<List<Point>>();
                 foreach (var triangle in delaunay.Cells)
                 {
                     var triangleCenterLineVertices = new List<Point>();
-                    var edge1Center = new Point(triangle.Vertices[0].Position.add(triangle.Vertices[1].Position)
-                        .Divide(2));
+                    var edge1Center = new Point((triangle.A + triangle.B) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge1Center);
                     }
 
-                    var edge2Center = new Point(triangle.Vertices[1].Position.add(triangle.Vertices[2].Position)
-                        .Divide(2));
+                    var edge2Center = new Point((triangle.B + triangle.C) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge2Center);
                     }
 
-                    var edge3Center = new Point(triangle.Vertices[2].Position.add(triangle.Vertices[0].Position)
-                        .Divide(2));
+                    var edge3Center = new Point((triangle.C + triangle.A) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge3Center);
@@ -71,9 +74,9 @@ namespace TVGL._2D
                             //of the short edge.
                             //If 
                             //Order the points, such that the larger edge is not included
-                            var d0 = (edge1Center - edge2Center).norm2();
-                            var d1 = (edge2Center - edge3Center).norm2();
-                            var d2 = (edge3Center - edge1Center).norm2();
+                            var d0 = (edge1Center - edge2Center).Length();
+                            var d1 = (edge2Center - edge3Center).Length();
+                            var d2 = (edge3Center - edge1Center).Length();
                             var ds = new List<double>() { d0, d1, d2 };
                             ds.Sort();
                             if (ds[0] - ds[1] > ds[1] - ds[2])
@@ -231,8 +234,8 @@ namespace TVGL._2D
                             var p2 = branch[branch.Count - 2];
                             for (var j = 0; j < branches.Count; j++)
                             {
-                                if ((branches[j][0] - p1).norm2().IsNegligible(0.0001) &&
-                                   (branches[j][1] - p2).norm2().IsNegligible(0.0001))
+                                if ((branches[j][0] - p1).Length().IsNegligible(0.0001) &&
+                                   (branches[j][1] - p2).Length().IsNegligible(0.0001))
                                 {
                                     branches.RemoveAt(j);
                                     break;

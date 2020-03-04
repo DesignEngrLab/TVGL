@@ -49,9 +49,7 @@ namespace TVGL
             Area = polygon.Area;
             Path = new List<Vector2>();
             foreach (var point in polygon.Path)
-            {
-                Path.Add(new Vector2(point));
-            }
+                Path.Add(point.Light);
 
             MaxX = polygon.MaxX;
             MaxY = polygon.MaxY;
@@ -111,7 +109,7 @@ namespace TVGL
             return Path.SelectMany(p => new[] { p.X, p.Y });
         }
 
-        internal static PolygonLight MakeFromBinaryString(Vector2 coordinates)
+        internal static PolygonLight MakeFromBinaryString(double[] coordinates)
         {
             var points = new List<Vector2>();
             for (int i = 0; i < coordinates.Length; i += 2)

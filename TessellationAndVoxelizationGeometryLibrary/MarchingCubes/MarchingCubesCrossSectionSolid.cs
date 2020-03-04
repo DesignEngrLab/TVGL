@@ -10,7 +10,7 @@ namespace TVGL
     {
         internal const double NumTrianglesOnSideFactor = 0.5;
         internal const double ToleranceForSnappingToLayers = 0.517;
-        private readonly Vector2[,] gridLayers;
+        private readonly double[][,] gridLayers;
         private readonly bool onLayers;
         private readonly int deltaLayer;
         private readonly double discretization;
@@ -36,7 +36,7 @@ namespace TVGL
             var length = solid.StepDistances[last] - solid.StepDistances[start];
             numLayers = last - start;
             var distanceBetweenLayers = length / numLayers;
-            var remainderError = (discretization/distanceBetweenLayers) % 1.0;
+            var remainderError = (discretization / distanceBetweenLayers) % 1.0;
             onLayers = (remainderError < ToleranceForSnappingToLayers || remainderError > (1 - ToleranceForSnappingToLayers));
             // if the distanceBetweenLayers is some integer multiple of the discretization (well, within the tolerance)
             // then simply use the layers - it's quicker and more accurate.  
@@ -45,7 +45,7 @@ namespace TVGL
             gridLayers = new double[numGridLayersToStore][,];
             if (onLayers)
             {
-                deltaLayer = (int)Math.Round(discretization/distanceBetweenLayers);
+                deltaLayer = (int)Math.Round(discretization / distanceBetweenLayers);
                 var offsetInt = (numLayers % deltaLayer) / 2;
                 start += offsetInt;
                 numLayers /= deltaLayer;
@@ -76,7 +76,7 @@ namespace TVGL
             gridLayers[0] = CreateDistanceGrid(solid.Layer2D[start]);
             for (var k = 1; k <= numLayers; k++)
             {
-                gridLayers[k % numGridLayersToStore] = CreateDistanceGrid(solid.Layer2D[start+k*deltaLayer]);
+                gridLayers[k % numGridLayersToStore] = CreateDistanceGrid(solid.Layer2D[start + k * deltaLayer]);
                 for (var i = 0; i < numGridX - 1; i++)
                     for (var j = 0; j < numGridY - 1; j++)
                         MakeFacesInCube(i, j, k);
@@ -141,22 +141,22 @@ namespace TVGL
                             var yp = _yMin + j * discretization;
                             //  var p = new PointLight(, );
                             //  var vTo = p - toPoint;
-                            var vTo = new[] { xp - toPoint.X, yp - toPoint.Y };
-                            var dot_to = segment.Dot(vTo, 2);
+                            var vTo = new Vector2(xp - toPoint.X, yp - toPoint.Y);
+                            var dot_to = segment.Dot(vTo);
                             if (dot_to > 0) continue;
                             //var vFrom = p - fromPoint;
-                            var vFrom = new[] { xp - fromPoint.X, yp - fromPoint.Y };
-                            var dot_from = segment.Dot(vFrom, 2);
+                            var vFrom = new Vector2(xp - fromPoint.X, yp - fromPoint.Y);
+                            var dot_from = segment.Dot(vFrom);
                             if (dot_from >= 0)
                             {
-                                var d = EqualityExtensions.crossProduct2(vFrom, segment.Normalize());
+                                var d = vFrom.Cross(segment.Normalize());
                                 if (Math.Abs(d) < Math.Abs(grid[i, j]))
                                     grid[i, j] = d;
                             }
                             else if (lastSegment.Dot(vFrom) > 0)
                             {
-                                var sign = Math.Sign(EqualityExtensions.crossProduct2(lastSegment, segment));
-                                var d = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
+                                var sign = Math.Sign(lastSegment.Cross(segment));
+                                var d = vFrom.Length();
                                 if (d < Math.Abs(grid[i, j]))
                                     grid[i, j] = sign * d;
                             }
@@ -178,7 +178,7 @@ namespace TVGL
             var grid = new double[numGridX, numGridY];
             for (int j = 0; j < numGridY; j++)
             {
-                Vector2 intersections = null;
+                double[] intersections = null;
                 if (j >= firstIntersectingIndex)
                 {
                     allIntersectionsEnumerator.MoveNext();
@@ -226,15 +226,15 @@ namespace TVGL
         private void ExpandHorizontally(Vector2 lastPoint, Vector2 fromPoint, Vector2 toPoint, double[,] grid, int iMin, int iMax, int jMin, int jMax)
         {
             var segment = toPoint - fromPoint;
-            if (segment[1].IsNegligible(1e-9)) return;
-            var segmentHalfWidth = 0.5 * segment[0];
-            var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
+            if (segment.Y.IsNegligible(1e-9)) return;
+            var segmentHalfWidth = 0.5 * segment.X;
+            var magnitude = segment.Length();
             var lastSegment = fromPoint - lastPoint;
-            var convexSign = Math.Sign(EqualityExtensions.crossProduct2(lastSegment, segment));
+            var convexSign = Math.Sign(lastSegment.Cross(segment));
             var xStart = fromPoint.X + segmentHalfWidth;
             var iStart = (int)((xStart - _xMin) * coordToGridFactor);
             var numStepsInHalfWidth = (int)(segmentHalfWidth * coordToGridFactor) + 1;
-            var d = new[] { segment[1] / magnitude, -segment[0] / magnitude }; //unit vector along the band
+            var d = new Vector2(segment.Y / magnitude, -segment.X / magnitude); //unit vector along the band
             var yDelta = (toPoint.Y > fromPoint.Y) ? -1 : +1;
             for (int xDelta = -1; xDelta <= 1; xDelta += 2)
             { //first backward, then forward
@@ -248,7 +248,7 @@ namespace TVGL
                     numSteps++;
                     if (i < iMin || i >= iMax) break;
                     var x = i * gridToCoordinateFactor + _xMin;
-                    var y = toPoint.Y + d[1] * (x - toPoint.X) / d[0];
+                    var y = toPoint.Y + d.Y * (x - toPoint.X) / d.X;
                     var j = (int)((y - _yMin) * coordToGridFactor);
                     while (true)
                     { //inner y loop
@@ -258,8 +258,8 @@ namespace TVGL
                         {
                             var p = new Vector2(x, j * gridToCoordinateFactor + _yMin);
                             var vFrom = p - fromPoint;
-                            var t = d.Dot(vFrom, 2);
-                            if (segment.Dot(vFrom, 2) >= 0) //then in the band of the extruded edge
+                            var t = d.Dot(vFrom);
+                            if (segment.Dot(vFrom) >= 0) //then in the band of the extruded edge
                             {
                                 if (Math.Sign(t) * t < Math.Sign(t) * grid[i, j])
                                 {
@@ -267,9 +267,9 @@ namespace TVGL
                                     atLeastOneSuccessfulChange = true;
                                 }
                             }
-                            else if (lastSegment.Dot(vFrom, 2) >= 0)
+                            else if (lastSegment.Dot(vFrom) >= 0)
                             {
-                                var distance = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
+                                var distance =vFrom.Length();
                                 if (distance < convexSign * grid[i, j])
                                 {
                                     grid[i, j] = convexSign * distance;
@@ -283,10 +283,10 @@ namespace TVGL
                     i += xDelta;
                 } while (atLeastOneSuccessfulChange || numSteps <= numStepsInHalfWidth);
             }
-            if (lastSegment[1] * segment[1] < 0) // then it is possible there are additional points around the corner that need 
+            if (lastSegment.Y * segment.X < 0) // then it is possible there are additional points around the corner that need 
                                                  //to be evaluated
             {
-                if (Math.Abs(lastSegment[0]) < Math.Abs(lastSegment[1]))
+                if (Math.Abs(lastSegment.X) < Math.Abs(lastSegment.Y))
                     ExpandLastCornerHorizontally(fromPoint, lastSegment, grid, iMin, iMax, jMin, jMax, convexSign);
                 else ExpandLastCornerVertically(fromPoint, lastSegment, grid, iMin, iMax, jMin, jMax, convexSign);
             }
@@ -295,15 +295,15 @@ namespace TVGL
         private void ExpandVertically(Vector2 lastPoint, Vector2 fromPoint, Vector2 toPoint, double[,] grid, int iMin, int iMax, int jMin, int jMax)
         {
             var segment = toPoint - fromPoint;
-            if (segment[0].IsNegligible(1e-9)) return;
-            var segmentHalfHeight = 0.5 * segment[1];
-            var magnitude = Math.Sqrt(segment[0] * segment[0] + segment[1] * segment[1]);
+            if (segment.X.IsNegligible(1e-9)) return;
+            var segmentHalfHeight = 0.5 * segment.Y;
+            var magnitude = Math.Sqrt(segment.X * segment.X + segment.Y * segment.Y);
             var lastSegment = fromPoint - lastPoint;
-            var convexSign = Math.Sign(EqualityExtensions.crossProduct2(lastSegment, segment));
+            var convexSign = Math.Sign(lastSegment.Cross(segment));
             var yStart = fromPoint.Y + segmentHalfHeight;
             var jStart = (int)((yStart - _yMin) * coordToGridFactor);
             var numStepsInHalfHeight = (int)(segmentHalfHeight * coordToGridFactor) + 1;
-            var d = new[] { segment[1] / magnitude, -segment[0] / magnitude }; //unit vector along the band
+            var d = new Vector2(segment.Y / magnitude, -segment.X / magnitude); //unit vector along the band
             var xDelta = (toPoint.X > fromPoint.X) ? -1 : +1;
             for (int yDelta = -1; yDelta <= 1; yDelta += 2)
             { //first backward, then forward
@@ -317,7 +317,7 @@ namespace TVGL
                     numSteps++;
                     if (j < jMin || j >= jMax) break;
                     var y = j * gridToCoordinateFactor + _yMin;
-                    var x = toPoint.X + d[0] * (y - toPoint.Y) / d[1];
+                    var x = toPoint.X + d.X * (y - toPoint.Y) / d.Y;
                     var i = (int)((x - _xMin) * coordToGridFactor);
                     while (true)
                     { //inner y loop
@@ -327,8 +327,8 @@ namespace TVGL
                         {
                             var p = new Vector2(i * gridToCoordinateFactor + _xMin, y);
                             var vFrom = p - fromPoint;
-                            var t = d.Dot(vFrom, 2);
-                            if (segment.Dot(vFrom, 2) >= 0) //then in the band of the extruded edge
+                            var t = d.Dot(vFrom);
+                            if (segment.Dot(vFrom) >= 0) //then in the band of the extruded edge
                             {
                                 if (Math.Sign(t) * t < Math.Sign(t) * grid[i, j])
                                 {
@@ -336,9 +336,9 @@ namespace TVGL
                                     atLeastOneSuccessfulChange = true;
                                 }
                             }
-                            else if (lastSegment.Dot(vFrom, 2) >= 0)
+                            else if (lastSegment.Dot(vFrom) >= 0)
                             {
-                                var distance = Math.Sqrt(vFrom[0] * vFrom[0] + vFrom[1] * vFrom[1]);
+                                var distance =vFrom.Length();
                                 if (distance < convexSign * grid[i, j])
                                 {
                                     grid[i, j] = convexSign * distance;
@@ -357,10 +357,10 @@ namespace TVGL
 
         private void ExpandLastCornerHorizontally(Vector2 fromPoint, Vector2 lastSegment, double[,] grid, int iMin, int iMax, int jMin, int jMax, int convexSign)
         {
-            var magnitude = Math.Sqrt(lastSegment[0] * lastSegment[0] + lastSegment[1] * lastSegment[1]);
-            var d = new[] { convexSign * lastSegment[1] / magnitude, -convexSign * lastSegment[0] / magnitude }; //unit vector along the band
-            var xDelta = Math.Sign(lastSegment[0]);
-            var yDelta = Math.Sign(lastSegment[1]);
+            var magnitude =lastSegment.Length();
+            var d = new[] { convexSign * lastSegment.Y / magnitude, -convexSign * lastSegment.X / magnitude }; //unit vector along the band
+            var xDelta = Math.Sign(lastSegment.X);
+            var yDelta = Math.Sign(lastSegment.Y);
             var i = (int)((fromPoint.X - _xMin) * coordToGridFactor);
             var numSteps = 0;
             bool atLeastOneSuccessfulChange;
@@ -398,10 +398,10 @@ namespace TVGL
 
         private void ExpandLastCornerVertically(Vector2 fromPoint, Vector2 lastSegment, double[,] grid, int iMin, int iMax, int jMin, int jMax, int convexSign)
         {
-            var magnitude = Math.Sqrt(lastSegment[0] * lastSegment[0] + lastSegment[1] * lastSegment[1]);
-            var d = new[] { convexSign * lastSegment[1] / magnitude, -convexSign * lastSegment[0] / magnitude }; //unit vector along the band
-            var xDelta = Math.Sign(lastSegment[0]);
-            var yDelta = Math.Sign(lastSegment[1]);
+            var magnitude = lastSegment.Length();
+            var d = new[] { convexSign * lastSegment.Y / magnitude, -convexSign * lastSegment.X / magnitude }; //unit vector along the band
+            var xDelta = Math.Sign(lastSegment.X);
+            var yDelta = Math.Sign(lastSegment.Y);
             var j = (int)((fromPoint.Y - _yMin) * coordToGridFactor);
             var numSteps = 0;
             bool atLeastOneSuccessfulChange;
