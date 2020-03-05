@@ -9,12 +9,6 @@ namespace TVGL._2D
 {
     public static class MedialAxis2D
     {
-      public  class Triangle<VertexType>
-        {
-           public VertexType A { get; }
-            public VertexType B { get; }
-            public VertexType C { get; }
-        }
         /// <summary>
         /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes. 
         /// Best way to show is using "Presenter.ShowAndHang(silhouette, medialAxis, "", Plot2DType.Line, false);"
@@ -38,24 +32,24 @@ namespace TVGL._2D
                 var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).Select(p => new PolygonLight(p)).First();
 
                 //Delaunay Medial Axis             
-                var delaunay = MIConvexHull.Triangulation.CreateDelaunay<Vector2,Triangle<Vector2>>(sampled);
+                var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
                 var lines = new List<List<Point>>();
                 foreach (var triangle in delaunay.Cells)
                 {
                     var triangleCenterLineVertices = new List<Point>();
-                    var edge1Center = new Point((triangle.A + triangle.B) * 0.5);
+                    var edge1Center = new Point((triangle.Vertices[0] + triangle.Vertices[1]) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge1Center);
                     }
 
-                    var edge2Center = new Point((triangle.B + triangle.C) * 0.5);
+                    var edge2Center = new Point((triangle.Vertices[1] + triangle.Vertices[2]) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge2Center);
                     }
 
-                    var edge3Center = new Point((triangle.C + triangle.A) * 0.5);
+                    var edge3Center = new Point((triangle.Vertices[2] + triangle.Vertices[0]) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge3Center);
@@ -139,22 +133,22 @@ namespace TVGL._2D
                     {
                         var sameLineCount = 0;
                         var l2 = lines[k];
-                        if (MiscFunctions.DistancePointToPoint(l1[0], l2[0]).IsNegligible(mergerTolerance))
+                        if (l1[0].Light.Distance(l2[0].Light).IsNegligible(mergerTolerance))
                         {
                             l2[0] = l1[0];
                             sameLineCount++;
                         }
-                        else if (MiscFunctions.DistancePointToPoint(l1[0], l2[1]).IsNegligible(mergerTolerance))
+                        else if (l1[0].Light.Distance(l2[1].Light).IsNegligible(mergerTolerance))
                         {
                             l2[1] = l1[0];
                             sameLineCount++;
                         }
-                        if (MiscFunctions.DistancePointToPoint(l1[1], l2[0]).IsNegligible(mergerTolerance))
+                        if (l1[1].Light.Distance(l2[0].Light).IsNegligible(mergerTolerance))
                         {
                             l2[0] = l1[1];
                             sameLineCount++;
                         }
-                        else if (MiscFunctions.DistancePointToPoint(l1[1], l2[1]).IsNegligible(mergerTolerance))
+                        else if (l1[1].Light.Distance(l2[1].Light).IsNegligible(mergerTolerance))
                         {
                             l2[1] = l1[1];
                             sameLineCount++;

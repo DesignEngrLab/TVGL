@@ -106,8 +106,8 @@ namespace TVGL
             if (ts.Errors.OverusedEdges != null)
             {
                 Message.output("==> " + ts.Errors.OverusedEdges.Count + " overused edges.");
-                Message.output("    The number of faces per overused edge: " +
-                               ts.Errors.OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
+                Message.output("    The number of faces per overused edge: " + string.Join(',',
+                               ts.Errors.OverusedEdges.Select(p => p.Item2.Count)));
             }
             if (ts.Errors.SingledSidedEdges != null) Message.output("==> " + ts.Errors.SingledSidedEdges.Count + " single-sided edges.");
             if (ts.Errors.DegenerateFaces != null) Message.output("==> " + ts.Errors.DegenerateFaces.Count + " degenerate faces in file.");
@@ -417,7 +417,7 @@ namespace TVGL
         private static bool TurnModelInsideOut(TessellatedSolid ts)
         {
             ts.Volume = -1 * ts.Volume;
-            ts._inertiaTensor = null;
+            ts._inertiaTensor = Matrix3x3.Null;
             foreach (var face in ts.Faces)
             {
                 face.Normal = face.Normal * -1;

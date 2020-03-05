@@ -59,7 +59,7 @@ namespace TVGL
                 foreach (var triangle in triangulatedList)
                 {
                     var newFace = new PolygonalFace(triangle, flat.Normal);
-                    if (newFace.Area.IsNegligible() && newFace.Normal.Any(double.IsNaN)) continue;
+                    if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;
                     newFaces.Add(newFace);
                     for (var j = 0; j < 3; j++)
                     {
@@ -98,13 +98,13 @@ namespace TVGL
         }
 
 
-        internal static List<Vertex> OrganizeIntoLoop(List<Edge> singleSidedEdges, Vector2 normal)
+        internal static List<Vertex> OrganizeIntoLoop(List<Edge> singleSidedEdges, Vector3 normal)
         {
             var edgesHashSet = new HashSet<Edge>(singleSidedEdges);
             var loop = new List<Vertex>();
             var currentEdge = edgesHashSet.First();
             Vertex startVertex, currentVertex;
-            if (normal.Dot(currentEdge.OwnedFace.Normal,3).IsPracticallySame(1))
+            if (normal.Dot(currentEdge.OwnedFace.Normal).IsPracticallySame(1))
             {
                 startVertex = currentEdge.From;
                 currentVertex = currentEdge.To;
@@ -133,7 +133,7 @@ namespace TVGL
         }
 
 
-        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector2 refEdge, Vector2 normal)
+        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal)
         {
             var unitRefEdge = refEdge.Normalize();
             var min = 2.0;

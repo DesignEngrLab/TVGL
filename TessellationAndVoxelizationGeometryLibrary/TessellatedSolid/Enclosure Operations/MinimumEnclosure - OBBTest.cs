@@ -49,14 +49,6 @@ namespace TVGL
             //Message.output("Time Elapsed for PCA Approach = " ,4);
             //Message.output("Volume for PCA Approach= " + boundingBox1.Volume,4);
             now = DateTime.Now;
-            Message.output("Beginning OBB Test", 2);
-
-            var boundingBox12 = Find_via_PCA_ApproachNR(vertices);
-            times.Add((DateTime.Now - now).TotalMilliseconds);
-            volumes.Add(boundingBox12.Volume);
-            //Message.output("Time Elapsed for PCA Approach = " ,4 );
-            //Message.output("Volume for PCA Approach= " + boundingBox1.Volume);
-            now = DateTime.Now;
             var boundingBox2 = Find_via_ChanTan_AABB_Approach(vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox2.Volume);
@@ -77,7 +69,7 @@ namespace TVGL
         {
             return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox
             {
-                Directions = new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ }
+                Directions = new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
                 Volume = double.PositiveInfinity
             });
         }
@@ -144,8 +136,8 @@ namespace TVGL
             public List<GaussSphereArc> OrthGaussSphereArcs { get; private set; }
             public Vertex BackVertex { get; set; }
             public Edge BackEdge { get; set; }
-            public Vector2 PosYDir { get; set; }
-            public Vector2 RotatorVector { get; private set; }
+            public Vector3 PosYDir { get; set; }
+            public Vector3 RotatorVector { get; private set; }
             public Edge RotatorEdge { get; private set; }
 
             public BoundingBoxData Copy()
@@ -157,18 +149,18 @@ namespace TVGL
                     BackEdge = BackEdge,
                     Box = new BoundingBox
                     {
-                        CornerVertices = Box.CornerVertices != null ? (Vertex[]) Box.CornerVertices.Clone() : null,
+                        CornerVertices = Box.CornerVertices != null ? (Vertex[])Box.CornerVertices.Clone() : null,
                         Center = Box.Center != null ? new Vertex(Box.Center.Coordinates) : null,
-                        Dimensions = Box.Dimensions != null ? (Vector3) Box.Dimensions.Clone() : Vector3.Null,
-                        Directions = Box.Directions != null ? (Vector3[]) Box.Directions.Clone() : Vector3.Null,
-                        PointsOnFaces = Box.PointsOnFaces != null ? (List<Vertex>[]) Box.PointsOnFaces.Clone() : null,
+                        Dimensions = Box.Dimensions != null ? Box.Dimensions : Vector3.Null,
+                        Directions = Box.Directions != null ? (Vector3[])Box.Directions.Clone() : null,
+                        PointsOnFaces = Box.PointsOnFaces != null ? (List<Vertex>[])Box.PointsOnFaces.Clone() : null,
                         Volume = Box.Volume
                     },
-                    Direction = (Vector2) Direction.Clone(),
+                    Direction = Direction,
                     OrthGaussSphereArcs = new List<GaussSphereArc>(OrthGaussSphereArcs),
                     OrthVertices = new List<Vertex>(OrthVertices),
-                    PosYDir = (Vector2) PosYDir.Clone(),
-                    RotatorVector = (Vector2) RotatorVector.Clone(),
+                    PosYDir = PosYDir,
+                    RotatorVector = RotatorVector,
                     RotatorEdge = RotatorEdge
                 };
             }
@@ -379,14 +371,15 @@ namespace TVGL
         }
 
 
-        private static Vector2 UpdateDirection(Vector2 startDir, Vector2 rotator, Vector2 posYDir, double angle)
+        private static Vector3 UpdateDirection(Vector3 startDir, Vector3 rotator, Vector3 posYDir, double angle)
         {
-            var a = new double[3, 3];
-            a.SetRow(0, rotator);
-            a.SetRow(1, startDir);
-            a.SetRow(2, posYDir);
-            var b = new[] {0.0, Math.Cos(angle), Math.Cos(angle + Math.PI/2)};
-            return EqualityExtensions.solve(a, b);
+            var a = new Matrix3x3(rotator.X, rotator.Y, rotator.Z,
+                startDir.X, startDir.Y, startDir.Z,
+                posYDir.X, posYDir.Y, posYDir.Z);
+            var b = new Vector3(0.0, Math.Cos(angle), Math.Cos(angle + Math.PI/2));
+            if (Matrix3x3.Invert(a, out var aInv))
+                return b.Transform(aInv);
+            else throw new Exception("Singular Matrix prevents updating direction.");
         }
 
         #endregion

@@ -96,8 +96,9 @@ namespace TVGL
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
             var backTransform = new Matrix4x4 { };
-            var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
-            List<Vector2[]> points2D;
+            var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop.ToArray(), 
+                extrudeDirection, out backTransform)).ToList();
+            List<Point[]> points2D;
             List<Vertex[]> triangles;
             try
             {
@@ -113,11 +114,11 @@ namespace TVGL
                 //This also means we need to recreate cleanLoops
                 //Also, give the vertices indices.
                 cleanLoops = new List<List<Vertex>>();
-                points2D = new List<Vector2[]>();
+                points2D = new List<Point[]>();
                 var j = 0;
                 foreach (var path in paths)
                 {
-                    var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
+                    var pathAsPoints = path.Select(p => new Point(p.X, p.Y)).ToArray();
                     var area = new PolygonLight(path).Area;
                     points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
@@ -164,11 +165,11 @@ namespace TVGL
                     //This also means we need to recreate cleanLoops
                     //Also, give the vertices indices.
                     cleanLoops = new List<List<Vertex>>();
-                    points2D = new List<Vector2[]>();
+                    points2D = new List<Point[]>();
                     var j = 0;
                     foreach (var path in paths)
                     {
-                        var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
+                        var pathAsPoints = path.Select(p => new Point(p.X, p.Y)).ToArray();
                         points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
                         foreach (var point in pathAsPoints)

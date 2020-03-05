@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Excel = Microsoft.Office.Interop.Excel;
+//using Excel = Microsoft.Office.Interop.Excel;
 
 namespace TVGLTest
 {
@@ -15,7 +15,7 @@ namespace TVGLTest
         /// <param name="xAxis"></param>
         /// <param name="yAxis"></param>
         /// <param name="headers"></param>
-        public static void CreateNewGraph(IList<List<double[]>> values, string graphTitle = "", 
+        public static void CreateNewGraph(IList<List<double[]>> values, string graphTitle = "",
              string xAxis = "", string yAxis = "", IList<string> headers = null)
         {
             //Create a new excel workbook and sheet
@@ -24,7 +24,7 @@ namespace TVGLTest
             Excel.Worksheet xlWorksheet;
             object misValue = System.Reflection.Missing.Value;
 
-            xlApp = new Excel.Application(); 
+            xlApp = new Excel.Application();
             xlWorkbook = xlApp.Workbooks.Add(misValue);
             xlWorksheet = xlWorkbook.Worksheets.get_Item(1);
 
@@ -34,7 +34,7 @@ namespace TVGLTest
             {
                 for (var i = 0; i < headers.Count; i++)
                 {
-                    xlWorksheet.Cells[2, i+1].Value = headers[i];
+                    xlWorksheet.Cells[2, i + 1].Value = headers[i];
                 }
             }
 
@@ -47,21 +47,21 @@ namespace TVGLTest
                 {
                     for (var k = 0; k < values[i][j].Count(); k++) //Column offset for items in double[]
                     {
-                      //  var row = i +j+2; //+1 for excel, +1 for headers
-                        var column =  k + 1;
+                        //  var row = i +j+2; //+1 for excel, +1 for headers
+                        var column = k + 1;
                         xlWorksheet.Cells[row, column] = values[i][j][k];
-                    }  
-                row++;
+                    }
+                    row++;
                 }
             }
-            
+
             //Create Chart
             var xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
             var myChart = xlCharts.Add(200, 30, 400, 300);
             var chart = myChart.Chart;
             chart.ChartType = Excel.XlChartType.xlXYScatterLines;
             var seriesCollection = (Excel.SeriesCollection)chart.SeriesCollection();
-            
+
             for (var i = 0; i < values.Count; i++) //For each series
             {
                 var xValues = new double[values[i].Count];
@@ -75,7 +75,7 @@ namespace TVGLTest
                 series.Values = yValues;
                 series.XValues = xValues;
             }
-            
+
             chart.ChartWizard(
                 Title: graphTitle,
                 CategoryTitle: xAxis,
@@ -123,7 +123,7 @@ namespace TVGLTest
 
                 //Add first series
                 var xValues = new double[dataSet1[i].Count];
-                var yValues= new double[dataSet1[i].Count];
+                var yValues = new double[dataSet1[i].Count];
                 for (var j = 0; j < dataSet1[i].Count; j++) //For each point in series
                 {
                     xValues[j] = dataSet1[i][j][0];
@@ -189,7 +189,7 @@ namespace TVGLTest
                     xlWorksheet.Cells[1, i].Value = headers[i];
                 }
             }
-            
+
             //Create Chart
             Excel.ChartObjects xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
 
@@ -205,20 +205,20 @@ namespace TVGLTest
 
                 //Create a new chart and offset from previous                
                 var offset = 300 * (i);
-                Excel.ChartObject myChart = xlCharts.Add(200, 30 + offset, 400, 300 );
+                Excel.ChartObject myChart = xlCharts.Add(200, 30 + offset, 400, 300);
                 Excel.Chart chart = myChart.Chart;
                 chart.ChartType = Excel.XlChartType.xlXYScatterLines;
                 Excel.SeriesCollection seriesCollection = (Excel.SeriesCollection)chart.SeriesCollection();
                 Excel.Series series = seriesCollection.NewSeries();
                 series.Values = yValues;
                 series.XValues = xValues;
-                
+
                 var title = seriesTitle + " " + i;
                 chart.ChartWizard(
                     Title: title,
                     CategoryTitle: xAxis,
                     ValueTitle: yAxis);
-                
+
             }
 
             xlApp.Visible = true;

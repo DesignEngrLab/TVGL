@@ -84,7 +84,8 @@ namespace TVGL
         /// </exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vertex[]>> Run2D(IList<Vector2[]> points2D, out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
+        public static List<List<Vertex[]>> Run2D(IList<Point[]> points2D, out List<List<int>> groupsOfLoops,
+            ref bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -141,16 +142,16 @@ namespace TVGL
                     var values = new List<double>() {0.82348, 0.13905, 0.78932, 0.37510 };
                     var theta = values[attempts - 1];
                     var points2Dtemp = points2D;
-                    points2D = new List<Vector2[]>();
+                    points2D = new List<Point[]>();
                     foreach (var loop in points2Dtemp)
                     {
-                        var newLoop = new List<Vector2>();
+                        var newLoop = new List<Point>();
                         var pHighest = double.NegativeInfinity;
                         foreach (var point in loop)
                         {
                             var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
                             var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
-                            var newPoint = new Vector2(pointX, pointY) ;
+                            var newPoint = new Point(pointX, pointY) ;
                             //var newPoint = new Vector2(point.References, pointX, pointY) ;
                             //todo Point References
                             newLoop.Add(newPoint);
@@ -360,7 +361,7 @@ namespace TVGL
                                 if (positiveLoop1 == positiveLoop2) continue;
                                 //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
                                 //Note: If this occurs, any loops inside loop 1 will also be inside loop 2, so no information is lost.
-                                if (!MiscFunctions.IsPointInsidePolygon(points2D[positiveLoop2.First().LoopID].ToList(),
+                                if (!MiscFunctions.IsPointInsidePolygon(points2D[positiveLoop2.First().LoopID].Select(p => p.Light).ToList(),
                                     positiveLoop1.First().Point.Light)) continue;
                                 isInside = true;
                                 break;
@@ -851,22 +852,6 @@ namespace TVGL
             return triangleFaceList;
         }
 
-        ///// <summary>
-        ///// Determines the order of a set of loops and their positive or negative directionality.
-        ///// If loop directionality is not know, make a array of booleans for isPositive and set
-        ///// isDirectionalityKnown to false.
-        ///// </summary>
-        ///// <param name="loops"></param>
-        ///// <param name="normal"></param>
-        ///// <param name="isPositive"></param>
-        ///// <param name="isDirectionalityKnown"></param>
-        ///// <returns></returns>
-        //public static List<List<List<Point>>> OrderLoops(IEnumerable<IEnumerable<Vertex>> loops, Vector2 normal, ref bool[] isPositive, bool isDirectionalityKnown = false)
-        //{
-        //    //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
-        //    var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
-        //    return OrderLoops2D(points2D, ref isPositive, isDirectionalityKnown);
-        //}
 
         /// <summary>
         /// Determines the order of a set of loops and their positive or negative directionality.

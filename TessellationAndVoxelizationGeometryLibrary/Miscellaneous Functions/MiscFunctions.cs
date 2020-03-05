@@ -126,43 +126,43 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Returns a list of sorted PointLights along a set direction. 
+        ///     Returns a list of sorted Vector2s along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
-        /// <param name="PointLights"></param>
-        /// <param name="sortedPointLights"></param>
-        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> PointLights,
-               out List<(Vector2, double)> sortedPointLights, int numDecimals)
+        /// <param name="Vector2s"></param>
+        /// <param name="sortedVector2s"></param>
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> Vector2s,
+               out List<(Vector2, double)> sortedVector2s, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
-            sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).ToList();
+            var Vector2Distances = GetVector2Distances(directionX, directionY, Vector2s, numDecimals);
+            sortedVector2s = Vector2Distances.OrderBy(Vector2 => Vector2.Item2).ToList();
         }
 
         /// <summary>
-        ///     Returns a list of sorted PointLights along a set direction. 
+        ///     Returns a list of sorted Vector2s along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
-        /// <param name="PointLights"></param>
-        /// <param name="sortedPointLights"></param>
-        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> PointLights,
-               out List<Vector2> sortedPointLights, int numDecimals)
+        /// <param name="Vector2s"></param>
+        /// <param name="sortedVector2s"></param>
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> Vector2s,
+               out List<Vector2> sortedVector2s, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
-            sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).Select(p => p.Item1).ToList();
+            var Vector2Distances = GetVector2Distances(directionX, directionY, Vector2s, numDecimals);
+            sortedVector2s = Vector2Distances.OrderBy(Vector2 => Vector2.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<(Vector2, double)> GetPointLightDistances(double directionX, double directionY,
-            IEnumerable<Vector2> PointLights, int numDecimals)
+        private static IEnumerable<(Vector2, double)> GetVector2Distances(double directionX, double directionY,
+            IEnumerable<Vector2> Vector2s, int numDecimals)
         {
-            var PointLightDistances = new List<(Vector2, double)>(PointLights.Count());
+            var Vector2Distances = new List<(Vector2, double)>(Vector2s.Count());
             //Accuracy to the 15th decimal place
-            foreach (var PointLight in PointLights)
+            foreach (var Vector2 in Vector2s)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(directionX * PointLight.X + directionY * PointLight.Y, numDecimals); //2D dot product
-                PointLightDistances.Add((PointLight, d));
+                var d = Math.Round(directionX * Vector2.X + directionY * Vector2.Y, numDecimals); //2D dot product
+                Vector2Distances.Add((Vector2, d));
             }
-            return PointLightDistances;
+            return Vector2Distances;
         }
 
 
@@ -625,65 +625,6 @@ namespace TVGL
         #endregion
 
         #region Flatten to 2D
-
-        /// <summary>
-        ///     Returns an array of points projected along the given direction onto an x-y plane.
-        ///     The point z-values will be zero. This does not destructively alter the vertices. 
-        ///     Additionally, this function will keep the loops in their original positive/negative
-        ///     orientation.
-        /// </summary>
-        /// <param name="loop"></param>
-        /// <param name="direction"></param>
-        /// <param name="backTransform"></param>
-        /// <param name="tolerance"></param>
-        /// 
-        /// <returns></returns>
-        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
-        {
-            var enumerable = loop as IList<Vertex> ?? loop.ToList();
-            var area1 = AreaOf3DPolygon(enumerable, direction);
-            var path = Get2DProjectionPoints(enumerable, direction, out backTransform).ToList();
-            var area2 = AreaOfPolygon(path);
-            var dif = area1 - area2;
-            var successful = false;
-            var attempts = 0;
-            //Try up to three times if not successful, expanding the tolerance each time
-            while (!successful && attempts < 4)
-            {
-                //For every attempt greater than zero, expand the tolerance by taking its square root
-                if (attempts > 0) tolerance = Math.Sqrt(tolerance);
-
-                try
-                {
-                    if (dif.IsNegligible(tolerance))
-                    {
-                        successful = true;
-                    }
-                    else
-                    {
-                        if ((-area1).IsPracticallySame(area2, tolerance))
-                        {
-                            dif = area1 + area2;
-                            path.Reverse();
-                            successful = true;
-                        }
-                        else
-                        {
-                            throw new Exception("area mismatch during 2D projection");
-                        }
-                    }
-                }
-                catch
-                {
-                    attempts++;
-                }
-            }
-            if (attempts > 0 && attempts < 4) Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
-            else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
-
-            return path;
-        }
-
 
 
         /// <summary>
@@ -1159,8 +1100,8 @@ namespace TVGL
         {
             var axis = edge1.Vector.Cross(edge2.Vector);
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1], axis),
-                InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1], axis));
+            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]),
+                InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]));
         }
 
         /// <summary>
@@ -1221,7 +1162,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(Vector2 edge1, Vector2 edge2, Vector3 axis)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
             return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
@@ -1234,7 +1175,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 edge1, Vector2 edge2, Vector3 axis)
+        internal static double InteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
             return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
@@ -1843,19 +1784,9 @@ namespace TVGL
             t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
                     / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
             pointOnLine = new Point(lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t);
-            return DistancePointToPoint(qPoint, pointOnLine);
+            return qPoint.Light.Distance(pointOnLine.Light);
         }
 
-        /// <summary>
-        ///     Distances the point to point.
-        /// </summary>
-        /// <param name="p1">point, p1.</param>
-        /// <param name="p2">point, p2.</param>
-        /// <returns>the distance between the two 3D points.</returns>
-        public static double DistancePointToPoint(Point p1, Point p2)
-        {
-            return p1.Light.Distance(p2.Light);
-        }
 
         /// <summary>
         ///     Distances the point to point.
@@ -1998,7 +1929,7 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 PointLightOnZPlaneFromIntersectingLine(double distOfPlane, Vertex point1,
+        public static Vector2 Vector2OnZPlaneFromIntersectingLine(double distOfPlane, Vertex point1,
             Vertex point2)
         {
             var toFactor = (distOfPlane - point1.Z) / (point2.Z - point1.Z);
@@ -2038,7 +1969,7 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Point PointOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+            Vector2OnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
                 line.ToPoint.X, line.ToPoint.Y, out var x, out var y);
             return new Point(x, y);
         }
@@ -2052,14 +1983,14 @@ namespace TVGL
         /// <param name="line"></param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 PointLightOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
+        public static Vector2 Vector2OnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+            Vector2OnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
                 line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
             return new Vector2(x, y);
         }
 
-        public static void PointLightOnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane,
+        public static void Vector2OnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane,
             double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
         {
             var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product

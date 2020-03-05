@@ -47,7 +47,6 @@
     <Compile Remove="Numerics\Vector4_Intrinsics.cs" />
     <Compile Remove="Numerics\VectorMath.cs" />
     <Compile Remove="Numerics\Vector_Operations.cs" />
-    <Compile Remove="TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
   </ItemGroup>
 
 

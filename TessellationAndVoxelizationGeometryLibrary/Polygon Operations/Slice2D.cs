@@ -284,7 +284,7 @@ namespace TVGL._2D
         public static Dictionary<double, List<double>> IntersectionPointsAtUniformDistancesAlongX(
             IEnumerable<PolygonLight> shape, double lowerBound, double distanceBetweenLines, int numLines)
         {
-            //var shapeForDebugging = new List<List<PointLight>>();
+            //var shapeForDebugging = new List<List<Vector2>>();
             //foreach (var polygon in shape)
             //{
             //    shapeForDebugging.Add(polygon.Path);//PolygonOperations.SimplifyFuzzy(

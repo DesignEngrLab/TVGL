@@ -387,7 +387,7 @@ namespace TVGL
         /// <param name="fromPositiveSide"></param>
         /// <param name="straddleEdgeOnSideVertices"></param>
         /// <param name="isClosed">is closed.</param>
-        internal Loop(IList<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, Vector2 normal, 
+        internal Loop(IList<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, Vector3 normal, 
             IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool fromPositiveSide,
             IEnumerable<Vertex> straddleEdgeOnSideVertices, bool isClosed = true)
         {

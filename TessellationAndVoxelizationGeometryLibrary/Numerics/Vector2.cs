@@ -14,7 +14,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
     // COMMENTEDCHANGE [Intrinsic]
-    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D
+    public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D, IVertex
     {
         #region Public Static Properties
         /// <summary>
@@ -72,6 +72,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         double IVertex2D.Y => Y;
 
+        public double[] Position => new[] { X, Y };
 
         public double this[int i]
         {

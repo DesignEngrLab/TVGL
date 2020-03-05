@@ -14,7 +14,7 @@ namespace TVGL
     public readonly struct PolygonLight
     {
         /// <summary>
-        /// Gets the PointLights that make up the polygon
+        /// Gets the Vector2s that make up the polygon
         /// </summary>
         [JsonIgnore]
         public readonly List<Vector2> Path;

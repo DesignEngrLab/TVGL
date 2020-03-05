@@ -32,7 +32,7 @@ namespace TVGL
         /// </summary>
         public static BoundingCircle MinimumCircle(IList<Point> points)
         {
-            return MinimumCircle(points.Select(p => new Vector2(p)).ToList());
+            return MinimumCircle(points.Select(p => p.Light).ToList());
         }
 
         /// <summary>
@@ -55,13 +55,13 @@ namespace TVGL
 
             ////Randomize the list of points
             //var r = new Random();
-            //var randomPoints = new List<PointLight>(points.OrderBy(p => r.Next()));
+            //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
 
             //if (randomPoints.Count < 2) return new BoundingCircle(0.0, points[0]);
             ////Get any two points in the list points.
             //var point1 = randomPoints[0];
             //var point2 = randomPoints[1];
-            //var previousPoints = new HashSet<PointLight>();
+            //var previousPoints = new HashSet<Vector2>();
             //var circle = new InternalCircle(point1, point2);
             //var stallCounter = 0;
             //var i = 0;
@@ -109,7 +109,7 @@ namespace TVGL
 
             #region Algorithm 2: Furthest Point
             //var r = new Random();
-            //var randomPoints = new List<PointLight>(points.OrderBy(p => r.Next()));
+            //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
 
             //Algorithm 2
             //I tried using the extremes (X, Y, and also tried Sum, Diff) to do a first pass at the circle
@@ -359,7 +359,7 @@ namespace TVGL
             //   The shortest distance determines the diameter of the inner circle.
             foreach (var point in polygon.Path)
             {
-                var d = MiscFunctions.DistancePointToPoint(point, centerPoint);
+                var d = point.Light.Distance(centerPoint.Light);
                 if (d < shortestDistance) shortestDistance = d;
             }
 
@@ -397,14 +397,14 @@ namespace TVGL
         public static BoundingBox MinimumBoundingCylinder(IList<Vertex> convexHullVertices)
         {
             // here we create 13 directions. just like for bounding box
-            var directions = new List<Vector2>();
+            var directions = new List<Vector3>();
             for (var i = -1; i <= 1; i++)
                 for (var j = -1; j <= 1; j++)
-                    directions.Add(new[] {1.0, i, j});
-            directions.Add(new[] {0.0, 0, 1});
-            directions.Add(new[] {0.0, 1, 0});
-            directions.Add(new[] {0.0, 1, 1});
-            directions.Add(new[] {0.0, -1, 1});
+                    directions.Add(new Vector3(1, i, j));
+            directions.Add(new Vector3(0, 0, 1));
+            directions.Add(new Vector3(0, 1, 0));
+            directions.Add(new Vector3(0, 1, 1));
+            directions.Add(new Vector3(0, -1, 1));
 
             var boxes = directions.Select(v => new BoundingBox
             {

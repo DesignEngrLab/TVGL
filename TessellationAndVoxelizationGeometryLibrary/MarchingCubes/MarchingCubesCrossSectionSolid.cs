@@ -139,7 +139,7 @@ namespace TVGL
                         {
                             var xp = _xMin + i * discretization;
                             var yp = _yMin + j * discretization;
-                            //  var p = new PointLight(, );
+                            //  var p = new Vector2(, );
                             //  var vTo = p - toPoint;
                             var vTo = new Vector2(xp - toPoint.X, yp - toPoint.Y);
                             var dot_to = segment.Dot(vTo);
