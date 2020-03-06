@@ -53,7 +53,7 @@ namespace TVGL
         /// <returns></returns>
         public static double CalculateVolume(IList<PolygonalFace> faces, out Vector3 center)
         {
-            double oldVolume;
+            double oldVolume = 0.0;
             var volume = 0.0;
             var iterations = 0;
             var oldCenter1 = new Vector3();
@@ -67,7 +67,7 @@ namespace TVGL
                 foreach (var face in faces)
                 {
                     if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Coordinates.Subtract(oldCenter1))) / 3;
+                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Coordinates - oldCenter1)) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
                     // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position.Subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
@@ -82,7 +82,7 @@ namespace TVGL
                 if (iterations > 10 || volume < 0) center = 0.5 * (oldCenter1 + oldCenter2);
                 else center = center.Divide(volume);
                 iterations++;
-            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);
+            } while (2 * Math.Abs(oldVolume - volume) / (oldVolume + volume) > Constants.BaseTolerance && iterations <= 20);
             return volume;
         }
         #endregion

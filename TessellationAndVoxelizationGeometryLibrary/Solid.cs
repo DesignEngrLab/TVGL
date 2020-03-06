@@ -50,7 +50,7 @@ namespace TVGL
         ///     Gets the bounds.
         /// </summary>
         /// <value>The bounds.</value>
-        public Vector3[] Bounds { get; set; } = new Vector3[2];
+        public Vector3[] Bounds { get; set; }
 
         public double XMin { get => Bounds[0].X;  }
         public double XMax { get => Bounds[1].X; }

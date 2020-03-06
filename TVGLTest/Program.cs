@@ -102,33 +102,43 @@ namespace TVGLPresenterDX
             var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 12; i < fileNames.Count()-30; i++)
+            for (var i = 17; i < fileNames.Count() - 30; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 var solid = (TessellatedSolid)IO.Open(filename);
-                if (solid.Errors != null) continue;
+                if (solid.Errors != null)
+                {
+                    Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
+                    continue;
+                }
+                solid.SolidColor = new Color(100, 200, 100, 50);
                 //Presenter.ShowAndHang(solid);
-                var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive,150);
+                var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 150);
                 //Presenter.ShowAndHang(xs);
                 var ts2 = xs.ConvertToTessellatedSolidMarchingCubes(10000);
-                Console.WriteLine("number of faces = {0}", ts2.NumberOfFaces);
-                //Presenter.ShowAndHang(ts2);
+                ts2.SolidColor = new Color(100, 50, 100, 250);
+                var volError = 2 * Math.Abs(solid.Volume - ts2.Volume) / (solid.Volume + ts2.Volume);
+                Console.WriteLine("number of faces = {0}, vol error = {1}", ts2.NumberOfFaces, volError);
+                if (volError > 2)
+                {
+                Console.WriteLine("orig vol= {0}, cs2ts vol = {1}", solid.Volume, ts2.Volume);
+                    Presenter.ShowAndHang(solid, ts2); }
                 //if (!File.Exists(filename)) continue;
                 //using (fileStream = File.OpenRead(filename))
                 //    IO.Open(fileStream, filename);
                 //IO.Save(xs, solid.FileName+".XS", FileType.TVGL);
                 //Color color = new Color(KnownColors.AliceBlue);
                 //var xs2 = (CrossSectionSolid)IO.Open(solid.FileName + ".tvgl");
-               // Presenter.ShowAndHang(xs2);
+                // Presenter.ShowAndHang(xs2);
                 //ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
                 //{
                 //    Af = 0.25f
                 //};
                 //Presenter.ShowAndHang(solid);
-               // TestCrossSectionSolidToTessellated(ts);
+                // TestCrossSectionSolidToTessellated(ts);
                 //TestSlice(ts);
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -170,7 +180,7 @@ namespace TVGLPresenterDX
         public static void TestCrossSectionSolidToTessellated(TessellatedSolid ts)
         {
             //Presenter.ShowAndHang(new ImplicitSolid());
-            var xs = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.ZPositive,10);
+            var xs = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.ZPositive, 10);
             //Presenter.ShowAndHang(ts);
             Presenter.ShowAndHang(xs);
             stopwatch.Restart();
@@ -196,7 +206,7 @@ namespace TVGLPresenterDX
             Presenter.ShowAndHang(silhouette);
         }
 
-   
+
 
         private static void TestSimplify(TessellatedSolid ts)
         {

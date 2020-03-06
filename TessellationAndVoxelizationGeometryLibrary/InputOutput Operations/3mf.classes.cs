@@ -101,9 +101,10 @@ namespace TVGL.IOFunctions.threemfclasses
             if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return new Matrix4x4();
             if (transformArray.Length == 3)
                 return Matrix4x4.CreateTranslation(transformArray[0], transformArray[1], transformArray[2]);
-            return new Matrix4x4(transformArray[0], transformArray[3], transformArray[6], transformArray[9],
-                transformArray[1], transformArray[4], transformArray[7], transformArray[10],
-                transformArray[2], transformArray[5], transformArray[8], transformArray[11]
+            return new Matrix4x4(transformArray[0], transformArray[1], transformArray[2], 
+                transformArray[3], transformArray[4], transformArray[5], 
+                transformArray[6], transformArray[7], transformArray[8],
+                transformArray[9], transformArray[10], transformArray[11]
                 );
         }
     }

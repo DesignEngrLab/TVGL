@@ -418,12 +418,6 @@ namespace TVGL
                     // if you made it passed these to "continue" conditions, then this is a valid new face
                     faceChecksums.Add(checksum);
                 }
-                var faceVertices =
-                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToList();
-                //We do not trust .STL file normals to be accurate enough. Recalculate.
-                var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
-                if (reverseVertexOrder) faceVertices.Reverse();
-
                 var color = SolidColor;
                 if (colors != null)
                 {
@@ -431,10 +425,14 @@ namespace TVGL
                     if (colors[j] != null) color = colors[j];
                     if (!SolidColor.Equals(color)) HasUniformColor = false;
                 }
+                var faceVertices =
+                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToList();
+
                 if (faceVertices.Count == 3)
-                    listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices) { Color = color });
+                    listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices) { Color = color });
                 else
                 {
+                    var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
                     List<List<Vertex[]>> triangulatedListofLists =
                         TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
@@ -1084,7 +1082,7 @@ namespace TVGL
                 if (yMax < v.Coordinates.Y) yMax = v.Coordinates.Y;
                 if (zMax < v.Coordinates.Z) zMax = v.Coordinates.Z;
             }
-            Bounds = new[] { new Vector3(xMin, YMin, zMin), new Vector3(xMax, yMax, zMin) };
+            Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
 
 
             //Update the faces
