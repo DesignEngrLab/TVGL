@@ -71,7 +71,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             get
             {
                 return new Matrix3x3(
-                    1.0, 0,
+                    1, 0,
                     0, 1,
                     0, 0);
             }
@@ -106,17 +106,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
         }
         /// <summary>
-        /// Returns whether the matrix has any Not-A-Numbers.
+        /// Returns whether the matrix has any Not-A-Numbers or if all terms are zero.
         /// </summary>
-        public bool IsNull
+        public bool IsNull()
         {
-            get
-            {
-                return
-                    double.IsNaN(M11) || double.IsNaN(M12) || double.IsNaN(M13) ||
-                    double.IsNaN(M21) || double.IsNaN(M22) || double.IsNaN(M23) ||
-                    double.IsNaN(M31) || double.IsNaN(M32) || double.IsNaN(M33);
-            }
+            return
+                double.IsNaN(M11) || double.IsNaN(M12) || double.IsNaN(M13) ||
+                double.IsNaN(M21) || double.IsNaN(M22) || double.IsNaN(M23) ||
+                double.IsNaN(M31) || double.IsNaN(M32) || double.IsNaN(M33) ||
+                (M11 == 0.0 && M12 == 0.0 && M13 == 0.0 &&
+                M21 == 0.0 && M22 == 0.0 && M23 == 0.0 &&
+                M31 == 0.0 && M32 == 0.0 && M33 == 0.0);
         }
 
         /// <summary>
@@ -139,14 +139,16 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             this.M11 = m11;
             this.M12 = m12;
+            this.M13 = 0.0;
+
             this.M21 = m21;
             this.M22 = m22;
+            this.M23 = 0.0;
+
             this.M31 = m31;
             this.M32 = m32;
-            IsProjectiveTransform = false;
-            this.M13 = 0.0;
-            this.M23 = 0.0;
             this.M33 = 1.0;
+            IsProjectiveTransform = false;
         }
 
         /// <summary>
@@ -510,36 +512,36 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public static Matrix3x3 Multiply(Matrix3x3 value1, Matrix3x3 value2)
         {
             if (value1.IsProjectiveTransform || value2.IsProjectiveTransform)
+                return new Matrix3x3(
+                  // First row
+                  value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31,
+                  value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32,
+                  value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33,
+
+                 // Second row
+                 value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31,
+                 value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32,
+                 value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33,
+
+                 // Third row
+                 value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31,
+                 value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32,
+                 value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33
+                 );
+
             return new Matrix3x3(
               // First row
-              value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31,
-              value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32,
-              value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33,
+              value1.M11 * value2.M11 + value1.M12 * value2.M21,
+              value1.M11 * value2.M12 + value1.M12 * value2.M22,
+             //0 ,
 
              // Second row
-             value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31,
-             value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32,
-             value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33,
-
-             // Third row
-             value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31,
-             value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32,
-             value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33
-             );
-
-            return new Matrix3x3(
-              // First row
-              value1.M11 * value2.M11 + value1.M12 * value2.M21 ,
-              value1.M11 * value2.M12 + value1.M12 * value2.M22 ,
-              //0 ,
-
-             // Second row
-             value1.M21 * value2.M11 + value1.M22 * value2.M21 ,
-             value1.M21 * value2.M12 + value1.M22 * value2.M22 ,
+             value1.M21 * value2.M11 + value1.M22 * value2.M21,
+             value1.M21 * value2.M12 + value1.M22 * value2.M22,
              // 0 ,
 
              // Third row
-             value1.M31 * value2.M11 + value1.M32 * value2.M21 +  value2.M31,
+             value1.M31 * value2.M11 + value1.M32 * value2.M21 + value2.M31,
              value1.M31 * value2.M12 + value1.M32 * value2.M22 + value2.M32
              //, 1
              );
@@ -596,11 +598,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The matrix containing the summed values.</returns>
         public static Matrix3x3 operator +(Matrix3x3 value1, Matrix3x3 value2)
         {
-                return new Matrix3x3(
-                    value1.M11 + value2.M11, value1.M12 + value2.M12, value1.M13 + value2.M13,
-                    value1.M21 + value2.M21, value1.M22 + value2.M22, value1.M23 + value2.M23,
-                    value1.M31 + value2.M31, value1.M32 + value2.M32, value1.M33 + value2.M33
-                    );
+            return new Matrix3x3(
+                value1.M11 + value2.M11, value1.M12 + value2.M12, value1.M13 + value2.M13,
+                value1.M21 + value2.M21, value1.M22 + value2.M22, value1.M23 + value2.M23,
+                value1.M31 + value2.M31, value1.M32 + value2.M32, value1.M33 + value2.M33
+                );
         }
 
         /// <summary>

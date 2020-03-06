@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-//using Excel = Microsoft.Office.Interop.Excel;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace TVGLTest
 {
@@ -26,7 +26,7 @@ namespace TVGLTest
 
             xlApp = new Excel.Application();
             xlWorkbook = xlApp.Workbooks.Add(misValue);
-            xlWorksheet = xlWorkbook.Worksheets.get_Item(1);
+            xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets.get_Item(1);
 
             //Export data to Excel Sheet from List<List<double>>
             //Set headers if given.
@@ -34,7 +34,7 @@ namespace TVGLTest
             {
                 for (var i = 0; i < headers.Count; i++)
                 {
-                    xlWorksheet.Cells[2, i + 1].Value = headers[i];
+                    ((Excel.Range)xlWorksheet.Cells[2, i + 1]).Value = headers[i];
                 }
             }
 
@@ -107,7 +107,7 @@ namespace TVGLTest
 
             xlApp = new Excel.Application();
             xlWorkbook = xlApp.Workbooks.Add(misValue);
-            xlWorksheet = xlWorkbook.Worksheets.get_Item(1);
+            xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets.get_Item(1);
 
             //Create Chart
             var xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
@@ -178,7 +178,7 @@ namespace TVGLTest
 
             xlApp = new Excel.Application();
             xlWorkbook = xlApp.Workbooks.Add(misValue);
-            xlWorksheet = xlWorkbook.Worksheets.get_Item(1);
+            xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets.get_Item(1);
 
             //Export data to Excel Sheet from List<List<double>>
             //Set headers if given.
@@ -186,7 +186,7 @@ namespace TVGLTest
             {
                 for (var i = 0; i < headers.Count; i++)
                 {
-                    xlWorksheet.Cells[1, i].Value = headers[i];
+                   ((Excel.Range) xlWorksheet.Cells[1, i]).Value = headers[i];
                 }
             }
 

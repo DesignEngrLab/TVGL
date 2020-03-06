@@ -331,8 +331,9 @@ namespace TVGL
                 v.DefineCurvature();
             ModifyTessellation.CheckModelIntegrity(this);
             ConvexHull = new TVGLConvexHull(this);
-            foreach (var cvxHullPt in ConvexHull.Vertices)
-                cvxHullPt.PartOfConvexHull = true;
+            if (ConvexHull.Vertices != null)
+                foreach (var cvxHullPt in ConvexHull.Vertices)
+                    cvxHullPt.PartOfConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
             {
                 face.PartOfConvexHull = true;
@@ -368,7 +369,7 @@ namespace TVGL
                 if (yMax < v.Y) yMax = v.Y;
                 if (zMax < v.Z) zMax = v.Z;
             }
-            Bounds = new[] { new Vector3(xMin, YMin, zMin), new Vector3(xMax, yMax, zMin) };
+            Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
             SameTolerance = shortestDimension * Constants.BaseTolerance;
         }

@@ -85,14 +85,6 @@ namespace TVGL
 
         #region Constructor
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Point" /> class.
-        /// </summary>
-        /// <param name="v">The v.</param>
-        public Point(Vertex v)
-            : this(v, v.Coordinates.X, v.Coordinates.Y)
-        {
-        }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Point" /> class.
@@ -105,24 +97,6 @@ namespace TVGL
         {
             References.Add(vertex);
         }
-
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Point" /> class.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        /// <param name="point"></param>
-        public Point(Point point) : this(point.X, point.Y)
-        {
-            References = new List<Vertex>(point.References);
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Point" /> class.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        public Point(IList<double> coordinates) : this(coordinates[0], coordinates[1]) { }
 
         /// <inheritdoc />
         /// <summary>
@@ -160,11 +134,6 @@ namespace TVGL
             if (ReferenceEquals(a, b)) return true;
             if (a is null || b is null) return false;
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
-        }
-
-        public Point Copy()
-        {
-            return new Point(X, Y);
         }
 
         /// <summary>
@@ -223,8 +192,6 @@ namespace TVGL
             }
         }
 
-        internal bool InResult;
-        internal bool InResultMultipleTimes;
 
         #endregion
     }

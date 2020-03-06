@@ -1177,8 +1177,6 @@ namespace TVGL
                     var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
                     SweepEvent se1, se2;
                     path[i].IndexInPath = i;
-                    path[i].InResult = false;
-                    path[i].InResultMultipleTimes = false;
                     if (path[i].X.IsPracticallySame(path[j].X))
                     {
                         if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
@@ -1217,8 +1215,6 @@ namespace TVGL
                     var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
                     SweepEvent se1, se2;
                     path[i].IndexInPath = i;
-                    path[i].InResult = false;
-                    path[i].InResultMultipleTimes = false;
                     if (path[i].X.IsPracticallySame(path[j].X))
                     {
                         if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
@@ -1351,14 +1347,11 @@ namespace TVGL
             {
                 result[i].PositionInResult = i;
                 result[i].Processed = false;
-                if (!hashResult.Contains(result[i].OtherEvent)) throw new Exception("Error in implementation. Both sweep events in the pair should be in this list.");
+                if (!hashResult.Contains(result[i].OtherEvent)) 
+                    throw new Exception("Error in implementation. Both sweep events in the pair should be in this list.");
                 var point = result[i].Point;
                 if (hashPoints.Contains(point))
-                {
                     hashPoints.Remove(point);
-                    if (!point.InResult) point.InResult = true;
-                    else point.InResultMultipleTimes = true;
-                }
                 else hashPoints.Add(point);
             }
             if (hashPoints.Select(point => hashPoints.Where(otherPoint => !point.Equals(otherPoint)).Any(otherPoint => point == otherPoint)).Any(duplicateFound => !duplicateFound))

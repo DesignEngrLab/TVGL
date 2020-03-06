@@ -110,17 +110,30 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
-        public bool IsIdentity
+        public bool IsIdentity()
         {
-            get
-            {
-                return !IsProjectiveTransform &&
-                    M11 == 1.0 && M22 == 1.0 && M33 == 1.0 && M44 == 1.0 && // Check diagonal element first for early out.
-                    M12 == 0.0 && M13 == 0.0 && M14 == 0.0 &&
-                    M21 == 0.0 && M23 == 0.0 && M24 == 0.0 &&
-                    M31 == 0.0 && M32 == 0.0 && M34 == 0.0 &&
-                    M41 == 0.0 && M42 == 0.0 && M43 == 0.0;
-            }
+            return !IsProjectiveTransform &&
+                M11 == 1.0 && M22 == 1.0 && M33 == 1.0 && M44 == 1.0 && // Check diagonal element first for early out.
+                M12 == 0.0 && M13 == 0.0 && M14 == 0.0 &&
+                M21 == 0.0 && M23 == 0.0 && M24 == 0.0 &&
+                M31 == 0.0 && M32 == 0.0 && M34 == 0.0 &&
+                M41 == 0.0 && M42 == 0.0 && M43 == 0.0;
+        }
+
+        /// <summary>
+        /// Returns whether the matrix has any Not-A-Numbers or if all terms are zero.
+        /// </summary>
+        public bool IsNull()
+        {
+            return
+                double.IsNaN(M11) || double.IsNaN(M12) || double.IsNaN(M13) || double.IsNaN(M14) ||
+                double.IsNaN(M21) || double.IsNaN(M22) || double.IsNaN(M23) || double.IsNaN(M24) ||
+                double.IsNaN(M31) || double.IsNaN(M32) || double.IsNaN(M33) || double.IsNaN(M34) ||
+                (M11 == 0.0 && M22 == 0.0 && M33 == 0.0 && M44 == 0.0 &&
+                M12 == 0.0 && M13 == 0.0 && M14 == 0.0 &&
+                M21 == 0.0 && M23 == 0.0 && M24 == 0.0 &&
+                M31 == 0.0 && M32 == 0.0 && M34 == 0.0 &&
+                M41 == 0.0 && M42 == 0.0 && M43 == 0.0);
         }
 
         /// <summary>
@@ -1362,521 +1375,521 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
 
-/// <summary>
-/// Transforms the given matrix by applying the given Quaternion rotation.
-/// </summary>
-/// <param name="value">The source matrix to transform.</param>
-/// <param name="rotation">The rotation to apply.</param>
-/// <returns>The transformed matrix.</returns>
-public static Matrix4x4 Transform(Matrix4x4 value, Quaternion rotation)
-{
-    // Compute rotation matrix.
-    double x2 = rotation.X + rotation.X;
-    double y2 = rotation.Y + rotation.Y;
-    double z2 = rotation.Z + rotation.Z;
+        /// <summary>
+        /// Transforms the given matrix by applying the given Quaternion rotation.
+        /// </summary>
+        /// <param name="value">The source matrix to transform.</param>
+        /// <param name="rotation">The rotation to apply.</param>
+        /// <returns>The transformed matrix.</returns>
+        public static Matrix4x4 Transform(Matrix4x4 value, Quaternion rotation)
+        {
+            // Compute rotation matrix.
+            double x2 = rotation.X + rotation.X;
+            double y2 = rotation.Y + rotation.Y;
+            double z2 = rotation.Z + rotation.Z;
 
-    double wx2 = rotation.W * x2;
-    double wy2 = rotation.W * y2;
-    double wz2 = rotation.W * z2;
-    double xx2 = rotation.X * x2;
-    double xy2 = rotation.X * y2;
-    double xz2 = rotation.X * z2;
-    double yy2 = rotation.Y * y2;
-    double yz2 = rotation.Y * z2;
-    double zz2 = rotation.Z * z2;
+            double wx2 = rotation.W * x2;
+            double wy2 = rotation.W * y2;
+            double wz2 = rotation.W * z2;
+            double xx2 = rotation.X * x2;
+            double xy2 = rotation.X * y2;
+            double xz2 = rotation.X * z2;
+            double yy2 = rotation.Y * y2;
+            double yz2 = rotation.Y * z2;
+            double zz2 = rotation.Z * z2;
 
-    double q11 = 1.0 - yy2 - zz2;
-    double q21 = xy2 - wz2;
-    double q31 = xz2 + wy2;
+            double q11 = 1.0 - yy2 - zz2;
+            double q21 = xy2 - wz2;
+            double q31 = xz2 + wy2;
 
-    double q12 = xy2 + wz2;
-    double q22 = 1.0 - xx2 - zz2;
-    double q32 = yz2 - wx2;
+            double q12 = xy2 + wz2;
+            double q22 = 1.0 - xx2 - zz2;
+            double q32 = yz2 - wx2;
 
-    double q13 = xz2 - wy2;
-    double q23 = yz2 + wx2;
-    double q33 = 1.0 - xx2 - yy2;
+            double q13 = xz2 - wy2;
+            double q23 = yz2 + wx2;
+            double q33 = 1.0 - xx2 - yy2;
 
-    return new Matrix4x4(
-     // First row
-     value.M11 * q11 + value.M12 * q21 + value.M13 * q31,
-    value.M11 * q12 + value.M12 * q22 + value.M13 * q32,
-    value.M11 * q13 + value.M12 * q23 + value.M13 * q33,
-    value.M14,
-    // Second row
-    value.M21 * q11 + value.M22 * q21 + value.M23 * q31,
-    value.M21 * q12 + value.M22 * q22 + value.M23 * q32,
-    value.M21 * q13 + value.M22 * q23 + value.M23 * q33,
-    value.M24,
-    // Third row
-    value.M31 * q11 + value.M32 * q21 + value.M33 * q31,
-    value.M31 * q12 + value.M32 * q22 + value.M33 * q32,
-    value.M31 * q13 + value.M32 * q23 + value.M33 * q33,
-    value.M34,
-    // Fourth row
-    value.M41 * q11 + value.M42 * q21 + value.M43 * q31,
-    value.M41 * q12 + value.M42 * q22 + value.M43 * q32,
-    value.M41 * q13 + value.M42 * q23 + value.M43 * q33,
-    value.M44);
-}
+            return new Matrix4x4(
+             // First row
+             value.M11 * q11 + value.M12 * q21 + value.M13 * q31,
+            value.M11 * q12 + value.M12 * q22 + value.M13 * q32,
+            value.M11 * q13 + value.M12 * q23 + value.M13 * q33,
+            value.M14,
+            // Second row
+            value.M21 * q11 + value.M22 * q21 + value.M23 * q31,
+            value.M21 * q12 + value.M22 * q22 + value.M23 * q32,
+            value.M21 * q13 + value.M22 * q23 + value.M23 * q33,
+            value.M24,
+            // Third row
+            value.M31 * q11 + value.M32 * q21 + value.M33 * q31,
+            value.M31 * q12 + value.M32 * q22 + value.M33 * q32,
+            value.M31 * q13 + value.M32 * q23 + value.M33 * q33,
+            value.M34,
+            // Fourth row
+            value.M41 * q11 + value.M42 * q21 + value.M43 * q31,
+            value.M41 * q12 + value.M42 * q22 + value.M43 * q32,
+            value.M41 * q13 + value.M42 * q23 + value.M43 * q33,
+            value.M44);
+        }
 
-/// <summary>
-/// Transposes the rows and columns of a matrix.
-/// </summary>
-/// <param name="matrix">The source matrix.</param>
-/// <returns>The transposed matrix.</returns>
-public static Matrix4x4 Transpose(Matrix4x4 matrix)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //var row1 = Sse.LoadVector128(&matrix.M11);
-        //var row2 = Sse.LoadVector128(&matrix.M21);
-        //var row3 = Sse.LoadVector128(&matrix.M31);
-        //var row4 = Sse.LoadVector128(&matrix.M41);
+        /// <summary>
+        /// Transposes the rows and columns of a matrix.
+        /// </summary>
+        /// <param name="matrix">The source matrix.</param>
+        /// <returns>The transposed matrix.</returns>
+        public static Matrix4x4 Transpose(Matrix4x4 matrix)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //var row1 = Sse.LoadVector128(&matrix.M11);
+                //var row2 = Sse.LoadVector128(&matrix.M21);
+                //var row3 = Sse.LoadVector128(&matrix.M31);
+                //var row4 = Sse.LoadVector128(&matrix.M41);
 
-        //var l12 = Sse.UnpackLow(row1, row2);
-        //var l34 = Sse.UnpackLow(row3, row4);
-        //var h12 = Sse.UnpackHigh(row1, row2);
-        //var h34 = Sse.UnpackHigh(row3, row4);
+                //var l12 = Sse.UnpackLow(row1, row2);
+                //var l34 = Sse.UnpackLow(row3, row4);
+                //var h12 = Sse.UnpackHigh(row1, row2);
+                //var h34 = Sse.UnpackHigh(row3, row4);
 
-        //Sse.Store(&matrix.M11, Sse.MoveLowToHigh(l12, l34));
-        //Sse.Store(&matrix.M21, Sse.MoveHighToLow(l34, l12));
-        //Sse.Store(&matrix.M31, Sse.MoveLowToHigh(h12, h34));
-        //Sse.Store(&matrix.M41, Sse.MoveHighToLow(h34, h12));
+                //Sse.Store(&matrix.M11, Sse.MoveLowToHigh(l12, l34));
+                //Sse.Store(&matrix.M21, Sse.MoveHighToLow(l34, l12));
+                //Sse.Store(&matrix.M31, Sse.MoveLowToHigh(h12, h34));
+                //Sse.Store(&matrix.M41, Sse.MoveHighToLow(h34, h12));
 
-        //return matrix;
-    }
-    return new Matrix4x4(
-        matrix.M11, matrix.M21, matrix.M31, matrix.M41,
-        matrix.M12, matrix.M22, matrix.M32, matrix.M42,
-        matrix.M13, matrix.M23, matrix.M33, matrix.M43,
-        matrix.M14, matrix.M24, matrix.M34, matrix.M44
-        );
-}
+                //return matrix;
+            }
+            return new Matrix4x4(
+                matrix.M11, matrix.M21, matrix.M31, matrix.M41,
+                matrix.M12, matrix.M22, matrix.M32, matrix.M42,
+                matrix.M13, matrix.M23, matrix.M33, matrix.M43,
+                matrix.M14, matrix.M24, matrix.M34, matrix.M44
+                );
+        }
 
-/// <summary>
-/// Linearly interpolates between the corresponding values of two matrices.
-/// </summary>
-/// <param name="matrix1">The first source matrix.</param>
-/// <param name="matrix2">The second source matrix.</param>
-/// <param name="amount">The relative weight of the second source matrix.</param>
-/// <returns>The interpolated matrix.</returns>
-public static Matrix4x4 Lerp(Matrix4x4 matrix1, Matrix4x4 matrix2, double amount)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //Vector128<double> amountVec = Vector128.Create(amount);
-        //Sse.Store(&matrix1.M11, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M11), Sse.LoadVector128(&matrix2.M11), amountVec));
-        //Sse.Store(&matrix1.M21, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M21), Sse.LoadVector128(&matrix2.M21), amountVec));
-        //Sse.Store(&matrix1.M31, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M31), Sse.LoadVector128(&matrix2.M31), amountVec));
-        //Sse.Store(&matrix1.M41, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M41), Sse.LoadVector128(&matrix2.M41), amountVec));
-        //return matrix1;
-    }
-    return new Matrix4x4(
-    // First row
-    matrix1.M11 + (matrix2.M11 - matrix1.M11) * amount,
-    matrix1.M12 + (matrix2.M12 - matrix1.M12) * amount,
-    matrix1.M13 + (matrix2.M13 - matrix1.M13) * amount,
-    matrix1.M14 + (matrix2.M14 - matrix1.M14) * amount,
+        /// <summary>
+        /// Linearly interpolates between the corresponding values of two matrices.
+        /// </summary>
+        /// <param name="matrix1">The first source matrix.</param>
+        /// <param name="matrix2">The second source matrix.</param>
+        /// <param name="amount">The relative weight of the second source matrix.</param>
+        /// <returns>The interpolated matrix.</returns>
+        public static Matrix4x4 Lerp(Matrix4x4 matrix1, Matrix4x4 matrix2, double amount)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //Vector128<double> amountVec = Vector128.Create(amount);
+                //Sse.Store(&matrix1.M11, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M11), Sse.LoadVector128(&matrix2.M11), amountVec));
+                //Sse.Store(&matrix1.M21, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M21), Sse.LoadVector128(&matrix2.M21), amountVec));
+                //Sse.Store(&matrix1.M31, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M31), Sse.LoadVector128(&matrix2.M31), amountVec));
+                //Sse.Store(&matrix1.M41, VectorMath.Lerp(Sse.LoadVector128(&matrix1.M41), Sse.LoadVector128(&matrix2.M41), amountVec));
+                //return matrix1;
+            }
+            return new Matrix4x4(
+            // First row
+            matrix1.M11 + (matrix2.M11 - matrix1.M11) * amount,
+            matrix1.M12 + (matrix2.M12 - matrix1.M12) * amount,
+            matrix1.M13 + (matrix2.M13 - matrix1.M13) * amount,
+            matrix1.M14 + (matrix2.M14 - matrix1.M14) * amount,
 
-    // Second row
-    matrix1.M21 + (matrix2.M21 - matrix1.M21) * amount,
-    matrix1.M22 + (matrix2.M22 - matrix1.M22) * amount,
-    matrix1.M23 + (matrix2.M23 - matrix1.M23) * amount,
-    matrix1.M24 + (matrix2.M24 - matrix1.M24) * amount,
+            // Second row
+            matrix1.M21 + (matrix2.M21 - matrix1.M21) * amount,
+            matrix1.M22 + (matrix2.M22 - matrix1.M22) * amount,
+            matrix1.M23 + (matrix2.M23 - matrix1.M23) * amount,
+            matrix1.M24 + (matrix2.M24 - matrix1.M24) * amount,
 
-    // Third row
-    matrix1.M31 + (matrix2.M31 - matrix1.M31) * amount,
-    matrix1.M32 + (matrix2.M32 - matrix1.M32) * amount,
-    matrix1.M33 + (matrix2.M33 - matrix1.M33) * amount,
-    matrix1.M34 + (matrix2.M34 - matrix1.M34) * amount,
+            // Third row
+            matrix1.M31 + (matrix2.M31 - matrix1.M31) * amount,
+            matrix1.M32 + (matrix2.M32 - matrix1.M32) * amount,
+            matrix1.M33 + (matrix2.M33 - matrix1.M33) * amount,
+            matrix1.M34 + (matrix2.M34 - matrix1.M34) * amount,
 
-    // Fourth row
-    matrix1.M41 + (matrix2.M41 - matrix1.M41) * amount,
-    matrix1.M42 + (matrix2.M42 - matrix1.M42) * amount,
-    matrix1.M43 + (matrix2.M43 - matrix1.M43) * amount,
-    matrix1.M44 + (matrix2.M44 - matrix1.M44) * amount
-    );
-}
+            // Fourth row
+            matrix1.M41 + (matrix2.M41 - matrix1.M41) * amount,
+            matrix1.M42 + (matrix2.M42 - matrix1.M42) * amount,
+            matrix1.M43 + (matrix2.M43 - matrix1.M43) * amount,
+            matrix1.M44 + (matrix2.M44 - matrix1.M44) * amount
+            );
+        }
 
-/// <summary>
-/// Returns a new matrix with the negated elements of the given matrix.
-/// </summary>
-/// <param name="value">The source matrix.</param>
-/// <returns>The negated matrix.</returns>
-public static Matrix4x4 Negate(Matrix4x4 value) => -value;
+        /// <summary>
+        /// Returns a new matrix with the negated elements of the given matrix.
+        /// </summary>
+        /// <param name="value">The source matrix.</param>
+        /// <returns>The negated matrix.</returns>
+        public static Matrix4x4 Negate(Matrix4x4 value) => -value;
 
-/// <summary>
-/// Adds two matrices together.
-/// </summary>
-/// <param name="value1">The first source matrix.</param>
-/// <param name="value2">The second source matrix.</param>
-/// <returns>The resulting matrix.</returns>
-public static Matrix4x4 Add(Matrix4x4 value1, Matrix4x4 value2) => value1 + value2;
+        /// <summary>
+        /// Adds two matrices together.
+        /// </summary>
+        /// <param name="value1">The first source matrix.</param>
+        /// <param name="value2">The second source matrix.</param>
+        /// <returns>The resulting matrix.</returns>
+        public static Matrix4x4 Add(Matrix4x4 value1, Matrix4x4 value2) => value1 + value2;
 
-/// <summary>
-/// Subtracts the second matrix from the first.
-/// </summary>
-/// <param name="value1">The first source matrix.</param>
-/// <param name="value2">The second source matrix.</param>
-/// <returns>The result of the subtraction.</returns>
-public static Matrix4x4 Subtract(Matrix4x4 value1, Matrix4x4 value2) => value1 - value2;
+        /// <summary>
+        /// Subtracts the second matrix from the first.
+        /// </summary>
+        /// <param name="value1">The first source matrix.</param>
+        /// <param name="value2">The second source matrix.</param>
+        /// <returns>The result of the subtraction.</returns>
+        public static Matrix4x4 Subtract(Matrix4x4 value1, Matrix4x4 value2) => value1 - value2;
 
-/// <summary>
-/// Multiplies a matrix by another matrix.
-/// </summary>
-/// <param name="value1">The first source matrix.</param>
-/// <param name="value2">The second source matrix.</param>
-/// <returns>The result of the multiplication.</returns>
-public static Matrix4x4 Multiply(Matrix4x4 value1, Matrix4x4 value2) => value1 * value2;
+        /// <summary>
+        /// Multiplies a matrix by another matrix.
+        /// </summary>
+        /// <param name="value1">The first source matrix.</param>
+        /// <param name="value2">The second source matrix.</param>
+        /// <returns>The result of the multiplication.</returns>
+        public static Matrix4x4 Multiply(Matrix4x4 value1, Matrix4x4 value2) => value1 * value2;
 
-/// <summary>
-/// Multiplies a matrix by a scalar value.
-/// </summary>
-/// <param name="value1">The source matrix.</param>
-/// <param name="value2">The scaling factor.</param>
-/// <returns>The scaled matrix.</returns>
-public static Matrix4x4 Multiply(Matrix4x4 value1, double value2) => value1 * value2;
+        /// <summary>
+        /// Multiplies a matrix by a scalar value.
+        /// </summary>
+        /// <param name="value1">The source matrix.</param>
+        /// <param name="value2">The scaling factor.</param>
+        /// <returns>The scaled matrix.</returns>
+        public static Matrix4x4 Multiply(Matrix4x4 value1, double value2) => value1 * value2;
 
-/// <summary>
-/// Returns a new matrix with the negated elements of the given matrix.
-/// </summary>
-/// <param name="value">The source matrix.</param>
-/// <returns>The negated matrix.</returns>
-public static Matrix4x4 operator -(Matrix4x4 value)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //Vector128<double> zero = Vector128<double>.Zero;
-        //Sse.Store(&value.M11, Sse.Subtract(zero, Sse.LoadVector128(&value.M11)));
-        //Sse.Store(&value.M21, Sse.Subtract(zero, Sse.LoadVector128(&value.M21)));
-        //Sse.Store(&value.M31, Sse.Subtract(zero, Sse.LoadVector128(&value.M31)));
-        //Sse.Store(&value.M41, Sse.Subtract(zero, Sse.LoadVector128(&value.M41)));
+        /// <summary>
+        /// Returns a new matrix with the negated elements of the given matrix.
+        /// </summary>
+        /// <param name="value">The source matrix.</param>
+        /// <returns>The negated matrix.</returns>
+        public static Matrix4x4 operator -(Matrix4x4 value)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //Vector128<double> zero = Vector128<double>.Zero;
+                //Sse.Store(&value.M11, Sse.Subtract(zero, Sse.LoadVector128(&value.M11)));
+                //Sse.Store(&value.M21, Sse.Subtract(zero, Sse.LoadVector128(&value.M21)));
+                //Sse.Store(&value.M31, Sse.Subtract(zero, Sse.LoadVector128(&value.M31)));
+                //Sse.Store(&value.M41, Sse.Subtract(zero, Sse.LoadVector128(&value.M41)));
 
-        //return value;
-    }
-    return new Matrix4x4(
-        -value.M11, -value.M12, -value.M13, -value.M14,
-        -value.M21, -value.M22, -value.M23, -value.M24,
-        -value.M31, -value.M32, -value.M33, -value.M34,
-        -value.M41, -value.M42, -value.M43, -value.M44
-    );
-}
+                //return value;
+            }
+            return new Matrix4x4(
+                -value.M11, -value.M12, -value.M13, -value.M14,
+                -value.M21, -value.M22, -value.M23, -value.M24,
+                -value.M31, -value.M32, -value.M33, -value.M34,
+                -value.M41, -value.M42, -value.M43, -value.M44
+            );
+        }
 
-/// <summary>
-/// Adds two matrices together.
-/// </summary>
-/// <param name="value1">The first source matrix.</param>
-/// <param name="value2">The second source matrix.</param>
-/// <returns>The resulting matrix.</returns>
-public static Matrix4x4 operator +(Matrix4x4 value1, Matrix4x4 value2)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //Sse.Store(&value1.M11, Sse.Add(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
-        //Sse.Store(&value1.M21, Sse.Add(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
-        //Sse.Store(&value1.M31, Sse.Add(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
-        //Sse.Store(&value1.M41, Sse.Add(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
-        //return value1;
-    }
-    return new Matrix4x4(
-    value1.M11 + value2.M11, value1.M12 + value2.M12, value1.M13 + value2.M13, value1.M14 + value2.M14,
-    value1.M21 + value2.M21, value1.M22 + value2.M22, value1.M23 + value2.M23, value1.M24 + value2.M24,
-    value1.M31 + value2.M31, value1.M32 + value2.M32, value1.M33 + value2.M33, value1.M34 + value2.M34,
-    value1.M41 + value2.M41, value1.M42 + value2.M42, value1.M43 + value2.M43, value1.M44 + value2.M44
-    );
-}
+        /// <summary>
+        /// Adds two matrices together.
+        /// </summary>
+        /// <param name="value1">The first source matrix.</param>
+        /// <param name="value2">The second source matrix.</param>
+        /// <returns>The resulting matrix.</returns>
+        public static Matrix4x4 operator +(Matrix4x4 value1, Matrix4x4 value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //Sse.Store(&value1.M11, Sse.Add(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
+                //Sse.Store(&value1.M21, Sse.Add(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
+                //Sse.Store(&value1.M31, Sse.Add(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
+                //Sse.Store(&value1.M41, Sse.Add(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
+                //return value1;
+            }
+            return new Matrix4x4(
+            value1.M11 + value2.M11, value1.M12 + value2.M12, value1.M13 + value2.M13, value1.M14 + value2.M14,
+            value1.M21 + value2.M21, value1.M22 + value2.M22, value1.M23 + value2.M23, value1.M24 + value2.M24,
+            value1.M31 + value2.M31, value1.M32 + value2.M32, value1.M33 + value2.M33, value1.M34 + value2.M34,
+            value1.M41 + value2.M41, value1.M42 + value2.M42, value1.M43 + value2.M43, value1.M44 + value2.M44
+            );
+        }
 
-/// <summary>
-/// Subtracts the second matrix from the first.
-/// </summary>
-/// <param name="value1">The first source matrix.</param>
-/// <param name="value2">The second source matrix.</param>
-/// <returns>The result of the subtraction.</returns>
-public static Matrix4x4 operator -(Matrix4x4 value1, Matrix4x4 value2)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //Sse.Store(&value1.M11, Sse.Subtract(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
-        //Sse.Store(&value1.M21, Sse.Subtract(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
-        //Sse.Store(&value1.M31, Sse.Subtract(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
-        //Sse.Store(&value1.M41, Sse.Subtract(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
-        //return value1;
-    }
-    return new Matrix4x4(
-        value1.M11 - value2.M11, value1.M12 - value2.M12, value1.M13 - value2.M13, value1.M14 - value2.M14,
-        value1.M21 - value2.M21, value1.M22 - value2.M22, value1.M23 - value2.M23, value1.M24 - value2.M24,
-        value1.M31 - value2.M31, value1.M32 - value2.M32, value1.M33 - value2.M33, value1.M34 - value2.M34,
-        value1.M41 - value2.M41, value1.M42 - value2.M42, value1.M43 - value2.M43, value1.M44 - value2.M44
-        );
-}
+        /// <summary>
+        /// Subtracts the second matrix from the first.
+        /// </summary>
+        /// <param name="value1">The first source matrix.</param>
+        /// <param name="value2">The second source matrix.</param>
+        /// <returns>The result of the subtraction.</returns>
+        public static Matrix4x4 operator -(Matrix4x4 value1, Matrix4x4 value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //Sse.Store(&value1.M11, Sse.Subtract(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)));
+                //Sse.Store(&value1.M21, Sse.Subtract(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)));
+                //Sse.Store(&value1.M31, Sse.Subtract(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)));
+                //Sse.Store(&value1.M41, Sse.Subtract(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41)));
+                //return value1;
+            }
+            return new Matrix4x4(
+                value1.M11 - value2.M11, value1.M12 - value2.M12, value1.M13 - value2.M13, value1.M14 - value2.M14,
+                value1.M21 - value2.M21, value1.M22 - value2.M22, value1.M23 - value2.M23, value1.M24 - value2.M24,
+                value1.M31 - value2.M31, value1.M32 - value2.M32, value1.M33 - value2.M33, value1.M34 - value2.M34,
+                value1.M41 - value2.M41, value1.M42 - value2.M42, value1.M43 - value2.M43, value1.M44 - value2.M44
+                );
+        }
 
-/// <summary>
-/// Multiplies a matrix by another matrix.
-/// </summary>
-/// <param name="value1">The first source matrix.</param>
-/// <param name="value2">The second source matrix.</param>
-/// <returns>The result of the multiplication.</returns>
-public static Matrix4x4 operator *(Matrix4x4 value1, Matrix4x4 value2)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //var row = Sse.LoadVector128(&value1.M11);
-        //Sse.Store(&value1.M11,
-        //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-        //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-        //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-        //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+        /// <summary>
+        /// Multiplies a matrix by another matrix.
+        /// </summary>
+        /// <param name="value1">The first source matrix.</param>
+        /// <param name="value2">The second source matrix.</param>
+        /// <returns>The result of the multiplication.</returns>
+        public static Matrix4x4 operator *(Matrix4x4 value1, Matrix4x4 value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //var row = Sse.LoadVector128(&value1.M11);
+                //Sse.Store(&value1.M11,
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
-        //// 0x00 is _MM_SHUFFLE(0,0,0,0), 0x55 is _MM_SHUFFLE(1,1,1,1), etc.
-        //// TODO: Replace with a method once it's added to the API.
+                //// 0x00 is _MM_SHUFFLE(0,0,0,0), 0x55 is _MM_SHUFFLE(1,1,1,1), etc.
+                //// TODO: Replace with a method once it's added to the API.
 
-        //row = Sse.LoadVector128(&value1.M21);
-        //Sse.Store(&value1.M21,
-        //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-        //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-        //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-        //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //row = Sse.LoadVector128(&value1.M21);
+                //Sse.Store(&value1.M21,
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
-        //row = Sse.LoadVector128(&value1.M31);
-        //Sse.Store(&value1.M31,
-        //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-        //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-        //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-        //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //row = Sse.LoadVector128(&value1.M31);
+                //Sse.Store(&value1.M31,
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
 
-        //row = Sse.LoadVector128(&value1.M41);
-        //Sse.Store(&value1.M41,
-        //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
-        //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
-        //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
-        //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
-        //return value1;
-    }
-    if (value1.IsProjectiveTransform && value2.IsProjectiveTransform)
-        return new Matrix4x4(
-    // First row
-    value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31 + value1.M14 * value2.M41,
-    value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32 + value1.M14 * value2.M42,
-    value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33 + value1.M14 * value2.M43,
-    value1.M11 * value2.M14 + value1.M12 * value2.M24 + value1.M13 * value2.M34 + value1.M14 * value2.M44,
+                //row = Sse.LoadVector128(&value1.M41);
+                //Sse.Store(&value1.M41,
+                //    Sse.Add(Sse.Add(Sse * Sse.Shuffle(row, row, 0x00), Sse.LoadVector128(&value2.M11)),
+                //                    Sse * Sse.Shuffle(row, row, 0x55), Sse.LoadVector128(&value2.M21))),
+                //            Sse.Add(Sse * Sse.Shuffle(row, row, 0xAA), Sse.LoadVector128(&value2.M31)),
+                //                    Sse * Sse.Shuffle(row, row, 0xFF), Sse.LoadVector128(&value2.M41)))));
+                //return value1;
+            }
+            if (value1.IsProjectiveTransform && value2.IsProjectiveTransform)
+                return new Matrix4x4(
+            // First row
+            value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31 + value1.M14 * value2.M41,
+            value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32 + value1.M14 * value2.M42,
+            value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33 + value1.M14 * value2.M43,
+            value1.M11 * value2.M14 + value1.M12 * value2.M24 + value1.M13 * value2.M34 + value1.M14 * value2.M44,
 
-    // Second row
-    value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31 + value1.M24 * value2.M41,
-    value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32 + value1.M24 * value2.M42,
-    value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33 + value1.M24 * value2.M43,
-    value1.M21 * value2.M14 + value1.M22 * value2.M24 + value1.M23 * value2.M34 + value1.M24 * value2.M44,
+            // Second row
+            value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31 + value1.M24 * value2.M41,
+            value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32 + value1.M24 * value2.M42,
+            value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33 + value1.M24 * value2.M43,
+            value1.M21 * value2.M14 + value1.M22 * value2.M24 + value1.M23 * value2.M34 + value1.M24 * value2.M44,
 
-    // Third row
-    value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31 + value1.M34 * value2.M41,
-    value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32 + value1.M34 * value2.M42,
-    value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33 + value1.M34 * value2.M43,
-    value1.M31 * value2.M14 + value1.M32 * value2.M24 + value1.M33 * value2.M34 + value1.M34 * value2.M44,
+            // Third row
+            value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31 + value1.M34 * value2.M41,
+            value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32 + value1.M34 * value2.M42,
+            value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33 + value1.M34 * value2.M43,
+            value1.M31 * value2.M14 + value1.M32 * value2.M24 + value1.M33 * value2.M34 + value1.M34 * value2.M44,
 
-    // Fourth row
-    value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value1.M44 * value2.M41,
-    value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value1.M44 * value2.M42,
-    value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value1.M44 * value2.M43,
-    value1.M41 * value2.M14 + value1.M42 * value2.M24 + value1.M43 * value2.M34 + value1.M44 * value2.M44);
+            // Fourth row
+            value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value1.M44 * value2.M41,
+            value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value1.M44 * value2.M42,
+            value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value1.M44 * value2.M43,
+            value1.M41 * value2.M14 + value1.M42 * value2.M24 + value1.M43 * value2.M34 + value1.M44 * value2.M44);
 
-    if (value1.IsProjectiveTransform)
-        return new Matrix4x4(
-    // First row
-    value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31 + value1.M14 * value2.M41,
-    value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32 + value1.M14 * value2.M42,
-    value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33 + value1.M14 * value2.M43,
-    value1.M14,
+            if (value1.IsProjectiveTransform)
+                return new Matrix4x4(
+            // First row
+            value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31 + value1.M14 * value2.M41,
+            value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32 + value1.M14 * value2.M42,
+            value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33 + value1.M14 * value2.M43,
+            value1.M14,
 
-    // Second row
-    value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31 + value1.M24 * value2.M41,
-    value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32 + value1.M24 * value2.M42,
-    value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33 + value1.M24 * value2.M43,
-    value1.M24,
+            // Second row
+            value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31 + value1.M24 * value2.M41,
+            value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32 + value1.M24 * value2.M42,
+            value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33 + value1.M24 * value2.M43,
+            value1.M24,
 
-    // Third row
-    value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31 + value1.M34 * value2.M41,
-    value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32 + value1.M34 * value2.M42,
-    value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33 + value1.M34 * value2.M43,
-    value1.M34,
+            // Third row
+            value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31 + value1.M34 * value2.M41,
+            value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32 + value1.M34 * value2.M42,
+            value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33 + value1.M34 * value2.M43,
+            value1.M34,
 
-    // Fourth row
-    value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value1.M44 * value2.M41,
-    value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value1.M44 * value2.M42,
-    value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value1.M44 * value2.M43,
-    value1.M44);
+            // Fourth row
+            value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value1.M44 * value2.M41,
+            value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value1.M44 * value2.M42,
+            value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value1.M44 * value2.M43,
+            value1.M44);
 
-    if (value2.IsProjectiveTransform)
-        return new Matrix4x4(
-    // First row
-    value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31,
-    value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32,
-    value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33,
-    value1.M11 * value2.M14 + value1.M12 * value2.M24 + value1.M13 * value2.M34,
+            if (value2.IsProjectiveTransform)
+                return new Matrix4x4(
+            // First row
+            value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31,
+            value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32,
+            value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33,
+            value1.M11 * value2.M14 + value1.M12 * value2.M24 + value1.M13 * value2.M34,
 
-    // Second row
-    value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31,
-    value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32,
-    value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33,
-    value1.M21 * value2.M14 + value1.M22 * value2.M24 + value1.M23 * value2.M34,
+            // Second row
+            value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31,
+            value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32,
+            value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33,
+            value1.M21 * value2.M14 + value1.M22 * value2.M24 + value1.M23 * value2.M34,
 
-    // Third row
-    value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31,
-    value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32,
-    value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33,
-    value1.M31 * value2.M14 + value1.M32 * value2.M24 + value1.M33 * value2.M34,
+            // Third row
+            value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31,
+            value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32,
+            value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33,
+            value1.M31 * value2.M14 + value1.M32 * value2.M24 + value1.M33 * value2.M34,
 
-    // Fourth row
-    value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value2.M41,
-    value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value2.M42,
-    value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value2.M43,
-    value1.M41 * value2.M14 + value1.M42 * value2.M24 + value1.M43 * value2.M34 + value2.M44);
+            // Fourth row
+            value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value2.M41,
+            value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value2.M42,
+            value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value2.M43,
+            value1.M41 * value2.M14 + value1.M42 * value2.M24 + value1.M43 * value2.M34 + value2.M44);
 
 
-    return new Matrix4x4(
-// First row
-value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31,
-value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32,
-value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33,
-// 0,
+            return new Matrix4x4(
+        // First row
+        value1.M11 * value2.M11 + value1.M12 * value2.M21 + value1.M13 * value2.M31,
+        value1.M11 * value2.M12 + value1.M12 * value2.M22 + value1.M13 * value2.M32,
+        value1.M11 * value2.M13 + value1.M12 * value2.M23 + value1.M13 * value2.M33,
+        // 0,
 
-// Second row
-value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31,
-value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32,
-value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33,
-// 0,
+        // Second row
+        value1.M21 * value2.M11 + value1.M22 * value2.M21 + value1.M23 * value2.M31,
+        value1.M21 * value2.M12 + value1.M22 * value2.M22 + value1.M23 * value2.M32,
+        value1.M21 * value2.M13 + value1.M22 * value2.M23 + value1.M23 * value2.M33,
+        // 0,
 
-// Third row
-value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31,
-value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32,
-value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33,
-// 0,
+        // Third row
+        value1.M31 * value2.M11 + value1.M32 * value2.M21 + value1.M33 * value2.M31,
+        value1.M31 * value2.M12 + value1.M32 * value2.M22 + value1.M33 * value2.M32,
+        value1.M31 * value2.M13 + value1.M32 * value2.M23 + value1.M33 * value2.M33,
+        // 0,
 
-// Fourth row
-value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value2.M41,
-value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value2.M42,
-value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value2.M43 //, 1
-);
-
-}
-
-/// <summary>
-/// Multiplies a matrix by a scalar value.
-/// </summary>
-/// <param name="value1">The source matrix.</param>
-/// <param name="value2">The scaling factor.</param>
-/// <returns>The scaled matrix.</returns>
-public static Matrix4x4 operator *(Matrix4x4 value1, double value2)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //Vector128<double> value2Vec = Vector128.Create(value2);
-        //Sse.Store(&value1.M11, Sse * Sse.LoadVector128(&value1.M11), value2Vec));
-        //Sse.Store(&value1.M21, Sse * Sse.LoadVector128(&value1.M21), value2Vec));
-        //Sse.Store(&value1.M31, Sse * Sse.LoadVector128(&value1.M31), value2Vec));
-        //Sse.Store(&value1.M41, Sse * Sse.LoadVector128(&value1.M41), value2Vec));
-        //return value1;
-    }
-    if (value1.IsProjectiveTransform)
-        return new Matrix4x4(
-        value1.M11 * value2, value1.M12 * value2, value1.M13 * value2, value1.M14 * value2,
-        value1.M21 * value2, value1.M22 * value2, value1.M23 * value2, value1.M24 * value2,
-        value1.M31 * value2, value1.M32 * value2, value1.M33 * value2, value1.M34 * value2,
-        value1.M41 * value2, value1.M42 * value2, value1.M43 * value2, value1.M44 * value2
+        // Fourth row
+        value1.M41 * value2.M11 + value1.M42 * value2.M21 + value1.M43 * value2.M31 + value2.M41,
+        value1.M41 * value2.M12 + value1.M42 * value2.M22 + value1.M43 * value2.M32 + value2.M42,
+        value1.M41 * value2.M13 + value1.M42 * value2.M23 + value1.M43 * value2.M33 + value2.M43 //, 1
         );
 
-    return new Matrix4x4(
-    value1.M11 * value2, value1.M12 * value2, value1.M13 * value2,
-    value1.M21 * value2, value1.M22 * value2, value1.M23 * value2,
-    value1.M31 * value2, value1.M32 * value2, value1.M33 * value2,
-    value1.M41 * value2, value1.M42 * value2, value1.M43 * value2
-    );
+        }
 
-}
+        /// <summary>
+        /// Multiplies a matrix by a scalar value.
+        /// </summary>
+        /// <param name="value1">The source matrix.</param>
+        /// <param name="value2">The scaling factor.</param>
+        /// <returns>The scaled matrix.</returns>
+        public static Matrix4x4 operator *(Matrix4x4 value1, double value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //Vector128<double> value2Vec = Vector128.Create(value2);
+                //Sse.Store(&value1.M11, Sse * Sse.LoadVector128(&value1.M11), value2Vec));
+                //Sse.Store(&value1.M21, Sse * Sse.LoadVector128(&value1.M21), value2Vec));
+                //Sse.Store(&value1.M31, Sse * Sse.LoadVector128(&value1.M31), value2Vec));
+                //Sse.Store(&value1.M41, Sse * Sse.LoadVector128(&value1.M41), value2Vec));
+                //return value1;
+            }
+            if (value1.IsProjectiveTransform)
+                return new Matrix4x4(
+                value1.M11 * value2, value1.M12 * value2, value1.M13 * value2, value1.M14 * value2,
+                value1.M21 * value2, value1.M22 * value2, value1.M23 * value2, value1.M24 * value2,
+                value1.M31 * value2, value1.M32 * value2, value1.M33 * value2, value1.M34 * value2,
+                value1.M41 * value2, value1.M42 * value2, value1.M43 * value2, value1.M44 * value2
+                );
 
-/// <summary>
-/// Returns a boolean indicating whether the given two matrices are equal.
-/// </summary>
-/// <param name="value1">The first matrix to compare.</param>
-/// <param name="value2">The second matrix to compare.</param>
-/// <returns>True if the given matrices are equal; False otherwise.</returns>
-public static bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //return
-        //    VectorMath.Equal(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) &&
-        //    VectorMath.Equal(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) &&
-        //    VectorMath.Equal(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) &&
-        //    VectorMath.Equal(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
-    }
+            return new Matrix4x4(
+            value1.M11 * value2, value1.M12 * value2, value1.M13 * value2,
+            value1.M21 * value2, value1.M22 * value2, value1.M23 * value2,
+            value1.M31 * value2, value1.M32 * value2, value1.M33 * value2,
+            value1.M41 * value2, value1.M42 * value2, value1.M43 * value2
+            );
 
-    return (value1.IsProjectiveTransform == value2.IsProjectiveTransform &&
-        value1.M11 == value2.M11 && value1.M22 == value2.M22 && value1.M33 == value2.M33 && value1.M44 == value2.M44 && // Check diagonal element first for early out.
-            value1.M12 == value2.M12 && value1.M13 == value2.M13 && value1.M14 == value2.M14 && value1.M21 == value2.M21 &&
-            value1.M23 == value2.M23 && value1.M24 == value2.M24 && value1.M31 == value2.M31 && value1.M32 == value2.M32 &&
-            value1.M34 == value2.M34 && value1.M41 == value2.M41 && value1.M42 == value2.M42 && value1.M43 == value2.M43);
-}
+        }
 
-/// <summary>
-/// Returns a boolean indicating whether the given two matrices are not equal.
-/// </summary>
-/// <param name="value1">The first matrix to compare.</param>
-/// <param name="value2">The second matrix to compare.</param>
-/// <returns>True if the given matrices are not equal; False if they are equal.</returns>
-public static bool operator !=(Matrix4x4 value1, Matrix4x4 value2)
-{
-    if (false) // COMMENTEDCHANGE (Sse.IsSupported)
-    {
-        //return
-        //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) ||
-        //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) ||
-        //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) ||
-        //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
-    }
+        /// <summary>
+        /// Returns a boolean indicating whether the given two matrices are equal.
+        /// </summary>
+        /// <param name="value1">The first matrix to compare.</param>
+        /// <param name="value2">The second matrix to compare.</param>
+        /// <returns>True if the given matrices are equal; False otherwise.</returns>
+        public static bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //return
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) &&
+                //    VectorMath.Equal(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
+            }
 
-    return !(value1 == value2);
-}
+            return (value1.IsProjectiveTransform == value2.IsProjectiveTransform &&
+                value1.M11 == value2.M11 && value1.M22 == value2.M22 && value1.M33 == value2.M33 && value1.M44 == value2.M44 && // Check diagonal element first for early out.
+                    value1.M12 == value2.M12 && value1.M13 == value2.M13 && value1.M14 == value2.M14 && value1.M21 == value2.M21 &&
+                    value1.M23 == value2.M23 && value1.M24 == value2.M24 && value1.M31 == value2.M31 && value1.M32 == value2.M32 &&
+                    value1.M34 == value2.M34 && value1.M41 == value2.M41 && value1.M42 == value2.M42 && value1.M43 == value2.M43);
+        }
 
-/// <summary>
-/// Returns a boolean indicating whether this matrix instance is equal to the other given matrix.
-/// </summary>
-/// <param name="other">The matrix to compare this instance to.</param>
-/// <returns>True if the matrices are equal; False otherwise.</returns>
-public bool Equals(Matrix4x4 other) => this == other;
+        /// <summary>
+        /// Returns a boolean indicating whether the given two matrices are not equal.
+        /// </summary>
+        /// <param name="value1">The first matrix to compare.</param>
+        /// <param name="value2">The second matrix to compare.</param>
+        /// <returns>True if the given matrices are not equal; False if they are equal.</returns>
+        public static bool operator !=(Matrix4x4 value1, Matrix4x4 value2)
+        {
+            if (false) // COMMENTEDCHANGE (Sse.IsSupported)
+            {
+                //return
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M11), Sse.LoadVector128(&value2.M11)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M21), Sse.LoadVector128(&value2.M21)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M31), Sse.LoadVector128(&value2.M31)) ||
+                //    VectorMath.NotEqual(Sse.LoadVector128(&value1.M41), Sse.LoadVector128(&value2.M41));
+            }
 
-/// <summary>
-/// Returns a boolean indicating whether the given Object is equal to this matrix instance.
-/// </summary>
-/// <param name="obj">The Object to compare against.</param>
-/// <returns>True if the Object is equal to this matrix; False otherwise.</returns>
-public override bool Equals(object obj) => (obj is Matrix4x4 other) && (this == other);
+            return !(value1 == value2);
+        }
 
-/// <summary>
-/// Returns a String representing this matrix instance.
-/// </summary>
-/// <returns>The string representation.</returns>
-public override string ToString()
-{
-    return string.Format(CultureInfo.CurrentCulture, "{{ {{M11:{0} M12:{1} M13:{2} M14:{3}}} {{M21:{4} M22:{5} M23:{6} M24:{7}}} {{M31:{8} M32:{9} M33:{10} M34:{11}}} {{M41:{12} M42:{13} M43:{14} M44:{15}}} }}",
-                         M11, M12, M13, M14,
-                         M21, M22, M23, M24,
-                         M31, M32, M33, M34,
-                         M41, M42, M43, M44);
-}
+        /// <summary>
+        /// Returns a boolean indicating whether this matrix instance is equal to the other given matrix.
+        /// </summary>
+        /// <param name="other">The matrix to compare this instance to.</param>
+        /// <returns>True if the matrices are equal; False otherwise.</returns>
+        public bool Equals(Matrix4x4 other) => this == other;
 
-/// <summary>
-/// Returns the hash code for this instance.
-/// </summary>
-/// <returns>The hash code.</returns>
-public override int GetHashCode()
-{
-    unchecked
-    {
-        return M11.GetHashCode() + M12.GetHashCode() + M13.GetHashCode() + M14.GetHashCode() +
-               M21.GetHashCode() + M22.GetHashCode() + M23.GetHashCode() + M24.GetHashCode() +
-               M31.GetHashCode() + M32.GetHashCode() + M33.GetHashCode() + M34.GetHashCode() +
-               M41.GetHashCode() + M42.GetHashCode() + M43.GetHashCode() + M44.GetHashCode();
-    }
-}
+        /// <summary>
+        /// Returns a boolean indicating whether the given Object is equal to this matrix instance.
+        /// </summary>
+        /// <param name="obj">The Object to compare against.</param>
+        /// <returns>True if the Object is equal to this matrix; False otherwise.</returns>
+        public override bool Equals(object obj) => (obj is Matrix4x4 other) && (this == other);
+
+        /// <summary>
+        /// Returns a String representing this matrix instance.
+        /// </summary>
+        /// <returns>The string representation.</returns>
+        public override string ToString()
+        {
+            return string.Format(CultureInfo.CurrentCulture, "{{ {{M11:{0} M12:{1} M13:{2} M14:{3}}} {{M21:{4} M22:{5} M23:{6} M24:{7}}} {{M31:{8} M32:{9} M33:{10} M34:{11}}} {{M41:{12} M42:{13} M43:{14} M44:{15}}} }}",
+                                 M11, M12, M13, M14,
+                                 M21, M22, M23, M24,
+                                 M31, M32, M33, M34,
+                                 M41, M42, M43, M44);
+        }
+
+        /// <summary>
+        /// Returns the hash code for this instance.
+        /// </summary>
+        /// <returns>The hash code.</returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return M11.GetHashCode() + M12.GetHashCode() + M13.GetHashCode() + M14.GetHashCode() +
+                       M21.GetHashCode() + M22.GetHashCode() + M23.GetHashCode() + M24.GetHashCode() +
+                       M31.GetHashCode() + M32.GetHashCode() + M33.GetHashCode() + M34.GetHashCode() +
+                       M41.GetHashCode() + M42.GetHashCode() + M43.GetHashCode() + M44.GetHashCode();
+            }
+        }
     }
 }

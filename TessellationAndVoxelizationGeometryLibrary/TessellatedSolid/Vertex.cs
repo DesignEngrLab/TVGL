@@ -147,7 +147,7 @@ namespace TVGL
         [JsonIgnore]
         public List<PolygonalFace> Faces { get; private set; }
 
-        double[] IVertex.Position => throw new NotImplementedException();
+        double[] IVertex.Position => Coordinates.Position;
 
         #endregion
     }

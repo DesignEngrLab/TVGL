@@ -259,8 +259,8 @@ namespace TVGL.IOFunctions
         }
         public static Solid Open(Stream s, string filename = "")
         {
-            try
-            {
+            //try
+            //{
                 var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
@@ -299,11 +299,11 @@ namespace TVGL.IOFunctions
                             return (Solid)JsonConvert.DeserializeObject(jObject.ToString(), type);
                         }
                 }
-            }
-            catch (Exception exc)
-            {
-                throw new Exception("Cannot open file. Message: " + exc.Message);
-            }
+            //}
+            //catch (Exception exc)
+            //{
+            //    throw new Exception("Cannot open file. Message: " + exc.Message);
+            //}
         }
 
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid solid)

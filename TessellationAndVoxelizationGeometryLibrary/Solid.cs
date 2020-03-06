@@ -157,8 +157,6 @@ namespace TVGL
             HasUniformColor = true;
             SolidColor = new Color(Constants.DefaultColor);
             Bounds = new Vector3[2];
-            Bounds[0] = Vector3.Null;
-            Bounds[1] = Vector3.Null;
         }
 
         #endregion

@@ -161,7 +161,7 @@ namespace TVGL.IOFunctions
         {
             var solid = resources.objects.First(obj => obj.id == objectid);
             var result = TessellatedSolidsFromObject(solid, name);
-            if (transformMatrix != null)
+            if (!transformMatrix.IsNull())
                 foreach (var ts in result)
                     ts.Transform(transformMatrix);
             return result;

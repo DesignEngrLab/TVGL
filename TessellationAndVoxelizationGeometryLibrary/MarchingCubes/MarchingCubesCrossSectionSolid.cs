@@ -267,9 +267,9 @@ namespace TVGL
                                     atLeastOneSuccessfulChange = true;
                                 }
                             }
-                            else if (lastSegment.Dot(vFrom) >= 0)
-                            {
-                                var distance =vFrom.Length();
+                            else if (convexSign != 0 && lastSegment.Dot(vFrom) >= 0)
+                            {   // then in the wedge between this segment and lastSegment
+                                var distance = vFrom.Length();
                                 if (distance < convexSign * grid[i, j])
                                 {
                                     grid[i, j] = convexSign * distance;
@@ -283,8 +283,8 @@ namespace TVGL
                     i += xDelta;
                 } while (atLeastOneSuccessfulChange || numSteps <= numStepsInHalfWidth);
             }
-            if (lastSegment.Y * segment.X < 0) // then it is possible there are additional points around the corner that need 
-                                                 //to be evaluated
+            if (convexSign != 0 && lastSegment.Y * segment.X < 0) // then it is possible there are additional points around the corner that need 
+                                               //to be evaluated
             {
                 if (Math.Abs(lastSegment.X) < Math.Abs(lastSegment.Y))
                     ExpandLastCornerHorizontally(fromPoint, lastSegment, grid, iMin, iMax, jMin, jMax, convexSign);
@@ -336,9 +336,9 @@ namespace TVGL
                                     atLeastOneSuccessfulChange = true;
                                 }
                             }
-                            else if (lastSegment.Dot(vFrom) >= 0)
+                            else if (convexSign != 0 && lastSegment.Dot(vFrom) >= 0)
                             {
-                                var distance =vFrom.Length();
+                                var distance = vFrom.Length();
                                 if (distance < convexSign * grid[i, j])
                                 {
                                     grid[i, j] = convexSign * distance;
@@ -357,7 +357,7 @@ namespace TVGL
 
         private void ExpandLastCornerHorizontally(Vector2 fromPoint, Vector2 lastSegment, double[,] grid, int iMin, int iMax, int jMin, int jMax, int convexSign)
         {
-            var magnitude =lastSegment.Length();
+            var magnitude = lastSegment.Length();
             var d = new[] { convexSign * lastSegment.Y / magnitude, -convexSign * lastSegment.X / magnitude }; //unit vector along the band
             var xDelta = Math.Sign(lastSegment.X);
             var yDelta = Math.Sign(lastSegment.Y);

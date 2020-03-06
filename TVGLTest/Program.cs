@@ -6,6 +6,7 @@ using System.Linq;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 
@@ -83,7 +84,7 @@ namespace TVGLPresenterDX
         {
             //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
-            Debug.Listeners.Add(writer);
+            Trace.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir;
             if (Directory.Exists("../../../../TestFiles"))
@@ -97,11 +98,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            //var fileNames = dir.GetFiles("*").ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i++)
+            for (var i = 12; i < fileNames.Count()-30; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -158,11 +159,11 @@ namespace TVGLPresenterDX
                 Slice.OnInfiniteFlat(ts, flat, out var solids, out var contactData);
             else
             {
-                Slice.OnInfiniteFlat(ts, new Flat((ts.XMax + ts.XMin) / 2, new[] { 1.0, 0, 0 }), out var solidsX,
+                Slice.OnInfiniteFlat(ts, new Flat((ts.XMax + ts.XMin) / 2, Vector3.UnitX), out var solidsX,
                     out var contactDataX);
-                Slice.OnInfiniteFlat(ts, new Flat((ts.YMax + ts.YMin) / 2, new[] { 0, 1.0, 0 }), out var solidsY,
+                Slice.OnInfiniteFlat(ts, new Flat((ts.YMax + ts.YMin) / 2, Vector3.UnitY), out var solidsY,
     out var contactDataY);
-                Slice.OnInfiniteFlat(ts, new Flat((ts.ZMax + ts.ZMin) / 2, new[] { 0, 0, 1.0 }), out var solidsZ,
+                Slice.OnInfiniteFlat(ts, new Flat((ts.ZMax + ts.ZMin) / 2, Vector3.UnitZ), out var solidsZ,
     out var contactDataZ);
             }
         }
@@ -191,7 +192,7 @@ namespace TVGLPresenterDX
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
+            var silhouette = TVGL.Silhouette.Run(ts, new Vector3(0.5, 0, 0.5));
             Presenter.ShowAndHang(silhouette);
         }
 

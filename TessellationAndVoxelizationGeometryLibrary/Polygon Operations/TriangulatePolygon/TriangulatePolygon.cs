@@ -141,6 +141,8 @@ namespace TVGL
                     //Removed random value to make function repeatable for debugging.
                     var values = new List<double>() {0.82348, 0.13905, 0.78932, 0.37510 };
                     var theta = values[attempts - 1];
+                    var cosTheta = Math.Cos(theta);
+                    var sinTheta = Math.Sin(theta);
                     var points2Dtemp = points2D;
                     points2D = new List<Point[]>();
                     foreach (var loop in points2Dtemp)
@@ -149,9 +151,9 @@ namespace TVGL
                         var pHighest = double.NegativeInfinity;
                         foreach (var point in loop)
                         {
-                            var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
-                            var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
-                            var newPoint = new Point(pointX, pointY) ;
+                            var pointX = point.X * cosTheta - point.Y * sinTheta;
+                            var pointY = point.X * sinTheta + point.Y * cosTheta;
+                            var newPoint = new Point(point.References[0], pointX, pointY) ;
                             //var newPoint = new Vector2(point.References, pointX, pointY) ;
                             //todo Point References
                             newLoop.Add(newPoint);
@@ -838,7 +840,7 @@ namespace TVGL
                     #endregion
 
                 }
-                catch
+                catch (Exception e)
                 {
                     if (attempts >= 3)
                     {
