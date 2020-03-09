@@ -40,7 +40,7 @@ namespace TVGL
             foreach (var face in faces)
                 face.BelongsToPrimitive = this;
             Area = Faces.Sum(f => f.Area);
-            Vertices = Faces.SelectMany(f => f.Vertices).Distinct().ToList();
+            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
         #endregion
@@ -88,7 +88,7 @@ namespace TVGL
         /// </summary>
         /// <value>The vertices.</value>
         [JsonIgnore]
-        public List<Vertex> Vertices { get; protected set; }
+        public HashSet<Vertex> Vertices { get; protected set; }
 
         public int[] VertexIndices
         {
@@ -107,7 +107,7 @@ namespace TVGL
         /// </summary>
         /// <value>The inner edges.</value>
         [JsonIgnore]
-        public List<Edge> InnerEdges
+        public HashSet<Edge> InnerEdges
         {
             get
             {
@@ -133,7 +133,7 @@ namespace TVGL
         /// </summary>
         /// <value>The outer edges.</value>
         [JsonIgnore]
-        public List<Edge> OuterEdges
+        public HashSet<Edge> OuterEdges
         {
             get
             {
@@ -152,8 +152,8 @@ namespace TVGL
             }
             set { _outerEdgeIndices = value; }
         }
-        private List<Edge> _innerEdges;
-        private List<Edge> _outerEdges;
+        private HashSet<Edge> _innerEdges;
+        private HashSet<Edge> _outerEdges;
         private int[] _faceIndices;
         private int[] _innerEdgeIndices;
         private int[] _outerEdgeIndices;
@@ -177,8 +177,8 @@ namespace TVGL
                     }
                 }
             }
-            _outerEdges = outerEdgeHash.ToList();
-            _innerEdges = innerEdgeHash.ToList();
+            _outerEdges = outerEdgeHash;
+            _innerEdges = innerEdgeHash;
         }
 
         /// <summary>
@@ -224,15 +224,15 @@ namespace TVGL
                 Faces.Add(face);
                 face.BelongsToPrimitive = this;
             }
-            Vertices = new List<Vertex>();
+            Vertices = new HashSet<Vertex>();
             foreach (var i in _vertexIndices)
                 Vertices.Add(ts.Vertices[i]);
 
-            _innerEdges = new List<Edge>();
+            _innerEdges = new HashSet<Edge>();
             foreach (var i in _innerEdgeIndices)
                 _innerEdges.Add(ts.Edges[i]);
 
-            _outerEdges = new List<Edge>();
+            _outerEdges = new HashSet<Edge>();
             foreach (var i in _outerEdgeIndices)
                 _outerEdges.Add(ts.Edges[i]);
             Area = Faces.Sum(f => f.Area);
@@ -307,6 +307,37 @@ namespace TVGL
                 loops.Add(loop);
             }
             return (allLoopsClosed, edgeLoops, loops);
+        }
+
+        public bool BoundsHaveBeenSet = false;
+        public double MaxX;
+        public double MinX;
+        public double MaxY;
+        public double MinY;
+        public double MaxZ;
+        public double MinZ;
+        public void SetBounds(bool ignoreIfAlreadySet = true)
+        {
+            if (BoundsHaveBeenSet && ignoreIfAlreadySet) return;
+            BoundsHaveBeenSet = true;
+            MaxX = double.MinValue;
+            MinX = double.MaxValue;
+            MaxY = double.MinValue;
+            MinY = double.MaxValue;
+            MaxZ = double.MinValue;
+            MinZ = double.MaxValue;
+            foreach (var v in Vertices)
+            {
+                var x = v.X;
+                var y = v.Y;
+                var z = v.Z;
+                if (x > MaxX) MaxX = x;
+                if (x < MinX) MinX = x;
+                if (y > MaxY) MaxY = y;
+                if (y < MinY) MinY = y;
+                if (z > MaxZ) MaxZ = z;
+                if (z < MinZ) MinZ = z;
+            }
         }
     }
 }

@@ -116,8 +116,8 @@ namespace TVGL
             var (allLoopsClosed, edgeLoops, loops) = GetLoops(edges, true);
             if (loops.Count != 2) return false; //There must be two and only two loops.
 
-            Loop1 = loops[0];
-            Loop2 = loops[1];
+            Loop1 = new HashSet<Vertex>(loops[0]);
+            Loop2 = new HashSet<Vertex>(loops[1]);
             EdgeLoop1 = edgeLoops[0];
             EdgeLoop2 = edgeLoops[1];
 
@@ -141,6 +141,10 @@ namespace TVGL
                 {
                     var A = i == 0 ? edge.To : edge.From;
                     var B = i == 0 ? edge.From : edge.To;
+                    var direction = edge.Vector.normalize();
+                    //Positive if B is further along
+                    var previousDistance = direction.dotProduct(B.Position);
+                    var sign = Math.Sign(direction.dotProduct(B.Position) - direction.dotProduct(A.Position));
                     if (Loop1.Contains(A))
                     {
                         bool reachedEnd = Loop2.Contains(B);
@@ -159,6 +163,9 @@ namespace TVGL
                                     if (!InnerEdges.Contains(otherEdge)) continue;
                                     var edgeDot = Math.Abs(otherEdge.Vector.Normalize().Dot(previousEdge.Vector.Normalize()));
                                     if (!edgeDot.IsPracticallySame(1.0, Constants.ErrorForFaceInSurface)) continue;
+                                    var distance = sign * (direction.dotProduct(otherEdge.OtherVertex(previousVertex).Position) - previousDistance);
+                                    if (!distance.IsGreaterThanNonNegligible()) continue; //This vertex is not any further along
+
                                     //Choose the edge that is most along the previous edge
                                     if (edgeDot > maxDot)
                                     {
@@ -273,9 +280,9 @@ namespace TVGL
         /// <value>The radius.</value>
         public double Radius { get; set; }
 
-        public List<Vertex> Loop1 { get; set; }
+        public HashSet<Vertex> Loop1 { get; set; }
 
-        public List<Vertex> Loop2 { get; set; }
+        public HashSet<Vertex> Loop2 { get; set; }
 
         public List<Edge> EdgeLoop1 { get; set; }
 

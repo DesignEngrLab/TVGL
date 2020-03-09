@@ -72,6 +72,7 @@ namespace TVGLPresenterDX
             this.ModelTransform = new TranslateTransform3D(0, 0, 0);
 
             this.ModelGeometry = new GroupModel3D();
+            this.ModelGeometry.ItemsSource = new ObservableCollection<Element3D>(); 
         //    RenderTechniquesManager = new DefaultRenderTechniquesManager();
             EffectsManager = new DefaultEffectsManager();
         }
@@ -80,7 +81,6 @@ namespace TVGLPresenterDX
         public void AttachModelList(IList<MeshGeometryModel3D> model3Ds)
         {
             this.ModelTransform = new TranslateTransform3D(0, 0, 0);
-            this.ModelGeometry = new GroupModel3D();
             foreach (var model3D in model3Ds)
             {
                 this.ModelGeometry.ItemsSource.Add(model3D);

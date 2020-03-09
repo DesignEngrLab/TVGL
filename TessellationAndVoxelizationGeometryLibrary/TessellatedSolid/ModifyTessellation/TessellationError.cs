@@ -138,5 +138,52 @@ namespace TVGL
         ///   <c>true</c> if [model is inside out]; otherwise, <c>false</c>.
         /// </value>
         public bool ModelIsInsideOut { get; internal set; }
+
+        public int Count()
+        {
+            if (NoErrors) return 0;
+            int count = 0;
+            if (DegenerateFaces != null) count += DegenerateFaces.Count;
+            if (DuplicateFaces != null) count += DuplicateFaces.Count;
+            if (EdgesThatDoNotLinkBackToFace != null) count += EdgesThatDoNotLinkBackToFace.Count;
+            if (EdgesThatDoNotLinkBackToVertex != null) count += EdgesThatDoNotLinkBackToVertex.Count;
+            if (EdgesWithBadAngle != null) count += EdgesWithBadAngle.Count;
+            if (FacesThatDoNotLinkBackToEdge != null) count += FacesThatDoNotLinkBackToEdge.Count;
+            if (FacesThatDoNotLinkBackToVertex != null) count += FacesThatDoNotLinkBackToVertex.Count;
+            if (FacesWithNegligibleArea != null) count += FacesWithNegligibleArea.Count;
+            if (FacesWithOneEdge != null) count += FacesWithOneEdge.Count;
+            if (FacesWithOneVertex != null) count += FacesWithOneVertex.Count;
+            if (FacesWithTwoEdges != null) count += FacesWithTwoEdges.Count;
+            if (FacesWithTwoVertices != null) count += FacesWithTwoVertices.Count;
+            if (OverusedEdges != null) count += OverusedEdges.Count;
+            if (SingledSidedEdges != null) count += SingledSidedEdges.Count;
+            if (VertsThatDoNotLinkBackToEdge != null) count += VertsThatDoNotLinkBackToEdge.Count;
+            if (VertsThatDoNotLinkBackToFace != null) count += VertsThatDoNotLinkBackToFace.Count;
+            return count;
+        }
+
+        public string Report()
+        {
+            if (NoErrors) return "No Errors";
+            string report = "";
+            if (DegenerateFaces != null) report += "DegenerateFaces: " + DegenerateFaces.Count + "\n";
+            if (DuplicateFaces != null) report += "DuplicateFaces: " + DuplicateFaces.Count + "\n";
+            if (EdgesThatDoNotLinkBackToFace != null) report += "EdgesThatDoNotLinkBackToFace: " + EdgesThatDoNotLinkBackToFace.Count + "\n";
+            if (EdgesThatDoNotLinkBackToVertex != null) report += "EdgesThatDoNotLinkBackToVertex: " + EdgesThatDoNotLinkBackToVertex.Count + "\n";
+            if (EdgesWithBadAngle != null) report += "EdgesWithBadAngle: " + EdgesWithBadAngle.Count + "\n";
+            if (FacesThatDoNotLinkBackToEdge != null) report += "FacesThatDoNotLinkBackToEdge: " + FacesThatDoNotLinkBackToEdge.Count + "\n";
+            if (FacesThatDoNotLinkBackToVertex != null) report += "FacesThatDoNotLinkBackToVertex: " + FacesThatDoNotLinkBackToVertex.Count + "\n";
+            if (FacesWithNegligibleArea != null) report += "FacesWithNegligibleArea: " + FacesWithNegligibleArea.Count + "\n";
+            if (FacesWithOneEdge != null) report += "FacesWithOneEdge: " + FacesWithOneEdge.Count + "\n";
+            if (FacesWithOneVertex != null) report += "FacesWithOneVertex: " + FacesWithOneVertex.Count + "\n";
+            if (FacesWithTwoEdges != null) report += "FacesWithTwoEdge: " + FacesWithTwoEdges.Count + "\n";
+            if (FacesWithTwoVertices != null) report += "FacesWithTwoVertices: " + FacesWithTwoVertices.Count + "\n";
+            if(ModelIsInsideOut) report += "ModelIsInsideOut: " + ModelIsInsideOut + "\n";
+            if (OverusedEdges != null) report += "OverusedEdges: " + OverusedEdges.Count + "\n";
+            if (SingledSidedEdges != null) report += "SingledSidedEdges: " + SingledSidedEdges.Count + "\n";
+            if (VertsThatDoNotLinkBackToEdge != null) report += "VertsThatDoNotLinkBackToEdge: " + VertsThatDoNotLinkBackToEdge.Count + "\n";
+            if (VertsThatDoNotLinkBackToFace != null) report += "VertsThatDoNotLinkBackToFace: " + VertsThatDoNotLinkBackToFace.Count;
+            return report;
+        }
     }
 }

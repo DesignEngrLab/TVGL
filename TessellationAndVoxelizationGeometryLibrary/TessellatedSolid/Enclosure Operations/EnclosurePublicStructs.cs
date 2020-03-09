@@ -55,7 +55,7 @@ namespace TVGL
 
         /// <summary>
         ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
-        ///     [0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
+        ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
         /// </summary>
         public Vertex[] CornerVertices;
 
