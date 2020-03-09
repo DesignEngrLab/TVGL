@@ -34,14 +34,13 @@
 // <summary></summary>
 // ***********************************************************************
 
+using OxyPlot;
+using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using OxyPlot;
-using OxyPlot.Series;
 using TVGL.Numerics;
-using DataPointSeries = OxyPlot.Wpf.DataPointSeries;
 
 namespace TVGL
 {

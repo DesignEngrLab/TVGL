@@ -1,8 +1,7 @@
 ﻿<Window x:Class="TVGL.Window3DPlot"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
-               
-        xmlns:helix="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf" 
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:h="http://helix-toolkit.org/wpf"
         Title="CameraControlDemo" Height="480" Width="640" Loaded="GridLines_OnChecked">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
@@ -73,18 +72,18 @@
                 </Grid>
             </MenuItem>
         </Menu>
-        <helix:HelixViewport3D x:Name="view1" ZoomExtentsWhenLoaded="False">
+        <h:HelixViewport3D x:Name="view1" ZoomExtentsWhenLoaded="False">
             <!--     <helix:HelixViewport3D.DefaultCamera />
                <PerspectiveCamera Position="100,100,100" LookDirection="-100,-100,-100" UpDirection="0,0,1" FieldOfView="61" NearPlaneDistance="0.001"/>-->
 
             <!--<helix:SunLight/>
             <helix:DirectionalHeadLight Position="{Binding Headlight1}" Brightness="{Binding Brightness}"/>
             <helix:DirectionalHeadLight Position="{Binding Headlight2}" Brightness="{Binding Brightness}"/>-->
-            <helix:SunLight x:Name="sunLight" Altitude="{Binding Altitude}" Azimuth="{Binding Azimuth}" Brightness="{Binding Brightness}" Ambient="{Binding Ambient}"/>
+            <h:SunLight x:Name="sunLight" Altitude="{Binding Altitude}" Azimuth="{Binding Azimuth}" Brightness="{Binding Brightness}" Ambient="{Binding Ambient}"/>
 
             <!--<helix:SphereVisual3D Radius="5"/>
             <helix:SphereVisual3D Center="5,0,0" Radius="1" Fill="White"/>-->
-            <helix:GridLinesVisual3D x:Name="GridLines" Visible="False"/>
-        </helix:HelixViewport3D>
+            <h:GridLinesVisual3D x:Name="GridLines" Visible="False"/>
+        </h:HelixViewport3D>
     </DockPanel>
 </Window>

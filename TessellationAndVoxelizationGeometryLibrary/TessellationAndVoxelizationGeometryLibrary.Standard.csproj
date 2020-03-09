@@ -34,22 +34,6 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Numerics\BitOperations.cs" />
-    <Compile Remove="Numerics\ConstantHelper.cs" />
-    <Compile Remove="Numerics\Register.cs" />
-    <Compile Remove="Numerics\Vector.cs" />
-    <Compile Remove="Numerics\Vector4.cs" />
-    <Compile Remove="Numerics\Vector4_Intrinsics.cs" />
-    <Compile Remove="Numerics\VectorMath.cs" />
-    <Compile Remove="Numerics\Vector_Operations.cs" />
-  </ItemGroup>
-
-
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
@@ -58,23 +42,4 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
-
-
-  <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-
-
 </Project>

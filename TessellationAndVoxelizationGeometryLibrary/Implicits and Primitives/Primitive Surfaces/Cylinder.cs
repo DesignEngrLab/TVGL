@@ -141,10 +141,10 @@ namespace TVGL
                 {
                     var A = i == 0 ? edge.To : edge.From;
                     var B = i == 0 ? edge.From : edge.To;
-                    var direction = edge.Vector.normalize();
+                    var direction = edge.Vector.Normalize();
                     //Positive if B is further along
-                    var previousDistance = direction.dotProduct(B.Position);
-                    var sign = Math.Sign(direction.dotProduct(B.Position) - direction.dotProduct(A.Position));
+                    var previousDistance = direction.Dot(B.Coordinates);
+                    var sign = Math.Sign(direction.Dot(B.Coordinates) - direction.Dot(A.Coordinates));
                     if (Loop1.Contains(A))
                     {
                         bool reachedEnd = Loop2.Contains(B);
@@ -163,7 +163,7 @@ namespace TVGL
                                     if (!InnerEdges.Contains(otherEdge)) continue;
                                     var edgeDot = Math.Abs(otherEdge.Vector.Normalize().Dot(previousEdge.Vector.Normalize()));
                                     if (!edgeDot.IsPracticallySame(1.0, Constants.ErrorForFaceInSurface)) continue;
-                                    var distance = sign * (direction.dotProduct(otherEdge.OtherVertex(previousVertex).Position) - previousDistance);
+                                    var distance = sign * (direction.Dot(otherEdge.OtherVertex(previousVertex).Coordinates) - previousDistance);
                                     if (!distance.IsGreaterThanNonNegligible()) continue; //This vertex is not any further along
 
                                     //Choose the edge that is most along the previous edge
