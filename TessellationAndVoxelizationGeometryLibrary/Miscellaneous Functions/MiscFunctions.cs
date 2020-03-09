@@ -2138,36 +2138,6 @@ namespace TVGL
 
         /// <summary>
         ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
-        ///     triangle are considered "inside."
-        /// </summary>
-        /// <param name="triangle">The triangle.</param>
-        /// <param name="vertexInQuestion">The vertex in question.</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        /// <returns><c>true</c> if [is point inside triangle] [the specified triangle]; otherwise, <c>false</c>.</returns>
-        public static bool IsVertexInsideTriangle(PolygonalFace triangle, Vertex vertexInQuestion,
-            bool onBoundaryIsInside = true)
-        {
-            return IsVertexInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
-        }
-
-        /// <summary>
-        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
-        ///     triangle are considered "inside."
-        /// </summary>
-        /// <param name="triangle">The vertices.</param>
-        /// <param name="vertexInQuestion">The vertex in question.</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        /// <returns><c>true</c> if [is point inside triangle] [the specified vertices]; otherwise, <c>false</c>.</returns>
-        /// <exception cref="Exception">Incorrect number of points in traingle</exception>
-        /// <exception cref="ArgumentException"></exception>
-        public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vertex vertexInQuestion,
-            bool onBoundaryIsInside = true)
-        {
-            return IsVertexInsideTriangle(triangle, vertexInQuestion.Coordinates, onBoundaryIsInside);
-        }
-
-        /// <summary>
-        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
         ///     triangle are considered "inside." Assumes vertex in question is in the same plane
         ///     as the triangle.
         /// </summary>
@@ -2246,7 +2216,7 @@ namespace TVGL
                     var newVertex = t.IsNegligible()
                         ? vertexInQuestion
                         : new Vertex(vertexInQuestion.Coordinates + (direction * t));
-                    if (!IsVertexInsideTriangle(face, newVertex)) continue;
+                    if (!IsVertexInsideTriangle(face.Vertices, newVertex.Coordinates)) continue;
                     //If the distance between the vertex and a plane is neglible and the vertex is inside that face
                     if (t.IsNegligible())
                     {

@@ -88,7 +88,7 @@ namespace TVGL
                 RotatorEdge = rotatorEdge;
                 RotatorVector = rotatorVector;
                 OrthGaussSphereArcs = new List<GaussSphereArc>();
-                // make arrays of the dotproducts with start and end directions (x-values) to help subsequent
+                // make arrays of the Dots with start and end directions (x-values) to help subsequent
                 // foreach loop which will look up faces multiple times.
                 var startingDots = new double[convexHull.Faces.Length];
                 for (var i = 0; i < convexHull.Faces.Length; i++)

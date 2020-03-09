@@ -59,7 +59,7 @@ namespace TVGL
             if (Faces.Contains(face)) return false;
             if (!face.Normal.Dot(Normal).IsPracticallySame(1.0, Tolerance)) return false;
             //Return true if all the vertices are within the tolerance 
-            //Note that the dotProduct term and distance to origin, must have the same sign, 
+            //Note that the Dot term and distance to origin, must have the same sign, 
             //so there is no additional need moth absolute value methods.
             return face.Vertices.All(v => Normal.Dot(v.Coordinates).IsPracticallySame(DistanceToOrigin, Tolerance));
         }

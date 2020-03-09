@@ -72,6 +72,7 @@ namespace TVGL.Numerics
 
         #endregion
 
+        #region Vector3
         public static double Distance(this Vector3 value1, Vector3 value2)
         { return Vector3.Distance(value1, value2); }
 
@@ -136,7 +137,9 @@ namespace TVGL.Numerics
 
         public static double Dot(this Vector3 vector1, Vector3 vector2)
         { return Vector3.Dot(vector1, vector2); }
+        #endregion
 
+        #region Matrix3x3 and Matrix4x4
 
         public static Matrix3x3 Transpose(this Matrix3x3 matrix)
         { return Matrix3x3.Transpose(matrix); }
@@ -145,7 +148,7 @@ namespace TVGL.Numerics
         public static Matrix4x4 Transpose(this Matrix4x4 matrix)
         { return Matrix4x4.Transpose(matrix); }
 
-
+        #endregion
 
     }
 }

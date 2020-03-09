@@ -330,14 +330,14 @@ namespace TVGL
             if (numSides == 0) // this would happen if the face collapse to a line.
                 return new Vector3(double.NaN, double.NaN, double.NaN);
             // before we just average these normals, let's check that they agree.
-            // the dotProductsOfNormals simply takes the dot product of adjacent
+            // the DotsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
-            var dotProductsOfNormals = new List<double>();
-            dotProductsOfNormals.Add(normals[0].Dot(normals[numSides - 1]));
-            for (var i = 1; i < numSides; i++) dotProductsOfNormals.Add(normals[i].Dot(normals[i - 1]));
+            var DotsOfNormals = new List<double>();
+            DotsOfNormals.Add(normals[0].Dot(normals[numSides - 1]));
+            for (var i = 1; i < numSides; i++) DotsOfNormals.Add(normals[i].Dot(normals[i - 1]));
             // if all are close to one (or at least positive), then the face is a convex polygon. Now,
             // we can simply average and return the answer.
-            var isConvex = dotProductsOfNormals.All(x => x > 0);
+            var isConvex = DotsOfNormals.All(x => x > 0);
             if (isConvex)
             {
                 var newNormal = normals.Aggregate((current, c) => current + c).Normalize();
@@ -352,14 +352,14 @@ namespace TVGL
             if (prevNormal != null)
             {
                 //
-                // well, here the guess may be useful. We'll insert it into the list of dotProducts
+                // well, here the guess may be useful. We'll insert it into the list of Dots
                 // and then do a tally
-                dotProductsOfNormals[0] = prevNormal.Dot(normals[0]);
-                dotProductsOfNormals.Insert(0, prevNormal.Dot(normals[numSides - 1]));
+                DotsOfNormals[0] = prevNormal.Dot(normals[0]);
+                DotsOfNormals.Insert(0, prevNormal.Dot(normals[numSides - 1]));
             }
             var likeFirstNormal = true;
             var numLikeFirstNormal = 1;
-            foreach (var d in dotProductsOfNormals)
+            foreach (var d in DotsOfNormals)
             {
                 // this tricky little function keeps track of how many are in the same direction
                 // as the first one.

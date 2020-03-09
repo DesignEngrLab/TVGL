@@ -170,24 +170,24 @@ namespace TVGL
                 // should be paired together. 
                 while (candidateFaces.Count > 1 && numFailedTries < candidateFaces.Count)
                 {
-                    var highestDotProduct = -2.0;
+                    var highestDot = -2.0;
                     PolygonalFace bestMatch = null;
                     var refFace = candidateFaces[0];
                     candidateFaces.RemoveAt(0);
                     var refOwnsEdge = FaceShouldBeOwnedFace(edge, refFace);
                     foreach (var candidateMatchingFace in candidateFaces)
                     {
-                        var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
+                        var DotScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
                             ? -2 //edge cannot be owned by both faces, thus this is not a good candidate for this.
                             : refFace.Normal.Dot(candidateMatchingFace.Normal);
                         //  To take it "out of the running", we simply give it a value of -2
-                        if (dotProductScore > highestDotProduct)
+                        if (DotScore > highestDot)
                         {
-                            highestDotProduct = dotProductScore;
+                            highestDot = DotScore;
                             bestMatch = candidateMatchingFace;
                         }
                     }
-                    if (highestDotProduct > -1)
+                    if (highestDot > -1)
                     // -1 is a valid dot-product but it is not practical to match faces with completely opposite
                     // faces
                     {
