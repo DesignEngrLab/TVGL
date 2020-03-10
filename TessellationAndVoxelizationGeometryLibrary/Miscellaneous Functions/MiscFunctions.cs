@@ -30,11 +30,11 @@ namespace TVGL
         #region Sort Along Direction
 
         /// <summary>
-        ///     Returns a list of sorted vertices along a set direction. 
+        ///     Returns a list of sorted locations along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="sortedVertices">The sorted vertices.</param>
+        /// <param name="vertices">The locations.</param>
+        /// <param name="sortedVertices">The sorted locations.</param>
         public static void SortAlongDirection(Vector3 direction, IEnumerable<Vertex> vertices,
             out List<(Vertex, double)> sortedVertices)
         {
@@ -45,16 +45,16 @@ namespace TVGL
             var vertexDistances = GetVertexDistances(direction, vertices);
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
-            //tolerance as the "isNeglible" star math function 
+            //toleranceForCombiningPoints as the "isNeglible" star math function 
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
         /// <summary>
-        ///     Returns a list of sorted vertices along a set direction. 
+        ///     Returns a list of sorted locations along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="sortedVertices">The sorted vertices.</param>
+        /// <param name="vertices">The locations.</param>
+        /// <param name="sortedVertices">The sorted locations.</param>
         public static void SortAlongDirection(Vector3 direction, IEnumerable<Vertex> vertices,
             out List<Vertex> sortedVertices)
         {
@@ -65,7 +65,7 @@ namespace TVGL
             var vertexDistances = GetVertexDistances(direction, vertices);
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
-            //tolerance as the "isNeglible" star math function 
+            //toleranceForCombiningPoints as the "isNeglible" star math function 
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).Select(p => p.Item1).ToList();
         }
 
@@ -77,7 +77,7 @@ namespace TVGL
             var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal) + 1)));
             foreach (var vertex in vertices)
             {
-                //Get distance along the search direction with accuracy to the 15th decimal place to match StarMath
+                //Get distance along the search direction
                 var d = Math.Round(direction.Dot(vertex.Coordinates), tolerance);
                 vertexDistances.Add((vertex, d));
             }
@@ -222,7 +222,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the Perimeter (length of a loop) of a 3D set of Vertices.
+        /// Gets the Perimeter (length of a locations) of a 3D set of Vertices.
         /// </summary>
         /// <param name="polygon3D"></param>
         /// <returns></returns>
@@ -241,7 +241,7 @@ namespace TVGL
         /// Gets a collection of faces with distinct normals. These are the largest faces within the set with common normal. 
         /// </summary>
         /// <param name="faces">The faces.</param>
-        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="removeOpposites">if set to <c>true</c> [remove opposites].</param>
         /// <returns>List&lt;PolygonalFace&gt;.</returns>
         public static List<PolygonalFace> FacesWithDistinctNormals(IEnumerable<PolygonalFace> faces,
@@ -278,7 +278,7 @@ namespace TVGL
         ///     Gets a list of flats for a given list of faces.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
         public static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
@@ -291,7 +291,7 @@ namespace TVGL
 
             //Use an IEnumerable class (List) for iterating through each part, and then the 
             //"Contains" function to see if it was already used. This is actually much faster
-            //than using a while loop with a ".Any" and ".First" call on the Hashset.
+            //than using a while locations with a ".Any" and ".First" call on the Hashset.
             foreach (var startFace in faces)
             {
                 //If this faces has already been used, continue to the next face
@@ -302,7 +302,7 @@ namespace TVGL
                 var flat = new Flat(flatHashSet) { Tolerance = tolerance };
                 //Stacks are fast for "Push" and "Pop".
                 //Add all the adjecent faces from the first face to the stack for 
-                //consideration in the while loop below.
+                //consideration in the while locations below.
                 var stack = new Stack<PolygonalFace>(flatHashSet);
                 var reDefineFlat = 3;
                 while (stack.Any())
@@ -310,7 +310,7 @@ namespace TVGL
                     var newFace = stack.Pop();
                     //Add new adjacent faces to the stack for consideration
                     //if the faces are already listed in the flat faces, the first
-                    //"if" statement in the while loop will ignore them.
+                    //"if" statement in the while locations will ignore them.
                     foreach (var adjacentFace in newFace.AdjacentFaces)
                     {
                         if (adjacentFace == null) continue;
@@ -413,11 +413,11 @@ namespace TVGL
                 iY = kY; //move i to k
                 iX = kX;
             }
-            //Final wrap around terms (Note: this is faster than checking an if condition in the for loop).
+            //Final wrap around terms (Note: this is faster than checking an if condition in the for locations).
             var pN = polygon[n - 1];
             area += p0.X * (p1.Y - pN.Y);
             area += pN.X * (p0.Y - polygon[n - 2].Y);
-            //If all x's were the same, we still need to check the last point, since i doesn't do it in the loop.
+            //If all x's were the same, we still need to check the last point, since i doesn't do it in the locations.
             if (returnZero && pN.X.IsPracticallySame(xval)) return 0.0;
 
             return area / 2;
@@ -437,7 +437,7 @@ namespace TVGL
             var ay = Math.Abs(normal.Y);
             var az = Math.Abs(normal.Z);
 
-            //Make a new list from the loop
+            //Make a new list from the locations
             var vertices = new List<Vertex>(loop);
             //Add the first vertex to the end
             vertices.Add(vertices.First());
@@ -515,7 +515,7 @@ namespace TVGL
             var ay = Math.Abs(normal.Y);
             var az = Math.Abs(normal.Z);
 
-            //Make a new list from the loop
+            //Make a new list from the locations
             var vertices = new List<Vector3>(loop);
             //Add the first vertex to the end
             vertices.Add(vertices.First());
@@ -626,358 +626,312 @@ namespace TVGL
 
         #region Flatten to 2D
 
-
+        #region change 3D vertices into 2D Points (objects with reference to vertex)
         /// <summary>
-        ///     Returns an array of points projected along the given direction onto an x-y plane.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
-            bool mergeDuplicateReferences = false)
-        {
-            var transform = TransformToXYPlane(direction);
-            return Get2DProjectionPoints(vertices, transform, mergeDuplicateReferences);
-        }
-
-        /// <summary>
-        ///     Returns an array of points projected along the given direction onto an x-y plane.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="mergeDuplicateTolerance">The merge duplicate references.</param>
-        /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction, double mergeDuplicateTolerance)
-        {
-            if (mergeDuplicateTolerance.IsNegligible()) mergeDuplicateTolerance = Constants.BaseTolerance; //Minimum allowed tolerance.
-            var transform = TransformToXYPlane(direction);
-            return Get2DProjectionPoints(vertices, transform, true, mergeDuplicateTolerance);
-        }
-
-        /// <summary>
-        ///     Returns an array of points projected along the given direction onto an x-y plane.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// Returns newly created 2D points projected along the given direction.
+        /// Points will contain the vertices in their references. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
-        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Vector3 direction,
-            out Matrix4x4 backTransform,
-            bool mergeDuplicateReferences = false)
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point. 
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at 
+        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
+        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
+        /// to define some polygon with order dictating the definition of edges.</param>
+        /// 
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Point&gt;.</returns>
+        public static IEnumerable<Point> ProjectVerticesTo2DPoints(this IEnumerable<Vertex> vertices, Vector3 direction,
+            out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return Get2DProjectionPoints(vertices, transform, mergeDuplicateReferences);
+            return ProjectVerticesTo2DPoints(vertices, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
         }
 
         /// <summary>
-        ///     Returns an array of points projected using the given transform.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// Returns newly created 2D points projected using the given transform.
+        /// Points will contain the vertices in their references. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="transform">The transform.</param>
-        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        /// <param name="sameTolerance">The same tolerance.</param>
-        /// <returns>Point[].</returns>
-        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, Matrix4x4 transform,
-            bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
+        /// <param name="transform">The transform matrix.</param>
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
+        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
+        /// to define some polygon with order dictating the definition of edges.</param>
+        /// 
+        /// /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Point&gt;.</returns>
+        public static IEnumerable<Point> ProjectVerticesTo2DPoints(this IEnumerable<Vertex> vertices, Matrix4x4 transform,
+            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
         {
-            var points = new List<Point>();
-            var simpleCompareDict = new Dictionary<string, Point>();
-            var numDecimalPoints = 0;
-            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
-            var stringformat = "F" + numDecimalPoints;
-            foreach (var vertex in vertices)
+            if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
             {
-                var point = Get2DProjectionPoint(vertex, transform);
-                if (!mergeDuplicateReferences)
+                foreach (var vertex in vertices)
                 {
-                    points.Add(new Point(vertex, point.X, point.Y));
+                    var point = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                    yield return new Point(vertex, point.X, point.Y);
                 }
-                else
+            }
+            else
+            {
+                var numDecimalPoints = 0;
+                var simpleCompareDict = new Dictionary<string, Point>();
+                while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
+                    numDecimalPoints++;
+                var stringformat = "F" + numDecimalPoints;
+
+                foreach (var vertex in vertices)
                 {
-                    point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
-                    // todo....is this lookupString to slow
-                    var lookupString = point.X.ToString(stringformat) + "|"
-                                       + point.Y.ToString(stringformat);
+                    var point = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                    var lookupString = point.X.ToString(stringformat) + "|" + point.Y.ToString(stringformat);
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
-                        /* if it's in the dictionary, Add reference and move to the next vertex */
-                        if (simpleCompareDict[lookupString].References != null)
-                        {
-                            simpleCompareDict[lookupString].References.Add(vertex);
-                        }
+                        var oldPoint = simpleCompareDict[lookupString];
+                        oldPoint.References.Add(vertex);
+                        if (duplicateEntriesToMaintainPolygonalOrdering) yield return oldPoint;
                     }
                     else
                     {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
-                        * the position in the locationIndices. */
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. */
+                        point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
                         var point2D = new Point(vertex, point.X, point.Y);
                         simpleCompareDict.Add(lookupString, point2D);
-                        points.Add(point2D);
+                        yield return point2D;
                     }
                 }
             }
-            return points.ToArray();
         }
+        #endregion
 
+        #region change 3D vertices into 2D coordinates (e.g. Vector2's)
         /// <summary>
-        ///     Returns an array of points projected along the given direction onto an x-y plane.
-        ///     The point z-values will be zero. This does not destructively alter the vertices. 
-        ///     Additionally, this function will keep the loops in their original positive/negative
-        ///     orientation.
-        /// </summary>
-        /// <param name="loop"></param>
-        /// <param name="direction"></param>
-        /// <param name="backTransform"></param>
-        /// <param name="tolerance"></param>
-        /// 
-        /// <returns></returns>
-        public static List<Vector2> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, Vector3 direction,
-            out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
-        {
-            var enumerable = loop as IList<Vertex> ?? loop.ToList();
-            var area1 = AreaOf3DPolygon(enumerable, direction);
-            var path = Get2DProjectionPointsAsLight(enumerable, direction, out backTransform);
-            var area2 = AreaOfPolygon(path);
-            var dif = area1 - area2;
-            var successful = false;
-            var attempts = 0;
-            //Try up to three times if not successful, expanding the tolerance each time
-            while (!successful && attempts < 4)
-            {
-                //For every attempt greater than zero, expand the tolerance by taking its square root
-                if (attempts > 0) tolerance = Math.Sqrt(tolerance);
-
-                try
-                {
-                    if (dif.IsNegligible(tolerance))
-                    {
-                        successful = true;
-                    }
-                    else
-                    {
-                        if ((-area1).IsPracticallySame(area2, tolerance))
-                        {
-                            dif = area1 + area2;
-                            path.Reverse();
-                            successful = true;
-                        }
-                        else
-                        {
-                            attempts++;
-                            //throw new Exception("area mismatch during 2D projection");
-                        }
-                    }
-                }
-                catch
-                {
-                    attempts++;
-                }
-            }
-            if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
-            return path;
-        }
-
-
-        /// <summary>
-        ///     Returns an array of points projected along the given direction onto an x-y plane.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+        /// These coordinates do not contain references back to the original vertices but are lighter and
+        /// quicker. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
-        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        /// <returns>Point2D[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector3 direction,
-            out Matrix4x4 backTransform,
-            bool mergeDuplicateReferences = false)
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
+        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
+        /// to define some polygon with order dictating the definition of edges.</param>
+        /// 
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        public static IEnumerable<Vector2> ProjectVerticesTo2DCoordinates(this IEnumerable<Vertex> vertices, Vector3 direction,
+                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
-        }
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vector3> vertices, Vector3 direction,
-            out Matrix4x4 backTransform,
-            bool mergeDuplicateReferences = false)
-        {
-            var transform = TransformToXYPlane(direction, out backTransform);
-            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
+            return ProjectVerticesTo2DCoordinates(vertices, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
         }
 
         /// <summary>
-        ///     Returns an array of points projected along the given direction onto an x-y plane.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+        /// These coordinates do not contain references back to the original vertices but are lighter and
+        /// quicker. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        /// <returns>Point2D[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Vector3 direction,
-            bool mergeDuplicateReferences = false)
+        /// <param name="transform">The transform matrix.</param>
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
+        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
+        /// to define some polygon with order dictating the definition of edges.</param>
+        /// 
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        public static IEnumerable<Vector2> ProjectVerticesTo2DCoordinates(this IEnumerable<Vertex> vertices, Matrix4x4 transform,
+            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
         {
-            var transform = TransformToXYPlane(direction);
-            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
-        }
-
-        /// <summary>
-        ///     Returns an array of points projected using the given transform.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="transform">The transform.</param>
-        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        /// <param name="sameTolerance">The same tolerance.</param>
-        /// <returns>Point[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, Matrix4x4 transform,
-            bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
-        {
-            var points = new List<Vector2>();
-            var simpleCompareDict = new Dictionary<string, Vector2>();
-            var numDecimalPoints = 0;
-            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
-            var stringformat = "F" + numDecimalPoints;
-            foreach (var vertex in vertices)
+            if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
             {
-                var point = Get2DProjectionPoint(vertex, transform);
-                if (!mergeDuplicateReferences)
+                foreach (var vertex in vertices)
+                    yield return Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+            }
+            else
+            {
+                var numDecimalPoints = 0;
+                var simpleCompareDict = new Dictionary<string, Vector2>();
+                while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
+                    numDecimalPoints++;
+                var stringformat = "F" + numDecimalPoints;
+
+                foreach (var vertex in vertices)
                 {
-                    points.Add(new Vector2(point.X, point.Y));
-                }
-                else
-                {
-                    point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
-                    // todo...is this lookupString slow?
-                    var lookupString = point.X.ToString(stringformat) + "|"
-                                       + point.Y.ToString(stringformat);
+                    var point = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                    var lookupString = point.X.ToString(stringformat) + "|" + point.Y.ToString(stringformat);
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
-                        /* if it's in the dictionary, move to the next vertex */
-                        continue;
+                        if (duplicateEntriesToMaintainPolygonalOrdering)
+                            yield return simpleCompareDict[lookupString];
+                    }
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
+                        point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
+                        simpleCompareDict.Add(lookupString, point);
+                        yield return point;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region change 3D locations (e.g. Vector3's) into 2D coordinates (e.g. Vector2's)
+        /// <summary>
+        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+        /// These coordinates do not contain references back to the original locations but are lighter and
+        /// quicker. 
+        /// </summary>
+        /// <param name="vertices">The locations.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="backTransform">The back transform.</param>
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple locations under a single point.
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
+        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
+        /// to define some polygon with order dictating the definition of edges.</param>
+        /// 
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        public static IEnumerable<Vector2> Project3DLocationsTo2DCoordinates(this IEnumerable<Vector3> locations, Vector3 direction,
+                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
+        {
+            var transform = TransformToXYPlane(direction, out backTransform);
+            return Project3DLocationsTo2DCoordinates(locations, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
+        }
+
+        /// <summary>
+        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+        /// These coordinates do not contain references back to the original locations but are lighter and
+        /// quicker. This does not destructively alter the locations.
+        /// </summary>
+        /// <param name="locations">The locations.</param>
+        /// <param name="transform">The transform matrix.</param>
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple locations under a single point.
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
+        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
+        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
+        /// to define some polygon with order dictating the definition of edges.</param>
+        /// 
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        public static IEnumerable<Vector2> Project3DLocationsTo2DCoordinates(this IEnumerable<Vector3> locations, Matrix4x4 transform,
+            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
+        {
+            if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
+            {
+                foreach (var location in locations)
+                    yield return Convert3DLocationTo2DCoordinates(location, transform);
+            }
+            else
+            {
+                var numDecimalPoints = 0;
+                var simpleCompareDict = new Dictionary<string, Vector2>();
+                while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
+                    numDecimalPoints++;
+                var stringformat = "F" + numDecimalPoints;
+
+                foreach (var location in locations)
+                {
+                    var point = Convert3DLocationTo2DCoordinates(location, transform);
+                    var lookupString = point.X.ToString(stringformat) + "|" + point.Y.ToString(stringformat);
+                    if (simpleCompareDict.ContainsKey(lookupString))
+                    {
+                        if (duplicateEntriesToMaintainPolygonalOrdering)
+                            yield return simpleCompareDict[lookupString];
                     }
                     else
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Vector2(point.X, point.Y);
-                        simpleCompareDict.Add(lookupString, point2D);
-                        points.Add(point2D);
+                        point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
+                        simpleCompareDict.Add(lookupString, point);
+                        yield return point;
                     }
                 }
             }
-            return points;
         }
 
-        /// <summary>
-        ///     Returns an array of points projected using the given transform.
-        ///     The point z-values will be zero. This does not destructively alter the vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="transform">The transform.</param>
-        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        /// <param name="sameTolerance">The same tolerance.</param>
-        /// <returns>Point[].</returns>
-        public static List<Vector2> Get2DProjectionPointsAsLight(IEnumerable<Vector3> vertices, Matrix4x4 transform,
-            bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
-        {
-            var points = new List<Vector2>();
-            var simpleCompareDict = new Dictionary<string, Vector2>();
-            var numDecimalPoints = 0;
-            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
-            var stringformat = "F" + numDecimalPoints;
-            foreach (var vertex in vertices)
-            {
-                var point = Get2DProjectionPoint(vertex, transform);
-                if (!mergeDuplicateReferences)
-                {
-                    points.Add(new Vector2(point.X, point.Y));
-                }
-                else
-                {
-                    point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
-                    // todo....lookupString is too slow
-                    var lookupString = point.X.ToString(stringformat) + "|"
-                                       + point.Y.ToString(stringformat);
-                    if (simpleCompareDict.ContainsKey(lookupString))
-                    {
-                        /* if it's in the dictionary, move to the next vertex */
-                        continue;
-                    }
-                    else
-                    {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
-                        * the position in the locationIndices. */
-                        var point2D = new Vector2(point.X, point.Y);
-                        simpleCompareDict.Add(lookupString, point2D);
-                        points.Add(point2D);
-                    }
-                }
-            }
-            return points;
-        }
-
-        public static Vector2 Get2DProjectionPointAsLight(Vertex vertex, Matrix4x4 transform)
-        {
-            var position = Get2DProjectionPoint(vertex, transform);
-            return new Vector2(position.X, position.Y);
-        }
-
-        public static Vector2 Get2DProjectionPoint(Vertex vertex, Matrix4x4 transform)
-        {
-            return Get2DProjectionPoint(vertex.Coordinates, transform);
-        }
-
-        public static Vector2 Get2DProjectionPoint(Vector3 vertex, Matrix4x4 transform)
-        {
-            var point2D = Vector3.Transform(vertex, transform);
-            return new Vector2(point2D.X, point2D.Y);
-        }
 
 
         /// <summary>
-        ///     Returns the positions (array of 2D arrays) of the vertices as that they would be represented in
-        ///     the x-y plane (z-values will be zero). This does not destructively alter the vertices.
+        /// Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
+        /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="direction">The direction.</param>
-        /// <returns>System.Vector2[].</returns>
-        public static Vector2[] Get2DProjectionPoints(IList<Vector3> vertices, Vector3 direction)
+        /// <param name="backTransform">The back transform matrix.</param>
+        /// <returns>TVGL.Numerics.Vector2.</returns>
+        public static Vector2 Convert3DLocationTo2DCoordinates(this in Vector3 location3D, in Vector3 direction, out Matrix4x4 backTransform)
         {
-            var transform = TransformToXYPlane(direction);
-            var points = new Vector2[vertices.Count];
-            for (var i = 0; i < vertices.Count; i++)
-            {
-                var pointAs2D = Vector3.Transform(vertices[i], transform);
-                points[i] = new Vector2(pointAs2D.X, pointAs2D.Y);
-            }
-            return points;
+            var transform = TransformToXYPlane(direction, out backTransform);
+            return Convert3DLocationTo2DCoordinates(location3D, transform);
+        }
+        /// <summary>
+        /// Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).
+        /// </summary>
+        /// <param name="location3D">The location as a Vector3.</param>
+        /// <param name="transform">The transform matrix.</param>
+        /// <returns>TVGL.Numerics.Vector2.</returns>
+        public static Vector2 Convert3DLocationTo2DCoordinates(this in Vector3 location3D, in Matrix4x4 transform)
+        {
+            var coordinates2D = Vector3.Transform(location3D, transform);
+            return new Vector2(coordinates2D.X, coordinates2D.Y);
+        }
+        #endregion
+
+        #region change 2D coordinates (e.g. Vector2's) into 3D locations (e.g. Vector3's) 
+
+        /// <summary>
+        /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <param name="normalDirection">The normal direction of the new plane.</param>
+        /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        public static IEnumerable<Vector3> Convert2DCoordinatesTo3DLocations(this IEnumerable<Vector2> coordinates, Vector3 normalDirection,
+                    double distanceAlongDirection)
+        {
+            TransformToXYPlane(normalDirection, out var backTransform);
+            var transform = backTransform * Matrix4x4.CreateTranslation(normalDirection * distanceAlongDirection);
+            return Convert2DCoordinatesTo3DLocations(coordinates, transform);
         }
 
         /// <summary>
-        ///     Gets the 2D projection vector
+        /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
         /// </summary>
-        /// <param name="vector3D"></param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>System.Vector2[].</returns>
-        public static Vector2 Get2DProjectionVector(Vector3 vector3D, Vector3 direction)
+        /// <param name="coordinates">The coordinates.</param>
+        /// <param name="normalDirection">The normal direction of the new plane.</param>
+        /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
+        /// <param name="transform">The transform matrix.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        private static IEnumerable<Vector3> Convert2DCoordinatesTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
         {
-            var transform = TransformToXYPlane(direction);
-            var vProjected = Vector3.Transform(vector3D, transform);
-            return new Vector2(vProjected.X, vProjected.Y);
+            foreach (var point2D in coordinates)
+                yield return Vector3.Transform(new Vector3(point2D, 0), transform);
         }
 
         /// <summary>
-        ///     Transforms to xy plane.
+        /// Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).
         /// </summary>
-        /// <param name="direction">The direction.</param>
-        /// <returns>System.Vector2.</returns>
-        public static Matrix4x4 TransformToXYPlane(Vector3 direction)
+        /// <param name="location3D">The location as a Vector3.</param>
+        /// <param name="transform">The transform matrix.</param>
+        /// <returns>TVGL.Numerics.Vector2.</returns>
+        public static Vector3 Convert2DCoordinateTo3DLocation(in Vector2 coordinates2D, in Matrix4x4 transform)
         {
-            return TransformToXYPlane(direction, out _);
+            return Vector3.Transform(new Vector3(coordinates2D, 0), transform);
         }
+        #endregion
 
         /// <summary>
         ///     Transforms to xy plane.
@@ -1019,73 +973,6 @@ namespace TVGL
             backTransform = backRotateY * backRotateX;
             return rotateX * rotateY;
         }
-
-        /// <summary>
-        /// Backtransforms a 2D vector from an XY plane. Return 3D vector.
-        /// </summary>
-        /// <param name="direction2D"></param>
-        /// <param name="backTransform"></param>
-        /// <returns></returns>
-        public static Vector3 Convert2DVectorTo3DVector(Vector2 direction2D, Matrix4x4 backTransform)
-        {
-            var tempVector = new Vector3(direction2D.X, direction2D.Y, 0);
-            return Vector3.Transform(tempVector, backTransform);
-        }
-
-
-        /// <summary>
-        /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
-        /// </summary>
-        /// <param name="points"></param>
-        /// <param name="direction"></param>
-        /// <param name="distanceAlongDirection"></param>
-        /// <returns></returns>
-        public static List<Vertex> GetVerticesFrom2DPoints(IEnumerable<Point> points, Vector3 direction, double distanceAlongDirection)
-        {
-            //Rotate axis back to the original, and then transform points along the given direction.
-            //If you try to transform first, it will shift the vertices incorrectly
-            TransformToXYPlane(direction, out var backTransform);
-            var directionVector = direction * distanceAlongDirection;
-            var contour = new List<Vertex>();
-            foreach (var point in points)
-            {
-                var position = new Vector3(point.X, point.Y, 0.0);
-                var untransformedPosition = position.Transform(backTransform);
-                var vertexPosition = untransformedPosition + directionVector;
-
-                contour.Add(new Vertex(vertexPosition));
-            }
-
-            return new List<Vertex>(contour);
-        }
-
-        /// <summary>
-        /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
-        /// </summary>
-        /// <param name="points"></param>
-        /// <param name="direction"></param>
-        /// <param name="distanceAlongDirection"></param>
-        /// <returns></returns>
-        public static List<Vertex> GetVerticesFrom2DPoints(List<Vector2> points, Vector3 direction, double distanceAlongDirection)
-        {
-            //Rotate axis back to the original, and then transform points along the given direction.
-            //If you try to transform first, it will shift the vertices incorrectly
-            TransformToXYPlane(direction, out var backTransform);
-            var directionVector = direction * distanceAlongDirection;
-            var contour = new List<Vertex>();
-            foreach (var point in points)
-            {
-                var position = new Vector3(point.X, point.Y, 0.0);
-                var untransformedPosition = position.Transform(backTransform);
-                var vertexPosition = untransformedPosition + directionVector;
-
-                contour.Add(new Vertex(vertexPosition));
-            }
-
-            return contour;
-            //replacing the below line with the above. just return the contour, right? why put it in a new list
-            //return new List<Vertex>(contour);
-        }
         #endregion
 
         #region Angle between Edges/Lines
@@ -1099,9 +986,9 @@ namespace TVGL
         internal static double SmallerAngleBetweenEdges(Edge edge1, Edge edge2)
         {
             var axis = edge1.Vector.Cross(edge2.Vector);
-            var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]),
-                InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]));
+            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
+            var extAngle = ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
         }
 
         /// <summary>
@@ -1126,7 +1013,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double SmallerAngleBetweenEdges(Vector2 v0, Vector2 v1)
         {
-            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(v0, v1), InteriorAngleBetweenEdgesInCCWList(v0, v1));
+            var extAngle = ExteriorAngleBetweenEdgesInCCWList(v0, v1);
+            return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
         }
 
         /// <summary>
@@ -1138,7 +1026,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
+            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
             return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -1151,7 +1039,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
+            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
             return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -1164,7 +1052,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double ExteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
+            var twoDEdges = (new[] { edge1, edge2 }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
             return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -1177,7 +1065,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
+            var twoDEdges = (new[] { edge1, edge2 }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
             return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -1218,7 +1106,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Projecteds the angle between vertices CCW.
+        ///     Projecteds the angle between locations CCW.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="b">The b.</param>
@@ -1227,7 +1115,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
-            var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
+            var points = (new List<Vertex> { a, b, c }).ProjectVerticesTo2DCoordinates(positiveNormal, out _).ToArray();
             return InteriorAngleBetweenEdgesInCCWList(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
                 new Vector2(points[2].X - points[1].X, points[2].Y - points[1].Y));
         }
@@ -1329,7 +1217,7 @@ namespace TVGL
             var qpxr = qp.X * r.Y - qp.Y * r.X;//2D cross product
 
             // If r x s ~ 0 and (q - p) x r ~ 0, then the two lines are possibly collinear.
-            // This is negigible tolerance of 0.00001 is not arbitary. It was chosen because of the second case within this if statement.
+            // This is negigible toleranceForCombiningPoints of 0.00001 is not arbitary. It was chosen because of the second case within this if statement.
             if (rxs.IsNegligible(0.00001) && qpxr.IsNegligible(0.00001))
             {
                 // 1. If either  0 <= (q - p) * r <= r * r or 0 <= (p - q) * s <= * s
@@ -2144,7 +2032,7 @@ namespace TVGL
         public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vector3 vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsVertexInsideTriangle(new[] { triangle[0].Coordinates, triangle[1].Coordinates, triangle[2].Coordinates }, 
+            return IsVertexInsideTriangle(new[] { triangle[0].Coordinates, triangle[1].Coordinates, triangle[2].Coordinates },
                 vertexInQuestion, onBoundaryIsInside);
         }
 
@@ -2170,7 +2058,7 @@ namespace TVGL
                 && ((c - b).Cross(p - b)).Dot((p - b).Cross(a - b)) >= 0;
         }
 
- 
+
 
         /// <summary>
         ///     Determines if a point is inside a tesselated solid (polyhedron).
@@ -2194,7 +2082,7 @@ namespace TVGL
             //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box
             //centered on the origin. A point on the origin would point to an edge (of the two triangles
             //forming the face) above and one below. Therefore, it was decided that special cases (through
-            //edges or vertices, will yeild inconclusive results. 
+            //edges or locations, will yeild inconclusive results. 
             while (inconclusive)
             {
                 inconclusive = false;

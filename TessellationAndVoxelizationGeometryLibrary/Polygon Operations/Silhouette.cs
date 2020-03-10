@@ -49,7 +49,7 @@ namespace TVGL
             var projectedPoints = new Dictionary<int, Vector2>();
             foreach (var vertex in vertices)
             {
-                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPointAsLight(vertex, transform));
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform));
             }
 
             //Build a dictionary of faces to polygons
@@ -167,7 +167,7 @@ namespace TVGL
             var projectedPoints = new Dictionary<int, Vector2>();
             foreach (var vertex in vertices)
             {
-                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPointAsLight(vertex, transform));
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform));
             }
             var projectedFacePolygons = positiveFaces.ToDictionary(f => f.IndexInList, f => GetPathFromFace(f, projectedPoints, true));
 

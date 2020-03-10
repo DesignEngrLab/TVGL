@@ -416,7 +416,7 @@ namespace TVGL
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
                 for (var j = 0; j < 3; j++)
                 {
-                    var pointsOnFace_i = MiscFunctions.Get2DProjectionPoints(convexHullVertices, boxes[i].Directions[j]);
+                    var pointsOnFace_i = MiscFunctions.ProjectVerticesTo2DPoints(convexHullVertices, boxes[i].Directions[j]);
                 }
             }
             var minVol = boxes.Min(box => box.Volume);

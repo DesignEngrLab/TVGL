@@ -157,7 +157,7 @@ namespace TVGL
             var layer = Layer3D[i] = new List<List<Vertex>>();
             foreach (var polygon in Layer2D[i])
             {
-                layer.Add(MiscFunctions.GetVerticesFrom2DPoints(polygon.Path, Direction, StepDistances[i]));
+                layer.Add(polygon.Path.Convert2DCoordinatesTo3DLocations(Direction, StepDistances[i]).Select(v => new Vertex(v)).ToList());
             }
         }
 

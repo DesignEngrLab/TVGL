@@ -168,7 +168,6 @@ namespace TVGL
                 }
             }
             //Console.WriteLine("");
-            //Console.WriteLine(StarMathLib.StarMath.MakePrintString(grid));
             return grid;
         }
         private double[,] CreateDistanceGrid(List<PolygonLight> layer)

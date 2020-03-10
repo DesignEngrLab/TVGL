@@ -96,7 +96,7 @@ namespace TVGL
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
             var backTransform = new Matrix4x4 { };
-            var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop.ToArray(), 
+            var paths = cleanLoops.Select(loop => MiscFunctions.ProjectVerticesTo2DCoordinates(loop.ToArray(), 
                 extrudeDirection, out backTransform)).ToList();
             List<Point[]> points2D;
             List<Vertex[]> triangles;
