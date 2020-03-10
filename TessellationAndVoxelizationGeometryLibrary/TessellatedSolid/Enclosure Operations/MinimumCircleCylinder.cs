@@ -414,10 +414,12 @@ namespace TVGL
             for (var i = 0; i < 13; i++)
             {
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
-                for (var j = 0; j < 3; j++)
-                {
-                    var pointsOnFace_i = MiscFunctions.ProjectVerticesTo2DPoints(convexHullVertices, boxes[i].Directions[j]);
-                }
+                // ******* this next loop is commented out as it doesn't seem to do anything. it makes a local variable, pointsOnFace_i
+                // ******* which dies in the scope *********
+                //for (var j = 0; j < 3; j++)
+                //{
+                //    var pointsOnFace_i = convexHullVertices.ProjectVerticesTo2DPoints(boxes[i].Directions[j], out _);
+                //}
             }
             var minVol = boxes.Min(box => box.Volume);
             return boxes.First(box => box.Volume == minVol);

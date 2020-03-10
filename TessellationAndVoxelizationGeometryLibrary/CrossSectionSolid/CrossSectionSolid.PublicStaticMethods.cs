@@ -24,7 +24,7 @@ namespace TVGL
             var start = layer3DAtStart.First().Coordinates.Dot(buildDirection);
             var endPoint = layer3DAtStart.First().Coordinates + buildDirection * extrudeDistance;
             var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.Dot(buildDirection) } };
-            var shape = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(layer3DAtStart, buildDirection));
+            var shape = new PolygonLight(layer3DAtStart.ProjectVerticesTo2DCoordinates(buildDirection, out _));
             if (shape.Area < 0) shape = PolygonLight.Reverse(shape);
             var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, new List<PolygonLight> { shape } }, { 1, new List<PolygonLight> { shape } } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);

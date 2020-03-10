@@ -94,7 +94,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public Window2DPlot(IEnumerable<Vector2[]> listOfArrayOfPoints, string title, Plot2DType plot2DType, bool closeShape,
+        public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker) : this(title)
         {
             foreach (var points in listOfArrayOfPoints)
@@ -107,55 +107,7 @@ namespace TVGL
             InitializeComponent();
         }
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Window2DPlot" /> class.
-        /// </summary>
-        /// <param name="listOfSeriesOfPoints">The list of array of points.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public Window2DPlot(IList<List<double[]>> listOfSeriesOfPoints, string title, Plot2DType plot2DType, bool closeShape,
-            MarkerType marker, IList<TVGL.Color> colors = null) : this(title)
-        {
-            for (var i = 0; i < listOfSeriesOfPoints.Count(); i++ )
-            {
-                //Note: both methods below will accept null colors, so set to null by default
-                TVGL.Color color = null;
-                if(colors != null)
-                {
-                    color = colors[i];
-                }
 
-                if (plot2DType == Plot2DType.Line)
-                    AddLineSeriesToModel(listOfSeriesOfPoints[i], closeShape, marker, color);
-                else
-                    AddScatterSeriesToModel(listOfSeriesOfPoints[i], marker, color);
-            }
-            InitializeComponent();
-        }
-
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Window2DPlot" /> class.
-        /// </summary>
-        /// <param name="listOfListOfPoints">The list of list of points.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfListOfPoints, string title, Plot2DType plot2DType, bool closeShape,
-            MarkerType marker) : this(title)
-        {
-            foreach (var points in listOfListOfPoints)
-            {
-                if (plot2DType == Plot2DType.Line)
-                    AddLineSeriesToModel(points, closeShape, marker);
-                else
-                    AddScatterSeriesToModel(points, marker);
-            }
-            InitializeComponent();
-        }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Window2DPlot" /> class.
@@ -168,7 +120,8 @@ namespace TVGL
         /// <param name="listOfListOfPoints1"></param>
         /// <param name="marker1"></param>
         /// <param name="marker2"></param>
-        public Window2DPlot(IEnumerable<List<Vector2>> listOfListOfPoints1, IEnumerable<List<Vector2>> listOfListOfPoints2, 
+        public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfListOfPoints1,
+            IEnumerable<IEnumerable<Vector2>> listOfListOfPoints2,
             string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker1, MarkerType marker2) : this(title)
         {
@@ -189,11 +142,11 @@ namespace TVGL
             InitializeComponent();
         }
 
-        public Window2DPlot(IEnumerable<List<List<Vector2>>> listofListOfListOfPoints, string title, Plot2DType plot2DType, bool closeShape,
-            MarkerType marker) : this(title)
+        public Window2DPlot(IEnumerable<IEnumerable<IEnumerable<Vector2>>> listofListOfListOfPoints,
+            string title, Plot2DType plot2DType, bool closeShape, MarkerType marker) : this(title)
         {
             var i = 0;
-            
+
             var colorPalet = Presenter.ColorPalette();
             var maxLength = colorPalet.Length;
             foreach (var listOfListOfPoints in listofListOfListOfPoints)
@@ -216,7 +169,7 @@ namespace TVGL
                         {
                             series.Points.Add(new DataPoint(point.X, point.Y));
                         }
-                        if (closeShape) series.Points.Add(new DataPoint(points[0].X, points[0].Y));
+                        if (closeShape) series.Points.Add(new DataPoint(points.First().X, points.First().Y));
                         Model.Series.Add(series);
                     }
                 }
@@ -282,7 +235,7 @@ namespace TVGL
             {
                 series.Color = OxyColor.FromRgb(color.R, color.G, color.B);
             }
-       
+
             foreach (var point in points)
                 //point[0] == x, point[1] == y
                 series.Points.Add(new DataPoint(point[0], point[1]));
@@ -326,9 +279,9 @@ namespace TVGL
 
         private List<double[]> PointsToDouble(IEnumerable<Vector2> points)
         {
-            return points.Select(p => new[] {p.X, p.Y}).ToList();
+            return points.Select(p => new[] { p.X, p.Y }).ToList();
         }
 
-        
+
     }
 }

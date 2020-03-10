@@ -501,6 +501,7 @@ namespace TVGL
             return area;
         }
 
+
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon in 3D space (loops)
         ///     This is faster than projecting to a 2D surface first in a seperate function.
@@ -679,27 +680,24 @@ namespace TVGL
             else
             {
                 var numDecimalPoints = 0;
-                var simpleCompareDict = new Dictionary<string, Point>();
+                var simpleCompareDict = new Dictionary<Vector2, Point>();
                 while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
                     numDecimalPoints++;
-                var stringformat = "F" + numDecimalPoints;
-
                 foreach (var vertex in vertices)
                 {
-                    var point = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-                    var lookupString = point.X.ToString(stringformat) + "|" + point.Y.ToString(stringformat);
-                    if (simpleCompareDict.ContainsKey(lookupString))
+                    var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                    coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
+                    if (simpleCompareDict.ContainsKey(coordinates))
                     {
-                        var oldPoint = simpleCompareDict[lookupString];
+                        var oldPoint = simpleCompareDict[coordinates];
                         oldPoint.References.Add(vertex);
                         if (duplicateEntriesToMaintainPolygonalOrdering) yield return oldPoint;
                     }
                     else
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. */
-                        point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
-                        var point2D = new Point(vertex, point.X, point.Y);
-                        simpleCompareDict.Add(lookupString, point2D);
+                        var point2D = new Point(vertex, coordinates.X, coordinates.Y);
+                        simpleCompareDict.Add(coordinates, point2D);
                         yield return point2D;
                     }
                 }
@@ -759,26 +757,23 @@ namespace TVGL
             else
             {
                 var numDecimalPoints = 0;
-                var simpleCompareDict = new Dictionary<string, Vector2>();
+                var simpleCompareDict = new HashSet<Vector2>();
                 while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
                     numDecimalPoints++;
-                var stringformat = "F" + numDecimalPoints;
-
                 foreach (var vertex in vertices)
                 {
-                    var point = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-                    var lookupString = point.X.ToString(stringformat) + "|" + point.Y.ToString(stringformat);
-                    if (simpleCompareDict.ContainsKey(lookupString))
+                    var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                        coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
+                    if (simpleCompareDict.Contains(coordinates))
                     {
                         if (duplicateEntriesToMaintainPolygonalOrdering)
-                            yield return simpleCompareDict[lookupString];
+                            yield return coordinates;
                     }
                     else
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
-                        point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
-                        simpleCompareDict.Add(lookupString, point);
-                        yield return point;
+                        simpleCompareDict.Add(coordinates);
+                        yield return coordinates;
                     }
                 }
             }
@@ -837,27 +832,23 @@ namespace TVGL
             else
             {
                 var numDecimalPoints = 0;
-                var simpleCompareDict = new Dictionary<string, Vector2>();
+                var simpleCompareDict = new HashSet<Vector2>();
                 while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
                     numDecimalPoints++;
-                var stringformat = "F" + numDecimalPoints;
-
                 foreach (var location in locations)
                 {
-                    var point = Convert3DLocationTo2DCoordinates(location, transform);
-                    var lookupString = point.X.ToString(stringformat) + "|" + point.Y.ToString(stringformat);
-                    if (simpleCompareDict.ContainsKey(lookupString))
+                    var coordinates = Convert3DLocationTo2DCoordinates(location, transform);
+                    coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
+                    if (simpleCompareDict.Contains(coordinates))
                     {
                         if (duplicateEntriesToMaintainPolygonalOrdering)
-                            yield return simpleCompareDict[lookupString];
+                            yield return coordinates;
                     }
                     else
                     {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
-                        * the position in the locationIndices. */
-                        point = new Vector2(Math.Round(point.X, numDecimalPoints), Math.Round(point.Y, numDecimalPoints));
-                        simpleCompareDict.Add(lookupString, point);
-                        yield return point;
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
+                        simpleCompareDict.Add(coordinates);
+                        yield return coordinates;
                     }
                 }
             }
@@ -1105,24 +1096,26 @@ namespace TVGL
             return InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
 
-        /// <summary>
-        ///     Projecteds the angle between locations CCW.
-        /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <param name="c">The c.</param>
-        /// <param name="positiveNormal">The positive normal.</param>
-        /// <returns>System.Double.</returns>
-        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
-        {
-            var points = (new List<Vertex> { a, b, c }).ProjectVerticesTo2DCoordinates(positiveNormal, out _).ToArray();
-            return InteriorAngleBetweenEdgesInCCWList(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
-                new Vector2(points[2].X - points[1].X, points[2].Y - points[1].Y));
-        }
-
+   
         public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
-            return 2 * Math.PI - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, positiveNormal);
+            return Constants.TwoPi - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, positiveNormal);
+        }
+        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
+        {
+            var flattenTransform = TransformToXYPlane(positiveNormal, out _);
+            return ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, flattenTransform);
+        }
+
+        internal static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Matrix4x4 flattenTransform)
+        {
+            return Constants.TwoPi - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, flattenTransform);
+        }
+        internal static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Matrix4x4 flattenTransform)
+        {
+            var points = (new List<Vertex> { a, b, c }).ProjectVerticesTo2DCoordinates(flattenTransform).ToArray();
+            return InteriorAngleBetweenEdgesInCCWList(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
+                new Vector2(points[2].X - points[1].X, points[2].Y - points[1].Y));
         }
 
         /// <summary>

@@ -204,9 +204,10 @@ namespace TVGL
             var solution = GetSurfacePaths(allSurfaces, normal, minPathAreaToConsider, originalSolid, projectedFacePolygons).ToList();
 
             var positiveEdgeFacePolygons = new List<List<Vector2>>();
+            var flattenTransform = MiscFunctions.TransformToXYPlane(normal, out _);
             foreach(var face in positiveEdgeFaces)
             {
-                var polygon = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(face.Vertices, normal));
+                var polygon = new PolygonLight(face.Vertices.ProjectVerticesTo2DCoordinates(flattenTransform));
                 if (!polygon.IsPositive) polygon.Path.Reverse();
                 positiveEdgeFacePolygons.Add(polygon.Path);
             }
@@ -385,7 +386,7 @@ namespace TVGL
             double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, List<Vector2>> projectedFacePolygons)
         {
             originalSolid.HasUniformColor = false;
-
+            var flattenTransform = MiscFunctions.TransformToXYPlane(normal, out _);
             var red = new Color(KnownColors.Red);
             var allPaths = new List<List<Vector2>>();
             foreach (var surface in surfaces)
@@ -447,15 +448,15 @@ namespace TVGL
                             var currentFace = surface.Contains(currentEdge.OtherFace) ? currentEdge.OtherFace : currentEdge.OwnedFace;
                             //currentFace.Color = new Color(KnownColors.White);
                             var otherVertex = currentFace.OtherVertex(currentEdge.To, currentEdge.From);
-                            var angle1 = MiscFunctions.ProjectedExteriorAngleBetweenVerticesCCW(vertex, nextVertex, otherVertex, normal);
-                            var angle2 = MiscFunctions.ProjectedInteriorAngleBetweenVerticesCCW(vertex, nextVertex, otherVertex, normal);
+                            var angle1 = MiscFunctions.ProjectedExteriorAngleBetweenVerticesCCW(vertex, nextVertex, otherVertex, flattenTransform);
+                            var angle2 = MiscFunctions.ProjectedInteriorAngleBetweenVerticesCCW(vertex, nextVertex, otherVertex, flattenTransform);
                             if (angle1 < angle2)
                             {
                                 //Use the exterior angle
                                 foreach (var edge in nextEdges)
                                 {
                                     var furtherVertex = edge.OtherVertex(nextVertex);
-                                    var angle = MiscFunctions.ProjectedExteriorAngleBetweenVerticesCCW(vertex, nextVertex, furtherVertex, normal);
+                                    var angle = MiscFunctions.ProjectedExteriorAngleBetweenVerticesCCW(vertex, nextVertex, furtherVertex, flattenTransform);
                                     if (!(angle < minAngle)) continue;
                                     minAngle = angle;
                                     //Update the current edge
@@ -468,7 +469,7 @@ namespace TVGL
                                 foreach (var edge in nextEdges)
                                 {
                                     var furtherVertex = edge.OtherVertex(nextVertex);
-                                    var angle = MiscFunctions.ProjectedInteriorAngleBetweenVerticesCCW(vertex, nextVertex, furtherVertex, normal);
+                                    var angle = MiscFunctions.ProjectedInteriorAngleBetweenVerticesCCW(vertex, nextVertex, furtherVertex, flattenTransform);
                                     if (!(angle < minAngle)) continue;
                                     minAngle = angle;
                                     //Update the current edge
@@ -557,7 +558,7 @@ namespace TVGL
 
                     //Get2DProjections does not project directionally (normal and normal * -1) return the same transform)
                     //However, the way we are unioning the polygons and eliminating overhand polygons seems to be taking care of this
-                    var surfacePath = MiscFunctions.Get2DProjectionPointsAsLight(loop, normal).ToList();
+                    var surfacePath = loop.ProjectVerticesTo2DCoordinates(flattenTransform).ToList();
                     var area2D = MiscFunctions.AreaOfPolygon(surfacePath);
                     if (area2D.IsNegligible(minAreaToConsider)) continue;
 

@@ -37,7 +37,7 @@ namespace TVGL
     {
         #region 2D Plots via OxyPlot
 
-        #region Single Series of Points
+        #region Plotting 2D coordinates both scatter and polygons
 
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<List<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
 
@@ -79,7 +79,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<List<List<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<IEnumerable<IEnumerable<Vector2>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
 
@@ -87,7 +87,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IList<PolygonLight> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<PolygonLight> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var points = polygons.Select(polygon => polygon.Path).ToList();
@@ -95,22 +95,6 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        /// <summary>
-        /// Shows the and hang.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<Vertex> vertices, double[] direction, string title = "",
-            Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            ShowAndHang(MiscFunctions.ProjectVerticesTo2DPoints(vertices, new Vector3(direction), false).Select(p=>new Vector2(p.X, p.Y)), title, plot2DType, closeShape,
-                marker);
-        }
 
         /// <summary>
         /// Shows two different lists of polygons using a unique marker for each.
@@ -122,72 +106,21 @@ namespace TVGL
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker1">The marker1.</param>
         /// <param name="marker2">The marker2.</param>
-        public static void ShowAndHang(IList<List<Vector2>> points1, IList<List<Vector2>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker1 = MarkerType.Circle, MarkerType marker2 = MarkerType.Cross)
+        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> points1,
+            IEnumerable<IEnumerable<Vector2>> points2, string title = "",
+            Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker1 = MarkerType.Circle,
+            MarkerType marker2 = MarkerType.Cross)
         {
             var window = new Window2DPlot(points1, points2, title, plot2DType, closeShape, marker1, marker2);
             window.ShowDialog();
         }
 
-
-        /// <summary>
-        /// Shows the specified points.
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="colors">The colors.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IList<List<double[]>> points, IList<Color> colors, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker, colors);
-            window.ShowDialog();
-        }
-
         #endregion
 
-        #region List of Series of Points
-
-        #region for Points
 
 
-        /// <summary>
-        /// Shows the and hang.
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> points, string title = "",
-            Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
-            window.ShowDialog();
-        }
-
-        /// <summary>
-        /// Shows the and hang.
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="title">The title.</param>
-        /// <param name="plot2DType">Type of the plot2 d.</param>
-        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<Vector2[]> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
-            window.ShowDialog();
-        }
-
-        #endregion
-
-        #region for Vertices and projection vector
-
+        #region 2D plots projecting vertices to 2D
         /// <summary>
         /// Shows the and hang.
         /// </summary>
@@ -197,14 +130,12 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IList<List<Vertex>> vertices, double[] direction, string title = "",
+        public static void ShowAndHang(IEnumerable<Vertex> vertices, Vector3 direction, string title = "",
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(
-                vertices.Select(listsOfVerts => MiscFunctions.ProjectVerticesTo2DPoints(listsOfVerts, new Vector3(direction), false).Select(p => new Vector2(p.X, p.Y))
-                        )
-                    .ToList(), title, plot2DType, closeShape, marker);
+            ShowAndHang(vertices.ProjectVerticesTo2DCoordinates(direction, out _), title, plot2DType, closeShape,
+                marker);
         }
 
         /// <summary>
@@ -216,17 +147,13 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<Vertex[]> vertices, double[] direction, string title = "",
+        public static void ShowAndHang(IEnumerable<IEnumerable<Vertex>> vertices, Vector3 direction, string title = "",
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(
-                vertices.Select(listsOfVerts => MiscFunctions.ProjectVerticesTo2DPoints(listsOfVerts, new Vector3(direction), false).Select(p=>new Vector2(p.X, p.Y))
-                        )
-                    .ToList(), title, plot2DType, closeShape, marker);
+            ShowAndHang(vertices.Select(listsOfVerts => listsOfVerts.ProjectVerticesTo2DCoordinates(direction, out _)),
+                title, plot2DType, closeShape, marker);
         }
-
-        #endregion
 
         #endregion
 
@@ -240,7 +167,7 @@ namespace TVGL
         /// <param name="paths"></param>
         /// <param name="closePaths"></param>
         /// <param name="solid"></param>
-        public static void ShowVertexPaths(IList<List<double[]>> paths, bool closePaths = true, TessellatedSolid solid = null)
+        public static void ShowVertexPaths(IEnumerable<List<double[]>> paths, bool closePaths = true, TessellatedSolid solid = null)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -282,7 +209,7 @@ namespace TVGL
         /// </summary>
         /// <param name="segments">The segments.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowVertexPathsWithSolid(IList<double[]> segments, IList<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IEnumerable<double[]> segments, IEnumerable<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -314,7 +241,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowVertexPathsWithSolid(IList<List<List<double[]>>> vertexPaths, IList<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IEnumerable<List<List<double[]>>> vertexPaths, IEnumerable<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -356,7 +283,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowVertexPathsWithSolid(IList<List<List<Vertex>>> vertexPaths, IList<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IEnumerable<List<List<Vertex>>> vertexPaths, IEnumerable<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -396,7 +323,7 @@ namespace TVGL
         /// Shows the vertex paths.
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
-        public static void ShowVertexPaths(IList<List<List<double[]>>> vertexPaths)
+        public static void ShowVertexPaths(IEnumerable<List<List<double[]>>> vertexPaths)
         {
             var window = new Window3DPlot();
 
@@ -427,7 +354,7 @@ namespace TVGL
         /// Shows the vertex paths.
         /// </summary>
         /// <param name="segments">The segments.</param>
-        public static void ShowVertexPaths(IList<double[]> segments)
+        public static void ShowVertexPaths(IEnumerable<double[]> segments)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -454,7 +381,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="ts">The ts.</param>
-        public static void ShowGaussSphereWithIntensity(IList<Vertex> vertices, IList<Color> colors, TessellatedSolid ts)
+        public static void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IEnumerable<Color> colors, TessellatedSolid ts)
         {
             var window = new Window3DPlot();
             var pt0 = new Point3D(ts.Center[0], ts.Center[1], ts.Center[2]);
@@ -475,9 +402,11 @@ namespace TVGL
             //window.view1.Children.Add(sphere);
 
             var i = 0;
+            var colorEnumerator = colors.GetEnumerator();
             foreach (var point in vertices)
             {
-                var color = colors[i];
+                colorEnumerator.MoveNext();
+                var color = colorEnumerator.Current;
                 var pt1 = new Point3D(pt0.X + point.X * radius, pt0.Y + point.Y * radius, pt0.Z + point.Z * radius);
 
 
@@ -514,7 +443,7 @@ namespace TVGL
         /// Shows vertex paths. Assumes paths are closed.
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
-        public static void ShowVertexPaths(IList<List<List<Vertex>>> vertexPaths)
+        public static void ShowVertexPaths(IEnumerable<List<List<Vertex>>> vertexPaths)
         {
             var window = new Window3DPlot();
 
@@ -592,7 +521,7 @@ namespace TVGL
         /// </summary>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
         /// <param name="seconds">The seconds.</param>
-        public static void Show(IList<TessellatedSolid> tessellatedSolids, int seconds = 0)
+        public static void Show(IEnumerable<TessellatedSolid> tessellatedSolids, int seconds = 0)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -633,7 +562,7 @@ namespace TVGL
         }
 
 
-        public static void ShowAndHang(IList<Solid> solids)
+        public static void ShowAndHang(IEnumerable<Solid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -666,7 +595,7 @@ namespace TVGL
         }
 
 
-        public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
+        public static void ShowAndHang(IEnumerable<TessellatedSolid> tessellatedSolids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -686,7 +615,7 @@ namespace TVGL
         /// </summary>
         /// <param name="transparents">The transparents.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowAndHangTransparentsAndSolids(IList<TessellatedSolid> transparents, IList<TessellatedSolid> solids)
+        public static void ShowAndHangTransparentsAndSolids(IEnumerable<TessellatedSolid> transparents, IEnumerable<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             foreach (var ts in solids)
@@ -727,7 +656,7 @@ namespace TVGL
         /// </summary>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
         /// <param name="seconds">The seconds.</param>
-        public static void ShowSequentially(IList<TessellatedSolid> tessellatedSolids, int seconds = 1)
+        public static void ShowSequentially(IEnumerable<TessellatedSolid> tessellatedSolids, int seconds = 1)
         {
             //var models = new List<Visual3D>();
             var window = new Window3DPlot();
@@ -899,7 +828,7 @@ namespace TVGL
             foreach (var layer in xYPaths)
             {
                 zEnumerator.MoveNext();
-                var z = zEnumerator.Current; 
+                var z = zEnumerator.Current;
                 foreach (var polygon in layer)
                 {
                     var contour = polygon.Path.Select(point => new Point3D(point.X, point.Y, z)).ToList();

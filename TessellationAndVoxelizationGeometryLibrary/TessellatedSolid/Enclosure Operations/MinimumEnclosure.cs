@@ -594,8 +594,8 @@ namespace TVGL
             var direction1 = direction.Normalize();
             var depth = GetLengthAndExtremeVertices(direction, vertices, out var bottomVertices, out var topVertices);
 
-            var points = MiscFunctions.ProjectVerticesTo2DPoints(vertices, direction, out var backTransform, false);
-            var boundingRectangle = RotatingCalipers2DMethod(points.Select(x=>x.Light).ToList());
+            var points = vertices.ProjectVerticesTo2DCoordinates(direction, out var backTransform);
+            var boundingRectangle = RotatingCalipers2DMethod(points.ToList());
 
             //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new Vector3(boundingRectangle.LengthDirection[0], boundingRectangle.LengthDirection[1], 0);
@@ -635,8 +635,8 @@ namespace TVGL
         {
             var direction0 = boxData.Direction = boxData.Direction.Normalize();
             var height = direction0.Dot(boxData.RotatorEdge.From.Coordinates.Subtract(boxData.BackVertex.Coordinates));
-            var points = MiscFunctions.ProjectVerticesTo2DPoints(boxData.OrthVertices, direction0, out var backTransform, false);
-            var boundingRectangle = RotatingCalipers2DMethod(points.Select(x=>x.Light).ToList());
+            var points = boxData.OrthVertices.ProjectVerticesTo2DCoordinates(direction0, out var backTransform);
+            var boundingRectangle = RotatingCalipers2DMethod(points.ToList());
             //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new Vector3(boundingRectangle.LengthDirection[0], boundingRectangle.LengthDirection[1],0);
             var direction1 = tempDirection.Transform(backTransform);

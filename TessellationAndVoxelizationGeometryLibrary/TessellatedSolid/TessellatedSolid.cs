@@ -473,9 +473,7 @@ namespace TVGL
              * the remainder of this method. */
             faceToVertexIndices = new List<int[]>();
             var listOfVertices = new List<Vector3>();
-            var simpleCompareDict = new Dictionary<string, int>();
-            //We used fixed-point to be able to specify the number of decimal places. 
-            var stringFormat = "F" + numDecimalPoints;
+            var simpleCompareDict = new Dictionary<Vector3, int>();
             //in order to reduce compare times we use a string comparer and dictionary
             foreach (var t in vertsPerFace)
             {
@@ -485,24 +483,18 @@ namespace TVGL
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    t[i] = new Vector3(Math.Round(t[i].X, numDecimalPoints), Math.Round(t[i].Y, numDecimalPoints),
-                        Math.Round(t[i].Z, numDecimalPoints));
-                    //Since negative zero and positive zero are both the same and can mess up the sign on the string,
-                    //we need to check if negligible, and force to "0" if it is. Note: there is no need to have the extra 8 zeros in this case.
-                    var xString = t[i].X.IsNegligible(SameTolerance) ? "0" : t[i].X.ToString(stringFormat);
-                    var yString = t[i].Y.IsNegligible(SameTolerance) ? "0" : t[i].Y.ToString(stringFormat);
-                    var zString = t[i].Z.IsNegligible(SameTolerance) ? "0" : t[i].Z.ToString(stringFormat);
-                    var lookupString = xString + "|" + yString + "|" + zString;
-                    if (simpleCompareDict.ContainsKey(lookupString))
+                    var coordinates = t[i] = new Vector3(Math.Round(t[i].X, numDecimalPoints), Math.Round(t[i].Y, numDecimalPoints),
+                                            Math.Round(t[i].Z, numDecimalPoints));
+                    if (simpleCompareDict.ContainsKey(coordinates))
                         /* if it's in the dictionary, simply put the location in the locationIndices */
-                        locationIndices.Add(simpleCompareDict[lookupString]);
+                        locationIndices.Add(simpleCompareDict[coordinates]);
                     else
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
                         var newIndex = listOfVertices.Count;
                         listOfVertices.Add(t[i]);
-                        simpleCompareDict.Add(lookupString, newIndex);
+                        simpleCompareDict.Add(coordinates, newIndex);
                         locationIndices.Add(newIndex);
                     }
                 }
@@ -523,9 +515,7 @@ namespace TVGL
             //Gets the number of decimal places
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var listOfVertices = new List<Vector3>();
-            var simpleCompareDict = new Dictionary<string, int>();
-            //We used fixed-point to be able to specify the number of decimal places. 
-            var stringFormat = "F" + numDecimalPoints;
+            var simpleCompareDict = new Dictionary<Vector3, int>();
             //in order to reduce compare times we use a string comparer and dictionary
             foreach (var faceToVertexIndex in faceToVertexIndices)
             {
@@ -535,19 +525,14 @@ namespace TVGL
                     var vertex = vertices[faceToVertexIndex[i]];
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
-                    //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
+                    //First, round the vertices. This will catch bidirectional tolerancing (+/-)
                     vertex = new Vector3(Math.Round(vertex.X, numDecimalPoints),
                         Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
-                    //Since negative zero and positive zero are both the same and can mess up the sign on the string,
-                    //we need to check if negligible, and force to "0" if it is. Note: there is no need to have the extra 8 zeros in this case.
-                    var xString = vertex.X.IsNegligible(SameTolerance) ? "0" : vertex.X.ToString(stringFormat);
-                    var yString = vertex.Y.IsNegligible(SameTolerance) ? "0" : vertex.Y.ToString(stringFormat);
-                    var zString = vertex.Z.IsNegligible(SameTolerance) ? "0" : vertex.Z.ToString(stringFormat);
-                    var lookupString = xString + "|" + yString + "|" + zString;
-                    if (simpleCompareDict.ContainsKey(lookupString))
+
+                    if (simpleCompareDict.ContainsKey(vertex))
                     {
                         // if it's in the dictionary, update the faceToVertexIndex
-                        faceToVertexIndex[i] = simpleCompareDict[lookupString];
+                        faceToVertexIndex[i] = simpleCompareDict[vertex];
                     }
                     else
                     {
@@ -555,7 +540,7 @@ namespace TVGL
                         * the position in the locationIndices. */
                         var newIndex = listOfVertices.Count;
                         listOfVertices.Add(vertex);
-                        simpleCompareDict.Add(lookupString, newIndex);
+                        simpleCompareDict.Add(vertex, newIndex);
                         faceToVertexIndex[i] = newIndex;
                     }
                 }

@@ -67,7 +67,7 @@ namespace TVGL
             if (distance < 0)
             {
                 distance = -distance;
-                extrudeDirection = -1*extrudeDirection;
+                extrudeDirection = -1 * extrudeDirection;
             }
 
             //First, make sure we are using "clean" loops. (e.g. not connected to any faces or edges)
@@ -95,9 +95,8 @@ namespace TVGL
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
-            var backTransform = new Matrix4x4 { };
-            var paths = cleanLoops.Select(loop => MiscFunctions.ProjectVerticesTo2DCoordinates(loop.ToArray(), 
-                extrudeDirection, out backTransform)).ToList();
+            var transform = MiscFunctions.TransformToXYPlane(extrudeDirection, out var backTransform);
+            var paths = cleanLoops.Select(loop => loop.ProjectVerticesTo2DCoordinates(transform).ToList()).ToList();
             List<Point[]> points2D;
             List<Vertex[]> triangles;
             try

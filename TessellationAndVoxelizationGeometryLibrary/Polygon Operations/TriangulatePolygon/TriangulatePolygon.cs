@@ -32,7 +32,7 @@ namespace TVGL
         public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, Vector3 normal, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
-            var points2D = loops.Select(loop => MiscFunctions.ProjectVerticesTo2DPoints(loop.ToArray(), normal, false)).ToList();
+            var points2D = loops.Select(loop =>loop.ProjectVerticesTo2DPoints(normal, out _).ToArray()).ToList();
             List<List<int>> groupsOfLoops;
             bool[] isPositive = null;
             return Run2D(points2D, out groupsOfLoops, ref isPositive, ignoreNegativeSpace);
@@ -51,7 +51,7 @@ namespace TVGL
             out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
-            var points2D = loops.Select(loop => MiscFunctions.ProjectVerticesTo2DPoints(loop.ToArray(), normal, false)).ToList();
+            var points2D = loops.Select(loop =>loop.ProjectVerticesTo2DPoints(normal, out _).ToArray()).ToList();
             isPositive = null;
             return Run2D(points2D, out groupsOfLoops, ref isPositive, ignoreNegativeSpace);
         }

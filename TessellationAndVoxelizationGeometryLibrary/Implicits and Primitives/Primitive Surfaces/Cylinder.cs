@@ -220,13 +220,13 @@ namespace TVGL
             var n = faces.Count;
 
             //Check if the loops are circular along the axis
-            var path1 = MiscFunctions.Get2DProjectionPointsAsLight(Loop1, Axis, out var backTransform);
+            var path1 = Loop1.ProjectVerticesTo2DCoordinates(Axis, out var backTransform);
             var poly = new PolygonLight(path1);
             if (!PolygonOperations.IsCircular(new Polygon(poly), out var centerCircle, Constants.MediumConfidence))
             {
                 return false;
             }
-            var path2 = MiscFunctions.Get2DProjectionPointsAsLight(Loop2, Axis, out var backTransform2);
+            var path2 = Loop2.ProjectVerticesTo2DCoordinates(Axis, out var backTransform2);
             var poly2 = new PolygonLight(path2);
             if (!PolygonOperations.IsCircular(new Polygon(poly2), out var centerCircle2, Constants.MediumConfidence))
             {

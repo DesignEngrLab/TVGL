@@ -102,7 +102,7 @@ namespace TVGLPresenterDX
             var fileNames = dir.GetFiles("myC*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count() - 30; i++)
+            for (var i = 0; i < fileNames.Count() - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -159,7 +159,7 @@ namespace TVGLPresenterDX
                 // return;
             }
 
-            Console.WriteLine("Completed.");
+            //Console.WriteLine("Completed.");
             //  Console.ReadKey();
         }
 
