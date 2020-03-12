@@ -33,23 +33,23 @@ namespace TVGL._2D
 
                 //Delaunay Medial Axis             
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
-                var lines = new List<List<Point>>();
+                var lines = new List<List<Vector2>>();
                 foreach (var triangle in delaunay.Cells)
                 {
-                    var triangleCenterLineVertices = new List<Point>();
-                    var edge1Center = new Point((triangle.Vertices[0] + triangle.Vertices[1]) * 0.5);
+                    var triangleCenterLineVertices = new List<Vector2>();
+                    var edge1Center = new Vector2((triangle.Vertices[0] + triangle.Vertices[1]) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge1Center);
                     }
 
-                    var edge2Center = new Point((triangle.Vertices[1] + triangle.Vertices[2]) * 0.5);
+                    var edge2Center = new Vector2((triangle.Vertices[1] + triangle.Vertices[2]) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge2Center);
                     }
 
-                    var edge3Center = new Point((triangle.Vertices[2] + triangle.Vertices[0]) * 0.5);
+                    var edge3Center = new Vector2((triangle.Vertices[2] + triangle.Vertices[0]) * 0.5);
                     if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center.Light))
                     {
                         triangleCenterLineVertices.Add(edge3Center);
@@ -80,40 +80,40 @@ namespace TVGL._2D
                                 if (d0 > d1 && d0 > d2)
                                 {
                                     //If d0 is the largest edge, it should be point 2,3,1
-                                    lines.Add(new List<Point> { edge2Center, edge3Center });
-                                    lines.Add(new List<Point> { edge3Center, edge1Center });
+                                    lines.Add(new List<Vector2> { edge2Center, edge3Center });
+                                    lines.Add(new List<Vector2> { edge3Center, edge1Center });
                                 }
                                 else if (d1 > d2)
                                 {
-                                    lines.Add(new List<Point> { edge3Center, edge1Center });
-                                    lines.Add(new List<Point> { edge1Center, edge2Center });
+                                    lines.Add(new List<Vector2> { edge3Center, edge1Center });
+                                    lines.Add(new List<Vector2> { edge1Center, edge2Center });
                                 }
                                 else
                                 {
-                                    lines.Add(new List<Point> { edge1Center, edge2Center });
-                                    lines.Add(new List<Point> { edge2Center, edge3Center });
+                                    lines.Add(new List<Vector2> { edge1Center, edge2Center });
+                                    lines.Add(new List<Vector2> { edge2Center, edge3Center });
                                 }
                             }
                             else
                             {
-                                Point newPoint;
+                                Vector2 newPoint;
                                 //Create a new center point on the shortest line and set three point sets
                                 if (d0 < d1 && d0 < d2)
                                 {
-                                    newPoint = new Point((edge1Center + edge2Center).Divide(2.0));
+                                    newPoint = new Vector2((edge1Center + edge2Center).Divide(2.0));
                                 }
                                 else if (d1 < d2)
                                 {
-                                    newPoint = new Point((edge2Center + edge3Center).Divide(2.0));
+                                    newPoint = new Vector2((edge2Center + edge3Center).Divide(2.0));
                                 }
                                 else
                                 {
-                                    newPoint = new Point((edge3Center + edge1Center).Divide(2.0));
+                                    newPoint = new Vector2((edge3Center + edge1Center).Divide(2.0));
                                 }
 
-                                lines.Add(new List<Point> { edge1Center, newPoint });
-                                lines.Add(new List<Point> { edge2Center, newPoint });
-                                lines.Add(new List<Point> { edge3Center, newPoint });
+                                lines.Add(new List<Vector2> { edge1Center, newPoint });
+                                lines.Add(new List<Vector2> { edge2Center, newPoint });
+                                lines.Add(new List<Vector2> { edge3Center, newPoint });
                             }
                         }
                         else
@@ -165,7 +165,7 @@ namespace TVGL._2D
                 }
 
                 //Get all the points
-                var points = new HashSet<Point>();
+                var points = new HashSet<Vector2>();
                 foreach (var line in lines)
                 {
                     points.Add(line[0]);
@@ -174,12 +174,12 @@ namespace TVGL._2D
 
                 //Get all the node points
                 //Also create a new branch for each line that attached to this node
-                var nodes = new HashSet<Point>();
-                var branches = new List<List<Point>>();
+                var nodes = new HashSet<Vector2>();
+                var branches = new List<List<Vector2>>();
                 foreach (var p1 in points)
                 {
                     var adjacentLineCount = 0;
-                    var adjacentLinesOtherPoints = new List<Point>();
+                    var adjacentLinesOtherPoints = new List<Vector2>();
                     foreach (var line in lines)
                     {
                         for (var p = 0; p < 2; p++)
@@ -196,7 +196,7 @@ namespace TVGL._2D
                         //Add a new branch for each adjacent line
                         foreach (var p2 in adjacentLinesOtherPoints)
                         {
-                            branches.Add(new List<Point> { p1, p2 });
+                            branches.Add(new List<Vector2> { p1, p2 });
                         }
                     }
                 }

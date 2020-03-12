@@ -426,15 +426,15 @@ namespace TVGL
                     if (!SolidColor.Equals(color)) HasUniformColor = false;
                 }
                 var faceVertices =
-                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToList();
+                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
 
-                if (faceVertices.Count == 3)
+                if (faceVertices.Length == 3)
                     listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices) { Color = color });
                 else
                 {
                     var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
-                    List<List<Vertex[]>> triangulatedListofLists =
-                        TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal);
+                    var triangulatedListofLists =
+                        TriangulatePolygon.Run(new [] { faceVertices }, normal,out _, out _);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
@@ -989,10 +989,10 @@ namespace TVGL
             //Now find the local origin. This will be the corner of the box furthest backward along
             //the X', Y', Z' axis.
             //First use X' to eliminate 4 of the vertices by removing the four vertices furthest along xPrime
-            var dotXs = new Dictionary<Vertex, double>();
-            foreach (var vertex in obb.CornerVertices)
+            var dotXs = new Dictionary<Vector3, double>();
+            foreach (var vertex in obb.Corners)
             {
-                var dot = vertex.Coordinates.Dot(xPrime);
+                var dot = vertex.Dot(xPrime);
                 dotXs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest four values. Then get the those four vertices.
@@ -1000,10 +1000,10 @@ namespace TVGL
             var bottom4Vertices = bottom4.Keys;
 
             //Second use Y' to eliminate 2 of the remaining 4 vertices by removing the 2 vertices furthest along yPrime
-            var dotYs = new Dictionary<Vertex, double>();
+            var dotYs = new Dictionary<Vector3, double>();
             foreach (var vertex in bottom4Vertices)
             {
-                var dot = vertex.Coordinates.Dot(yPrime);
+                var dot = vertex.Dot(yPrime);
                 dotYs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -1011,10 +1011,10 @@ namespace TVGL
             var bottom2Vertices = bottom2.Keys;
 
             //Second use Z' to eliminate one of the remaining two vertices by removing the furthest vertex along zPrime
-            var dotZs = new Dictionary<Vertex, double>();
+            var dotZs = new Dictionary<Vector3, double>();
             foreach (var vertex in bottom2Vertices)
             {
-                var dot = vertex.Coordinates.Dot(zPrime);
+                var dot = vertex.Dot(zPrime);
                 dotZs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.

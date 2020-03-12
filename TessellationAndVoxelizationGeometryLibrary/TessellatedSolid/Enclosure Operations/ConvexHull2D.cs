@@ -29,7 +29,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullPoints2D"></param>
         /// <returns></returns>
-        public static double ConvexHull2DArea(IList<Point> convexHullPoints2D)
+        public static double ConvexHull2DArea(IList<Vector2> convexHullPoints2D)
         {
             //Set origin point to first point in convex hull
             var point1 = convexHullPoints2D[0];

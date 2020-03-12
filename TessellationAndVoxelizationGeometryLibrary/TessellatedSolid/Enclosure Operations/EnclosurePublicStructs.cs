@@ -27,61 +27,167 @@ namespace TVGL
     /// </summary>
     public class BoundingBox
     {
-        /// <summary>
-        ///     The volume of the bounding box.
-        /// </summary>
-        public double Volume;
-
+        #region Constructor Defined Fields
         /// <summary>
         ///     The dimensions of the bounding box. The 3 values correspond to the 3 direction.
         ///     If this was a bounding box along a given direction, the first dimension will
         ///     correspond with the distance along that direction.
         /// </summary>
-        public Vector3 Dimensions;
-
-        /// <summary>
-        ///     The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid that are on the faces
-        ///     of the bounding box. These are not the corners of the bounding box. They are in the order of direction1-low,
-        ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
-        /// </summary>
-        public List<Vertex>[] PointsOnFaces;
+        public Vector3 Dimensions { get; private set; }
 
         /// <summary>
         ///     The Directions normal are the three unit vectors that describe the orientation of the box.
         ///     If this was a bounding box along a given direction, the first direction will
         ///     correspond with that direction.
         /// </summary>
-        public Vector3[] Directions;
+        public Vector3[] Directions { get; private set; }
 
+        /// <summary>
+        /// The minimum plane distance to the origin. This is the simplest way to locate the box in space.
+        /// These three values along with the direction vectors indicate the three planes of the lower
+        /// corner of the box. If you add dimensions to this, you would get the maximum plane distances
+        /// </summary>
+        public Vector3 MinPlaneDistanceToOrigin { get; private set; }
+
+        public BoundingBox(Vector3 dimensions, Vector3[] directions, Vector3 minplaneDistAnceToOrigin)
+        {
+            Dimensions = dimensions;
+            Directions = directions.Select(d => d.Normalize()).ToArray();
+            MinPlaneDistanceToOrigin = minplaneDistAnceToOrigin;
+        }
+        public BoundingBox(Vector3 dimensions, Vector3[] directions, Vector3 minPointOnDirection0,
+            Vector3 minPointOnDirection1, Vector3 minPointOnDirection2)
+            : this(dimensions, directions, new Vector3(
+                minPointOnDirection0.Dot(directions[0]),
+                minPointOnDirection1.Dot(directions[1]),
+                minPointOnDirection2.Dot(directions[2])))
+        { }
+
+        #endregion
+
+        #region Properties
+        /// <summary>
+        ///     The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid 
+        ///     that are on the faces of the bounding box. They are in the order of direction1-low,
+        ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
+        /// </summary>
+        public List<Vertex>[] PointsOnFaces { get; internal set; }
+
+        #region the following properties are set with a lazy private field
         /// <summary>
         ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
         ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
         /// </summary>
-        public Vertex[] CornerVertices;
+        public Vector3[] Corners
+        {
+            get
+            {
+                if (corners == null) MakeCornerPoints();
+                return corners;
+            }
+            set
+            {
+                corners = value;
+            }
+        }
+        private Vector3[] corners;
+        /// <summary>
+        ///     Adds the corner vertices to the bounding box.
+        ///     The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        private void MakeCornerPoints()
+        {
+            ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
+            ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
+            corners = new Vector3[8];
+            // ---
+            corners[0] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0],
+                Directions[1], MinPlaneDistanceToOrigin[1],
+                Directions[2], MinPlaneDistanceToOrigin[2]);
+            // +--
+            corners[1] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], MinPlaneDistanceToOrigin[1],
+                Directions[2], MinPlaneDistanceToOrigin[2]);
+            // ++-
+            corners[2] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], MinPlaneDistanceToOrigin[2]);
+            // -+-
+            corners[3] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0],
+                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], MinPlaneDistanceToOrigin[2]);
+            // --+
+            corners[4] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0],
+                Directions[1], MinPlaneDistanceToOrigin[1],
+                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+            // +-+
+            corners[5] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], MinPlaneDistanceToOrigin[1],
+                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+            // +++
+            corners[6] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+            // -++
+            corners[7] = MiscFunctions.PointCommonToThreePlanes(
+                Directions[0], MinPlaneDistanceToOrigin[0],
+                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+        }
 
         /// <summary>
         ///     The center point
         /// </summary>
-        public Vertex Center;
+        public Vector3 Center
+        {
+            get
+            {
+                if (center.IsNull())
+                {
+                    center = new Vector3();
+                    center = Corners.Aggregate(center, (c, v) => c + v).Divide(8.0);
+                }
+                return center;
+            }
+            set
+            {
+                center = value;
+            }
+        }
+        private Vector3 center = Vector3.Null;
+
+        /// <summary>
+        ///     The volume of the bounding box.
+        /// </summary>
+        public double Volume => Dimensions.X * Dimensions.Y * Dimensions.Z;
 
         /// <summary>
         ///     The Solid Representation of the bounding box. This is not set by defualt. 
         /// </summary>
-        public TessellatedSolid SolidRepresentation;
 
         /// <summary>
         ///     Sets the Solid Representation of the bounding box
         /// </summary>
-        public void SetSolidRepresentation()
+        public TessellatedSolid AsTessellatedSolid
         {
-            if (CornerVertices == null || !CornerVertices.Any())
+            get
             {
-                SetCornerVertices();
+                if (_tessellatedSolid == null)
+                    _tessellatedSolid = Extrude.FromLoops(new [] { Corners.Take(4).ToArray() },
+                        Directions[2], Dimensions[2]);
+                return _tessellatedSolid;
             }
-            SolidRepresentation = Extrude.FromLoops(new List<List<Vertex>>() { CornerVertices.Take(4).ToList() }, Directions[2], Dimensions[2]);
         }
+        private TessellatedSolid _tessellatedSolid;
 
-        private IList<int> _sortedDirectionIndicesByLength;
         /// <summary>
         ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
         /// </summary>
@@ -89,14 +195,13 @@ namespace TVGL
         {
             get
             {
-                if (_sortedDirectionsListsHaveBeenSet) return _sortedDirectionIndicesByLength;
-                //Else
-                SetSortedDirections();
+                if (_sortedDirectionIndicesByLength == null)
+                    SetSortedDirections();
                 return _sortedDirectionIndicesByLength;
             }
         }
+        private IList<int> _sortedDirectionIndicesByLength;
 
-        private IList<Vector3> _sortedDirectionsByLength;
         /// <summary>
         ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
         /// </summary>
@@ -104,14 +209,13 @@ namespace TVGL
         {
             get
             {
-                if (_sortedDirectionsListsHaveBeenSet) return _sortedDirectionsByLength;
-                //Else
-                SetSortedDirections();
+                if (_sortedDirectionsByLength == null)
+                    SetSortedDirections();
                 return _sortedDirectionsByLength;
             }
         }
+        private IList<Vector3> _sortedDirectionsByLength;
 
-        private IList<double> _sortedDimensions;
         /// <summary>
         ///     The sorted dimensions. This is not set by defualt. 
         /// </summary>
@@ -119,23 +223,17 @@ namespace TVGL
         {
             get
             {
-                if (_sortedDirectionsListsHaveBeenSet) return _sortedDimensions;
-                //Else
-                SetSortedDirections();
+                if (_sortedDimensions == null)
+                    SetSortedDirections();
                 return _sortedDimensions;
             }
         }
-
-        /// <summary>
-        /// If false, need to call SetSortedDirections() to get above three properties.
-        /// Default for booleans is false.
-        /// </summary>
-        private bool _sortedDirectionsListsHaveBeenSet;
+        private IList<double> _sortedDimensions;
 
         /// <summary>
         /// Sorts the directions by the distance along that direction. Smallest to largest.
         /// </summary>
-        public void SetSortedDirections()
+        private void SetSortedDirections()
         {
             var dimensions = new Dictionary<int, double>
             {
@@ -158,228 +256,80 @@ namespace TVGL
                 _sortedDirectionsByLength.Add(Directions[index]);
                 _sortedDimensions.Add(Dimensions[index]);
             }
-
-            _sortedDirectionsListsHaveBeenSet = true;
         }
+        #endregion
+        #endregion
 
-        /// <summary>
-        ///     Adds the corner vertices to the bounding box.
-        ///     The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
-        /// </summary>
-        /// <returns>BoundingBox.</returns>
-        public void SetCornerVertices()
+
+        public BoundingBox Copy()
         {
-            ////////////////////////////////////////
-            //First, get the bottom corner.
-            ////////////////////////////////////////
+            var copy = new BoundingBox(this.Dimensions, (Vector3[])this.Directions.Clone(),
+               this.MinPlaneDistanceToOrigin);
 
-            //Collect all the points on faces
-            var allPointsOnFaces = new List<Vertex>();
-            foreach (var setOfPoints in PointsOnFaces)
-            {
-                allPointsOnFaces.AddRange(setOfPoints);
-            }
-
-            if (!allPointsOnFaces.Any()) throw new Exception("Must set the points on the faces prior to setting the corner vertices " +
-                                                             "(Or set the corner vertices with the convex hull");
-            SetCornerVertices(allPointsOnFaces);
-        }
-
-        /// <summary>
-        ///     Adds the corner vertices to the bounding box.
-        ///     This method is used when the face vertices are not known.
-        ///     The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
-        /// </summary>
-        /// <returns>BoundingBox.</returns>
-        public void SetCornerVertices(List<Vertex> verticesOfInterest)
-        {
-            var cornerVertices = new Vertex[8];
-
-            //Get the low extreme vertices along each direction
-            List<Vertex> vLows, vHighs;
-            var dimension0 = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
-            var v0 = new Vertex(vLows.First().Coordinates);
-            var dimension1 = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
-            var v1 = new Vertex(vLows.First().Coordinates);
-            var dimension2 = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
-            var v2 = new Vertex(vLows.First().Coordinates);
-
-            //Start with v0 and move along direction[1] by projection
-            var vector0To1 = v1.Coordinates.Subtract(v0.Coordinates);
-            var projectionOntoD1 = Directions[1] * Directions[1].Dot(vector0To1);
-            var v4 = v0.Coordinates + projectionOntoD1;
-
-            //Move along direction[2] by projection
-            var vector4To2 = v2.Coordinates.Subtract(v4);
-            var projectionOntoD2 = Directions[2] * Directions[2].Dot(vector4To2);
-            var bottomCorner = new Vertex(v4 + projectionOntoD2);
-
-            //Double Check to make sure it is the bottom corner
-            verticesOfInterest.Add(bottomCorner);
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
-            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
-            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
-            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-
-            //Create the vertices that make up the box and add them to the corner vertices array
-            for (var i = 0; i < 2; i++)
-            {
-                var d0Vector = i == 0 ? new Vector3() : Directions[0] * dimension0;
-                for (var j = 0; j < 2; j++)
-                {
-                    var d1Vector = j == 0 ? new Vector3() : Directions[1] * dimension1;
-                    for (var k = 0; k < 2; k++)
-                    {
-                        var d2Vector = k == 0 ? new Vector3() : Directions[2] * dimension2;
-                        var newVertex = new Vertex(bottomCorner.Coordinates + d0Vector + d1Vector + d2Vector);
-
-                        //
-                        var b = k == 0 ? 0 : 4;
-                        if (j == 0)
-                        {
-                            if (i == 0) cornerVertices[b] = newVertex; //i == 0 && j== 0 && k == 0 or 1 
-                            else cornerVertices[b + 1] = newVertex; //i == 1 && j == 0 && k == 0 or 1 
-                        }
-                        else
-                        {
-                            if (i == 0) cornerVertices[b + 3] = newVertex; //i == 0 && j== 1 && k == 0 or 1 
-                            else cornerVertices[b + 2] = newVertex; //i == 1 && j == 1 && k == 0 or 1 
-                        }
-                    }
-                }
-            }
-            CornerVertices = cornerVertices;
-            //Add in the center
-            var cX = 0.0;
-            var cY = 0.0;
-            var cZ = 0.0;
-            foreach (var vertex in cornerVertices)
-            {
-                cX += vertex.Coordinates[0];
-                cY += vertex.Coordinates[1];
-                cZ += vertex.Coordinates[2];
-            }
-            var oneOverCornerCount = 1 / cornerVertices.Length;
-            Center = new Vertex(new Vector3(oneOverCornerCount * cX, oneOverCornerCount * cY,
-                oneOverCornerCount * cZ));
-        }
-
-        public static BoundingBox Copy(BoundingBox original)
-        {
-            var copy = new BoundingBox
-            {
-                Center = original.Center.Copy(),
-                Volume = original.Volume,
-                Dimensions = new Vector3(original.Dimensions[0], original.Dimensions[1], original.Dimensions[2]),
-                Directions = original.Directions, //If these change, then the copy is useless anyways
-                PointsOnFaces = original.PointsOnFaces, //These are reference vertices, so they should not be copied
-                CornerVertices = new Vertex[8]
-            };
-            //Recreated the corner vertices
-            for (var i = 0; i < 8; i++)
-            {
-                copy.CornerVertices[i] = original.CornerVertices[i].Copy();
-            }
             //Recreate the solid representation if one existing in the original
-            if (original.SolidRepresentation != null) copy.SetSolidRepresentation();
+            if (_tessellatedSolid != null) copy._tessellatedSolid = _tessellatedSolid;
+            if (!this.center.IsNull()) copy.center = this.center;
+            if (this.corners != null) copy.corners = (Vector3[])this.corners.Clone();
+            if (this.PointsOnFaces != null)
+            {
+                copy.PointsOnFaces = new List<Vertex>[8];
+                for (int i = 0; i < 8; i++)
+                    copy.PointsOnFaces[i] = new List<Vertex>(this.PointsOnFaces[i]);
+            }
             return copy;
         }
 
-        public static BoundingBox ExtendAlongDirection(BoundingBox original, Vector3 direction, double distance)
+        public BoundingBox MoveFaceOutwardToNewSolid(Vector3 direction, double distance)
         {
-            int sign = 0;
-            var updateIndex = -1;
-            for (var i = 0; i <= 2; i++)
-            {
-                var dot = direction.Dot(original.Directions[i]);
-                sign = Math.Sign(dot);
-                if (Math.Abs(dot).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance))
-                {
-                    updateIndex = i;
-                    break;
-                }
-            }
-            if (updateIndex == -1) throw new Exception("BoundingBox may only be extended along one of its three defining directions.");
-
-            var dimensions = new Vector3(original.Dimensions[0], original.Dimensions[1], original.Dimensions[2]);
-            dimensions += distance * Vector3.UnitVector(updateIndex);
-            var volume = dimensions[0] * dimensions[1] * dimensions[2];
-
-            var result = new BoundingBox
-            {
-                Center = new Vertex(original.Center.Coordinates + (direction * distance / 2)),
-                Dimensions = dimensions,
-                Volume = volume,
-                Directions = original.Directions, //If these change, then the copy is useless anyways
-                PointsOnFaces = null, // these reference vertices are no longer valid.
-                CornerVertices = new Vertex[8]
-            };
-
-            //Recreate the corner vertices  
-            for (var i = 0; i < 8; i++)
-            {
-                result.CornerVertices[i] = original.CornerVertices[i].Copy();
-            }
-
-            //And then move the vertices furthest along the direction by the given distance
-            var vectorOffset = direction * distance;
-            //Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
-            //[0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
-            int[] indicesToUpdate;
-            if (updateIndex == 0)
-            {
-                if (sign == 1) indicesToUpdate = new int[] { 0, 1, 2, 3 };
-                else indicesToUpdate = new int[] { 4, 5, 6, 7 };
-            }
-            else if (updateIndex == 1)
-            {
-                if (sign == 1) indicesToUpdate = new int[] { 0, 3, 4, 7 };
-                else indicesToUpdate = new int[] { 1, 2, 5, 6 };
-            }
-            else
-            {
-                if (sign == 1) indicesToUpdate = new int[] { 0, 1, 4, 5 };
-                else indicesToUpdate = new int[] { 2, 3, 6, 7 };
-            }
-            foreach (var i in indicesToUpdate)
-            {
-                result.CornerVertices[i] = new Vertex(result.CornerVertices[i].Coordinates + vectorOffset);
-            }
-
-            //Recreate the solid representation if one existing in the original
-            if (original.SolidRepresentation != null) result.SetSolidRepresentation();
-            return result;
+            var copy = this.Copy();
+            copy.MoveFaceOutward(direction, distance);
+            return copy;
         }
 
-        //Note: Corner vertices must be ordered correctly. See below where - = low and + = high along directions 0, 1, and 2 respectively.
-        // [0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
-        public static BoundingBox FromCornerVertices(Vector3[] directions, Vertex[] cornerVertices, bool areVerticesInCorrectOrder)
+        public void MoveFaceOutward(Vector3 direction, double distance)
         {
-            if (!areVerticesInCorrectOrder) throw new Exception("Not implemented exception. Vertices must be in correct order for OBB");
-            if (cornerVertices.Length != 8) throw new Exception("Must set Bounding Box using eight corner vertices in correct order");
-
-            var dimensions = new Vector3(
-                MinimumEnclosure.GetLengthAndExtremeVertices(directions[0], cornerVertices, out _, out _),
-                MinimumEnclosure.GetLengthAndExtremeVertices(directions[1], cornerVertices, out _, out _),
-                MinimumEnclosure.GetLengthAndExtremeVertices(directions[2], cornerVertices, out _, out _));
-
-            //Add in the center
-            var centerPosition = new Vector3();
-            centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c + v.Coordinates)
-                .Divide(cornerVertices.Length);
-
-            return new BoundingBox
-            {
-                Center = new Vertex(centerPosition),
-                Volume = dimensions[0] * dimensions[1] * dimensions[2],
-                Dimensions = dimensions,
-                Directions = directions,
-                PointsOnFaces = null,
-                CornerVertices = cornerVertices
-            };
+            var unitDir = direction.Normalize();
+            CartesianDirections cartesian = CartesianDirections.ZNegative;
+            if (unitDir.Dot(Directions[0]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.XPositive;
+            if (unitDir.Dot(Directions[1]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.YPositive;
+            if (unitDir.Dot(Directions[2]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.ZPositive;
+            if (unitDir.Dot(Directions[0]).IsPracticallySame(-1.0, 0.1)) cartesian = CartesianDirections.XNegative;
+            if (unitDir.Dot(Directions[1]).IsPracticallySame(-1.0, 0.1)) cartesian = CartesianDirections.YNegative;
+            MoveFaceOutward(cartesian, distance);
         }
+        public BoundingBox MoveFaceOutwardToNewSolid(CartesianDirections face, double distance)
+        {
+            var copy = this.Copy();
+            copy.MoveFaceOutward(face, distance);
+            return copy;
+        }
+        public void MoveFaceOutward(CartesianDirections face, double distance)
+        {
+            if (distance.IsNegligible()) return;
+            var positiveFace = face > 0;
+            var direction = Math.Abs((int)face) - 1;
+            if (positiveFace)
+                Dimensions = Dimensions + Vector3.UnitVector(direction) * distance;
+            else MinPlaneDistanceToOrigin = MinPlaneDistanceToOrigin - Vector3.UnitVector(direction) * distance;
+            if (PointsOnFaces != null)
+            {
+                //direction1-low,
+                ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
+                var vertexOnPlaneIndex = 2 * direction + (positiveFace ? 1 : 0);
+                PointsOnFaces[vertexOnPlaneIndex].Clear();
+            }
+            ResetLazyFields();
+        }
+        private void ResetLazyFields()
+        {
+            center = Vector3.Null;
+            this.corners = null;
+            this._sortedDimensions = null;
+            this._sortedDirectionIndicesByLength = null;
+            this._sortedDirectionsByLength = null;
+            this._tessellatedSolid = null;
+        }
+
     }
 
     /// <summary>
@@ -400,7 +350,7 @@ namespace TVGL
         /// <summary>
         ///     The point pairs that define the bounding rectangle limits
         /// </summary>
-        public List<Point>[] PointsOnSides;
+        public List<Vector2>[] PointsOnSides;
 
         /// <summary>
         ///     Vector direction of length 

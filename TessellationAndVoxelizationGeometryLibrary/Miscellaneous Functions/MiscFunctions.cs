@@ -49,14 +49,15 @@ namespace TVGL
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
+
         /// <summary>
         ///     Returns a list of sorted locations along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
         /// <param name="vertices">The locations.</param>
         /// <param name="sortedVertices">The sorted locations.</param>
-        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vertex> vertices,
-            out List<Vertex> sortedVertices)
+        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vector3> vertices,
+            out List<(Vector3, double)> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
@@ -66,64 +67,41 @@ namespace TVGL
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //toleranceForCombiningPoints as the "isNeglible" star math function 
-            sortedVertices = vertexDistances.OrderBy(p => p.Item2).Select(p => p.Item1).ToList();
+            sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
-        private static IEnumerable<(Vertex, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vertex> vertices)
+        private static IEnumerable<(Vertex, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vertex> vertices,
+            double sameTolerance = Constants.BaseTolerance)
         {
             var vertexDistances = new List<(Vertex, double)>(vertices.Count());
-            //Accuracy to the 15th decimal place
-            var toleranceString = EqualityExtensions.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
-            var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal) + 1)));
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             foreach (var vertex in vertices)
             {
                 //Get distance along the search direction
-                var d = Math.Round(direction.Dot(vertex.Coordinates), tolerance);
+                var d = Math.Round(direction.Dot(vertex.Coordinates), numDecimalPoints);
                 vertexDistances.Add((vertex, d));
             }
             return vertexDistances;
         }
 
-        /// <summary>
-        ///     Returns a list of sorted points along a set direction. 
-        /// </summary>
-        /// <param name="direction">The directions.</param>
-        /// <param name="points"></param>
-        /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
-               out List<(Point, double)> sortedPoints)
+        private static IEnumerable<(Vector3, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vector3> vertices,
+            double sameTolerance = Constants.BaseTolerance)
         {
-            var pointDistances = GetPointDistances(directionX, directionY, points);
-            sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
-        }
-
-        /// <summary>
-        ///     Returns a list of sorted points along a set direction. 
-        /// </summary>
-        /// <param name="direction">The directions.</param>
-        /// <param name="points"></param>
-        /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
-               out List<Point> sortedPoints)
-        {
-            var pointDistances = GetPointDistances(directionX, directionY, points);
-            sortedPoints = pointDistances.OrderBy(point => point.Item2).Select(p => p.Item1).ToList();
-        }
-
-        private static IEnumerable<(Point, double)> GetPointDistances(double directionX, double directionY, IEnumerable<Point> points)
-        {
-            var pointDistances = new List<(Point, double)>(points.Count());
-            //Accuracy to the 15th decimal place
-            var toleranceString = EqualityExtensions.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
-            var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
-            foreach (var point in points)
+            var vertexDistances = new List<(Vector3, double)>(vertices.Count());
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            foreach (var vertex in vertices)
             {
-                //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(directionX * point.X + directionY * point.Y, tolerance); //2D dot product
-                pointDistances.Add((point, d));
+                //Get distance along the search direction
+                var d = Math.Round(direction.Dot(vertex), numDecimalPoints);
+                vertexDistances.Add((vertex, d));
             }
-            return pointDistances;
+            return vertexDistances;
         }
+
+
+
 
         /// <summary>
         ///     Returns a list of sorted Vector2s along a set direction. 
@@ -132,7 +110,7 @@ namespace TVGL
         /// <param name="Vector2s"></param>
         /// <param name="sortedVector2s"></param>
         public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> Vector2s,
-               out List<(Vector2, double)> sortedVector2s, int numDecimals)
+               out List<(Vector2, double)> sortedVector2s, int numDecimals = 9)
         {
             var Vector2Distances = GetVector2Distances(directionX, directionY, Vector2s, numDecimals);
             sortedVector2s = Vector2Distances.OrderBy(Vector2 => Vector2.Item2).ToList();
@@ -145,7 +123,7 @@ namespace TVGL
         /// <param name="Vector2s"></param>
         /// <param name="sortedVector2s"></param>
         public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> Vector2s,
-               out List<Vector2> sortedVector2s, int numDecimals)
+               out List<Vector2> sortedVector2s, int numDecimals = 9)
         {
             var Vector2Distances = GetVector2Distances(directionX, directionY, Vector2s, numDecimals);
             sortedVector2s = Vector2Distances.OrderBy(Vector2 => Vector2.Item2).Select(p => p.Item1).ToList();
@@ -205,19 +183,6 @@ namespace TVGL
             double perimeter = Vector2.Distance(polygon.Last(), polygon[0]);
             for (var i = 1; i < polygon.Count; i++)
                 perimeter += Vector2.Distance(polygon[i - 1], polygon[i]);
-            return perimeter;
-        }
-
-        /// <summary>
-        /// Gets the perimeter for a 2D set of points.
-        /// </summary>
-        /// <param name="polygon"></param>
-        /// <returns></returns>
-        public static double Perimeter(IList<Point> polygon)
-        {
-            double perimeter = Vector2.Distance(polygon.Last().Light, polygon[0].Light);
-            for (var i = 1; i < polygon.Count; i++)
-                perimeter += Vector2.Distance(polygon[i - 1].Light, polygon[i].Light);
             return perimeter;
         }
 
@@ -348,10 +313,6 @@ namespace TVGL
             return paths.Sum(path => AreaOfPolygon(path));
         }
 
-        public static double AreaOfPolygon(IList<Point> polygon)
-        {
-            return AreaOfPolygon(polygon.Select(p => p.Light).ToList());
-        }
 
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
@@ -627,33 +588,31 @@ namespace TVGL
 
         #region Flatten to 2D
 
-        #region change 3D vertices into 2D Points (objects with reference to vertex)
+        #region change 3D vertices into 2D coordinates (e.g. Vector2's)
         /// <summary>
-        /// Returns newly created 2D points projected along the given direction.
-        /// Points will contain the vertices in their references. This does not destructively alter the vertices.
+        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+        /// These coordinates do not contain references back to the original vertices but are lighter and
+        /// quicker. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
-        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point. 
-        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at 
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
-        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
-        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
-        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
-        /// to define some polygon with order dictating the definition of edges.</param>
         /// 
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Point&gt;.</returns>
-        public static IEnumerable<Point> ProjectVerticesTo2DPoints(this IEnumerable<Vertex> vertices, Vector3 direction,
-            out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        public static Dictionary<Vector2, List<Vertex>> ProjectVerticesTo2DCoordinatesWithRefToVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
+                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return ProjectVerticesTo2DPoints(vertices, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
+            return ProjectVerticesTo2DCoordinatesWithRefToVertices(vertices, transform, toleranceForCombiningPoints);
         }
 
         /// <summary>
-        /// Returns newly created 2D points projected using the given transform.
-        /// Points will contain the vertices in their references. This does not destructively alter the vertices.
+        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+        /// These coordinates do not contain references back to the original vertices but are lighter and
+        /// quicker. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="transform">The transform matrix.</param>
@@ -665,46 +624,67 @@ namespace TVGL
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
         /// 
-        /// /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Point&gt;.</returns>
-        public static IEnumerable<Point> ProjectVerticesTo2DPoints(this IEnumerable<Vertex> vertices, Matrix4x4 transform,
-            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        public static Dictionary<Vector2, List<Vertex>> ProjectVerticesTo2DCoordinatesWithRefToVertices(this IEnumerable<Vertex> vertices, Matrix4x4 transform,
+            double toleranceForCombiningPoints = Constants.BaseTolerance)
         {
-            if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
+            var resultsDict = new Dictionary<Vector2, List<Vertex>>();
+            var numDecimalPoints = 0;
+            while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
+                numDecimalPoints++;
+            foreach (var vertex in vertices)
             {
-                foreach (var vertex in vertices)
-                {
-                    var point = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-                    yield return new Point(vertex, point.X, point.Y);
-                }
+                var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
+                if (resultsDict.ContainsKey(coordinates))
+                    resultsDict[coordinates].Add(vertex);
+                else
+                    /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
+                    resultsDict.Add(coordinates, new List<Vertex>());
             }
-            else
-            {
-                var numDecimalPoints = 0;
-                var simpleCompareDict = new Dictionary<Vector2, Point>();
-                while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
-                    numDecimalPoints++;
-                foreach (var vertex in vertices)
-                {
-                    var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-                    coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
-                    if (simpleCompareDict.ContainsKey(coordinates))
-                    {
-                        var oldPoint = simpleCompareDict[coordinates];
-                        oldPoint.References.Add(vertex);
-                        if (duplicateEntriesToMaintainPolygonalOrdering) yield return oldPoint;
-                    }
-                    else
-                    {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. */
-                        var point2D = new Point(vertex, coordinates.X, coordinates.Y);
-                        simpleCompareDict.Add(coordinates, point2D);
-                        yield return point2D;
-                    }
-                }
-            }
+            return resultsDict;
         }
-        #endregion
 
+        /*
+        /// <summary>
+        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
+        /// These coordinates do not contain references back to the original vertices but are lighter and
+        /// quicker. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="OneToOneOrderedList">The one to one ordered list.</param>
+        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
+        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
+        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// <summary>
+        /// 
+        /// <returns>Dictionary&lt;Vector2, List&lt;Vertex&gt;&gt;.</returns>
+        public static Dictionary<Vector2, Vertex> ProjectVerticesTo2DCoordinatesWithRefToVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
+                out List<Vector2> OneToOneOrderedList, double toleranceForCombiningPoints = Constants.BaseTolerance)
+        {
+            var transform = TransformToXYPlane(direction, out _);
+            var resultsDict = new Dictionary<Vector2, List<Vertex>>();
+            OneToOneOrderedList = new List<Vector2>();
+            var numDecimalPoints = 0;
+            while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
+                numDecimalPoints++;
+            foreach (var vertex in vertices)
+            {
+                var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
+                if (resultsDict.ContainsKey(coordinates))
+                    resultsDict[coordinates].Add(vertex);
+                else
+                    else, add a new vertex to the list, and a new entry to simpleCompareDict.  
+                    resultsDict.Add(coordinates, new List<Vertex>());
+                OneToOneOrderedList.Add(coordinates);
+            }
+            return resultsDict;
+        }
+        */
+
+        #endregion
         #region change 3D vertices into 2D coordinates (e.g. Vector2's)
         /// <summary>
         /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
@@ -763,7 +743,7 @@ namespace TVGL
                 foreach (var vertex in vertices)
                 {
                     var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-                        coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
+                    coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
                     if (simpleCompareDict.Contains(coordinates))
                     {
                         if (duplicateEntriesToMaintainPolygonalOrdering)
@@ -982,19 +962,6 @@ namespace TVGL
             return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
         }
 
-        /// <summary>
-        ///     Gets the smaller of the two angles between edges.
-        /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <param name="c">The c.</param>
-        /// <returns>System.Double.</returns>
-        internal static double SmallerAngleBetweenEdges(Point a, Point b, Point c)
-        {
-            var edge1 = new Vector2(b.X - a.X, b.Y - a.Y);
-            var edge2 = new Vector2(c.X - b.X, c.Y - b.Y);
-            return Math.Acos(edge1.Dot(edge2) / (edge1.Length() * edge2.Length()));
-        }
 
         /// <summary>
         ///     Smallers the angle between edges.
@@ -1060,43 +1027,16 @@ namespace TVGL
             return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
-        /// <summary>
-        ///     Angles the between edges cw.
-        /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <param name="c">The c.</param>
-        /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(Point a, Point b, Point c)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
         {
-            return ExteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
+            return Constants.TwoPi - InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
-
-        /// <summary>
-        ///     Angles the between edges CCW.
-        /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <param name="c">The c.</param>
-        /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(Point a, Point b, Point c)
-        {
-            return InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
-        }
-
-        /// <summary>
-        ///     Angles the between edges CCW.
-        /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <param name="c">The c.</param>
-        /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
         {
             return InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
 
-   
+
         public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
             return Constants.TwoPi - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, positiveNormal);
@@ -1173,7 +1113,7 @@ namespace TVGL
         /// <param name="intersectionPoint"></param>
         /// <param name="considerCollinearOverlapAsIntersect"></param>
         /// <returns></returns>
-        public static bool LineLineIntersection(Line line1, Line line2, out Point intersectionPoint,
+        public static bool LineLineIntersection(Line line1, Line line2, out Vector2 intersectionPoint,
             bool considerCollinearOverlapAsIntersect = false)
         {
             return
@@ -1195,235 +1135,67 @@ namespace TVGL
         /// http://www.codeproject.com/Tips/862988/Find-the-Intersection-Point-of-Two-Line-Segments
         /// </source>
         /// <returns></returns>
-        public static bool LineLineIntersection(Point pt1, Point pt2, Point pt3, Point pt4, out Point intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
+        public static bool LineLineIntersection(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2,
+            out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
         {
-            var p = pt1;
-            var p2 = pt2;
-            var q = pt3;
-            var q2 = pt4;
-            var points = new List<Point> { pt1, pt2, pt3, pt4 };
-            intersectionPoint = null;
-            var r = p2 - p;
-            var s = q2 - q;
-            var rxs = r.X * s.Y - r.Y * s.X; //2D cross product, determines if parallel
-            var qp = q - p;
-            var qpxr = qp.X * r.Y - qp.Y * r.X;//2D cross product
-
-            // If r x s ~ 0 and (q - p) x r ~ 0, then the two lines are possibly collinear.
-            // This is negigible toleranceForCombiningPoints of 0.00001 is not arbitary. It was chosen because of the second case within this if statement.
-            if (rxs.IsNegligible(0.00001) && qpxr.IsNegligible(0.00001))
+            intersectionPoint = Vector2.Null;
+            // first check if bounding boxes overlap. If they don't then return false here
+            if (Math.Max(p1.X, p2.X) < Math.Min(q1.X, q2.X) || Math.Max(q1.X, q2.X) < Math.Min(p1.X, p2.X) ||
+                Math.Max(p1.Y, p2.Y) < Math.Min(q1.Y, q2.Y) || Math.Max(p1.Y, p2.Y) < Math.Min(q1.Y, q2.Y))
+                return false;
+            // okay, so bounding boxes overlap
+            //first a quick check to see if points are the same
+            if ((p1 - q1).LengthSquared().IsNegligible())
             {
-                // 1. If either  0 <= (q - p) * r <= r * r or 0 <= (p - q) * s <= * s
-                // then the two lines are overlapping,
-                // 2. If neither 0 <= (q - p) * r = r * r nor 0 <= (p - q) * s <= s * s
-                // then the two lines are collinear but disjoint.
-                var qpr = qp.X * r.X + qp.Y * r.Y;
-                var pqs = (p - q).X * s.X + (p - q).Y * s.Y;
-                var overlapping = (0 <= qpr && qpr <= r.X * r.X + r.Y * r.Y) ||
-                                  (0 <= pqs && pqs <= s.X * s.X + s.Y * s.Y);
-                if (rxs.IsNegligible() && qpxr.IsNegligible())
-                // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
-                {
-                    if (!considerCollinearOverlapAsIntersect) return false;
-                    return overlapping;
-                }
-                //It is possible for the rxs or qpxr to be near negligible, but all points of the two lines are negligibly close to the line
-                //making the lines collinear
-                if (!overlapping) return false;
-                //Get the slope for both lines
-                double slope1, slope2;
-                if (pt1.X.IsPracticallySame(pt2.X)) //Vertical line
-                {
-                    slope1 = double.MaxValue;
-                }
-                else if (pt1.Y.IsPracticallySame(pt2.Y))//Horizontal Line
-                {
-                    slope1 = 0.0;
-                }
-                else slope1 = (pt2.Y - pt1.Y) / (pt2.X - pt1.X);
-                if (pt3.X.IsPracticallySame(pt4.X)) //Vertical line
-                {
-                    slope2 = double.MaxValue;
-                }
-                else if (pt3.Y.IsPracticallySame(pt4.Y))//Horizontal Line
-                {
-                    slope2 = 0.0;
-                }
-                else slope2 = (pt4.Y - pt3.Y) / (pt4.X - pt3.X);
-                //Foreach line, check the Y intercepts of the X values from the other line. If the intercepts match the point.Y values, then it is collinear
-                if ((slope1 * (pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y) &&
-                    (slope1 * (pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
-                {
-                    if (!considerCollinearOverlapAsIntersect) return false;
-                    return true;
-                }
-                if ((slope2 * (pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y) &&
-                    (slope2 * (pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
-                {
-                    if (!considerCollinearOverlapAsIntersect) return false;
-                    return true;
-                }
-                //Else look at other cases.
-            }
-
-            // 3. If r x s = 0 and (q - p) x r != 0, then the two lines are parallel and non-intersecting.
-            if (rxs.IsNegligible() && !qpxr.IsNegligible()) return false;
-
-            //4. Check if the lines share a point. If yes, return that point.  
-            if (pt1 == pt3 || pt1 == pt4)
-            {
-                intersectionPoint = pt1;
+                intersectionPoint = p1;
                 return true;
             }
-            if (pt2 == pt3 || pt2 == pt4)
+            if ((p1 - q2).LengthSquared().IsNegligible())
             {
-                intersectionPoint = pt2;
+                intersectionPoint = p1;
+                return true;
+            }
+            if ((p2 - q1).LengthSquared().IsNegligible())
+            {
+                intersectionPoint = p2;
+                return true;
+            }
+            if ((p2 - q2).LengthSquared().IsNegligible())
+            {
+                intersectionPoint = p2;
                 return true;
             }
 
-            // t = (q - p) x s / (r x s)
-            //Note, the output of this will be t = [0,0,#] since this is a 2D cross product.
-            var t = (q - p).Cross(s) / rxs;
+            var vp = p2 - p1; //vector along p-line
+            var vq = q2 - q1; //vector along q-line
+            var vCross = vp.Cross(vq); //2D cross product, determines if parallel
+            var vStarts = q1 - p1; // the vector connecting starts
 
-            // u = (q - p) x r / (r x s)
-            //Note, the output of this will be u = [0,0,#] since this is a 2D cross product.
-            var u = (q - p).Cross(r) / rxs;
-
-            // 5. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
-            // the two line segments meet at the point p + t r = q + u s.
-            if (!rxs.IsNegligible() &&
-                !t.IsLessThanNonNegligible() && !t.IsGreaterThanNonNegligible(1.0) &&
-                !u.IsLessThanNonNegligible() && !u.IsGreaterThanNonNegligible(1.0))
+            if (vCross.IsNegligible(Constants.BaseTolerance))
             {
-
-                ////Tthe intersection point may be one of the existing points
-                ////This is needed because the x,y calculated below can be off by a very slight amount, caused by rounding error.
-                ////Check if any of the points are on the other line.
-                //double slope1, slope2;
-                //if (pt1.X.IsPracticallySame(pt2.X)) //Vertical line
-                //{
-                //    slope1 = double.MaxValue;
-                //}
-                //else if (pt1.Y.IsPracticallySame(pt2.Y))//Horizontal Line
-                //{
-                //    slope1 = 0.0;
-                //}
-                //else slope1 = (pt2.Y - pt1.Y) / (pt2.X - pt1.X);
-                //if (pt3.X.IsPracticallySame(pt4.X)) //Vertical line
-                //{
-                //    slope2 = double.MaxValue;
-                //}
-                //else if (pt3.Y.IsPracticallySame(pt4.Y))//Horizontal Line
-                //{
-                //    slope2 = 0.0;
-                //}
-                //else slope2 = (pt4.Y - pt3.Y) / (pt4.X - pt3.X);
-
-                ////Foreach line, check the Y intercepts of the X values from the other line. If the intercepts match the point.Y values, then it is collinear
-                //if ((slope1*(pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y))
-                //{
-                //    intersectionPoint = pt3;
-                //    return true;
-                //}
-                //if ((slope1*(pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
-                //{
-                //    intersectionPoint = pt4;
-                //    return true;
-                //}
-                //if ((slope2 * (pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y))
-                //{
-                //    intersectionPoint = pt1;
-                //    return true;
-                //};
-                //if ((slope2*(pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
-                //{
-                //    intersectionPoint = pt2;
-                //    return true;
-                //}
-
-
-                // We can calculate the intersection point using either t or u.
-                var x = p.X + t * r.X;
-                var y = p.Y + t * r.Y;
-                var x2 = q.X + u * s.X;
-                var y2 = q.Y + u * s.Y;
-
-                //If either is equal to any of the given points, return that point
-                if (x.IsPracticallySame(x2) && y.IsPracticallySame(y2))
-                {
-                    //If either is equal to any of the given points, return that point
-                    foreach (var point in points)
-                    {
-                        if (!point.X.IsPracticallySame(x) || !point.Y.IsPracticallySame(y)) continue;
-                        intersectionPoint = point;
-                        return true;
-                    }
-                    //Else, return the new intersection point
-                    intersectionPoint = new Point(x, y);
-                    return true;
-                }
-
-                //Values are not even close
-                if (!x.IsPracticallySame(x2, 0.0001) || !y.IsPracticallySame(y2, 0.00001)) throw new NotImplementedException();
-
-                //Else, equations were not equal, but one may have been slightly off. 
-                //Check to see if either possible intersection point matches an existing point.
-                foreach (var point in points)
-                {
-                    if ((!point.X.IsPracticallySame(x) || !point.Y.IsPracticallySame(y)) &&
-                        (!point.X.IsPracticallySame(x2) || !point.Y.IsPracticallySame(y2))) continue;
-                    intersectionPoint = point;
-                    return true;
-                }
-
-                //Else, choose the solution with fewer digits
-                var x3 = x;
-                var y3 = y;
-                if (!x.IsPracticallySame(x2))
-                {
-                    var i = 0;
-                    while (i < 16 && !x.IsPracticallySame(Math.Round(x, i)))
-                    {
-                        i++;
-                    }
-                    var j = 0;
-                    while (j < 16 && !x2.IsPracticallySame(Math.Round(x2, j)))
-                    {
-                        j++;
-                    }
-                    //i < j. x3 is already equal to x.
-                    if (i > j)
-                    {
-                        x3 = x2;
-                    }
-                    //if i == j, just use the first x.
-                }
-                if (!y.IsPracticallySame(y2))
-                {
-                    var i = 0;
-                    while (i < 16 && !y.IsPracticallySame(Math.Round(y, i)))
-                    {
-                        i++;
-                    }
-                    var j = 0;
-                    while (j < 16 && !y2.IsPracticallySame(Math.Round(y2, j)))
-                    {
-                        j++;
-                    }
-                    //i < j. x3 is already equal to x.
-                    if (i > j)
-                    {
-                        y3 = y2;
-                    }
-                    //if i == j, just use the first y.
-                }
-                intersectionPoint = new Point(x3, y3);
-                return true;
-
+                // if this is also parallel with the vector direction then there is overlap
+                // (since bounding boxes overlap). But we cannot set intersectionPoint
+                // to a single value since it is infinite points!
+                return vStarts.Cross(vp).IsNegligible(Constants.BaseTolerance);
             }
-
-            // 5. Otherwise, the two line segments are not parallel but do not intersect.
-            return false;
+            // solve for the t scalar values for the two lines.
+            // the line is define as all values of t from 0 to 1 in the equations
+            // p-line(t_p) = (1 - t_p)*p1 + t_p*p2
+            // q-line(t_q) = (1 - t_q)*q1 + t_q*q2
+            // solve as a system of two equations
+            //   |   vp_x      vq_x   | |  t_p  |    | vStarts_x  |
+            //   |                    |*|       | =  |            |
+            //   |   vp_y      vq_y   | |  t_q  |    | vStarts_y  |
+            var oneOverdeterminnant = 1 / vCross;
+            var aInv11 = vq.Y * oneOverdeterminnant;
+            var aInv12 = -vq.X * oneOverdeterminnant;
+            var aInv21 = -vp.Y * oneOverdeterminnant;
+            var aInv22 = vp.X * oneOverdeterminnant;
+            var t_p = aInv11 * vStarts.X + aInv12 * vStarts.Y;
+            var t_q = aInv21 * vStarts.X + aInv22 * vStarts.Y;
+            if (t_p < 0 || t_p > 1 || t_q < 0 || t_q > 1) return false;
+            intersectionPoint = 0.5*((1 - t_p) * p1 + t_p * p2 + (1 - t_q) * q1 + t_q * q2);
+            return true;
         }
 
         /// <summary>
@@ -1649,27 +1421,6 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Returns the distance the point on an infinite line.
-        /// </summary>
-        /// <param name="qPoint">q is the point that is off of the line.</param>
-        /// <param name="lineRefPt">p is a reference point on the line.</param>
-        /// <param name="lineVector">n is the vector of the line direction.</param>
-        /// <param name="pointOnLine">The point on line closest to point, q.</param>
-        /// <returns>System.Double.</returns>
-        public static double DistancePointToLine(Point qPoint, Point lineRefPt, Vector2 lineVector,
-            out Point pointOnLine)
-        {
-            double t;
-            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
-            * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
-                    / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
-            pointOnLine = new Point(lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t);
-            return qPoint.Light.Distance(pointOnLine.Light);
-        }
-
-
-        /// <summary>
         ///     Distances the point to point.
         /// </summary>
         /// <param name="p1">point, p1.</param>
@@ -1837,22 +1588,6 @@ namespace TVGL
             var d2 = normalOfPlane.Dot(point2);
             var fraction = (d1 - distOfPlane) / (d1 - d2);
             return Vector3.Lerp(point1, point2, fraction);
-        }
-
-        /// <summary>
-        ///     Finds the point on the plane made by a line intersecting
-        ///     with that plane.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane. Can be 2D or 3D. </param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="line"></param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Point PointOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
-        {
-            Vector2OnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
-                line.ToPoint.X, line.ToPoint.Y, out var x, out var y);
-            return new Point(x, y);
         }
 
         /// <summary>
@@ -2143,7 +1878,7 @@ namespace TVGL
         /// <param name="closestLineAbove"></param>
         /// <param name="isOnLine"></param>
         /// <returns></returns>
-        public static int NumberOfLinesAbovePoint(Point pointInQuestion, IEnumerable<Line> lineList, out Line closestLineAbove, out bool isOnLine)
+        public static int NumberOfLinesAbovePoint(Vector2 pointInQuestion, IEnumerable<Line> lineList, out Line closestLineAbove, out bool isOnLine)
         {
             isOnLine = false;
             var count = 0;
@@ -2178,7 +1913,7 @@ namespace TVGL
         /// <param name="closestLineBelow"></param>
         /// <param name="isOnLine"></param>
         /// <returns></returns>
-        public static int NumberOfLinesBelowPoint(Point pointInQuestion, IEnumerable<Line> lineList, out Line closestLineBelow, out bool isOnLine)
+        public static int NumberOfLinesBelowPoint(Vector2 pointInQuestion, IEnumerable<Line> lineList, out Line closestLineBelow, out bool isOnLine)
         {
             isOnLine = false;
             var count = 0;
@@ -2228,7 +1963,7 @@ namespace TVGL
         ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
         ///     below, but does allow determination of whether a point is on the boundary.
         /// </summary>
-        public static bool IsPointInsidePolygon(Polygon polygon, Point pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
+        public static bool IsPointInsidePolygon(Polygon polygon, Vector2 pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
             bool onBoundaryIsInside = true)
         {
             //This function has three layers of checks. 
@@ -2244,7 +1979,7 @@ namespace TVGL
                 !pointInQuestion.Y.IsLessThanNonNegligible(polygon.MaxY) ||
                 !pointInQuestion.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
 
-            var points = new List<Point>(polygon.Path);
+            var points = polygon.Path;
 
             //2) If the point in question is == a point in points, then it is inside the polygon
             if (
@@ -2258,7 +1993,7 @@ namespace TVGL
 
             //Make sure polygon indices are set properly
             if (polygon.Index == -1) polygon.Index = 0;
-            foreach (var point in points.Where(point => point.PolygonIndex != polygon.Index))
+            foreach (var point in points)
             {
                 point.PolygonIndex = polygon.Index;
             }
@@ -2374,24 +2109,6 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="p"></param>
-        public static bool IsPointInsidePolygon(List<Point> path, Point point, bool returnSharedPointAsInside = false)
-        {
-            return IsPointInsidePolygon(path.Select(p => p.Light).ToList(), new Vector2(point.X, point.Y), returnSharedPointAsInside);
-        }
-
-        /// <summary>
-        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
-        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
-        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
-        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
-        ///     Major Assumptions: 
-        ///     1) The polygon can be convex
-        ///     2) The direction of the polygon does not matter  
-        /// 
-        ///     Updated by Brandon Massoni: 8.11.2017
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="p"></param>
         public static bool IsPointInsidePolygon(List<Vector2> path, Vector2 p, bool returnSharedPointAsInside = false)
         {
             //Check if the point is the same as any of the polygon's points
@@ -2455,8 +2172,8 @@ namespace TVGL
                 subject.MaxY < clip.MinY) return false;
 
             //Check if either polygon is fully encompassed by the other
-            if (clip.Path.Any(p => IsPointInsidePolygon(subject.Light, p.Light))) return true;
-            if (subject.Path.Any(p => IsPointInsidePolygon(clip.Light, p.Light))) return true;
+            if (clip.Path.Any(p => IsPointInsidePolygon(subject.Light, p))) return true;
+            if (subject.Path.Any(p => IsPointInsidePolygon(clip.Light, p))) return true;
 
             //Else, any remaining intersection will be defined by one or more crossing lines
             //Check for intersections between all but one of the clip lines with all of the subject lines.

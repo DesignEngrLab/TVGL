@@ -317,7 +317,7 @@ namespace TVGL
         /// <summary>
         /// The vertices making up this loop
         /// </summary>
-        public IList<Vertex> VertexLoop;
+        public Vertex[] VertexLoop;
         /// <summary>
         /// The faces that were formed on-side for this loop. About 2/3 s
         /// of these faces should have one negligible adjacent face. 
@@ -341,7 +341,7 @@ namespace TVGL
                 //Else, reverse the loop and the invert the area.
                 Area = -Area;
                 var temp = VertexLoop.Reverse();
-                VertexLoop = new List<Vertex>(temp);
+                VertexLoop = temp.ToArray();
             }
         }
 
@@ -393,7 +393,7 @@ namespace TVGL
             IEnumerable<Vertex> straddleEdgeOnSideVertices, bool isClosed = true)
         {
             if (!IsClosed) Message.output("loop not closed!",3);
-            VertexLoop = new List<Vertex>(vertexLoop);
+            VertexLoop = vertexLoop.ToArray();
             OnSideContactFaces = onSideContactFaces;
             IsClosed = isClosed;
             Area = MiscFunctions.AreaOf3DPolygon(vertexLoop, normal);

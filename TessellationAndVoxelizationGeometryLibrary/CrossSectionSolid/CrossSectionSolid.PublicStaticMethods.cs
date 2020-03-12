@@ -7,16 +7,13 @@ namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, Vector3 startPoint, double extrudeDistance,
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
             List<PolygonLight> shape, double sameTolerance, UnitType units)
         {
-            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var endPoint = startPoint + (buildDirection * extrudeDistance);
-            var stepDistances = new Dictionary<int, double> { { 0, startPoint.Dot(buildDirection) }, { 1, endPoint.Dot(buildDirection) } };
+            var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
             var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, shape }, { 1, shape } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
-
         public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,
            double sameTolerance, UnitType units)
         {

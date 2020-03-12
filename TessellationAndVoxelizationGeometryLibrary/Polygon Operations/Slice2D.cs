@@ -18,11 +18,11 @@ namespace TVGL._2D
         /// intersection points before the line).
         /// </summary>
         public static List<PolygonLight> OnLine(List<PolygonLight> shape, Vector2 direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, out List<Point> intersectionPoints,
-            double offsetAtLine = 0.0, List<(Point, double)> sortedPoints = null)
+            bool returnFurtherThanSlice, out List<Vector2> intersectionPoints,
+            double offsetAtLine = 0.0, List<(Vector2, double)> sortedPoints = null)
         {
             var partialShape = new List<PolygonLight>();
-            intersectionPoints = new List<Point>();
+            intersectionPoints = new List<Vector2>();
             var shallowPolygonsTrees = PolygonOperations.GetShallowPolygonTrees(shape);
             var dirX = direction2D[0];
             var dirY = direction2D[1];
@@ -35,7 +35,7 @@ namespace TVGL._2D
                 }
 
                 //Get the sorted points
-                var allPoints = new List<Point>();
+                var allPoints = new List<Vector2>();
                 foreach (var path in shallowPolygonTree.AllPaths)
                 {
                     allPoints.AddRange(path);
@@ -48,7 +48,7 @@ namespace TVGL._2D
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
                 //that they are from non-overlapping shallow polygon trees.
-                var localSortedIntersectionOffsetPoints = new List<Point>();
+                var localSortedIntersectionOffsetPoints = new List<Vector2>();
                 var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
                     out localSortedIntersectionOffsetPoints, offsetAtLine);
                 partialShape.AddRange(paths);
@@ -66,12 +66,12 @@ namespace TVGL._2D
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static List<List<Vector2>> OnLine(List<List<Point>> shape, Vector2 direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, out List<Point> intersectionPoints,
-            double offsetAtLine = 0.0, List<(Point, double)> sortedPoints = null)
+        public static List<List<Vector2>> OnLine(List<List<Vector2>> shape, Vector2 direction2D, double distanceAlongDirection,
+            bool returnFurtherThanSlice, out List<Vector2> intersectionPoints,
+            double offsetAtLine = 0.0, List<(Vector2, double)> sortedPoints = null)
         {
             var partialShape = new List<List<Vector2>>();
-            intersectionPoints = new List<Point>();
+            intersectionPoints = new List<Vector2>();
             var shallowPolygonsTrees = ShallowPolygonTree.GetShallowPolygonTrees(shape);
             var dirX = direction2D[0];
             var dirY = direction2D[1];
@@ -84,7 +84,7 @@ namespace TVGL._2D
                 }
 
                 //Get the sorted points
-                var allPoints = new List<Point>();
+                var allPoints = new List<Vector2>();
                 foreach (var path in shallowPolygonTree.AllPaths)
                 {
                     allPoints.AddRange(path);
@@ -123,7 +123,7 @@ namespace TVGL._2D
         /// <param name="offsetAtLine"></param>
         /// <returns></returns>
         public static List<PolygonLight> OnLine(ShallowPolygonTree polyTree, Vector2 direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, IEnumerable<(Point, double)> sortedPoints, out List<Point> sortedIntersectionPoints,
+            bool returnFurtherThanSlice, IEnumerable<(Vector2, double)> sortedPoints, out List<Vector2> sortedIntersectionPoints,
             double offsetAtLine = 0.0)
         {
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
@@ -177,7 +177,7 @@ namespace TVGL._2D
                 var currentPolygon = polyTree.AllPolygons[endPoint.PolygonIndex];
                 var endPolygonIndex = currentPolygon.Index;
                 var endLineIndex = endLine.IndexInPath;
-                var path = new List<Vector2> { endPoint.Light };
+                var path = new List<Vector2> { endPoint };
 
                 var nextLineIndex = currentPolygon.NextLineIndex(endLineIndex);
                 //Since the line index can be duplicated between polygons, we also need to check the polygon index
@@ -186,7 +186,7 @@ namespace TVGL._2D
                 {
                     var currentLineIndex = nextLineIndex;
                     var currentLine = currentPolygon.PathLines[currentLineIndex];
-                    path.Add(currentLine.FromPoint.Light);
+                    path.Add(currentLine.FromPoint);
                     if (intersectionLines.Contains(currentLine))
                     {
                         //Add the paired intersection points.
@@ -201,7 +201,7 @@ namespace TVGL._2D
 
                         //Add four points to the path, both intersection points and their offsets
                         //(1) the current intersection point. 
-                        path.Add(intersectionPoint.Light);
+                        path.Add(intersectionPoint);
 
                         //(2) the offset point of the current intersection point
                         //Each intersection point corresponds to an intersection offset point. This point
@@ -210,20 +210,20 @@ namespace TVGL._2D
                             ? intersectionPoint - (direction2D * offsetAtLine)
                             : intersectionPoint + (direction2D * offsetAtLine);
 
-                        var intersectionOffsetPoint = new Point(position[0], position[1]);
-                        path.Add(intersectionOffsetPoint.Light);
+                        var intersectionOffsetPoint = new Vector2(position[0], position[1]);
+                        path.Add(intersectionOffsetPoint);
                         sortedIntersectionPoints.Add(intersectionOffsetPoint);
 
                         //(3) the offset point of the next intersection point
                         position = returnFurtherThanSlice
                             ? pairedIntersectionPoint - (direction2D * offsetAtLine)
                             : pairedIntersectionPoint + (direction2D * offsetAtLine);
-                        var pairedIntersectionOffsetPoint = new Point(position[0], position[1]);
-                        path.Add(pairedIntersectionOffsetPoint.Light);
+                        var pairedIntersectionOffsetPoint = new Vector2(position[0], position[1]);
+                        path.Add(pairedIntersectionOffsetPoint);
                         sortedIntersectionPoints.Add(pairedIntersectionOffsetPoint);
 
                         //(4) the next intersection point. 
-                        path.Add(pairedIntersectionPoint.Light);
+                        path.Add(pairedIntersectionPoint);
 
                         //Update the current polygons, since it may have changed, and then update the next line index
                         var nextLine = intersectionLinesByRef[pairedIntersectionPoint.ReferenceIndex];
@@ -244,11 +244,11 @@ namespace TVGL._2D
             return partialShape;
         }
 
-        private static List<Point> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, Vector2 direction2D,
-            double distance, out Dictionary<int, Line> intersectionLinesByRef, out Dictionary<int, Point> intersectionPointsByRef)
+        private static List<Vector2> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, Vector2 direction2D,
+            double distance, out Dictionary<int, Line> intersectionLinesByRef, out Dictionary<int, Vector2> intersectionPointsByRef)
         {
             intersectionLinesByRef = new Dictionary<int, Line>(intersectionLines.Count);
-            intersectionPointsByRef = new Dictionary<int, Point>(intersectionLines.Count);
+            intersectionPointsByRef = new Dictionary<int, Vector2>(intersectionLines.Count);
             //Any line that is left in line hash, must be an intersection line.
             var refIndex = 0;
             foreach (var line in intersectionLines)
@@ -266,7 +266,7 @@ namespace TVGL._2D
             }
             //var searchDirectionPerpendicular = new[] {-direction2D[1], direction2D[0]};
             MiscFunctions.SortAlongDirection(-direction2D[1], direction2D[0], intersectionPointsByRef.Values.ToList(),
-                    out List<Point> sortedIntersectionPoints);
+                    out List<Vector2> sortedIntersectionPoints);
             if (sortedIntersectionPoints.Count % 2 != 0)
             {
                 throw new Exception("There must be an even number of intersection points");
@@ -293,7 +293,7 @@ namespace TVGL._2D
 
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
             //Also, get the sorted points
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
+            var polygons = shape.Select(p => new Polygon(p.Path, true));
             var allPoints = polygons.SelectMany(poly => poly.Path);
             var sortedPoints = allPoints.OrderBy(p => p.X).ToList();
 
@@ -347,7 +347,7 @@ namespace TVGL._2D
         {
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
             //Also, get the sorted points
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
+            var polygons = shape.Select(p => new Polygon(p.Path, true));
             var allPoints = polygons.SelectMany(poly => poly.Path);
             var sortedPoints = allPoints.OrderBy(p => p.Y).ToList();
 

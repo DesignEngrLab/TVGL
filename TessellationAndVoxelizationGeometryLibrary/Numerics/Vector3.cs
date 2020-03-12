@@ -279,8 +279,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             else
             {
                 double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
-                double length = Math.Sqrt(ls);
-                return new Vector3(value.X / length, value.Y / length, value.Z / length);
+                if (ls.IsPracticallySame(1.0)) return value;
+                double lengthfactor = 1 / Math.Sqrt(ls);
+                return new Vector3(value.X * lengthfactor, value.Y * lengthfactor, value.Z * lengthfactor);
             }
         }
 

@@ -18,7 +18,7 @@ namespace TVGL
         ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
-        public Point ToPoint { get; private set; }
+        public Vector2 ToPoint { get; private set; }
 
         /// <summary>
         ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
@@ -30,7 +30,7 @@ namespace TVGL
         ///     Gets the Pointwhich the line is pointing away from. Set is through the constructor.
         /// </summary>
         /// <value>From node.</value>
-        public Point FromPoint { get; private set; }
+        public Vector2 FromPoint { get; private set; }
 
         /// <summary>
         ///     Gets the Slope.
@@ -93,7 +93,7 @@ namespace TVGL
         /// </summary>
         /// <param name="fromPoint"></param>
         /// <param name="lineVector"></param>
-        internal Line(Point fromPoint, Vector2 lineVector)
+        internal Line(Vector2 fromPoint, Vector2 lineVector)
         {
             //This line has an infinite length
             IsInfinite = true;
@@ -110,7 +110,7 @@ namespace TVGL
         /// <param name="fromPoint"></param>
         /// <param name="toPoint"></param>
         /// <param name="twoWayReference"></param>
-        internal Line(Point fromPoint, Point toPoint, bool twoWayReference = true)
+        internal Line(Vector2 fromPoint, Vector2 toPoint, bool twoWayReference = true)
         {
             FromPoint = fromPoint;
             ToPoint = toPoint;
@@ -179,7 +179,7 @@ namespace TVGL
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public Point OtherPoint(Point point)
+        public Vector2 OtherPoint(Vector2 point)
         {
             if (point == FromPoint) return ToPoint;
             return point == ToPoint ? FromPoint : null;

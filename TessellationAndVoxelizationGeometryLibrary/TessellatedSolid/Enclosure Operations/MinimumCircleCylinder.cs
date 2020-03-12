@@ -30,14 +30,6 @@ namespace TVGL
         /// <summary>
         ///     Finds the minimum bounding circle
         /// </summary>
-        public static BoundingCircle MinimumCircle(IList<Point> points)
-        {
-            return MinimumCircle(points.Select(p => p.Light).ToList());
-        }
-
-        /// <summary>
-        ///     Finds the minimum bounding circle
-        /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>System.Double.</returns>
         /// <exception cref="Exception">Bounding circle failed to converge</exception>
@@ -228,16 +220,7 @@ namespace TVGL
             return new BoundingCircle(radius, new Vector2(centerX, centerY));
         }
 
-        /// <summary>
-        ///     Gets the maximum inner circle given a group of polygons and a center point.
-        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
-        /// </summary>
-        /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<List<Vector2>> paths, Vector2 centerPoint)
-        {
-            var polygons = paths.Select(path => new Polygon(path.Select(p => new Point(p)))).ToList();
-            return MaximumInnerCircle(polygons, new Point(centerPoint));
-        }
+ 
 
         /// <summary>
         ///     Gets the maximum inner circle given a group of polygons and a center point.
@@ -247,7 +230,7 @@ namespace TVGL
         public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, Vector2 centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
-            return MaximumInnerCircle(polygons, new Point(centerPoint));
+            return MaximumInnerCircle(polygons, centerPoint);
         }
 
         /// <summary>
@@ -255,7 +238,7 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<List<Point>> paths, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(IList<List<Vector2>> paths, Vector2 centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
             return MaximumInnerCircle(polygons, centerPoint);
@@ -267,7 +250,7 @@ namespace TVGL
         ///     Else it returns a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(List<Polygon> polygons, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(List<Polygon> polygons, Vector2 centerPoint)
         {
             var negativePolygons = new List<Polygon>();
             var positivePolygons = new List<Polygon>();
@@ -290,7 +273,7 @@ namespace TVGL
             {
                 if (!MiscFunctions.IsPointInsidePolygon(negativePoly, centerPoint, out var closestLineAbove,
                     out _, out var onBoundary)) continue;
-                if (onBoundary) return new BoundingCircle(0.0, centerPoint.Light); //Null solution.
+                if (onBoundary) return new BoundingCircle(0.0, centerPoint); //Null solution.
                 var d = closestLineAbove.YGivenX(centerPoint.X) - centerPoint.Y; //Not negligible because not on Boundary
                 if (d < minDistance)
                 {
@@ -310,14 +293,14 @@ namespace TVGL
                 foreach (var positivePoly in positivePolygons)
                 {
                     if (MiscFunctions.IsPointInsidePolygon(positivePoly, centerPoint, out _,
-                        out _, out _)) return new BoundingCircle(0.0, centerPoint.Light);
+                        out _, out _)) return new BoundingCircle(0.0, centerPoint);
                     polygonsOfInterest.Add(positivePoly);
                 }
             }
             
             //Lastly, determine how big the inner circle can be.
             var shortestDistance = double.MaxValue;
-            var smallestBoundingCircle = new BoundingCircle(0.0, centerPoint.Light);
+            var smallestBoundingCircle = new BoundingCircle(0.0, centerPoint);
             foreach (var polygon in polygonsOfInterest)
             {
                 var boundingCircle = MaximumInnerCircleInHole(polygon, centerPoint);
@@ -331,7 +314,7 @@ namespace TVGL
             return smallestBoundingCircle;
         }
 
-        private static BoundingCircle MaximumInnerCircleInHole(Polygon polygon, Point centerPoint)
+        private static BoundingCircle MaximumInnerCircleInHole(Polygon polygon, Vector2 centerPoint)
         {
             var shortestDistance = double.MaxValue;
             //1. For every line on the path, get the closest point on the edge to the center point. 
@@ -341,7 +324,7 @@ namespace TVGL
                 var v1 = line.ToPoint-line.FromPoint;
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
-                if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
+                if (!MiscFunctions.AreaOfPolygon(new List<Vector2> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
                     continue;
 
                 //Figure out how far the center point is away from the line
@@ -359,12 +342,12 @@ namespace TVGL
             //   The shortest distance determines the diameter of the inner circle.
             foreach (var point in polygon.Path)
             {
-                var d = point.Light.Distance(centerPoint.Light);
+                var d = point.Distance(centerPoint);
                 if (d < shortestDistance) shortestDistance = d;
             }
 
-            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new BoundingCircle(0.0, centerPoint.Light); //Not inside any hole or outside any positive polygon
-            return new BoundingCircle(shortestDistance, centerPoint.Light);
+            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new BoundingCircle(0.0, centerPoint); //Not inside any hole or outside any positive polygon
+            return new BoundingCircle(shortestDistance, centerPoint);
         }
 
         /// <summary>
@@ -372,7 +355,7 @@ namespace TVGL
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>Point.</returns>
-        public static Point Median(List<Point> points)
+        public static Vector2 Median(List<Vector2> points)
         {
             return points[0];
         }
@@ -384,7 +367,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="line">The line.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool MEC_Center(List<Point> points, Vector2 line)
+        public static bool MEC_Center(List<Vector2> points, Vector2 line)
         {
             return false;
         }
@@ -406,11 +389,11 @@ namespace TVGL
             directions.Add(new Vector3(0, 1, 1));
             directions.Add(new Vector3(0, -1, 1));
 
-            var boxes = directions.Select(v => new BoundingBox
-            {
-                Directions = new[] {v},
-                Volume = double.PositiveInfinity
-            }).ToList();
+            var boxes = directions.Select(v =>
+            new BoundingBox(
+                new Vector3(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity),
+                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
+                new Vector3(double.NegativeInfinity, double.NegativeInfinity, double.NegativeInfinity))).ToList();
             for (var i = 0; i < 13; i++)
             {
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
@@ -464,7 +447,7 @@ namespace TVGL
             /// </summary>
             /// <param name="point1">The point1.</param>
             /// <param name="point2">The point2.</param>
-            internal Bisector(Point point1, Point point2)
+            internal Bisector(Vector2 point1, Vector2 point2)
             {
             }
 

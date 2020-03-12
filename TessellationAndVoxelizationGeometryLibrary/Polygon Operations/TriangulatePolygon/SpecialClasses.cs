@@ -90,8 +90,8 @@ namespace TVGL
         ///     Gets the base class, Point of this node.
         /// </summary>
         /// <value>The point.</value>
-        internal Point Point { get; private set; }
-
+        internal Vector2 Point { get; private set; }
+        internal Vertex Reference { get; set; }
         /// <summary>
         ///     Gets the base class, Point of this node.
         /// </summary>
@@ -107,43 +107,17 @@ namespace TVGL
         #endregion
 
         #region Constructor
-
-        /// <summary>
-        ///     Create a new node from a given point
-        /// </summary>
-        /// <param name="currentPoint">The current point.</param>
-        /// <param name="nodeType">Type of the node.</param>
-        /// <param name="loopID">The loop identifier.</param>
-        internal Node(Point currentPoint, NodeType nodeType, int loopID)
-        {
-            LoopID = loopID;
-            Type = nodeType;
-            Point = currentPoint;
-            X = currentPoint.X;
-            Y = currentPoint.Y;
-        }
-
+        
         /// <summary>
         ///     Initializes a new instance of the <see cref="Node" /> class.
         /// </summary>
         /// <param name="currentPoint">The current point.</param>
         /// <param name="loopID">The loop identifier.</param>
-        internal Node(Point currentPoint, int loopID)
+        internal Node(Vector2 currentPoint, Vertex reference, int loopID)
         {
             LoopID = loopID;
             Point = currentPoint;
-            X = currentPoint.X;
-            Y = currentPoint.Y;
-        }
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Node" /> class.
-        /// </summary>
-        /// <param name="currentPoint">The current point.</param>
-        /// <param name="loopID">The loop identifier.</param>
-        internal Node(Vector2 currentPoint, int loopID)
-        {
-            LoopID = loopID;
-            Point =new Point(currentPoint);
+            Reference = reference;
             X = currentPoint.X;
             Y = currentPoint.Y;
         }

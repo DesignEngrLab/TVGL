@@ -67,11 +67,10 @@ namespace TVGL
 
         private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices)
         {
-            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox
-            {
-                Directions = new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
-                Volume = double.PositiveInfinity
-            });
+            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox(
+                new Vector3(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity),
+                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
+                new Vector3(double.NegativeInfinity, double.NegativeInfinity, double.NegativeInfinity)));
         }
 
         private class BoundingBoxData
@@ -101,7 +100,7 @@ namespace TVGL
                 {
                     var ownedX = startingDots[edge.OwnedFace.IndexInList];
                     var otherX = startingDots[edge.OtherFace.IndexInList];
-                    if (otherX*ownedX <= 0)
+                    if (otherX * ownedX <= 0)
                     {
                         var ownedY = edge.OwnedFace.Normal.Dot(yDir);
                         var otherY = edge.OtherFace.Normal.Dot(yDir);
@@ -116,7 +115,7 @@ namespace TVGL
                     }
                 }
                 OrthVertices =
-                    OrthGaussSphereArcs.SelectMany(arc => new[] {arc.Edge.From, arc.Edge.To}).Distinct().ToList();
+                    OrthGaussSphereArcs.SelectMany(arc => new[] { arc.Edge.From, arc.Edge.To }).Distinct().ToList();
                 var maxDistance = double.NegativeInfinity;
                 foreach (var v in convexHull.Vertices)
                 {
@@ -147,15 +146,7 @@ namespace TVGL
                     Angle = Angle,
                     BackVertex = BackVertex,
                     BackEdge = BackEdge,
-                    Box = new BoundingBox
-                    {
-                        CornerVertices = Box.CornerVertices != null ? (Vertex[])Box.CornerVertices.Clone() : null,
-                        Center = Box.Center != null ? new Vertex(Box.Center.Coordinates) : null,
-                        Dimensions = Box.Dimensions != null ? Box.Dimensions : Vector3.Null,
-                        Directions = Box.Directions != null ? (Vector3[])Box.Directions.Clone() : null,
-                        PointsOnFaces = Box.PointsOnFaces != null ? (List<Vertex>[])Box.PointsOnFaces.Clone() : null,
-                        Volume = Box.Volume
-                    },
+                    Box = Box.Copy(),
                     Direction = Direction,
                     OrthGaussSphereArcs = new List<GaussSphereArc>(OrthGaussSphereArcs),
                     OrthVertices = new List<Vertex>(OrthVertices),
@@ -186,7 +177,10 @@ namespace TVGL
         /// </accuracy>
         private static BoundingBox OrientedBoundingBox(TVGLConvexHull convexHull)
         {
-            var minBox = new BoundingBox {Volume = double.PositiveInfinity};
+            var minBox = new BoundingBox(
+                new Vector3(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity),
+                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
+                new Vector3(double.NegativeInfinity, double.NegativeInfinity, double.NegativeInfinity));
             foreach (var rotateEdge in convexHull.Edges)
             {
                 #region Initialize variables
@@ -272,7 +266,7 @@ namespace TVGL
                         while (!lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBAngleTolerance))
                         {
                             midBox.Direction = (lowerBox.Direction + upperBox.Direction).Divide(2).Normalize();
-                            midBox.Angle = (lowerBox.Angle + upperBox.Angle)/2.0;
+                            midBox.Angle = (lowerBox.Angle + upperBox.Angle) / 2.0;
                             FindOBBAlongDirection(midBox);
                             if (midBox.Box.Volume > lowerBox.Box.Volume && midBox.Box.Volume > upperBox.Box.Volume)
                                 break;
@@ -301,7 +295,7 @@ namespace TVGL
                 var x = boxData.Direction.Dot(arc.ToFace.Normal);
                 var y = boxData.PosYDir.Dot(arc.ToFace.Normal);
                 if (y == 0.0) continue;
-                var tempSlope = -x/y;
+                var tempSlope = -x / y;
                 if (!(tempSlope < minSlope)) continue;
                 minSlope = tempSlope;
                 arcToRemove = arc;
@@ -343,7 +337,7 @@ namespace TVGL
                 if (y < 0)
                 {
                     // the x-value is boxData.Direction.Dot(vector) and it's positive for all edges since it's the back vertex
-                    var slope = -boxData.Direction.Dot(vector)/y;
+                    var slope = -boxData.Direction.Dot(vector) / y;
                     if (slope < minSlope)
                     {
                         minSlope = slope;
@@ -376,7 +370,7 @@ namespace TVGL
             var a = new Matrix3x3(rotator.X, rotator.Y, rotator.Z,
                 startDir.X, startDir.Y, startDir.Z,
                 posYDir.X, posYDir.Y, posYDir.Z);
-            var b = new Vector3(0.0, Math.Cos(angle), Math.Cos(angle + Math.PI/2));
+            var b = new Vector3(0.0, Math.Cos(angle), Math.Cos(angle + Math.PI / 2));
             if (Matrix3x3.Invert(a, out var aInv))
                 return b.Transform(aInv);
             else throw new Exception("Singular Matrix prevents updating direction.");

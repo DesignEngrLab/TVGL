@@ -255,13 +255,13 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="prevNormal">The normal.</param>
         /// <returns>System.Vector3.</returns>
-        public static Vector3 DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, Vector3 prevNormal)
+        public static Vector3 DetermineNormal(IList<Vertex> vertices, out bool reverseVertexOrder, Vector3 prevNormal)
         {
             var n = vertices.Count;
             if (n == 3) return DetermineNormalTriangle(vertices[0], vertices[1], vertices[2], out reverseVertexOrder, prevNormal);
             else return DetermineNormalPolygon(n, vertices, out reverseVertexOrder, prevNormal);
         }
-        public static Vector3 DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder)
+        public static Vector3 DetermineNormal(IList<Vertex> vertices, out bool reverseVertexOrder)
         {
             var n = vertices.Count;
             if (n == 3)
@@ -291,7 +291,7 @@ namespace TVGL
             }
             return calcNormal;
         }
-        internal static Vector3 DetermineNormalPolygon(int numSides, List<Vertex> vertices, out bool reverseVertexOrder, Vector3 prevNormal)
+        internal static Vector3 DetermineNormalPolygon(int numSides, IList<Vertex> vertices, out bool reverseVertexOrder, Vector3 prevNormal)
         {
             reverseVertexOrder = false;
             var edgeVectors = new Vector3[numSides];

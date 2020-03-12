@@ -209,7 +209,7 @@ namespace TVGL.Boolean_Operations
             {
                 var direction = plane.Normal * k;
                 var loops = k == -1 ? posSideLoops : negSideLoops;
-                var vertexLoops = loops.Select(loop => loop.VertexLoop);
+                var vertexLoops = loops.Select(loop => loop.VertexLoop).ToArray();
 
                 //Order the loops into groups, determine positive or negative for each loop, and create vertex[]s to use for new faces.
                 //Each group consists of one positive loop, but may include no or many negative loops.

@@ -12,24 +12,6 @@ namespace TVGL
     public static class Extrude
     {
         /// <summary>
-        /// Creates a Tessellated Solid by extruding the given loop along the given normal.
-        /// Currently, this function recreates the Vertices, so no prior references will impact result.
-        /// Setting midPlane to true, extrudes half forward and half reverse.
-        /// </summary>
-        /// <param name="loops"></param>
-        /// <param name="normal"></param>
-        /// <param name="distance"></param>
-        /// <param name="midPlane"></param>
-        /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vertex>> loops, Vector3 normal,
-            double distance, bool midPlane = false)
-        {
-            var enumerable = loops as IEnumerable<Vertex>[] ?? loops.ToArray();
-            var loopsWithoutVertices = enumerable.Select(loop => loop.Select(vertex => vertex.Coordinates).ToList()).ToList();
-            return FromLoops(loopsWithoutVertices, normal, distance, midPlane);
-        }
-
-        /// <summary>
         /// Creates a Tesselated Solid by extruding the given loop along the given normal.
         /// Setting midPlane to true, extrudes half forward and half reverse.
         /// </summary>
@@ -38,21 +20,14 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static TessellatedSolid FromLoops(Vector3[][] loops, Vector3 extrudeDirection,
             double distance, bool midPlane = false)
         {
             return new TessellatedSolid(ReturnFacesFromLoops(loops, extrudeDirection, distance, midPlane), null, false);
         }
 
-        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vertex>> loops,
-            Vector3 extrudeDirection, double distance, bool midPlane = false)
-        {
-            var positionLoops = loops.Select(loop => loop.Select(vertex => vertex.Coordinates).ToList()).ToList();
-            return ReturnFacesFromLoops(positionLoops, extrudeDirection, distance, midPlane);
-        }
-
         /// <summary>
-        /// Create the Polygonal Faces for a new Tesselated Solid by extruding the given loop along the given normal.
+        /// Create the Polygonal Faces for a new Tessellated Solid by extruding the given loop along the given normal.
         /// Setting midPlane to true, extrudes half forward and half reverse.
         /// </summary>
         /// <param name="loops"></param>
@@ -60,8 +35,8 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
-        double distance, bool midPlane = false)
+        public static List<PolygonalFace> ReturnFacesFromLoops(Vector3[][] loops, Vector3 extrudeDirection,
+            double distance, bool midPlane = false)
         {
             //This simplifies the cases we have to handle by always extruding in the positive direction
             if (distance < 0)
@@ -69,35 +44,34 @@ namespace TVGL
                 distance = -distance;
                 extrudeDirection = -1 * extrudeDirection;
             }
-
-            //First, make sure we are using "clean" loops. (e.g. not connected to any faces or edges)
-            var cleanLoops = new List<List<Vertex>>();
-            var i = 0;
-            foreach (var loop in loops)
+            //First, make the vertices that will be used on the perimeter (positioned at the loop coordinates)
+            var vertexLoops = new Vertex[loops.Length][];
+            var count = 0;
+            for (int loopI = 0; loopI < loops.Length; loopI++)
             {
-                var cleanLoop = new List<Vertex>();
-                foreach (var vertexPosition in loop)
+                var vertexLoop = new Vertex[loops[loopI].Length];
+                for (int vertexI = 0; vertexI < loops[loopI].Length; vertexI++)
                 {
                     //If a midPlane extrusion, move the original vertices backwards by 1/2 the extrude distance.
                     //These vertices will be used as the base for offsetting the paired vertices forward by the 
                     //entire extrude distance.
                     if (midPlane)
                     {
-                        var midPlaneVertexPosition = vertexPosition + (extrudeDirection * (-distance / 2));
-                        cleanLoop.Add(new Vertex(midPlaneVertexPosition, i));
+                        var midPlaneVertexPosition = loops[loopI][vertexI] + (extrudeDirection * (-distance / 2));
+                        vertexLoop[vertexI] = new Vertex(midPlaneVertexPosition, count);
                     }
-                    else cleanLoop.Add(new Vertex(vertexPosition, i));
-                    i++;
+                    else vertexLoop[vertexI] = new Vertex(loops[loopI][vertexI], count);
+                    count++;
                 }
-                cleanLoops.Add(cleanLoop);
+                vertexLoops[loopI] = vertexLoop;
             }
-            var distanceFromOriginAlongDirection = extrudeDirection.Dot(cleanLoops.First().First().Coordinates);
+            var distanceFromOriginAlongDirection = extrudeDirection.Dot(vertexLoops.First().First().Coordinates);
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
             var transform = MiscFunctions.TransformToXYPlane(extrudeDirection, out var backTransform);
-            var paths = cleanLoops.Select(loop => loop.ProjectVerticesTo2DCoordinates(transform).ToList()).ToList();
-            List<Point[]> points2D;
+            var paths = vertexLoops.Select(loop => loop.ProjectVerticesTo2DCoordinates(transform).ToArray()).ToArray();
+            List<Vector2[]> points2D;
             List<Vertex[]> triangles;
             try
             {
@@ -112,12 +86,12 @@ namespace TVGL
                 //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                 //This also means we need to recreate cleanLoops
                 //Also, give the vertices indices.
-                cleanLoops = new List<List<Vertex>>();
-                points2D = new List<Point[]>();
+                vertexLoops = new List<List<Vertex>>();
+                points2D = new List<Vector2[]>();
                 var j = 0;
                 foreach (var path in paths)
                 {
-                    var pathAsPoints = path.Select(p => new Point(p.X, p.Y)).ToArray();
+                    var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
                     var area = new PolygonLight(path).Area;
                     points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
@@ -137,7 +111,7 @@ namespace TVGL
                         cleanLoop.Add(vertex);
                         j++;
                     }
-                    cleanLoops.Add(cleanLoop);
+                    vertexLoops.Add(cleanLoop);
                 }
 
                 bool[] isPositive = null;
@@ -163,12 +137,12 @@ namespace TVGL
                     //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                     //This also means we need to recreate cleanLoops
                     //Also, give the vertices indices.
-                    cleanLoops = new List<List<Vertex>>();
-                    points2D = new List<Point[]>();
+                    vertexLoops = new List<List<Vertex>>();
+                    points2D = new List<Vector2[]>();
                     var j = 0;
                     foreach (var path in paths)
                     {
-                        var pathAsPoints = path.Select(p => new Point(p.X, p.Y)).ToArray();
+                        var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
                         points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
                         foreach (var point in pathAsPoints)
@@ -187,7 +161,7 @@ namespace TVGL
                             cleanLoop.Add(vertex);
                             j++;
                         }
-                        cleanLoops.Add(cleanLoop);
+                        vertexLoops.Add(cleanLoop);
                     }
 
                     bool[] isPositive = null;
@@ -206,7 +180,7 @@ namespace TVGL
 
             //Second, build up the a set of duplicate vertices
             var vertices = new HashSet<Vertex>();
-            foreach (var vertex in cleanLoops.SelectMany(loop => loop))
+            foreach (var vertex in vertexLoops.SelectMany(loop => loop))
             {
                 vertices.Add(vertex);
             }
@@ -248,9 +222,9 @@ namespace TVGL
             //Fourth, create the triangles on the sides 
             //The normals of the faces are dependent on the whether the loops are ordered correctly from the view of the extrude direction
             //This influences which order the vertices are used to create triangles.
-            for (var j = 0; j < cleanLoops.Count; j++)
+            for (var j = 0; j < vertexLoops.Count; j++)
             {
-                var loop = cleanLoops[j];
+                var loop = vertexLoops[j];
 
                 //Determine if the loop direction is correct by using the top face
                 var v1 = loop[0];

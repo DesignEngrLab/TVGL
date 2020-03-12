@@ -49,7 +49,7 @@ namespace TVGL
             Area = polygon.Area;
             Path = new List<Vector2>();
             foreach (var point in polygon.Path)
-                Path.Add(point.Light);
+                Path.Add(point);
 
             MaxX = polygon.MaxX;
             MaxY = polygon.MaxY;
@@ -132,12 +132,7 @@ namespace TVGL
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
-        public List<Point> Path;
-
-        /// <summary>
-        /// The list of 2D points that make up a polygon.
-        /// </summary>
-        public List<Vector2> PathAsLight => Path.Select(p => p.Light).ToList();
+        public List<Vector2> Path;
 
         /// <summary>
         /// The list of 2D points that make up a polygon.
@@ -168,10 +163,10 @@ namespace TVGL
             set
             {
                 _index = value;
-                foreach (var point in Path)
-                {
-                    point.PolygonIndex = _index;
-                }
+                //foreach (var point in Path)
+                //{
+                //    point.PolygonIndex = _index;
+                //}
             }
         }
 
@@ -238,9 +233,9 @@ namespace TVGL
         /// <param name="points"></param>
         /// <param name="setLines"></param>
         /// <param name="index"></param>
-        public Polygon(IEnumerable<Point> points, bool setLines = false, int index = -1)
+        public Polygon(IEnumerable<Vector2> points, bool setLines = false, int index = -1)
         {
-            Path = new List<Point>(points);
+            Path = new List<Vector2>(points);
             //set index in path
             MaxX = double.MinValue;
             MinX = double.MaxValue;
@@ -253,8 +248,7 @@ namespace TVGL
                 if (point.X < MinX) MinX = point.X;
                 if (point.Y > MaxY) MaxY = point.Y;
                 if (point.Y < MinY) MinY = point.Y;
-                point.IndexInPath = i;
-                point.Lines = new List<Line>(); //erase any previous connection to lines.
+                //point.Lines = new List<Line>(); //erase any previous connection to lines.
             }
             Index = index;
             Area = CalculateArea();
@@ -269,7 +263,7 @@ namespace TVGL
             }
         }
 
-        public Polygon(PolygonLight poly, bool setLines = false) : this(poly.Path.Select(p => new Point(p)), setLines)
+        public Polygon(PolygonLight poly, bool setLines = false) : this(poly.Path, setLines)
         {
         }
 
@@ -287,12 +281,8 @@ namespace TVGL
             if (!(Area < 0)) return;
 
             //It is negative. Reverse the path and path lines.
-            var path = new List<Point>(Path);
+            var path = new List<Vector2>(Path);
             path.Reverse();
-            for (var i = 0; i < path.Count; i++)
-            {
-                path[i].IndexInPath = i;
-            }
             Area = -Area;
             Path = path;
 
@@ -313,12 +303,8 @@ namespace TVGL
             if (Area < 0) return;
 
             //It is positive. Reverse the path and path lines.
-            var path = new List<Point>(Path);
+            var path = new List<Vector2>(Path);
             path.Reverse();
-            for (var i = 0; i < path.Count; i++)
-            {
-                path[i].IndexInPath = i;
-            }
             Area = -Area;
             Path = path;
 
@@ -361,7 +347,7 @@ namespace TVGL
         /// <param name="currentPointIndex"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public Point NextPoint(int currentPointIndex)
+        public Vector2 NextPoint(int currentPointIndex)
         {
             return Path[NextPointIndex(currentPointIndex)];
         }

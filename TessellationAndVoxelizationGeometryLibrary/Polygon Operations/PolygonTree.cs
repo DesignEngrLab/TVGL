@@ -30,7 +30,7 @@ namespace TVGL
         /// <summary>
         /// A list of all the polygons in this tree.
         /// </summary>
-        public IList<List<Point>> AllPaths => AllPolygons.Select(polygon => polygon.Path).ToList();
+        public IList<List<Vector2>> AllPaths => AllPolygons.Select(polygon => polygon.Path).ToList();
 
         /// <summary>
         /// A list of all the polygons in this tree.
@@ -153,7 +153,7 @@ namespace TVGL
         /// </summary>
         /// <param name="paths"></param>
         /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Vector2>> paths)
         {
             return GetShallowPolygonTrees(paths.Select(path => new Polygon(path)).ToList());
         }

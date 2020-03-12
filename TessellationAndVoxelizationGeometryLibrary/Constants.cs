@@ -126,9 +126,6 @@ namespace TVGL
             new []{ -1, -1, -1},
         };
 
-        public static readonly double[] X = new double[] { 1.0, 0, 0 };
-        public static readonly double[] Y = new double[] { 0, 1.0, 0 };
-        public static readonly double[] Z = new double[] { 0, 0, 1.0 };
 
         /// <summary>
         ///     Finds the index.
