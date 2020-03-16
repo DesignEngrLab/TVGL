@@ -223,7 +223,7 @@ namespace TVGL
                 double distance;
                 if (extrudeBack) distance = Math.Abs(StepDistances[i] - StepDistances[i - reverse]);//current - prior (reverse extrusion)        
                 else distance = Math.Abs(StepDistances[i + reverse] - StepDistances[i]); //next - current (forward extrusion)
-                var layerfaces = Extrude.ReturnFacesFromLoops(Layer3D[i], direction, distance, false);
+                var layerfaces = Extrude.ReturnFacesFromLoops((IList<IList<Vector3>>)Layer3D[i], direction, distance, false);
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }

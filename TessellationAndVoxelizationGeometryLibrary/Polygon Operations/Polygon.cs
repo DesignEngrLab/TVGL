@@ -147,7 +147,7 @@ namespace TVGL
         /// <summary>
         /// A list of the polygons inside this polygon.
         /// </summary>
-        public List<Polygon> Childern;
+        public List<Polygon> Children;
 
         /// <summary>
         /// The polygon that this polygon is inside of.
@@ -255,7 +255,7 @@ namespace TVGL
             Length = SetLength();
             PathLines = null;
             Parent = null;
-            Childern = new List<Polygon>();
+            Children = new List<Polygon>();
 
             if (setLines)
             {
@@ -330,14 +330,13 @@ namespace TVGL
         /// <returns></returns>
         public void SetPathLines()
         {
-            var lines = new List<Line>();
+            PathLines = new List<Line>();
             var n = Path.Count;
             for (var i = 0; i < n; i++)
             {
                 var j = (i + 1) % n;
-                lines.Add(new Line(Path[i], Path[j], true) { IndexInPath = i });
+                PathLines.Add(new Line(Path[i], Path[j], true) { IndexInPath = i });
             }
-            PathLines = new List<Line>(lines);
         }
 
         /// <summary>

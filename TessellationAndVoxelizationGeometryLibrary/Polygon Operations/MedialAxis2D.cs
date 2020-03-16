@@ -37,23 +37,17 @@ namespace TVGL._2D
                 foreach (var triangle in delaunay.Cells)
                 {
                     var triangleCenterLineVertices = new List<Vector2>();
-                    var edge1Center = new Vector2((triangle.Vertices[0] + triangle.Vertices[1]) * 0.5);
-                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center.Light))
-                    {
+                    var edge1Center = 0.5 * (triangle.Vertices[0] + triangle.Vertices[1]);
+                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center))
                         triangleCenterLineVertices.Add(edge1Center);
-                    }
 
-                    var edge2Center = new Vector2((triangle.Vertices[1] + triangle.Vertices[2]) * 0.5);
-                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center.Light))
-                    {
+                    var edge2Center = 0.5 * (triangle.Vertices[1] + triangle.Vertices[2]);
+                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center))
                         triangleCenterLineVertices.Add(edge2Center);
-                    }
 
-                    var edge3Center = new Vector2((triangle.Vertices[2] + triangle.Vertices[0]) * 0.5);
-                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center.Light))
-                    {
+                    var edge3Center = 0.5 * (triangle.Vertices[2] + triangle.Vertices[0]);
+                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center))
                         triangleCenterLineVertices.Add(edge3Center);
-                    }
 
                     if (triangleCenterLineVertices.Any())
                     {
@@ -99,17 +93,11 @@ namespace TVGL._2D
                                 Vector2 newPoint;
                                 //Create a new center point on the shortest line and set three point sets
                                 if (d0 < d1 && d0 < d2)
-                                {
-                                    newPoint = new Vector2((edge1Center + edge2Center).Divide(2.0));
-                                }
+                                    newPoint = 0.5*(edge1Center + edge2Center);
                                 else if (d1 < d2)
-                                {
-                                    newPoint = new Vector2((edge2Center + edge3Center).Divide(2.0));
-                                }
+                                    newPoint = 0.5*(edge2Center + edge3Center);
                                 else
-                                {
-                                    newPoint = new Vector2((edge3Center + edge1Center).Divide(2.0));
-                                }
+                                    newPoint = 0.5*(edge3Center + edge1Center);
 
                                 lines.Add(new List<Vector2> { edge1Center, newPoint });
                                 lines.Add(new List<Vector2> { edge2Center, newPoint });
@@ -133,22 +121,22 @@ namespace TVGL._2D
                     {
                         var sameLineCount = 0;
                         var l2 = lines[k];
-                        if (l1[0].Light.Distance(l2[0].Light).IsNegligible(mergerTolerance))
+                        if (l1[0].Distance(l2[0]).IsNegligible(mergerTolerance))
                         {
                             l2[0] = l1[0];
                             sameLineCount++;
                         }
-                        else if (l1[0].Light.Distance(l2[1].Light).IsNegligible(mergerTolerance))
+                        else if (l1[0].Distance(l2[1]).IsNegligible(mergerTolerance))
                         {
                             l2[1] = l1[0];
                             sameLineCount++;
                         }
-                        if (l1[1].Light.Distance(l2[0].Light).IsNegligible(mergerTolerance))
+                        if (l1[1].Distance(l2[0]).IsNegligible(mergerTolerance))
                         {
                             l2[0] = l1[1];
                             sameLineCount++;
                         }
-                        else if (l1[1].Light.Distance(l2[1].Light).IsNegligible(mergerTolerance))
+                        else if (l1[1].Distance(l2[1]).IsNegligible(mergerTolerance))
                         {
                             l2[1] = l1[1];
                             sameLineCount++;
@@ -269,7 +257,7 @@ namespace TVGL._2D
                             }
                         }
                     }
-                    allBranches.Add(branch.Select(p => p.Light).ToList());
+                    allBranches.Add(branch.ToList());
                 }
 
             }

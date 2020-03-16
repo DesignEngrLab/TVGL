@@ -100,47 +100,46 @@ namespace TVGL
             return vertexDistances;
         }
 
-
-
-
         /// <summary>
         ///     Returns a list of sorted Vector2s along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
-        /// <param name="Vector2s"></param>
-        /// <param name="sortedVector2s"></param>
-        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> Vector2s,
-               out List<(Vector2, double)> sortedVector2s, int numDecimals = 9)
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        public static void SortAlongDirection(Vector2 direction, IList<Vector2> points,
+               out List<(Vector2, double)> sortedPoints, int numDecimals = -1)
         {
-            var Vector2Distances = GetVector2Distances(directionX, directionY, Vector2s, numDecimals);
-            sortedVector2s = Vector2Distances.OrderBy(Vector2 => Vector2.Item2).ToList();
+            var distances = GetPointDistances(direction, points, numDecimals);
+            sortedPoints = distances.OrderBy(p => p.Item2).ToList();
         }
 
         /// <summary>
         ///     Returns a list of sorted Vector2s along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
-        /// <param name="Vector2s"></param>
-        /// <param name="sortedVector2s"></param>
-        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Vector2> Vector2s,
-               out List<Vector2> sortedVector2s, int numDecimals = 9)
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        public static void SortAlongDirection(Vector2 direction, IList<Vector2> points,
+               out List<Vector2> sortedPoints, int numDecimals = -1)
         {
-            var Vector2Distances = GetVector2Distances(directionX, directionY, Vector2s, numDecimals);
-            sortedVector2s = Vector2Distances.OrderBy(Vector2 => Vector2.Item2).Select(p => p.Item1).ToList();
+            var distances = GetPointDistances(direction, points, numDecimals);
+            sortedPoints = distances.OrderBy(p => p.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<(Vector2, double)> GetVector2Distances(double directionX, double directionY,
-            IEnumerable<Vector2> Vector2s, int numDecimals)
+        private static (Vector2, double)[] GetPointDistances(Vector2 direction,
+            IList<Vector2> points, int numDecimals = -1)
         {
-            var Vector2Distances = new List<(Vector2, double)>(Vector2s.Count());
-            //Accuracy to the 15th decimal place
-            foreach (var Vector2 in Vector2s)
+            var distances = new (Vector2, double)[points.Count];
+            for (int i = 0; i < points.Count; i++)
             {
+                var point = points[i];
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(directionX * Vector2.X + directionY * Vector2.Y, numDecimals); //2D dot product
-                Vector2Distances.Add((Vector2, d));
+                var d = direction.Dot(point);
+                if (numDecimals > 0)
+                    d = Math.Round(d, numDecimals); //2D dot product
+                distances[i] = (point, d);
             }
-            return Vector2Distances;
+            return distances;
         }
 
 
@@ -407,10 +406,10 @@ namespace TVGL
             var coord = 3; //ignore z-coord
             if (ax > az && (ax > ay || ax.IsPracticallySame(ay))) coord = 1; //ignore x-coord
             else if (ay > az && ay > ax) coord = 2; //ignore y-coord
-            //These are the results for eqaul directions
-            //if az == ax, then ignore z-coord.
-            //if az == ax == ay, then ignore z-coord.
-            //if ax == ay and both are greater than az, ignore the x-coord
+                                                    //These are the results for eqaul directions
+                                                    //if az == ax, then ignore z-coord.
+                                                    //if az == ax == ay, then ignore z-coord.
+                                                    //if ax == ay and both are greater than az, ignore the x-coord
 
             // compute area of the 2D projection
             // -1 so as to not include the vertex that was added to the end of the list
@@ -486,10 +485,10 @@ namespace TVGL
             var coord = 3; //ignore z-coord
             if (ax > az && (ax > ay || ax.IsPracticallySame(ay))) coord = 1; //ignore x-coord
             else if (ay > az && ay > ax) coord = 2; //ignore y-coord
-            //These are the results for eqaul directions
-            //if az == ax, then ignore z-coord.
-            //if az == ax == ay, then ignore z-coord.
-            //if ax == ay and both are greater than az, ignore the x-coord
+                                                    //These are the results for eqaul directions
+                                                    //if az == ax, then ignore z-coord.
+                                                    //if az == ax == ay, then ignore z-coord.
+                                                    //if ax == ay and both are greater than az, ignore the x-coord
 
             // compute area of the 2D projection
             // -1 so as to not include the vertex that was added to the end of the list
@@ -1194,7 +1193,7 @@ namespace TVGL
             var t_p = aInv11 * vStarts.X + aInv12 * vStarts.Y;
             var t_q = aInv21 * vStarts.X + aInv22 * vStarts.Y;
             if (t_p < 0 || t_p > 1 || t_q < 0 || t_q > 1) return false;
-            intersectionPoint = 0.5*((1 - t_p) * p1 + t_p * p2 + (1 - t_q) * q1 + t_q * q2);
+            intersectionPoint = 0.5 * ((1 - t_p) * p1 + t_p * p2 + (1 - t_q) * q1 + t_q * q2);
             return true;
         }
 
@@ -1978,31 +1977,18 @@ namespace TVGL
                 !pointInQuestion.X.IsGreaterThanNonNegligible(polygon.MinX) ||
                 !pointInQuestion.Y.IsLessThanNonNegligible(polygon.MaxY) ||
                 !pointInQuestion.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
-
-            var points = polygon.Path;
-
             //2) If the point in question is == a point in points, then it is inside the polygon
-            if (
-                points.Any(
-                    point =>
-                        point.X.IsPracticallySame(pointInQuestion.X) && point.Y.IsPracticallySame(pointInQuestion.Y)))
+            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion)))
             {
                 onBoundary = true;
                 return onBoundaryIsInside;
             }
 
-            //Make sure polygon indices are set properly
-            if (polygon.Index == -1) polygon.Index = 0;
-            foreach (var point in points)
-            {
-                point.PolygonIndex = polygon.Index;
-            }
-            //Force the point in question not to have the same index, if it does.
-            if (pointInQuestion.PolygonIndex == polygon.Index) pointInQuestion.PolygonIndex = -1;
+            var points = polygon.Path.ToList();
+            points.Add(pointInQuestion);
 
             //Sort points ascending x, then by ascending y.
-            points.Add(pointInQuestion);
-            var sortedPoints = points.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
+            var sortedPoints = points.OrderBy(p => p.X).ThenBy(p => p.Y).ToArray();
             var lineList = new HashSet<Line>();
 
             //3) Use Line sweep to determine if the polygon contains the point.
@@ -2010,22 +1996,7 @@ namespace TVGL
             //Note: either above or below should work. Checks both to catch errors.
             foreach (var point in sortedPoints)
             {
-                if (point.PolygonIndex == polygon.Index)
-                {
-                    //Add to or remove from Line Sweep
-                    foreach (var line in point.Lines)
-                    {
-                        if (lineList.Contains(line))
-                        {
-                            lineList.Remove(line);
-                        }
-                        else
-                        {
-                            lineList.Add(line);
-                        }
-                    }
-                }
-                else
+                if (point == pointInQuestion)
                 {
                     //If reached the point in question, then find intercepts on the lineList 
                     var numberOfLinesAbove = NumberOfLinesAbovePoint(pointInQuestion, lineList, out closestLineAbove, out bool isOnLine);
@@ -2041,6 +2012,17 @@ namespace TVGL
                     var numberOfLinesBelow = NumberOfLinesBelowPoint(pointInQuestion, lineList, out closestLineBelow, out isOnLine);
                     //No need to check isOnLine, since it is the same lines and point as the lines above check.
                     return numberOfLinesBelow % 2 != 0;
+                }
+                else
+                {
+                    //Add to or remove from Line Sweep
+                    foreach (var line in point.Lines)
+                    {
+                        if (lineList.Contains(line))
+                            lineList.Remove(line);
+                        else
+                            lineList.Add(line);
+                    }
                 }
             }
             //If not returned, throw error

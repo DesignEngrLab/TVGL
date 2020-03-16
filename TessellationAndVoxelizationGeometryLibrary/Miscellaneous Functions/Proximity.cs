@@ -178,7 +178,7 @@ namespace TVGL.MathOperations
             //(1) If the distance is <= 0, the infinite line intersection is outside the line segment interval, on the FromPoint side.
             //(2) If the distance is >= the line.Length, the infinite line intersection is outside the line segment interval, on the ToPoint side.
             //(3) Otherwise, the infinite line intersection is inside the line segment interval.
-            var fromPoint = line.FromPoint.Light;
+            var fromPoint = line.FromPoint;
             var lineVector = line.ToPoint - line.FromPoint;
             var distanceToSegment = (p - fromPoint).Dot(lineVector) / line.Length;
 
@@ -188,7 +188,7 @@ namespace TVGL.MathOperations
             }
             if (distanceToSegment >= line.Length)
             {
-                return line.ToPoint.Light;
+                return line.ToPoint;
             }
             distanceToSegment = distanceToSegment / line.Length;
             return new Vector2(fromPoint.X + lineVector.X * distanceToSegment,

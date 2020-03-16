@@ -98,7 +98,7 @@ namespace TVGL
             //This line has an infinite length
             IsInfinite = true;
             FromPoint = fromPoint;
-            ToPoint = null;
+            ToPoint = Vector2.Null;
             LineVector = lineVector;
             dX = lineVector.X;
             dY = lineVector.Y;
@@ -114,7 +114,7 @@ namespace TVGL
         {
             FromPoint = fromPoint;
             ToPoint = toPoint;
-            Length = FromPoint.Light.Distance(ToPoint.Light);
+            Length = FromPoint.Distance(ToPoint);
             IsHorizontal = false;
             IsVertical = false;
             dY = ToPoint.Y - FromPoint.Y;
@@ -182,7 +182,7 @@ namespace TVGL
         public Vector2 OtherPoint(Vector2 point)
         {
             if (point == FromPoint) return ToPoint;
-            return point == ToPoint ? FromPoint : null;
+            return point == ToPoint ? FromPoint : Vector2.Null;
         }
 
         /// <summary>

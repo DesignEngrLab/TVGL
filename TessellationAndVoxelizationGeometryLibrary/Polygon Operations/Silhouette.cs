@@ -62,7 +62,7 @@ namespace TVGL
             var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;
 
             //Remove tiny polygons and slivers 
-            solution = PolygonOperations.SimplifyFuzzy(solution);
+            solution = PolygonOperations.SimplifyFuzzy((IList<IList<Vector2>>)solution);
             var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
             var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
             //Presenter.ShowAndHang(significantSolution);
@@ -241,7 +241,7 @@ namespace TVGL
             //This is helpful when the polygon is nearly self-intersecting. 
             //Then offset back out.  
 
-            solution = PolygonOperations.SimplifyFuzzy(solution, Math.Min(scale / 1000, Constants.LineLengthMinimum),
+            solution = PolygonOperations.SimplifyFuzzy((IList<IList<Vector2>>)solution, Math.Min(scale / 1000, Constants.LineLengthMinimum),
                 Math.Min(angleTolerance / 1000, Constants.LineSlopeTolerance));
             var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
             offsetPolygons = EliminateOverhangPolygons(offsetPolygons, projectedFacePolygons);
@@ -579,8 +579,8 @@ namespace TVGL
             //negative regions. This is undesirable, since we do not want to union a hole
             //with an overlapping region. For this reason, Union Non-Zero is used. It keeps
             //the holes in their proper orientation and does not combine them together. 
-            var nonSelfIntersectingPaths = PolygonOperations.Union(allPaths, false, PolygonFillType.NonZero);
-            var correctedSurfacePath = EliminateOverhangPolygons(nonSelfIntersectingPaths, projectedFacePolygons);
+            var nonSelfIntersectingPaths = PolygonOperations.Union((IList<IList<Vector2>>)allPaths, false, PolygonFillType.NonZero);
+            var correctedSurfacePath = EliminateOverhangPolygons((List<List<Vector2>>)nonSelfIntersectingPaths, projectedFacePolygons);
             //if (allPaths.Sum(p => p.Count) > 10) Presenter.ShowAndHang(nonSelfIntersectingPaths);
 
             return correctedSurfacePath;

@@ -487,11 +487,11 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> OffsetRound(IEnumerable<IEnumerable<Vector2>> paths, double offset,
+        public static IList<IList<Vector2>> OffsetRound(IEnumerable<IEnumerable<Vector2>> paths, double offset,
             double minLength = 0.0)
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.jtRound, minLength);
+            return (IList<IList<Vector2>>)Offset(listPaths, offset, JoinType.jtRound, minLength);
         }
         public static PolygonsAsLight OffsetRound(PolygonsAsLight paths, double offset, double minLength = 0.0)
         {
@@ -617,9 +617,9 @@ namespace TVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(IList<List<Vector2>> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static IList<IList<Vector2>> Union(IList<IList<Vector2>> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
+            return (IList<IList<Vector2>>)BooleanOperation(polyFill, ClipType.ctUnion, (IEnumerable<PolygonLight>)subject, null, simplifyPriorToUnion);
         }
         public static PolygonsAsLight Union(IEnumerable<PolygonLight> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {

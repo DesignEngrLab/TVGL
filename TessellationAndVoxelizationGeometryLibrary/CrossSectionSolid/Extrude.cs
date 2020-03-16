@@ -35,7 +35,7 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ReturnFacesFromLoops(Vector3[][] loops, Vector3 extrudeDirection,
+        public static List<PolygonalFace> ReturnFacesFromLoops(IList<IList<Vector3>> loops, Vector3 extrudeDirection,
             double distance, bool midPlane = false)
         {
             //This simplifies the cases we have to handle by always extruding in the positive direction
@@ -45,12 +45,12 @@ namespace TVGL
                 extrudeDirection = -1 * extrudeDirection;
             }
             //First, make the vertices that will be used on the perimeter (positioned at the loop coordinates)
-            var vertexLoops = new Vertex[loops.Length][];
+            var vertexLoops = new List<List<Vertex>>();
             var count = 0;
-            for (int loopI = 0; loopI < loops.Length; loopI++)
+            for (int loopI = 0; loopI < loops.Count; loopI++)
             {
-                var vertexLoop = new Vertex[loops[loopI].Length];
-                for (int vertexI = 0; vertexI < loops[loopI].Length; vertexI++)
+                var vertexLoop = new Vertex[loops[loopI].Count];
+                for (int vertexI = 0; vertexI < loops[loopI].Count; vertexI++)
                 {
                     //If a midPlane extrusion, move the original vertices backwards by 1/2 the extrude distance.
                     //These vertices will be used as the base for offsetting the paired vertices forward by the 
@@ -63,7 +63,7 @@ namespace TVGL
                     else vertexLoop[vertexI] = new Vertex(loops[loopI][vertexI], count);
                     count++;
                 }
-                vertexLoops[loopI] = vertexLoop;
+                vertexLoops[loopI] = vertexLoop.ToList();
             }
             var distanceFromOriginAlongDirection = extrudeDirection.Dot(vertexLoops.First().First().Coordinates);
 
@@ -81,7 +81,7 @@ namespace TVGL
                 //Do some polygon functions to clean up issues and try again
                 //This is important because the Get2DProjections may produce invalid paths and because
                 //triangulate will try 3 times before throwing the exception to go to the catch.
-                paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                paths = (Vector2[][])PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
 
                 //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                 //This also means we need to recreate cleanLoops
@@ -107,7 +107,6 @@ namespace TVGL
                             distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
                             new Vertex(vertexPosition2));
                         vertex.IndexInList = j;
-                        point.References.Add(vertex);
                         cleanLoop.Add(vertex);
                         j++;
                     }
@@ -129,10 +128,10 @@ namespace TVGL
                     triangles = new List<Vertex[]>();
 
                     //Do some polygon functions to clean up issues and try again
-                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-                    paths = PolygonOperations.OffsetRound(paths, distance / 1000);
-                    paths = PolygonOperations.OffsetRound(paths, -distance / 1000);
-                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                    paths = (Vector2[][])PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                    paths = (Vector2[][])PolygonOperations.OffsetRound(paths, distance / 1000);
+                    paths = (Vector2[][])PolygonOperations.OffsetRound(paths, -distance / 1000);
+                    paths = (Vector2[][])PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
 
                     //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                     //This also means we need to recreate cleanLoops
@@ -157,7 +156,6 @@ namespace TVGL
                                 distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
                                 new Vertex(vertexPosition2));
                             vertex.IndexInList = j;
-                            point.References.Add(vertex);
                             cleanLoop.Add(vertex);
                             j++;
                         }

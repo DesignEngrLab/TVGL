@@ -10,7 +10,7 @@ namespace TVGL._2D
     public static class Slice2D
     {
         /// <summary>
-        /// This function gets cuts shape [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false, 
+        /// This function slices the [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false, 
         /// it will return the partial shape before the cutting line, otherwise those beyond the cutting line.
         /// The returned partial shape is properly closed and ordered CCW+, CW-.
         /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the 
@@ -24,8 +24,6 @@ namespace TVGL._2D
             var partialShape = new List<PolygonLight>();
             intersectionPoints = new List<Vector2>();
             var shallowPolygonsTrees = PolygonOperations.GetShallowPolygonTrees(shape);
-            var dirX = direction2D[0];
-            var dirY = direction2D[1];
             foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
             {
                 //Set the lines in all the polygons. These are needed for Slice.OnLine()
@@ -43,14 +41,13 @@ namespace TVGL._2D
 
                 if (sortedPoints == null)
                 {
-                    MiscFunctions.SortAlongDirection(dirX, dirY, allPoints, out sortedPoints);
+                    MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
                 }
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
                 //that they are from non-overlapping shallow polygon trees.
-                var localSortedIntersectionOffsetPoints = new List<Vector2>();
                 var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
-                    out localSortedIntersectionOffsetPoints, offsetAtLine);
+                    out var localSortedIntersectionOffsetPoints, offsetAtLine);
                 partialShape.AddRange(paths);
                 intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
             }
@@ -59,7 +56,7 @@ namespace TVGL._2D
         }
 
         /// <summary>
-        /// This function gets cuts shape [List(List(Point))] with a give direction and distance. If returnFurtherThanSlice = false, 
+        /// This function slices the [List(List(Point))] with a give direction and distance. If returnFurtherThanSlice = false, 
         /// it will return the partial shape before the cutting line, otherwise those beyond the cutting line.
         /// The returned partial shape is properly closed and ordered CCW+, CW-.
         /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the 
@@ -73,8 +70,6 @@ namespace TVGL._2D
             var partialShape = new List<List<Vector2>>();
             intersectionPoints = new List<Vector2>();
             var shallowPolygonsTrees = ShallowPolygonTree.GetShallowPolygonTrees(shape);
-            var dirX = direction2D[0];
-            var dirY = direction2D[1];
             foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
             {
                 //Set the lines in all the polygons. These are needed for Slice.OnLine()
@@ -92,7 +87,7 @@ namespace TVGL._2D
 
                 if (sortedPoints == null)
                 {
-                    MiscFunctions.SortAlongDirection(dirX, dirY, allPoints, out sortedPoints);
+                    MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
                 }
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
@@ -107,7 +102,7 @@ namespace TVGL._2D
         }
 
         /// <summary>
-        /// This function gets cuts ShallowPoygonTree with a give direction and distance. If returnFurtherThanSlice = false, 
+        /// This function slices a ShallowPoygonTree with a given direction and distance. If returnFurtherThanSlice = false, 
         /// it will return the partial shape [List(List(Point))] before the cutting line, otherwise those beyond the cutting line.
         /// The returned partial shape is properly closed and ordered CCW+, CW-.
         /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the 
@@ -122,12 +117,12 @@ namespace TVGL._2D
         /// <param name="sortedIntersectionPoints"></param>
         /// <param name="offsetAtLine"></param>
         /// <returns></returns>
-        public static List<PolygonLight> OnLine(ShallowPolygonTree polyTree, Vector2 direction2D, double distanceAlongDirection,
+        private static List<PolygonLight> OnLine(ShallowPolygonTree polyTree, Vector2 direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, IEnumerable<(Vector2, double)> sortedPoints, out List<Vector2> sortedIntersectionPoints,
             double offsetAtLine = 0.0)
         {
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
-                 Second (2), the intersection point for each of the intersection points is found.
+                 Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
                  Fourth (4), a smart slicing algorithm is used to cut the full shape into a partial shape, using 
                  the intersection points and lines.*/
@@ -137,8 +132,8 @@ namespace TVGL._2D
             var linesToLeft = new HashSet<Line>();
             foreach (var pair in sortedPoints)
             {
-                var distanceAlong = pair.Item2;
                 var point = pair.Item1;
+                var distanceAlong = pair.Item2;
                 //If the search direction is forward, then the partial shape is defined with any lines
                 //prior to the given distance. If reverse, then it is with lines further than the current distance.
                 var furtherThanSlice = distanceAlong > distanceAlongDirection;
@@ -253,7 +248,7 @@ namespace TVGL._2D
             var refIndex = 0;
             foreach (var line in intersectionLines)
             {
-                var intersectionPoint = MiscFunctions.PointOnPlaneFromIntersectingLine(direction2D, distance, line);
+                var intersectionPoint = MiscFunctions.Vector2OnPlaneFromIntersectingLine(direction2D, distance, line);
                 line.ReferenceIndex = refIndex;
                 intersectionPoint.ReferenceIndex = refIndex;
                 intersectionLinesByRef.Add(refIndex, line);
