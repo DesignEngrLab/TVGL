@@ -1,188 +1,168 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : Design Engineering Lab
+// Created          : 04-18-2016
+//
+// Last Modified By : Design Engineering Lab
+// Last Modified On : 05-26-2016
+// ***********************************************************************
+// <copyright file="SpecialClasses.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TVGL.Numerics;
 
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
     /// <summary>
-    /// A 2D Line made up of two points.
+    ///     NodeLine
     /// </summary>
     public class Line
     {
-
-        #region Public Properties
+        #region Properties
         /// <summary>
-        ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
+        /// Gets the length of the line.
         /// </summary>
-        /// <value>To node.</value>
-        public Vector2 ToPoint { get; private set; }
-
-        /// <summary>
-        ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
-        /// </summary>
-        /// <value>To node.</value>
-        public Vector2 Center => new Vector2((ToPoint.X + FromPoint.X) / 2, (ToPoint.Y + FromPoint.Y) / 2);
-
-        /// <summary>
-        ///     Gets the Pointwhich the line is pointing away from. Set is through the constructor.
-        /// </summary>
-        /// <value>From node.</value>
-        public Vector2 FromPoint { get; private set; }
+        /// <value>The length.</value>
+        public double Length
+        {
+            get
+            {
+                if (double.IsNaN(_length))
+                    _length = Vector.Length();
+                return _length;
+            }
+        }
+        double _length = double.NaN;
 
         /// <summary>
-        ///     Gets the Slope.
+        /// Gets the length of the line.
         /// </summary>
-        /// <value>The Slope.</value>
-        public double Slope { get; private set; }
+        /// <value>The length.</value>
+        public Vector2 Vector
+        {
+            get
+            {
+                if (_vector.IsNull())
+                    _vector = ToPoint.Coordinates - FromPoint.Coordinates;
+                return _vector;
+            }
+        }
+        Vector2 _vector = Vector2.Null;
+
+
+        public Vector2 Center
+        {
+            get
+            {
+                if (_center.IsNull())
+                    _center = new Vector2((ToPoint.X + FromPoint.X) / 2, (ToPoint.Y + FromPoint.Y) / 2);
+                return _center;
+            }
+        }
+        Vector2 _center = Vector2.Null;
+
+        public double Yintercept
+        {
+            get
+            {
+                if (double.IsNaN(_yIntercept))
+                    _yIntercept = YGivenX(0, out _);
+                return _yIntercept;
+            }
+        }
+        double _yIntercept = double.NaN;
+        public double Xintercept
+        {
+            get
+            {
+                if (double.IsNaN(_xIntercept))
+                    _xIntercept = XGivenY(0, out _);
+                return _xIntercept;
+            }
+        }
+        double _xIntercept = double.NaN;
+
 
         /// <summary>
-        /// Gets whether line is horizontal
+        /// Gets the vertical slope.
         /// </summary>
-        public bool IsHorizontal { get; private set; }
+        /// <value>The vertical slope.</value>
+        public double VerticalSlope
+        {
+            get
+            {
+                if (double.IsNaN(_verticalSlope))
+                    _verticalSlope = Vector.Y / Vector.X;
+                return _length;
+            }
+        }
+        double _verticalSlope = double.NaN;
 
         /// <summary>
-        /// Gets whether line is vertical
+        /// Gets the horizontal slope.
         /// </summary>
-        public bool IsVertical { get; private set; }
-
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-        // ReSharper disable once InconsistentNaming
-        /// <summary>
-        ///     Gets the Yintercept.
-        /// </summary>
-        /// <value>The Yintercept.</value>
-        public double Yintercept { get; private set; }
-
-        /// <summary>
-        /// Get or set its index in a list.
-        /// </summary>
-        public int IndexInPath { get; set; }
-
-        /// <summary>
-        /// Gets the length of the line
-        /// </summary>
-        public double Length { get; private set; }
-
-        /// <summary>
-        ///     Gets or sets an arbitrary ReferenceIndex to track this line
-        /// </summary>
-        /// <value>The reference index.</value>
-        public int ReferenceIndex { get; set; }
-
-        // ReSharper disable once InconsistentNaming
-        public double dY; //Rise
-
-        // ReSharper disable once InconsistentNaming
-        public double dX; //Run
-
-        /// <summary>
-        /// If the line is infinite, it only has a FromPoint and Slope. ToPoint is null
-        /// </summary>
-        public bool IsInfinite = false;
-
-        public Vector2 LineVector;
+        /// <value>The horizontal slope.</value>
+        public double HorizontalSlope
+        {
+            get
+            {
+                if (double.IsNaN(_horizontalSlope))
+                    _horizontalSlope = Vector.X / Vector.Y;
+                return _length;
+            }
+        }
+        double _horizontalSlope = double.NaN;
         #endregion
 
         #region Constructor
-
         /// <summary>
-        ///     Sets to and from points as well as slope and intercept of line.
+        ///     Sets to and from nodes as well as slope and intercept of line.
         /// </summary>
-        /// <param name="fromPoint"></param>
-        /// <param name="lineVector"></param>
-        internal Line(Vector2 fromPoint, Vector2 lineVector)
+        /// <param name="fromNode">From node.</param>
+        /// <param name="toNode">To node.</param>
+        internal Line(Node fromNode, Node toNode)
         {
-            //This line has an infinite length
-            IsInfinite = true;
-            FromPoint = fromPoint;
-            ToPoint = Vector2.Null;
-            LineVector = lineVector;
-            dX = lineVector.X;
-            dY = lineVector.Y;
-        }
-
-        /// <summary>
-        ///     Sets to and from points as well as slope and intercept of line.
-        /// </summary>
-        /// <param name="fromPoint"></param>
-        /// <param name="toPoint"></param>
-        /// <param name="twoWayReference"></param>
-        internal Line(Vector2 fromPoint, Vector2 toPoint, bool twoWayReference = true)
-        {
-            FromPoint = fromPoint;
-            ToPoint = toPoint;
-            Length = FromPoint.Distance(ToPoint);
-            IsHorizontal = false;
-            IsVertical = false;
-            dY = ToPoint.Y - FromPoint.Y;
-            dX = ToPoint.X - FromPoint.X;
-            LineVector = new Vector2(dX, dY );
-
-            //Solve for slope and y intercept. 
-            if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
-            {
-                Slope = double.MaxValue;
-                //use maxvalue instead of infinity, since IsPracticallyTheSame comparison does not work with infinity
-                Yintercept = double.MaxValue;
-                //use maxvalue instead of infinity, since IsPracticallyTheSame comparison does not work with infinity
-                IsVertical = true;
-            }
-
-            else if (ToPoint.Y.IsPracticallySame(FromPoint.Y)) //If horizontal line, set slope = 0.
-            {
-                Slope = 0.0;
-                IsHorizontal = true;
-                Yintercept = ToPoint.Y;
-            }
-            else //Else y = mx + Yintercept
-            {
-                Slope = (dY) / (dX);
-                Yintercept = ToPoint.Y - Slope * ToPoint.X;
-            }
-
-            if (!twoWayReference) return;
-            FromPoint.Lines.Add(this);
-            ToPoint.Lines.Add(this);
-        }
-
-        internal Line(Line line)
-        {
-            FromPoint = line.FromPoint;
-            ToPoint = line.ToPoint;
-            dY = line.dY;
-            dX = line.dX;
-            LineVector = line.LineVector;
-            Length = line.Length;
-            IsHorizontal = line.IsHorizontal;
-            IsVertical = line.IsVertical;
-            Slope = line.Slope;
-            Yintercept = line.Yintercept;
+            FromPoint = fromNode;
+            ToPoint = toNode;
         }
         #endregion
-
-        #region Public Methods        
         /// <summary>
-        ///     Reverses this line.
+        ///     Gets the Node which the line is pointing to. Set is through the constructor.
         /// </summary>
-        public void Reverse()
-        {
-            var tempPoint = FromPoint;
-            FromPoint = ToPoint;
-            ToPoint = tempPoint;
-        }
+        /// <value>To node.</value>
+        internal Node ToPoint { get; }
 
+        /// <summary>
+        ///     Gets the Node which the line is pointing away from. Set is through the constructor.
+        /// </summary>
+        /// <value>From node.</value>
+        internal Node FromPoint { get; }
+
+
+
+        #region Methods
         /// <summary>
         /// Gets the other point that makes up this line.
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public Vector2 OtherPoint(Vector2 point)
+        public Node OtherPoint(Node point)
         {
             if (point == FromPoint) return ToPoint;
-            return point == ToPoint ? FromPoint : Vector2.Null;
+            return point == ToPoint ? FromPoint : null;
+        }
+        /// <summary>
+        ///     Reverses this instance.
+        /// </summary>
+        internal Line Reverse()
+        {
+            return new Line(ToPoint, FromPoint);
         }
 
         /// <summary>
@@ -190,50 +170,52 @@ namespace TVGL
         /// </summary>
         /// <param name="xval"></param>
         /// <returns></returns>
-        public double YGivenX(double xval)
+        public double YGivenX(double xval, out bool isBetweenEndPoints)
         {
-            if (IsHorizontal)
+            isBetweenEndPoints = (FromPoint.X < xval) != (ToPoint.X < xval);
+            // if both true or both false then endpoints are on same side of point
+            if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
             {
                 //Any y value on the line will do
                 return FromPoint.Y;
             }
-            if (IsVertical)
+            if (FromPoint.X.IsPracticallySame(ToPoint.X))
             {
+                isBetweenEndPoints = (xval.IsPracticallySame(FromPoint.X));
                 //return either positive or negative infinity depending on the direction of the line.
                 if (ToPoint.Y - FromPoint.Y > 0)
-                {
                     return double.MaxValue;
-                }
                 return double.MinValue;
             }
-            return Slope * xval + Yintercept;
+            return VerticalSlope * (xval - FromPoint.X) + FromPoint.Y;
         }
 
         /// <summary>
         /// Returns X value given a Y value
         /// </summary>
-        /// <param name="y">The y.</param>
+        /// <param name="yval">The y.</param>
         /// <returns>System.Double.</returns>
-        public double XGivenY(double y)
+        public double XGivenY(double yval, out bool isBetweenEndPoints)
         {
+            isBetweenEndPoints = (FromPoint.Y < yval) != (ToPoint.Y < yval);
+            // if both true or both false then endpoints are on same side of point
             //If a vertical line, return an x value on that line (e.g., ToNode.X)
-            if (IsVertical)
+            if (FromPoint.X.IsPracticallySame(ToPoint.X))
             {
                 return FromPoint.X;
             }
 
             //If a flat line give either positive or negative infinity depending on the direction of the line.
-            if (IsHorizontal)
+            if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
             {
+                isBetweenEndPoints = (yval.IsPracticallySame(FromPoint.Y));
                 if (ToPoint.X - FromPoint.X > 0)
-                {
                     return double.MaxValue;
-                }
                 return double.MinValue;
             }
-            return (y - Yintercept) / Slope;
+            return HorizontalSlope * (yval - FromPoint.Y) + FromPoint.X;
         }
         #endregion
     }
-}
 
+}

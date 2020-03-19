@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -172,18 +173,6 @@ namespace TVGL
         #endregion
 
         #region Perimeter
-        /// <summary>
-        /// Gets the perimeter for a 2D set of points.
-        /// </summary>
-        /// <param name="polygon"></param>
-        /// <returns></returns>
-        public static double Perimeter(IList<Vector2> polygon)
-        {
-            double perimeter = Vector2.Distance(polygon.Last(), polygon[0]);
-            for (var i = 1; i < polygon.Count; i++)
-                perimeter += Vector2.Distance(polygon[i - 1], polygon[i]);
-            return perimeter;
-        }
 
         /// <summary>
         /// Gets the Perimeter (length of a locations) of a 3D set of Vertices.
@@ -303,85 +292,6 @@ namespace TVGL
         }
         #endregion
 
-
-        /// <summary>
-        ///     Calculate the area of any non-intersecting polygon.
-        /// </summary>
-        public static double AreaOfPolygon(IList<List<Vector2>> paths)
-        {
-            return paths.Sum(path => AreaOfPolygon(path));
-        }
-
-
-        /// <summary>
-        ///     Calculate the area of any non-intersecting polygon.
-        /// </summary>
-        /// <param name="polygon"></param>
-        /// <returns>System.Double.</returns>
-        /// <reference>
-        ///     Method 1: http://www.mathopenref.com/coordpolygonarea2.html
-        ///     Faster Method: http://geomalgorithms.com/a01-_area.html.
-        ///     The faster method has been optimized for speed, since it is called often.
-        /// </reference>
-        public static double AreaOfPolygon(IList<Vector2> polygon)
-        {
-            //If less than three points, it is a line and has zero area.
-            if (polygon.Count < 3) return 0.0;
-            #region Method 1
-
-            //Method 1
-            //var area = 0.0;
-            //var j = polygon.Count - 1; //Previous to the first vertex
-            //for (var i = 0; i < polygon.Count; i++)
-            //{
-            //    area += (polygon[j].X + polygon[i].X) * (polygon[j].Y - polygon[i].Y);
-            //    j = i; //Previous to i
-            //}
-            //area = -area / 2;
-
-            #endregion
-
-            //Also check if all x are the same. The algorithm will catch all y's and output zero,
-            //But it may output a small number, even if all the x's are the same
-            var n = polygon.Count;
-            var p0 = polygon[0];
-            var xval = p0.X;
-
-            //Optimized version reduces get functions from arrays and point.X and point.Y
-            // j == i - 1;
-            // k == i + 1
-            var area = 0.0;
-            var p1 = polygon[1];
-            var jY = p0.Y;
-            var iX = p1.X;
-            var iY = p1.Y;
-            var returnZero = true;
-            for (var i = 1; i < n - 1; i++)
-            {
-                var kPoint = polygon[i + 1]; //Thus i < n - 1
-                var kX = kPoint.X;
-                var kY = kPoint.Y;
-                area += iX * (kY - jY);
-
-                if (returnZero && !iX.IsPracticallySame(xval))
-                {
-                    returnZero = false;
-                }
-
-                //Update values
-                jY = iY; //move j to i
-                iY = kY; //move i to k
-                iX = kX;
-            }
-            //Final wrap around terms (Note: this is faster than checking an if condition in the for locations).
-            var pN = polygon[n - 1];
-            area += p0.X * (p1.Y - pN.Y);
-            area += pN.X * (p0.Y - polygon[n - 2].Y);
-            //If all x's were the same, we still need to check the last point, since i doesn't do it in the locations.
-            if (returnZero && pN.X.IsPracticallySame(xval)) return 0.0;
-
-            return area / 2;
-        }
 
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon in 3D space (loops)
@@ -1112,12 +1022,13 @@ namespace TVGL
         /// <param name="intersectionPoint"></param>
         /// <param name="considerCollinearOverlapAsIntersect"></param>
         /// <returns></returns>
-        public static bool LineLineIntersection(Line line1, Line line2, out Vector2 intersectionPoint,
+        internal static bool LineLineIntersection(Line line1, Line line2, out Vector2 intersectionPoint,
             bool considerCollinearOverlapAsIntersect = false)
         {
             return
-                (LineLineIntersection(line1.FromPoint, line1.ToPoint, line2.FromPoint, line2.ToPoint,
-                    out intersectionPoint, considerCollinearOverlapAsIntersect));
+                LineLineIntersection(line1.FromPoint.Coordinates, line1.ToPoint.Coordinates,
+                line2.FromPoint.Coordinates, line2.ToPoint.Coordinates,
+                out intersectionPoint, considerCollinearOverlapAsIntersect);
         }
 
         /// <summary>
@@ -1598,7 +1509,7 @@ namespace TVGL
         /// <param name="line"></param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 Vector2OnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
+        internal static Vector2 Vector2OnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
         {
             Vector2OnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
                 line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
@@ -1870,101 +1781,14 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the number of lines above a point in question. Also returns the closest line above, if any is above.
-        /// </summary>
-        /// <param name="pointInQuestion"></param>
-        /// <param name="lineList"></param>
-        /// <param name="closestLineAbove"></param>
-        /// <param name="isOnLine"></param>
-        /// <returns></returns>
-        public static int NumberOfLinesAbovePoint(Vector2 pointInQuestion, IEnumerable<Line> lineList, out Line closestLineAbove, out bool isOnLine)
-        {
-            isOnLine = false;
-            var count = 0;
-            var minD = double.MaxValue;
-            closestLineAbove = null;
-            foreach (var line in lineList)
-            {
-                var d = line.YGivenX(pointInQuestion.X) - pointInQuestion.Y;
-                if (d.IsNegligible())
-                {
-                    minD = d;
-                    isOnLine = true;
-                    closestLineAbove = line;
-                }
-
-                if (d < 0) continue; //line is below
-
-                //Else, line is above
-                count++;
-                if (d > minD) continue;
-                minD = d;
-                closestLineAbove = line;
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Returns the number of lines below a point in question. Also returns the closest line below, if any is below.
-        /// </summary>
-        /// <param name="pointInQuestion"></param>
-        /// <param name="lineList"></param>
-        /// <param name="closestLineBelow"></param>
-        /// <param name="isOnLine"></param>
-        /// <returns></returns>
-        public static int NumberOfLinesBelowPoint(Vector2 pointInQuestion, IEnumerable<Line> lineList, out Line closestLineBelow, out bool isOnLine)
-        {
-            isOnLine = false;
-            var count = 0;
-            var maxD = double.MinValue; //Max value should never be greater than 0.
-            closestLineBelow = null;
-            foreach (var line in lineList)
-            {
-                var d = line.YGivenX(pointInQuestion.X) - pointInQuestion.Y;
-                if (d.IsNegligible())
-                {
-                    maxD = d;
-                    isOnLine = true;
-                    closestLineBelow = line;
-                }
-
-                if (d > 0) continue; //line is above
-
-                //Else, line is below
-                count++;
-                if (d < maxD) continue;
-                maxD = d;
-                closestLineBelow = line;
-            }
-            return count;
-        }
-
-        /// <summary>
-        ///     Determines if a polygon is inside another polygon.
-        ///     
-        ///     Assumptions:
-        ///     1) Polygon ordering does not matter.
-        ///     2) The polygons do not intersect
-        /// 
-        ///     Updated by Brandon Massoni: 8.11.2017
-        /// </summary>
-        public static bool IsPolygonInsidePolygon(PolygonLight outerPolygon, PolygonLight possibleInnerPolygon)
-        {
-            //The inner polygon can only fully be inside a polygon that has a larger absolute area.
-            if (Math.Abs(outerPolygon.Area) < Math.Abs(possibleInnerPolygon.Area)) return false;
-
-            //Since the polygons are assumed not the intersect, we only need to test if one point is from the
-            // possibleInnerPolygon is inside the outer polygon.
-            return IsPointInsidePolygon(outerPolygon, possibleInnerPolygon.Path.First());
-        }
-
-        /// <summary>
         ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
         ///     below, but does allow determination of whether a point is on the boundary.
         /// </summary>
-        public static bool IsPointInsidePolygon(Polygon polygon, Vector2 pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
-            bool onBoundaryIsInside = true)
+        internal static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion, out Line closestLineAbove,
+            out Line closestLineBelow, out bool onBoundary, bool onBoundaryIsInside = true)
         {
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
             //This function has three layers of checks. 
             //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
             //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
@@ -1973,110 +1797,63 @@ namespace TVGL
             closestLineBelow = null;
             onBoundary = false;
             //1) Check if center point is within bounding box of each polygon
-            if (!pointInQuestion.X.IsLessThanNonNegligible(polygon.MaxX) ||
-                !pointInQuestion.X.IsGreaterThanNonNegligible(polygon.MinX) ||
-                !pointInQuestion.Y.IsLessThanNonNegligible(polygon.MaxY) ||
-                !pointInQuestion.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
+            if (qX < polygon.MinX || qY < polygon.MinY ||
+                qX > polygon.MaxX || qY > polygon.MaxY)
+                return false;
             //2) If the point in question is == a point in points, then it is inside the polygon
             if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion)))
             {
                 onBoundary = true;
                 return onBoundaryIsInside;
             }
-
-            var points = polygon.Path.ToList();
-            points.Add(pointInQuestion);
-
-            //Sort points ascending x, then by ascending y.
-            var sortedPoints = points.OrderBy(p => p.X).ThenBy(p => p.Y).ToArray();
-            var lineList = new HashSet<Line>();
-
-            //3) Use Line sweep to determine if the polygon contains the point.
-            //An odd number of lines above and below a point, means the point is inside the polygon.
-            //Note: either above or below should work. Checks both to catch errors.
-            foreach (var point in sortedPoints)
+            var numberAbove = 0;
+            var numberBelow = 0;
+            var minDistAbove = double.PositiveInfinity;
+            var minDistBelow = double.PositiveInfinity;
+            foreach (var line in polygon.Lines)
             {
-                if (point == pointInQuestion)
+                if ((line.FromPoint.X < qX) == (line.ToPoint.X < qX))
+                    // if the X values are both on the same side, then ignore it. We are looking for
+                    // lines that 'straddle' the x-values. Then we want to know if the lines' y values
+                    // are above or below
+                    continue;
+                var lineYValue = line.YGivenX(qX, out _); //this out parameter is the same condition
+                //as 5 lines earlier, but that check is kept for efficiency
+                var yDistance = lineYValue - qY;
+                if (yDistance > 0)
                 {
-                    //If reached the point in question, then find intercepts on the lineList 
-                    var numberOfLinesAbove = NumberOfLinesAbovePoint(pointInQuestion, lineList, out closestLineAbove, out bool isOnLine);
-                    //Check if the point is on the left line or right line (note that one direction search is sufficient).
-                    if (isOnLine)
+                    numberAbove++;
+                    if (minDistAbove > yDistance)
                     {
-                        onBoundary = true;
-                        return onBoundaryIsInside;
-                    }
-
-                    //Else, not on a boundary, so check to see that it is in between an odd number of lines to left and right
-                    if (numberOfLinesAbove % 2 == 0) return false;
-                    var numberOfLinesBelow = NumberOfLinesBelowPoint(pointInQuestion, lineList, out closestLineBelow, out isOnLine);
-                    //No need to check isOnLine, since it is the same lines and point as the lines above check.
-                    return numberOfLinesBelow % 2 != 0;
-                }
-                else
-                {
-                    //Add to or remove from Line Sweep
-                    foreach (var line in point.Lines)
-                    {
-                        if (lineList.Contains(line))
-                            lineList.Remove(line);
-                        else
-                            lineList.Add(line);
+                        minDistAbove = yDistance;
+                        closestLineAbove = line;
                     }
                 }
-            }
-            //If not returned, throw error
-            throw new Exception("Failed to return intercept information");
-        }
-
-        /// <summary>
-        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
-        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
-        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
-        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
-        ///     Major Assumptions: 
-        ///     1) The polygon can be convex
-        ///     2) The direction of the polygon does not matter  
-        /// 
-        ///     Updated by Brandon Massoni: 8.11.2017
-        /// </summary>
-        /// <param name="polygon"></param>
-        /// <param name="p"></param>
-        /// <param name="returnSharedPointAsInside"></param>
-        /// <returns></returns>
-        public static bool IsPointInsidePolygon(PolygonLight polygon, Vector2 p, bool returnSharedPointAsInside = false)
-        {
-            //Check if the point is the same as any of the polygon's points
-            foreach (var point in polygon.Path)
-            {
-                if (point.X.IsPracticallySame(p.X) && point.Y.IsPracticallySame(p.Y))
+                else if (yDistance < 0)
                 {
-                    return returnSharedPointAsInside;
+                    yDistance = -yDistance;
+                    numberBelow++;
+                    if (minDistBelow > yDistance)
+                    {
+                        minDistBelow = yDistance;
+                        closestLineBelow = line;
+                    }
+                }
+                else //else, the point is on a line in the polygon
+                {
+                    closestLineAbove = closestLineBelow = line;
+                    onBoundary = true;
+                    return true;
                 }
             }
-
-            //1) Check if center point is within bounding box of each polygon
-            if (!p.X.IsLessThanNonNegligible(polygon.MaxX) ||
-                !p.X.IsGreaterThanNonNegligible(polygon.MinX) ||
-                !p.Y.IsLessThanNonNegligible(polygon.MaxY) ||
-                !p.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
-
-            //2) Next, see how many lines are to the left of the point, using a fixed y value.
-            //This compact, effecient 7 lines of code is from W. Randolph Franklin
-            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
-            var path = polygon.Path;
-            var inside = false;
-            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            if (numberBelow != numberAbove)
             {
-                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
-                     p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
-                {
-                    inside = !inside;
-                }
+                Trace.WriteLine("In IsPointInsidePolygon, the number of points above is not equal to the number below");
+                numberAbove = numberBelow = Math.Max(numberBelow, numberAbove);
             }
-
-            return inside;
+            return numberAbove % 2 != 0;
         }
+
 
         /// <summary>
         ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
@@ -2090,33 +1867,28 @@ namespace TVGL
         ///     Updated by Brandon Massoni: 8.11.2017
         /// </summary>
         /// <param name="path"></param>
-        /// <param name="p"></param>
-        public static bool IsPointInsidePolygon(List<Vector2> path, Vector2 p, bool returnSharedPointAsInside = false)
+        /// <param name="pointInQuestion"></param>
+        public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
         {
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
             //Check if the point is the same as any of the polygon's points
+            var polygonIsLeftOfPoint = false;
+            var polygonIsRightOfPoint = false;
+            var polygonIsAbovePoint = false;
+            var polygonIsBelowPoint = false;
             foreach (var point in path)
             {
-                if (point.X.IsPracticallySame(p.X) && point.Y.IsPracticallySame(p.Y))
-                {
-                    return returnSharedPointAsInside;
-                }
+                if (point == pointInQuestion)
+                    return onBoundaryIsInside;
+                if (point.X > qX) polygonIsLeftOfPoint = true;
+                else if (point.X < qX) polygonIsRightOfPoint = true;
+                if (point.Y > qY) polygonIsAbovePoint = true;
+                else if (point.Y < qY) polygonIsBelowPoint = true;
             }
-
-            //1) Get the axis aligned bounding box of the path. This is super fast.
-            //If the point is inside the bounding box, continue to check with more detailed methods, 
-            //Else, retrun false.
-            var xMax = double.NegativeInfinity;
-            var yMax = double.NegativeInfinity;
-            var xMin = double.PositiveInfinity;
-            var yMin = double.PositiveInfinity;
-            foreach (var point in path)
-            {
-                if (point.X < xMin) xMin = point.X;
-                if (point.X > xMax) xMax = point.X;
-                if (point.Y < yMin) yMin = point.Y;
-                if (point.Y > yMax) yMax = point.Y;
-            }
-            if (p.Y < yMin || p.Y > yMax || p.X < xMin || p.X > xMax) return false;
+            if (!(polygonIsAbovePoint && polygonIsBelowPoint && polygonIsLeftOfPoint && polygonIsRightOfPoint))
+                // this is like the AABB check. 
+                return false;
 
             //2) Next, see how many lines are to the left of the point, using a fixed y value.
             //This compact, effecient 7 lines of code is from W. Randolph Franklin
@@ -2124,8 +1896,8 @@ namespace TVGL
             var inside = false;
             for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
             {
-                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
-                     p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                if ((path[i].Y > pointInQuestion.Y) != (path[j].Y > pointInQuestion.Y) &&
+                     pointInQuestion.X < (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
                 {
                     inside = !inside;
                 }
@@ -2143,7 +1915,7 @@ namespace TVGL
         /// <returns></returns>
         //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
         // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
-        public static bool IsPolygonIntersectingPolygon(Polygon subject, Polygon clip)
+        public static bool IsPolygonIntersectingPolygon(this Polygon subject, Polygon clip)
         {
             //Get the axis aligned bounding box of the path. This is super fast.
             //If the point is inside the bounding box, continue to check with more detailed methods, 
@@ -2154,8 +1926,8 @@ namespace TVGL
                 subject.MaxY < clip.MinY) return false;
 
             //Check if either polygon is fully encompassed by the other
-            if (clip.Path.Any(p => IsPointInsidePolygon(subject.Light, p))) return true;
-            if (subject.Path.Any(p => IsPointInsidePolygon(clip.Light, p))) return true;
+            if (clip.Path.Any(p => IsPointInsidePolygon(subject, p, out _, out _,out _))) return true;
+            if (subject.Path.Any(p => IsPointInsidePolygon(clip, p, out _, out _, out _))) return true;
 
             //Else, any remaining intersection will be defined by one or more crossing lines
             //Check for intersections between all but one of the clip lines with all of the subject lines.

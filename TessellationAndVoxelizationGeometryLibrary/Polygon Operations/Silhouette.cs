@@ -5,7 +5,7 @@ using System.Linq;
 using TVGL.Numerics;
 
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
     /// <summary>
     /// The outline of a solid from a particular direction.

@@ -8,121 +8,115 @@ using TVGL.Numerics;
 
 using TVGL.IOFunctions;
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
-    [KnownType(typeof(List<Vector2>))]
-    public readonly struct PolygonLight
-    {
-        /// <summary>
-        /// Gets the Vector2s that make up the polygon
-        /// </summary>
-        [JsonIgnore]
-        public readonly List<Vector2> Path;
+    //[KnownType(typeof(List<Vector2>))]
+    //public class PolygonLight : List<Vector2>
+    //{
+    //    /// <summary>
+    //    /// Gets the Vector2s that make up the polygon
+    //    /// </summary>
+    //    [JsonIgnore]
+    //    public readonly List<Vector2> Path;
 
-        /// <summary>
-        /// Gets the area of the polygon. Negative Area for holes.
-        /// </summary>
-        public readonly double Area;
+    //    /// <summary>
+    //    /// Gets the area of the polygon. Negative Area for holes.
+    //    /// </summary>
+    //    public readonly double Area;
 
-        /// <summary>
-        /// Maximum X value
-        /// </summary>
-        public readonly double MaxX;
+    //    /// <summary>
+    //    /// Maximum X value
+    //    /// </summary>
+    //    public readonly double MaxX;
 
-        /// <summary>
-        /// Minimum X value
-        /// </summary>
-        public readonly double MinX;
+    //    /// <summary>
+    //    /// Minimum X value
+    //    /// </summary>
+    //    public readonly double MinX;
 
-        /// <summary>
-        /// Maximum Y value
-        /// </summary>
-        public readonly double MaxY;
+    //    /// <summary>
+    //    /// Maximum Y value
+    //    /// </summary>
+    //    public readonly double MaxY;
 
-        /// <summary>
-        /// Minimum Y value
-        /// </summary>
-        public readonly double MinY;
+    //    /// <summary>
+    //    /// Minimum Y value
+    //    /// </summary>
+    //    public readonly double MinY;
 
-        public PolygonLight(Polygon polygon)
-        {
-            Area = polygon.Area;
-            Path = new List<Vector2>();
-            foreach (var point in polygon.Path)
-                Path.Add(point);
+    //    public PolygonLight(Polygon polygon)
+    //    {
+    //        Area = polygon.Area;
+    //        Path = new List<Vector2>();
+    //        foreach (var point in polygon.Path)
+    //            Path.Add(point);
 
-            MaxX = polygon.MaxX;
-            MaxY = polygon.MaxY;
-            MinX = polygon.MinX;
-            MinY = polygon.MinY;
-        }
+    //        MaxX = polygon.MaxX;
+    //        MaxY = polygon.MaxY;
+    //        MinX = polygon.MinX;
+    //        MinY = polygon.MinY;
+    //    }
 
-        public PolygonLight(IEnumerable<Vector2> points)
-        {
-            Path = new List<Vector2>(points);
-            Area = MiscFunctions.AreaOfPolygon(Path);
-            MaxX = double.MinValue;
-            MinX = double.MaxValue;
-            MaxY = double.MinValue;
-            MinY = double.MaxValue;
-            foreach (var point in Path)
-            {
-                if (point.X > MaxX) MaxX = point.X;
-                if (point.X < MinX) MinX = point.X;
-                if (point.Y > MaxY) MaxY = point.Y;
-                if (point.Y < MinY) MinY = point.Y;
-            }
-        }
+    //    public PolygonLight(IEnumerable<Vector2> points)
+    //    {
+    //        Path = new List<Vector2>(points);
+    //        Area = MiscFunctions.AreaOfPolygon(Path);
+    //        MaxX = double.MinValue;
+    //        MinX = double.MaxValue;
+    //        MaxY = double.MinValue;
+    //        MinY = double.MaxValue;
+    //        foreach (var point in Path)
+    //        {
+    //            if (point.X > MaxX) MaxX = point.X;
+    //            if (point.X < MinX) MinX = point.X;
+    //            if (point.Y > MaxY) MaxY = point.Y;
+    //            if (point.Y < MinY) MinY = point.Y;
+    //        }
+    //    }
 
-        public static PolygonLight Reverse(PolygonLight original)
-        {
-            var path = new List<Vector2>(original.Path);
-            path.Reverse();
-            var newPoly = new PolygonLight(path);
-            return newPoly;
-        }
+    //    public static PolygonLight Reverse(PolygonLight original)
+    //    {
+    //        var path = new List<Vector2>(original.Path);
+    //        path.Reverse();
+    //        var newPoly = new PolygonLight(path);
+    //        return newPoly;
+    //    }
 
-        public double Length => MiscFunctions.Perimeter(Path);
+    //    public double Length => MiscFunctions.Perimeter(Path);
 
-        public bool IsPositive => Area >= 0;
+    //    public bool IsPositive => Area >= 0;
 
-        public void Serialize(string filename)
-        {
-            using (var writer = new FileStream(filename, FileMode.Create, FileAccess.Write))
-            {
-                var ser = new DataContractSerializer(typeof(PolygonLight));
-                ser.WriteObject(writer, this);
-            }
-        }
+    //    public void Serialize(string filename)
+    //    {
+    //        using (var writer = new FileStream(filename, FileMode.Create, FileAccess.Write))
+    //        {
+    //            var ser = new DataContractSerializer(typeof(PolygonLight));
+    //            ser.WriteObject(writer, this);
+    //        }
+    //    }
 
-        public static PolygonLight Deserialize(string filename)
-        {
-            using (var reader = new FileStream(filename, FileMode.Open, FileAccess.Read))
-            {
-                var ser = new DataContractSerializer(typeof(PolygonLight));
-                return (PolygonLight)ser.ReadObject(reader);
-            }
-        }
+    //    public static PolygonLight Deserialize(string filename)
+    //    {
+    //        using (var reader = new FileStream(filename, FileMode.Open, FileAccess.Read))
+    //        {
+    //            var ser = new DataContractSerializer(typeof(PolygonLight));
+    //            return (PolygonLight)ser.ReadObject(reader);
+    //        }
+    //    }
 
-        internal IEnumerable<double> ConvertToDoublesArray()
-        {
-            return Path.SelectMany(p => new[] { p.X, p.Y });
-        }
+    //    internal IEnumerable<double> ConvertToDoublesArray()
+    //    {
+    //        return Path.SelectMany(p => new[] { p.X, p.Y });
+    //    }
 
-        internal static PolygonLight MakeFromBinaryString(double[] coordinates)
-        {
-            var points = new List<Vector2>();
-            for (int i = 0; i < coordinates.Length; i += 2)
-                points.Add(new Vector2(coordinates[i], coordinates[i + 1]));
-            return new PolygonLight(points);
-        }
-    }
-
-    internal enum PolygonType
-    {
-        Subject,
-        Clip
-    };
+    //    internal static PolygonLight MakeFromBinaryString(double[] coordinates)
+    //    {
+    //        var points = new List<Vector2>();
+    //        for (int i = 0; i < coordinates.Length; i += 2)
+    //            points.Add(new Vector2(coordinates[i], coordinates[i + 1]));
+    //        return new PolygonLight(points);
+    //    }
+    //}
 
     /// <summary>
     /// A list of 2D points
@@ -133,16 +127,32 @@ namespace TVGL
         /// The list of 2D points that make up a polygon.
         /// </summary>
         public List<Vector2> Path;
+        public List<Node> Points;
 
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
-        public PolygonLight Light => new PolygonLight(this);
+        //public PolygonLight Light => new PolygonLight(this);
 
         /// <summary>
         /// The list of lines that make up a polygon. This is not set by default.
         /// </summary>
-        public List<Line> PathLines;
+        public List<Line> Lines
+        {
+            get
+            {
+                if (_lines == null)
+                {
+                    _lines = new List<Line>();
+                    var n = Path.Count - 1;
+                    for (var i = 0; i < n; i++)
+                        Lines.Add(new Line(Points[i], Points[j]));
+                    Lines.Add(new Line(Points[n], Points[0]));
+                }
+                return _lines;
+            }
+        }
+        List<Line> _lines;
 
         /// <summary>
         /// A list of the polygons inside this polygon.
@@ -253,7 +263,7 @@ namespace TVGL
             Index = index;
             Area = CalculateArea();
             Length = SetLength();
-            PathLines = null;
+            Lines = null;
             Parent = null;
             Children = new List<Polygon>();
 
@@ -261,10 +271,6 @@ namespace TVGL
             {
                 SetPathLines();
             }
-        }
-
-        public Polygon(PolygonLight poly, bool setLines = false) : this(poly.Path, setLines)
-        {
         }
 
         private double SetLength()
@@ -278,23 +284,21 @@ namespace TVGL
         private void SetToCCWPositive()
         {
             //Check if already positive ccw.
-            if (!(Area < 0)) return;
+            if (Area >= 0) return;
 
             //It is negative. Reverse the path and path lines.
-            var path = new List<Vector2>(Path);
-            path.Reverse();
+            Path.Reverse();
             Area = -Area;
-            Path = path;
 
             //Only reverse the lines if they have been generated
-            if (PathLines == null) return;
-            var lines = new List<Line>(PathLines);
+            if (Lines == null) return;
+            var lines = new List<Line>(Lines);
             lines.Reverse();
             for (var i = 0; i < lines.Count; i++)
             {
                 lines[i].IndexInPath = i;
             }
-            PathLines = lines;
+            Lines = lines;
         }
 
         private void SetToCWNegative()
@@ -309,14 +313,14 @@ namespace TVGL
             Path = path;
 
             //Only reverse the lines if they have been generated
-            if (PathLines == null) return;
-            var lines = new List<Line>(PathLines);
+            if (Lines == null) return;
+            var lines = new List<Line>(Lines);
             lines.Reverse();
             for (var i = 0; i < lines.Count; i++)
             {
                 lines[i].IndexInPath = i;
             }
-            PathLines = lines;
+            Lines = lines;
         }
 
         private double CalculateArea()
@@ -324,89 +328,14 @@ namespace TVGL
             return MiscFunctions.AreaOfPolygon(Path.ToArray());
         }
 
-        /// <summary>
-        /// Returns a list of lines that make up the path of this polygon
-        /// </summary>
-        /// <returns></returns>
-        public void SetPathLines()
-        {
-            PathLines = new List<Line>();
-            var n = Path.Count;
-            for (var i = 0; i < n; i++)
-            {
-                var j = (i + 1) % n;
-                PathLines.Add(new Line(Path[i], Path[j], true) { IndexInPath = i });
-            }
-        }
-
-        /// <summary>
-        /// Gets the next point in the path, given the current point index. 
-        /// This function automatically wraps back to the first point.
-        /// </summary>
-        /// <param name="currentPointIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public Vector2 NextPoint(int currentPointIndex)
-        {
-            return Path[NextPointIndex(currentPointIndex)];
-        }
-
-        /// <summary>
-        /// Gets the index of the next point in the path, given the current point index. 
-        /// This function automatically wraps back to index 0.
-        /// </summary>
-        /// <param name="currentPointIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public int NextPointIndex(int currentPointIndex)
-        {
-            if (Path[currentPointIndex].IndexInPath != currentPointIndex)
-                throw new Exception("Path has been altered and the indices do not match up");
-            if (Path.Count == currentPointIndex + 1)
-            {
-                return 0;
-            }
-            return currentPointIndex + 1;
-        }
-
-        /// <summary>
-        /// Gets the next line in the path, given the current line index. 
-        /// This function automatically wraps back to the first line.
-        /// </summary>
-        /// <param name="currentLineIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public Line NextLine(int currentLineIndex)
-        {
-            return PathLines[NextLineIndex(currentLineIndex)];
-        }
-
-        /// <summary>
-        /// Gets the index of the next line in the path, given the current line index. 
-        /// This function automatically wraps back to index 0.
-        /// </summary>
-        /// <param name="currentLineIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public int NextLineIndex(int currentLineIndex)
-        {
-            if (PathLines[currentLineIndex].IndexInPath != currentLineIndex)
-                throw new Exception("Path has been altered and the indices do not match up");
-            if (PathLines.Count == currentLineIndex + 1)
-            {
-                return 0;
-            }
-            return currentLineIndex + 1;
-        }
 
         public bool IsConvex()
         {
             if (!Area.IsGreaterThanNonNegligible()) return false; //It must have an area greater than zero
-            if (PathLines == null) SetPathLines();
-            var firstLine = PathLines.Last();
-            foreach (var secondLine in PathLines)
+            var firstLine = Lines.Last();
+            foreach (var secondLine in Lines)
             {
-                var cross = firstLine.dX * secondLine.dY - firstLine.dY * secondLine.dX;
+                var cross = firstLine.Vector.Cross(secondLine.Vector);
                 if (secondLine.Length.IsNegligible(0.0000001)) continue;// without updating the first line             
                 if (cross < 0)
                 {

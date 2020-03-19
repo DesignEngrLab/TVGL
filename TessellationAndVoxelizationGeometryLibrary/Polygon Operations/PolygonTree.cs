@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
     /// <summary>
     /// A list of one positive (Outer) polygon and all the negative (Inner) polygons directly inside it.

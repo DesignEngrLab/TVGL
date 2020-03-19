@@ -4,7 +4,7 @@ using System.Linq;
 using TVGL.Numerics;
 using System.Diagnostics;
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
     /// <summary>
     /// Triangulates a Polygon into faces in O(n log n) time.
@@ -20,7 +20,7 @@ namespace TVGL
     ///     http://www.personal.kent.edu/~rmuhamma/Compgeometry/MyCG/PolyPart/polyPartition.htm
     ///     This algorithm should run in O(n) time.
     /// </References>
-    public static class TriangulatePolygon
+    public static partial class PolygonOperations
     {
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
@@ -31,7 +31,7 @@ namespace TVGL
         /// <param name="isPositive">The is positive.</param>
         /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        public static List<List<Vertex[]>> Run(Vertex[][] loops, Vector3 normal,
+        public static List<List<Vertex[]>> Triangulate(Vertex[][] loops, Vector3 normal,
             out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
@@ -140,7 +140,7 @@ namespace TVGL
                         }
                         points2D[loopI] = newLoop;
                     }
-                    var linesInLoops = new List<List<NodeLine>>();
+                    var linesInLoops = new List<List<Line>>();
                     loopI = 0;
                     vertexI = 0;
                     foreach (var origLoop in origVertexLoops)
@@ -148,7 +148,7 @@ namespace TVGL
                     {
                         var loop = points2D[loopI];
                         var orderedLoop = new List<Node>();
-                        var linesInLoop = new List<NodeLine>();
+                        var linesInLoop = new List<Line>();
                         //Count the number of points and add to total.
                         pointCount += loop.Length;
 
@@ -181,7 +181,7 @@ namespace TVGL
                                 orderedLoop.Add(node);
 
                                 //Create New NodeLine
-                                var line = new NodeLine(previousNode, node);
+                                var line = new Line(previousNode, node);
                                 previousNode.StartLine = line;
                                 node.EndLine = line;
                                 previousNode = node;
@@ -192,11 +192,11 @@ namespace TVGL
 
 
                         //Create both missing lines 
-                        var line1 = new NodeLine(previousNode, lastNode);
+                        var line1 = new Line(previousNode, lastNode);
                         previousNode.StartLine = line1;
                         lastNode.EndLine = line1;
                         linesInLoop.Insert(0, line1);
-                        var line2 = new NodeLine(lastNode, firstNode);
+                        var line2 = new Line(lastNode, firstNode);
                         lastNode.StartLine = line2;
                         firstNode.EndLine = line2;
                         linesInLoop.Add(line2);
@@ -239,7 +239,7 @@ namespace TVGL
                             }
 
                             //inititallize lineList 
-                            var lineList = new List<NodeLine>();
+                            var lineList = new List<Line>();
                             for (var j = 0; j < sortedGroup.Count; j++)
                             {
                                 var node = sortedGroup[j];
@@ -250,10 +250,10 @@ namespace TVGL
                                     bool isOnLine;
                                     //If remainder is not equal to 0, then it is odd.
                                     //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                                    NodeLine leftLine;
+                                    Line leftLine;
                                     if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
                                     {
-                                        NodeLine rightLine;
+                                        Line rightLine;
                                         isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                     }
                                     else isInside = false;
@@ -318,10 +318,8 @@ namespace TVGL
                         {
                             orderedLoop.Reverse();
                             //Also, reorder all the lines for these nodes
-                            foreach (var line in linesInLoops[j])
-                            {
-                                line.Reverse();
-                            }
+                            for (int i = 0; i < linesInLoops[j].Count; i++)
+                                linesInLoops[j][i] = linesInLoops[j][i].Reverse();
                             //And reorder all the node - line identifiers
                             foreach (var node in orderedLoop)
                             {
@@ -354,7 +352,7 @@ namespace TVGL
                                 //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
                                 //Note: If this occurs, any loops inside loop 1 will also be inside loop 2, so no information is lost.
                                 if (!MiscFunctions.IsPointInsidePolygon(points2D[positiveLoop2.First().LoopID].ToList(),
-                                    positiveLoop1.First().Point)) continue;
+                                    positiveLoop1.First().Coordinates)) continue;
                                 isInside = true;
                                 break;
                             }
@@ -478,7 +476,7 @@ namespace TVGL
                         }
 
                         //inititallize lineList and sortedNodes
-                        var lineList = new List<NodeLine>();
+                        var lineList = new List<Line>();
 
                         #region Trapezoidize Polygons
 
@@ -490,8 +488,8 @@ namespace TVGL
                         for (var j = 0; j < sortedGroup.Count; j++)
                         {
                             var node = sortedGroup[j];
-                            NodeLine leftLine = null;
-                            NodeLine rightLine = null;
+                            Line leftLine = null;
+                            Line rightLine = null;
 
                             //Check if negative loop is inside polygon 
                             //note that listPositive changes order /size , while isPositive is static like loopID.
@@ -640,7 +638,7 @@ namespace TVGL
                             var trapezoid = completedTrapezoids[j];
                             if (trapezoid.TopNode.Type == NodeType.DownwardReflex) //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
                             {
-                                var newLine = new NodeLine(trapezoid.TopNode, trapezoid.BottomNode);
+                                var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
                                 var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
                                 var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
@@ -650,7 +648,7 @@ namespace TVGL
                             }
                             else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
                             {
-                                var newLine = new NodeLine(trapezoid.TopNode, trapezoid.BottomNode);
+                                var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
                                 var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
                                 var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
@@ -713,8 +711,8 @@ namespace TVGL
                                 sortedMonotonePolyNodes.Add(monotoneTrapPoly[j].TopNode);
 
                                 //If trapezoid upper node is on the right line, add it to the right chain
-                                if (monotoneTrapPoly[j].RightLine.FromNode == monotoneTrapPoly[j].TopNode ||
-                                    monotoneTrapPoly[j].RightLine.ToNode == monotoneTrapPoly[j].TopNode)
+                                if (monotoneTrapPoly[j].RightLine.FromPoint == monotoneTrapPoly[j].TopNode ||
+                                    monotoneTrapPoly[j].RightLine.ToPoint == monotoneTrapPoly[j].TopNode)
                                 {
                                     monotoneRightChain.Add(monotoneTrapPoly[j].TopNode);
                                 }
@@ -852,7 +850,7 @@ namespace TVGL
         /// A, B, and C are counterclockwise ordered points.
         internal static NodeType GetNodeType(Node a, Node b, Node c)
         {
-            var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(a.Point, b.Point, c.Point);
+            var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(a.Coordinates, b.Coordinates, c.Coordinates);
             if (angle > Math.PI * 2) throw new Exception();
             if (a.Y.IsPracticallySame(b.Y))
             {
@@ -883,7 +881,7 @@ namespace TVGL
         #endregion
 
         #region Create Trapezoid and Insert Into List
-        internal static void InsertTrapezoid(Node node, NodeLine leftLine, NodeLine rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
+        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
         {
             var matchesTrap = false;
             var i = 0;
@@ -904,7 +902,7 @@ namespace TVGL
         #endregion
 
         #region Find Lines to Left or Right
-        internal static int LinesToLeft(Node node, IEnumerable<NodeLine> lineList, out NodeLine leftLine, out bool isOnLine)
+        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, out bool isOnLine)
         {
             isOnLine = false;
             leftLine = null;
@@ -913,7 +911,7 @@ namespace TVGL
             foreach (var line in lineList)
             {
                 //Check to make sure that the line does not contain the node
-                if (line.FromNode == node || line.ToNode == node) continue;
+                if (line.FromPoint == node || line.ToPoint == node) continue;
                 //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
@@ -927,20 +925,20 @@ namespace TVGL
                         //Find the shared node
                         Node nodeOnLine;
                         if (leftLine == null) throw new Exception("Null Reference");
-                        if (leftLine.ToNode == line.FromNode)
+                        if (leftLine.ToPoint == line.FromPoint)
                         {
-                            nodeOnLine = line.FromNode;
+                            nodeOnLine = line.FromPoint;
                         }
-                        else if (leftLine.FromNode == line.ToNode)
+                        else if (leftLine.FromPoint == line.ToPoint)
                         {
-                            nodeOnLine = line.ToNode;
+                            nodeOnLine = line.ToPoint;
                         }
                         else throw new Exception("Rounding Error");
 
                         //Choose whichever line has the right most other node
                         //Note that this condition will only occur when line and
                         //leftLine share a node. 
-                        leftLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X ? nodeOnLine.EndLine : nodeOnLine.StartLine;
+                        leftLine = nodeOnLine.EndLine.FromPoint.X > nodeOnLine.StartLine.ToPoint.X ? nodeOnLine.EndLine : nodeOnLine.StartLine;
                     }
                     else if (xdif >= xleft)
                     {
@@ -952,14 +950,14 @@ namespace TVGL
             return counter;
         }
 
-        internal static void FindLeftLine(Node node, IEnumerable<NodeLine> lineList, out NodeLine leftLine)
+        internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
         {
             bool isOnLine;
             LinesToLeft(node, lineList, out leftLine, out isOnLine);
             if (leftLine == null) throw new Exception("Failed to find line to left.");
         }
 
-        internal static int LinesToRight(Node node, IEnumerable<NodeLine> lineList, out NodeLine rightLine, out bool isOnLine)
+        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, out bool isOnLine)
         {
             isOnLine = false;
             rightLine = null;
@@ -968,7 +966,7 @@ namespace TVGL
             foreach (var line in lineList)
             {
                 //Check to make sure that the line does not contain the node
-                if (line.FromNode == node || line.ToNode == node) continue;
+                if (line.FromPoint == node || line.ToPoint == node) continue;
                 //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
@@ -983,18 +981,18 @@ namespace TVGL
                         //leftLine share a node.                        
                         Node nodeOnLine;
                         if (rightLine == null) throw new Exception("Null Reference");
-                        if (rightLine.ToNode == line.FromNode)
+                        if (rightLine.ToPoint == line.FromPoint)
                         {
-                            nodeOnLine = line.FromNode;
+                            nodeOnLine = line.FromPoint;
                         }
-                        else if (rightLine.FromNode == line.ToNode)
+                        else if (rightLine.FromPoint == line.ToPoint)
                         {
-                            nodeOnLine = line.ToNode;
+                            nodeOnLine = line.ToPoint;
                         }
                         else throw new Exception("Rounding Error");
 
                         //Choose whichever line has the right most other node
-                        rightLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X ? nodeOnLine.StartLine : nodeOnLine.EndLine;
+                        rightLine = nodeOnLine.EndLine.FromPoint.X > nodeOnLine.StartLine.ToPoint.X ? nodeOnLine.StartLine : nodeOnLine.EndLine;
                     }
                     else if (xdif <= xright) //If less than
                     {
@@ -1006,7 +1004,7 @@ namespace TVGL
             return counter;
         }
 
-        internal static void FindRightLine(Node node, IEnumerable<NodeLine> lineList, out NodeLine rightLine)
+        internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
         {
             bool isOnLine;
             LinesToRight(node, lineList, out rightLine, out isOnLine);
@@ -1156,8 +1154,8 @@ namespace TVGL
                         //Check to see if the angle is concave (Strictly less than PI). Exit if it is convex.
                         //Note that if the chain is the right chain, the order of nodes will be backwards 
                         var angle = (node.IsRightChain)
-                            ? MiscFunctions.InteriorAngleBetweenEdgesInCCWList(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
-                            : MiscFunctions.ExteriorAngleBetweenEdgesInCCWList(node.Point, scan.Last().Point, scan[scan.Count - 2].Point);
+                            ? MiscFunctions.InteriorAngleBetweenEdgesInCCWList(node.Coordinates, scan.Last().Coordinates, scan[scan.Count - 2].Coordinates)
+                            : MiscFunctions.ExteriorAngleBetweenEdgesInCCWList(node.Coordinates, scan.Last().Coordinates, scan[scan.Count - 2].Coordinates);
                         //Skip if greater than OR close to Math.PI, because that will yield a Negligible area triangle
                         if (angle > Math.PI || Math.Abs(angle - Math.PI) < 1E-6)
                         {

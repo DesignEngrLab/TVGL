@@ -5,9 +5,9 @@ using System.Text;
 using TVGL.Numerics;
 
 
-namespace TVGL._2D
+namespace TVGL.TwoDimensional
 {
-    public static class Slice2D
+    public static partial class PolygonOperations
     {
         /// <summary>
         /// This function slices the [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false, 
@@ -17,14 +17,13 @@ namespace TVGL._2D
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static List<PolygonLight> OnLine(List<PolygonLight> shape, Vector2 direction2D, double distanceAlongDirection,
+        public static List<PolygonLight> SliceAtLine(List<PolygonLight> shape, Vector2 lineNormalDirection, double distanceAlongDirection,
             bool returnFurtherThanSlice, out List<Vector2> intersectionPoints,
-            double offsetAtLine = 0.0, List<(Vector2, double)> sortedPoints = null)
+            double offsetAtLine = 0.0)
         {
             var partialShape = new List<PolygonLight>();
             intersectionPoints = new List<Vector2>();
-            var shallowPolygonsTrees = PolygonOperations.GetShallowPolygonTrees(shape);
-            foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
+            foreach (var shallowPolygonTree in PolygonOperations.GetShallowPolygonTrees(shape)) //There is usually only one, but do them all
             {
                 //Set the lines in all the polygons. These are needed for Slice.OnLine()
                 foreach (var polygon in shallowPolygonTree.AllPolygons)
@@ -41,12 +40,12 @@ namespace TVGL._2D
 
                 if (sortedPoints == null)
                 {
-                    MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
+                    MiscFunctions.SortAlongDirection(lineNormalDirection, allPoints, out sortedPoints);
                 }
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
                 //that they are from non-overlapping shallow polygon trees.
-                var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
+                var paths = OnLine(shallowPolygonTree, lineNormalDirection, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
                     out var localSortedIntersectionOffsetPoints, offsetAtLine);
                 partialShape.AddRange(paths);
                 intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
@@ -139,15 +138,18 @@ namespace TVGL._2D
                 var furtherThanSlice = distanceAlong > distanceAlongDirection;
                 if (returnFurtherThanSlice == furtherThanSlice)
                 {
-                    foreach (var line in point.Lines)
+                    if (intersectionLines.Contains(point.StartLine))
                     {
-                        if (intersectionLines.Contains(line))
-                        {
-                            intersectionLines.Remove(line);
-                            linesToLeft.Add(line);
-                        }
-                        else intersectionLines.Add(line);
+                        intersectionLines.Remove(point.StartLine);
+                        linesToLeft.Add(point.StartLine);
                     }
+                    else intersectionLines.Add(point.StartLine);
+                    if (intersectionLines.Contains(point.EndLine))
+                    {
+                        intersectionLines.Remove(point.EndLine);
+                        linesToLeft.Add(point.EndLine);
+                    }
+                    else intersectionLines.Add(point.EndLine);
                 }
                 //else break;
             }
@@ -180,7 +182,7 @@ namespace TVGL._2D
                 while (nextLineIndex != endLineIndex || currentPolygon.Index != endPolygonIndex)
                 {
                     var currentLineIndex = nextLineIndex;
-                    var currentLine = currentPolygon.PathLines[currentLineIndex];
+                    var currentLine = currentPolygon.Lines[currentLineIndex];
                     path.Add(currentLine.FromPoint);
                     if (intersectionLines.Contains(currentLine))
                     {
@@ -318,18 +320,25 @@ namespace TVGL._2D
                 }
 
                 //Update the intersection lines
-                foreach (var line in point.Lines)
+                if (intersectionLines.Contains(point.StartLine))
                 {
-                    if (intersectionLines.Contains(line))
-                    {
-                        intersectionLines.Remove(line);
-                        numIntersectionLines--;
-                    }
-                    else
-                    {
-                        intersectionLines.Add(line);
-                        numIntersectionLines++;
-                    }
+                    intersectionLines.Remove(point.StartLine);
+                    numIntersectionLines--;
+                }
+                else
+                {
+                    intersectionLines.Add(point.StartLine);
+                    numIntersectionLines++;
+                }
+                if (intersectionLines.Contains(point.EndLine))
+                {
+                    intersectionLines.Remove(point.EndLine);
+                    numIntersectionLines--;
+                }
+                else
+                {
+                    intersectionLines.Add(point.EndLine);
+                    numIntersectionLines++;
                 }
             }
 
@@ -372,18 +381,25 @@ namespace TVGL._2D
                 }
 
                 //Update the intersection lines
-                foreach (var line in point.Lines)
+                if (intersectionLines.Contains(point.StartLine))
                 {
-                    if (intersectionLines.Contains(line))
-                    {
-                        intersectionLines.Remove(line);
-                        numIntersectionLines--;
-                    }
-                    else
-                    {
-                        intersectionLines.Add(line);
-                        numIntersectionLines++;
-                    }
+                    intersectionLines.Remove(point.StartLine);
+                    numIntersectionLines--;
+                }
+                else
+                {
+                    intersectionLines.Add(point.StartLine);
+                    numIntersectionLines++;
+                }
+                if (intersectionLines.Contains(point.EndLine))
+                {
+                    intersectionLines.Remove(point.EndLine);
+                    numIntersectionLines--;
+                }
+                else
+                {
+                    intersectionLines.Add(point.EndLine);
+                    numIntersectionLines++;
                 }
             }
             //Presenter.ShowAndHang(intersectionPoints);

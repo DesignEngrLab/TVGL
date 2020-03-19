@@ -5,7 +5,7 @@ using System.Text;
 using TVGL.Numerics;
 
 
-namespace TVGL._2D
+namespace TVGL.TwoDimensional
 {
     public static class MedialAxis2D
     {
