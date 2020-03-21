@@ -28,8 +28,9 @@ namespace TVGL.TwoDimensional
             var allBranches = new List<List<Vector2>>();
             foreach (var positivePolygon in silhouette.Where(p => p.Area() > 0))
             {
-                var sampled = PolygonOperations.SampleWithEdgeLength(positivePolygon, MiscFunctions.Perimeter(positivePolygon) / 600);
-                var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).First();
+                var perimeter = positivePolygon.Perimeter();
+                var sampled = PolygonOperations.SampleWithEdgeLength(positivePolygon, perimeter / 600);
+                var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * perimeter).First();
 
                 //Delaunay Medial Axis             
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
@@ -93,11 +94,11 @@ namespace TVGL.TwoDimensional
                                 Vector2 newPoint;
                                 //Create a new center point on the shortest line and set three point sets
                                 if (d0 < d1 && d0 < d2)
-                                    newPoint = 0.5*(edge1Center + edge2Center);
+                                    newPoint = 0.5 * (edge1Center + edge2Center);
                                 else if (d1 < d2)
-                                    newPoint = 0.5*(edge2Center + edge3Center);
+                                    newPoint = 0.5 * (edge2Center + edge3Center);
                                 else
-                                    newPoint = 0.5*(edge3Center + edge1Center);
+                                    newPoint = 0.5 * (edge3Center + edge1Center);
 
                                 lines.Add(new List<Vector2> { edge1Center, newPoint });
                                 lines.Add(new List<Vector2> { edge2Center, newPoint });

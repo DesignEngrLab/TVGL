@@ -21,6 +21,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using TVGL.IOFunctions;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL.Voxelization
 {

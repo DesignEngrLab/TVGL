@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
-
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -52,7 +52,7 @@ namespace TVGL
                 innerVertices.RemoveWhere(v => outerEdgeHashSet.Overlaps(v.Edges));
                 verticesToRemove.AddRange(innerVertices);
                 var vertexLoops = OrganizeIntoLoop(flat.OuterEdges, flat.Normal).ToArray();
-                var triangulatedListofLists = TriangulatePolygon.Run(new[] { vertexLoops }, flat.Normal, out _, out _);
+                var triangulatedListofLists = PolygonOperations.Triangulate(new[] { vertexLoops }, flat.Normal, out _, out _);
                 var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                 var oldEdgeDictionary = flat.OuterEdges.ToDictionary(TessellatedSolid.SetAndGetEdgeChecksum);
                 Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();

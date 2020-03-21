@@ -114,7 +114,7 @@ namespace TVGL
                     vertexLoops.Add(cleanLoop);
                 }
 
-                var triangleFaceList = PolygonOperations.Triangulate(points2D, extrudeDirection,out _, out var isPositive);
+                var triangleFaceList = PolygonOperations.Triangulate((IList<IList<Vertex>>)vertexLoops, extrudeDirection,out _, out var isPositive);
                 foreach (var face in triangleFaceList)
                 {
                     triangles.AddRange(face);
@@ -162,7 +162,7 @@ namespace TVGL
                         vertexLoops.Add(cleanLoop);
                     }
 
-                    var triangleFaceList = PolygonOperations.Triangulate(points2D, extrudeDirection, out _, out var isPositive);
+                    var triangleFaceList = PolygonOperations.Triangulate((IList<IList<Vertex>>)points2D, extrudeDirection, out _, out var isPositive);
                     foreach (var face in triangleFaceList)
                     {
                         triangles.AddRange(face);

@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
 using TVGL.IOFunctions;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -434,7 +435,7 @@ namespace TVGL
                     List<List<Vertex[]>> triangleFaceList = null;
                     try
                     {
-                        triangleFaceList = TriangulatePolygon.Run(new [] {edges.Select(e => e.To).ToArray()},
+                        triangleFaceList = PolygonOperations.Triangulate(new [] {edges.Select(e => e.To).ToArray()},
                             normal, out _, out _);
                     }
                     catch

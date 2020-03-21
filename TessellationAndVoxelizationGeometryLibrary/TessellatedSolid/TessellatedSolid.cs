@@ -23,6 +23,7 @@ using Newtonsoft.Json.Linq;
 
 using TVGL.IOFunctions;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -434,7 +435,7 @@ namespace TVGL
                 {
                     var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
                     var triangulatedListofLists =
-                        TriangulatePolygon.Run(new [] { faceVertices }, normal,out _, out _);
+                       PolygonOperations.Triangulate(new [] { faceVertices }, normal,out _, out _);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)

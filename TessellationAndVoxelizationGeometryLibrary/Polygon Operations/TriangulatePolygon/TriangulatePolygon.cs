@@ -67,7 +67,7 @@ namespace TVGL.TwoDimensional
         /// </exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vertex[]>> Run2D(Vector2[][] origPoints2D, Vertex[][] origVertexLoops, out List<List<int>> groupsOfLoops,
+        public static List<List<Vertex[]>> Run2D(Vector2[][] origPoints2D, IList<IList<Vertex>> origVertexLoops, out List<List<int>> groupsOfLoops,
             out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.

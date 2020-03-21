@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
-
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -412,7 +412,7 @@ namespace TVGL
             var p3 = v1Min + v2Min;
             var p4 = v1Max + v2Min;
             CornerPoints = new[] { p1, p2, p3, p4 };
-            var areaCheck = MiscFunctions.AreaOfPolygon(CornerPoints);
+            var areaCheck = CornerPoints.Area();
             if (areaCheck < 0.0)
             {
                 CornerPoints = new[] { p4, p3, p2, p1 };
