@@ -1022,30 +1022,27 @@ namespace TVGL
         /// <param name="intersectionPoint"></param>
         /// <param name="considerCollinearOverlapAsIntersect"></param>
         /// <returns></returns>
-        internal static bool LineLineIntersection(Line line1, Line line2, out Vector2 intersectionPoint,
+        internal static bool PolygonSegmentIntersection(this PolygonSegment line1, PolygonSegment line2, out Vector2 intersectionPoint,
             bool considerCollinearOverlapAsIntersect = false)
         {
             return
-                LineLineIntersection(line1.FromPoint.Coordinates, line1.ToPoint.Coordinates,
+                SegmentSegment2DIntersection(line1.FromPoint.Coordinates, line1.ToPoint.Coordinates,
                 line2.FromPoint.Coordinates, line2.ToPoint.Coordinates,
                 out intersectionPoint, considerCollinearOverlapAsIntersect);
         }
 
         /// <summary>
-        /// Detemines if Two Lines intersect. Outputs intersection point if they do.
-        /// If two lines are colinear, they are not considered intersecting.
+        /// Determines if Two Lines intersect. Outputs intersection point if they do.
+        /// If two lines are collinear, they are not considered intersecting.
         /// </summary>
-        /// <param name="intersectionPoint"></param>
-        /// <param name="considerCollinearOverlapAsIntersect"></param>
-        /// <param name="pt1"></param>
-        /// <param name="pt2"></param>
-        /// <param name="pt3"></param>
-        /// /// <param name="pt4"></param>
-        /// <source>
-        /// http://www.codeproject.com/Tips/862988/Find-the-Intersection-Point-of-Two-Line-Segments
-        /// </source>
-        /// <returns></returns>
-        public static bool LineLineIntersection(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2,
+        /// <param name="p1">The p1.</param>
+        /// <param name="p2">The p2.</param>
+        /// <param name="q1">The q1.</param>
+        /// <param name="q2">The q2.</param>
+        /// <param name="intersectionPoint">The intersection point.</param>
+        /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
+        /// <returns>System.Boolean.</returns>
+        public static bool SegmentSegment2DIntersection(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2,
             out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
         {
             intersectionPoint = Vector2.Null;
@@ -1055,22 +1052,12 @@ namespace TVGL
                 return false;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if ((p1 - q1).LengthSquared().IsNegligible())
+            if (p1.IsPracticallySame(q1) || p1.IsPracticallySame(q2))
             {
                 intersectionPoint = p1;
                 return true;
             }
-            if ((p1 - q2).LengthSquared().IsNegligible())
-            {
-                intersectionPoint = p1;
-                return true;
-            }
-            if ((p2 - q1).LengthSquared().IsNegligible())
-            {
-                intersectionPoint = p2;
-                return true;
-            }
-            if ((p2 - q2).LengthSquared().IsNegligible())
+            if (p2.IsPracticallySame(q1) || p2.IsPracticallySame(q2))
             {
                 intersectionPoint = p2;
                 return true;
@@ -1086,7 +1073,9 @@ namespace TVGL
                 // if this is also parallel with the vector direction then there is overlap
                 // (since bounding boxes overlap). But we cannot set intersectionPoint
                 // to a single value since it is infinite points!
-                return vStarts.Cross(vp).IsNegligible(Constants.BaseTolerance);
+                if (vStarts.Cross(vp).IsNegligible(Constants.BaseTolerance))
+                    return considerCollinearOverlapAsIntersect;
+                return false;
             }
             // solve for the t scalar values for the two lines.
             // the line is define as all values of t from 0 to 1 in the equations
@@ -1105,6 +1094,65 @@ namespace TVGL
             var t_q = aInv21 * vStarts.X + aInv22 * vStarts.Y;
             if (t_p < 0 || t_p > 1 || t_q < 0 || t_q > 1) return false;
             intersectionPoint = 0.5 * ((1 - t_p) * p1 + t_p * p2 + (1 - t_q) * q1 + t_q * q2);
+            return true;
+        }
+        /// <summary>
+        /// Determines if Two Lines intersect. Outputs intersection point if they do.
+        /// If two lines are collinear, they are not considered intersecting.
+        /// </summary>
+        /// <param name="p1">The p1.</param>
+        /// <param name="p2">The p2.</param>
+        /// <param name="qAnchor">The q1.</param>
+        /// <param name="q2">The q2.</param>
+        /// <param name="intersectionPoint">The intersection point.</param>
+        /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
+        /// <returns>System.Boolean.</returns>
+        public static bool SegmentLine2DIntersection(Vector2 p1, Vector2 p2, Vector2 qAnchor, Vector2 qDirection,
+            out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
+        {
+            intersectionPoint = Vector2.Null;
+            // okay, so bounding boxes overlap
+            //first a quick check to see if points are the same
+            if (p1.IsPracticallySame(qAnchor))
+            {
+                intersectionPoint = p1;
+                return true;
+            }
+            if (p2.IsPracticallySame(qAnchor))
+            {
+                intersectionPoint = p2;
+                return true;
+            }
+
+            var vp = p2 - p1; //vector along p-line
+            var vCross = vp.Cross(qDirection); //2D cross product, determines if parallel
+            var vStarts = qAnchor - p1; // the vector connecting starts
+
+            if (vCross.IsNegligible(Constants.BaseTolerance))
+            {
+                // if this is also parallel with the vector direction then there is overlap
+                // (since bounding boxes overlap). But we cannot set intersectionPoint
+                // to a single value since it is infinite points!
+                if (vStarts.Cross(vp).IsNegligible(Constants.BaseTolerance))
+                    return considerCollinearOverlapAsIntersect;
+                return false;
+            }
+            // solve for the t scalar values for the two lines.
+            // the line is define as all values of t from 0 to 1 in the equations
+            // p-line(t_p) = (1 - t_p)*p1 + t_p*p2
+            // q-line(t_q) = (1 - t_q)*q1 + t_q*q2
+            // solve as a system of two equations
+            //   |   vp_x      vq_x   | |  t_p  |    | vStarts_x  |
+            //   |                    |*|       | =  |            |
+            //   |   vp_y      vq_y   | |  t_q  |    | vStarts_y  |
+            var oneOverdeterminnant = 1 / vCross;
+            var aInv11 = qDirection.Y * oneOverdeterminnant;
+            var aInv12 = -qDirection.X * oneOverdeterminnant;
+            //var aInv21 = -vp.Y * oneOverdeterminnant;
+            //var aInv22 = vp.X * oneOverdeterminnant;
+            var t_p = aInv11 * vStarts.X + aInv12 * vStarts.Y;
+            if (t_p < 0 || t_p > 1) return false;
+            intersectionPoint = (1 - t_p) * p1 + t_p * p2;
             return true;
         }
 
@@ -1509,7 +1557,7 @@ namespace TVGL
         /// <param name="line"></param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        internal static Vector2 Vector2OnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, Line line)
+        internal static Vector2 Vector2OnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, PolygonSegment line)
         {
             Vector2OnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
                 line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
@@ -1780,190 +1828,6 @@ namespace TVGL
             //Even number of intercepts, means the vertex is inside
         }
 
-        /// <summary>
-        ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
-        ///     below, but does allow determination of whether a point is on the boundary.
-        /// </summary>
-        internal static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion, out Line closestLineAbove,
-            out Line closestLineBelow, out bool onBoundary, bool onBoundaryIsInside = true)
-        {
-            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
-            var qY = pointInQuestion.Y;  // we declare these local variables.
-            //This function has three layers of checks. 
-            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
-            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
-            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
-            closestLineAbove = null;
-            closestLineBelow = null;
-            onBoundary = false;
-            //1) Check if center point is within bounding box of each polygon
-            if (qX < polygon.MinX || qY < polygon.MinY ||
-                qX > polygon.MaxX || qY > polygon.MaxY)
-                return false;
-            //2) If the point in question is == a point in points, then it is inside the polygon
-            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion)))
-            {
-                onBoundary = true;
-                return onBoundaryIsInside;
-            }
-            var numberAbove = 0;
-            var numberBelow = 0;
-            var minDistAbove = double.PositiveInfinity;
-            var minDistBelow = double.PositiveInfinity;
-            foreach (var line in polygon.Lines)
-            {
-                if ((line.FromPoint.X < qX) == (line.ToPoint.X < qX))
-                    // if the X values are both on the same side, then ignore it. We are looking for
-                    // lines that 'straddle' the x-values. Then we want to know if the lines' y values
-                    // are above or below
-                    continue;
-                var lineYValue = line.YGivenX(qX, out _); //this out parameter is the same condition
-                //as 5 lines earlier, but that check is kept for efficiency
-                var yDistance = lineYValue - qY;
-                if (yDistance > 0)
-                {
-                    numberAbove++;
-                    if (minDistAbove > yDistance)
-                    {
-                        minDistAbove = yDistance;
-                        closestLineAbove = line;
-                    }
-                }
-                else if (yDistance < 0)
-                {
-                    yDistance = -yDistance;
-                    numberBelow++;
-                    if (minDistBelow > yDistance)
-                    {
-                        minDistBelow = yDistance;
-                        closestLineBelow = line;
-                    }
-                }
-                else //else, the point is on a line in the polygon
-                {
-                    closestLineAbove = closestLineBelow = line;
-                    onBoundary = true;
-                    return true;
-                }
-            }
-            if (numberBelow != numberAbove)
-            {
-                Trace.WriteLine("In IsPointInsidePolygon, the number of points above is not equal to the number below");
-                numberAbove = numberBelow = Math.Max(numberBelow, numberAbove);
-            }
-            return numberAbove % 2 != 0;
-        }
-
-
-        /// <summary>
-        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
-        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
-        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
-        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
-        ///     Major Assumptions: 
-        ///     1) The polygon can be convex
-        ///     2) The direction of the polygon does not matter  
-        /// 
-        ///     Updated by Brandon Massoni: 8.11.2017
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="pointInQuestion"></param>
-        public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
-        {
-            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
-            var qY = pointInQuestion.Y;  // we declare these local variables.
-            //Check if the point is the same as any of the polygon's points
-            var polygonIsLeftOfPoint = false;
-            var polygonIsRightOfPoint = false;
-            var polygonIsAbovePoint = false;
-            var polygonIsBelowPoint = false;
-            foreach (var point in path)
-            {
-                if (point == pointInQuestion)
-                    return onBoundaryIsInside;
-                if (point.X > qX) polygonIsLeftOfPoint = true;
-                else if (point.X < qX) polygonIsRightOfPoint = true;
-                if (point.Y > qY) polygonIsAbovePoint = true;
-                else if (point.Y < qY) polygonIsBelowPoint = true;
-            }
-            if (!(polygonIsAbovePoint && polygonIsBelowPoint && polygonIsLeftOfPoint && polygonIsRightOfPoint))
-                // this is like the AABB check. 
-                return false;
-
-            //2) Next, see how many lines are to the left of the point, using a fixed y value.
-            //This compact, effecient 7 lines of code is from W. Randolph Franklin
-            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
-            var inside = false;
-            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
-            {
-                if ((path[i].Y > pointInQuestion.Y) != (path[j].Y > pointInQuestion.Y) &&
-                     pointInQuestion.X < (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
-                {
-                    inside = !inside;
-                }
-            }
-
-            return inside;
-        }
-
-        /// <summary>
-        /// This algorithm returns whether two polygons intersect. It can be used to triangle/triangle intersections,
-        /// or any abitrary set of polygons. If two polygons are touching, they are not considered to be intersecting.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <returns></returns>
-        //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
-        // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
-        public static bool IsPolygonIntersectingPolygon(this Polygon subject, Polygon clip)
-        {
-            //Get the axis aligned bounding box of the path. This is super fast.
-            //If the point is inside the bounding box, continue to check with more detailed methods, 
-            //Else, return false.
-            if (subject.MinX > clip.MaxX ||
-                subject.MaxX < clip.MinX ||
-                subject.MinY > clip.MaxY ||
-                subject.MaxY < clip.MinY) return false;
-
-            //Check if either polygon is fully encompassed by the other
-            if (clip.Path.Any(p => IsPointInsidePolygon(subject, p, out _, out _,out _))) return true;
-            if (subject.Path.Any(p => IsPointInsidePolygon(clip, p, out _, out _, out _))) return true;
-
-            //Else, any remaining intersection will be defined by one or more crossing lines
-            //Check for intersections between all but one of the clip lines with all of the subject lines.
-            //This is enough to test for intersection because we have already performed a point check.
-            //This makes very little difference for large polygons, but cuts 9 operations down to 6 for 
-            //a triangle/triangle intersection
-            var clipPathLength = clip.Path.Count;
-            var subjectPathLength = subject.Path.Count;
-            //This next section gathers the points rather than using polygon.PathLines, so that the 
-            //PathLines do not need to be set (we don't even use them in LineLineIntersection).
-            for (var i = 0; i < clipPathLength - 1; i++) //-1 since we only need two lines
-            {
-                var point1 = clip.Path[i];
-                var point2 = (i == clipPathLength - 1) ? clip.Path[0] : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
-                for (var j = 0; j < subjectPathLength; j++) //Need to consider all the lines
-                {
-                    var point3 = subject.Path[j];
-                    var point4 = (j == subjectPathLength - 1) ? subject.Path[0] : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
-                    if (LineLineIntersection(point1, point2, point3, point4, out var intersectionPoint, false))
-                    {
-                        if (intersectionPoint == point1 ||
-                            intersectionPoint == point1 ||
-                            intersectionPoint == point3 ||
-                            intersectionPoint == point4)
-                        {
-                            continue;
-                        }
-                        //Else
-                        return true;
-                    }
-                }
-            }
-
-            //No intersections identified. Return false.
-            return false;
-        }
     }
     #endregion
 }

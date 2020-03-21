@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -221,14 +222,12 @@ namespace TVGL
 
             //Check if the loops are circular along the axis
             var path1 = Loop1.ProjectVerticesTo2DCoordinates(Axis, out var backTransform);
-            var poly = new PolygonLight(path1);
-            if (!PolygonOperations.IsCircular(new Polygon(poly), out var centerCircle, Constants.MediumConfidence))
+            if (!PolygonOperations.IsCircular(new Polygon(path1), out var centerCircle, Constants.MediumConfidence))
             {
                 return false;
             }
             var path2 = Loop2.ProjectVerticesTo2DCoordinates(Axis, out var backTransform2);
-            var poly2 = new PolygonLight(path2);
-            if (!PolygonOperations.IsCircular(new Polygon(poly2), out var centerCircle2, Constants.MediumConfidence))
+            if (!PolygonOperations.IsCircular(new Polygon(path2), out var centerCircle2, Constants.MediumConfidence))
             {
                 return false;
             }
@@ -290,7 +289,7 @@ namespace TVGL
 
         public HashSet<Flat> SmallFlats { get; set; }
 
-        public PolygonLight Loop2D { get; set; }
+        public List<Vector2> Loop2D { get; set; }
 
         public double MaxDistanceAlongAxis { get; set; }
 

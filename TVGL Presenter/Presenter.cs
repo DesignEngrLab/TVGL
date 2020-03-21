@@ -87,10 +87,10 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IEnumerable<PolygonLight> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<List<Vector2>> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            var points = polygons.Select(polygon => polygon.Path).ToList();
+            var points = polygons.Select(polygon => polygon).ToList();
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
             window.ShowDialog();
         }
@@ -820,7 +820,7 @@ namespace TVGL
         }
 
 
-        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<PolygonLight>> xYPaths,
+        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<List<Vector2>>> xYPaths,
             IEnumerable<double> zValues, bool closePaths = true)
         {
             var lineVisuals = new List<LinesVisual3D>();
@@ -831,7 +831,7 @@ namespace TVGL
                 var z = zEnumerator.Current;
                 foreach (var polygon in layer)
                 {
-                    var contour = polygon.Path.Select(point => new Point3D(point.X, point.Y, z)).ToList();
+                    var contour = polygon.Select(point => new Point3D(point.X, point.Y, z)).ToList();
                     //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
                     foreach (var t in contour)

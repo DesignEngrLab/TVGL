@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
-
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -227,22 +227,12 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, Vector2 centerPoint)
-        {
-            var polygons = paths.Select(path => new Polygon(path)).ToList();
-            return MaximumInnerCircle(polygons, centerPoint);
-        }
-
-        /// <summary>
-        ///     Gets the maximum inner circle given a group of polygons and a center point.
-        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
-        /// </summary>
-        /// <returns>BoundingBox.</returns>
         public static BoundingCircle MaximumInnerCircle(IList<List<Vector2>> paths, Vector2 centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
             return MaximumInnerCircle(polygons, centerPoint);
         }
+
 
         /// <summary>
         ///     Gets the maximum inner circle given a group of polygons and a center point.
@@ -256,7 +246,6 @@ namespace TVGL
             var positivePolygons = new List<Polygon>();
             foreach (var polygon in polygons)
             {
-                if(polygon.PathLines == null) polygon.SetPathLines();
                 if (polygon.IsPositive) positivePolygons.Add(polygon);
                 else negativePolygons.Add(polygon);
             }
@@ -271,10 +260,10 @@ namespace TVGL
             Polygon closestContainingPolygon = null;
             foreach (var negativePoly in negativePolygons)
             {
-                if (!MiscFunctions.IsPointInsidePolygon(negativePoly, centerPoint, out var closestLineAbove,
+                if (!negativePoly.IsPointInsidePolygon(centerPoint, out var closestLineAbove,
                     out _, out var onBoundary)) continue;
                 if (onBoundary) return new BoundingCircle(0.0, centerPoint); //Null solution.
-                var d = closestLineAbove.YGivenX(centerPoint.X) - centerPoint.Y; //Not negligible because not on Boundary
+                var d = closestLineAbove.YGivenX(centerPoint.X,out _) - centerPoint.Y; //Not negligible because not on Boundary
                 if (d < minDistance)
                 {
                     minDistance = d;
@@ -292,7 +281,7 @@ namespace TVGL
             {
                 foreach (var positivePoly in positivePolygons)
                 {
-                    if (MiscFunctions.IsPointInsidePolygon(positivePoly, centerPoint, out _,
+                    if (positivePoly.IsPointInsidePolygon(centerPoint, out _,
                         out _, out _)) return new BoundingCircle(0.0, centerPoint);
                     polygonsOfInterest.Add(positivePoly);
                 }
@@ -319,21 +308,22 @@ namespace TVGL
             var shortestDistance = double.MaxValue;
             //1. For every line on the path, get the closest point on the edge to the center point. 
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
-            foreach (var line in polygon.PathLines)
+            foreach (var line in polygon.Lines)
             {
-                var v1 = line.ToPoint-line.FromPoint;
+                var v1 = line.ToPoint.Coordinates - line.FromPoint.Coordinates;
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
-                if (!MiscFunctions.AreaOfPolygon(new List<Vector2> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
+                if (!(new List<Vector2> { line.FromPoint.Coordinates, line.ToPoint.Coordinates, centerPoint })
+                    .Area().IsLessThanNonNegligible())
                     continue;
 
                 //Figure out how far the center point is away from the line
-                var d = MiscFunctions.DistancePointToLine(centerPoint, line.FromPoint, v1, out var pointOnLine);
+                var d = MiscFunctions.DistancePointToLine(centerPoint, line.FromPoint.Coordinates, v1, out var pointOnLine);
                 if (d > shortestDistance) continue;
 
                 //Now we need to figure out if the lines intersect
-                var tempLine = new Line(centerPoint, pointOnLine, false);
-                if (!MiscFunctions.LineLineIntersection(line, tempLine, out _)) continue;
+                if (!MiscFunctions.SegmentSegment2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
+                    centerPoint,pointOnLine, out _)) continue;
                 //if(intersectionPoint != tempPoint) throw new Exception("Error in implementation. This should always be true.");
                 shortestDistance = d;
             }

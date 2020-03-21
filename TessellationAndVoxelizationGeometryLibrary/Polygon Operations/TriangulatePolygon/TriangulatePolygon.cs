@@ -31,7 +31,7 @@ namespace TVGL.TwoDimensional
         /// <param name="isPositive">The is positive.</param>
         /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        public static List<List<Vertex[]>> Triangulate(Vertex[][] loops, Vector3 normal,
+        public static List<List<Vertex[]>> Triangulate(IList<IList<Vertex>> loops, Vector3 normal,
             out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
@@ -140,7 +140,7 @@ namespace TVGL.TwoDimensional
                         }
                         points2D[loopI] = newLoop;
                     }
-                    var linesInLoops = new List<List<Line>>();
+                    var linesInLoops = new List<List<PolygonSegment>>();
                     loopI = 0;
                     vertexI = 0;
                     foreach (var origLoop in origVertexLoops)
@@ -148,7 +148,7 @@ namespace TVGL.TwoDimensional
                     {
                         var loop = points2D[loopI];
                         var orderedLoop = new List<Node>();
-                        var linesInLoop = new List<Line>();
+                        var linesInLoop = new List<PolygonSegment>();
                         //Count the number of points and add to total.
                         pointCount += loop.Length;
 
@@ -181,7 +181,7 @@ namespace TVGL.TwoDimensional
                                 orderedLoop.Add(node);
 
                                 //Create New NodeLine
-                                var line = new Line(previousNode, node);
+                                var line = new PolygonSegment(previousNode, node);
                                 previousNode.StartLine = line;
                                 node.EndLine = line;
                                 previousNode = node;
@@ -192,11 +192,11 @@ namespace TVGL.TwoDimensional
 
 
                         //Create both missing lines 
-                        var line1 = new Line(previousNode, lastNode);
+                        var line1 = new PolygonSegment(previousNode, lastNode);
                         previousNode.StartLine = line1;
                         lastNode.EndLine = line1;
                         linesInLoop.Insert(0, line1);
-                        var line2 = new Line(lastNode, firstNode);
+                        var line2 = new PolygonSegment(lastNode, firstNode);
                         lastNode.StartLine = line2;
                         firstNode.EndLine = line2;
                         linesInLoop.Add(line2);
@@ -239,7 +239,7 @@ namespace TVGL.TwoDimensional
                             }
 
                             //inititallize lineList 
-                            var lineList = new List<Line>();
+                            var lineList = new List<PolygonSegment>();
                             for (var j = 0; j < sortedGroup.Count; j++)
                             {
                                 var node = sortedGroup[j];
@@ -250,10 +250,10 @@ namespace TVGL.TwoDimensional
                                     bool isOnLine;
                                     //If remainder is not equal to 0, then it is odd.
                                     //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                                    Line leftLine;
+                                    PolygonSegment leftLine;
                                     if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
                                     {
-                                        Line rightLine;
+                                        PolygonSegment rightLine;
                                         isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                     }
                                     else isInside = false;
@@ -351,7 +351,7 @@ namespace TVGL.TwoDimensional
                                 if (positiveLoop1 == positiveLoop2) continue;
                                 //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
                                 //Note: If this occurs, any loops inside loop 1 will also be inside loop 2, so no information is lost.
-                                if (!MiscFunctions.IsPointInsidePolygon(points2D[positiveLoop2.First().LoopID].ToList(),
+                                if (!IsPointInsidePolygon(points2D[positiveLoop2.First().LoopID].ToList(),
                                     positiveLoop1.First().Coordinates)) continue;
                                 isInside = true;
                                 break;
@@ -476,7 +476,7 @@ namespace TVGL.TwoDimensional
                         }
 
                         //inititallize lineList and sortedNodes
-                        var lineList = new List<Line>();
+                        var lineList = new List<PolygonSegment>();
 
                         #region Trapezoidize Polygons
 
@@ -488,8 +488,8 @@ namespace TVGL.TwoDimensional
                         for (var j = 0; j < sortedGroup.Count; j++)
                         {
                             var node = sortedGroup[j];
-                            Line leftLine = null;
-                            Line rightLine = null;
+                            PolygonSegment leftLine = null;
+                            PolygonSegment rightLine = null;
 
                             //Check if negative loop is inside polygon 
                             //note that listPositive changes order /size , while isPositive is static like loopID.
@@ -638,7 +638,7 @@ namespace TVGL.TwoDimensional
                             var trapezoid = completedTrapezoids[j];
                             if (trapezoid.TopNode.Type == NodeType.DownwardReflex) //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
                             {
-                                var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
+                                var newLine = new PolygonSegment(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
                                 var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
                                 var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
@@ -648,7 +648,7 @@ namespace TVGL.TwoDimensional
                             }
                             else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
                             {
-                                var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
+                                var newLine = new PolygonSegment(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
                                 var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
                                 var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
@@ -881,7 +881,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Create Trapezoid and Insert Into List
-        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
+        internal static void InsertTrapezoid(Node node, PolygonSegment leftLine, PolygonSegment rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
         {
             var matchesTrap = false;
             var i = 0;
@@ -902,7 +902,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Find Lines to Left or Right
-        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, out bool isOnLine)
+        internal static int LinesToLeft(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine, out bool isOnLine)
         {
             isOnLine = false;
             leftLine = null;
@@ -913,7 +913,7 @@ namespace TVGL.TwoDimensional
                 //Check to make sure that the line does not contain the node
                 if (line.FromPoint == node || line.ToPoint == node) continue;
                 //Find distance to line
-                var x = line.Xintercept(node.Y);
+                var x = line.XGivenY(node.Y, out _);
                 var xdif = x - node.X;
                 if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
                 if (xdif < 0 && !xdif.IsNegligible())//Moved to the left by some tolerance 
@@ -950,14 +950,14 @@ namespace TVGL.TwoDimensional
             return counter;
         }
 
-        internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
+        internal static void FindLeftLine(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine)
         {
             bool isOnLine;
             LinesToLeft(node, lineList, out leftLine, out isOnLine);
             if (leftLine == null) throw new Exception("Failed to find line to left.");
         }
 
-        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, out bool isOnLine)
+        internal static int LinesToRight(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine, out bool isOnLine)
         {
             isOnLine = false;
             rightLine = null;
@@ -968,7 +968,7 @@ namespace TVGL.TwoDimensional
                 //Check to make sure that the line does not contain the node
                 if (line.FromPoint == node || line.ToPoint == node) continue;
                 //Find distance to line
-                var x = line.Xintercept(node.Y);
+                var x = line.XGivenY(node.Y, out _);
                 var xdif = x - node.X;
                 if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
                 if (xdif > 0 && !xdif.IsNegligible())//Moved to the right by some tolerance
@@ -1004,7 +1004,7 @@ namespace TVGL.TwoDimensional
             return counter;
         }
 
-        internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
+        internal static void FindRightLine(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine)
         {
             bool isOnLine;
             LinesToRight(node, lineList, out rightLine, out isOnLine);

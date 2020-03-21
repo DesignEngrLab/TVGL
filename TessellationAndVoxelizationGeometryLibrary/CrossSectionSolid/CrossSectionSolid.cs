@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -29,11 +30,11 @@ namespace TVGL
         [JsonIgnore]
         public Dictionary<int, List<List<Vertex>>> Layer3D;
         [JsonIgnore]
-        public Dictionary<int, List<PolygonLight>> Layer2D;
+        public Dictionary<int, List<List<Vector2>>> Layer2D;
 
         // an alternate approach without using dictionaries should be pursued
         //public List<List<Vertex>>[] Layer3D { get; set; }
-        //public List<PolygonLight>[] Layer2D { get; }
+        //public List<List<Vector2>>[] Layer2D { get; }
 
         /// <summary>
         /// Step distances stores the distance along direction for each index.
@@ -58,7 +59,7 @@ namespace TVGL
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
-            Layer2D = new Dictionary<int, List<PolygonLight>>();
+            Layer2D = new Dictionary<int, List<List<Vector2>>>();
             Layer3D = new Dictionary<int, List<List<Vertex>>>();
             StepDistances = stepDistances;
         }
@@ -74,7 +75,7 @@ namespace TVGL
             SameTolerance = sameTolerance;
         }
 
-        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<PolygonLight>> Layer2D, Vector3[] bounds = null,
+        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<List<Vector2>>> Layer2D, Vector3[] bounds = null,
             UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
@@ -92,7 +93,7 @@ namespace TVGL
                 var ymax = double.NegativeInfinity;
                 foreach (var layer in Layer2D)
                     foreach (var polygon in layer.Value)
-                        foreach (var point in polygon.Path)
+                        foreach (var point in polygon)
                         {
                             if (xmin > point.X) xmin = point.X;
                             if (ymin > point.Y) ymin = point.Y;
@@ -124,7 +125,7 @@ namespace TVGL
             var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
             var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
-            var layerDict = new Dictionary<int, List<PolygonLight>>();
+            var layerDict = new Dictionary<int, List<List<Vector2>>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
             var directionVector = new double[3];
@@ -135,12 +136,12 @@ namespace TVGL
             return cs;
         }
 
-        public void Add(List<Vertex> feature3D, PolygonLight feature2D, int layer)
+        public void Add(List<Vertex> feature3D, List<Vector2> feature2D, int layer)
         {
             if (!Layer3D.ContainsKey(layer))
             {
                 Layer3D[layer] = new List<List<Vertex>>();
-                Layer2D[layer] = new List<PolygonLight>();
+                Layer2D[layer] = new List<List<Vector2>>();
             }
             //Layer 3D is optional and may be null, but Layer2D cannot be null.
             if (feature3D != null) Layer3D[layer].Add(feature3D);
@@ -157,7 +158,7 @@ namespace TVGL
             var layer = Layer3D[i] = new List<List<Vertex>>();
             foreach (var polygon in Layer2D[i])
             {
-                layer.Add(polygon.Path.Convert2DCoordinatesTo3DLocations(Direction, StepDistances[i]).Select(v => new Vertex(v)).ToList());
+                layer.Add(polygon.Convert2DCoordinatesTo3DLocations(Direction, StepDistances[i]).Select(v => new Vertex(v)).ToList());
             }
         }
 
@@ -178,7 +179,7 @@ namespace TVGL
                 double distance;
                 if (extrudeBack) distance = Math.Abs(StepDistances[i] - StepDistances[i - reverse]);//current - prior (reverse extrusion)        
                 else distance = Math.Abs(StepDistances[i + reverse] - StepDistances[i]); //next - current (forward extrusion)
-                Volume += distance * Layer2D[i].Sum(p => p.Area);
+                Volume += distance * Layer2D[i].Sum(p => p.Area());
             }
         }
         //public void SetVolume()
@@ -256,10 +257,9 @@ namespace TVGL
         {
             var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Bounds, Units);
             //Recreate the loops, so that the lists are not linked to the original.
-            //Since polygonlight is a struct, it will not be linked.
             foreach (var layer in Layer2D)
             {
-                solid.Layer2D.Add(layer.Key, new List<PolygonLight>(layer.Value));
+                solid.Layer2D.Add(layer.Key, new List<List<Vector2>>(layer.Value));
             }
             //To create an unlinked copy for layer3D, we need to create new lists and copy the vertices
             foreach (var layer in Layer3D)
@@ -302,9 +302,14 @@ namespace TVGL
         {
             serializationData = new Dictionary<string, JToken>();
             serializationData.Add("CrossSections",
-                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => p.ConvertToDoublesArray()))));
+                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => ConvertToDoublesArray(p)))));
             FirstIndex = Layer2D.Keys.First();
             LastIndex = Layer2D.Keys.Last();
+        }
+
+        static IEnumerable<double> ConvertToDoublesArray(List<Vector2> coordinates)
+        {
+            return coordinates.SelectMany(p => new[] { p.X, p.Y });
         }
 
         [OnDeserialized]
@@ -312,16 +317,24 @@ namespace TVGL
         {
             JArray jArray = (JArray)serializationData["CrossSections"];
             var layerArray = jArray.ToObject<double[][][]>();
-            Layer2D = new Dictionary<int, List<PolygonLight>>();
+            Layer2D = new Dictionary<int, List<List<Vector2>>>();
             var j = 0;
             for (int i = FirstIndex; i <= LastIndex; i++)
             {
-                var layer = new List<PolygonLight>();
+                var layer = new List<List<Vector2>>();
                 foreach (var coordinates in layerArray[j])
-                    layer.Add(PolygonLight.MakeFromBinaryString(coordinates));
+                    layer.Add(MakeFromBinaryString(coordinates));
                 Layer2D.Add(i, layer);
                 j++;
             }
+        }
+
+        private List<Vector2> MakeFromBinaryString(double[] coordinates)
+        {
+            var path = new List<Vector2>();
+            for (int i = 0; i < coordinates.Length; i += 2)
+                path.Add(new Vector2(coordinates[i], coordinates[i + 1]));
+            return path;
         }
     }
 }

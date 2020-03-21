@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -92,7 +93,7 @@ namespace TVGL
                 foreach (var path in paths)
                 {
                     var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
-                    var area = new PolygonLight(path).Area;
+                    var area = path.Area();
                     points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
                     foreach (var point in pathAsPoints)
@@ -113,8 +114,7 @@ namespace TVGL
                     vertexLoops.Add(cleanLoop);
                 }
 
-                bool[] isPositive = null;
-                var triangleFaceList = TriangulatePolygon.Run2D(points2D, out _, ref isPositive);
+                var triangleFaceList = PolygonOperations.Triangulate(points2D, extrudeDirection,out _, out var isPositive);
                 foreach (var face in triangleFaceList)
                 {
                     triangles.AddRange(face);
@@ -162,8 +162,7 @@ namespace TVGL
                         vertexLoops.Add(cleanLoop);
                     }
 
-                    bool[] isPositive = null;
-                    var triangleFaceList = TriangulatePolygon.Run2D(points2D, out _, ref isPositive);
+                    var triangleFaceList = PolygonOperations.Triangulate(points2D, extrudeDirection, out _, out var isPositive);
                     foreach (var face in triangleFaceList)
                     {
                         triangles.AddRange(face);

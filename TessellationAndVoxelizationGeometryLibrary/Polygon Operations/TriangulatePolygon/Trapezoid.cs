@@ -39,7 +39,7 @@ namespace TVGL.TwoDimensional
         /// <param name="bottomNode">The bottom node.</param>
         /// <param name="leftLine">The left line.</param>
         /// <param name="rightLine">The right line.</param>
-        internal Trapezoid(Node topNode, Node bottomNode, Line leftLine, Line rightLine)
+        internal Trapezoid(Node topNode, Node bottomNode, PolygonSegment leftLine, PolygonSegment rightLine)
         {
             TopNode = topNode;
             BottomNode = bottomNode;
@@ -67,13 +67,13 @@ namespace TVGL.TwoDimensional
         ///     Gets the left vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The left line.</value>
-        internal Line LeftLine { get; private set; }
+        internal PolygonSegment LeftLine { get; private set; }
 
         /// <summary>
         ///     Gets the right vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The right line.</value>
-        internal Line RightLine { get; private set; }
+        internal PolygonSegment RightLine { get; private set; }
 
         #endregion
     }

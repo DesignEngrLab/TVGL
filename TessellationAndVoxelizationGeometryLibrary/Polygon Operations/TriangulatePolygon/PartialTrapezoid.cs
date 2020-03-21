@@ -36,7 +36,7 @@ namespace TVGL.TwoDimensional
         /// <param name="topNode">The top node.</param>
         /// <param name="leftLine">The left line.</param>
         /// <param name="rightLine">The right line.</param>
-        internal PartialTrapezoid(Node topNode, Line leftLine, Line rightLine)
+        internal PartialTrapezoid(Node topNode, PolygonSegment leftLine, PolygonSegment rightLine)
         {
             TopNode = topNode;
             LeftLine = leftLine;
@@ -53,13 +53,13 @@ namespace TVGL.TwoDimensional
         ///     Gets the left vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The left line.</value>
-        internal Line LeftLine { get; }
+        internal PolygonSegment LeftLine { get; }
 
         /// <summary>
         ///     Gets the right vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The right line.</value>
-        internal Line RightLine { get; }
+        internal PolygonSegment RightLine { get; }
 
         /// <summary>
         ///     Checks whether the partial trapezoid contains the two lines.
@@ -67,7 +67,7 @@ namespace TVGL.TwoDimensional
         /// <param name="line1">The line1.</param>
         /// <param name="line2">The line2.</param>
         /// <returns><c>true</c> if [contains] [the specified line1]; otherwise, <c>false</c>.</returns>
-        internal bool Contains(Line line1, Line line2)
+        internal bool Contains(PolygonSegment line1, PolygonSegment line2)
         {
             if (LeftLine != line1 && LeftLine != line2) return false;
             return RightLine == line1 || RightLine == line2;

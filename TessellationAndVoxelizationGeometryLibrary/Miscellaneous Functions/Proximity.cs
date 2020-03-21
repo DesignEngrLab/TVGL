@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 using TVGL.Voxelization;
 
 namespace TVGL.MathOperations
@@ -11,7 +12,7 @@ namespace TVGL.MathOperations
     /// <summary>
     /// 
     /// </summary>
-    public class Proximity
+    public static class Proximity
     {
         /// <summary>
         /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).
@@ -170,7 +171,7 @@ namespace TVGL.MathOperations
         /// <param name="line"></param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public static Vector2 ClosestPointOnLineSegmentToPoint(Line line, Vector2 p)
+        public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonSegment line, Vector2 p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
             //the line.FromPoint
@@ -179,16 +180,16 @@ namespace TVGL.MathOperations
             //(2) If the distance is >= the line.Length, the infinite line intersection is outside the line segment interval, on the ToPoint side.
             //(3) Otherwise, the infinite line intersection is inside the line segment interval.
             var fromPoint = line.FromPoint;
-            var lineVector = line.ToPoint - line.FromPoint;
-            var distanceToSegment = (p - fromPoint).Dot(lineVector) / line.Length;
+            var lineVector = line.ToPoint.Coordinates - line.FromPoint.Coordinates;
+            var distanceToSegment = (p - fromPoint.Coordinates).Dot(lineVector) / line.Length;
 
             if (distanceToSegment <= 0.0)
             {
-                return fromPoint;
+                return fromPoint.Coordinates;
             }
             if (distanceToSegment >= line.Length)
             {
-                return line.ToPoint;
+                return line.ToPoint.Coordinates;
             }
             distanceToSegment = distanceToSegment / line.Length;
             return new Vector2(fromPoint.X + lineVector.X * distanceToSegment,

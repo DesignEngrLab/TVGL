@@ -18,6 +18,7 @@ using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -484,10 +485,10 @@ namespace TVGL
                     }
                 }
 
-                var polyLight = new PolygonLight(allPoints);
+                var polyLight = new Polygon(allPoints);
                 var date = DateTime.Now.ToString("MM.dd.yy_HH.mm");
                 polyLight.Serialize("ConvexHullError_" + date + ".PolyLight");
-                var cvxHullLight = new PolygonLight(polygon);
+                var cvxHullLight = polygon.Path;
                 cvxHullLight.Serialize("ConvexHull_" + date + ".PolyLight");
                 throw new Exception("Error in Minimum Bounding Box, likely due to faulty convex hull.");
             }

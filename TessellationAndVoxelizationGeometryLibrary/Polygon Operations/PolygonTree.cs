@@ -120,7 +120,9 @@ namespace TVGL.TwoDimensional
                 //Start with the smallest positive polygon           
                 foreach (var shallowTree in shallowPolygonTrees)
                 {
-                    if (MiscFunctions.IsPolygonInsidePolygon(shallowTree.OuterPolygon.Light, negativePolygon.Light))
+                    //if (MiscFunctions.IsPolygonInsidePolygon(shallowTree.OuterPolygon.Light, negativePolygon.Light))
+                    if (shallowTree.OuterPolygon.IsPointInsidePolygon(negativePolygon.Path[0],out _, out _, out _) &&
+                        shallowTree.OuterPolygon.IsPolygonIntersectingPolygon(negativePolygon))
                     {
                         shallowTree.InnerPolygons.Add(negativePolygon);
                         negativePolygon.Parent = shallowTree.OuterPolygon;

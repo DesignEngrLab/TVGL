@@ -49,13 +49,13 @@ namespace TVGL.TwoDimensional
         ///     Gets the line that starts at this node.
         /// </summary>
         /// <value>The start line.</value>
-        internal Line StartLine { get; set; }
+        internal PolygonSegment StartLine { get; set; }
 
         /// <summary>
         ///     Gets the line that ends at this node.
         /// </summary>
         /// <value>The end line.</value>
-        internal Line EndLine { get; set; }
+        internal PolygonSegment EndLine { get; set; }
 
         /// <summary>
         ///     Gets the type of  node.

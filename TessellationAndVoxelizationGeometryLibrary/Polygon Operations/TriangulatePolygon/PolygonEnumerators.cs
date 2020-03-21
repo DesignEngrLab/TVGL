@@ -46,4 +46,17 @@ namespace TVGL.TwoDimensional
         Clip
     };
 
+    internal enum BooleanOperationType
+    {
+        Union,
+        Intersection
+    };
+
+    public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
+    {
+        Positive, // (Most common if polygons are ordered correctly and not self-intersecting) All sub-regions with winding counts > 0 are filled.
+        EvenOdd,  // (Most common when polygon directions are unknown) Odd numbered sub-regions are filled, while even numbered sub-regions are not.
+        Negative, // (Rarely used) All sub-regions with winding counts < 0 are filled.
+        NonZero //(Common if polygon directions are unknown) All non-zero sub-regions are filled (used in silhouette because we prefer filled regions).
+    };
 }

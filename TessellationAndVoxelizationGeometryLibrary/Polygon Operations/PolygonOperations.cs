@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -11,30 +12,17 @@ namespace TVGL.TwoDimensional
     using ListofListVector2s = List<List<Vector2>>;
     using Polygons = List<Polygon>;
 
-    internal enum BooleanOperationType
-    {
-        Union,
-        Intersection
-    };
-
-    public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
-    {
-        Positive, // (Most common if polygons are ordered correctly and not self-intersecting) All sub-regions with winding counts > 0 are filled.
-        EvenOdd,  // (Most common when polygon directions are unknown) Odd numbered sub-regions are filled, while even numbered sub-regions are not.
-        Negative, // (Rarely used) All sub-regions with winding counts < 0 are filled.
-        NonZero //(Common if polygon directions are unknown) All non-zero sub-regions are filled (used in silhouette because we prefer filled regions).
-    };
 
     /// <summary>
     /// A set of general operation for points and paths
     /// </summary>
     public static partial class PolygonOperations
-    { 
+    {
         /// <summary>
-             /// Gets the perimeter for a 2D set of points.
-             /// </summary>
-             /// <param name="polygon"></param>
-             /// <returns></returns>
+        /// Gets the perimeter for a 2D set of points.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
         public static double Perimeter(this IList<Vector2> polygon)
         {
             double perimeter = Vector2.Distance(polygon[^1], polygon[0]);
@@ -149,7 +137,7 @@ namespace TVGL.TwoDimensional
         {
             var intersections = new List<double[]>();
             var sortedPoints = polygons.SelectMany(polygon => polygon.Points).OrderBy(p => p.X).ToList();
-            var currentLines = new HashSet<Line>();
+            var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().X;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
             var pIndex = 0;
@@ -175,7 +163,7 @@ namespace TVGL.TwoDimensional
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = line.YGivenX(x);
+                    intersects[index++] = line.YGivenX(x, out _);
                 intersections.Add(intersects.OrderBy(y => y).ToArray());
             }
             return intersections;
@@ -190,8 +178,8 @@ namespace TVGL.TwoDimensional
                 out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.Y).ToList();
-            var currentLines = new HashSet<Line>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Points).OrderBy(p => p.Y).ToList();
+            var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().Y;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
             var pIndex = 0;
@@ -218,7 +206,7 @@ namespace TVGL.TwoDimensional
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = line.XGivenY(y);
+                    intersects[index++] = line.XGivenY(y, out _);
                 intersections.Add(intersects.OrderBy(x => x).ToArray());
             }
             return intersections;
@@ -258,7 +246,7 @@ namespace TVGL.TwoDimensional
                 return false;
             }
 
-            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon.Path);
+            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon);
             return area.IsPracticallySame(minBoundingRectangle.Area, area * tolerancePercentage);
         }
 
@@ -309,6 +297,192 @@ namespace TVGL.TwoDimensional
         public static double Length(IList<List<Vector2>> paths)
         {
             return paths.Sum(path => Length(path));
+        }
+
+
+        /// <summary>
+        ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
+        ///     below, but does allow determination of whether a point is on the boundary.
+        /// </summary>
+        internal static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion, out PolygonSegment closestLineAbove,
+            out PolygonSegment closestLineBelow, out bool onBoundary, bool onBoundaryIsInside = true)
+        {
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
+            //This function has three layers of checks. 
+            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
+            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
+            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
+            closestLineAbove = null;
+            closestLineBelow = null;
+            onBoundary = false;
+            //1) Check if center point is within bounding box of each polygon
+            if (qX < polygon.MinX || qY < polygon.MinY ||
+                qX > polygon.MaxX || qY > polygon.MaxY)
+                return false;
+            //2) If the point in question is == a point in points, then it is inside the polygon
+            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion)))
+            {
+                onBoundary = true;
+                return onBoundaryIsInside;
+            }
+            var numberAbove = 0;
+            var numberBelow = 0;
+            var minDistAbove = double.PositiveInfinity;
+            var minDistBelow = double.PositiveInfinity;
+            foreach (var line in polygon.Lines)
+            {
+                if ((line.FromPoint.X < qX) == (line.ToPoint.X < qX))
+                    // if the X values are both on the same side, then ignore it. We are looking for
+                    // lines that 'straddle' the x-values. Then we want to know if the lines' y values
+                    // are above or below
+                    continue;
+                var lineYValue = line.YGivenX(qX, out _); //this out parameter is the same condition
+                //as 5 lines earlier, but that check is kept for efficiency
+                var yDistance = lineYValue - qY;
+                if (yDistance > 0)
+                {
+                    numberAbove++;
+                    if (minDistAbove > yDistance)
+                    {
+                        minDistAbove = yDistance;
+                        closestLineAbove = line;
+                    }
+                }
+                else if (yDistance < 0)
+                {
+                    yDistance = -yDistance;
+                    numberBelow++;
+                    if (minDistBelow > yDistance)
+                    {
+                        minDistBelow = yDistance;
+                        closestLineBelow = line;
+                    }
+                }
+                else //else, the point is on a line in the polygon
+                {
+                    closestLineAbove = closestLineBelow = line;
+                    onBoundary = true;
+                    return true;
+                }
+            }
+            if (numberBelow != numberAbove)
+            {
+                Trace.WriteLine("In IsPointInsidePolygon, the number of points above is not equal to the number below");
+                numberAbove = numberBelow = Math.Max(numberBelow, numberAbove);
+            }
+            return numberAbove % 2 != 0;
+        }
+
+
+        /// <summary>
+        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
+        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
+        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        ///     Major Assumptions: 
+        ///     1) The polygon can be convex
+        ///     2) The direction of the polygon does not matter  
+        /// 
+        ///     Updated by Brandon Massoni: 8.11.2017
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="pointInQuestion"></param>
+        public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
+        {
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
+            //Check if the point is the same as any of the polygon's points
+            var polygonIsLeftOfPoint = false;
+            var polygonIsRightOfPoint = false;
+            var polygonIsAbovePoint = false;
+            var polygonIsBelowPoint = false;
+            foreach (var point in path)
+            {
+                if (point == pointInQuestion)
+                    return onBoundaryIsInside;
+                if (point.X > qX) polygonIsLeftOfPoint = true;
+                else if (point.X < qX) polygonIsRightOfPoint = true;
+                if (point.Y > qY) polygonIsAbovePoint = true;
+                else if (point.Y < qY) polygonIsBelowPoint = true;
+            }
+            if (!(polygonIsAbovePoint && polygonIsBelowPoint && polygonIsLeftOfPoint && polygonIsRightOfPoint))
+                // this is like the AABB check. 
+                return false;
+
+            //2) Next, see how many lines are to the left of the point, using a fixed y value.
+            //This compact, effecient 7 lines of code is from W. Randolph Franklin
+            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
+            var inside = false;
+            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            {
+                if ((path[i].Y > pointInQuestion.Y) != (path[j].Y > pointInQuestion.Y) &&
+                     pointInQuestion.X < (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                {
+                    inside = !inside;
+                }
+            }
+
+            return inside;
+        }
+
+        /// <summary>
+        /// This algorithm returns whether two polygons intersect. It can be used to triangle/triangle intersections,
+        /// or any abitrary set of polygons. If two polygons are touching, they are not considered to be intersecting.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
+        // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
+        public static bool IsPolygonIntersectingPolygon(this Polygon subject, Polygon clip)
+        {
+            //Get the axis aligned bounding box of the path. This is super fast.
+            //If the point is inside the bounding box, continue to check with more detailed methods, 
+            //Else, return false.
+            if (subject.MinX > clip.MaxX ||
+                subject.MaxX < clip.MinX ||
+                subject.MinY > clip.MaxY ||
+                subject.MaxY < clip.MinY) return false;
+
+            //Check if either polygon is fully encompassed by the other
+            if (clip.Path.Any(p => IsPointInsidePolygon(subject, p, out _, out _, out _))) return true;
+            if (subject.Path.Any(p => IsPointInsidePolygon(clip, p, out _, out _, out _))) return true;
+
+            //Else, any remaining intersection will be defined by one or more crossing lines
+            //Check for intersections between all but one of the clip lines with all of the subject lines.
+            //This is enough to test for intersection because we have already performed a point check.
+            //This makes very little difference for large polygons, but cuts 9 operations down to 6 for 
+            //a triangle/triangle intersection
+            var clipPathLength = clip.Path.Count;
+            var subjectPathLength = subject.Path.Count;
+            //This next section gathers the points rather than using polygon.PathLines, so that the 
+            //PathLines do not need to be set (we don't even use them in LineLineIntersection).
+            for (var i = 0; i < clipPathLength - 1; i++) //-1 since we only need two lines
+            {
+                var point1 = clip.Path[i];
+                var point2 = (i == clipPathLength - 1) ? clip.Path[0] : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
+                for (var j = 0; j < subjectPathLength; j++) //Need to consider all the lines
+                {
+                    var point3 = subject.Path[j];
+                    var point4 = (j == subjectPathLength - 1) ? subject.Path[0] : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
+                    if (MiscFunctions.SegmentSegment2DIntersection(point1, point2, point3, point4, out var intersectionPoint, false))
+                    {
+                        if (intersectionPoint == point1 ||
+                            intersectionPoint == point1 ||
+                            intersectionPoint == point3 ||
+                            intersectionPoint == point4)
+                        {
+                            continue;
+                        }
+                        //Else
+                        return true;
+                    }
+                }
+            }
+
+            //No intersections identified. Return false.
+            return false;
         }
 
         /// <summary>
@@ -682,7 +856,7 @@ namespace TVGL.TwoDimensional
         private static List<List<Vector2>> Offset(IEnumerable<ListVector2s> polygons, double offset, JoinType joinType,
             double minLength = 0.0)
         {
-            return Offset(polygons.Select(p => p.Path).ToList(), offset, joinType, minLength)
+            return Offset(polygons.ToList(), offset, joinType, minLength)
                 .Select(path => new ListVector2s(path)).ToList();
         }
         #endregion
@@ -958,7 +1132,7 @@ namespace TVGL.TwoDimensional
 
         #endregion
 
-        private static List<List<Vector2>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, 
+        private static List<List<Vector2>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType,
             IEnumerable<List<Vector2>> subject,
            IEnumerable<List<Vector2>> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
@@ -1197,7 +1371,7 @@ namespace TVGL.TwoDimensional
                         if (sweepEvent.Slope.IsPracticallySame(nextSweepEvent.Slope, 0.00001))
                         {
                             Vector2 intersectionPoint;
-                            if (MiscFunctions.LineLineIntersection(sweepEvent.Point, sweepEvent.OtherEvent.Point,
+                            if (MiscFunctions.SegmentSegment2DIntersection(sweepEvent.Point, sweepEvent.OtherEvent.Point,
                                 nextSweepEvent.Point, nextSweepEvent.OtherEvent.Point, out intersectionPoint, true) &&
                                 intersectionPoint == null)
                             {
@@ -1499,7 +1673,7 @@ namespace TVGL.TwoDimensional
             var newSweepEvents = new List<SweepEvent>();
 
             Vector2 intersectionPoint;
-            if (MiscFunctions.LineLineIntersection(se1.Point, se1.OtherEvent.Point,
+            if (MiscFunctions.SegmentSegment2DIntersection(se1.Point, se1.OtherEvent.Point,
                 se2.Point, se2.OtherEvent.Point, out intersectionPoint, true) && intersectionPoint == null)
             {
                 #region SPECIAL CASE: Collinear
@@ -2065,20 +2239,14 @@ namespace TVGL.TwoDimensional
         public static List<List<Vector2>> Mirror(List<List<Vector2>> shape, Vector2 direction2D)
         {
             var mirror = new List<List<Vector2>>();
-            var points = new List<Vector2>();
-            foreach (var path in shape)
-            {
-                foreach (var point in path.Path)
-                {
-                    points.Add(point);
-                }
-            }
+            var points = shape.SelectMany(path => path).ToList();
+
             MinimumEnclosure.GetLengthAndExtremePoints(direction2D, points, out var bottomPoints, out _);
             var distanceFromOriginToClosestPoint = bottomPoints[0].Dot(direction2D);
             foreach (var polygon in shape)
             {
                 var newPath = new List<Vector2>();
-                foreach (var point in polygon.Path)
+                foreach (var point in polygon)
                 {
                     //Get the distance to the point along direction2D
                     //Then subtract 2X the distance along direction2D
@@ -2088,10 +2256,10 @@ namespace TVGL.TwoDimensional
                 //Reverse the new path so that it retains the same CW/CCW direction of the original
                 newPath.Reverse();
                 mirror.Add(new ListVector2s(newPath));
-                if (!mirror.Last().Area.IsPracticallySame(polygon.Area, Constants.BaseTolerance))
-                {
-                    throw new Exception("Areas do not match after mirroring the polygons");
-                }
+                //if (!mirror.Last().Area().IsPracticallySame(polygon.Area, Constants.BaseTolerance))
+                //{
+                //   throw new Exception("Areas do not match after mirroring the polygons");
+                //} ********commenting out this check. It should be in unit testing - not slow down this method*** 
             }
             return mirror;
         }

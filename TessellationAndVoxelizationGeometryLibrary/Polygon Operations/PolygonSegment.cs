@@ -22,7 +22,7 @@ namespace TVGL.TwoDimensional
     /// <summary>
     ///     NodeLine
     /// </summary>
-    public class Line
+    public class PolygonSegment
     {
         #region Properties
         /// <summary>
@@ -67,7 +67,7 @@ namespace TVGL.TwoDimensional
         }
         Vector2 _center = Vector2.Null;
 
-        public double Yintercept
+        public double YIntercept
         {
             get
             {
@@ -77,7 +77,7 @@ namespace TVGL.TwoDimensional
             }
         }
         double _yIntercept = double.NaN;
-        public double Xintercept
+        public double XIntercept
         {
             get
             {
@@ -126,7 +126,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="fromNode">From node.</param>
         /// <param name="toNode">To node.</param>
-        internal Line(Node fromNode, Node toNode)
+        internal PolygonSegment(Node fromNode, Node toNode)
         {
             FromPoint = fromNode;
             ToPoint = toNode;
@@ -160,9 +160,9 @@ namespace TVGL.TwoDimensional
         /// <summary>
         ///     Reverses this instance.
         /// </summary>
-        internal Line Reverse()
+        internal PolygonSegment Reverse()
         {
-            return new Line(ToPoint, FromPoint);
+            return new PolygonSegment(ToPoint, FromPoint);
         }
 
         /// <summary>

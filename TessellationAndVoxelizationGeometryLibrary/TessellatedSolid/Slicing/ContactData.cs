@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -176,7 +177,7 @@ namespace TVGL
     /// </summary>
     public class IntersectionGroup
     {
-        public readonly List<PolygonLight> Intersection2D;
+        public readonly List<List<Vector2>> Intersection2D;
         public readonly HashSet<GroupOfLoops> GroupOfLoops;
         public List<int> GetLoopIndices()
         {
@@ -192,10 +193,10 @@ namespace TVGL
         }
 
         public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops, 
-            IEnumerable<PolygonLight> intersection2D, int index)
+            IEnumerable<List<Vector2>> intersection2D, int index)
         {
             GroupOfLoops = new HashSet<GroupOfLoops>{posSideGroupOfLoops, negSideGroupOfLoops };
-            Intersection2D = new List<PolygonLight>(intersection2D);
+            Intersection2D = new List<List<Vector2>>(intersection2D);
             Index = index;
         }
 
@@ -257,22 +258,22 @@ namespace TVGL
 
         public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
-        public List<PolygonLight> CrossSection2D;
+        public List<List<Vector2>> CrossSection2D;
 
         public void SetCrossSection2D(Flat plane)
         {
             var paths = new List<List<Vector2>>();
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
-            var positivePath = new PolygonLight(PositiveLoop.VertexLoop.ProjectVerticesTo2DCoordinates(flattenTransform));
-            if (positivePath.Area < 0) positivePath.Path.Reverse();
-            paths.Add(positivePath.Path);
+            var positivePath = PositiveLoop.VertexLoop.ProjectVerticesTo2DCoordinates(flattenTransform).ToList();
+            if (positivePath.Area() < 0) positivePath.Reverse();
+            paths.Add(positivePath);
             foreach (var loop in NegativeLoops)
             {
-                var negativePath = new PolygonLight(loop.VertexLoop.ProjectVerticesTo2DCoordinates(flattenTransform));
-                if (negativePath.Area > 0) negativePath.Path.Reverse();
-                paths.Add(negativePath.Path);
+                var negativePath = loop.VertexLoop.ProjectVerticesTo2DCoordinates(flattenTransform).ToList();
+                if (negativePath.Area() > 0) negativePath.Reverse();
+                paths.Add(negativePath);
             }
-            CrossSection2D = PolygonOperations.Union((IList<IList<Vector2>>)paths).Select(p => new PolygonLight(p)).ToList();
+            CrossSection2D = PolygonOperations.Union((IList<IList<Vector2>>)paths).Cast<List<Vector2>>().ToList();
         }
 
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)

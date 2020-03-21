@@ -11,7 +11,7 @@ using TVGL.IOFunctions;
 namespace TVGL.TwoDimensional
 {
     //[KnownType(typeof(List<Vector2>))]
-    //public class PolygonLight : List<Vector2>
+    //public class > : List<Vector2>
     //{
     //    /// <summary>
     //    /// Gets the Vector2s that make up the polygon
@@ -44,7 +44,7 @@ namespace TVGL.TwoDimensional
     //    /// </summary>
     //    public readonly double MinY;
 
-    //    public PolygonLight(Polygon polygon)
+    //    public >(Polygon polygon)
     //    {
     //        Area = polygon.Area;
     //        Path = new List<Vector2>();
@@ -57,7 +57,7 @@ namespace TVGL.TwoDimensional
     //        MinY = polygon.MinY;
     //    }
 
-    //    public PolygonLight(IEnumerable<Vector2> points)
+    //    public >(IEnumerable<Vector2> points)
     //    {
     //        Path = new List<Vector2>(points);
     //        Area = MiscFunctions.AreaOfPolygon(Path);
@@ -74,11 +74,11 @@ namespace TVGL.TwoDimensional
     //        }
     //    }
 
-    //    public static PolygonLight Reverse(PolygonLight original)
+    //    public static > Reverse(> original)
     //    {
     //        var path = new List<Vector2>(original.Path);
     //        path.Reverse();
-    //        var newPoly = new PolygonLight(path);
+    //        var newPoly = new >(path);
     //        return newPoly;
     //    }
 
@@ -90,17 +90,17 @@ namespace TVGL.TwoDimensional
     //    {
     //        using (var writer = new FileStream(filename, FileMode.Create, FileAccess.Write))
     //        {
-    //            var ser = new DataContractSerializer(typeof(PolygonLight));
+    //            var ser = new DataContractSerializer(typeof(>));
     //            ser.WriteObject(writer, this);
     //        }
     //    }
 
-    //    public static PolygonLight Deserialize(string filename)
+    //    public static > Deserialize(string filename)
     //    {
     //        using (var reader = new FileStream(filename, FileMode.Open, FileAccess.Read))
     //        {
-    //            var ser = new DataContractSerializer(typeof(PolygonLight));
-    //            return (PolygonLight)ser.ReadObject(reader);
+    //            var ser = new DataContractSerializer(typeof(>));
+    //            return (>)ser.ReadObject(reader);
     //        }
     //    }
 
@@ -109,12 +109,12 @@ namespace TVGL.TwoDimensional
     //        return Path.SelectMany(p => new[] { p.X, p.Y });
     //    }
 
-    //    internal static PolygonLight MakeFromBinaryString(double[] coordinates)
+    //    internal static > MakeFromBinaryString(double[] coordinates)
     //    {
     //        var points = new List<Vector2>();
     //        for (int i = 0; i < coordinates.Length; i += 2)
     //            points.Add(new Vector2(coordinates[i], coordinates[i + 1]));
-    //        return new PolygonLight(points);
+    //        return new >(points);
     //    }
     //}
 
@@ -132,27 +132,27 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
-        //public PolygonLight Light => new PolygonLight(this);
+        //public > Light => new >(this);
 
         /// <summary>
         /// The list of lines that make up a polygon. This is not set by default.
         /// </summary>
-        public List<Line> Lines
+        public List<PolygonSegment> Lines
         {
             get
             {
                 if (_lines == null)
                 {
-                    _lines = new List<Line>();
+                    _lines = new List<PolygonSegment>();
                     var n = Path.Count - 1;
                     for (var i = 0; i < n; i++)
-                        Lines.Add(new Line(Points[i], Points[j]));
-                    Lines.Add(new Line(Points[n], Points[0]));
+                        Lines.Add(new PolygonSegment(Points[i], Points[i + 1]));
+                    Lines.Add(new PolygonSegment(Points[n], Points[0]));
                 }
                 return _lines;
             }
         }
-        List<Line> _lines;
+        List<PolygonSegment> _lines;
 
         /// <summary>
         /// A list of the polygons inside this polygon.
@@ -261,21 +261,8 @@ namespace TVGL.TwoDimensional
                 //point.Lines = new List<Line>(); //erase any previous connection to lines.
             }
             Index = index;
-            Area = CalculateArea();
-            Length = SetLength();
-            Lines = null;
             Parent = null;
             Children = new List<Polygon>();
-
-            if (setLines)
-            {
-                SetPathLines();
-            }
-        }
-
-        private double SetLength()
-        {
-            return MiscFunctions.Perimeter(Path);
         }
 
         /// <summary>
@@ -291,14 +278,12 @@ namespace TVGL.TwoDimensional
             Area = -Area;
 
             //Only reverse the lines if they have been generated
-            if (Lines == null) return;
-            var lines = new List<Line>(Lines);
-            lines.Reverse();
-            for (var i = 0; i < lines.Count; i++)
-            {
-                lines[i].IndexInPath = i;
-            }
-            Lines = lines;
+            if (_lines == null) return;
+            var lines = _lines;
+            _lines = new List<PolygonSegment>();
+            var n = lines.Count;
+            for (var i = 0; i < n; i++)
+                _lines[i] = lines[n - i - 1].Reverse();
         }
 
         private void SetToCWNegative()
@@ -307,25 +292,21 @@ namespace TVGL.TwoDimensional
             if (Area < 0) return;
 
             //It is positive. Reverse the path and path lines.
-            var path = new List<Vector2>(Path);
-            path.Reverse();
+            Path.Reverse();
             Area = -Area;
-            Path = path;
 
             //Only reverse the lines if they have been generated
-            if (Lines == null) return;
-            var lines = new List<Line>(Lines);
-            lines.Reverse();
-            for (var i = 0; i < lines.Count; i++)
-            {
-                lines[i].IndexInPath = i;
-            }
-            Lines = lines;
+            if (_lines == null) return;
+            var lines = _lines;
+            _lines = new List<PolygonSegment>();
+            var n = lines.Count;
+            for (var i = 0; i < n; i++)
+                _lines[i] = lines[n - i - 1].Reverse();
         }
 
         private double CalculateArea()
         {
-            return MiscFunctions.AreaOfPolygon(Path.ToArray());
+            return Path.Area();
         }
 
 

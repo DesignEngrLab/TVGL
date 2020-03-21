@@ -26,10 +26,10 @@ namespace TVGL.TwoDimensional
             //6) Get all the nodes (3+ lines)
             //7) Connect all the nodes to form branches with the lines
             var allBranches = new List<List<Vector2>>();
-            foreach (var positivePolygon in silhouette.Where(p => MiscFunctions.AreaOfPolygon(p) > 0))
+            foreach (var positivePolygon in silhouette.Where(p => p.Area() > 0))
             {
                 var sampled = PolygonOperations.SampleWithEdgeLength(positivePolygon, MiscFunctions.Perimeter(positivePolygon) / 600);
-                var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).Select(p => new PolygonLight(p)).First();
+                var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).First();
 
                 //Delaunay Medial Axis             
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
@@ -38,15 +38,15 @@ namespace TVGL.TwoDimensional
                 {
                     var triangleCenterLineVertices = new List<Vector2>();
                     var edge1Center = 0.5 * (triangle.Vertices[0] + triangle.Vertices[1]);
-                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center))
+                    if (smaller.IsPointInsidePolygon(edge1Center))
                         triangleCenterLineVertices.Add(edge1Center);
 
                     var edge2Center = 0.5 * (triangle.Vertices[1] + triangle.Vertices[2]);
-                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center))
+                    if (smaller.IsPointInsidePolygon(edge2Center))
                         triangleCenterLineVertices.Add(edge2Center);
 
                     var edge3Center = 0.5 * (triangle.Vertices[2] + triangle.Vertices[0]);
-                    if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center))
+                    if (smaller.IsPointInsidePolygon(edge3Center))
                         triangleCenterLineVertices.Add(edge3Center);
 
                     if (triangleCenterLineVertices.Any())
