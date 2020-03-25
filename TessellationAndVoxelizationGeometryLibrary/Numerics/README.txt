@@ -19,7 +19,8 @@ The files are changed as little as possible so that changes to System.Numerics c
 
 
 A. error in TransformNormals - need to take the transpose of the inverse of the matrix. but maybe since this would be
-time consuming to apply to lots of vectors, it assumes that the input matrix already has this form
+time consuming to apply to lots of vectors, it assumes that the input matrix already has this form. However, the 
+actual functionality is the same as Transform but without the translation. Therefore, it should be called TransformNoTranslate
 B. change Matrix3x2 to Matrix3x3 and add a boolean to both Matrix3x3 and Matrix4x4 which is "IsProjectiveTransform"
 	why?
 		1. matrix3x3 should be useful in other situations where solving a small system of equations like Ax = b.

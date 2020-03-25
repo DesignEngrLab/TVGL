@@ -202,7 +202,7 @@ namespace TVGLPresenterDX
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new Vector3(0.5, 0, 0.5));
+            var silhouette = TVGL.TwoDimensional.Silhouette.Run(ts, new Vector3(0.5, 0, 0.5));
             Presenter.ShowAndHang(silhouette);
         }
 

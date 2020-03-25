@@ -4,19 +4,6 @@
     <RootNamespace>TVGL_PresenterDX</RootNamespace>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Window3DPlot.xaml.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Remove="Window3DPlot.xaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="HelixToolkit.SharpDX.Core" Version="2.11.0" />
-    <PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.11.0" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj" />
-  </ItemGroup>
 
 </Project>

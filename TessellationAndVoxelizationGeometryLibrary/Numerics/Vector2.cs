@@ -397,21 +397,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 position.X * matrix.M12 + position.Y * matrix.M22);
         }
 
-        /// <summary>
-        /// Transforms a vector normal by the given matrix.
-        /// </summary>
-        /// <param name="normal">The source vector.</param>
-        /// <param name="matrix">The transformation matrix.</param>
-        /// <returns>The transformed vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 TransformNormal(Vector2 normal, Matrix4x4 matrix)
-        {
-            if (!Matrix4x4.Invert(matrix, out var invMatrix))
-                throw new ArgumentException("The matrix is singular. It needs to be inverted to find the normal transform.");
-            return new Vector2(
-                normal.X * matrix.M11 + normal.Y * matrix.M21,
-                normal.X * matrix.M12 + normal.Y * matrix.M22);
-        }
+
 
         /// <summary>
         /// Transforms a vector by the given Quaternion rotation value.

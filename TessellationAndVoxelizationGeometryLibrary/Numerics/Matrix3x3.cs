@@ -414,7 +414,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 return false;
             }
             double invDet = 1.0 / det;
-            if (m.IsProjectiveTransform)
+            if (!m.IsProjectiveTransform)
                 result = new Matrix3x3(
                     m.M22 * invDet, -m.M12 * invDet,
                     -m.M21 * invDet, m.M11 * invDet,

@@ -31,8 +31,8 @@ namespace TVGL.Numerics
         public static Vector2 Transform(this Vector2 position, Matrix4x4 matrix)
         { return Vector2.Transform(position, matrix); }
 
-        public static Vector2 TransformNormal(this Vector2 normal, Matrix4x4 matrix)
-        { return Vector2.TransformNormal(normal, matrix); }
+        public static Vector2 TransformNoTranslate(this Vector2 normal, Matrix4x4 matrix)
+        { return Vector2.TransformNoTranslate(normal, matrix); }
 
         public static Vector2 Transform(this Vector2 value, Quaternion rotation)
         { return Vector2.Transform(value, rotation); }
