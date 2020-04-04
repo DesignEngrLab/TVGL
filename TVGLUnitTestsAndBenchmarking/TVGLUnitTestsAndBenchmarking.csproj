@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <GenerateProgramFile>false</GenerateProgramFile>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
