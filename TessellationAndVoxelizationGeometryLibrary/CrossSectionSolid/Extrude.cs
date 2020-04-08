@@ -71,8 +71,7 @@ namespace TVGL
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
             var transform = MiscFunctions.TransformToXYPlane(extrudeDirection, out var backTransform);
-            var paths = vertexLoops.Select(loop => loop.ProjectVerticesTo2DCoordinates(transform).ToArray()).ToArray();
-            List<Vector2[]> points2D;
+            var paths = vertexLoops.Select(loop => loop.ProjectVerticesTo2DCoordinates(transform));
             List<Vertex[]> triangles;
             try
             {
@@ -82,21 +81,17 @@ namespace TVGL
                 //Do some polygon functions to clean up issues and try again
                 //This is important because the Get2DProjections may produce invalid paths and because
                 //triangulate will try 3 times before throwing the exception to go to the catch.
-                paths = (Vector2[][])PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
 
                 //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                 //This also means we need to recreate cleanLoops
                 //Also, give the vertices indices.
                 vertexLoops = new List<List<Vertex>>();
-                points2D = new List<Vector2[]>();
                 var j = 0;
                 foreach (var path in paths)
                 {
-                    var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
-                    var area = path.Area();
-                    points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
-                    foreach (var point in pathAsPoints)
+                    foreach (var point in path)
                     {
                         var position = new Vector3(point.X, point.Y, 0.0);
                         var vertexPosition1 = position.Transform(backTransform);
@@ -128,23 +123,20 @@ namespace TVGL
                     triangles = new List<Vertex[]>();
 
                     //Do some polygon functions to clean up issues and try again
-                    paths = (Vector2[][])PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-                    paths = (Vector2[][])PolygonOperations.OffsetRound(paths, distance / 1000);
-                    paths = (Vector2[][])PolygonOperations.OffsetRound(paths, -distance / 1000);
-                    paths = (Vector2[][])PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                    paths = PolygonOperations.OffsetRound(paths, distance / 1000);
+                    paths = PolygonOperations.OffsetRound(paths, -distance / 1000);
+                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
 
                     //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                     //This also means we need to recreate cleanLoops
                     //Also, give the vertices indices.
                     vertexLoops = new List<List<Vertex>>();
-                    points2D = new List<Vector2[]>();
                     var j = 0;
                     foreach (var path in paths)
                     {
-                        var pathAsPoints = path.Select(p => new Vector2(p.X, p.Y)).ToArray();
-                        points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
-                        foreach (var point in pathAsPoints)
+                        foreach (var point in path)
                         {
                             var position = new Vector3(point.X, point.Y, 0.0);
                             var vertexPosition1 = position.Transform(backTransform);
@@ -162,7 +154,7 @@ namespace TVGL
                         vertexLoops.Add(cleanLoop);
                     }
 
-                    var triangleFaceList = PolygonOperations.Triangulate((IList<IList<Vertex>>)points2D, extrudeDirection, out _, out var isPositive);
+                    var triangleFaceList = PolygonOperations.Triangulate(paths, extrudeDirection, out _, out var isPositive);
                     foreach (var face in triangleFaceList)
                     {
                         triangles.AddRange(face);

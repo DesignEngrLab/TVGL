@@ -55,7 +55,7 @@ namespace TVGL.TwoDimensional
             //Build a dictionary of faces to polygons
             //var projectedFacePolygons = positiveFaces.ToDictionary(f => f, f => GetPolygonFromFace(f, projectedPoints, true));
             //Use GetPolygonFromFace and force to be positive faces with true"
-            var projectedFacePolygons2 = positiveFaces.Select(f => GetPolygonFromFace(f, projectedPoints, true)).ToList().Where(p => p.Area() > minPathAreaToConsider).ToList();
+            var projectedFacePolygons2 = positiveFaces.Select(f => GetPolygonFromFace(f, projectedPoints, true)).ToList().Where(p => p.Area() > minPathAreaToConsider);
             var solution = PolygonOperations.Union(projectedFacePolygons2, false).ToList();
 
             //Offset by enough to account for minimum angle 
@@ -579,8 +579,8 @@ namespace TVGL.TwoDimensional
             //negative regions. This is undesirable, since we do not want to union a hole
             //with an overlapping region. For this reason, Union Non-Zero is used. It keeps
             //the holes in their proper orientation and does not combine them together. 
-            var nonSelfIntersectingPaths = PolygonOperations.Union((IList<IList<Vector2>>)allPaths, false, PolygonFillType.NonZero);
-            var correctedSurfacePath = EliminateOverhangPolygons((List<List<Vector2>>)nonSelfIntersectingPaths, projectedFacePolygons);
+            var nonSelfIntersectingPaths = PolygonOperations.Union(allPaths, false, PolygonFillType.NonZero);
+            var correctedSurfacePath = EliminateOverhangPolygons(nonSelfIntersectingPaths, projectedFacePolygons);
             //if (allPaths.Sum(p => p.Count) > 10) Presenter.ShowAndHang(nonSelfIntersectingPaths);
 
             return correctedSurfacePath;

@@ -273,7 +273,7 @@ namespace TVGL
                 if (negativePath.Area() > 0) negativePath.Reverse();
                 paths.Add(negativePath);
             }
-            CrossSection2D = PolygonOperations.Union((IList<IList<Vector2>>)paths).Cast<List<Vector2>>().ToList();
+            CrossSection2D = PolygonOperations.Union(paths);
         }
 
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)
