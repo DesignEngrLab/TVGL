@@ -13,26 +13,16 @@
 // ***********************************************************************
 
 using System.Collections.Generic;
-using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
-
-#region Partial Trapezoid Class
-
-    #endregion
-
-    #region MonotonePolygon class
-
     /// <summary>
     ///     Monotone Polygon, which consists of two ordered chains
     ///     The chains start and end at the same nodes
     /// </summary>
-    internal class MonotonePolygon
+    internal struct MonotonePolygon
     {
         #region Constructor
-
         /// <summary>
         ///     Constructs a MonotonePolygon based on a list of nodes.
         /// </summary>
@@ -45,34 +35,27 @@ namespace TVGL.TwoDimensional
             RightChain = rightChain;
             SortedNodes = sortedNodes;
         }
-
         #endregion
 
         #region Properties
-
         /// <summary>
         ///     Gets Monochain1. Set is through the constructor.
         /// </summary>
         /// <value>The left chain.</value>
-        internal List<Node> LeftChain { get; private set; }
+        internal List<Node> LeftChain { get; }
 
         /// <summary>
         ///     Gets Monochain2. Set is through the constructor.
         /// </summary>
         /// <value>The right chain.</value>
-        internal List<Node> RightChain { get; private set; }
+        internal List<Node> RightChain { get; }
 
         /// <summary>
         ///     Gets Monochain2. Set is through the constructor.
         /// </summary>
         /// <value>The sorted nodes.</value>
-        internal List<Node> SortedNodes { get; private set; }
+        internal List<Node> SortedNodes { get; }
 
         #endregion
     }
-
-#endregion
-#region NodeLine Class
-
-    #endregion
 }

@@ -213,7 +213,7 @@ namespace TVGL.Boolean_Operations
                 var vertexLoops = loops.Select(loop => loop.VertexLoop).ToArray();
 
                 //Order the loops into groups, determine positive or negative for each loop, and create vertex[]s to use for new faces.
-                //Each group consists of one positive loop, but may include no or many negative loops.
+                //Each group consists of one positive loop, but may include zero to many negative loops.
                 //No negative loop will be inside of two positive loops. No positive loop will be inside another positive loop. 
                 //(NOTE: although they technically can be 'inside' other loops, there is no need for such a complicated tree of groupings)
                 //Triangulating the polygon reverses loops (internally) if necessary and groups them together.
@@ -227,7 +227,7 @@ namespace TVGL.Boolean_Operations
                 //Put the groups of loops into a GroupOfLoops class.
                 for (var i = 0; i < groupsOfLoopsIndices.Count; i++)
                 {
-                    var groupOfLoopIndices = groupsOfLoopsIndices[i];
+                    List<int> groupOfLoopIndices = groupsOfLoopsIndices[i];
                     var groupOfTriangles = groupsOfTriangles[i];
                     var positiveLoop = loops[groupOfLoopIndices.First()];
                     var negativeLoops = new List<Loop>();

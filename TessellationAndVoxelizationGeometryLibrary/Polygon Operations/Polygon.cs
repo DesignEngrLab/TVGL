@@ -10,131 +10,47 @@ using TVGL.IOFunctions;
 
 namespace TVGL.TwoDimensional
 {
-    //[KnownType(typeof(List<Vector2>))]
-    //public class > : List<Vector2>
-    //{
-    //    /// <summary>
-    //    /// Gets the Vector2s that make up the polygon
-    //    /// </summary>
-    //    [JsonIgnore]
-    //    public readonly List<Vector2> Path;
 
-    //    /// <summary>
-    //    /// Gets the area of the polygon. Negative Area for holes.
-    //    /// </summary>
-    //    public readonly double Area;
-
-    //    /// <summary>
-    //    /// Maximum X value
-    //    /// </summary>
-    //    public readonly double MaxX;
-
-    //    /// <summary>
-    //    /// Minimum X value
-    //    /// </summary>
-    //    public readonly double MinX;
-
-    //    /// <summary>
-    //    /// Maximum Y value
-    //    /// </summary>
-    //    public readonly double MaxY;
-
-    //    /// <summary>
-    //    /// Minimum Y value
-    //    /// </summary>
-    //    public readonly double MinY;
-
-    //    public >(Polygon polygon)
-    //    {
-    //        Area = polygon.Area;
-    //        Path = new List<Vector2>();
-    //        foreach (var point in polygon.Path)
-    //            Path.Add(point);
-
-    //        MaxX = polygon.MaxX;
-    //        MaxY = polygon.MaxY;
-    //        MinX = polygon.MinX;
-    //        MinY = polygon.MinY;
-    //    }
-
-    //    public >(IEnumerable<Vector2> points)
-    //    {
-    //        Path = new List<Vector2>(points);
-    //        Area = MiscFunctions.AreaOfPolygon(Path);
-    //        MaxX = double.MinValue;
-    //        MinX = double.MaxValue;
-    //        MaxY = double.MinValue;
-    //        MinY = double.MaxValue;
-    //        foreach (var point in Path)
-    //        {
-    //            if (point.X > MaxX) MaxX = point.X;
-    //            if (point.X < MinX) MinX = point.X;
-    //            if (point.Y > MaxY) MaxY = point.Y;
-    //            if (point.Y < MinY) MinY = point.Y;
-    //        }
-    //    }
-
-    //    public static > Reverse(> original)
-    //    {
-    //        var path = new List<Vector2>(original.Path);
-    //        path.Reverse();
-    //        var newPoly = new >(path);
-    //        return newPoly;
-    //    }
-
-    //    public double Length => MiscFunctions.Perimeter(Path);
-
-    //    public bool IsPositive => Area >= 0;
-
-    //    public void Serialize(string filename)
-    //    {
-    //        using (var writer = new FileStream(filename, FileMode.Create, FileAccess.Write))
-    //        {
-    //            var ser = new DataContractSerializer(typeof(>));
-    //            ser.WriteObject(writer, this);
-    //        }
-    //    }
-
-    //    public static > Deserialize(string filename)
-    //    {
-    //        using (var reader = new FileStream(filename, FileMode.Open, FileAccess.Read))
-    //        {
-    //            var ser = new DataContractSerializer(typeof(>));
-    //            return (>)ser.ReadObject(reader);
-    //        }
-    //    }
-
-    //    internal IEnumerable<double> ConvertToDoublesArray()
-    //    {
-    //        return Path.SelectMany(p => new[] { p.X, p.Y });
-    //    }
-
-    //    internal static > MakeFromBinaryString(double[] coordinates)
-    //    {
-    //        var points = new List<Vector2>();
-    //        for (int i = 0; i < coordinates.Length; i += 2)
-    //            points.Add(new Vector2(coordinates[i], coordinates[i + 1]));
-    //        return new >(points);
-    //    }
-    //}
-
-    /// <summary>
-    /// A list of 2D points
-    /// </summary>
     public class Polygon
     {
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
-        public List<Vector2> Path;
-        public List<Node> Points;
+        public List<Vector2> Path
+        {
+            get
+            {
+                if (_path == null)
+                {
+                    _path = new List<Vector2>();
+                    foreach (var point in _points)
+                    {
+                        _path.Add(new Vector2(point.X, point.Y));
+                    }
+                }
+                return _path;
+            }
+        }
+        List<Vector2> _path;
 
-        /// <summary>
-        /// The list of 2D points that make up a polygon.
-        /// </summary>
-        //public > Light => new >(this);
 
-        /// <summary>
+        public List<Node> Points
+        {
+            get
+            {
+                if (_points == null)
+                {
+                    _points = new List<Node>();
+                    for (int i = 0; i < _path.Count; i++)
+                    {
+                        _points.Add(new Node(_path[i], i, Index));
+                    }
+                }
+                return _points;
+            }
+        }
+        List<Node> _points;
+
         /// The list of lines that make up a polygon. This is not set by default.
         /// </summary>
         public List<PolygonSegment> Lines
@@ -167,20 +83,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// The index of this child in its parent's child list.
         /// </summary>
-        public int Index
-        {
-            get { return _index; }
-            set
-            {
-                _index = value;
-                //foreach (var point in Path)
-                //{
-                //    point.PolygonIndex = _index;
-                //}
-            }
-        }
-
-        private int _index;
+        public int Index { get; set; }
 
         /// <summary>
         /// Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.
@@ -240,12 +143,12 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Polygon Constructor. Assumes path is closed and not self-intersecting.
         /// </summary>
-        /// <param name="points"></param>
+        /// <param name="coordinates"></param>
         /// <param name="setLines"></param>
         /// <param name="index"></param>
-        public Polygon(IEnumerable<Vector2> points, bool setLines = false, int index = -1)
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
-            Path = new List<Vector2>(points);
+            _path = coordinates.ToList();
             //set index in path
             MaxX = double.MinValue;
             MinX = double.MaxValue;
@@ -263,6 +166,13 @@ namespace TVGL.TwoDimensional
             Index = index;
             Parent = null;
             Children = new List<Polygon>();
+        }
+
+        public Polygon(List<Node> points, List<PolygonSegment> lines, int index = -1)
+        {
+            _points = points;
+            _lines = lines;
+            Index = index;
         }
 
         /// <summary>

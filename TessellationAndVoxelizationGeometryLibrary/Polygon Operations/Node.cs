@@ -68,7 +68,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <value>The point.</value>
         internal Vector2 Coordinates { get; private set; }
-        internal Vertex Reference { get; set; }
+        internal int ReferenceID { get; set; }
         /// <summary>
         ///     Gets the base class, Point of this node.
         /// </summary>
@@ -90,11 +90,11 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="currentPoint">The current point.</param>
         /// <param name="loopID">The loop identifier.</param>
-        internal Node(Vector2 currentPoint, Vertex reference, int loopID)
+        internal Node(Vector2 currentPoint, int referenceID, int loopID)
         {
             LoopID = loopID;
             Coordinates = currentPoint;
-            Reference = reference;
+            ReferenceID = referenceID;
         }
 
         #endregion

@@ -113,7 +113,7 @@ namespace TVGL.TwoDimensional
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, true)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
@@ -124,7 +124,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, true)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
@@ -166,7 +166,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<List<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, true)), startingYValue,
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,

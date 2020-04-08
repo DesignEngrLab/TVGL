@@ -29,7 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*box*");
+            var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];

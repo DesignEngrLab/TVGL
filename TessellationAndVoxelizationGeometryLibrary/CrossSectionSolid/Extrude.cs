@@ -18,13 +18,13 @@ namespace TVGL
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="extrudeDirection"></param>
-        /// <param name="distance"></param>
+        /// <param name="extrusionHeight"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(Vector3[][] loops, Vector3 extrudeDirection,
-            double distance, bool midPlane = false)
+        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+            double extrusionHeight, bool midPlane = false)
         {
-            return new TessellatedSolid(ReturnFacesFromLoops(loops, extrudeDirection, distance, midPlane), null, false);
+            return new TessellatedSolid(ReturnFacesFromLoops(loops, extrudeDirection, extrusionHeight, midPlane), null, false);
         }
 
         /// <summary>
@@ -33,233 +33,148 @@ namespace TVGL
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="extrudeDirection"></param>
-        /// <param name="distance"></param>
+        /// <param name="extrusionHeight"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ReturnFacesFromLoops(IList<IList<Vector3>> loops, Vector3 extrudeDirection,
-            double distance, bool midPlane = false)
+        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+            double extrusionHeight, bool midPlane = false)
         {
-            //This simplifies the cases we have to handle by always extruding in the positive direction
-            if (distance < 0)
+            // for consistency with adding the extrusionHeight to the base plane, negate if it comes in negative
+            if (extrusionHeight < 0)
             {
-                distance = -distance;
+                extrusionHeight = -extrusionHeight;
                 extrudeDirection = -1 * extrudeDirection;
             }
-            //First, make the vertices that will be used on the perimeter (positioned at the loop coordinates)
-            var vertexLoops = new List<List<Vertex>>();
-            var count = 0;
-            for (int loopI = 0; loopI < loops.Count; loopI++)
-            {
-                var vertexLoop = new Vertex[loops[loopI].Count];
-                for (int vertexI = 0; vertexI < loops[loopI].Count; vertexI++)
-                {
-                    //If a midPlane extrusion, move the original vertices backwards by 1/2 the extrude distance.
-                    //These vertices will be used as the base for offsetting the paired vertices forward by the 
-                    //entire extrude distance.
-                    if (midPlane)
-                    {
-                        var midPlaneVertexPosition = loops[loopI][vertexI] + (extrudeDirection * (-distance / 2));
-                        vertexLoop[vertexI] = new Vertex(midPlaneVertexPosition, count);
-                    }
-                    else vertexLoop[vertexI] = new Vertex(loops[loopI][vertexI], count);
-                    count++;
-                }
-                vertexLoops[loopI] = vertexLoop.ToList();
-            }
-            var distanceFromOriginAlongDirection = extrudeDirection.Dot(vertexLoops.First().First().Coordinates);
-
-            //First, triangulate the loops
-            var listOfFaces = new List<PolygonalFace>();
+            // find transform to the XY plane and store the backTransform (the transform back to the original)
             var transform = MiscFunctions.TransformToXYPlane(extrudeDirection, out var backTransform);
-            var paths = vertexLoops.Select(loop => loop.ProjectVerticesTo2DCoordinates(transform));
-            List<Vertex[]> triangles;
+            // make paths, the 2D polygons represening the 3D loops
+            var paths = loops.Select(loop => loop.Project3DLocationsTo2DCoordinates(transform));
+            // the basePlaneDistance defines the plane closer to the origin. we can get this from the any input coordinate
+            var basePlaneDistance = extrudeDirection.Dot(loops.First().First());
+            if (midPlane) basePlaneDistance -= extrusionHeight / 2.0;
+            return ReturnFacesFromLoops(paths, extrudeDirection, basePlaneDistance, extrusionHeight);
+        }
+
+
+        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
+            double basePlaneDistance, double extrusionHeight)
+        {
+            List<List<int[]>> triangleIndices;
+            bool[] isPositive;
+            #region First, run the triangulate polygons to define how the ends of the extruded shape will be defined
             try
             {
-                //Reset the list of triangles
-                triangles = new List<Vertex[]>();
-
-                //Do some polygon functions to clean up issues and try again
-                //This is important because the Get2DProjections may produce invalid paths and because
-                //triangulate will try 3 times before throwing the exception to go to the catch.
-                paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-
-                //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
-                //This also means we need to recreate cleanLoops
-                //Also, give the vertices indices.
-                vertexLoops = new List<List<Vertex>>();
-                var j = 0;
-                foreach (var path in paths)
-                {
-                    var cleanLoop = new List<Vertex>();
-                    foreach (var point in path)
-                    {
-                        var position = new Vector3(point.X, point.Y, 0.0);
-                        var vertexPosition1 = position.Transform(backTransform);
-                        //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
-                        //So, we must move it to be on the plane
-                        //This next line gets a second vertex to use for the point on plane function
-                        var vertexPosition2 = vertexPosition1 + (extrudeDirection * 5);
-                        var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
-                            distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
-                            new Vertex(vertexPosition2));
-                        vertex.IndexInList = j;
-                        cleanLoop.Add(vertex);
-                        j++;
-                    }
-                    vertexLoops.Add(cleanLoop);
-                }
-
-                var triangleFaceList = PolygonOperations.Triangulate((IList<IList<Vertex>>)vertexLoops, extrudeDirection,out _, out var isPositive);
-                foreach (var face in triangleFaceList)
-                {
-                    triangles.AddRange(face);
-                }
+                triangleIndices = paths.Triangulate(out _, out isPositive);
             }
             catch
             {
                 try
                 {
-                    //Reset the list of triangles
-                    triangles = new List<Vertex[]>();
-
                     //Do some polygon functions to clean up issues and try again
+                    //This is important because the Get2DProjections may produce invalid paths and because
+                    //triangulate will try 3 times before throwing the exception to go to the catch.
                     paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-                    paths = PolygonOperations.OffsetRound(paths, distance / 1000);
-                    paths = PolygonOperations.OffsetRound(paths, -distance / 1000);
-                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-
-                    //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
-                    //This also means we need to recreate cleanLoops
-                    //Also, give the vertices indices.
-                    vertexLoops = new List<List<Vertex>>();
-                    var j = 0;
-                    foreach (var path in paths)
-                    {
-                        var cleanLoop = new List<Vertex>();
-                        foreach (var point in path)
-                        {
-                            var position = new Vector3(point.X, point.Y, 0.0);
-                            var vertexPosition1 = position.Transform(backTransform);
-                            //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
-                            //So, we must move it to be on the plane
-                            //This next line gets a second vertex to use for the point on plane function
-                            var vertexPosition2 = vertexPosition1 + (extrudeDirection * 5);
-                            var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
-                                distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
-                                new Vertex(vertexPosition2));
-                            vertex.IndexInList = j;
-                            cleanLoop.Add(vertex);
-                            j++;
-                        }
-                        vertexLoops.Add(cleanLoop);
-                    }
-
-                    var triangleFaceList = PolygonOperations.Triangulate(paths, extrudeDirection, out _, out var isPositive);
-                    foreach (var face in triangleFaceList)
-                    {
-                        triangles.AddRange(face);
-                    }
+                    triangleIndices = paths.Triangulate(out _, out isPositive);
                 }
                 catch
                 {
-                    Debug.WriteLine("Tried extrusion twice and failed.");
-                    return null;
-                }
-            }
-
-            //Second, build up the a set of duplicate vertices
-            var vertices = new HashSet<Vertex>();
-            foreach (var vertex in vertexLoops.SelectMany(loop => loop))
-            {
-                vertices.Add(vertex);
-            }
-            var pairedVertices = new Dictionary<Vertex, Vertex>();
-            foreach (var vertex in vertices)
-            {
-                var newVertex = new Vertex(vertex.Coordinates + (extrudeDirection * distance));
-                pairedVertices.Add(vertex, newVertex);
-            }
-
-            //Third, create the triangles on the two ends
-            //var triangleDictionary = new Dictionary<PolygonalFace, PolygonalFace>();
-            var topFaces = new List<PolygonalFace>();
-            foreach (var triangle in triangles)
-            {
-                //Create the triangle in plane with the loops
-                var v1 = triangle[1].Coordinates.Subtract(triangle[0].Coordinates);
-                var v2 = triangle[2].Coordinates.Subtract(triangle[0].Coordinates);
-
-                //This model reverses the triangle vertex ordering as necessary to line up with the normal.
-                var topTriangle = v1.Cross(v2).Dot(extrudeDirection * -1) < 0
-                    ? new PolygonalFace(triangle.Reverse(), extrudeDirection * -1, true)
-                    : new PolygonalFace(triangle, extrudeDirection * -1, true);
-                topFaces.Add(topTriangle);
-                listOfFaces.Add(topTriangle);
-
-                //Create the triangle on the opposite side of the extrusion
-                var bottomTriangle = new PolygonalFace(
-                        new List<Vertex>
-                        {
-                            pairedVertices[triangle[0]],
-                            pairedVertices[triangle[2]],
-                            pairedVertices[triangle[1]]
-                        }, extrudeDirection, false);
-                listOfFaces.Add(bottomTriangle);
-                //triangleDictionary.Add(topTriangle, bottomTriangle);
-            }
-
-            //Fourth, create the triangles on the sides 
-            //The normals of the faces are dependent on the whether the loops are ordered correctly from the view of the extrude direction
-            //This influences which order the vertices are used to create triangles.
-            for (var j = 0; j < vertexLoops.Count; j++)
-            {
-                var loop = vertexLoops[j];
-
-                //Determine if the loop direction is correct by using the top face
-                var v1 = loop[0];
-                var v2 = loop[1];
-
-                //Find the face with both of these vertices
-                PolygonalFace firstFace = null;
-                foreach (var face in topFaces)
-                {
-                    if (face.Vertices[0] == v1 || face.Vertices[1] == v1 || face.Vertices[2] == v1)
+                    try
                     {
-                        if (face.Vertices[0] == v2 || face.Vertices[1] == v2 || face.Vertices[2] == v2)
-                        {
-                            firstFace = face;
-                            break;
-                        }
+                        //Do some polygon functions to clean up issues and try again
+                        paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                        paths = PolygonOperations.OffsetRound(paths, extrusionHeight / 1000);
+                        paths = PolygonOperations.OffsetRound(paths, -extrusionHeight / 1000);
+                        paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                        triangleIndices = paths.Triangulate(out _, out isPositive);
+                    }
+                    catch (Exception exc)
+                    {
+                        Debug.WriteLine("Tried extrusion three-times and it failed." + exc.Message);
+                        return null;
                     }
                 }
-                if (firstFace == null) throw new Exception("Did not find face with both the vertices");
+            }
+            #endregion
 
-
-                if (firstFace.NextVertexCCW(v1) == v2)
+            MiscFunctions.TransformToXYPlane(basePlaneNormal, out var rotateTransform);
+            #region Make Base faces
+            var int2VertexDict = new Dictionary<int, Vertex>();
+            var baseVertices = new List<List<Vertex>>();
+            var vertexID = 0;
+            foreach (var loop in paths)
+            {
+                var vertexLoop = new List<Vertex>();
+                baseVertices.Add(vertexLoop);
+                foreach (var position2D in loop)
                 {
-                    //Do nothing
-                }
-                else if (firstFace.NextVertexCCW(v2) == v1)
-                {
-                    //Reverse the loop
-                    loop.Reverse();
-                }
-                else throw new Exception();
-
-                //The loop is now ordered correctly
-                //It does not matter whether the loop is positive or negative, only that it is ordered correctly for the given extrude direction
-                for (var k = 0; k < loop.Count; k++)
-                {
-                    var g = k + 1;
-                    if (k == loop.Count - 1) g = 0;
-
-                    //Create the new triangles
-                    listOfFaces.Add(new PolygonalFace(new List<Vertex>() { loop[k], pairedVertices[loop[k]], pairedVertices[loop[g]] }));
-                    listOfFaces.Add(new PolygonalFace(new List<Vertex>() { loop[k], pairedVertices[loop[g]], loop[g] }));
+                    var position3D = new Vector3(position2D, 0);
+                    var newVertex = new Vertex(position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal, vertexID);
+                    vertexLoop.Add(newVertex);
+                    int2VertexDict.Add(vertexID, newVertex);
+                    vertexID++;
                 }
             }
+            var result = new List<PolygonalFace>();
+            foreach (var polygonTriangleIndices in triangleIndices)
+                foreach (var triangle in polygonTriangleIndices)
+                    result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[2]],
+                        int2VertexDict[triangle[1]], int2VertexDict[triangle[0]] }));
+            #endregion
+            #region Make Top faces
+            int2VertexDict.Clear();
+            var topVertices = new List<List<Vertex>>();
+            vertexID = 0;
+            basePlaneDistance += extrusionHeight;
+            foreach (var loop in paths)
+            {
+                var vertexLoop = new List<Vertex>();
+                topVertices.Add(vertexLoop);
+                foreach (var position2D in loop)
+                {
+                    var position3D = new Vector3(position2D, 0);
+                    var newVertex = new Vertex(position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal, vertexID);
+                    vertexLoop.Add(newVertex);
+                    int2VertexDict.Add(vertexID, newVertex);
+                    vertexID++;
+                }
+            }
+            foreach (var polygonTriangleIndices in triangleIndices)
+                foreach (var triangle in polygonTriangleIndices)
+                    result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[0]],
+                        int2VertexDict[triangle[1]], int2VertexDict[triangle[2]] }));
+            #endregion
+            #region Make Faces on the sides
+            //The normals of the faces are dependent on the whether the loops are ordered correctly from the view of the extrude direction
+            //This influences which order the vertices are used to create triangles.
+            var index = 0;
+            foreach (var vectorLoop in paths)
+            {
+                var topLoop = topVertices[index];
+                var baseLoop = baseVertices[index];
+                if (vectorLoop.ToArray().Area() > 0 == isPositive[index]) //then loop is  in the proper direction
+                {
+                    result.Add(new PolygonalFace(new[] { topLoop[^1], baseLoop[^1], topLoop[0] }));
+                    result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[^1], baseLoop[0] }));
+                    for (int i = 1; i < topLoop.Count; i++)
+                    {
+                        result.Add(new PolygonalFace(new[] { topLoop[i - 1], baseLoop[i - 1], topLoop[i] }));
+                        result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i - 1], baseLoop[i] }));
+                    }
+                }
+                else
+                {
+                    result.Add(new PolygonalFace(new[] { topLoop[^1], topLoop[0], baseLoop[^1] }));
+                    result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[0], baseLoop[^1] }));
+                    for (int i = 1; i < topLoop.Count; i++)
+                    {
+                        result.Add(new PolygonalFace(new[] { topLoop[i - 1], topLoop[i], baseLoop[i - 1] }));
+                        result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i], baseLoop[i - 1] }));
+                    }
+                }
+            }
+            #endregion
 
-            return listOfFaces;
+            return result;
         }
     }
 }
