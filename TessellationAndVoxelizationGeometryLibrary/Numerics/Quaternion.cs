@@ -39,13 +39,27 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             get { return new Quaternion(0, 0, 0, 1); }
         }
+        /// <summary>
+        /// Returns a Quaternion representing no rotation.
+        /// </summary>
+        public static Quaternion Null
+        {
+            get { return new Quaternion(double.NaN, double.NaN, double.NaN, double.NaN); }
+        }
 
         /// <summary>
         /// Returns whether the Quaternion is the identity Quaternion.
         /// </summary>
-        public bool IsIdentity
+        public bool IsIdentity()
         {
-            get { return X == 0.0 && Y == 0.0 && Z == 0.0 && W == 1.0; }
+            return X == 0.0 && Y == 0.0 && Z == 0.0 && W == 1.0;
+        }
+        /// <summary>
+        /// Returns whether the Quaternion is the identity Quaternion.
+        /// </summary>
+        public bool IsNull()
+        {
+            return double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z) || double.IsNaN(W);
         }
 
         /// <summary>
@@ -82,9 +96,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The computed length of the Quaternion.</returns>
         public double Length()
         {
-            double ls = X * X + Y * Y + Z * Z + W * W;
-
-            return Math.Sqrt(ls);
+            return Math.Sqrt(LengthSquared());
         }
 
         /// <summary>
@@ -104,10 +116,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public static Quaternion Normalize(Quaternion value)
         {
             Quaternion ans;
-
-            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z + value.W * value.W;
-
-            double invNorm = 1.0 / Math.Sqrt(ls);
+            double invNorm = 1.0 / value.Length();
 
             ans.X = value.X * invNorm;
             ans.Y = value.Y * invNorm;
@@ -382,24 +391,24 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Concatenates two Quaternions; the result represents the value1 rotation followed by the value2 rotation.
         /// </summary>
-        /// <param name="value1">The first Quaternion rotation in the series.</param>
-        /// <param name="value2">The second Quaternion rotation in the series.</param>
+        /// <param name="quaternion1">The first Quaternion rotation in the series.</param>
+        /// <param name="quaternion2">The second Quaternion rotation in the series.</param>
         /// <returns>A new Quaternion representing the concatenation of the value1 rotation followed by the value2 rotation.</returns>
-        public static Quaternion Concatenate(Quaternion value1, Quaternion value2)
+        public static Quaternion Concatenate(Quaternion quaternion1, Quaternion quaternion2)
         {
             Quaternion ans;
 
             // Concatenate rotation is actually q2 * q1 instead of q1 * q2.
             // So that's why value2 goes q1 and value1 goes q2.
-            double q1x = value2.X;
-            double q1y = value2.Y;
-            double q1z = value2.Z;
-            double q1w = value2.W;
+            double q1x = quaternion2.X;
+            double q1y = quaternion2.Y;
+            double q1z = quaternion2.Z;
+            double q1w = quaternion2.W;
 
-            double q2x = value1.X;
-            double q2y = value1.Y;
-            double q2z = value1.Z;
-            double q2w = value1.W;
+            double q2x = quaternion1.X;
+            double q2y = quaternion1.Y;
+            double q2z = quaternion1.Z;
+            double q2w = quaternion1.W;
 
             // cross(av, bv)
             double cx = q1y * q2z - q1z * q2y;
@@ -671,6 +680,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             return ans;
         }
+        /// <summary>
+        /// Multiplies a Quaternion by a scalar value.
+        /// </summary>
+        /// <param name="value1">The source Quaternion.</param>
+        /// <param name="value2">The scalar value.</param>
+        /// <returns>The result of the multiplication.</returns>
+        public static Quaternion operator *(double value1, Quaternion value2)
+        { return value2 * value1; }
 
         /// <summary>
         /// Divides a Quaternion by another Quaternion.

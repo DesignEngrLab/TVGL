@@ -99,7 +99,7 @@ namespace TVGLPresenterDX
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("myC*").ToArray();
+            var fileNames = dir.GetFiles("cube.ply").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count() - 0; i++)
@@ -115,9 +115,9 @@ namespace TVGLPresenterDX
                     continue;
                 }
                 solid.SolidColor = new Color(100, 200, 100, 50);
-                //Presenter.ShowAndHang(solid);
+                Presenter.ShowAndHang(solid);
                 var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 150);
-                //Presenter.ShowAndHang(xs);
+                Presenter.ShowAndHang(xs);
                 var ts2 = xs.ConvertToTessellatedSolidMarchingCubes(10000);
                 ts2.SolidColor = new Color(100, 50, 100, 250);
                 var volError = 2 * Math.Abs(solid.Volume - ts2.Volume) / (solid.Volume + ts2.Volume);

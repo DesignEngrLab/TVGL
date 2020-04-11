@@ -23,4 +23,8 @@
     <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="__snapshots__\" />
+  </ItemGroup>
+
 </Project>

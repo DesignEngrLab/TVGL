@@ -94,20 +94,19 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
-        public bool IsIdentity
+        /// // CHANGED from property to method
+        public bool IsIdentity()
         {
-            get
-            {
-                return M11 == 1.0 && M22 == 1.0 && // Check diagonal element first for early out.
-                                    M12 == 0.0 &&
-                       M21 == 0.0 &&
-                       M31 == 0.0 && M32 == 0.0 && (!IsProjectiveTransform ||
-                       (M13 == 0.0 && M23 == 0.0 && M33 == 1.0));
-            }
+            return M11 == 1.0 && M22 == 1.0 && // Check diagonal element first for early out.
+                                M12 == 0.0 &&
+                   M21 == 0.0 &&
+                   M31 == 0.0 && M32 == 0.0 && (!IsProjectiveTransform ||
+                   (M13 == 0.0 && M23 == 0.0 && M33 == 1.0));
         }
         /// <summary>
         /// Returns whether the matrix has any Not-A-Numbers or if all terms are zero.
         /// </summary>
+        /// // CHANGED from property to method
         public bool IsNull()
         {
             return
@@ -469,10 +468,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The negated matrix.</returns>
         public static Matrix3x3 Negate(Matrix3x3 value)
         {
-            return new Matrix3x3(
-                -value.M11, -value.M12, -value.M13,
-                -value.M11, -value.M12, -value.M13,
-                -value.M11, -value.M12, -value.M13);
+            if (value.IsProjectiveTransform)
+                return new Matrix3x3(
+                    -value.M11, -value.M12, -value.M13,
+                    -value.M21, -value.M22, -value.M23,
+                    -value.M31, -value.M32, -value.M33
+                    );
+            else
+                return new Matrix3x3(
+                    -value.M11, -value.M12,
+                    -value.M21, -value.M22,
+                    -value.M31, -value.M32
+                    );
         }
 
         /// <summary>
@@ -576,18 +583,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The negated matrix.</returns>
         public static Matrix3x3 operator -(Matrix3x3 value)
         {
-            if (value.IsProjectiveTransform)
-                return new Matrix3x3(
-                    -value.M11, -value.M12, -value.M13,
-                    -value.M21, -value.M22, -value.M23,
-                    -value.M31, -value.M32, -value.M33
-                    );
-            else
-                return new Matrix3x3(
-                    -value.M11, -value.M12,
-                    -value.M21, -value.M22,
-                    -value.M31, -value.M32
-                    );
+            return Negate(value);
         }
 
         /// <summary>
@@ -598,11 +594,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The matrix containing the summed values.</returns>
         public static Matrix3x3 operator +(Matrix3x3 value1, Matrix3x3 value2)
         {
-            return new Matrix3x3(
-                value1.M11 + value2.M11, value1.M12 + value2.M12, value1.M13 + value2.M13,
-                value1.M21 + value2.M21, value1.M22 + value2.M22, value1.M23 + value2.M23,
-                value1.M31 + value2.M31, value1.M32 + value2.M32, value1.M33 + value2.M33
-                );
+            return Add(value1, value2);
         }
 
         /// <summary>
@@ -613,12 +605,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The matrix containing the resulting values.</returns>
         public static Matrix3x3 operator -(Matrix3x3 value1, Matrix3x3 value2)
         {
-            return new Matrix3x3(
-                value1.M11 - value2.M11, value1.M12 - value2.M12, value1.M13 - value2.M13,
-                value1.M21 - value2.M21, value1.M22 - value2.M22, value1.M23 - value2.M23,
-                value1.M31 - value2.M31, value1.M32 - value2.M32, value1.M33 - value2.M33
-                );
+            return Subtract(value1, value2);
         }
+
         /// <summary>
         /// Multiplies two matrices together and returns the resulting matrix.
         /// </summary>
@@ -639,6 +628,16 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public static Matrix3x3 operator *(Matrix3x3 value1, double value2)
         {
             return Multiply(value1, value2);
+        }
+        /// <summary>
+        /// Scales all elements in a matrix by the given scalar factor.
+        /// </summary>
+        /// <param name="value1">The source matrix.</param>
+        /// <param name="value2">The scaling value to use.</param>
+        /// <returns>The resulting matrix.</returns>
+        public static Matrix3x3 operator *(double value1, Matrix3x3 value2)
+        {
+            return Multiply(value2, value1);
         }
 
         /// <summary>

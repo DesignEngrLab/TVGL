@@ -5,6 +5,7 @@ using TVGL;
 using System.IO;
 using TVGL.IOFunctions;
 using Snapshooter.Xunit;
+using Snapshooter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -34,6 +35,7 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
+                var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
                 if (solid.Errors != null)
@@ -45,7 +47,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 Presenter.ShowAndHang(solid);
                 var silhouette = TVGL.TwoDimensional.Silhouette.Run(solid, new Vector3(1, 1, 1));
                 Presenter.ShowAndHang(silhouette);
-                Snapshot.Match(silhouette);
+                Snapshot.Match(silhouette, SnapshotNameExtension.Create(name));
             }
         }
 

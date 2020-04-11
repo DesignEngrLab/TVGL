@@ -422,7 +422,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 TransformNormal(Vector3 normal, Matrix4x4 matrix)
+        public static Vector3 TransformNoTranslate(Vector3 normal, Matrix4x4 matrix)
         {
             return new Vector3(
                 normal.X * matrix.M11 + normal.Y * matrix.M21 + normal.Z * matrix.M31,
@@ -561,6 +561,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
 
-        #endregion Public operator methods
+        #endregion 
     }
 }

@@ -108,6 +108,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             0, 0, 0);
 
         /// <summary>
+        /// Returns a null matrix, which means all values are set to Not-A-Number.
+        /// </summary>
+        public static Matrix4x4 Null
+        {
+            get
+            {
+                return new Matrix4x4(
+                    double.NaN, double.NaN, double.NaN,
+                    double.NaN, double.NaN, double.NaN,
+                    double.NaN, double.NaN, double.NaN,
+                    double.NaN, double.NaN, double.NaN);
+            }
+        }
+        /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
         public bool IsIdentity()
@@ -1552,6 +1566,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public static Matrix4x4 Multiply(Matrix4x4 value1, double value2) => value1 * value2;
 
         /// <summary>
+        /// Multiplies a matrix by a scalar value.
+        /// </summary>
+        /// <param name="value1">The source matrix.</param>
+        /// <param name="value2">The scaling factor.</param>
+        /// <returns>The scaled matrix.</returns>
+        public static Matrix4x4 Multiply(double value1, Matrix4x4 value2) => value2 * value1;
+
+        /// <summary>
         /// Returns a new matrix with the negated elements of the given matrix.
         /// </summary>
         /// <param name="value">The source matrix.</param>
@@ -1778,6 +1800,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The source matrix.</param>
         /// <param name="value2">The scaling factor.</param>
         /// <returns>The scaled matrix.</returns>
+        public static Matrix4x4 operator *(double value1, Matrix4x4 value2)
+        { return value2 * value1; }
         public static Matrix4x4 operator *(Matrix4x4 value1, double value2)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)

@@ -17,7 +17,7 @@ namespace TVGL.TwoDimensional
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static Vector2[] SliceAtLine(this List<List<Vector2>> shape, Vector2 lineNormalDirection, double distanceAlongDirection,
+        public static Vector2[] SliceAtLine(this IEnumerable<IEnumerable<Vector2>> shape, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
@@ -26,7 +26,7 @@ namespace TVGL.TwoDimensional
                 offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
         }
 
-        public static Vector2[] SliceAtLine(this List<ShallowPolygonTree> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
+        public static Vector2[] SliceAtLine(this IEnumerable<ShallowPolygonTree> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {

@@ -99,7 +99,7 @@ namespace TVGL.TwoDimensional
             {
                 if (double.IsNaN(_verticalSlope))
                     _verticalSlope = Vector.Y / Vector.X;
-                return _length;
+                return _verticalSlope;
             }
         }
         double _verticalSlope = double.NaN;
@@ -114,7 +114,7 @@ namespace TVGL.TwoDimensional
             {
                 if (double.IsNaN(_horizontalSlope))
                     _horizontalSlope = Vector.X / Vector.Y;
-                return _length;
+                return _horizontalSlope;
             }
         }
         double _horizontalSlope = double.NaN;

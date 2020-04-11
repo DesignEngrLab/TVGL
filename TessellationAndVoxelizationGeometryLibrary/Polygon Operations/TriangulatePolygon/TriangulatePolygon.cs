@@ -47,7 +47,7 @@ namespace TVGL.TwoDimensional
             {
                 var polygonTriangles = new List<Vertex[]>();
                 foreach (var triangle in polygonTriangleIndices)
-                    polygonTriangles.Add(new[] { int2VertexDict[triangle[0]], 
+                    polygonTriangles.Add(new[] { int2VertexDict[triangle[0]],
                         int2VertexDict[triangle[1]], int2VertexDict[triangle[2]] });
                 result.Add(polygonTriangles);
             }
@@ -143,8 +143,8 @@ namespace TVGL.TwoDimensional
                             nodes.Add(new Node(coordinates.Transform(randRotMatrix), pointCount++, loopsCount));
                         for (int i = 1; i < nodes.Count; i++)
                         {
-                            var fromNode = nodes[i];
-                            var toNode = nodes[i + 1];
+                            var fromNode = nodes[i - 1];
+                            var toNode = nodes[i];
                             var polySegment = new PolygonSegment(fromNode, toNode);
                             fromNode.StartLine = polySegment;
                             toNode.EndLine = polySegment;
@@ -364,10 +364,10 @@ namespace TVGL.TwoDimensional
                         foreach (var node in orderedLoop)
                         {
                             if (node.Type == NodeType.DownwardReflex) downwardReflexCount++;
-                            if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
-                            if (node.Type == NodeType.Peak) peakCount++;
-                            if (node.Type == NodeType.Root) rootCount++;
-                            if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
+                            else if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
+                            else if (node.Type == NodeType.Peak) peakCount++;
+                            else if (node.Type == NodeType.Root) rootCount++;
+                            else if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
                         }
                         if (isPositive[loopI]) //If a positive loop, the following conditions must be balanced
                         {

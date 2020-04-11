@@ -43,7 +43,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Y = y;
         }
 
-        internal bool IsNull()
+        /// <summary>Determines whether this instance is null.</summary>
+        /// <returns>
+        ///   <c>true</c> if this instance is null; otherwise, <c>false</c>.</returns>
+        public bool IsNull()
         {
             return double.IsNaN(X) || double.IsNaN(Y);
         }

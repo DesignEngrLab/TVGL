@@ -28,6 +28,9 @@ namespace TVGL.Numerics
         public static Vector2 Transform(this Vector2 position, Matrix3x3 matrix)
         { return Vector2.Transform(position, matrix); }
 
+        public static Vector2 TransformNoTranslate(this Vector2 normal, Matrix3x3 matrix)
+        { return Vector2.TransformNoTranslate(normal, matrix); }
+
         public static Vector2 Transform(this Vector2 position, Matrix4x4 matrix)
         { return Vector2.Transform(position, matrix); }
 
@@ -104,8 +107,8 @@ namespace TVGL.Numerics
         public static Vector3 Transform(this Vector3 position, Matrix3x3 matrix)
         { return Vector3.Transform(position, matrix); }
 
-        public static Vector3 TransformNormal(this Vector3 normal, Matrix4x4 matrix)
-        { return Vector3.TransformNormal(normal, matrix); }
+        public static Vector3 TransformNoTranslate(this Vector3 normal, Matrix4x4 matrix)
+        { return Vector3.TransformNoTranslate(normal, matrix); }
 
         public static Vector3 Transform(this Vector3 value, Quaternion rotation)
         { return Vector3.Transform(value, rotation); }
@@ -139,14 +142,39 @@ namespace TVGL.Numerics
         { return Vector3.Dot(vector1, vector2); }
         #endregion
 
-        #region Matrix3x3 and Matrix4x4
-
+        #region Matrix3x3, Matrix4x4, Quaternion, and Plane
         public static Matrix3x3 Transpose(this Matrix3x3 matrix)
         { return Matrix3x3.Transpose(matrix); }
 
-
         public static Matrix4x4 Transpose(this Matrix4x4 matrix)
         { return Matrix4x4.Transpose(matrix); }
+        public static bool Decompose(this Matrix4x4 matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation)
+        { return Matrix4x4.Decompose(matrix, out scale, out rotation, out translation); }
+        public static Matrix4x4 Transform(this Matrix4x4 value, Quaternion rotation)
+        { return Matrix4x4.Transform(value, rotation); }
+        public static Quaternion Normalize(this Quaternion value)
+        { return Quaternion.Normalize(value); }
+        public static Quaternion Conjugate(this Quaternion value)
+        { return Quaternion.Conjugate(value); }
+
+        public static Quaternion Inverse(this Quaternion value)
+        { return Quaternion.Inverse(value); }
+        public static double Dot(this Quaternion quaternion1, Quaternion quaternion2)
+        { return Quaternion.Dot(quaternion1, quaternion2); }
+        public static Quaternion Concatenate(this Quaternion quaternion1, Quaternion quaternion2)
+        { return Quaternion.Concatenate(quaternion1, quaternion2); }
+
+        public static Plane Normalize(this Plane value)
+        { return Plane.Normalize(value); }
+        public static Plane Transform(this Plane plane, Matrix4x4 matrix)
+        { return Plane.Transform(plane, matrix); }
+        public static Plane Transform(this Plane plane, Quaternion rotation)
+        { return Plane.Transform(plane, rotation); }
+
+        public static double DotCoordinate(this Plane plane, Vector3 value)
+        { return Plane.DotCoordinate(plane, value); }
+        public static double DotNormal(this Plane plane, Vector3 value)
+        { return Plane.DotNormal(plane, value); }
 
         #endregion
 

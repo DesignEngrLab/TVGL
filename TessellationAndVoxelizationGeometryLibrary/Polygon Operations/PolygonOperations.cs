@@ -485,17 +485,13 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="paths"></param>
         /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Vector2>> paths)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<IEnumerable<Vector2>> paths)
         {
             return ShallowPolygonTree.GetShallowPolygonTrees(paths);
         }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<Polygon> paths)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<Polygon> paths)
         {
             return ShallowPolygonTree.GetShallowPolygonTrees(paths);
-        }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<List<Vector2>> paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths.Select(p => new Polygon(p)).ToList());
         }
 
         #region Clockwise / CounterClockwise Ordering

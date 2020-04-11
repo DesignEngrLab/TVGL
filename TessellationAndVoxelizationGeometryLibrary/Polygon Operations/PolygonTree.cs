@@ -82,7 +82,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygons"></param>
         /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<Polygon> polygons)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<Polygon> polygons)
         {
             //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
             //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
@@ -155,7 +155,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="paths"></param>
         /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Vector2>> paths)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<IEnumerable<Vector2>> paths)
         {
             return GetShallowPolygonTrees(paths.Select(path => new Polygon(path)).ToList());
         }
