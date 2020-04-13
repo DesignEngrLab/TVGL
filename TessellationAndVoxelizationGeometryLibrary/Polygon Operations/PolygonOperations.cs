@@ -106,7 +106,19 @@ namespace TVGL.TwoDimensional
             return area / 2;
         }
 
-
+        /// <summary>
+        /// Gets the Shallow Polygon Trees for a given set of paths. 
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <returns></returns>
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths)
+        {
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
+        }
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(this IEnumerable<Polygon> paths)
+        {
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
+        }
 
 
         #region Line Intersections with Polygon
