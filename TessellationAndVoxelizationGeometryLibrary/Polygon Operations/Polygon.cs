@@ -71,16 +71,6 @@ namespace TVGL.TwoDimensional
         List<PolygonSegment> _lines;
 
         /// <summary>
-        /// A list of the polygons inside this polygon.
-        /// </summary>
-        public List<Polygon> Children;
-
-        /// <summary>
-        /// The polygon that this polygon is inside of.
-        /// </summary>
-        public Polygon Parent;
-
-        /// <summary>
         /// The index of this child in its parent's child list.
         /// </summary>
         public int Index { get; set; }
@@ -110,10 +100,6 @@ namespace TVGL.TwoDimensional
             else SetToCCWPositive();
         }
 
-        /// <summary>
-        /// Gets the length of the polygon.
-        /// </summary>
-        public double Length;
 
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
@@ -154,9 +140,9 @@ namespace TVGL.TwoDimensional
             MinX = double.MaxValue;
             MaxY = double.MinValue;
             MinY = double.MaxValue;
-            for (var i = 0; i < Path.Count; i++)
+            for (var i = 0; i < _path.Count; i++)
             {
-                var point = Path[i];
+                var point = _path[i];
                 if (point.X > MaxX) MaxX = point.X;
                 if (point.X < MinX) MinX = point.X;
                 if (point.Y > MaxY) MaxY = point.Y;
@@ -164,8 +150,6 @@ namespace TVGL.TwoDimensional
                 //point.Lines = new List<Line>(); //erase any previous connection to lines.
             }
             Index = index;
-            Parent = null;
-            Children = new List<Polygon>();
         }
 
         public Polygon(List<Node> points, List<PolygonSegment> lines, int index = -1)
@@ -212,11 +196,6 @@ namespace TVGL.TwoDimensional
             var n = lines.Count;
             for (var i = 0; i < n; i++)
                 _lines[i] = lines[n - i - 1].Reverse();
-        }
-
-        private double CalculateArea()
-        {
-            return Path.Area();
         }
 
 

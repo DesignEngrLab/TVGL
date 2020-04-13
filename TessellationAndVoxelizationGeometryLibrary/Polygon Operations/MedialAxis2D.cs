@@ -29,7 +29,7 @@ namespace TVGL.TwoDimensional
             foreach (var positivePolygon in silhouette.Where(p => p.Area() > 0))
             {
                 var perimeter = positivePolygon.Perimeter();
-                var sampled = PolygonOperations.SampleWithEdgeLength(positivePolygon, perimeter / 600);
+                var sampled = PolygonOperations.Simplify(positivePolygon);
                 var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * perimeter).First();
 
                 //Delaunay Medial Axis             

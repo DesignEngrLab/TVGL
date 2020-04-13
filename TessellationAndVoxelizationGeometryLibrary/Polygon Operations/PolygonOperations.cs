@@ -1,6 +1,7 @@
 ﻿using ClipperLib;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -531,185 +532,265 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Simplify
-        public static List<List<Vector2>> SimplifyFuzzy(IEnumerable<IEnumerable<Vector2>> paths, double lengthTolerance = Constants.LineLengthMinimum,
-            double slopeTolerance = Constants.LineSlopeTolerance)
+        public static List<List<Vector2>> Simplify(IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.BaseTolerance)
         {
-            return paths.Select(p => SimplifyFuzzy(p, lengthTolerance, slopeTolerance)).ToList();
+            return paths.Select(p => Simplify(p, allowableChangeInAreaFraction)).ToList();
         }
 
         /// <summary>
         /// Simplifies the lines on a polygon to use fewer points when possible.
         /// </summary>
         /// <param name="path"></param>
-        /// <param name="lengthTolerance"></param>
-        /// <param name="slopeTolerance"></param>
         /// <returns></returns>
-        public static List<Vector2> SimplifyFuzzy(IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
-            double slopeTolerance = Constants.LineSlopeTolerance)
+        public static List<Vector2> Simplify(IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.BaseTolerance)
         {
-            var squareLengthTolerance = lengthTolerance * lengthTolerance;
-            var simplePath = new List<Vector2>(path);
-            var originalArea = simplePath.Area();
-            var n = simplePath.Count;
+            var polygon = path.ToArray();
+            var numPoints = polygon.Length;
+            var origArea = Math.Abs(polygon.Area()); //will this solve the problems with negative polygons?
+            var deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
+            // that happens when we change cross-product to area of a triangle
+            #region build initial list of cross products
+            var crossProductToCornerDict = new Dictionary<double, HashSet<int>>();
+            var crossProductsArray = new double[numPoints];
+            var sortedPositiveCrossList = new SortedList<double, int>();
+            var sortedNegativeCrossList = new SortedList<double, int>(new ReverseSort());
+            AddCrossProductToOneOfTheLists(polygon[^1], polygon[0], polygon[1], crossProductToCornerDict,
+                crossProductsArray, 0, sortedPositiveCrossList, sortedNegativeCrossList);
+            for (int i = 1; i < numPoints - 1; i++)
+                AddCrossProductToOneOfTheLists(polygon[i - 1], polygon[i], polygon[i + 1], crossProductToCornerDict,
+                crossProductsArray, i, sortedPositiveCrossList, sortedNegativeCrossList);
+            AddCrossProductToOneOfTheLists(polygon[numPoints - 2], polygon[numPoints - 1], polygon[0], crossProductToCornerDict,
+                crossProductsArray, numPoints - 1, sortedPositiveCrossList, sortedNegativeCrossList);
+            #endregion
 
-            //Remove negligible length lines and combine collinear lines.
-            var i = 0;
-            var j = 1;
-            var k = 2;
-            var iX = simplePath[i].X;
-            var iY = simplePath[i].Y;
-            var jX = simplePath[j].X;
-            var jY = simplePath[j].Y;
-            var kX = simplePath[k].X;
-            var kY = simplePath[k].Y;
-            while (i < n)
+            #region first we remove any convex corners that would reduce the area
+            var smallestArea = sortedPositiveCrossList.Keys[0];
+            var numberWithSameCross = sortedPositiveCrossList.Values[0];
+            while (deltaArea >= smallestArea)
             {
-                //The simplification is destroying this polygon. Do not simplify it.
-                if (n < 4) return simplePath;
-
-                //We only check line I-J in the first iteration, since later we
-                //check line J-K instead.
-                if (i == 0 && NegligibleLine(iX, iY, jX, jY, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    //Current stays the same.
-                    //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                else if (NegligibleLine(jX, jY, kX, kY, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(k);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    //Current and Next stay the same.
-                    //k moves forward but has the same index.
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                //Use an even looser tolerance to determine if slopes are equal.
-                else if (LineSlopesEqual(iX, iY, jX, jY, kX, kY, slopeTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-
-                    //Current stays the same.
-                    //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
+                var lastPass = false;
+                List<int> indicesToRemove = null;
+                if (numberWithSameCross * smallestArea >= deltaArea)
+                {  // there are more corners here than we need to hit the budget from deltaArea
+                    lastPass = true;
+                    numberWithSameCross = (int)(deltaArea / smallestArea);
+                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea].Take(numberWithSameCross));
                 }
                 else
-                {
-                    //Everything moves forward
-                    i++;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    iX = jX;
-                    iY = jY;
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
+                {  //the budget in deltaArea is bigger
+                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea]);
+                    deltaArea -= numberWithSameCross * smallestArea;
+                    sortedPositiveCrossList.RemoveAt(0);
                 }
+                foreach (var index in indicesToRemove)
+                {
+                    polygon[index] = Vector2.Null;
+                    int nextIndex = FindValidNeighborIndex(index, true, polygon);
+                    RemoveFromDictionary(nextIndex, crossProductToCornerDict, crossProductsArray);
+                    int nextnextIndex = FindValidNeighborIndex(nextIndex, true, polygon);
+                    int prevIndex = FindValidNeighborIndex(index, false, polygon);
+                    RemoveFromDictionary(prevIndex, crossProductToCornerDict, crossProductsArray);
+                    int prevprevIndex = FindValidNeighborIndex(prevIndex, false, polygon);
+                    AddCrossProductToOneOfTheLists(polygon[prevIndex], polygon[nextIndex], polygon[nextnextIndex], crossProductToCornerDict,
+                        crossProductsArray, nextIndex, sortedPositiveCrossList, sortedNegativeCrossList);
+                    AddCrossProductToOneOfTheLists(polygon[prevprevIndex], polygon[prevIndex], polygon[nextIndex], crossProductToCornerDict,
+                        crossProductsArray, prevIndex, sortedPositiveCrossList, sortedNegativeCrossList);
+                }
+                if (lastPass) break;
+                smallestArea = sortedPositiveCrossList.Keys[0];
+                numberWithSameCross = sortedPositiveCrossList.Values[0];
             }
+            #endregion
 
-            var area2 = simplePath.Area();
-
-            //If the simplification destroys a polygon, do not simplify it.
-            if (area2.IsNegligible() ||
-                !originalArea.IsPracticallySame(area2, Math.Abs(originalArea * (1 - Constants.HighConfidence))))
+            #region second we remove any concave corners that would increase the area
+            deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
+            smallestArea = sortedNegativeCrossList.Keys[0];
+            numberWithSameCross = sortedNegativeCrossList.Values[0];
+            while (deltaArea >= -smallestArea)
             {
-                return (List<Vector2>)path;
+                var lastPass = false;
+                List<int> indicesToRemove = null;
+                if (numberWithSameCross * -smallestArea >= deltaArea)
+                {  // there are more corners here than we need to hit the budget from deltaArea
+                    lastPass = true;
+                    numberWithSameCross = (int)(deltaArea / -smallestArea);
+                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea].Take(numberWithSameCross));
+                }
+                else
+                {  //the budget in deltaArea is bigger
+                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea]);
+                    deltaArea += numberWithSameCross * smallestArea;
+                    sortedNegativeCrossList.RemoveAt(0);
+                }
+                foreach (var index in indicesToRemove)
+                {
+                    polygon[index] = Vector2.Null;
+                    int nextIndex = FindValidNeighborIndex(index, true, polygon);
+                    RemoveFromDictionary(nextIndex, crossProductToCornerDict, crossProductsArray);
+                    int nextnextIndex = FindValidNeighborIndex(nextIndex, true, polygon);
+                    int prevIndex = FindValidNeighborIndex(index, false, polygon);
+                    RemoveFromDictionary(prevIndex, crossProductToCornerDict, crossProductsArray);
+                    int prevprevIndex = FindValidNeighborIndex(prevIndex, false, polygon);
+                    AddCrossProductToOneOfTheLists(polygon[prevIndex], polygon[nextIndex], polygon[nextnextIndex], crossProductToCornerDict,
+                        crossProductsArray, nextIndex, sortedPositiveCrossList, sortedNegativeCrossList);
+                    AddCrossProductToOneOfTheLists(polygon[prevprevIndex], polygon[prevIndex], polygon[nextIndex], crossProductToCornerDict,
+                        crossProductsArray, prevIndex, sortedPositiveCrossList, sortedNegativeCrossList);
+                }
+                if (lastPass) break;
+                smallestArea = sortedPositiveCrossList.Keys[0];
+                numberWithSameCross = sortedPositiveCrossList.Values[0];
             }
-
-            return simplePath;
+            #endregion
+            return polygon.Where(v => !v.IsNull()).ToList();
         }
 
         /// <summary>
         /// Simplifies the lines on a polygon to use fewer points when possible.
         /// </summary>
         /// <param name="path"></param>
-        /// <param name="edgeLength"></param>
         /// <returns></returns>
-        public static List<Vector2> SampleWithEdgeLength(IList<Vector2> path, double edgeLength)
+        public static List<List<Vector2>> Simplify(IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
         {
-            //ToDo: Speed this up to be like SimplifyFuzzy
-            var lengthTolerance = edgeLength / 2;
-            var squareLengthTolerance = lengthTolerance * lengthTolerance;
-
-            var newPath = new List<Vector2>();
-            var simplePath = new List<Vector2>(path);
-            for (var i = 0; i < simplePath.Count; i++)
+            var polygons = path.Select(p => p.ToArray()).ToArray();
+            var numPoints = polygons.Sum(p => p.Length);
+            var numToRemove = numPoints - targetNumberOfPoints;
+            #region build initial list of cross products
+            var crossProductToCornerDict = new Dictionary<double, HashSet<int>>();
+            var crossProductsArray = new double[numPoints];
+            var sortedPositiveCrossList = new SortedList<double, int>();
+            foreach (var polygon in polygons)
             {
-                var j = i + 1;
-                if (i == simplePath.Count - 1) j = 0;
-                var k = j + 1;
-                if (j == simplePath.Count - 1) k = 0;
-                var current = simplePath[i];
-                var next = simplePath[j];
-                var nextNext = simplePath[k];
-                var length = current.Distance(next);
-                if (length > edgeLength)
+                AddCrossProductToLists(polygon[^1], polygon[0], polygon[1], crossProductToCornerDict,
+                    crossProductsArray, 0, sortedPositiveCrossList);
+                for (int i = 1; i < numPoints - 1; i++)
+                    AddCrossProductToLists(polygon[i - 1], polygon[i], polygon[i + 1], crossProductToCornerDict,
+                    crossProductsArray, i, sortedPositiveCrossList);
+                AddCrossProductToLists(polygon[numPoints - 2], polygon[numPoints - 1], polygon[0], crossProductToCornerDict,
+                    crossProductsArray, numPoints - 1, sortedPositiveCrossList);
+            }
+            #endregion
+            var smallestArea = sortedPositiveCrossList.Keys[0];
+            var numberWithSameCross = sortedPositiveCrossList.Values[0];
+            while (numToRemove > 0)
+            {
+                List<int> indicesToRemove = null;
+                if (numberWithSameCross >= numToRemove)
+                {  // there are more corners here than we need to hit the budget from deltaArea
+                    numToRemove = 0;
+                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea].Take(numToRemove));
+                }
+                else
+                {  //the budget in deltaArea is bigger
+                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea]);
+                    numToRemove -= numberWithSameCross;
+                    sortedPositiveCrossList.RemoveAt(0);
+                }
+                indicesToRemove = indicesToRemove.OrderByDescending(x => x).ToList();
+                foreach (var index in indicesToRemove)
                 {
-                    var n = (int)(length / edgeLength);
-                    var vector = (next - current).Normalize() * edgeLength;
-                    newPath.Add(current);
-                    for (var p = 0; p < n; p++)
+                    var cornerIndex = index;
+                    var polygonIndex = 0;
+                    while (cornerIndex >= polygons[polygonIndex].Length) cornerIndex -= polygons[polygonIndex].Length;
+                    polygons[polygonIndex][cornerIndex] = Vector2.Null;
+                    int nextIndex = FindValidNeighborIndex(cornerIndex, true, polygons[polygonIndex]);
+                    RemoveFromDictionary(nextIndex, crossProductToCornerDict, crossProductsArray);
+                    int nextnextIndex = FindValidNeighborIndex(nextIndex, true, polygons[polygonIndex]);
+                    int prevIndex = FindValidNeighborIndex(cornerIndex, false, polygons[polygonIndex]);
+                    RemoveFromDictionary(prevIndex, crossProductToCornerDict, crossProductsArray);
+                    int prevprevIndex = FindValidNeighborIndex(prevIndex, false, polygons[polygonIndex]);
+                    if (nextnextIndex==prevIndex||nextIndex==prevprevIndex) // then reduced to two points.
                     {
-                        current = new Vector2(current.X + vector.X, current.Y + vector.Y);
-                        newPath.Add(current);
+                        polygons[polygonIndex][nextIndex] = Vector2.Null;
+                        polygons[polygonIndex][nextnextIndex] = Vector2.Null;
+                        numToRemove -= 2;
                     }
+                    AddCrossProductToLists(polygons[polygonIndex][prevIndex], polygons[polygonIndex][nextIndex], polygons[polygonIndex][nextnextIndex], crossProductToCornerDict,
+                        crossProductsArray, nextIndex, sortedPositiveCrossList);
+                    AddCrossProductToLists(polygons[polygonIndex][prevprevIndex], polygons[polygonIndex][prevIndex], polygons[polygonIndex][nextIndex], crossProductToCornerDict,
+                        crossProductsArray, prevIndex, sortedPositiveCrossList);
                 }
-                else if (i == 0 && NegligibleLine(current.X, current.Y, next.X, next.Y, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    i--;
-                    continue;
-                }
-                else if (NegligibleLine(next.X, next.Y, nextNext.X, nextNext.Y, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(k);
-                    i--;
-                    continue;
-                }
-                else
-                {
-                    newPath.Add(current);
-                }
+                smallestArea = sortedPositiveCrossList.Keys[0];
+                numberWithSameCross = sortedPositiveCrossList.Values[0];
             }
-            return newPath;
+            var result = new List<List<Vector2>>();
+            foreach (var polygon in polygons)
+            {
+                var resultPolygon = new List<Vector2>();
+                foreach (var corner in polygon)
+                    if (!corner.IsNull()) resultPolygon.Add(corner);
+                if (resultPolygon.Count > 0)
+                    result.Add(resultPolygon);
+            }
+            return result;
         }
 
-
-
-
-        private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
+        private static void RemoveFromDictionary(int index, Dictionary<double, HashSet<int>> crossProductToCornerDict, double[] crossProductsArray)
         {
-            var dX = p1X - p2X;
-            var dY = p1Y - p2Y;
-            return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
+            var nextCrossValue = crossProductsArray[index];
+            var indicesWithSameCrossProduct = crossProductToCornerDict[nextCrossValue];
+            if (indicesWithSameCrossProduct.Count == 1) crossProductToCornerDict.Remove(nextCrossValue);
+            else indicesWithSameCrossProduct.Remove(index);
         }
 
-        private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y,
-            double tolerance = Constants.LineSlopeTolerance)
+        private static int FindValidNeighborIndex(int index, bool forward, Vector2[] polygon)
         {
-            if (tolerance.IsNegligible()) tolerance = Constants.LineSlopeTolerance;
-            var value = (p1Y - p2Y) * (p2X - p3X) - (p1X - p2X) * (p2Y - p3Y);
-            return value.IsNegligible(tolerance);
+            int increment = forward ? 1 : -1;
+            do
+            {
+                index += increment;
+                if (index < 0) index = polygon.Length - 1;
+                else if (index == polygon.Length) index = 0;
+            }
+            while (!polygon[index].IsNull());
+            return index;
+        }
+
+        private class ReverseSort : IComparer<double>
+        {
+            public int Compare(double x, double y)
+            {
+                if (x == y) return 0;
+                if (x < y) return 1;
+                return -1;
+            }
+        }
+
+        private static void AddCrossProductToOneOfTheLists(Vector2 fromPoint, Vector2 currentPoint,
+            Vector2 nextPoint, Dictionary<double, HashSet<int>> crossProductToCornerDict,
+            double[] crossProductsList, int index, SortedList<double, int> sortedPositiveCrosses,
+            SortedList<double, int> sortedNegativeCrosses)
+        {
+            var cross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
+            if (crossProductToCornerDict.ContainsKey(cross))
+            {
+                crossProductToCornerDict[cross].Add(index);
+                if (cross < 0) sortedNegativeCrosses[cross]++;
+                else sortedPositiveCrosses[cross]++;
+            }
+            else
+            {
+                crossProductToCornerDict.Add(cross, new HashSet<int> { index });
+                if (cross < 0) sortedNegativeCrosses.Add(cross, 1);
+                else sortedPositiveCrosses.Add(cross, 1);
+            }
+            crossProductsList[index] = cross;
+        }
+        private static void AddCrossProductToLists(Vector2 fromPoint, Vector2 currentPoint,
+            Vector2 nextPoint, Dictionary<double, HashSet<int>> crossProductToCornerDict,
+            double[] crossProductsList, int index, SortedList<double, int> sortedCrosses)
+        {
+            var cross = Math.Abs((currentPoint - fromPoint).Cross(nextPoint - currentPoint));
+            if (crossProductToCornerDict.ContainsKey(cross))
+            {
+                crossProductToCornerDict[cross].Add(index);
+                sortedCrosses[cross]++;
+            }
+            else
+            {
+                crossProductToCornerDict.Add(cross, new HashSet<int> { index });
+                sortedCrosses.Add(cross, 1);
+            }
+            crossProductsList[index] = cross;
         }
         #endregion
 
@@ -828,7 +909,7 @@ namespace TVGL.TwoDimensional
 
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject =
-                paths.Select(loop => loop.Select(point => 
+                paths.Select(loop => loop.Select(point =>
                 new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler))
                 .ToList()).ToList();
 
@@ -1103,15 +1184,15 @@ namespace TVGL.TwoDimensional
                 PolygonFillType.EvenOdd => PolyFillType.pftEvenOdd,
                 _ => throw new NotImplementedException(),
             };
-            
+
             if (simplifyPriorToBooleanOperation)
             {
-                subject = subject.Select(path => SimplifyFuzzy(path));
+                subject = subject.Select(path => Simplify(path));
             }
             if (simplifyPriorToBooleanOperation)
             {
                 //If not null
-                clip = clip?.Select(path => SimplifyFuzzy(path));
+                clip = clip?.Select(path => Simplify(path));
             }
 
             if (!subject.Any())
@@ -1135,7 +1216,7 @@ namespace TVGL.TwoDimensional
             var subjectIntLoops = new List<List<IntPoint>>();
             foreach (var loop in subject)
             {
-                var intLoop = loop.Select(point 
+                var intLoop = loop.Select(point
                     => new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler)).ToList();
                 if (intLoop.Count > 2) subjectIntLoops.Add(intLoop);
             }
@@ -1146,7 +1227,7 @@ namespace TVGL.TwoDimensional
                 var clipIntLoops = new List<List<IntPoint>>();
                 foreach (var loop in clip)
                 {
-                    var intLoop = loop.Select(point 
+                    var intLoop = loop.Select(point
                         => new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler)).ToList();
                     if (intLoop.Count > 2) clipIntLoops.Add(intLoop);
                 }
@@ -1159,7 +1240,7 @@ namespace TVGL.TwoDimensional
             if (!result) throw new Exception("Clipper Union Failed");
 
             //Convert back to points
-            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point 
+            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point
                 => new Vector2(point.X * Constants.IntPointToDoubleMultipler, point.Y * Constants.IntPointToDoubleMultipler))
             .ToList()).ToList();
             return solution;

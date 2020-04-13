@@ -69,11 +69,6 @@ namespace TVGL.TwoDimensional
             {
                 throw new Exception("The inner polygons must be negative");
             }
-            foreach (var negativePolygon in negativePolygons)
-            {
-                negativePolygon.Parent = OuterPolygon;
-                OuterPolygon.Children.Add(negativePolygon);
-            }
             InnerPolygons = new List<Polygon>(negativePolygons);
         }
 
@@ -125,8 +120,6 @@ namespace TVGL.TwoDimensional
                         shallowTree.OuterPolygon.IsPolygonIntersectingPolygon(negativePolygon))
                     {
                         shallowTree.InnerPolygons.Add(negativePolygon);
-                        negativePolygon.Parent = shallowTree.OuterPolygon;
-                        shallowTree.OuterPolygon.Children.Add(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
                         isInside = true;
                         break;
