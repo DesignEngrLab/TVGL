@@ -307,9 +307,9 @@ namespace TVGL
             LastIndex = Layer2D.Keys.Last();
         }
 
-        static IEnumerable<double> ConvertToDoublesArray(List<Vector2> coordinates)
+        static IEnumerable<double> ConvertToDoublesArray(IEnumerable<Vector2> coordinates)
         {
-            return coordinates.SelectMany(p => new[] { p.X, p.Y });
+            return coordinates.SelectMany(p => p.Position);
         }
 
         [OnDeserialized]

@@ -41,7 +41,7 @@ namespace TVGL
         ///     (doesn't care about multiple points on a line and fewer rounding functions)
         ///     and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
-        public static BoundingCircle MinimumCircle(IList<Vector2> points)
+        public static BoundingCircle MinimumCircle(this IEnumerable<Vector2> points)
         {
             #region Algorithm 1
 
@@ -107,11 +107,12 @@ namespace TVGL
             //I tried using the extremes (X, Y, and also tried Sum, Diff) to do a first pass at the circle
             //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
             //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
-            var circle = new InternalCircle(points[0], points[points.Count / 2]);
+            var pointList = (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList();
+            var circle = new InternalCircle(pointList[0], pointList[pointList.Count / 2]);
             var dummyPoint = new Vector2(double.NaN, double.NaN);
             var stallCounter = 0;
             var successful = false;
-            var stallLimit = points.Count * 1.5;
+            var stallLimit = pointList.Count * 1.5;
             if (stallLimit < 100) stallLimit = 100;
             var centerX = circle.CenterX;
             var centerY = circle.CenterY;
@@ -131,7 +132,7 @@ namespace TVGL
                 //Find the furthest point from the center point
                 var maxDistancePlusTolerance = sqRadiusPlusTolerance;
                 var nextPointIsSet = false;
-                foreach (var point in points)
+                foreach (var point in pointList)
                 {
                     var dx = centerX - point.X;
                     var dy = centerY - point.Y;
@@ -340,27 +341,6 @@ namespace TVGL
             return new BoundingCircle(shortestDistance, centerPoint);
         }
 
-        /// <summary>
-        ///     Takes a set of elements and a metric for comparing them pairwise, and returns the median of the elements.
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <returns>Point.</returns>
-        public static Vector2 Median(List<Vector2> points)
-        {
-            return points[0];
-        }
-
-        /// <summary>
-        ///     Takes a set of points and a line, and determines which side of the line the center of the MEC of  the points lies
-        ///     on.
-        /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="line">The line.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool MEC_Center(List<Vector2> points, Vector2 line)
-        {
-            return false;
-        }
 
         /// <summary>
         ///     Gets the minimum bounding cylinder using 13 guesses for the depth direction

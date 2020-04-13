@@ -56,7 +56,7 @@ namespace TVGL
         }
 
 
-        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
+        public static List<PolygonalFace> ReturnFacesFromLoops(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
             double basePlaneDistance, double extrusionHeight)
         {
             List<List<int[]>> triangleIndices;

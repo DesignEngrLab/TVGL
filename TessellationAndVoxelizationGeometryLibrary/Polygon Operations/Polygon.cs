@@ -80,16 +80,14 @@ namespace TVGL.TwoDimensional
         /// </summary>
         public bool IsPositive
         {
-            get { return !(Area < 0); }
+            get { return Area >= 0; }
             set
             {
-                if (value == true)
-                {
-                    SetToCCWPositive();
-                }
+                if (value) SetToCCWPositive();
                 else SetToCWNegative();
             }
         }
+
 
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
@@ -104,27 +102,76 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
-        public double Area;
+        public double Area
+        {
+            get
+            {
+                if (double.IsNaN(area))
+                    area = Path.Area();
+                return area;
+            }
+        }
+
+        private double area = double.NaN;
 
         /// <summary>
         /// Maxiumum X value
         /// </summary>
-        public double MaxX;
+        public double MaxX
+        {
+            get
+            {
+                if (double.IsInfinity(maxX))
+                    SetBounds();
+                return maxX;
+            }
+        }
+
+        private double maxX = double.NegativeInfinity;
 
         /// <summary>
         /// Miniumum X value
         /// </summary>
-        public double MinX;
+        public double MinX
+        {
+            get
+            {
+                if (double.IsInfinity(minX))
+                    SetBounds();
+                return minX;
+            }
+        }
+
+        private double minX = double.PositiveInfinity;
 
         /// <summary>
         /// Maxiumum Y value
         /// </summary>
-        public double MaxY;
+        public double MaxY
+        {
+            get
+            {
+                if (double.IsInfinity(maxY))
+                    SetBounds();
+                return maxY;
+            }
+        }
+
+        private double maxY = double.NegativeInfinity;
 
         /// <summary>
         /// Minimum Y value
         /// </summary>
-        public double MinY;
+        private double minY = double.PositiveInfinity;
+        public double MinY
+        {
+            get
+            {
+                if (double.IsInfinity(minY))
+                    SetBounds();
+                return minY;
+            }
+        }
 
         /// <summary>
         /// Polygon Constructor. Assumes path is closed and not self-intersecting.
@@ -135,20 +182,6 @@ namespace TVGL.TwoDimensional
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
             _path = coordinates.ToList();
-            //set index in path
-            MaxX = double.MinValue;
-            MinX = double.MaxValue;
-            MaxY = double.MinValue;
-            MinY = double.MaxValue;
-            for (var i = 0; i < _path.Count; i++)
-            {
-                var point = _path[i];
-                if (point.X > MaxX) MaxX = point.X;
-                if (point.X < MinX) MinX = point.X;
-                if (point.Y > MaxY) MaxY = point.Y;
-                if (point.Y < MinY) MinY = point.Y;
-                //point.Lines = new List<Line>(); //erase any previous connection to lines.
-            }
             Index = index;
         }
 
@@ -169,7 +202,7 @@ namespace TVGL.TwoDimensional
 
             //It is negative. Reverse the path and path lines.
             Path.Reverse();
-            Area = -Area;
+            area = -area;
 
             //Only reverse the lines if they have been generated
             if (_lines == null) return;
@@ -187,7 +220,7 @@ namespace TVGL.TwoDimensional
 
             //It is positive. Reverse the path and path lines.
             Path.Reverse();
-            Area = -Area;
+            area = -area;
 
             //Only reverse the lines if they have been generated
             if (_lines == null) return;
@@ -214,6 +247,30 @@ namespace TVGL.TwoDimensional
                 firstLine = secondLine;
             }
             return true;
+        }
+
+        private void SetBounds()
+        {
+            if (_path != null)
+            {
+                foreach (var point in _path)
+                {
+                    if (point.X > MaxX) maxX = point.X;
+                    if (point.X < MinX) minX = point.X;
+                    if (point.Y > MaxY) maxY = point.Y;
+                    if (point.Y < MinY) minY = point.Y;
+                }
+            }
+            else
+            {
+                foreach (var point in _points)
+                {
+                    if (point.X > MaxX) maxX = point.X;
+                    if (point.X < MinX) minX = point.X;
+                    if (point.Y > MaxY) maxY = point.Y;
+                    if (point.Y < MinY) minY = point.Y;
+                }
+            }
         }
     }
 }

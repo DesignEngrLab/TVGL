@@ -218,8 +218,9 @@ namespace TVGL.TwoDimensional
         /// <param name="dimensions"></param>
         /// <param name="confidencePercentage"></param>
         /// <returns></returns>
-        public static bool IsRectangular(List<Vector2> polygon, out Vector2 dimensions, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsRectangular(this IEnumerable<Vector2> polygon, out Vector2 dimensions, double confidencePercentage = Constants.HighConfidence)
         {
+            var polygonAsList = (polygon is IList<Vector2>) ? (IList<Vector2>)polygon : polygon.ToList();
             if (confidencePercentage > 1.0 || Math.Sign(confidencePercentage) < 0)
                 throw new Exception("Confidence percentage must be between 0 and 1");
             var tolerancePercentage = 1.0 - confidencePercentage;
@@ -228,8 +229,8 @@ namespace TVGL.TwoDimensional
             //If true, then check the polygon area vs. its minBoundingRectangle area. 
             //The area / perimeter check is not strictly necessary, but can provide some speed-up
             //For obviously not rectangular pieces
-            var perimeter = polygon.Perimeter();
-            var area = polygon.Area();
+            var perimeter = polygonAsList.Perimeter();
+            var area = polygonAsList.Area();
             var sqrRootTerm = Math.Sqrt(perimeter * perimeter - 16 * area);
             var length = 0.25 * (perimeter + sqrRootTerm);
             var width = 0.25 * (perimeter - sqrRootTerm);
@@ -242,21 +243,18 @@ namespace TVGL.TwoDimensional
                 return false;
             }
 
-            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon);
+            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygonAsList);
             return area.IsPracticallySame(minBoundingRectangle.Area, area * tolerancePercentage);
         }
 
-        public static bool IsCircular(List<Vector2> polygon, double confidencePercentage = Constants.HighConfidence)
-        {
-            return IsCircular(new Polygon(polygon), out var _, confidencePercentage);
-        }
 
-        public static bool IsCircular(Polygon polygon, double confidencePercentage = Constants.HighConfidence)
-        {
-            return IsCircular(polygon, out var _, confidencePercentage);
-        }
-
-        public static bool IsCircular(Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        /// <summary>Determines whether the specified polygon is circular.</summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="minCircle">The minimum circle.</param>
+        /// <param name="confidencePercentage">The confidence percentage.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
+        public static bool IsCircular(this Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
             minCircle = MinimumEnclosure.MinimumCircle(polygon.Path.ToList());
@@ -265,36 +263,6 @@ namespace TVGL.TwoDimensional
             var polygonArea = Math.Abs(polygon.Area);
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
-
-        /// <summary>
-        /// Gets the length of a path
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public static double Length(IList<Vector2> path)
-        {
-            if (path.Count < 2) return 0.0;
-            var editPath = new List<Vector2>(path) { path.First() };
-            var length = 0.0;
-            for (var i = 0; i < editPath.Count - 1; i++)
-            {
-                var p1 = editPath[i];
-                var p2 = editPath[i + 1];
-                length += p1.Distance(p2);
-            }
-            return length;
-        }
-
-        /// <summary>
-        /// Gets the length of a path
-        /// </summary>
-        /// <param name="paths"></param>
-        /// <returns></returns>
-        public static double Length(IList<List<Vector2>> paths)
-        {
-            return paths.Sum(path => Length(path));
-        }
-
 
         /// <summary>
         ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
@@ -481,19 +449,6 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-        /// <summary>
-        /// Gets the Shallow Polygon Trees for a given set of paths. 
-        /// </summary>
-        /// <param name="paths"></param>
-        /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<IEnumerable<Vector2>> paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
-        }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<Polygon> paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
-        }
 
         #region Clockwise / CounterClockwise Ordering
 
@@ -507,7 +462,7 @@ namespace TVGL.TwoDimensional
         /// 2. the last point is not repeated.
         /// 3. the polygon is simple (does not intersect itself or have holes)
         /// </assumptions>
-        public static List<Vector2> CCWPositive(IList<Vector2> p)
+        private static List<Vector2> CCWPositive(IList<Vector2> p)
         {
             var polygon = new List<Vector2>(p);
             var area = p.Area();
@@ -521,7 +476,7 @@ namespace TVGL.TwoDimensional
         /// <param name="p"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public static List<Vector2> CWNegative(IList<Vector2> p)
+        private static List<Vector2> CWNegative(IList<Vector2> p)
         {
             var polygon = new List<Vector2>(p);
             var area = p.Area();
@@ -532,7 +487,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Simplify
-        public static List<List<Vector2>> Simplify(IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.BaseTolerance)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.BaseTolerance)
         {
             return paths.Select(p => Simplify(p, allowableChangeInAreaFraction)).ToList();
         }
@@ -542,7 +497,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> Simplify(IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.BaseTolerance)
+        public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.BaseTolerance)
         {
             var polygon = path.ToArray();
             var numPoints = polygon.Length;
@@ -649,7 +604,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> Simplify(IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
         {
             var polygons = path.Select(p => p.ToArray()).ToArray();
             var numPoints = polygons.Sum(p => p.Length);
@@ -698,7 +653,7 @@ namespace TVGL.TwoDimensional
                     int prevIndex = FindValidNeighborIndex(cornerIndex, false, polygons[polygonIndex]);
                     RemoveFromDictionary(prevIndex, crossProductToCornerDict, crossProductsArray);
                     int prevprevIndex = FindValidNeighborIndex(prevIndex, false, polygons[polygonIndex]);
-                    if (nextnextIndex==prevIndex||nextIndex==prevprevIndex) // then reduced to two points.
+                    if (nextnextIndex == prevIndex || nextIndex == prevprevIndex) // then reduced to two points.
                     {
                         polygons[polygonIndex][nextIndex] = Vector2.Null;
                         polygons[polygonIndex][nextnextIndex] = Vector2.Null;
@@ -803,16 +758,12 @@ namespace TVGL.TwoDimensional
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> OffsetRound(IEnumerable<Vector2> path, double offset,
+        public static List<List<Vector2>> OffsetRound(this IEnumerable<Vector2> path, double offset,
             double minLength = 0.0)
         {
-            return Offset(new List<List<Vector2>> { path.ToList() }, offset, JoinType.jtRound, minLength);
+            return Offset(new List<IEnumerable<Vector2>> { path }, offset, JoinType.jtRound, minLength);
         }
-        public static List<List<Vector2>> OffsetRound(List<Vector2> path, double offset,
-            double minLength = 0.0)
-        {
-            return Offset(new List<List<Vector2>> { path }, offset, JoinType.jtRound, minLength);
-        }
+
 
         /// <summary>
         /// Offsets all paths by the given offset value. Rounds the corners.
@@ -823,13 +774,8 @@ namespace TVGL.TwoDimensional
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static IList<IList<Vector2>> OffsetRound(IEnumerable<IEnumerable<Vector2>> paths, double offset,
+        public static List<List<Vector2>> OffsetRound(this IEnumerable<IEnumerable<Vector2>> paths, double offset,
             double minLength = 0.0)
-        {
-            var listPaths = paths.Select(path => path.ToList()).ToList();
-            return (IList<IList<Vector2>>)Offset(listPaths, offset, JoinType.jtRound, minLength);
-        }
-        public static List<List<Vector2>> OffsetRound(List<List<Vector2>> paths, double offset, double minLength = 0.0)
         {
             return Offset(paths, offset, JoinType.jtRound, minLength);
         }
@@ -842,13 +788,9 @@ namespace TVGL.TwoDimensional
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> OffsetMiter(IEnumerable<Vector2> path, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetMiter(this IEnumerable<Vector2> path, double offset, double minLength = 0.0)
         {
-            return Offset(new List<List<Vector2>> { path.ToList() }, offset, JoinType.jtMiter, minLength);
-        }
-        public static List<List<Vector2>> OffsetMiter(List<Vector2> path, double offset, double minLength = 0.0)
-        {
-            return Offset(new List<List<Vector2>> { path }, offset, JoinType.jtMiter, minLength);
+            return Offset(new List<IEnumerable<Vector2>> { path }, offset, JoinType.jtMiter, minLength);
         }
 
         /// <summary>
@@ -860,12 +802,7 @@ namespace TVGL.TwoDimensional
         /// <param name="minLength"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> OffsetMiter(IEnumerable<IEnumerable<Vector2>> paths, double offset, double minLength = 0.0)
-        {
-            var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.jtMiter, minLength);
-        }
-        public static List<List<Vector2>> OffsetMiter(List<List<Vector2>> paths, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetMiter(this IEnumerable<IEnumerable<Vector2>> paths, double offset, double minLength = 0.0)
         {
             return Offset(paths, offset, JoinType.jtMiter, minLength);
         }
@@ -878,9 +815,9 @@ namespace TVGL.TwoDimensional
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> OffsetSquare(List<Vector2> path, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetSquare(this IEnumerable<Vector2> path, double offset, double minLength = 0.0)
         {
-            return Offset(new List<List<Vector2>> { path.ToList() }, offset, JoinType.jtSquare, minLength);
+            return Offset(new List<IEnumerable<Vector2>> { path }, offset, JoinType.jtSquare, minLength);
         }
 
         /// <summary>
@@ -892,29 +829,26 @@ namespace TVGL.TwoDimensional
         /// <param name="minLength"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> OffsetSquare(List<List<Vector2>> paths, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetSquare(this IEnumerable<IEnumerable<Vector2>> paths, double offset, double minLength = 0.0)
         {
-            var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.jtSquare, minLength);
+            return Offset(paths, offset, JoinType.jtSquare, minLength);
         }
 
-        private static List<List<Vector2>> Offset(List<List<Vector2>> paths, double offset, JoinType joinType,
+        private static List<List<Vector2>> Offset(IEnumerable<IEnumerable<Vector2>> paths, double offset, JoinType joinType,
             double minLength = 0.0)
         {
-            if (minLength.IsNegligible())
-            {
-                var totalLength = paths.Sum(loop => Length(loop));
-                minLength = totalLength * 0.001;
-            }
-
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject =
                 paths.Select(loop => loop.Select(point =>
                 new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler))
                 .ToList()).ToList();
-
+           if (minLength.IsNegligible())
+            {
+                var totalLength = clipperSubject.Sum(Perimeter);
+                minLength = totalLength * 0.001;
+            }
             //Setup Clipper
-            var clip = new ClipperOffset(2, minLength * Constants.DoubleToIntPointMultipler);
+            var clip = new ClipperOffset(2, minLength );
             clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
@@ -922,16 +856,28 @@ namespace TVGL.TwoDimensional
             clip.Execute(clipperSolution, offset * Constants.DoubleToIntPointMultipler);
 
             //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point
+            return clipperSolution.Select(clipperPath => clipperPath.Select(point
                 => new Vector2(point.X * Constants.IntPointToDoubleMultipler, point.Y * Constants.IntPointToDoubleMultipler)).ToList()).ToList();
-            return solution;
         }
-        private static List<List<Vector2>> Offset(IEnumerable<List<Vector2>> polygons, double offset, JoinType joinType,
-            double minLength = 0.0)
+
+        private static double Perimeter(this List<IntPoint> polygon)
         {
-            return Offset(polygons.ToList(), offset, joinType, minLength)
-                .Select(path => new List<Vector2>(path)).ToList();
+            var value1 = polygon[^1];
+            var value2 = polygon[0];
+            var dx = value1.X - value2.X;
+            var dy = value1.Y - value2.Y;
+            double perimeter =Math.Sqrt(dx * dx + dy * dy);
+            for (var i = 1; i < polygon.Count; i++)
+            {
+                 value1 = polygon[i-1];
+                 value2 = polygon[i];
+                 dx = value1.X - value2.X;
+                 dy = value1.Y - value2.Y;
+                 perimeter += Math.Sqrt(dx * dx + dy * dy);
+            }
+            return perimeter;
         }
+
         #endregion
 
         #region Boolean Operations
@@ -947,7 +893,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(IEnumerable<IEnumerable<Vector2>> subject, bool simplifyPriorToUnion = true,
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, bool simplifyPriorToUnion = true,
             PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, (IEnumerable<List<Vector2>>)subject, null, simplifyPriorToUnion);
@@ -963,7 +909,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
@@ -978,7 +924,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, new[] { subject }, new[] { clip }, simplifyPriorToUnion);
         }
@@ -992,7 +938,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, new[] { clip }, simplifyPriorToUnion);
         }
@@ -1009,7 +955,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
+        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
             bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
@@ -1024,7 +970,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Difference(new[] { subject }, new[] { clip }, simplifyPriorToDifference, polyFill);
         }
@@ -1038,7 +984,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Difference(subject, new[] { clip }, simplifyPriorToDifference, polyFill);
         }
@@ -1052,7 +998,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clip,
+        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clip,
             bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Difference(new[] { subject }, clip, simplifyPriorToDifference, polyFill);
@@ -1068,7 +1014,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Intersection(new[] { subject }, new[] { clip }, simplifyPriorToIntersection, polyFill);
         }
@@ -1081,7 +1027,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Intersection(subjects, new[] { clip }, simplifyPriorToIntersection, polyFill);
         }
@@ -1094,7 +1040,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Intersection(new[] { subject }, clips, simplifyPriorToIntersection, polyFill);
         }
@@ -1107,7 +1053,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
         }
@@ -1123,7 +1069,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
+        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
             bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
@@ -1137,7 +1083,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Xor(new[] { subject }, new[] { clip }, simplifyPriorToXor, polyFill);
         }
@@ -1150,7 +1096,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip,
+        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip,
             bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Xor(subjects, new[] { clip }, simplifyPriorToXor, polyFill);
@@ -1164,7 +1110,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToXor = true,
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToXor = true,
             PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Xor(new[] { subject }, clips, simplifyPriorToXor, polyFill);

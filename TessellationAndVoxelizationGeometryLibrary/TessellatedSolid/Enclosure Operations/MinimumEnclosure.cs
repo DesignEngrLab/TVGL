@@ -45,7 +45,7 @@ namespace TVGL
         /// <param name="setCornerPoints"></param>
         /// <param name="setPointsOnSide"></param>
         /// <returns>BoundingRectangle.</returns>
-        public static BoundingRectangle BoundingRectangle(List<Vector2> polygon, bool pointsAreConvexHull = false,
+        public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> polygon, bool pointsAreConvexHull = false,
             bool setCornerPoints = true, bool setPointsOnSide = true)
         {
             return RotatingCalipers2DMethod(polygon, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
@@ -265,12 +265,14 @@ namespace TVGL
         /// <exception cref="Exception">
         ///     Area should never be negligible unless data is messed up.
         /// </exception>
-        private static BoundingRectangle RotatingCalipers2DMethod(IList<Vector2> points,
+        private static BoundingRectangle RotatingCalipers2DMethod(IEnumerable<Vector2> points,
             bool pointsAreConvexHull = false, bool setCornerPoints = true,
             bool setPointsOnSide = true)
         {
-            if (points.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
-            var cvxPoints = pointsAreConvexHull ? points : ConvexHull2D(points).ToList();
+            var cvxPoints = pointsAreConvexHull 
+                ? (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList() 
+                : ConvexHull2D(points).ToList();
+            if (cvxPoints.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
 
             //Simplify the points to make sure they are the minimal convex hull
             //Only set it as the convex hull if it contains more than three points.
