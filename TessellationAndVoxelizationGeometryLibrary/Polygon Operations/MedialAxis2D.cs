@@ -7,14 +7,14 @@ using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
-    public static class MedialAxis2D
+    public static partial class PolygonOperations
     {
         /// <summary>
         /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes. 
         /// Best way to show is using "Presenter.ShowAndHang(silhouette, medialAxis, "", Plot2DType.Line, false);"
         /// </summary>
         /// <param name="silhouette"></param>
-        public static List<List<Vector2>> Run(IEnumerable<List<Vector2>> silhouette)
+        public static List<List<Vector2>> Create2DMedialAxis(this IEnumerable<IEnumerable<Vector2>> silhouette)
         {
             //To Get the 2D Medial Axis:
             //The first four steps create a medial axis and the next three steps sort the axis lines into branches

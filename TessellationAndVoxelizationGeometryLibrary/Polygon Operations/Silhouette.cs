@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> Slow(IList<PolygonalFace> faces, Vector3 normal, double minAngle = 0.1,
+        internal static List<List<Vector2>> Slow(IList<PolygonalFace> faces, Vector3 normal, double minAngle = 0.1,
             double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180);
@@ -76,10 +76,10 @@ namespace TVGL.TwoDimensional
         /// <param name="normal"></param>
         /// <param name="minAngle"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> Run(TessellatedSolid ts, Vector3 normal, double minAngle = 0.1)
+        public static List<List<Vector2>> CreateSilhouette(this TessellatedSolid ts, Vector3 normal, double minAngle = 0.1)
         {
             var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out _, out _);
-            return Run(ts.Faces, normal, ts, minAngle, ts.SameTolerance, depthOfPart);
+            return CreateSilhouette(ts.Faces, normal, ts, minAngle, ts.SameTolerance, depthOfPart);
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace TVGL.TwoDimensional
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param> 
         /// <returns></returns>
-        public static List<List<Vector2>> Run(IList<PolygonalFace> faces, Vector3 normal, TessellatedSolid originalSolid, double minAngle = 0.1,
+        public static List<List<Vector2>> CreateSilhouette(IList<PolygonalFace> faces, Vector3 normal, TessellatedSolid originalSolid, double minAngle = 0.1,
         double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             //Get the positive faces into a dictionary

@@ -1,3 +1,4 @@
+using BenchmarkDotNet.Running;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,8 +20,15 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            var tVGL3Dto2DTests = new TVGL3Dto2DTests();
-            tVGL3Dto2DTests.BoxSilhouette();
+            //var tVGL3Dto2DTests = new TVGL3Dto2DTests();
+            //tVGL3Dto2DTests.BoxSilhouette();
+
+            PolygonOperationsTesting.TestSimplify();
+
+            //BenchmarkRunner.Run<PolygonOperationsTesting> ();
+            //var po =new PolygonOperations();
+            //po.Perimeter(4, 10);
+            //Console.WriteLine(summary);
         }
     }
 }

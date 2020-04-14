@@ -144,7 +144,7 @@ namespace TVGL
         }
 
 
-        public static Vector3 GetPerpendicularDirection(Vector3 direction)
+        internal static Vector3 GetPerpendicularDirection(Vector3 direction)
         {
             //If any of the normal terms (X, Y, or Z) are zero, then that will be direction 2
             if (direction.X.IsNegligible())
@@ -181,7 +181,6 @@ namespace TVGL
         /// <returns></returns>
         public static double Perimeter(IList<Vertex> polygon3D)
         {
-
             double perimeter = Vector3.Distance(polygon3D.Last().Coordinates, polygon3D[0].Coordinates);
             for (var i = 1; i < polygon3D.Count; i++)
                 perimeter += Vector3.Distance(polygon3D[i - 1].Coordinates, polygon3D[i].Coordinates);
@@ -1425,7 +1424,7 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnFaceFromIntersectingLine(PolygonalFace face, Vector3 point1, Vector3 point2)
+        public static Vector3 PointOnFaceFromIntersectingLine(this PolygonalFace face, Vector3 point1, Vector3 point2)
         {
             var positions = face.Vertices.Select(vertex => vertex.Coordinates).ToList();
             return PointOnFaceFromIntersectingLine(positions, face.Normal, point1, point2);
@@ -1609,7 +1608,7 @@ namespace TVGL
         /// <param name="signedDistance">The signed distance.</param>
         /// 
         /// <returns>Vertex.</returns>
-        public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vertex vertex, Vector3 direction,
+        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vertex vertex, Vector3 direction,
             out double signedDistance)
         {
             return PointOnTriangleFromLine(face, vertex.Coordinates, direction, out signedDistance);
@@ -1646,7 +1645,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vector3 point3D, CartesianDirections direction,
+        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vector3 point3D, CartesianDirections direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             Vector3 newPoint;

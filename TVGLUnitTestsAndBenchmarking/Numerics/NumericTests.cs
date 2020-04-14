@@ -13,13 +13,13 @@ namespace TVGLUnitTestsAndBenchmarking
         public void Vector2Length()
         {
             var vectLength5 = new Vector2(3, 4);
-            Assert.Equal(5, vectLength5.Length());
+            Assert.Equal(5, vectLength5.Length(), 10);
         }
 
         [Fact]
         public void Cross2test1()
         {
-            Assert.Equal(1, Vector2.UnitX.Cross(Vector2.UnitY));
+            Assert.Equal(1, Vector2.UnitX.Cross(Vector2.UnitY), 10);
         }
 
         [Fact]
@@ -32,10 +32,9 @@ namespace TVGLUnitTestsAndBenchmarking
         [Fact]
         public void Normalize2()
         {
-            var r = new Random();
             var v1 = new Vector2(r100, r100);
             var v2 = v1.Normalize();
-            Assert.Equal(1, v2.Length());
+            Assert.Equal(v2.Length(), 1.0, 10);
         }
         [Fact]
         public void Matrix3Invert()
@@ -53,10 +52,10 @@ namespace TVGLUnitTestsAndBenchmarking
                     v2 = v1.Transform(m);
                 }
                 while (!Matrix3x3.Invert(m, out mInv));
-                Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-11));
-            }
+                Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
         }
-
-
     }
+
+
+}
 }

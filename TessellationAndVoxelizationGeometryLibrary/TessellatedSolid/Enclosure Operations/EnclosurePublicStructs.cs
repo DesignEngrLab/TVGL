@@ -181,7 +181,7 @@ namespace TVGL
             get
             {
                 if (_tessellatedSolid == null)
-                    _tessellatedSolid = Extrude.FromLoops(new [] { Corners.Take(4).ToArray() },
+                    _tessellatedSolid = Extrude.ExtrusionSolidFrom3DLoops(new [] { Corners.Take(4).ToArray() },
                         Directions[2], Dimensions[2]);
                 return _tessellatedSolid;
             }

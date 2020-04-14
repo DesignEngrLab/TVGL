@@ -17,92 +17,69 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Gets the perimeter for a 2D set of points.
         /// </summary>
-        /// <param name="polygon"></param>
-        /// <returns></returns>
-        public static double Perimeter(this IList<Vector2> polygon)
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static double Perimeter(this IEnumerable<IEnumerable<Vector2>> paths)
         {
-            double perimeter = Vector2.Distance(polygon[^1], polygon[0]);
-            for (var i = 1; i < polygon.Count; i++)
-                perimeter += Vector2.Distance(polygon[i - 1], polygon[i]);
+            return paths.Sum(path => path.Perimeter());
+        }
+        /// <summary>
+        /// Gets the perimeter for a 2D set of points.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static double Perimeter(this IEnumerable<Vector2> polygon)
+        {
+            var perimeter = 0.0;
+            var firstpass = true;
+            var firstPoint = Vector2.Null;
+            var prevPoint = Vector2.Null;
+            foreach (var currentPt in polygon)
+            {
+                if (firstpass)
+                {
+                    firstpass = false;
+                    firstPoint = prevPoint = currentPt;
+                }
+                else
+                {
+                    perimeter += Vector2.Distance(prevPoint, currentPt);
+                    prevPoint = currentPt;
+                }
+            }
+            perimeter += Vector2.Distance(prevPoint, firstPoint);
+
             return perimeter;
         }
 
+
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
         /// </summary>
-        public static double Area(this IList<List<Vector2>> paths)
+        public static double Area(this IEnumerable<IEnumerable<Vector2>> paths)
         {
-            return paths.Sum(path => Area(path));
+            return paths.Sum(path => path.Area());
         }
 
 
         /// <summary>
-        ///     Calculate the area of any non-intersecting polygon.
+        /// Gets the area for a 2D set of points defining a polygon.
         /// </summary>
-        /// <param name="polygon"></param>
+        /// <param name="polygon">The polygon.</param>
         /// <returns>System.Double.</returns>
-        /// <reference>
-        ///     Method 1: http://www.mathopenref.com/coordpolygonarea2.html
-        ///     Faster Method: http://geomalgorithms.com/a01-_area.html.
-        ///     The faster method has been optimized for speed, since it is called often.
-        /// </reference>
-        public static double Area(this IList<Vector2> polygon)
+        public static double Area(this IEnumerable<Vector2> polygon)
         {
-            //If less than three points, it is a line and has zero area.
-            if (polygon.Count < 3) return 0.0;
-            #region Method 1
-
-            //Method 1
-            //var area = 0.0;
-            //var j = polygon.Count - 1; //Previous to the first vertex
-            //for (var i = 0; i < polygon.Count; i++)
-            //{
-            //    area += (polygon[j].X + polygon[i].X) * (polygon[j].Y - polygon[i].Y);
-            //    j = i; //Previous to i
-            //}
-            //area = -area / 2;
-
-            #endregion
-
-            //Also check if all x are the same. The algorithm will catch all y's and output zero,
-            //But it may output a small number, even if all the x's are the same
-            var n = polygon.Count;
-            var p0 = polygon[0];
-            var xval = p0.X;
-
-            //Optimized version reduces get functions from arrays and point.X and point.Y
-            // j == i - 1;
-            // k == i + 1
             var area = 0.0;
-            var p1 = polygon[1];
-            var jY = p0.Y;
-            var iX = p1.X;
-            var iY = p1.Y;
-            var returnZero = true;
-            for (var i = 1; i < n - 1; i++)
+            var enumerator = polygon.GetEnumerator();
+            enumerator.MoveNext();
+            var basePoint = enumerator.Current;
+            enumerator.MoveNext();
+            var prevPoint = enumerator.Current;
+            foreach (var currentPt in polygon)
             {
-                var kPoint = polygon[i + 1]; //Thus i < n - 1
-                var kX = kPoint.X;
-                var kY = kPoint.Y;
-                area += iX * (kY - jY);
-
-                if (returnZero && !iX.IsPracticallySame(xval))
-                {
-                    returnZero = false;
-                }
-
-                //Update values
-                jY = iY; //move j to i
-                iY = kY; //move i to k
-                iX = kX;
+                area += (prevPoint - basePoint).Cross(currentPt - basePoint);
+                prevPoint = currentPt;
             }
-            //Final wrap around terms (Note: this is faster than checking an if condition in the for locations).
-            var pN = polygon[n - 1];
-            area += p0.X * (p1.Y - pN.Y);
-            area += pN.X * (p0.Y - polygon[n - 2].Y);
-            //If all x's were the same, we still need to check the last point, since i doesn't do it in the locations.
-            if (returnZero && pN.X.IsPracticallySame(xval)) return 0.0;
-
             return area / 2;
         }
 
@@ -232,7 +209,6 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         public static bool IsRectangular(this IEnumerable<Vector2> polygon, out Vector2 dimensions, double confidencePercentage = Constants.HighConfidence)
         {
-            var polygonAsList = (polygon is IList<Vector2>) ? (IList<Vector2>)polygon : polygon.ToList();
             if (confidencePercentage > 1.0 || Math.Sign(confidencePercentage) < 0)
                 throw new Exception("Confidence percentage must be between 0 and 1");
             var tolerancePercentage = 1.0 - confidencePercentage;
@@ -241,8 +217,8 @@ namespace TVGL.TwoDimensional
             //If true, then check the polygon area vs. its minBoundingRectangle area. 
             //The area / perimeter check is not strictly necessary, but can provide some speed-up
             //For obviously not rectangular pieces
-            var perimeter = polygonAsList.Perimeter();
-            var area = polygonAsList.Area();
+            var perimeter = polygon.Perimeter();
+            var area = polygon.Area();
             var sqrRootTerm = Math.Sqrt(perimeter * perimeter - 16 * area);
             var length = 0.25 * (perimeter + sqrRootTerm);
             var width = 0.25 * (perimeter - sqrRootTerm);
@@ -255,7 +231,7 @@ namespace TVGL.TwoDimensional
                 return false;
             }
 
-            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygonAsList);
+            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon);
             return area.IsPracticallySame(minBoundingRectangle.Area, area * tolerancePercentage);
         }
 
@@ -474,7 +450,7 @@ namespace TVGL.TwoDimensional
         /// 2. the last point is not repeated.
         /// 3. the polygon is simple (does not intersect itself or have holes)
         /// </assumptions>
-        private static List<Vector2> CCWPositive(IList<Vector2> p)
+        private static List<Vector2> CCWPositive(IEnumerable<Vector2> p)
         {
             var polygon = new List<Vector2>(p);
             var area = p.Area();
@@ -488,7 +464,7 @@ namespace TVGL.TwoDimensional
         /// <param name="p"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        private static List<Vector2> CWNegative(IList<Vector2> p)
+        private static List<Vector2> CWNegative(IEnumerable<Vector2> p)
         {
             var polygon = new List<Vector2>(p);
             var area = p.Area();
@@ -499,7 +475,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Simplify
-        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.BaseTolerance)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
             return paths.Select(p => Simplify(p, allowableChangeInAreaFraction)).ToList();
         }
@@ -509,7 +485,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.BaseTolerance)
+        public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
             var polygon = path.ToArray();
             var numPoints = polygon.Length;
@@ -531,26 +507,23 @@ namespace TVGL.TwoDimensional
             #endregion
 
             #region first we remove any convex corners that would reduce the area
-            var smallestArea = sortedPositiveCrossList.Keys[0];
-            var numberWithSameCross = sortedPositiveCrossList.Values[0];
+            PopNextSmallestArea(sortedPositiveCrossList, crossProductToCornerDict, out double smallestArea, out int numberWithSameCross);
+            //var smallestArea = sortedPositiveCrossList.Keys[0];
+            //var numberWithSameCross = sortedPositiveCrossList.Values[0];
             while (deltaArea >= smallestArea)
             {
-                var lastPass = false;
-                List<int> indicesToRemove = null;
+                IEnumerable<int> indicesToRemove = null;
                 if (numberWithSameCross * smallestArea >= deltaArea)
                 {  // there are more corners here than we need to hit the budget from deltaArea
-                    lastPass = true;
                     numberWithSameCross = (int)(deltaArea / smallestArea);
-                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea].Take(numberWithSameCross));
+                    indicesToRemove = crossProductToCornerDict[smallestArea].Take(numberWithSameCross);
                 }
-                else
-                {  //the budget in deltaArea is bigger
-                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea]);
-                    deltaArea -= numberWithSameCross * smallestArea;
-                    sortedPositiveCrossList.RemoveAt(0);
-                }
+                else  //the budget in deltaArea is bigger
+                    indicesToRemove = crossProductToCornerDict[smallestArea];
+                deltaArea -= numberWithSameCross * smallestArea;
                 foreach (var index in indicesToRemove)
                 {
+                    RemoveFromDictionary(index, crossProductToCornerDict, crossProductsArray);
                     polygon[index] = Vector2.Null;
                     int nextIndex = FindValidNeighborIndex(index, true, polygon);
                     RemoveFromDictionary(nextIndex, crossProductToCornerDict, crossProductsArray);
@@ -563,34 +536,27 @@ namespace TVGL.TwoDimensional
                     AddCrossProductToOneOfTheLists(polygon[prevprevIndex], polygon[prevIndex], polygon[nextIndex], crossProductToCornerDict,
                         crossProductsArray, prevIndex, sortedPositiveCrossList, sortedNegativeCrossList);
                 }
-                if (lastPass) break;
-                smallestArea = sortedPositiveCrossList.Keys[0];
-                numberWithSameCross = sortedPositiveCrossList.Values[0];
+                PopNextSmallestArea(sortedPositiveCrossList, crossProductToCornerDict, out  smallestArea, out  numberWithSameCross);
             }
             #endregion
 
             #region second we remove any concave corners that would increase the area
             deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
-            smallestArea = sortedNegativeCrossList.Keys[0];
-            numberWithSameCross = sortedNegativeCrossList.Values[0];
+            PopNextSmallestArea(sortedNegativeCrossList, crossProductToCornerDict, out  smallestArea, out  numberWithSameCross);
             while (deltaArea >= -smallestArea)
             {
-                var lastPass = false;
-                List<int> indicesToRemove = null;
+                IEnumerable<int> indicesToRemove = null;
                 if (numberWithSameCross * -smallestArea >= deltaArea)
                 {  // there are more corners here than we need to hit the budget from deltaArea
-                    lastPass = true;
                     numberWithSameCross = (int)(deltaArea / -smallestArea);
-                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea].Take(numberWithSameCross));
+                    indicesToRemove = crossProductToCornerDict[smallestArea].Take(numberWithSameCross);
                 }
-                else
-                {  //the budget in deltaArea is bigger
-                    indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea]);
-                    deltaArea += numberWithSameCross * smallestArea;
-                    sortedNegativeCrossList.RemoveAt(0);
-                }
+                else  //the budget in deltaArea is bigger
+                    indicesToRemove = crossProductToCornerDict[smallestArea];
+                deltaArea += numberWithSameCross * smallestArea;
                 foreach (var index in indicesToRemove)
                 {
+                    RemoveFromDictionary(index, crossProductToCornerDict, crossProductsArray);
                     polygon[index] = Vector2.Null;
                     int nextIndex = FindValidNeighborIndex(index, true, polygon);
                     RemoveFromDictionary(nextIndex, crossProductToCornerDict, crossProductsArray);
@@ -603,12 +569,22 @@ namespace TVGL.TwoDimensional
                     AddCrossProductToOneOfTheLists(polygon[prevprevIndex], polygon[prevIndex], polygon[nextIndex], crossProductToCornerDict,
                         crossProductsArray, prevIndex, sortedPositiveCrossList, sortedNegativeCrossList);
                 }
-                if (lastPass) break;
-                smallestArea = sortedPositiveCrossList.Keys[0];
-                numberWithSameCross = sortedPositiveCrossList.Values[0];
+                PopNextSmallestArea(sortedNegativeCrossList, crossProductToCornerDict, out smallestArea, out numberWithSameCross);
             }
             #endregion
             return polygon.Where(v => !v.IsNull()).ToList();
+        }
+
+        private static void PopNextSmallestArea(SortedList<double, int> sortedCrossList, Dictionary<double, HashSet<int>> crossProductToCornerDict,
+            out double smallestArea, out int numberWithSameCross)
+        {
+            smallestArea = sortedCrossList.Keys[0];
+            while (!crossProductToCornerDict.ContainsKey(smallestArea))
+            {
+                sortedCrossList.RemoveAt(0);
+                smallestArea = sortedCrossList.Keys[0];
+            }
+            numberWithSameCross = sortedCrossList.Values[0];
         }
 
         /// <summary>
@@ -693,9 +669,9 @@ namespace TVGL.TwoDimensional
 
         private static void RemoveFromDictionary(int index, Dictionary<double, HashSet<int>> crossProductToCornerDict, double[] crossProductsArray)
         {
-            var nextCrossValue = crossProductsArray[index];
-            var indicesWithSameCrossProduct = crossProductToCornerDict[nextCrossValue];
-            if (indicesWithSameCrossProduct.Count == 1) crossProductToCornerDict.Remove(nextCrossValue);
+            var cross = crossProductsArray[index];
+            var indicesWithSameCrossProduct = crossProductToCornerDict[cross];
+            if (indicesWithSameCrossProduct.Count == 1) crossProductToCornerDict.Remove(cross);
             else indicesWithSameCrossProduct.Remove(index);
         }
 
@@ -708,7 +684,7 @@ namespace TVGL.TwoDimensional
                 if (index < 0) index = polygon.Length - 1;
                 else if (index == polygon.Length) index = 0;
             }
-            while (!polygon[index].IsNull());
+            while (polygon[index].IsNull());
             return index;
         }
 
@@ -854,13 +830,13 @@ namespace TVGL.TwoDimensional
                 paths.Select(loop => loop.Select(point =>
                 new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler))
                 .ToList()).ToList();
-           if (minLength.IsNegligible())
+            if (minLength.IsNegligible())
             {
                 var totalLength = clipperSubject.Sum(Perimeter);
                 minLength = totalLength * 0.001;
             }
             //Setup Clipper
-            var clip = new ClipperOffset(2, minLength );
+            var clip = new ClipperOffset(2, minLength);
             clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
@@ -878,14 +854,14 @@ namespace TVGL.TwoDimensional
             var value2 = polygon[0];
             var dx = value1.X - value2.X;
             var dy = value1.Y - value2.Y;
-            double perimeter =Math.Sqrt(dx * dx + dy * dy);
+            double perimeter = Math.Sqrt(dx * dx + dy * dy);
             for (var i = 1; i < polygon.Count; i++)
             {
-                 value1 = polygon[i-1];
-                 value2 = polygon[i];
-                 dx = value1.X - value2.X;
-                 dy = value1.Y - value2.Y;
-                 perimeter += Math.Sqrt(dx * dx + dy * dy);
+                value1 = polygon[i - 1];
+                value2 = polygon[i];
+                dx = value1.X - value2.X;
+                dy = value1.Y - value2.Y;
+                perimeter += Math.Sqrt(dx * dx + dy * dy);
             }
             return perimeter;
         }

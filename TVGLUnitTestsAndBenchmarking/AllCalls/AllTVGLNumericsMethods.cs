@@ -3,11 +3,11 @@ using TVGL;
 using TVGL.Numerics;
 
 
-namespace TVGLPresenterDX
+namespace TVGLUnitTestsAndBenchmarking
 {
-    internal class AllMethods
+    internal class AllTVGLNumericsMethods
     {
-        private static void TVGLNumericsMethods()
+        private static void Run()
         {
             #region Near Equality Methods
             var x = 1.0;

@@ -21,10 +21,10 @@ namespace TVGL
         /// <param name="extrusionHeight"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static TessellatedSolid ExtrusionSolidFrom3DLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
-            return new TessellatedSolid(ReturnFacesFromLoops(loops, extrudeDirection, extrusionHeight, midPlane), null, false);
+            return new TessellatedSolid(ExtrusionFacesFrom3DLoops(loops, extrudeDirection, extrusionHeight, midPlane), null, false);
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace TVGL
         /// <param name="extrusionHeight"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static List<PolygonalFace> ExtrusionFacesFrom3DLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
             // for consistency with adding the extrusionHeight to the base plane, negate if it comes in negative
@@ -52,11 +52,11 @@ namespace TVGL
             // the basePlaneDistance defines the plane closer to the origin. we can get this from the any input coordinate
             var basePlaneDistance = extrudeDirection.Dot(loops.First().First());
             if (midPlane) basePlaneDistance -= extrusionHeight / 2.0;
-            return ReturnFacesFromLoops(paths, extrudeDirection, basePlaneDistance, extrusionHeight);
+            return ExtrusionFacesFrom2DPolygons(paths, extrudeDirection, basePlaneDistance, extrusionHeight);
         }
 
 
-        public static List<PolygonalFace> ReturnFacesFromLoops(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
+        public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
             double basePlaneDistance, double extrusionHeight)
         {
             List<List<int[]>> triangleIndices;
