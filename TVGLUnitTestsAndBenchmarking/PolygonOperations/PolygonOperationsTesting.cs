@@ -41,9 +41,9 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal static void TestSimplify()
         {
-            var polygon = MakeRandomCircularPolygon(3000, 30, 1);
+            IEnumerable<Vector2> polygon = MakeRandomCircularPolygon(30000, 30, 1);
             Presenter.ShowAndHang(polygon);
-            polygon = polygon.Simplify(new[] { polygon },20);
+            polygon = polygon.Simplify(20)[0];
             Presenter.ShowAndHang(polygon);
         }
 

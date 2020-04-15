@@ -523,6 +523,7 @@ namespace TVGL.TwoDimensional
                 deltaArea -= numberWithSameCross * smallestArea;
                 foreach (var index in indicesToRemove)
                 {
+                    Console.WriteLine(index);
                     RemoveFromDictionary(index, crossProductToCornerDict, crossProductsArray);
                     polygon[index] = Vector2.Null;
                     int nextIndex = FindValidNeighborIndex(index, true, polygon);
@@ -536,13 +537,13 @@ namespace TVGL.TwoDimensional
                     AddCrossProductToOneOfTheLists(polygon[prevprevIndex], polygon[prevIndex], polygon[nextIndex], crossProductToCornerDict,
                         crossProductsArray, prevIndex, sortedPositiveCrossList, sortedNegativeCrossList);
                 }
-                PopNextSmallestArea(sortedPositiveCrossList, crossProductToCornerDict, out  smallestArea, out  numberWithSameCross);
+                PopNextSmallestArea(sortedPositiveCrossList, crossProductToCornerDict, out smallestArea, out numberWithSameCross);
             }
             #endregion
 
             #region second we remove any concave corners that would increase the area
             deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
-            PopNextSmallestArea(sortedNegativeCrossList, crossProductToCornerDict, out  smallestArea, out  numberWithSameCross);
+            PopNextSmallestArea(sortedNegativeCrossList, crossProductToCornerDict, out smallestArea, out numberWithSameCross);
             while (deltaArea >= -smallestArea)
             {
                 IEnumerable<int> indicesToRemove = null;
@@ -578,6 +579,12 @@ namespace TVGL.TwoDimensional
         private static void PopNextSmallestArea(SortedList<double, int> sortedCrossList, Dictionary<double, HashSet<int>> crossProductToCornerDict,
             out double smallestArea, out int numberWithSameCross)
         {
+            if (sortedCrossList.Count == 0)
+            {
+                smallestArea = double.NaN;
+                numberWithSameCross = 0;
+                return;
+            }
             smallestArea = sortedCrossList.Keys[0];
             while (!crossProductToCornerDict.ContainsKey(smallestArea))
             {
@@ -585,6 +592,7 @@ namespace TVGL.TwoDimensional
                 smallestArea = sortedCrossList.Keys[0];
             }
             numberWithSameCross = sortedCrossList.Values[0];
+            sortedCrossList.RemoveAt(0);
         }
 
         /// <summary>
@@ -592,6 +600,9 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
+        public static List<List<Vector2>> Simplify(this IEnumerable<Vector2> path, int targetNumberOfPoints)
+        { return Simplify(new[] { path }, targetNumberOfPoints); }
+
         public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
         {
             var polygons = path.Select(p => p.ToArray()).ToArray();
@@ -600,41 +611,38 @@ namespace TVGL.TwoDimensional
             #region build initial list of cross products
             var crossProductToCornerDict = new Dictionary<double, HashSet<int>>();
             var crossProductsArray = new double[numPoints];
-            var sortedPositiveCrossList = new SortedList<double, int>();
+            var sortedCrosses = new SortedList<double, int>();
             foreach (var polygon in polygons)
             {
                 AddCrossProductToLists(polygon[^1], polygon[0], polygon[1], crossProductToCornerDict,
-                    crossProductsArray, 0, sortedPositiveCrossList);
+                    crossProductsArray, 0, sortedCrosses);
                 for (int i = 1; i < numPoints - 1; i++)
                     AddCrossProductToLists(polygon[i - 1], polygon[i], polygon[i + 1], crossProductToCornerDict,
-                    crossProductsArray, i, sortedPositiveCrossList);
+                    crossProductsArray, i, sortedCrosses);
                 AddCrossProductToLists(polygon[numPoints - 2], polygon[numPoints - 1], polygon[0], crossProductToCornerDict,
-                    crossProductsArray, numPoints - 1, sortedPositiveCrossList);
+                    crossProductsArray, numPoints - 1, sortedCrosses);
             }
             #endregion
-            var smallestArea = sortedPositiveCrossList.Keys[0];
-            var numberWithSameCross = sortedPositiveCrossList.Values[0];
+            PopNextSmallestArea(sortedCrosses, crossProductToCornerDict, out var smallestArea, out var numberWithSameCross);
+            //var smallestArea = sortedPositiveCrossList.Keys[0];
+            //var numberWithSameCross = sortedPositiveCrossList.Values[0];
             while (numToRemove > 0)
             {
                 List<int> indicesToRemove = null;
                 if (numberWithSameCross >= numToRemove)
                 {  // there are more corners here than we need to hit the budget from deltaArea
-                    numToRemove = 0;
                     indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea].Take(numToRemove));
                 }
-                else
-                {  //the budget in deltaArea is bigger
+                else  //the budget in deltaArea is bigger
                     indicesToRemove = new List<int>(crossProductToCornerDict[smallestArea]);
-                    numToRemove -= numberWithSameCross;
-                    sortedPositiveCrossList.RemoveAt(0);
-                }
-                indicesToRemove = indicesToRemove.OrderByDescending(x => x).ToList();
+                numToRemove -= numberWithSameCross;
                 foreach (var index in indicesToRemove)
                 {
                     var cornerIndex = index;
                     var polygonIndex = 0;
                     while (cornerIndex >= polygons[polygonIndex].Length) cornerIndex -= polygons[polygonIndex].Length;
                     polygons[polygonIndex][cornerIndex] = Vector2.Null;
+                    RemoveFromDictionary(index, crossProductToCornerDict, crossProductsArray);
                     int nextIndex = FindValidNeighborIndex(cornerIndex, true, polygons[polygonIndex]);
                     RemoveFromDictionary(nextIndex, crossProductToCornerDict, crossProductsArray);
                     int nextnextIndex = FindValidNeighborIndex(nextIndex, true, polygons[polygonIndex]);
@@ -648,12 +656,11 @@ namespace TVGL.TwoDimensional
                         numToRemove -= 2;
                     }
                     AddCrossProductToLists(polygons[polygonIndex][prevIndex], polygons[polygonIndex][nextIndex], polygons[polygonIndex][nextnextIndex], crossProductToCornerDict,
-                        crossProductsArray, nextIndex, sortedPositiveCrossList);
+                        crossProductsArray, nextIndex, sortedCrosses);
                     AddCrossProductToLists(polygons[polygonIndex][prevprevIndex], polygons[polygonIndex][prevIndex], polygons[polygonIndex][nextIndex], crossProductToCornerDict,
-                        crossProductsArray, prevIndex, sortedPositiveCrossList);
+                        crossProductsArray, prevIndex, sortedCrosses);
                 }
-                smallestArea = sortedPositiveCrossList.Keys[0];
-                numberWithSameCross = sortedPositiveCrossList.Values[0];
+                PopNextSmallestArea(sortedCrosses, crossProductToCornerDict, out smallestArea, out numberWithSameCross);
             }
             var result = new List<List<Vector2>>();
             foreach (var polygon in polygons)
@@ -713,8 +720,18 @@ namespace TVGL.TwoDimensional
             else
             {
                 crossProductToCornerDict.Add(cross, new HashSet<int> { index });
-                if (cross < 0) sortedNegativeCrosses.Add(cross, 1);
-                else sortedPositiveCrosses.Add(cross, 1);
+                try
+                {
+                    if (cross < 0) sortedNegativeCrosses.Add(cross, 1);
+                    else sortedPositiveCrosses.Add(cross, 1);
+                }
+                catch {
+                    //I know, it seems problematic to have a try-catch here, but the reason is that in very
+                    //rare cases, the cross-product will already be in the sorted list, but not in the dictionary
+                    //checked at the begninning of the if-else. in order to 'fix' we'd need to update RemoveFromDictionary
+                    //to update the sorted-list the same time as the dictionary. however, finding and removing from the 
+                    //sortedlist is O(n) and we get rid of the important ones in the front of the list in PopNextSmallestArea.
+                }
             }
             crossProductsList[index] = cross;
         }

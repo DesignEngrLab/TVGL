@@ -6,6 +6,7 @@ using System.IO;
 using TVGL.IOFunctions;
 using Snapshooter.Xunit;
 using Snapshooter;
+using System.Linq;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -29,8 +30,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*");
+            var fileNames = dir.GetFiles("Pump10*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
