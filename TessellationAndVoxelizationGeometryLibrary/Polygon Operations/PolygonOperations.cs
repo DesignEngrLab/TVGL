@@ -724,7 +724,8 @@ namespace TVGL.TwoDimensional
                     if (cross < 0) sortedNegativeCrosses.Add(cross, 1);
                     else sortedPositiveCrosses.Add(cross, 1);
                 }
-                catch {
+                catch
+                {
                     //I know, it seems problematic to have a try-catch here, but the reason is that in very
                     //rare cases, the cross-product will already be in the sorted list, but not in the dictionary
                     //checked at the begninning of the if-else. in order to 'fix' we'd need to update RemoveFromDictionary
@@ -2211,7 +2212,7 @@ namespace TVGL.TwoDimensional
             var mirror = new List<List<Vector2>>();
             var points = shape.SelectMany(path => path).ToList();
 
-            MinimumEnclosure.GetLengthAndExtremePoints(direction2D, points, out var bottomPoints, out _);
+            MinimumEnclosure.GetLengthAndExtremePoints(points, direction2D, out var bottomPoints, out _);
             var distanceFromOriginToClosestPoint = bottomPoints[0].Dot(direction2D);
             foreach (var polygon in shape)
             {

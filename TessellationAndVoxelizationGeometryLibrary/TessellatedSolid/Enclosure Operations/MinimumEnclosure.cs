@@ -56,7 +56,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
+        public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
         {
             return OrientedBoundingBox(ts.ConvexHull.Vertices.Any() ? ts.ConvexHull.Vertices : ts.Vertices);
         }
@@ -66,7 +66,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(IList<Vertex> convexHullVertices)
+        public static BoundingBox OrientedBoundingBox(this IList<Vertex> convexHullVertices)
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
@@ -105,7 +105,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
-        private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices, BoundingBox minOBB)
+        private static BoundingBox Find_via_ChanTan_AABB_Approach(IEnumerable<Vertex> convexHullVertices, BoundingBox minOBB)
         {
             var failedConsecutiveRotations = 0;
             var k = 0;
@@ -139,7 +139,7 @@ namespace TVGL
         /// <param name="bottomVertices">The bottom vertices.</param>
         /// <param name="topVertices">The top vertices.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(Vector3 direction, IEnumerable<Vertex> vertices,
+        public static double GetLengthAndExtremeVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
             out List<Vertex> bottomVertices,
             out List<Vertex> topVertices)
         {
@@ -180,7 +180,7 @@ namespace TVGL
         /// <param name="bottomVertex"></param>
         /// <param name="topVertex"></param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertex(Vector3 direction, IEnumerable<Vertex> vertices,
+        public static double GetLengthAndExtremeVertex(this IEnumerable<Vertex> vertices, Vector3 direction,
             out Vertex bottomVertex,
             out Vertex topVertex)
         {
@@ -215,7 +215,7 @@ namespace TVGL
         /// <param name="bottomPoints">The bottom vertices.</param>
         /// <param name="topPoints">The top vertices.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremePoints(Vector2 direction2D, IList<Vector2> points,
+        public static double GetLengthAndExtremePoints(this IEnumerable<Vector2> points,Vector2 direction2D,
             out List<Vector2> bottomPoints,
             out List<Vector2> topPoints)
         {
@@ -269,8 +269,8 @@ namespace TVGL
             bool pointsAreConvexHull = false, bool setCornerPoints = true,
             bool setPointsOnSide = true)
         {
-            var cvxPoints = pointsAreConvexHull 
-                ? (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList() 
+            var cvxPoints = pointsAreConvexHull
+                ? (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList()
                 : ConvexHull2D(points).ToList();
             if (cvxPoints.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
 
@@ -524,10 +524,10 @@ namespace TVGL
             return boundingBox;
         }
 
-        private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, Vector3 direction)
+        private static BoundingBox FindOBBAlongDirection(IEnumerable<Vertex> vertices, Vector3 direction)
         {
             var direction1 = direction.Normalize();
-            var depth = GetLengthAndExtremeVertices(direction, vertices, out var bottomVertices, out var topVertices);
+            var depth = GetLengthAndExtremeVertices(vertices, direction, out var bottomVertices, out var topVertices);
 
             var pointsDict = vertices.ProjectVerticesTo2DCoordinatesWithRefToVertices(direction, out var backTransform);
             var boundingRectangle = RotatingCalipers2DMethod(pointsDict.Keys.ToList());

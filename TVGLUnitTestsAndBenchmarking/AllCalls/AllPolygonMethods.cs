@@ -37,6 +37,8 @@ namespace TVGLUnitTestsAndBenchmarking
             a.ConvexHull2D();
             var b = PolygonOperationsTesting.MakeCircularPolygon(5, 5);
             a.Difference(b);
+            var length = a.GetLengthAndExtremePoints(new Vector2(1, 1), out List<Vector2> bottomPoints,
+                out List<Vector2> topPoints);
             a.Intersection(b);
             a.IsRectangular(out var dimensions);
             a.MinimumCircle();

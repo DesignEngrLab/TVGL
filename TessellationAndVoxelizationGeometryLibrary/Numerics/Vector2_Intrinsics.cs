@@ -29,7 +29,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The element to fill the vector with.</param>
         // COMMENTEDCHANGE [Intrinsic]
-        public Vector2(double value) : this(value, value) { }
+        internal Vector2(double value) : this(value, value) { }
 
         /// <summary>
         /// Constructs a vector with the given individual elements.

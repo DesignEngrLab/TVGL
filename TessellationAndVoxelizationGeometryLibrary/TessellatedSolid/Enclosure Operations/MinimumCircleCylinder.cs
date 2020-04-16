@@ -228,7 +228,7 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<List<Vector2>> paths, Vector2 centerPoint)
+        public static BoundingCircle MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
             return MaximumInnerCircle(polygons, centerPoint);
@@ -241,7 +241,7 @@ namespace TVGL
         ///     Else it returns a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(List<Polygon> polygons, Vector2 centerPoint)
+        public static BoundingCircle MaximumInnerCircle(this List<Polygon> polygons, Vector2 centerPoint)
         {
             var negativePolygons = new List<Polygon>();
             var positivePolygons = new List<Polygon>();
@@ -347,7 +347,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox MinimumBoundingCylinder(IList<Vertex> convexHullVertices)
+        public static BoundingBox MinimumBoundingCylinder(this IEnumerable<Vertex> convexHullVertices)
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();

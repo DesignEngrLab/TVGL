@@ -78,7 +78,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         public static List<List<Vector2>> CreateSilhouette(this TessellatedSolid ts, Vector3 normal, double minAngle = 0.1)
         {
-            var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out _, out _);
+            var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(ts.Vertices, normal, out _, out _);
             return CreateSilhouette(ts.Faces, normal, ts, minAngle, ts.SameTolerance, depthOfPart);
         }
 
