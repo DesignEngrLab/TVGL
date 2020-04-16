@@ -166,14 +166,14 @@ namespace TVGLPresenterDX
         public static void TestSlice(TessellatedSolid ts, Flat flat = null)
         {
             if (!(flat is null))
-                Slice.OnInfiniteFlat(ts, flat, out var solids, out var contactData);
+                Slice.SliceOnInfiniteFlat(ts, flat, out var solids, out var contactData);
             else
             {
-                Slice.OnInfiniteFlat(ts, new Flat((ts.XMax + ts.XMin) / 2, Vector3.UnitX), out var solidsX,
+                Slice.SliceOnInfiniteFlat(ts, new Flat((ts.XMax + ts.XMin) / 2, Vector3.UnitX), out var solidsX,
                     out var contactDataX);
-                Slice.OnInfiniteFlat(ts, new Flat((ts.YMax + ts.YMin) / 2, Vector3.UnitY), out var solidsY,
+                Slice.SliceOnInfiniteFlat(ts, new Flat((ts.YMax + ts.YMin) / 2, Vector3.UnitY), out var solidsY,
     out var contactDataY);
-                Slice.OnInfiniteFlat(ts, new Flat((ts.ZMax + ts.ZMin) / 2, Vector3.UnitZ), out var solidsZ,
+                Slice.SliceOnInfiniteFlat(ts, new Flat((ts.ZMax + ts.ZMin) / 2, Vector3.UnitZ), out var solidsZ,
     out var contactDataZ);
             }
         }

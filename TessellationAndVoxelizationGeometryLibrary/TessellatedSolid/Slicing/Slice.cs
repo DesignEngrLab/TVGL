@@ -29,11 +29,11 @@ namespace TVGL.Boolean_Operations
         /// <param name="solids">The resulting solids </param>
         /// <param name="setIntersectionGroups">Determines whether to output the intersections (2D cross sections and other info)</param>
         /// <param name="undoPlaneOffset">Determines whether to construct new faces exactly on the cutting plane</param>
-        public static void OnInfiniteFlat(TessellatedSolid ts, Flat plane,
+        public static void SliceOnInfiniteFlat(this TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> solids, out ContactData contactData, bool setIntersectionGroups = false,
             bool undoPlaneOffset = false)
         {
-            if (!GetContactData(ts, plane, out contactData, setIntersectionGroups, undoPlaneOffset: undoPlaneOffset))
+            if (!GetSliceContactData(ts, plane, out contactData, setIntersectionGroups, undoPlaneOffset: undoPlaneOffset))
             {
                 solids = new List<TessellatedSolid>();
                 Debug.WriteLine("CuttingPlane does not cut through the given solid.");
@@ -65,7 +65,7 @@ namespace TVGL.Boolean_Operations
         /// This is because Slice was written to re-triangulate exposed surfaces from the intersection loops.
         /// This cannot currently be done for partial intersection loops. 
         /// </summary>
-        public static void OnFiniteFlatByIngoringIntersections(TessellatedSolid ts, Flat plane,
+        public static void SliceOnFiniteFlatByIngoringIntersections(this TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> solids, ICollection<IntersectionGroup> intersectionsToIgnore, out ContactData newContactData)
         {
             var loopsToIgnore = new List<int>();
@@ -74,7 +74,7 @@ namespace TVGL.Boolean_Operations
                 loopsToIgnore.AddRange(intersectionGroup.GetLoopIndices());
             }
 
-            if (!GetContactData(ts, plane, out newContactData, false, loopsToIgnore))
+            if (!GetSliceContactData(ts, plane, out newContactData, false, loopsToIgnore))
             {
                 solids = new List<TessellatedSolid>();
                 Debug.WriteLine("CuttingPlane does not cut through the given solid.");
@@ -101,10 +101,10 @@ namespace TVGL.Boolean_Operations
         /// <param name="positiveSideSolid">The solid that is on the positive side of the plane
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolid">The solid on the negative side of the plane.</param>
-        public static void OnFlatAsSingleSolids(TessellatedSolid ts, Flat plane,
+        public static void SliceOnFlatAsSingleSolids(this TessellatedSolid ts, Flat plane,
             out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
         {
-            if (!GetContactData(ts, plane, out var contactData, false))
+            if (!GetSliceContactData(ts, plane, out var contactData, false))
             {
                 positiveSideSolid = null;
                 negativeSideSolid = null;
@@ -123,7 +123,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="setIntersectionGroups"></param>
         /// <param name="loopsToIgnore"></param>
         /// <param name="undoPlaneOffset"></param>
-        public static bool GetContactData(TessellatedSolid ts, Flat plane, out ContactData contactData, bool setIntersectionGroups,
+        public static bool GetSliceContactData(this TessellatedSolid ts, Flat plane, out ContactData contactData, bool setIntersectionGroups,
             ICollection<int> loopsToIgnore = null, bool undoPlaneOffset = false)
         {
             #region Get the loops
@@ -157,7 +157,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="contactData"></param>
         /// <param name="unitType"></param>
         /// <param name="solids"></param>
-        public static void MakeSolids(ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
+        public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
             solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, true, null, unitType)).ToList();
         }
@@ -169,7 +169,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="unitType"></param>
         /// <param name="positiveSideSolid"></param>
         /// <param name="negativeSideSolid"></param>
-        public static void MakeSingleSolidOnEachSideOfInfitePlane(ContactData contactData, UnitType unitType, out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
+        public static void MakeSingleSolidOnEachSideOfInfitePlane(this ContactData contactData, UnitType unitType, out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
         {
             var positiveSideFaces = new List<PolygonalFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
             positiveSideSolid = new TessellatedSolid(positiveSideFaces, null, true, null, unitType);
@@ -686,7 +686,7 @@ namespace TVGL.Boolean_Operations
         /// or
         /// Error, the straddle edges do not match up at a common vertex
         /// </exception>
-        public static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, Dictionary<int, Edge> straddleEdgesDict,
+        private static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, Dictionary<int, Edge> straddleEdgesDict,
             Dictionary<int, PolygonalFace> straddleFaces, List<Edge> newEdges, HashSet<int> adjOnsideFaceIndices, bool lastNewFace = false)
         {
             PolygonalFace sharedFace;
@@ -823,7 +823,7 @@ namespace TVGL.Boolean_Operations
         /// <summary>
         /// Straddle edge references original edge and an intersection vertex.
         /// </summary>
-        public class StraddleEdge
+        internal class StraddleEdge
         {
             /// <summary>
             /// Point of edge / plane intersection

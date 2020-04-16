@@ -523,7 +523,6 @@ namespace TVGL.TwoDimensional
                 deltaArea -= numberWithSameCross * smallestArea;
                 foreach (var index in indicesToRemove)
                 {
-                    Console.WriteLine(index);
                     RemoveFromDictionary(index, crossProductToCornerDict, crossProductsArray);
                     polygon[index] = Vector2.Null;
                     int nextIndex = FindValidNeighborIndex(index, true, polygon);

@@ -28,7 +28,7 @@ namespace TVGLUnitTestsAndBenchmarking
             poly1.Reverse();
             #endregion
 
-            IEnumerable<Vector2> a = poly1.Path;
+            List<Vector2> a = poly1.Path;
 
             #region IEnumerable<Vector2>
             a.Area();

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using TVGL;
+using TVGL.Boolean_Operations;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 using TVGL.Voxelization;
@@ -31,6 +32,9 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.SimplifyFlatPatches();
             ts.Transform(new Matrix4x4());
             ts.TransformToNewSolid(new Matrix4x4());
+            ts.SliceOnInfiniteFlat(new Flat(), out List<TessellatedSolid> solids, out ContactData contactData);
+            ts.SliceOnFlatAsSingleSolids(new Flat(), out TessellatedSolid positiveSideSolids, out TessellatedSolid negativeSideSolid);
+            ts.GetSliceContactData(new Flat(), out contactData, false);
 
 
             #endregion
@@ -41,8 +45,14 @@ namespace TVGLUnitTestsAndBenchmarking
             #endregion
 
             #region VoxelizedSolid
-            var vs = new VoxelizedSolid(ts, 0.1);
-
+            var vs1 = new VoxelizedSolid(ts, 0.1);
+            vs1.ConvertToTessellatedSolidMarchingCubes(5);
+            vs1.ConvertToTessellatedSolidRectilinear();
+            var vs2 =(VoxelizedSolid) vs1.Copy();
+            vs1.DirectionalErodeToConstraintToNewSolid(in vs2, CartesianDirections.XNegative);
+            vs1.Draft(CartesianDirections.XNegative);
+            var vs3 = vs1.DraftToNewSolid(CartesianDirections.XNegative);
+            
             #endregion
         }
     }
