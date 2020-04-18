@@ -197,7 +197,7 @@ namespace TVGL
                     }
                 }
 
-                if(circle.SqRadius < priorRadius)
+                if (circle.SqRadius < priorRadius)
                 {
                     Debug.WriteLine("Bounding circle got smaller during this iteration");
                 }
@@ -272,7 +272,7 @@ namespace TVGL
             var positivePolygons = new List<Polygon>();
             foreach (var polygon in polygons)
             {
-                if(polygon.PathLines == null) polygon.SetPathLines();
+                if (polygon.PathLines == null) polygon.SetPathLines();
                 if (polygon.IsPositive) positivePolygons.Add(polygon);
                 else negativePolygons.Add(polygon);
             }
@@ -313,7 +313,7 @@ namespace TVGL
                     polygonsOfInterest.Add(positivePoly);
                 }
             }
-            
+
             //Lastly, determine how big the inner circle can be.
             var shortestDistance = double.MaxValue;
             var smallestBoundingCircle = new BoundingCircle(0.0, centerPoint.Light);
@@ -337,7 +337,7 @@ namespace TVGL
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
             foreach (var line in polygon.PathLines)
             {
-                var v1 = line.ToPoint-line.FromPoint;
+                var v1 = line.ToPoint - line.FromPoint;
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
                 if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
@@ -393,33 +393,47 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox MinimumBoundingCylinder(IList<Vertex> convexHullVertices)
+        public static Cylinder MinimumBoundingCylinder(IList<Vertex> convexHullVertices)
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<double[]>();
             for (var i = -1; i <= 1; i++)
                 for (var j = -1; j <= 1; j++)
-                    directions.Add(new[] {1.0, i, j});
-            directions.Add(new[] {0.0, 0, 1});
-            directions.Add(new[] {0.0, 1, 0});
-            directions.Add(new[] {0.0, 1, 1});
-            directions.Add(new[] {0.0, -1, 1});
+                    directions.Add(new[] { 1.0, i, j });
+            directions.Add(new[] { 0.0, 0, 1 });
+            directions.Add(new[] { 0.0, 1, 0 });
+            directions.Add(new[] { 0.0, 1, 1 });
+            directions.Add(new[] { 0.0, -1, 1 });
 
             var boxes = directions.Select(v => new BoundingBox
             {
-                Directions = new[] {v},
+                Directions = new[] { v },
                 Volume = double.PositiveInfinity
             }).ToList();
+            Cylinder minCylinder = null;
+            var minCylinderVolume = double.PositiveInfinity;
             for (var i = 0; i < 13; i++)
             {
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
                 for (var j = 0; j < 3; j++)
                 {
-                    var pointsOnFace_i = MiscFunctions.Get2DProjectionPoints(convexHullVertices, boxes[i].Directions[j]);
+                    var axis = boxes[i].Directions[j];
+                    var pointsOnFace_i = MiscFunctions.Get2DProjectionPoints(convexHullVertices, axis, out var backTransform);
+                    var circle = MinimumCircle(pointsOnFace_i);
+                    var height = boxes[i].Dimensions[j];
+                    var volume = height * circle.Area;
+                    if (minCylinderVolume > volume)
+                    {
+                        minCylinderVolume = volume;
+                        var anchor = backTransform.multiply(new[] { circle.Center.X, circle.Center.Y, 0 });
+                        var dxOfBottomPlane = axis.dotProduct(boxes[i].PointsOnFaces[2 * j][0].Position);
+
+                        minCylinder = new Cylinder(axis, anchor,
+                                circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);
+                    }
                 }
             }
-            var minVol = boxes.Min(box => box.Volume);
-            return boxes.First(box => box.Volume == minVol);
+            return minCylinder;
         }
 
         /// <summary>
@@ -515,12 +529,12 @@ namespace TVGL
                 //Check for special cases of vertical or horizontal lines
                 if (rise1.IsNegligible(Constants.BaseTolerance)) //If rise is zero, x can be found directly
                 {
-                    x = (point0X + point1X)/2;
+                    x = (point0X + point1X) / 2;
                     //If run of other line is approximately zero as well, y can be found directly
                     if (run2.IsNegligible(Constants.BaseTolerance))
-                        //If run is approximately zero, y can be found directly
+                    //If run is approximately zero, y can be found directly
                     {
-                        y = (point1Y + point2Y)/2;
+                        y = (point1Y + point2Y) / 2;
                     }
                     else
                     {
@@ -528,18 +542,18 @@ namespace TVGL
                         //Then use the midpoint to find "b" and solve y = mx+b
                         //This is condensed into a single line because VS rounds the numbers 
                         //during division.
-                        y = (point1Y + point2Y)/2 + -run2/rise2*(x - (point1X + point2X)/2);
+                        y = (point1Y + point2Y) / 2 + -run2 / rise2 * (x - (point1X + point2X) / 2);
                     }
                 }
                 else if (rise2.IsNegligible(Constants.BaseTolerance))
-                    //If rise is approximately zero, x can be found directly
+                //If rise is approximately zero, x can be found directly
                 {
-                    x = (point1X + point2X)/2;
+                    x = (point1X + point2X) / 2;
                     //If run of other line is approximately zero as well, y can be found directly
                     if (run1.IsNegligible(Constants.BaseTolerance))
-                        //If run is approximately zero, y can be found directly
+                    //If run is approximately zero, y can be found directly
                     {
-                        y = (point0Y + point1Y)/2;
+                        y = (point0Y + point1Y) / 2;
                     }
                     else
                     {
@@ -547,30 +561,30 @@ namespace TVGL
                         //Then use the midpoint to find "b" and solve y = mx+b
                         //This is condensed into a single line because VS rounds the numbers 
                         //during division.
-                        y = (point0Y + point1Y)/2 + -run1/rise1*(x - (point0X + point1X)/2);
+                        y = (point0Y + point1Y) / 2 + -run1 / rise1 * (x - (point0X + point1X) / 2);
                     }
                 }
                 else if (run1.IsNegligible(Constants.BaseTolerance))
-                    //If run is approximately zero, y can be found directly
+                //If run is approximately zero, y can be found directly
                 {
-                    y = (point0Y + point1Y)/2;
+                    y = (point0Y + point1Y) / 2;
                     //Find perpendicular slope, and midpoint of line 2. 
                     //Then use the midpoint to find "b" and solve y = mx+b
                     //This is condensed into a single line because VS rounds the numbers 
                     //during division.
-                    x = (y - ((point1Y + point2Y)/2 - -run2/rise2*
-                              (point1X + point2X)/2))/(-run2/rise2);
+                    x = (y - ((point1Y + point2Y) / 2 - -run2 / rise2 *
+                              (point1X + point2X) / 2)) / (-run2 / rise2);
                 }
                 else if (run2.IsNegligible(Constants.BaseTolerance))
-                    //If run is approximately zero, y can be found directly
+                //If run is approximately zero, y can be found directly
                 {
-                    y = (point1Y + point2Y)/2;
+                    y = (point1Y + point2Y) / 2;
                     //Find perpendicular slope, and midpoint of line 2. 
                     //Then use the midpoint to find "b" and solve y = mx+b
                     //This is condensed into a single line because VS rounds the numbers 
                     //during division.
-                    x = (y - ((point1Y + point0Y)/2 - -run1/rise1*
-                              (point1X + point0X)/2))/(-run1/rise1);
+                    x = (y - ((point1Y + point0Y) / 2 - -run1 / rise1 *
+                              (point1X + point0X) / 2)) / (-run1 / rise1);
                 }
                 else
                 {
@@ -621,8 +635,8 @@ namespace TVGL
                 //DO P0, then P1, then P2
                 numPreviousPoints = (NumPointsDefiningCircle == 3) ? 2 : 1;
                 previousPoint2 = _dummyPoint;
-                var p0SquareDistance =  Math.Pow(Point0.X - point.X, 2) + Math.Pow(Point0.Y - point.Y, 2);
-                var p1SquareDistance = Math.Pow(Point1.X - point.X, 2) + Math.Pow(Point1.Y - point.Y, 2);              
+                var p0SquareDistance = Math.Pow(Point0.X - point.X, 2) + Math.Pow(Point0.Y - point.Y, 2);
+                var p1SquareDistance = Math.Pow(Point1.X - point.X, 2) + Math.Pow(Point1.Y - point.Y, 2);
                 if (p0SquareDistance > p1SquareDistance)
                 {
                     previousPoint1 = Point1;
@@ -639,11 +653,11 @@ namespace TVGL
                             //If P2 > P0 and P0 > P1, P2 must also be greater than P1.
                             furthestPoint = Point2;
                             previousPoint2 = Point0;
-                        }        
+                        }
                     }
                     else
                     {
-                        furthestPoint = Point0;                
+                        furthestPoint = Point0;
                     }
                 }
                 else
@@ -667,7 +681,7 @@ namespace TVGL
                     {
                         furthestPoint = Point1;
                     }
-                } 
+                }
             }
 
             #region Properties

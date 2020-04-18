@@ -525,30 +525,4 @@ namespace TVGL
             Circumference = Constants.TwoPi*radius;
         }
     }
-
-    /// <summary>
-    ///     Public cylinder structure
-    /// </summary>
-    public struct BoundingCylinder
-    {
-        /// <summary>
-        ///     Center axis along depth
-        /// </summary>
-        public double[] Axis;
-
-        /// <summary>
-        ///     Bounding Circle on one end of the cylinder
-        /// </summary>
-        public BoundingCircle BoundingCircle;
-
-        /// <summary>
-        ///     Height of cylinder
-        /// </summary>
-        public double Height;
-
-        /// <summary>
-        ///     Volume
-        /// </summary>
-        public double Volume;
-    }
 }
