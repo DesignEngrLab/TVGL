@@ -425,7 +425,7 @@ namespace TVGL
                     if (minCylinderVolume > volume)
                     {
                         minCylinderVolume = volume;
-                        var anchor = backTransform.multiply(new[] { circle.Center.X, circle.Center.Y, 0 });
+                        var anchor = MiscFunctions.Convert2DVectorTo3DVector(new[] { circle.Center.X, circle.Center.Y, 0, 1 }, backTransform);
                         var dxOfBottomPlane = axis.dotProduct(boxes[i].PointsOnFaces[2 * j][0].Position);
 
                         minCylinder = new Cylinder(axis, anchor,

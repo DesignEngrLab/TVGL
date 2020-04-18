@@ -282,7 +282,7 @@ namespace TVGL
         ///     Gets the direction.
         /// </summary>
         /// <value>The direction.</value>
-        public double[] Axis { get; private set; }
+        public double[] Axis { get;  set; }
 
         /// <summary>
         ///     Gets the radius.
