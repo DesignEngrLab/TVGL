@@ -1153,7 +1153,7 @@ namespace TVGL
         public static double[] Convert2DVectorTo3DVector(double[] direction2D, double[,] backTransform)
         {
             var tempVector = new[] { direction2D[0], direction2D[1], 0.0, 1.0 };
-            return backTransform.multiply(tempVector).Take(3).ToArray().normalize(3);
+            return backTransform.multiply(tempVector).Take(3).ToArray();
         }
 
         /// <summary>
@@ -2091,6 +2091,21 @@ namespace TVGL
             var d2 = point2.subtract(position).norm2();
             var d3 = point1.subtract(position).norm2();
             return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : null;
+        }
+
+        /// <summary>
+        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Vertex PointOnPlaneFromIntersectingLine(Flat plane, Vertex point1, Vertex point2)
+        {
+            return new Vertex(PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, point1.Position, point2.Position));
         }
 
         /// <summary>
