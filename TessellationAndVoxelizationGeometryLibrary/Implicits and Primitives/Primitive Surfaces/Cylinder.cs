@@ -235,6 +235,9 @@ namespace TVGL
                 return false;
             }
             Radius = (centerCircle.Radius + centerCircle2.Radius) / 2; //Average
+            //Set the Anchor/Center point
+            var center = centerCircle.Center.Add(centerCircle2.Center).divide(2);
+            Anchor = MiscFunctions.Convert2DVectorTo3DVector(center, backTransform);
             return true;
         }
 
