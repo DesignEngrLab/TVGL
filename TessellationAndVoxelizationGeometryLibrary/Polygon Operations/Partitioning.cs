@@ -42,46 +42,36 @@ namespace TVGL
             var p = (polygon is IList<PointLight>) ? (IList<PointLight>)polygon : polygon.ToList();
             // assume X and Y monotonicities are both positive, let GetMonotonicityChange tell us the 
             // correct direction
-            var initChange = GetMonotonicityChange(p, 0, 1, 1);
-            var xDirection = (initChange == MonotonicityChange.X || initChange == MonotonicityChange.Both) ? -1 : 1;
-            var yDirection = (initChange == MonotonicityChange.Y || initChange == MonotonicityChange.Both) ? -1 : 1;
+            var lowChange = GetMonotonicityChange(p, 0, 1, 1);
+            var xDirection = (lowChange == MonotonicityChange.X || lowChange == MonotonicityChange.Both) ? -1 : 1;
+            var yDirection = (lowChange == MonotonicityChange.Y || lowChange == MonotonicityChange.Both) ? -1 : 1;
             // getting the first box means working backwards into the end of the list, which also helps us
             // establish maxIndex
-            var lowIndex = 0;
-            MonotonicityChange lowChange = GetMonotonicityChange(p, lowIndex, xDirection, yDirection);
-            if (lowChange == MonotonicityChange.Neither)
-            {
-                lowIndex = p.Count - 1;
-                lowChange = GetMonotonicityChange(p, lowIndex, xDirection, yDirection);
-            }
-            while (lowChange == MonotonicityChange.Neither)
+            var lowIndex = p.Count;
+            do
             {
                 lowIndex--;
                 lowChange = GetMonotonicityChange(p, lowIndex, xDirection, yDirection);
-            }
+            } while (lowChange == MonotonicityChange.Neither);
+            var maxIndex = lowIndex = (lowIndex + 1) % p.Count;
             // maxIndex should simply be the end of the list. however, if the low worked its way into the end 
             // of the list, we will set it to lowIndex;
-            var maxIndex = lowIndex == 0 ? p.Count : lowIndex;
+            var boxes = new List<MonotoneBox>();
             var hiIndex = 0;
             var hiChange = MonotonicityChange.Neither;
-            while (hiChange == MonotonicityChange.Neither)
-            {
-                hiIndex++;
-                hiChange = GetMonotonicityChange(p, hiIndex, xDirection, yDirection);
-            }
-            var boxes = new List<MonotoneBox>();
             while (hiIndex < maxIndex)
             {
-                boxes.Add(new MonotoneBox(p, lowIndex, hiIndex, lowChange, hiChange, xDirection, yDirection));
-                lowIndex = hiIndex;
-                lowChange = hiChange;
-                if (hiChange == MonotonicityChange.X || hiChange == MonotonicityChange.Both) xDirection *= -1;
-                if (hiChange == MonotonicityChange.Y || hiChange == MonotonicityChange.Both) yDirection *= -1;
                 do
                 {
                     hiIndex++;
                     hiChange = GetMonotonicityChange(p, hiIndex, xDirection, yDirection);
                 } while (hiChange == MonotonicityChange.Neither && hiIndex < maxIndex);
+
+                boxes.Add(new MonotoneBox(p, lowIndex, hiIndex, lowChange, hiChange, xDirection, yDirection));
+                lowIndex = hiIndex;
+                lowChange = hiChange;
+                if (hiChange == MonotonicityChange.X || hiChange == MonotonicityChange.Both) xDirection *= -1;
+                if (hiChange == MonotonicityChange.Y || hiChange == MonotonicityChange.Both) yDirection *= -1;
             }
             return boxes;
         }
@@ -89,27 +79,28 @@ namespace TVGL
         static MonotonicityChange GetMonotonicityChange(IList<PointLight> p, int index, int xDirection, int yDirection)
         {
             var numPoints = p.Count;
-            var prevIndex = (index == 0) ? numPoints - 1 : index - 1;
+            var nextIndex = index + 1;
+            if (nextIndex == numPoints) nextIndex = 0;
             var x = p[index].X;
             var y = p[index].Y;
-            if (xDirection * x < xDirection * p[prevIndex].X
-                && yDirection * y < yDirection * p[prevIndex].Y)
+            if (xDirection * p[nextIndex].X < xDirection * x
+                && yDirection * p[nextIndex].Y < yDirection * y)
                 // there are cases below where we may also return Both if one of the coords is the same
                 return MonotonicityChange.Both;
-            if (xDirection * x >= xDirection * p[prevIndex].X
-                && yDirection * y >= yDirection * p[prevIndex].Y)
+            if (xDirection * p[nextIndex].X >= xDirection * x
+                && yDirection * p[nextIndex].Y >= yDirection * y)
                 // this captures all "neither" cases, so in the remainder you have to return X, Y, or both
                 return MonotonicityChange.Neither;
-            if (xDirection * x < xDirection * p[prevIndex].X)
+            if (xDirection * p[nextIndex].X < xDirection * x)
             { //then either X or Both
-                if (y == p[prevIndex].Y)
+                if (y == p[nextIndex].Y)
                 {  // Y's are the same...need to look ahead to see which way Y goes
-                    var nextIndex = (index + 1) % numPoints;
-                    while (p[nextIndex].Y == y)
-                        if (++nextIndex == numPoints)
-                            nextIndex = 0;
+                    var aheadIndex = (nextIndex + 1) % numPoints;
+                    while (p[aheadIndex].Y == y)
+                        if (++aheadIndex == numPoints)
+                            aheadIndex = 0;
                     // now at a point where the y's differ
-                    if (yDirection * p[nextIndex].Y < yDirection * y) return MonotonicityChange.Both;
+                    if (yDirection * p[aheadIndex].Y < yDirection * y) return MonotonicityChange.Both;
                 }
                 //Y must be in the same sense as previous since code didn't exit at first condition
                 return MonotonicityChange.X;
@@ -117,14 +108,14 @@ namespace TVGL
             // finally Y must change monotoniticity (otherwise exited above), so the following condition is redundant
             //if (yDirection * y < yDirection * p[prevIndex].Y)
             // but like the X case it is possible that it is still Both...that's only if X is the same
-            if (x == p[prevIndex].X)
+            if (x == p[nextIndex].X)
             {  // X's are the same...need to look ahead to see which way X goes
-                var nextIndex = (index + 1) % numPoints;
-                while (p[nextIndex].X == x)
-                    if (++nextIndex == numPoints)
-                        nextIndex = 0;
+                var aheadIndex = (nextIndex + 1) % numPoints;
+                while (p[aheadIndex].X == x)
+                    if (++aheadIndex == numPoints)
+                        aheadIndex = 0;
                 // now at a point where the y's differ
-                if (xDirection * p[nextIndex].X < xDirection * x) return MonotonicityChange.Both;
+                if (xDirection * p[aheadIndex].X < xDirection * x) return MonotonicityChange.Both;
             }
             //Y must be in the same sense as previous since code didn't exit at first condition
             return MonotonicityChange.Y;
