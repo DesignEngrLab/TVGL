@@ -30,7 +30,7 @@ namespace TVGL
     /// <summary>
     /// A set of general operation for points and paths
     /// </summary>
-    public class PolygonOperations
+    public static partial class PolygonOperations
     {
         #region Line Intersections with Polygon
 
@@ -1098,7 +1098,7 @@ namespace TVGL
 
             if (!subject.Any())
             {
-                if(clip == null || !clip.Any())
+                if (clip == null || !clip.Any())
                 {
                     return new List<List<PointLight>>();
                 }
@@ -1109,7 +1109,7 @@ namespace TVGL
                     clip = null;
                 }
             }
-           
+
             var clipperSolution = new List<List<IntPoint>>();
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject =

@@ -405,28 +405,28 @@ namespace TVGL
             directions.Add(new[] { 0.0, 1, 1 });
             directions.Add(new[] { 0.0, -1, 1 });
 
-            var boxes = directions.Select(v => new BoundingBox
-            {
-                Directions = new[] { v },
-                Volume = double.PositiveInfinity
-            }).ToList();
             Cylinder minCylinder = null;
             var minCylinderVolume = double.PositiveInfinity;
             for (var i = 0; i < 13; i++)
             {
-                boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
+                var box = new BoundingBox
+                {
+                    Directions = new[] { directions[i] },
+                    Volume = double.PositiveInfinity
+                };
+                box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
                 for (var j = 0; j < 3; j++)
                 {
-                    var axis = boxes[i].Directions[j];
+                    var axis = box.Directions[j];
                     var pointsOnFace_i = MiscFunctions.Get2DProjectionPoints(convexHullVertices, axis, out var backTransform);
                     var circle = MinimumCircle(pointsOnFace_i);
-                    var height = boxes[i].Dimensions[j];
+                    var height = box.Dimensions[j];
                     var volume = height * circle.Area;
                     if (minCylinderVolume > volume)
                     {
                         minCylinderVolume = volume;
                         var anchor = MiscFunctions.Convert2DVectorTo3DVector(new[] { circle.Center.X, circle.Center.Y, 0, 1 }, backTransform);
-                        var dxOfBottomPlane = axis.dotProduct(boxes[i].PointsOnFaces[2 * j][0].Position);
+                        var dxOfBottomPlane = axis.dotProduct(box.PointsOnFaces[2 * j][0].Position);
 
                         minCylinder = new Cylinder(axis, anchor,
                                 circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);
