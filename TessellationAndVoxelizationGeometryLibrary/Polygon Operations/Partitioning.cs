@@ -34,6 +34,11 @@ namespace TVGL
             Bottom = Math.Min(p[lowIndex].Y, p[hiIndex].Y);
             Top = Math.Max(p[lowIndex].Y, p[hiIndex].Y);
         }
+
+        public double Area()
+        {
+            return (Right - Left) * (Top - Bottom);
+        }
     }
     public static partial class PolygonOperations
     {
