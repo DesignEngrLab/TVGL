@@ -74,6 +74,36 @@ namespace TVGL
         #endregion
         #region Properies
         /// <summary>
+        /// Gets the maximum of the collection.
+        /// </summary>
+        /// <value>The maximum.</value>
+        public double Maximum
+        {
+            get
+            {
+                if (double.IsNaN(maximum) && list.Count > 0)
+                    maximum = list.Max();
+                return maximum;
+            }
+        }
+        double maximum = double.NaN;
+
+        /// <summary>
+        /// Gets the minimum of the collection.
+        /// </summary>
+        /// <value>The minimum.</value>
+        public double Minimum
+        {
+            get
+            {
+                if (double.IsNaN(minimum) && list.Count > 0)
+                    minimum = list.Min();
+                return minimum;
+            }
+        }
+        double minimum = double.NaN;
+
+        /// <summary>
         /// Gets the median of the collection.
         /// </summary>
         /// <value>The median.</value>
@@ -81,7 +111,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(median))
+                if (double.IsNaN(median) && list.Count > 0)
                 {
                     var index = (list.Count - 1) / 2;
                     var loValue = NthOrderStatistic(index);
@@ -105,7 +135,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(mean))
+                if (double.IsNaN(mean) && list.Count > 0)
                 {
                     mean = list.Sum(x => x);
                     mean /= Count;
@@ -123,9 +153,9 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(varianceFromMean))
+                if (double.IsNaN(varianceFromMean) && list.Count > 0)
                 {
-                     varianceFromMean = 0;
+                    varianceFromMean = 0;
                     foreach (var x in list)
                     {
                         var d = x - Mean;
@@ -146,9 +176,9 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(varianceFromMedian))
+                if (double.IsNaN(varianceFromMedian) && list.Count > 0)
                 {
-                     varianceFromMedian = 0;
+                    varianceFromMedian = 0;
                     var thisMedian = Median; //need to calc Median first since order of list is altered
                     foreach (var x in list)
                     {
@@ -186,7 +216,7 @@ namespace TVGL
 
         public bool Remove(double item)
         {
-            if(list.Remove(item))
+            if (list.Remove(item))
             {
                 resetProperties();
                 return true;
@@ -196,6 +226,8 @@ namespace TVGL
 
         private void resetProperties()
         {
+            minimum = double.NaN;
+            maximum = double.NaN;
             mean = double.NaN;
             median = double.NaN;
             varianceFromMean = double.NaN;
@@ -210,6 +242,18 @@ namespace TVGL
         IEnumerator IEnumerable.GetEnumerator()
         {
             return list.GetEnumerator();
+        }
+
+        public double NormalizedRootMeanSquareError(double targetValue)
+        {
+            var error = 0.0;
+            foreach (var x in list)
+            {
+                var delta = x - targetValue;
+                error += delta * delta;
+            }
+            error = Math.Sqrt(error);
+            return error / Maximum;
         }
     }
 }
