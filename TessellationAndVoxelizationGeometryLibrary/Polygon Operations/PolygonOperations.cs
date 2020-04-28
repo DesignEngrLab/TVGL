@@ -84,6 +84,35 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
+        /// Gets the area for a 2D set of points defining a polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static bool IsPositive(this IEnumerable<Vector2> polygon)
+        {
+            return polygon.Area() > 0;
+        }
+
+        public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vector2> coordinates)
+        {
+            return coordinates.SelectMany(p => p.Position);
+        }
+
+        public static IEnumerable<Vector2> ConvertToVector2s(this IEnumerable<double> coordinates)
+        {
+            var enumerator = coordinates.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                var x = enumerator.Current;
+                if (!enumerator.MoveNext())
+                    throw new ArgumentException("An odd number of coordinates have been provided to " +
+                   "convert the 1D array of double to an array of vectors.");
+                var y = enumerator.Current;
+                yield return new Vector2(x, y);
+            }
+        }
+
+        /// <summary>
         /// Gets the Shallow Polygon Trees for a given set of paths. 
         /// </summary>
         /// <param name="paths"></param>
@@ -261,10 +290,10 @@ namespace TVGL.TwoDimensional
         {
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
-            //This function has three layers of checks. 
-            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
-            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
-            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
+                                         //This function has three layers of checks. 
+                                         //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
+                                         //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
+                                         //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
             closestLineAbove = null;
             closestLineBelow = null;
             onBoundary = false;
@@ -290,7 +319,7 @@ namespace TVGL.TwoDimensional
                     // are above or below
                     continue;
                 var lineYValue = line.YGivenX(qX, out _); //this out parameter is the same condition
-                //as 5 lines earlier, but that check is kept for efficiency
+                                                          //as 5 lines earlier, but that check is kept for efficiency
                 var yDistance = lineYValue - qY;
                 if (yDistance > 0)
                 {
@@ -344,7 +373,7 @@ namespace TVGL.TwoDimensional
         {
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
-            //Check if the point is the same as any of the polygon's points
+                                         //Check if the point is the same as any of the polygon's points
             var polygonIsLeftOfPoint = false;
             var polygonIsRightOfPoint = false;
             var polygonIsAbovePoint = false;
@@ -491,7 +520,7 @@ namespace TVGL.TwoDimensional
             var numPoints = polygon.Length;
             var origArea = Math.Abs(polygon.Area()); //will this solve the problems with negative polygons?
             var deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
-            // that happens when we change cross-product to area of a triangle
+                                                                          // that happens when we change cross-product to area of a triangle
             #region build initial list of cross products
             var crossProductToCornerDict = new Dictionary<double, HashSet<int>>();
             var crossProductsArray = new double[numPoints];
@@ -516,10 +545,10 @@ namespace TVGL.TwoDimensional
                 if (numberWithSameCross * smallestArea >= deltaArea)
                 {  // there are more corners here than we need to hit the budget from deltaArea
                     numberWithSameCross = (int)(deltaArea / smallestArea);
-                    indicesToRemove = crossProductToCornerDict[smallestArea].Take(numberWithSameCross);
+                    indicesToRemove = crossProductToCornerDict[smallestArea].Take(numberWithSameCross).ToArray();
                 }
                 else  //the budget in deltaArea is bigger
-                    indicesToRemove = crossProductToCornerDict[smallestArea];
+                    indicesToRemove = crossProductToCornerDict[smallestArea].ToArray();
                 deltaArea -= numberWithSameCross * smallestArea;
                 foreach (var index in indicesToRemove)
                 {

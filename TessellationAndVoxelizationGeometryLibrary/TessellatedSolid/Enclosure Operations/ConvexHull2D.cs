@@ -24,10 +24,10 @@ namespace TVGL
 {
     public static partial class MinimumEnclosure
     {
-        public static IList<Vector2> ConvexHull2D(this IEnumerable<Vector2> points) 
+        public static List<Vector2> ConvexHull2D(this IEnumerable<Vector2> points) 
         {
             var pointList = (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList();
-            return MIConvexHull.ConvexHull.Create2D(pointList).Result;
+            return (List<Vector2>)MIConvexHull.ConvexHull.Create2D(pointList).Result;
         }
     }
 }

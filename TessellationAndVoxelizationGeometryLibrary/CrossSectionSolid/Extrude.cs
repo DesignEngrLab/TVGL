@@ -21,7 +21,7 @@ namespace TVGL
         /// <param name="extrusionHeight"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid ExtrusionSolidFrom3DLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static TessellatedSolid ExtrusionSolidFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
             return new TessellatedSolid(ExtrusionFacesFrom3DLoops(loops, extrudeDirection, extrusionHeight, midPlane), null, false);
@@ -36,7 +36,7 @@ namespace TVGL
         /// <param name="extrusionHeight"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> ExtrusionFacesFrom3DLoops(IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static List<PolygonalFace> ExtrusionFacesFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
             // for consistency with adding the extrusionHeight to the base plane, negate if it comes in negative
@@ -173,7 +173,6 @@ namespace TVGL
                 }
             }
             #endregion
-
             return result;
         }
     }

@@ -12,19 +12,7 @@ namespace TVGL
             List<List<Vector2>> shape, double sameTolerance, UnitType units)
         {
             var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
-            var layers2D = new Dictionary<int, List<List<Vector2>>> { { 0, shape }, { 1, shape } };
-            return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
-        }
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,
-           double sameTolerance, UnitType units)
-        {
-            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var start = layer3DAtStart.First().Coordinates.Dot(buildDirection);
-            var endPoint = layer3DAtStart.First().Coordinates + buildDirection * extrudeDistance;
-            var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.Dot(buildDirection) } };
-            var shape = layer3DAtStart.ProjectVerticesTo2DCoordinates(buildDirection, out _).ToList();
-            if (shape.Area() < 0) shape.Reverse();
-            var layers2D = new Dictionary<int, List<List<Vector2>>> { { 0, new List<List<Vector2>> { shape } }, { 1, new List<List<Vector2>> { shape } } };
+            var layers2D = new Dictionary<int, List<List<Vector2>>> { { 0, shape }, { 1, shape.Select(a => new List<Vector2>(a)).ToList() } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 

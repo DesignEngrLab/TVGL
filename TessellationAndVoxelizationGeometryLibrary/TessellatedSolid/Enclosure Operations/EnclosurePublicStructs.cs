@@ -181,7 +181,7 @@ namespace TVGL
             get
             {
                 if (_tessellatedSolid == null)
-                    _tessellatedSolid = Extrude.ExtrusionSolidFrom3DLoops(new [] { Corners.Take(4).ToArray() },
+                    _tessellatedSolid = Extrude.ExtrusionSolidFrom3DLoops(new[] { Corners.Take(4).ToArray() },
                         Directions[2], Dimensions[2]);
                 return _tessellatedSolid;
             }
@@ -235,27 +235,31 @@ namespace TVGL
         /// </summary>
         private void SetSortedDirections()
         {
-            var dimensions = new Dictionary<int, double>
+            if (Dimensions.X <= Dimensions.Y)
             {
-                {0, Dimensions[0]},
-                {1, Dimensions[1]},
-                {2, Dimensions[2]}
-            };
-
-            // Order by values. Use LINQ to specify sorting by value.
-            var sortedDimensions = from pair in dimensions
-                                   orderby pair.Value ascending
-                                   select pair;
-
-            //Set the sorted lists
-            _sortedDirectionIndicesByLength = sortedDimensions.Select(pair => pair.Key).ToList();
-            _sortedDirectionsByLength = new List<Vector3>();
-            _sortedDimensions = new List<double>();
-            foreach (var index in _sortedDirectionIndicesByLength)
-            {
-                _sortedDirectionsByLength.Add(Directions[index]);
-                _sortedDimensions.Add(Dimensions[index]);
+                if (Dimensions.Y <= Dimensions.Z)
+                    _sortedDirectionIndicesByLength = new[] { 0, 1, 2 };
+                else if (Dimensions.X <= Dimensions.Z)
+                    _sortedDirectionIndicesByLength = new[] { 0, 2, 1 };
+                else
+                    _sortedDirectionIndicesByLength = new[] { 2, 0, 1 };
             }
+            // then X>Y
+            if (Dimensions.Y > Dimensions.Z)
+                _sortedDirectionIndicesByLength = new[] { 2, 1, 0 };
+            if (Dimensions.X <= Dimensions.Z)
+                _sortedDirectionIndicesByLength = new[] { 1, 0, 2 };
+            else
+                _sortedDirectionIndicesByLength = new[] { 1, 2, 0 };
+
+            _sortedDimensions = new[] {
+                Dimensions.Position[_sortedDirectionIndicesByLength[0]],
+                Dimensions.Position[_sortedDirectionIndicesByLength[1]],
+                Dimensions.Position[_sortedDirectionIndicesByLength[2]] };
+            _sortedDirectionsByLength = new[] {
+                Directions[_sortedDirectionIndicesByLength[0]],
+                Directions[_sortedDirectionIndicesByLength[1]],
+                Directions[_sortedDirectionIndicesByLength[2]] };
         }
         #endregion
         #endregion
@@ -272,8 +276,8 @@ namespace TVGL
             if (this.corners != null) copy.corners = (Vector3[])this.corners.Clone();
             if (this.PointsOnFaces != null)
             {
-                copy.PointsOnFaces = new List<Vertex>[8];
-                for (int i = 0; i < 8; i++)
+                copy.PointsOnFaces = new List<Vertex>[6];
+                for (int i = 0; i < 6; i++)
                     copy.PointsOnFaces[i] = new List<Vertex>(this.PointsOnFaces[i]);
             }
             return copy;

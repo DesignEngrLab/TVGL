@@ -202,9 +202,9 @@ namespace TVGL
         /// </summary>
         public IReadOnlyCollection<PolygonalFace> ConvertToTessellatedExtrusions(bool extrudeBack = true)
         {
-            if (!Layer3D.Any()) SetAllVertices();
-            var start = Layer3D.Where(p => p.Value.Any()).FirstOrDefault().Key;
-            var stop = Layer3D.Where(p => p.Value.Any()).LastOrDefault().Key;
+            //if (!Layer3D.Any()) SetAllVertices();
+            var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
+            var stop = Layer2D.Where(p => p.Value.Any()).LastOrDefault().Key;
             var reverse = start < stop ? 1 : -1;
             var direction = reverse == 1 ? Direction : -1 * Direction;
             var faces = new List<PolygonalFace>();
@@ -220,11 +220,11 @@ namespace TVGL
             else stop -= reverse;
             for (var i = start; i * reverse <= stop * reverse; i += reverse) //Include the last index, since we already modified start or stop
             {
-                if (!Layer3D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
-                double distance;
-                if (extrudeBack) distance = Math.Abs(StepDistances[i] - StepDistances[i - reverse]);//current - prior (reverse extrusion)        
-                else distance = Math.Abs(StepDistances[i + reverse] - StepDistances[i]); //next - current (forward extrusion)
-                var layerfaces = Extrude.ExtrusionFacesFrom3DLoops((IList<IList<Vector3>>)Layer3D[i], direction, distance, false);
+                if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
+                var basePlaneDistance = extrudeBack ? StepDistances[i - reverse] : StepDistances[i];
+                var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + reverse];
+                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i], direction,basePlaneDistance,
+                    topPlaneDistance-basePlaneDistance);
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
@@ -302,14 +302,9 @@ namespace TVGL
         {
             serializationData = new Dictionary<string, JToken>();
             serializationData.Add("CrossSections",
-                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => ConvertToDoublesArray(p)))));
+                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => p.ConvertTo1DDoublesCollection()))));
             FirstIndex = Layer2D.Keys.First();
             LastIndex = Layer2D.Keys.Last();
-        }
-
-        static IEnumerable<double> ConvertToDoublesArray(IEnumerable<Vector2> coordinates)
-        {
-            return coordinates.SelectMany(p => p.Position);
         }
 
         [OnDeserialized]
@@ -323,18 +318,10 @@ namespace TVGL
             {
                 var layer = new List<List<Vector2>>();
                 foreach (var coordinates in layerArray[j])
-                    layer.Add(MakeFromBinaryString(coordinates));
+                    layer.Add(PolygonOperations.ConvertToVector2s(coordinates).ToList());
                 Layer2D.Add(i, layer);
                 j++;
             }
-        }
-
-        private List<Vector2> MakeFromBinaryString(double[] coordinates)
-        {
-            var path = new List<Vector2>();
-            for (int i = 0; i < coordinates.Length; i += 2)
-                path.Add(new Vector2(coordinates[i], coordinates[i + 1]));
-            return path;
         }
     }
 }

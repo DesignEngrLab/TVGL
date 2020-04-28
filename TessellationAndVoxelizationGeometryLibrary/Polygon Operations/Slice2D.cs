@@ -23,10 +23,29 @@ namespace TVGL.TwoDimensional
         {
             var polyTrees = shape.GetShallowPolygonTrees();
             return SliceAtLine(polyTrees, lineNormalDirection, distanceAlongDirection, out negativeSidePolygons, out positiveSidePolygons,
-                offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
+                   offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
         }
 
         public static Vector2[] SliceAtLine(this IEnumerable<ShallowPolygonTree> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
+            out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
+            double offsetAtLineForPositiveSide = 0.0)
+        {
+            negativeSidePolygons = new List<List<Vector2>>();
+            positiveSidePolygons = new List<List<Vector2>>();
+            var intersections = new List<Vector2>();
+            foreach (var shallowPolygonTree in polyTrees)
+            {
+                intersections.AddRange(SliceAtLine(shallowPolygonTree, lineNormalDirection, distanceAlongDirection, out var thisNegativeSidePolys,
+                    out var thisPositiveSidePolys, offsetAtLineForNegativeSide, offsetAtLineForPositiveSide));
+                negativeSidePolygons.AddRange(thisNegativeSidePolys);
+                positiveSidePolygons.AddRange(thisPositiveSidePolys);
+            }
+
+            var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
+            return intersections.OrderBy(v => lineDir.Dot(v)).ToArray();
+        }
+
+        public static Vector2[] SliceAtLine(this ShallowPolygonTree shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
@@ -47,28 +66,27 @@ namespace TVGL.TwoDimensional
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = distanceAlongDirection * lineNormalDirection;
             var sortedPoints = new SortedList<double, (Vector2, PolygonSegment, bool)>();
-            foreach (var shallowPolygonTree in polyTrees)
-                foreach (var polygons in shallowPolygonTree.AllPolygons)
-                    foreach (var line in polygons.Lines)
+            foreach (var polygons in shallowPolygonTree.AllPolygons)
+                foreach (var line in polygons.Lines)
+                {
+                    var fromPointAlongDir = line.FromPoint.Coordinates.Dot(lineNormalDirection);
+                    var toPointAlongDir = line.ToPoint.Coordinates.Dot(lineNormalDirection);
+                    if (fromPointAlongDir == distanceAlongDirection) collinearPoints.Add(line.FromPoint.Coordinates);
+                    if (fromPointAlongDir <= distanceAlongDirection && toPointAlongDir <= distanceAlongDirection)
+                        linesNegativeSide.Add(line);
+                    else if (fromPointAlongDir >= distanceAlongDirection && toPointAlongDir >= distanceAlongDirection)
+                        linesPositiveSide.Add(line);
+                    else if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
+                        anchorpoint, lineDir, out var intersectionPoint, true))
                     {
-                        var fromPointAlongDir = line.FromPoint.Coordinates.Dot(lineNormalDirection);
-                        var toPointAlongDir = line.ToPoint.Coordinates.Dot(lineNormalDirection);
-                        if (fromPointAlongDir == distanceAlongDirection) collinearPoints.Add(line.FromPoint.Coordinates);
-                        if (fromPointAlongDir <= distanceAlongDirection && toPointAlongDir <= distanceAlongDirection)
-                            linesNegativeSide.Add(line);
-                        else if (fromPointAlongDir >= distanceAlongDirection && toPointAlongDir >= distanceAlongDirection)
-                            linesPositiveSide.Add(line);
-                        else if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
-                            anchorpoint, lineDir, out var intersectionPoint, true))
-                        {
-                            if (intersectionPoint.IsNull()) // this only happens in polygon line segment is collinear with separation line
-                                collinearSegments.Add(line);
-                            var distanceAlong = lineDir.Dot(intersectionPoint);
-                            sortedPoints.Add(distanceAlong, (intersectionPoint, line, toPointAlongDir > distanceAlongDirection));
-                            intersectionLines.Add(line);
-                        }
-                        else throw new Exception("A line was not left nor right, nor crossing the line. That doesn't make sense.");
+                        if (intersectionPoint.IsNull()) // this only happens in polygon line segment is collinear with separation line
+                            collinearSegments.Add(line);
+                        var distanceAlong = lineDir.Dot(intersectionPoint);
+                        sortedPoints.Add(distanceAlong, (intersectionPoint, line, toPointAlongDir > distanceAlongDirection));
+                        intersectionLines.Add(line);
                     }
+                    else throw new Exception("A line was not left nor right, nor crossing the line. That doesn't make sense.");
+                }
             // we don't really need the distances, so  convert the values to an array
             var pointsOnLineTuples = sortedPoints.Values.ToArray();
             // this is what is returned. although now sure if this is useful in any case
@@ -88,7 +106,7 @@ namespace TVGL.TwoDimensional
                 var negSideTo = newSegmentTupleB.Item1 + offsetAtLineForNegativeSide * lineNormalDirection;
 
                 if (!newSegmentTupleA.Item3 || newSegmentTupleB.Item3) throw new Exception("the first should always be positive and the second should be negative.");
-              // see if there is an existing polygon that ends where this one start
+                // see if there is an existing polygon that ends where this one start
                 var existingNegSidePolygon = negativeSidePolygons.FirstOrDefault(p => p.Last().Equals(negSideFrom));
                 if (existingNegSidePolygon == null)
                 {

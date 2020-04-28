@@ -246,7 +246,6 @@ namespace TVGL.TwoDimensional
 
                     //Check to see that the loops are ordered correctly to their isPositive boolean
                     //If they are incorrectly ordered, reverse the order.
-                    //This is used to check situations whether isPositive == null or not.
                     var nodesLoopsCorrected = new List<List<Node>>();
                     for (var j = 0; j < polygonNodes.Count; j++)
                     {
@@ -1076,7 +1075,7 @@ namespace TVGL.TwoDimensional
                 ////If the root, make the final triangle regardless of angle/area tolerance
                 if (i == sortedNodes.Count - 1 && scan.Count == 2)
                 {
-                    triangles.Add(new[] { node.ReferenceID, scan[0].ReferenceID, scan[1].ReferenceID });
+                    AddTriangle(triangles, node, scan[0], scan[1]);
                     continue;
                 }
                 //If the nodes is on the opposite chain from any other node (s). 
@@ -1087,7 +1086,7 @@ namespace TVGL.TwoDimensional
                     {
                         //Do not skip, even if angle is close to Math.PI, because skipping could break the algorithm (create incorrect triangles)
                         //Better to output negligible triangles.
-                        triangles.Add(new[] { node.ReferenceID, scan[0].ReferenceID, scan[1].ReferenceID });
+                        AddTriangle(triangles, node, scan[0], scan[1]);
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
                         //Essentially this moves the peak. 
@@ -1114,7 +1113,7 @@ namespace TVGL.TwoDimensional
                             exitBool = true;
                             continue;
                         }
-                        triangles.Add(new[] { scan[scan.Count - 2].ReferenceID, scan.Last().ReferenceID, node.ReferenceID });
+                        AddTriangle(triangles, scan[scan.Count - 2], scan.Last(), node);
                         //Remove last node from scan list 
                         scan.Remove(scan.Last());
                     }
@@ -1128,6 +1127,13 @@ namespace TVGL.TwoDimensional
                 throw new Exception("Incorrect number of triangles created in triangulate monotone polgon function. This is likely due to angle and area tolerances.");
             }
             return triangles;
+        }
+
+        private static void AddTriangle(List<int[]> triangles, Node node1, Node node2, Node node3)
+        {
+            var cross = (node2.Coordinates - node1.Coordinates).Cross(node3.Coordinates - node1.Coordinates);
+            if (cross >= 0) triangles.Add(new[] { node1.ReferenceID, node2.ReferenceID, node3.ReferenceID });
+            else triangles.Add(new[] { node3.ReferenceID, node2.ReferenceID, node1.ReferenceID });
         }
         #endregion
     }

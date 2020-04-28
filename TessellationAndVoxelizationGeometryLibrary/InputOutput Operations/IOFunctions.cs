@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 using TVGL.Voxelization;
 
 namespace TVGL.IOFunctions
@@ -304,6 +305,11 @@ namespace TVGL.IOFunctions
             {
                 throw new Exception("Cannot open file. Message: " + exc.Message);
             }
+        }
+
+        public static void Save(Polygon polygon, string filename)
+        {
+            throw new NotImplementedException();
         }
 
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid solid)

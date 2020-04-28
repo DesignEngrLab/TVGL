@@ -144,32 +144,6 @@ namespace TVGL
         }
 
 
-        internal static Vector3 GetPerpendicularDirection(Vector3 direction)
-        {
-            //If any of the normal terms (X, Y, or Z) are zero, then that will be direction 2
-            if (direction.X.IsNegligible())
-            {
-                return new Vector3(1.0, 0.0, 0.0);
-            }
-            else if (direction.Y.IsNegligible())
-            {
-                return new Vector3(0.0, 1.0, 0.0);
-            }
-            else if (direction.Z.IsNegligible())
-            {
-                return new Vector3(0.0, 0.0, 1.0);
-            }
-            //Otherwise, 
-            else
-            {
-                //Choose two perpendicular vectors.
-                var v1 = new Vector3(direction.Y, -direction.X, 0.0);
-                var v2 = new Vector3(-direction.Z, 0.0, direction.X);
-
-                //Any linear combination of them is also perpendicular to the original vector
-                return (v1 + v2).Normalize();
-            }
-        }
         #endregion
 
         #region Perimeter
@@ -548,7 +522,7 @@ namespace TVGL
                     resultsDict[coordinates].Add(vertex);
                 else
                     /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
-                    resultsDict.Add(coordinates, new List<Vertex>());
+                    resultsDict.Add(coordinates, new List<Vertex> { vertex });
             }
             return resultsDict;
         }
@@ -825,7 +799,18 @@ namespace TVGL
             var zDir = direction.Z;
 
             Matrix4x4 rotateX, rotateY, backRotateX, backRotateY;
-            if (xDir.IsNegligible() && zDir.IsNegligible())
+            if (xDir.IsNegligible() && yDir.IsNegligible())
+            {
+                if (zDir > 0)
+                {
+                    backTransform = Matrix4x4.Identity;
+                    return Matrix4x4.Identity;
+                }
+                rotateX = Matrix4x4.CreateRotationX(Math.PI);
+                backRotateX = Matrix4x4.CreateRotationX(-Math.PI);
+                backRotateY = rotateY = Matrix4x4.Identity;
+            }
+            else if (xDir.IsNegligible() && zDir.IsNegligible())
             {
                 rotateX = Matrix4x4.CreateRotationX(Math.Sign(yDir) * Math.PI / 2);
                 backRotateX = Matrix4x4.CreateRotationX(-Math.Sign(yDir) * Math.PI / 2);
@@ -849,8 +834,8 @@ namespace TVGL
                 rotateX = Matrix4x4.CreateRotationX(rotXAngle);
                 backRotateX = Matrix4x4.CreateRotationX(-rotXAngle);
             }
-            backTransform = backRotateY * backRotateX;
-            return rotateX * rotateY;
+            backTransform = backRotateX * backRotateY;
+            return rotateY * rotateX;
         }
         #endregion
 
