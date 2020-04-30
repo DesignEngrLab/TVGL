@@ -45,6 +45,8 @@ namespace TVGL
         public static List<MonotoneBox> PartitionIntoMonotoneBoxes(IEnumerable<PointLight> polygon)
         {
             var p = (polygon is IList<PointLight>) ? (IList<PointLight>)polygon : polygon.ToList();
+            if (p.Count < 3) return new List<MonotoneBox>() {new MonotoneBox(p,0,1,MonotonicityChange.Both,
+                MonotonicityChange.Both,1,1)};
             // assume X and Y monotonicities are both positive, let GetMonotonicityChange tell us the 
             // correct direction
             var lowChange = GetMonotonicityChange(p, 0, 1, 1);

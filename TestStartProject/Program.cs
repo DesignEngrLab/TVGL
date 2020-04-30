@@ -83,7 +83,7 @@ namespace TVGLPresenterDX
         {
             //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
-            Debug.Listeners.Add(writer);
+            Trace.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir;
             if (Directory.Exists("../../../../TestFiles"))
@@ -109,12 +109,12 @@ namespace TVGLPresenterDX
                 Stream fileStream;
                 var solid = (TessellatedSolid)IO.Open(filename);
                 if (solid.Errors != null) continue;
-                //Presenter.ShowAndHang(solid);
+                Presenter.ShowAndHang(solid);
                 var xs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive,150);
-                //Presenter.ShowAndHang(xs);
+                Presenter.ShowAndHang(xs);
                 var ts2 = xs.ConvertToTessellatedSolidMarchingCubes(10000);
                 Console.WriteLine("number of faces = {0}", ts2.NumberOfFaces);
-                //Presenter.ShowAndHang(ts2);
+                Presenter.ShowAndHang(ts2);
                 //if (!File.Exists(filename)) continue;
                 //using (fileStream = File.OpenRead(filename))
                 //    IO.Open(fileStream, filename);
