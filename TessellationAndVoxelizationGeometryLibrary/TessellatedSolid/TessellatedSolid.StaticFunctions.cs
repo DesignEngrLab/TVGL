@@ -53,36 +53,38 @@ namespace TVGL
         /// <returns></returns>
         public static double CalculateVolume(IList<PolygonalFace> faces, out Vector3 center)
         {
-            double oldVolume = 0.0;
+            double oldVolume;
             var volume = 0.0;
             var iterations = 0;
-            var oldCenter1 = new Vector3();
             center = new Vector3();
+            Vector3 oldCenter1 = center;
+            Vector3 oldCenter2;
             do
             {
                 oldVolume = volume;
-                var oldCenter2 = oldCenter1;
+                oldCenter2 = oldCenter1;
                 oldCenter1 = center;
                 volume = 0;
+                center = Vector3.Zero;
                 foreach (var face in faces)
                 {
                     if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * (face.Normal.Dot(face.Vertices[0].Coordinates - oldCenter1)) / 3;
+                    var tetrahedronVolume = face.Area * face.Normal.Dot(face.Vertices[0].Coordinates - oldCenter1) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                    // in the Dot, "face.Normal.Dot(face.Vertices[0].Position.Subtract(ORIGIN))", but clearly there is no need to subtract
+                    // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                     // on the volume.
                     volume += tetrahedronVolume;
-                    center = new Vector3(
+                    center += new Vector3(
                         (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4,
                         (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4,
                         (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4);
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
                 if (iterations > 10 || volume < 0) center = 0.5 * (oldCenter1 + oldCenter2);
-                else center = center.Divide(volume);
+                else center = center / volume;
                 iterations++;
-            } while (2 * Math.Abs(oldVolume - volume) / (oldVolume + volume) > Constants.BaseTolerance && iterations <= 20);
+            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);
             return volume;
         }
         #endregion

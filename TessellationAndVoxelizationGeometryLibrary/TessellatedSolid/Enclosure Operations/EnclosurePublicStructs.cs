@@ -27,53 +27,112 @@ namespace TVGL
     /// </summary>
     public class BoundingBox
     {
+        #region Constructors
+        // These first three define Dimensions and Transform. note how the first invokes the 
+        // second and the second invokes the third.
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="directions">The directions.</param>
+        /// <param name="minPointOnDirection0">The minimum point on direction0.</param>
+        /// <param name="minPointOnDirection1">The minimum point on direction1.</param>
+        /// <param name="minPointOnDirection2">The minimum point on direction2.</param>
+        public BoundingBox(double[] dimensions, Vector3[] directions, Vector3 minPointOnDirection0,
+            Vector3 minPointOnDirection1, Vector3 minPointOnDirection2)
+            : this(dimensions, directions, new Vector3(
+                minPointOnDirection0.Dot(directions[0].Normalize()),
+                minPointOnDirection1.Dot(directions[1].Normalize()),
+                minPointOnDirection2.Dot(directions[2].Normalize())))
+        { }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="directions">The directions.</param>
+        /// <param name="translationFromOrigin">The translation to the lowest corner from the  origin.</param>
+        public BoundingBox(double[] dimensions, Vector3[] directions, Vector3 translationFromOrigin)
+          : this(dimensions, new Matrix4x4(directions[0].Normalize(), directions[1].Normalize(),
+              directions[2].Normalize(), translationFromOrigin))
+        { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="transform">The transform.</param>
+        public BoundingBox(double[] dimensions, Matrix4x4 transform)
+        {
+            Dimensions = dimensions;
+            Transform = transform;
+        }
+
+        public BoundingBox(double[] dimensions, Vector3[] directions, IList<IEnumerable<Vertex>> pointsOnFaces)
+            : this(dimensions, directions, pointsOnFaces[0].First().Coordinates, pointsOnFaces[2].First().Coordinates,
+                 pointsOnFaces[4].First().Coordinates)
+        {
+            PointsOnFaces = pointsOnFaces.Select(pof => pof.ToArray()).ToArray();
+        }
+
+        #endregion
         #region Constructor Defined Fields
         /// <summary>
         ///     The dimensions of the bounding box. The 3 values correspond to the 3 direction.
         ///     If this was a bounding box along a given direction, the first dimension will
         ///     correspond with the distance along that direction.
         /// </summary>
-        public Vector3 Dimensions { get; private set; }
+        public double[] Dimensions { get; }
 
+        /// <summary>
+        /// Gets the transformation from the global frame to this box. This is only a rotate and translate. Along
+        /// with the Dimensions, it fully defines the box
+        /// </summary>
+        /// <value>The transform.</value>
+        public Matrix4x4 Transform { get; private set; }
+
+        /// <summary>
+        ///     The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid 
+        ///     that are on the faces of the bounding box. They are in the order of direction1-low,
+        ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
+        /// </summary>
+        public Vertex[][] PointsOnFaces { get; private set; }
+
+        #endregion
+
+        #region Properties
+        //the following properties are set with a lazy private fields
         /// <summary>
         ///     The Directions normal are the three unit vectors that describe the orientation of the box.
         ///     If this was a bounding box along a given direction, the first direction will
         ///     correspond with that direction.
         /// </summary>
-        public Vector3[] Directions { get; private set; }
+        public Vector3[] Directions
+        {
+            get
+            {
+                if (_directions == null)
+                    _directions = new[] { Transform.XBasisVector, Transform.YBasisVector, Transform.ZBasisVector };
+                return _directions;
+            }
+        }
+        private Vector3[] _directions;
 
         /// <summary>
         /// The minimum plane distance to the origin. This is the simplest way to locate the box in space.
         /// These three values along with the direction vectors indicate the three planes of the lower
         /// corner of the box. If you add dimensions to this, you would get the maximum plane distances
         /// </summary>
-        public Vector3 MinPlaneDistanceToOrigin { get; private set; }
-
-        public BoundingBox(Vector3 dimensions, Vector3[] directions, Vector3 minplaneDistAnceToOrigin)
+        public Vector3 TranslationFromOrigin
         {
-            Dimensions = dimensions;
-            Directions = directions.Select(d => d.Normalize()).ToArray();
-            MinPlaneDistanceToOrigin = minplaneDistAnceToOrigin;
+            get
+            {
+                if (_translationFromOrigin.IsNull())
+                    _translationFromOrigin = Transform.TranslationAsVector;
+                return _translationFromOrigin;
+            }
         }
-        public BoundingBox(Vector3 dimensions, Vector3[] directions, Vector3 minPointOnDirection0,
-            Vector3 minPointOnDirection1, Vector3 minPointOnDirection2)
-            : this(dimensions, directions, new Vector3(
-                minPointOnDirection0.Dot(directions[0]),
-                minPointOnDirection1.Dot(directions[1]),
-                minPointOnDirection2.Dot(directions[2])))
-        { }
+        private Vector3 _translationFromOrigin = Vector3.Null;
 
-        #endregion
-
-        #region Properties
-        /// <summary>
-        ///     The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid 
-        ///     that are on the faces of the bounding box. They are in the order of direction1-low,
-        ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
-        /// </summary>
-        public List<Vertex>[] PointsOnFaces { get; internal set; }
-
-        #region the following properties are set with a lazy private field
         /// <summary>
         ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
         ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
@@ -84,10 +143,6 @@ namespace TVGL
             {
                 if (corners == null) MakeCornerPoints();
                 return corners;
-            }
-            set
-            {
-                corners = value;
             }
         }
         private Vector3[] corners;
@@ -103,44 +158,44 @@ namespace TVGL
             corners = new Vector3[8];
             // ---
             corners[0] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0],
-                Directions[1], MinPlaneDistanceToOrigin[1],
-                Directions[2], MinPlaneDistanceToOrigin[2]);
+                Directions[0], TranslationFromOrigin[0],
+                Directions[1], TranslationFromOrigin[1],
+                Directions[2], TranslationFromOrigin[2]);
             // +--
             corners[1] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], MinPlaneDistanceToOrigin[1],
-                Directions[2], MinPlaneDistanceToOrigin[2]);
+                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], TranslationFromOrigin[1],
+                Directions[2], TranslationFromOrigin[2]);
             // ++-
             corners[2] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], MinPlaneDistanceToOrigin[2]);
+                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], TranslationFromOrigin[2]);
             // -+-
             corners[3] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0],
-                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], MinPlaneDistanceToOrigin[2]);
+                Directions[0], TranslationFromOrigin[0],
+                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], TranslationFromOrigin[2]);
             // --+
             corners[4] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0],
-                Directions[1], MinPlaneDistanceToOrigin[1],
-                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+                Directions[0], TranslationFromOrigin[0],
+                Directions[1], TranslationFromOrigin[1],
+                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
             // +-+
             corners[5] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], MinPlaneDistanceToOrigin[1],
-                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], TranslationFromOrigin[1],
+                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
             // +++
             corners[6] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
+                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
             // -++
             corners[7] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], MinPlaneDistanceToOrigin[0],
-                Directions[1], MinPlaneDistanceToOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], MinPlaneDistanceToOrigin[2] + 0.5 * Dimensions[2]);
+                Directions[0], TranslationFromOrigin[0],
+                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
+                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
         }
 
         /// <summary>
@@ -152,8 +207,10 @@ namespace TVGL
             {
                 if (center.IsNull())
                 {
-                    center = new Vector3();
-                    center = Corners.Aggregate(center, (c, v) => c + v).Divide(8.0);
+                    // since the transform would change 0,0,0 into the bottom corner
+                    // it would also change Dimensions into the opposite corner. 
+                    // there the center can be found by transforming half the dimensions
+                    center = (0.5 * new Vector3(Dimensions)).Transform(Transform);
                 }
                 return center;
             }
@@ -167,8 +224,7 @@ namespace TVGL
         /// <summary>
         ///     The volume of the bounding box.
         /// </summary>
-        public double Volume => Dimensions.X * Dimensions.Y * Dimensions.Z;
-
+        public double Volume => Dimensions[0] * Dimensions[1] * Dimensions[2];
         /// <summary>
         ///     The Solid Representation of the bounding box. This is not set by defualt. 
         /// </summary>
@@ -189,7 +245,7 @@ namespace TVGL
         private TessellatedSolid _tessellatedSolid;
 
         /// <summary>
-        ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
+        ///     The direction indices sorted by the dimensions from smallest to greatest. 
         /// </summary>
         public IList<int> SortedDirectionIndicesByLength
         {
@@ -203,7 +259,7 @@ namespace TVGL
         private IList<int> _sortedDirectionIndicesByLength;
 
         /// <summary>
-        ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
+        ///     The direction indices sorted by the dimensions from smallest to greatest. 
         /// </summary>
         public IList<Vector3> SortedDirectionsByLength
         {
@@ -217,9 +273,9 @@ namespace TVGL
         private IList<Vector3> _sortedDirectionsByLength;
 
         /// <summary>
-        ///     The sorted dimensions. This is not set by defualt. 
+        ///     The sorted dimensions from smallest to greatest. 
         /// </summary>
-        public IList<double> SortedDimensions
+        public double[] SortedDimensions
         {
             get
             {
@@ -228,59 +284,60 @@ namespace TVGL
                 return _sortedDimensions;
             }
         }
-        private IList<double> _sortedDimensions;
+        private double[] _sortedDimensions;
 
         /// <summary>
         /// Sorts the directions by the distance along that direction. Smallest to largest.
         /// </summary>
         private void SetSortedDirections()
         {
-            if (Dimensions.X <= Dimensions.Y)
+            if (Dimensions[0] <= Dimensions[1])
             {
-                if (Dimensions.Y <= Dimensions.Z)
+                if (Dimensions[1] <= Dimensions[2])
                     _sortedDirectionIndicesByLength = new[] { 0, 1, 2 };
-                else if (Dimensions.X <= Dimensions.Z)
+                else if (Dimensions[0] <= Dimensions[2])
                     _sortedDirectionIndicesByLength = new[] { 0, 2, 1 };
                 else
                     _sortedDirectionIndicesByLength = new[] { 2, 0, 1 };
             }
             // then X>Y
-            if (Dimensions.Y > Dimensions.Z)
+            else if (Dimensions[1] > Dimensions[2])
                 _sortedDirectionIndicesByLength = new[] { 2, 1, 0 };
-            if (Dimensions.X <= Dimensions.Z)
+            else if (Dimensions[0] <= Dimensions[2])
                 _sortedDirectionIndicesByLength = new[] { 1, 0, 2 };
             else
                 _sortedDirectionIndicesByLength = new[] { 1, 2, 0 };
 
             _sortedDimensions = new[] {
-                Dimensions.Position[_sortedDirectionIndicesByLength[0]],
-                Dimensions.Position[_sortedDirectionIndicesByLength[1]],
-                Dimensions.Position[_sortedDirectionIndicesByLength[2]] };
+                Dimensions[_sortedDirectionIndicesByLength[0]],
+                Dimensions[_sortedDirectionIndicesByLength[1]],
+                Dimensions[_sortedDirectionIndicesByLength[2]] };
             _sortedDirectionsByLength = new[] {
                 Directions[_sortedDirectionIndicesByLength[0]],
                 Directions[_sortedDirectionIndicesByLength[1]],
                 Directions[_sortedDirectionIndicesByLength[2]] };
         }
-        #endregion
+
+
+        private void ResetLazyFields()
+        {
+            center = Vector3.Null;
+            corners = null;
+            _directions = null;
+            _translationFromOrigin = Vector3.Null;
+            _sortedDimensions = null;
+            _sortedDirectionIndicesByLength = null;
+            _sortedDirectionsByLength = null;
+            _tessellatedSolid = null;
+        }
         #endregion
 
 
         public BoundingBox Copy()
         {
-            var copy = new BoundingBox(this.Dimensions, (Vector3[])this.Directions.Clone(),
-               this.MinPlaneDistanceToOrigin);
-
-            //Recreate the solid representation if one existing in the original
-            if (_tessellatedSolid != null) copy._tessellatedSolid = _tessellatedSolid;
-            if (!this.center.IsNull()) copy.center = this.center;
-            if (this.corners != null) copy.corners = (Vector3[])this.corners.Clone();
-            if (this.PointsOnFaces != null)
-            {
-                copy.PointsOnFaces = new List<Vertex>[6];
-                for (int i = 0; i < 6; i++)
-                    copy.PointsOnFaces[i] = new List<Vertex>(this.PointsOnFaces[i]);
-            }
-            return copy;
+            if (PointsOnFaces != null)
+                return new BoundingBox(this.Dimensions, this.Directions, PointsOnFaces);
+            else return new BoundingBox(this.Dimensions, this.Transform);
         }
 
         public BoundingBox MoveFaceOutwardToNewSolid(Vector3 direction, double distance)
@@ -310,30 +367,25 @@ namespace TVGL
         public void MoveFaceOutward(CartesianDirections face, double distance)
         {
             if (distance.IsNegligible()) return;
-            var positiveFace = face > 0;
+            var negativeFace = face < 0;
             var direction = Math.Abs((int)face) - 1;
-            if (positiveFace)
-                Dimensions = Dimensions + Vector3.UnitVector(direction) * distance;
-            else MinPlaneDistanceToOrigin = MinPlaneDistanceToOrigin - Vector3.UnitVector(direction) * distance;
+            Dimensions[direction] += distance;
             if (PointsOnFaces != null)
             {
                 //direction1-low,
                 ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
-                var vertexOnPlaneIndex = 2 * direction + (positiveFace ? 1 : 0);
-                PointsOnFaces[vertexOnPlaneIndex].Clear();
+                var vertexOnPlaneIndex = 2 * direction + (!negativeFace ? 1 : 0);
+                PointsOnFaces[vertexOnPlaneIndex] = Array.Empty<Vertex>();
             }
+            if (negativeFace)
+            {
+                _translationFromOrigin -= Vector3.UnitVector(direction) * distance;
+                Transform = new Matrix4x4(Transform.XBasisVector, Transform.YBasisVector,
+                    Transform.ZBasisVector, _translationFromOrigin);
+            }
+
             ResetLazyFields();
         }
-        private void ResetLazyFields()
-        {
-            center = Vector3.Null;
-            this.corners = null;
-            this._sortedDimensions = null;
-            this._sortedDirectionIndicesByLength = null;
-            this._sortedDirectionsByLength = null;
-            this._tessellatedSolid = null;
-        }
-
     }
 
     /// <summary>
@@ -352,7 +404,9 @@ namespace TVGL
         public Vector2[] CornerPoints;
 
         /// <summary>
-        ///     The point pairs that define the bounding rectangle limits
+        ///     The point pairs that define the bounding rectangle limits. Unlike bounding box
+        ///     these go: dir1-min, dir2-max, dir1-max, dir2-min this is because you are going
+        ///     around ccw
         /// </summary>
         public List<Vector2>[] PointsOnSides;
 

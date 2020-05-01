@@ -47,7 +47,7 @@ namespace TVGL
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
-        public Vector3 Direction { get; set; }
+        public Vector3 Direction { get;  }
         // in the future, wouldn't this just be
         // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 

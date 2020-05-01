@@ -80,21 +80,54 @@ namespace TVGL
             directions.Add(new Vector3(0, 1, 0));
             directions.Add(new Vector3(0, 1, 1).Normalize());
             directions.Add(new Vector3(0, -1, 1).Normalize());
-
-            var boxes = directions.Select(v => new BoundingBox(new Vector3(double.PositiveInfinity), new[] { v },
-                new Vector3(double.NegativeInfinity))).ToList();
-            for (var i = 0; i < 13; i++)
-                boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
             var minVolume = double.PositiveInfinity;
+            var boxes = directions.Select(v => new BoundingBox(new[]{double.PositiveInfinity,
+                double.PositiveInfinity,double.PositiveInfinity}, new[] { v, Vector3.UnitY, Vector3.UnitZ },
+                new Vector3(double.NegativeInfinity))).ToList();
             var minBox = boxes[0];
-
-            foreach (var box in boxes)
+            for (var i = 0; i < 13; i++)
             {
+                var box = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
                 if (box.Volume >= minVolume) continue;
                 minVolume = box.Volume;
                 minBox = box;
             }
-            return minBox;
+            // to make a consistent result, we will put the longest dimension along X, the second along Y and the shortest
+            // on Z. Also, we will flip directions so that the more positive direction is chosen, which makes for smaller
+            // rotation angles to square the solid
+            var largestDirection = minBox.SortedDirectionsByLength[2];
+            var minPointsLargestDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[2]];
+            var maxPointsLargestDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[2] + 1];
+            if (largestDirection.Dot(new Vector3(1, 1, 1)) < 0)
+            {
+                largestDirection = -largestDirection;
+                var temp = minPointsLargestDir;
+                minPointsLargestDir = maxPointsLargestDir;
+                maxPointsLargestDir = temp;
+            }
+            var midDirection = minBox.SortedDirectionsByLength[1];
+            var minPointsMediumDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[1]];
+            var maxPointsMediumDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[1] + 1];
+            if (midDirection.Dot(new Vector3(1, 1, 1)) < 0)
+            {
+                midDirection = -midDirection;
+                var temp = minPointsMediumDir;
+                minPointsMediumDir = maxPointsMediumDir;
+                maxPointsMediumDir = temp;
+            }
+            var smallestDirection = largestDirection.Cross(midDirection);
+            var minPointsSmallDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[0]];
+            var maxPointsSmallDir = minBox.PointsOnFaces[2 * minBox.SortedDirectionIndicesByLength[0] + 1];
+            if (smallestDirection.Dot(minBox.SortedDirectionsByLength[0]) < 0)
+            {
+                var temp = minPointsSmallDir;
+                minPointsSmallDir = maxPointsSmallDir;
+                maxPointsSmallDir = temp;
+            }
+            return new BoundingBox(minBox.SortedDimensions.Reverse().ToArray(),
+                new[] { largestDirection, midDirection, smallestDirection },
+                new[] {minPointsLargestDir,maxPointsLargestDir,minPointsMediumDir,maxPointsMediumDir,
+                minPointsSmallDir,maxPointsSmallDir});
         }
 
         #region ChanTan AABB Approach
@@ -215,7 +248,7 @@ namespace TVGL
         /// <param name="bottomPoints">The bottom vertices.</param>
         /// <param name="topPoints">The top vertices.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremePoints(this IEnumerable<Vector2> points,Vector2 direction2D,
+        public static double GetLengthAndExtremePoints(this IEnumerable<Vector2> points, Vector2 direction2D,
             out List<Vector2> bottomPoints,
             out List<Vector2> topPoints)
         {
@@ -251,6 +284,11 @@ namespace TVGL
         #region 2D Rotating Calipers
         private static readonly double[] CaliperOffsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
 
+        // we want to store the extreme in a meaningful order: 0) dir1-minima, 1) dir1-maxima, 2)dir2-minima,
+        // 3) dir2-maxima. However in the following method we order the sides in the rectangle from the bottom
+        // (y-min) counter-clockwise. So the first is y-min (or 2 since this is dir2-minima), then 1 for dir1-max,
+        // then 3 for dir2-max, then 0 since this would be xmin or dir1-minima
+        private static int[] properExtremaIndex = new[] { 2, 1, 3, 0 };
         /// <summary>
         ///     Rotating the calipers 2D method. Convex hull must be a counter clockwise loop.
         ///     Optional booleans for what information should be set in the Bounding Rectangle.
@@ -413,7 +451,7 @@ namespace TVGL
                 var pointsOnSides = new List<Vector2>[4];
                 for (var i = 0; i < 4; i++)
                 {
-                    pointsOnSides[i] = new List<Vector2>();
+                    pointsOnSides[properExtremaIndex[i]] = new List<Vector2>();
                     var dir = i % 2 == 0 ? angleVector1 : angleVector2;
                     var distance = cvxPoints[extremeIndices[i]].Dot(dir);
                     if (i % 2 == 0) //D1
@@ -432,7 +470,7 @@ namespace TVGL
                         extremeIndices[i] = prevIndex;
                         if (setPointsOnSide)
                         {
-                            pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
+                            pointsOnSides[properExtremaIndex[i]].Add(cvxPoints[extremeIndices[i]]);
                         }
                         prevIndex = extremeIndices[i] == 0 ? numCvxPoints - 1 : extremeIndices[i] - 1;
                     } while (distance.IsPracticallySame(cvxPoints[prevIndex].Dot(dir),
@@ -527,37 +565,29 @@ namespace TVGL
         private static BoundingBox FindOBBAlongDirection(IEnumerable<Vertex> vertices, Vector3 direction)
         {
             var direction1 = direction.Normalize();
-            var depth = GetLengthAndExtremeVertices(vertices, direction, out var bottomVertices, out var topVertices);
+            var depth = GetLengthAndExtremeVertices(vertices, direction1, out var bottomVertices, out var topVertices);
 
-            var pointsDict = vertices.ProjectVerticesTo2DCoordinatesWithRefToVertices(direction, out var backTransform);
+            var pointsDict = vertices.ProjectVerticesTo2DCoordinatesWithRefToVertices(direction1, out var backTransform);
             var boundingRectangle = RotatingCalipers2DMethod(pointsDict.Keys.ToList());
-
             //Get the Direction vectors from rotating caliper and projection.
-            var tempDirection = new Vector3(boundingRectangle.LengthDirection.X, boundingRectangle.LengthDirection.Y, 0);
-            tempDirection = tempDirection.Transform(backTransform);
-            var direction2 = new Vector3(tempDirection[0], tempDirection[1], tempDirection[2]);
-            tempDirection = new Vector3(boundingRectangle.WidthDirection.X, boundingRectangle.WidthDirection.Y, 0);
-            var direction3 = tempDirection.Transform(backTransform);
-            var verticesOnFaces = new List<List<Vertex>>
+            var direction2 = new Vector3(boundingRectangle.WidthDirection, 0);
+            direction2 = direction2.Transform(backTransform).Normalize();
+            var direction3 = new Vector3(boundingRectangle.LengthDirection, 0);
+            direction3 = direction3.Transform(backTransform).Normalize();
+            var verticesOnFaces = new[]
             {
                 bottomVertices,
                 topVertices,
-                boundingRectangle.PointsOnSides[0].SelectMany(p =>pointsDict[p]).ToList(),
-                boundingRectangle.PointsOnSides[1].SelectMany(p =>pointsDict[p]).ToList(),
-                boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]).ToList(),
-                boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]).ToList()
+                // these indices are really wacky
+                boundingRectangle.PointsOnSides[0].SelectMany(p =>pointsDict[p]),
+                boundingRectangle.PointsOnSides[1].SelectMany(p =>pointsDict[p]),
+                boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]),
+                boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p])
             };
             if ((depth * boundingRectangle.Length * boundingRectangle.Width).IsNegligible())
                 throw new Exception("Volume should never be negligible, unless the input data is bad");
-            //var dim2 = GetLengthAndExtremeVertices(direction2, vertices, out bottomVertices, out topVertices);
-            //var dim3 = GetLengthAndExtremeVertices(direction3, vertices, out bottomVertices, out topVertices);
-            //if (!dim2.IsPracticallySame(boundingRectangle.Dimensions[0], 0.000001)) throw new Exception("Error in implementation");
-            //if (!dim3.IsPracticallySame(boundingRectangle.Dimensions[1], 0.000001)) throw new Exception("Error in implementation");
-            var minBox = new BoundingBox(new Vector3(depth, boundingRectangle.Length, boundingRectangle.Width),
-                new[] { direction1, direction2, direction3 }, bottomVertices[0].Coordinates,
-                verticesOnFaces[2][0].Coordinates, verticesOnFaces[4][0].Coordinates);
-            minBox.PointsOnFaces = verticesOnFaces.ToArray();
-            return minBox;
+            return new BoundingBox(new[] { depth, boundingRectangle.Width, boundingRectangle.Length },
+                new[] { direction1, direction2, direction3 }, verticesOnFaces);
         }
 
         #endregion

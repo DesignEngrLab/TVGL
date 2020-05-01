@@ -435,7 +435,7 @@ namespace TVGL
                 {
                     var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
                     var triangulatedListofLists =
-                       PolygonOperations.Triangulate(new [] { faceVertices }, normal,out _, out _);
+                       PolygonOperations.Triangulate(new[] { faceVertices }, normal, out _, out _);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
@@ -899,10 +899,10 @@ namespace TVGL
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
         /// <returns></returns>
-        public TessellatedSolid SetToOriginAndSquareToNewSolid(out Matrix4x4 backTransform)
+        public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)
         {
             var copy = (TessellatedSolid)this.Copy();
-            copy.SetToOriginAndSquare(out backTransform);
+            copy.SetToOriginAndSquare(out originalBoundingBox);
             return copy;
         }
         /// <summary>
@@ -910,141 +910,13 @@ namespace TVGL
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
         /// <returns></returns>
-        public void SetToOriginAndSquare(out Matrix4x4 backTransform)
+        public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
         {
-            var transformationMatrix = GetSquaredandOriginTransform(out backTransform);
-            Transform(transformationMatrix);
+            originalBoundingBox = MinimumEnclosure.OrientedBoundingBox(this);
+            Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
+            Transform(transform);
         }
 
-        /// <summary>
-        /// Translates and Squares Tesselated Solid based on the give bounding box. 
-        /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
-        /// </summary>
-        /// <returns></returns>
-        public void SetToOriginAndSquare(BoundingBox obb, out Matrix4x4 backTransform)
-        {
-            var transformationMatrix = GetSquaredandOriginTransform(obb, out backTransform);
-            Transform(transformationMatrix);
-        }
-
-        private Matrix4x4 GetSquaredandOriginTransform(out Matrix4x4 backTransform)
-        {
-            var obb = MinimumEnclosure.OrientedBoundingBox(this);
-            return GetSquaredandOriginTransform(obb, out backTransform);
-        }
-
-        private Matrix4x4 GetSquaredandOriginTransform(BoundingBox obb, out Matrix4x4 backTransform)
-        {
-            //First, get the oriented bounding box directions. 
-            var obbDirections = obb.Directions.ToList();
-
-            //The bounding box directions are in no particular order.
-            //We want a local coordinate system (X', Y', Z') based on these directions. 
-            //Choose X' to be the +/- direction most aligned with the global X.
-            //Y' will be a direction left that is most aligned with the global Y.
-            //Z' will be the cross product X'.cross(Y'), which should align with the last axis.
-            var minDot = double.NegativeInfinity;
-            var xPrime = new Vector3();
-            var xPrimeIndex = 0;
-            for (var i = 0; i < 3; i++)
-            {
-                var direction = obbDirections[i];
-                var dotX1 = direction.Dot(new Vector3(1.0, 0.0, 0.0));
-                if (dotX1 > minDot)
-                {
-                    minDot = dotX1;
-                    xPrime = direction;
-                    xPrimeIndex = i;
-                }
-                var dotX2 = (direction * -1).Dot(new Vector3(1.0, 0.0, 0.0));
-                if (dotX2 > minDot)
-                {
-                    minDot = dotX2;
-                    xPrime = direction * -1;
-                    xPrimeIndex = i;
-                }
-            }
-            obbDirections.RemoveAt(xPrimeIndex);
-
-            minDot = double.NegativeInfinity;
-            var yPrime = new Vector3();
-            for (var i = 0; i < 2; i++)
-            {
-                var direction = obbDirections[i];
-                var dotY1 = direction.Dot(new Vector3(0.0, 1.0, 0.0));
-                if (dotY1 > minDot)
-                {
-                    minDot = dotY1;
-                    yPrime = direction;
-                }
-                var dotY2 = (direction * -1).Dot(new Vector3(0.0, 1.0, 0.0));
-                if (dotY2 > minDot)
-                {
-                    minDot = dotY2;
-                    yPrime = direction * -1;
-                }
-            }
-
-            var zPrime = xPrime.Cross(yPrime);
-
-            //Now find the local origin. This will be the corner of the box furthest backward along
-            //the X', Y', Z' axis.
-            //First use X' to eliminate 4 of the vertices by removing the four vertices furthest along xPrime
-            var dotXs = new Dictionary<Vector3, double>();
-            foreach (var vertex in obb.Corners)
-            {
-                var dot = vertex.Dot(xPrime);
-                dotXs.Add(vertex, dot);
-            }
-            //Order the vertices by their dot products. Take the smallest four values. Then get the those four vertices.
-            var bottom4 = dotXs.OrderBy(pair => pair.Value).Take(4).ToDictionary(pair => pair.Key, pair => pair.Value);
-            var bottom4Vertices = bottom4.Keys;
-
-            //Second use Y' to eliminate 2 of the remaining 4 vertices by removing the 2 vertices furthest along yPrime
-            var dotYs = new Dictionary<Vector3, double>();
-            foreach (var vertex in bottom4Vertices)
-            {
-                var dot = vertex.Dot(yPrime);
-                dotYs.Add(vertex, dot);
-            }
-            //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
-            var bottom2 = dotYs.OrderBy(pair => pair.Value).Take(2).ToDictionary(pair => pair.Key, pair => pair.Value);
-            var bottom2Vertices = bottom2.Keys;
-
-            //Second use Z' to eliminate one of the remaining two vertices by removing the furthest vertex along zPrime
-            var dotZs = new Dictionary<Vector3, double>();
-            foreach (var vertex in bottom2Vertices)
-            {
-                var dot = vertex.Dot(zPrime);
-                dotZs.Add(vertex, dot);
-            }
-            //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
-            var bottom1 = dotZs.OrderBy(pair => pair.Value).Take(1).ToDictionary(pair => pair.Key, pair => pair.Value);
-            var localOrigin = bottom1.Keys.First();
-
-
-            //Get the translation matrix based on the local origin that we just found.
-            //var translationMatrix = new[,]
-            //{
-            //    {1.0, 0.0, 0.0, },
-            //    {0.0, 1.0, 0.0, },
-            //    {0.0, 0.0, 1.0, },
-            //    {0.0, 0.0, 0.0, 1.0}
-            //};
-
-            //Change of coordinates matrix. Easier than using 3 rotation matrices
-            //Multiplying by this matrix after the transform will align "local" coordinate axis
-            //with the global axis, where the local axis are defined by the directions list.
-            var transformationMatrix = new Matrix4x4(
-                //YIKES! changed this to its transpose since Numerics follows the CS instead of the ENGR approach
-                xPrime.X, yPrime.X, zPrime.X, 0.0,
-               xPrime.Y, yPrime.Y, zPrime.Y, 0.0,
-               xPrime.Z, yPrime.Z, zPrime.Z, 0.0,
-              -localOrigin.X, -localOrigin.Y, -localOrigin.Z, 1.0
-            );
-            Matrix4x4.Invert(transformationMatrix, out backTransform);
-            return transformationMatrix;
-        }
 
         /// <summary>
         /// Transforms the specified transform matrix.

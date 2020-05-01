@@ -20,6 +20,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         private const double BillboardMinAngle = 1.0 - (0.1 * (Math.PI / 180.0)); // 0.1 degrees
         private const double DecomposeEpsilon = 0.0001;
 
+
         #region Public Fields
         /// <summary>
         /// Value at row 1, column 1 of the matrix. This is the x scaling term.
@@ -151,9 +152,30 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Gets or sets the translation component of this matrix.
+        /// Gets  the translation component of this matrix.
         /// </summary>
-        public Vector3 Translation => new Vector3(M41, M42, M43);
+        public Vector3 TranslationAsVector => new Vector3(M41, M42, M43);
+        /// <summary>
+        /// Gets the x basis vector. This is the first column not including the 
+        /// translation component. This represent i-vector what the x-direction is
+        /// in the new coordinate frame.
+        /// </summary>
+        /// <value>The x basis vector.</value>
+        public Vector3 XBasisVector => new Vector3(M11, M12, M13);
+        /// <summary>
+        /// Gets the y basis vector. This is the second column not including the 
+        /// translation component. This represent i-vector what the x-direction is
+        /// in the new coordinate frame.
+        /// </summary>
+        /// <value>The y basis vector.</value>
+        public Vector3 YBasisVector => new Vector3(M21, M22, M23);
+        /// <summary>
+        /// Gets the z basis vector. This is the third column not including the 
+        /// translation component. This represent i-vector what the x-direction is
+        /// in the new coordinate frame.
+        /// </summary>
+        /// <value>The z basis vector.</value>
+        public Vector3 ZBasisVector => new Vector3(M31, M32, M33);
 
         /// <summary>
         /// Constructs a Matrix4x4 from the given components.
@@ -236,6 +258,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             matrix.M21, matrix.M22, 0, matrix.M23,
             0, 0, 1, 0,
             matrix.M31, matrix.M32, 0, 1)
+        { }
+
+        public Matrix4x4(Vector3 xComponent, Vector3 yComponent, Vector3 zComponent, Vector3 translation) 
+            : this(xComponent.X, xComponent.Y, xComponent.Z,
+                  yComponent.X, yComponent.Y, yComponent.Z,
+                  zComponent.X, zComponent.Y, zComponent.Z,
+                  translation.X, translation.Y, translation.Z)
         { }
 
         /// <summary>

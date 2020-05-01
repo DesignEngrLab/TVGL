@@ -794,48 +794,57 @@ namespace TVGL
         /// <returns>System.Vector2.</returns>
         public static Matrix4x4 TransformToXYPlane(Vector3 direction, out Matrix4x4 backTransform)
         {
-            var xDir = direction.X;
-            var yDir = direction.Y;
-            var zDir = direction.Z;
-
-            Matrix4x4 rotateX, rotateY, backRotateX, backRotateY;
-            if (xDir.IsNegligible() && yDir.IsNegligible())
+            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {
-                if (zDir > 0)
+                if (direction.Z > 0)
                 {
                     backTransform = Matrix4x4.Identity;
                     return Matrix4x4.Identity;
                 }
-                rotateX = Matrix4x4.CreateRotationX(Math.PI);
-                backRotateX = Matrix4x4.CreateRotationX(-Math.PI);
-                backRotateY = rotateY = Matrix4x4.Identity;
+                backTransform = new Matrix4x4(1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0);
+                return backTransform;
             }
-            else if (xDir.IsNegligible() && zDir.IsNegligible())
+            else if (direction.X.IsNegligible() && direction.Z.IsNegligible())
             {
-                rotateX = Matrix4x4.CreateRotationX(Math.Sign(yDir) * Math.PI / 2);
-                backRotateX = Matrix4x4.CreateRotationX(-Math.Sign(yDir) * Math.PI / 2);
-                backRotateY = rotateY = Matrix4x4.Identity;
+                if (direction.Y > 0)
+                {
+                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0);
+                    return new Matrix4x4(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0);
+                }
+                backTransform = new Matrix4x4(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0);
+                return new Matrix4x4(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0);
             }
-            else if (zDir.IsNegligible())
+            else if (direction.Y.IsNegligible() && direction.Z.IsNegligible())
             {
-                rotateY = Matrix4x4.CreateRotationY(-Math.Sign(xDir) * Math.PI / 2);
-                backRotateY = Matrix4x4.CreateRotationY(Math.Sign(xDir) * Math.PI / 2);
-                var rotXAngle = Math.Atan(yDir / Math.Abs(xDir));
-                rotateX = Matrix4x4.CreateRotationX(rotXAngle);
-                backRotateX = Matrix4x4.CreateRotationX(-rotXAngle);
+                if (direction.X > 0)
+                {
+                    backTransform = new Matrix4x4(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0);
+                    return new Matrix4x4(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0);
+                }
+                backTransform = new Matrix4x4(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0);
+                return new Matrix4x4(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0);
             }
-            else
-            {
-                var rotYAngle = -Math.Atan(xDir / zDir);
-                rotateY = Matrix4x4.CreateRotationY(rotYAngle);
-                backRotateY = Matrix4x4.CreateRotationY(-rotYAngle);
-                var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
-                var rotXAngle = Math.Sign(zDir) * Math.Atan(yDir / baseLength);
-                rotateX = Matrix4x4.CreateRotationX(rotXAngle);
-                backRotateX = Matrix4x4.CreateRotationX(-rotXAngle);
-            }
-            backTransform = backRotateX * backRotateY;
-            return rotateY * rotateX;
+            var zDir = direction.Normalize();
+            var xDir = zDir.GetPerpendicularDirection();
+            var yDir = zDir.Cross(xDir);
+            backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
+            Matrix4x4.Invert(backTransform, out var forwardTransform);
+            return forwardTransform;
+        }
+
+        public static Vector3 GetPerpendicularDirection(this Vector3 direction)
+        {
+            //If the vector is only in the y-direction, then return the x direction
+            if (direction.X.IsNegligible() && direction.Z.IsNegligible())
+                return Vector3.UnitX;    
+            // otherwise we will return something in the x-z plane, which is created by
+            // taking the cross product of the Y-direction with this vector.
+            // The thinking is that - since this is used in the function above (to translate
+            // to the x-y plane) - the provided direction, is the new z-direction, so
+            // we find something in the x-z plane through this cross-product, so that the
+            // third direction has strong component in positive y-direction - like 
+            // camera up position.
+            return Vector3.UnitY.Cross(direction).Normalize();
         }
         #endregion
 

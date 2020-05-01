@@ -8,11 +8,18 @@ namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
+        public CrossSectionSolid CreateConstantCrossSectionSolid(IEnumerable<IEnumerable<Vector2>> bottomPolygon, Matrix4x4 transform, 
+            double sameToleranceTVGL, UnitType unitsTVGL)
+        {
+            throw new NotImplementedException();
+        }
+
         public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
-            List<List<Vector2>> shape, double sameTolerance, UnitType units)
+            IEnumerable<IEnumerable<Vector2>> shape, double sameTolerance, UnitType units)
         {
             var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
-            var layers2D = new Dictionary<int, List<List<Vector2>>> { { 0, shape }, { 1, shape.Select(a => new List<Vector2>(a)).ToList() } };
+            var layers2D = new Dictionary<int, List<List<Vector2>>> { { 0, shape.Select(a => new List<Vector2>(a)).ToList() }, 
+                { 1, shape.Select(a => new List<Vector2>(a)).ToList() } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
