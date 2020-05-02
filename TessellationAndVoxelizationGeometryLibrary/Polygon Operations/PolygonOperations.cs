@@ -860,7 +860,7 @@ namespace TVGL.TwoDimensional
                 minLength = totalLength * 0.001;
             }
             //Setup Clipper
-            var clip = new ClipperOffset(2, minLength);
+            var clip = new ClipperOffset(2, minLength* Constants.DoubleToIntPointMultipler);
             clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
