@@ -202,7 +202,7 @@ namespace TVGLUnitTestsAndBenchmarking
             m4x4 = new Matrix4x4(m3x3);
             isItTrueThat = m4x4.IsIdentity();
             isItTrueThat = m4x4.IsNull();
-            Vector3 t3 = m4x4.Translation;
+            Vector3 t3 = m4x4.TranslationAsVector;
             m4x4 = Matrix4x4.CreateBillboard(v3_1, v3_1, v3_1, v3_1);
             m4x4 = Matrix4x4.CreateConstrainedBillboard(v3_1, v3_1, v3_1, v3_1, v3_1);
 

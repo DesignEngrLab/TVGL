@@ -205,8 +205,8 @@ namespace TVGL
             //if (!Layer3D.Any()) SetAllVertices();
             var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
             var stop = Layer2D.Where(p => p.Value.Any()).LastOrDefault().Key;
-            var reverse = start < stop ? 1 : -1;
-            var direction = reverse == 1 ? Direction : -1 * Direction;
+            var increment = start < stop ? 1 : -1;
+            //var direction = increment == 1 ? Direction : -1 * Direction;
             var faces = new List<PolygonalFace>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
@@ -214,16 +214,16 @@ namespace TVGL
             //But both methods, only result in material between the cross sections.
             if (extrudeBack)
             {
-                direction = -1 * direction;
-                start += reverse;
+              //  direction = -1 * direction;
+                start += increment;
             }
-            else stop -= reverse;
-            for (var i = start; i * reverse <= stop * reverse; i += reverse) //Include the last index, since we already modified start or stop
+            else stop -= increment;
+            for (var i = start; i * increment <= stop * increment; i += increment) //Include the last index, since we already modified start or stop
             {
                 if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
-                var basePlaneDistance = extrudeBack ? StepDistances[i - reverse] : StepDistances[i];
-                var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + reverse];
-                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i], direction,basePlaneDistance,
+                var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
+                var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
+                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i], Direction,basePlaneDistance,
                     topPlaneDistance-basePlaneDistance);
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);

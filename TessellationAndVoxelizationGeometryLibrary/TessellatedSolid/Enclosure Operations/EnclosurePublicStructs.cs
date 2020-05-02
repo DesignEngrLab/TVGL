@@ -379,9 +379,9 @@ namespace TVGL
             }
             if (negativeFace)
             {
-                _translationFromOrigin -= Vector3.UnitVector(direction) * distance;
+                var translate = TranslationFromOrigin - Vector3.UnitVector(direction) * distance;
                 Transform = new Matrix4x4(Transform.XBasisVector, Transform.YBasisVector,
-                    Transform.ZBasisVector, _translationFromOrigin);
+                    Transform.ZBasisVector, translate);
             }
 
             ResetLazyFields();
