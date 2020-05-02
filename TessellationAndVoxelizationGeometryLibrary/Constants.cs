@@ -45,8 +45,8 @@ namespace TVGL
         /// <summary>The conversion from double to IntPoint as is used in the Clipper polygon functions. 
         /// See: https://github.com/DesignEngrLab/TVGL/wiki/Determining-the-Double-to-Long-Dimension-Multiplier
         /// for how this number is established.</summary>
-        internal const int DoubleToIntPointMultipler = 365760000;
-        internal const double IntPointToDoubleMultipler = 1.0 / 365760000.0;
+        internal const int DoubleToIntPointMultipler = 1000000;  // 365760000;
+        internal const double IntPointToDoubleMultipler = 1.0 / 1000000; //365760000.0;
 
         /// <summary>
         ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
