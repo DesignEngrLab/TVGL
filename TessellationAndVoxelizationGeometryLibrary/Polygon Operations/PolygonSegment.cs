@@ -126,23 +126,23 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="fromNode">From node.</param>
         /// <param name="toNode">To node.</param>
-        internal PolygonSegment(Node fromNode, Node toNode)
+        internal PolygonSegment(Vertex2D fromNode, Vertex2D toNode)
         {
             FromPoint = fromNode;
             ToPoint = toNode;
         }
         #endregion
         /// <summary>
-        ///     Gets the Node which the line is pointing to. Set is through the constructor.
+        ///     Gets the Vertex2D which the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
-        internal Node ToPoint { get; }
+        internal Vertex2D ToPoint { get; }
 
         /// <summary>
-        ///     Gets the Node which the line is pointing away from. Set is through the constructor.
+        ///     Gets the Vertex2D which the line is pointing away from. Set is through the constructor.
         /// </summary>
         /// <value>From node.</value>
-        internal Node FromPoint { get; }
+        internal Vertex2D FromPoint { get; }
 
 
 
@@ -152,7 +152,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="point"></param>
         /// <returns></returns>
-        public Node OtherPoint(Node point)
+        public Vertex2D OtherPoint(Vertex2D point)
         {
             if (point == FromPoint) return ToPoint;
             return point == ToPoint ? FromPoint : null;

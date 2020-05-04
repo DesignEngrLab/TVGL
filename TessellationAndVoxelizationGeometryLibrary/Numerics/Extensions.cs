@@ -140,6 +140,12 @@ namespace TVGL.Numerics
 
         public static double Dot(this Vector3 vector1, Vector3 vector2)
         { return Vector3.Dot(vector1, vector2); }
+        public static double Dot(this IVertex3D vector1, Vector3 vector2)
+        {
+            return vector1.X * vector2.X +
+                   vector1.Y * vector2.Y +
+                   vector1.Z * vector2.Z;
+        }
         #endregion
 
         #region Matrix3x3, Matrix4x4, Quaternion, and Plane

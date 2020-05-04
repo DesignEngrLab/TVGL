@@ -26,7 +26,7 @@ namespace TVGL
     ///     The 3D vertex can connect to any number of faces and edges. It inherits from the
     ///     MIConvexhull IVertex interface.
     /// </summary>
-    public class Vertex : TessellationBaseClass, IVertex
+    public class Vertex : TessellationBaseClass, IVertex3D, IVertex
     {
         /// <summary>
         ///     Prevents a default instance of the <see cref="Vertex" /> class from being created.

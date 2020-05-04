@@ -38,8 +38,8 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.GetSliceContactData(new Flat(), out contactData, false);
             ts.ConvexHull.Vertices.MinimumBoundingCylinder();
             ts.ConvexHull.Vertices.OrientedBoundingBox();
-            var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<Vertex> bottomVertices,
-                  out List<Vertex> topVertices);
+            var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<IVertex3D> bottomVertices,
+                  out List<IVertex3D> topVertices);
             length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertex(Vector3.UnitX, out Vertex bottomVertex,
                   out Vertex topVertex);
 

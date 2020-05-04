@@ -14,7 +14,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
     // COMMENTEDCHANGE [Intrinsic]
-    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex
+    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex3D, IVertex
     {
         #region Public Static Properties
         /// <summary>
@@ -563,4 +563,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         #endregion 
     }
+
+    public interface IVertex3D
+    {
+        double X { get; }
+        double Y { get; }
+        double Z { get; }
+    }
+
 }

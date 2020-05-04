@@ -221,12 +221,12 @@ namespace TVGL
             var n = faces.Count;
 
             //Check if the loops are circular along the axis
-            var path1 = Loop1.ProjectVerticesTo2DCoordinates(Axis, out var backTransform);
+            var path1 = Loop1.ProjectTo2DCoordinates(Axis, out var backTransform);
             if (!PolygonOperations.IsCircular(new Polygon(path1), out var centerCircle, Constants.MediumConfidence))
             {
                 return false;
             }
-            var path2 = Loop2.ProjectVerticesTo2DCoordinates(Axis, out var backTransform2);
+            var path2 = Loop2.ProjectTo2DCoordinates(Axis, out var backTransform2);
             if (!PolygonOperations.IsCircular(new Polygon(path2), out var centerCircle2, Constants.MediumConfidence))
             {
                 return false;

@@ -49,7 +49,7 @@ namespace TVGL.TwoDimensional
             var projectedPoints = new Dictionary<int, Vector2>();
             foreach (var vertex in vertices)
             {
-                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform));
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.ConvertTo2DCoordinates(vertex.Coordinates, transform));
             }
 
             //Build a dictionary of faces to polygons
@@ -167,7 +167,7 @@ namespace TVGL.TwoDimensional
             var projectedPoints = new Dictionary<int, Vector2>();
             foreach (var vertex in vertices)
             {
-                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform));
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.ConvertTo2DCoordinates(vertex.Coordinates, transform));
             }
             var projectedFacePolygons = positiveFaces.ToDictionary(f => f.IndexInList, f => GetPathFromFace(f, projectedPoints, true));
 
@@ -207,7 +207,7 @@ namespace TVGL.TwoDimensional
             var flattenTransform = MiscFunctions.TransformToXYPlane(normal, out _);
             foreach(var face in positiveEdgeFaces)
             {
-                var polygon = new List<Vector2>(face.Vertices.ProjectVerticesTo2DCoordinates(flattenTransform));
+                var polygon = new List<Vector2>(face.Vertices.ProjectTo2DCoordinates(flattenTransform));
                 if (polygon.Area()<0) polygon.Reverse();
                 positiveEdgeFacePolygons.Add(polygon);
             }
@@ -557,7 +557,7 @@ namespace TVGL.TwoDimensional
 
                     //Get2DProjections does not project directionally (normal and normal * -1) return the same transform)
                     //However, the way we are unioning the polygons and eliminating overhand polygons seems to be taking care of this
-                    var surfacePath = loop.ProjectVerticesTo2DCoordinates(flattenTransform).ToList();
+                    var surfacePath = loop.ProjectTo2DCoordinates(flattenTransform).ToList();
                     var area2D = surfacePath.Area();
                     if (area2D.IsNegligible(minAreaToConsider)) continue;
 

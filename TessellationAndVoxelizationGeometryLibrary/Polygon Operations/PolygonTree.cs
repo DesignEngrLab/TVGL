@@ -13,7 +13,7 @@ namespace TVGL.TwoDimensional
     {
         /// <summary>
         /// The list of all the negative polygons inside the positive=outer polygon.
-        /// There can be NO positive polygons inside this class, since this is a SHALLOW Polygon Tree
+        /// There can be NO positive polygons inside this collection, since this is a SHALLOW Polygon Tree
         /// </summary>
         public IList<Polygon> InnerPolygons;
 
@@ -33,51 +33,28 @@ namespace TVGL.TwoDimensional
         public IList<List<Vector2>> AllPaths => AllPolygons.Select(polygon => polygon.Path).ToList();
 
         /// <summary>
-        /// A list of all the polygons in this tree.
-        /// </summary>
-        public IList<List<Vector2>> AllPathsAsLight =>
-            AllPolygons.Select(polygon => polygon.Path.ToList()).ToList();
-
-        /// <summary>
         /// Gets the area of the shallow polygon tree (OuterPolygon - InnerPolygons)
         /// </summary>
         public double Area => AllPolygons.Sum(p => p.Area);
 
         /// <summary>
-        /// Create an empty ShallowPolygonTree
-        /// </summary>
-        public ShallowPolygonTree() { }
-        
-        /// <summary>
         /// Create an ShallowPolygonTree with just a positive polygon
         /// </summary>
-        public ShallowPolygonTree(Polygon positivePolygon)
+        private ShallowPolygonTree(Polygon positivePolygon)
         {
             if (!positivePolygon.IsPositive) throw new Exception("The outer polygon must be positive");
             InnerPolygons = new List<Polygon>();
             OuterPolygon = positivePolygon;
         }
 
-        /// <summary>
-        /// Create an ShallowPolygonTree with the positive (outer) polygon and negative (inner) polygons
-        /// </summary>
-        public ShallowPolygonTree(Polygon positivePolygon, ICollection<Polygon> negativePolygons)
-        {
-            if (!positivePolygon.IsPositive) throw new Exception("The outer polygon must be positive");
-            OuterPolygon = positivePolygon;
-            if (negativePolygons.Any(negativePolygon => negativePolygon.IsPositive))
-            {
-                throw new Exception("The inner polygons must be negative");
-            }
-            InnerPolygons = new List<Polygon>(negativePolygons);
-        }
+
 
         /// <summary>
         /// Gets the Shallow Polygon Trees for a given set of polygons. 
         /// </summary>
         /// <param name="polygons"></param>
         /// <returns></returns>
-        internal static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<Polygon> polygons)
+        internal static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<IEnumerable<Vector2>> polygons)
         {
             //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
             //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
@@ -90,7 +67,7 @@ namespace TVGL.TwoDimensional
             //Example: A negative polygon must be between two concentric positive polygons.
 
             //By ordering the polygons, we are gauranteed to do the outermost positive polygons first.
-            var orderedPolygons = polygons.OrderByDescending(p => p.Area);
+            var orderedPolygons = polygons.Select(p=> new Polygon(p)).OrderByDescending(p => p.Area);
 
             //1) Make a list of all the shallow polygon trees from the positive polygons
             var shallowPolygonTrees = new List<ShallowPolygonTree>();
@@ -141,16 +118,6 @@ namespace TVGL.TwoDimensional
             }
 
             return shallowPolygonTrees;
-        }
-
-        /// <summary>
-        /// Gets the Shallow Polygon Trees for a given set of paths. 
-        /// </summary>
-        /// <param name="paths"></param>
-        /// <returns></returns>
-        internal static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<IEnumerable<Vector2>> paths)
-        {
-            return GetShallowPolygonTrees(paths.Select(path => new Polygon(path)).ToList());
         }
     }
 }

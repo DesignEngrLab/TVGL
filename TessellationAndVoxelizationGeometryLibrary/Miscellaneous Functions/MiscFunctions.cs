@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -468,9 +469,7 @@ namespace TVGL
         }
         #endregion
 
-        #region Flatten to 2D
-
-        #region change 3D vertices into 2D coordinates (e.g. Vector2's)
+        #region change 3D locations into 2D coordinates (e.g. Vector2's)
         /// <summary>
         /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
         /// These coordinates do not contain references back to the original vertices but are lighter and
@@ -484,11 +483,11 @@ namespace TVGL
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         /// 
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
-        public static Dictionary<Vector2, List<Vertex>> ProjectVerticesTo2DCoordinatesWithRefToVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
-                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance)
+        public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
+                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return ProjectVerticesTo2DCoordinatesWithRefToVertices(vertices, transform, toleranceForCombiningPoints);
+            return ProjectTo2DCoordinatesReturnDictionary(vertices, transform, toleranceForCombiningPoints);
         }
 
         /// <summary>
@@ -507,142 +506,26 @@ namespace TVGL
         /// to define some polygon with order dictating the definition of edges.</param>
         /// 
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
-        public static Dictionary<Vector2, List<Vertex>> ProjectVerticesTo2DCoordinatesWithRefToVertices(this IEnumerable<Vertex> vertices, Matrix4x4 transform,
-            double toleranceForCombiningPoints = Constants.BaseTolerance)
+        public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Matrix4x4 transform,
+            double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
         {
-            var resultsDict = new Dictionary<Vector2, List<Vertex>>();
+            var resultsDict = new Dictionary<Vector2, List<T>>();
             var numDecimalPoints = 0;
             while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
                 numDecimalPoints++;
             foreach (var vertex in vertices)
             {
-                var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
+                var coordinates = ConvertTo2DCoordinates(vertex, transform);
                 coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
                 if (resultsDict.ContainsKey(coordinates))
                     resultsDict[coordinates].Add(vertex);
                 else
                     /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
-                    resultsDict.Add(coordinates, new List<Vertex> { vertex });
+                    resultsDict.Add(coordinates, new List<T> { vertex });
             }
             return resultsDict;
         }
 
-        /*
-        /// <summary>
-        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
-        /// These coordinates do not contain references back to the original vertices but are lighter and
-        /// quicker. This does not destructively alter the vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="OneToOneOrderedList">The one to one ordered list.</param>
-        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
-        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
-        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
-        /// <summary>
-        /// 
-        /// <returns>Dictionary&lt;Vector2, List&lt;Vertex&gt;&gt;.</returns>
-        public static Dictionary<Vector2, Vertex> ProjectVerticesTo2DCoordinatesWithRefToVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
-                out List<Vector2> OneToOneOrderedList, double toleranceForCombiningPoints = Constants.BaseTolerance)
-        {
-            var transform = TransformToXYPlane(direction, out _);
-            var resultsDict = new Dictionary<Vector2, List<Vertex>>();
-            OneToOneOrderedList = new List<Vector2>();
-            var numDecimalPoints = 0;
-            while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
-                numDecimalPoints++;
-            foreach (var vertex in vertices)
-            {
-                var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-                coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
-                if (resultsDict.ContainsKey(coordinates))
-                    resultsDict[coordinates].Add(vertex);
-                else
-                    else, add a new vertex to the list, and a new entry to simpleCompareDict.  
-                    resultsDict.Add(coordinates, new List<Vertex>());
-                OneToOneOrderedList.Add(coordinates);
-            }
-            return resultsDict;
-        }
-        */
-
-        #endregion
-        #region change 3D vertices into 2D coordinates (e.g. Vector2's)
-        /// <summary>
-        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
-        /// These coordinates do not contain references back to the original vertices but are lighter and
-        /// quicker. This does not destructively alter the vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="backTransform">The back transform.</param>
-        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
-        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
-        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
-        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
-        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
-        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
-        /// to define some polygon with order dictating the definition of edges.</param>
-        /// 
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
-        public static IEnumerable<Vector2> ProjectVerticesTo2DCoordinates(this IEnumerable<Vertex> vertices, Vector3 direction,
-                    out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
-        {
-            var transform = TransformToXYPlane(direction, out backTransform);
-            return ProjectVerticesTo2DCoordinates(vertices, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
-        }
-
-        /// <summary>
-        /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
-        /// These coordinates do not contain references back to the original vertices but are lighter and
-        /// quicker. This does not destructively alter the vertices.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="transform">The transform matrix.</param>
-        /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
-        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
-        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
-        /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
-        /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
-        /// multiple times in the output collection to maintain the same order. This is useful if the original data is
-        /// to define some polygon with order dictating the definition of edges.</param>
-        /// 
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
-        public static IEnumerable<Vector2> ProjectVerticesTo2DCoordinates(this IEnumerable<Vertex> vertices, Matrix4x4 transform,
-            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
-        {
-            if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
-            {
-                foreach (var vertex in vertices)
-                    yield return Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-            }
-            else
-            {
-                var numDecimalPoints = 0;
-                var simpleCompareDict = new HashSet<Vector2>();
-                while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
-                    numDecimalPoints++;
-                foreach (var vertex in vertices)
-                {
-                    var coordinates = Convert3DLocationTo2DCoordinates(vertex.Coordinates, transform);
-                    coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
-                    if (simpleCompareDict.Contains(coordinates))
-                    {
-                        if (duplicateEntriesToMaintainPolygonalOrdering)
-                            yield return coordinates;
-                    }
-                    else
-                    {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
-                        simpleCompareDict.Add(coordinates);
-                        yield return coordinates;
-                    }
-                }
-            }
-        }
-        #endregion
-
-        #region change 3D locations (e.g. Vector3's) into 2D coordinates (e.g. Vector2's)
         /// <summary>
         /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
         /// These coordinates do not contain references back to the original locations but are lighter and
@@ -660,11 +543,12 @@ namespace TVGL
         /// to define some polygon with order dictating the definition of edges.</param>
         /// 
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
-        public static IEnumerable<Vector2> Project3DLocationsTo2DCoordinates(this IEnumerable<Vector3> locations, Vector3 direction,
+        public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
+            where T : IVertex3D
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return Project3DLocationsTo2DCoordinates(locations, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
+            return ProjectTo2DCoordinates<T>(locations, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
         }
 
         /// <summary>
@@ -683,13 +567,13 @@ namespace TVGL
         /// to define some polygon with order dictating the definition of edges.</param>
         /// 
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
-        public static IEnumerable<Vector2> Project3DLocationsTo2DCoordinates(this IEnumerable<Vector3> locations, Matrix4x4 transform,
-            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
+        public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Matrix4x4 transform,
+            double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D
         {
             if (double.IsNaN(toleranceForCombiningPoints) || toleranceForCombiningPoints < 0.0)
             {
                 foreach (var location in locations)
-                    yield return Convert3DLocationTo2DCoordinates(location, transform);
+                    yield return ConvertTo2DCoordinates(location, transform);
             }
             else
             {
@@ -699,7 +583,7 @@ namespace TVGL
                     numDecimalPoints++;
                 foreach (var location in locations)
                 {
-                    var coordinates = Convert3DLocationTo2DCoordinates(location, transform);
+                    var coordinates = ConvertTo2DCoordinates(location, transform);
                     coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
                     if (simpleCompareDict.Contains(coordinates))
                     {
@@ -716,30 +600,40 @@ namespace TVGL
             }
         }
 
-
-
         /// <summary>
         /// Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).
         /// </summary>
-        /// <param name="location3D">The location as a Vector3.</param>
+        /// <param name="location3D">The location3 d.</param>
         /// <param name="direction">The direction.</param>
-        /// <param name="backTransform">The back transform matrix.</param>
-        /// <returns>TVGL.Numerics.Vector2.</returns>
-        public static Vector2 Convert3DLocationTo2DCoordinates(this in Vector3 location3D, in Vector3 direction, out Matrix4x4 backTransform)
+        /// <param name="backTransform">The back transform.</param>
+        /// <returns>Vector2.</returns>
+        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Vector3 direction, out Matrix4x4 backTransform)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return Convert3DLocationTo2DCoordinates(location3D, transform);
+            return ConvertTo2DCoordinates(location3D, transform);
         }
+
         /// <summary>
         /// Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).
         /// </summary>
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <returns>TVGL.Numerics.Vector2.</returns>
-        public static Vector2 Convert3DLocationTo2DCoordinates(this in Vector3 location3D, in Matrix4x4 transform)
+        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Matrix4x4 matrix)
         {
-            var coordinates2D = Vector3.Transform(location3D, transform);
-            return new Vector2(coordinates2D.X, coordinates2D.Y);
+            var x3D = location3D.X;
+            var y3D = location3D.Y;
+            var z3D = location3D.Z;
+
+            var x2D = x3D * matrix.M11 + y3D * matrix.M21 + z3D * matrix.M31 + matrix.M41;
+            var y2D = x3D * matrix.M12 + y3D * matrix.M22 + z3D * matrix.M32 + matrix.M42;
+            if (matrix.IsProjectiveTransform)
+            {
+                var factor = 1 / (x3D * matrix.M14 + y3D * matrix.M24 + z3D * matrix.M34 + matrix.M44);
+                x2D *= factor;
+                y2D *= factor;
+            }
+            return new Vector2(x2D, y2D);
         }
         #endregion
 
@@ -752,12 +646,12 @@ namespace TVGL
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
-        public static IEnumerable<Vector3> Convert2DCoordinatesTo3DLocations(this IEnumerable<Vector2> coordinates, Vector3 normalDirection,
+        public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Vector3 normalDirection,
                     double distanceAlongDirection)
         {
             TransformToXYPlane(normalDirection, out var backTransform);
             var transform = backTransform * Matrix4x4.CreateTranslation(normalDirection * distanceAlongDirection);
-            return Convert2DCoordinatesTo3DLocations(coordinates, transform);
+            return ConvertTo3DLocations(coordinates, transform);
         }
 
         /// <summary>
@@ -768,7 +662,7 @@ namespace TVGL
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
-        private static IEnumerable<Vector3> Convert2DCoordinatesTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
+        private static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
         {
             foreach (var point2D in coordinates)
                 yield return Vector3.Transform(new Vector3(point2D, 0), transform);
@@ -780,7 +674,7 @@ namespace TVGL
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <returns>TVGL.Numerics.Vector2.</returns>
-        public static Vector3 Convert2DCoordinateTo3DLocation(in Vector2 coordinates2D, in Matrix4x4 transform)
+        public static Vector3 ConvertTo3DLocation(in Vector2 coordinates2D, in Matrix4x4 transform)
         {
             return Vector3.Transform(new Vector3(coordinates2D, 0), transform);
         }
@@ -836,7 +730,7 @@ namespace TVGL
         {
             //If the vector is only in the y-direction, then return the x direction
             if (direction.X.IsNegligible() && direction.Z.IsNegligible())
-                return Vector3.UnitX;    
+                return Vector3.UnitX;
             // otherwise we will return something in the x-z plane, which is created by
             // taking the cross product of the Y-direction with this vector.
             // The thinking is that - since this is used in the function above (to translate
@@ -846,7 +740,6 @@ namespace TVGL
             // camera up position.
             return Vector3.UnitY.Cross(direction).Normalize();
         }
-        #endregion
 
         #region Angle between Edges/Lines
 
@@ -859,7 +752,7 @@ namespace TVGL
         internal static double SmallerAngleBetweenEdges(Edge edge1, Edge edge2)
         {
             var axis = edge1.Vector.Cross(edge2.Vector);
-            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
+            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
             var extAngle = ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
             return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
         }
@@ -886,7 +779,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
-            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
+            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -899,7 +792,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
-            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
+            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -912,7 +805,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double ExteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
-            var twoDEdges = (new[] { edge1, edge2 }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
+            var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -925,7 +818,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
-            var twoDEdges = (new[] { edge1, edge2 }).Project3DLocationsTo2DCoordinates(axis, out _).ToArray();
+            var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -955,7 +848,7 @@ namespace TVGL
         }
         internal static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Matrix4x4 flattenTransform)
         {
-            var points = (new List<Vertex> { a, b, c }).ProjectVerticesTo2DCoordinates(flattenTransform).ToArray();
+            var points = (new List<Vertex> { a, b, c }).ProjectTo2DCoordinates(flattenTransform).ToArray();
             return InteriorAngleBetweenEdgesInCCWList(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
                 new Vector2(points[2].X - points[1].X, points[2].Y - points[1].Y));
         }
@@ -1487,21 +1380,6 @@ namespace TVGL
             return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : Vector3.Null;
         }
 
-        /// <summary>
-        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that plane.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vertex PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vertex point1,
-            Vertex point2)
-        {
-            return new Vertex(PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1.Coordinates, point2.Coordinates));
-        }
         /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
         ///     with that plane.

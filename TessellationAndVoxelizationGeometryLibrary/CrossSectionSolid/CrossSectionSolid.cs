@@ -51,7 +51,7 @@ namespace TVGL
         // in the future, wouldn't this just be
         // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
 
-        public Matrix4x4 TranformMatrix { get; set; } = Matrix4x4.Identity;
+        public Matrix4x4 TransformMatrix { get; set; } = Matrix4x4.Identity;
 
 
         public int NumLayers { get; set; }
@@ -132,7 +132,7 @@ namespace TVGL
             directionVector[intDir] = Math.Sign((int)direction);
             var cs = new CrossSectionSolid(new Vector3(directionVector), stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
             //var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
-            cs.TranformMatrix = Matrix4x4.Identity;
+            cs.TransformMatrix = Matrix4x4.Identity;
             return cs;
         }
 
@@ -158,7 +158,7 @@ namespace TVGL
             var layer = Layer3D[i] = new List<List<Vertex>>();
             foreach (var polygon in Layer2D[i])
             {
-                layer.Add(polygon.Convert2DCoordinatesTo3DLocations(Direction, StepDistances[i]).Select(v => new Vertex(v)).ToList());
+                layer.Add(polygon.ConvertTo3DLocations(Direction, StepDistances[i]).Select(v => new Vertex(v)).ToList());
             }
         }
 

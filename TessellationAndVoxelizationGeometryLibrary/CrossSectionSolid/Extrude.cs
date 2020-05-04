@@ -48,7 +48,7 @@ namespace TVGL
             // find transform to the XY plane and store the backTransform (the transform back to the original)
             var transform = MiscFunctions.TransformToXYPlane(extrudeDirection, out var backTransform);
             // make paths, the 2D polygons represening the 3D loops
-            var paths = loops.Select(loop => loop.Project3DLocationsTo2DCoordinates(transform));
+            var paths = loops.Select(loop => loop.ProjectTo2DCoordinates(transform));
             // the basePlaneDistance defines the plane closer to the origin. we can get this from the any input coordinate
             var basePlaneDistance = extrudeDirection.Dot(loops.First().First());
             if (midPlane) basePlaneDistance -= extrusionHeight / 2.0;

@@ -121,11 +121,7 @@ namespace TVGL.TwoDimensional
         {
             return ShallowPolygonTree.GetShallowPolygonTrees(paths);
         }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(this IEnumerable<Polygon> paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
-        }
-
+ 
 
         #region Line Intersections with Polygon
 
@@ -150,7 +146,7 @@ namespace TVGL.TwoDimensional
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.Points).OrderBy(p => p.X).ToList();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.X).ToList();
             var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().X;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
@@ -192,7 +188,7 @@ namespace TVGL.TwoDimensional
                 out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.Points).OrderBy(p => p.Y).ToList();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.Y).ToList();
             var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().Y;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);

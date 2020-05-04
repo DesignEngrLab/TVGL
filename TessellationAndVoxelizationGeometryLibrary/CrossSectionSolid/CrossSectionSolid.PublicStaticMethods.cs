@@ -142,7 +142,27 @@ namespace TVGL
             return loops;
         }
 
-
+        public Vector3[][][] GetCrossSectionsAs3DLoops()
+        {
+            var result = new Vector3[Layer2D.Count][][];
+            int k = 0;
+            foreach (var layerKeyValuePair in Layer2D)
+            {
+                var index = layerKeyValuePair.Key;
+                var zValue = StepDistances[index];
+                var numLoops = layerKeyValuePair.Value.Count;
+                var layer = new Vector3[numLoops][];
+                result[k++] = layer;
+                for (int j = 0; j < numLoops; j++)
+                {
+                    var loop = new Vector3[layerKeyValuePair.Value[j].Count];
+                    layer[j] = loop;
+                    for (int i = 0; i < loop.Length; i++)
+                        loop[i] =(new Vector3(layerKeyValuePair.Value[j][i], zValue)).Transform(TransformMatrix);
+                }
+            }
+            return result;
+        }
 
     }
 }

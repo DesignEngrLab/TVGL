@@ -24,7 +24,7 @@ namespace TVGLUnitTestsAndBenchmarking
             extrema = poly1.MaxY;
             extrema = poly1.MinX;
             extrema = poly1.MinY;
-            List<Node> points = poly1.Points;
+            List<Vertex2D> points = poly1.Vertices;
             poly1.Reverse();
             #endregion
 
@@ -33,7 +33,7 @@ namespace TVGLUnitTestsAndBenchmarking
             #region IEnumerable<Vector2>
             a.Area();
             a.BoundingRectangle();
-            a.Convert2DCoordinatesTo3DLocations(Vector3.UnitX, 1.0);
+            a.ConvertTo3DLocations(Vector3.UnitX, 1.0);
             a.ConvexHull2D();
             var b = PolygonOperationsTesting.MakeCircularPolygon(5, 5);
             a.Difference(b);

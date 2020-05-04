@@ -19,10 +19,10 @@ using TVGL.Numerics;
 namespace TVGL.TwoDimensional
 {
     /// <summary>
-    ///     Node class used in Triangulate Polygon
+    ///     Vertex2D class used in Triangulate Polygon
     ///     Inherits position from point class
     /// </summary>
-    public class Node
+    public class Vertex2D
     {
         #region Properties
 
@@ -90,7 +90,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="currentPoint">The current point.</param>
         /// <param name="loopID">The loop identifier.</param>
-        internal Node(Vector2 currentPoint, int referenceID, int loopID)
+        internal Vertex2D(Vector2 currentPoint, int referenceID, int loopID)
         {
             LoopID = loopID;
             Coordinates = currentPoint;

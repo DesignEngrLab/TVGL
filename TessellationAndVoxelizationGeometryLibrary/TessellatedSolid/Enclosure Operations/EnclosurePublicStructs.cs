@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,8 +39,8 @@ namespace TVGL
         /// <param name="minPointOnDirection0">The minimum point on direction0.</param>
         /// <param name="minPointOnDirection1">The minimum point on direction1.</param>
         /// <param name="minPointOnDirection2">The minimum point on direction2.</param>
-        public BoundingBox(double[] dimensions, Vector3[] directions, Vector3 minPointOnDirection0,
-            Vector3 minPointOnDirection1, Vector3 minPointOnDirection2)
+        public BoundingBox(double[] dimensions, Vector3[] directions, IVertex3D minPointOnDirection0,
+            IVertex3D minPointOnDirection1, IVertex3D minPointOnDirection2)
             : this(dimensions, directions, new Vector3(
                 minPointOnDirection0.Dot(directions[0].Normalize()),
                 minPointOnDirection1.Dot(directions[1].Normalize()),
@@ -67,12 +68,13 @@ namespace TVGL
             Transform = transform;
         }
 
-        public BoundingBox(double[] dimensions, Vector3[] directions, IList<IEnumerable<Vertex>> pointsOnFaces)
-            : this(dimensions, directions, pointsOnFaces[0].First().Coordinates, pointsOnFaces[2].First().Coordinates,
-                 pointsOnFaces[4].First().Coordinates)
+        public BoundingBox(double[] dimensions, Vector3[] directions, IList<IEnumerable<IVertex3D>> pointsOnFaces)
+            : this(dimensions, directions, pointsOnFaces[0].First(), pointsOnFaces[2].First(),
+                 pointsOnFaces[4].First())
         {
             PointsOnFaces = pointsOnFaces.Select(pof => pof.ToArray()).ToArray();
         }
+
 
         #endregion
         #region Constructor Defined Fields
@@ -95,7 +97,7 @@ namespace TVGL
         ///     that are on the faces of the bounding box. They are in the order of direction1-low,
         ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
         /// </summary>
-        public Vertex[][] PointsOnFaces { get; private set; }
+        public IVertex3D[][] PointsOnFaces { get; private set; }
 
         #endregion
 
@@ -336,7 +338,7 @@ namespace TVGL
         public BoundingBox Copy()
         {
             if (PointsOnFaces != null)
-                return new BoundingBox(this.Dimensions, this.Directions, PointsOnFaces);
+                    return new BoundingBox(this.Dimensions, this.Directions, PointsOnFaces);
             else return new BoundingBox(this.Dimensions, this.Transform);
         }
 

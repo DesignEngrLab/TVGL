@@ -264,12 +264,12 @@ namespace TVGL
         {
             var paths = new List<List<Vector2>>();
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
-            var positivePath = PositiveLoop.VertexLoop.ProjectVerticesTo2DCoordinates(flattenTransform).ToList();
+            var positivePath = PositiveLoop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
             if (positivePath.Area() < 0) positivePath.Reverse();
             paths.Add(positivePath);
             foreach (var loop in NegativeLoops)
             {
-                var negativePath = loop.VertexLoop.ProjectVerticesTo2DCoordinates(flattenTransform).ToList();
+                var negativePath = loop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
                 if (negativePath.Area() > 0) negativePath.Reverse();
                 paths.Add(negativePath);
             }

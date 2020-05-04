@@ -134,7 +134,7 @@ namespace TVGL
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(vertices.ProjectVerticesTo2DCoordinates(direction, out _), title, plot2DType, closeShape,
+            ShowAndHang(vertices.ProjectTo2DCoordinates(direction, out _), title, plot2DType, closeShape,
                 marker);
         }
 
@@ -151,7 +151,7 @@ namespace TVGL
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(vertices.Select(listsOfVerts => listsOfVerts.ProjectVerticesTo2DCoordinates(direction, out _)),
+            ShowAndHang(vertices.Select(listsOfVerts => listsOfVerts.ProjectTo2DCoordinates(direction, out _)),
                 title, plot2DType, closeShape, marker);
         }
 

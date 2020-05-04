@@ -868,8 +868,8 @@ namespace TVGL.Boolean_Operations
                 OffSideVertex = offSideVertex;
                 OriginalOffSideVertex = offSideVertex;
                 OnSideVertex = Edge.OtherVertex(OffSideVertex);
-                IntersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
-                    plane.DistanceToOrigin - planeOffset, edge.To, edge.From);
+                IntersectVertex =new Vertex(MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
+                    plane.DistanceToOrigin - planeOffset, edge.To.Coordinates, edge.From.Coordinates));
                 if (IntersectVertex == null) throw new Exception("Cannot Be Null");
             }
 

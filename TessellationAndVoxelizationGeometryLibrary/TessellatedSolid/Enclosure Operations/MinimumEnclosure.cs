@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -66,7 +67,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(this IList<Vertex> convexHullVertices)
+        public static BoundingBox OrientedBoundingBox(this IList<IVertex3D> convexHullVertices)
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
@@ -126,7 +127,7 @@ namespace TVGL
             }
             return new BoundingBox(minBox.SortedDimensions.Reverse().ToArray(),
                 new[] { largestDirection, midDirection, smallestDirection },
-                new[] {minPointsLargestDir,maxPointsLargestDir,minPointsMediumDir,maxPointsMediumDir,
+                new IVertex3D[][] {minPointsLargestDir,maxPointsLargestDir,minPointsMediumDir,maxPointsMediumDir,
                 minPointsSmallDir,maxPointsSmallDir});
         }
 
@@ -138,7 +139,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
-        private static BoundingBox Find_via_ChanTan_AABB_Approach(IEnumerable<Vertex> convexHullVertices, BoundingBox minOBB)
+        private static BoundingBox Find_via_ChanTan_AABB_Approach(IEnumerable<IVertex3D> convexHullVertices, BoundingBox minOBB)
         {
             var failedConsecutiveRotations = 0;
             var k = 0;
@@ -172,18 +173,60 @@ namespace TVGL
         /// <param name="bottomVertices">The bottom vertices.</param>
         /// <param name="topVertices">The top vertices.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
-            out List<Vertex> bottomVertices,
-            out List<Vertex> topVertices)
+        public static double GetLengthAndExtremeVertices(this IEnumerable<IVertex3D> vertices, Vector3 direction,
+            out List<IVertex3D> bottomVertices,
+            out List<IVertex3D> topVertices)
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertices = new List<Vertex>();
-            topVertices = new List<Vertex>();
+            bottomVertices = new List<IVertex3D>();
+            topVertices = new List<IVertex3D>();
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.Dot(v.Coordinates);
+                var distance = (v is Vector3) ? dir.Dot((Vector3)v) : dir.Dot(((Vertex)v).Coordinates);
+                if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
+                    bottomVertices.Add(v);
+                else if (distance < minD)
+                {
+                    bottomVertices.Clear();
+                    bottomVertices.Add(v);
+                    minD = distance;
+                }
+                if (distance.IsPracticallySame(maxD, Constants.BaseTolerance))
+                    topVertices.Add(v);
+                else if (distance > maxD)
+                {
+                    topVertices.Clear();
+                    topVertices.Add(v);
+                    maxD = distance;
+                }
+            }
+            return maxD - minD;
+        }
+
+
+        /// <summary>
+        ///     Given a Direction, dir, this function returns the maximum length along this Direction
+        ///     for the provided vertices as well as the vertices that represent the extremes.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="bottomVertices">The bottom vertices.</param>
+        /// <param name="topVertices">The top vertices.</param>
+        /// <returns>System.Double.</returns>
+        public static double GetLengthAndExtremeVertices(this IEnumerable<Vector3> vertices, Vector3 direction,
+            out List<Vector3> bottomVertices,
+            out List<Vector3> topVertices)
+        {
+            var dir = direction.Normalize();
+            var minD = double.PositiveInfinity;
+            bottomVertices = new List<Vector3>();
+            topVertices = new List<Vector3>();
+            var maxD = double.NegativeInfinity;
+            foreach (var v in vertices)
+            {
+                var distance = dir.Dot(v);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomVertices.Add(v);
                 else if (distance < minD)
@@ -556,18 +599,12 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         /// <exception cref="Exception">Volume should never be negligible, unless the input data is bad</exception>
         /// <exception cref="System.Exception"></exception>
-        public static BoundingBox OBBAlongDirection(IList<Vertex> vertices, Vector3 direction)
-        {
-            var boundingBox = FindOBBAlongDirection(vertices, direction);
-            return boundingBox;
-        }
-
-        private static BoundingBox FindOBBAlongDirection(IEnumerable<Vertex> vertices, Vector3 direction)
+        public static BoundingBox FindOBBAlongDirection(this IEnumerable<IVertex3D> vertices, Vector3 direction)
         {
             var direction1 = direction.Normalize();
             var depth = GetLengthAndExtremeVertices(vertices, direction1, out var bottomVertices, out var topVertices);
 
-            var pointsDict = vertices.ProjectVerticesTo2DCoordinatesWithRefToVertices(direction1, out var backTransform);
+            var pointsDict = vertices.ProjectTo2DCoordinatesReturnDictionary(direction1, out var backTransform);
             var boundingRectangle = RotatingCalipers2DMethod(pointsDict.Keys.ToList());
             //Get the Direction vectors from rotating caliper and projection.
             var direction2 = new Vector3(boundingRectangle.WidthDirection, 0);

@@ -29,7 +29,7 @@ namespace TVGL.TwoDimensional
         /// <param name="leftChain">The left chain.</param>
         /// <param name="rightChain">The right chain.</param>
         /// <param name="sortedNodes">The sorted nodes.</param>
-        internal MonotonePolygon(List<Node> leftChain, List<Node> rightChain, List<Node> sortedNodes)
+        internal MonotonePolygon(List<Vertex2D> leftChain, List<Vertex2D> rightChain, List<Vertex2D> sortedNodes)
         {
             LeftChain = leftChain;
             RightChain = rightChain;
@@ -42,19 +42,19 @@ namespace TVGL.TwoDimensional
         ///     Gets Monochain1. Set is through the constructor.
         /// </summary>
         /// <value>The left chain.</value>
-        internal List<Node> LeftChain { get; }
+        internal List<Vertex2D> LeftChain { get; }
 
         /// <summary>
         ///     Gets Monochain2. Set is through the constructor.
         /// </summary>
         /// <value>The right chain.</value>
-        internal List<Node> RightChain { get; }
+        internal List<Vertex2D> RightChain { get; }
 
         /// <summary>
         ///     Gets Monochain2. Set is through the constructor.
         /// </summary>
         /// <value>The sorted nodes.</value>
-        internal List<Node> SortedNodes { get; }
+        internal List<Vertex2D> SortedNodes { get; }
 
         #endregion
     }

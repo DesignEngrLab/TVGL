@@ -35,7 +35,7 @@ namespace TVGL.TwoDimensional
             out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
-            var points2D = loops.Select(loop => loop.ProjectVerticesTo2DCoordinates(normal, out _).ToArray()).ToArray();
+            var points2D = loops.Select(loop => loop.ProjectTo2DCoordinates(normal, out _).ToArray()).ToArray();
             var triangleIndices = Triangulate(points2D, out groupsOfLoops, out isPositive, ignoreNegativeSpace);
             var int2VertexDict = new Dictionary<int, Vertex>();
             var vertexID = 0;
@@ -123,8 +123,8 @@ namespace TVGL.TwoDimensional
                     //      was in a positive or negative loop.
                     // 4)   Add nodes to an ordered loop (same as points2D except now Nodes) 
                     //      and a sorted loop (used for sweeping).
-                    var polygonNodes = new List<List<Node>>();
-                    var sortedPolygonNodes = new List<List<Node>>();
+                    var polygonNodes = new List<List<Vertex2D>>();
+                    var sortedPolygonNodes = new List<List<Vertex2D>>();
                     var polygonLines = new List<List<PolygonSegment>>();
 
                     var pointCount = 0;
@@ -137,10 +137,10 @@ namespace TVGL.TwoDimensional
                     var loopsCount = 0;
                     foreach (var origLoop in polygons)
                     {
-                        var nodes = new List<Node>();
+                        var nodes = new List<Vertex2D>();
                         var polygonSegments = new List<PolygonSegment>();
                         foreach (var coordinates in origLoop)
-                            nodes.Add(new Node(coordinates.Transform(randRotMatrix), pointCount++, loopsCount));
+                            nodes.Add(new Vertex2D(coordinates.Transform(randRotMatrix), pointCount++, loopsCount));
                         for (int i = 1; i < nodes.Count; i++)
                         {
                             var fromNode = nodes[i - 1];
@@ -172,7 +172,7 @@ namespace TVGL.TwoDimensional
                     var sortedFirstNodes = sortedPolygonNodes.Select(sortedLoop => sortedLoop[0])
                         .OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
                     //Use a red-black tree to track whether loops are inside other loops
-                    var tempSortedLoops1 = new List<List<Node>>(sortedPolygonNodes);
+                    var tempSortedLoops1 = new List<List<Vertex2D>>(sortedPolygonNodes);
                     while (tempSortedLoops1.Any())
                     {
                         //Set the start loop and remove necessary information
@@ -181,7 +181,7 @@ namespace TVGL.TwoDimensional
                         sortedFirstNodes.RemoveAt(0);
                         tempSortedLoops1.Remove(startLoop);
                         if (!sortedFirstNodes.Any()) continue; //Exit while loop
-                        var sortedGroup = new List<Node>(startLoop);
+                        var sortedGroup = new List<Vertex2D>(startLoop);
 
                         //Add the remaining first points from each loop into sortedGroup.
                         foreach (var firstNode in sortedFirstNodes)
@@ -246,7 +246,7 @@ namespace TVGL.TwoDimensional
 
                     //Check to see that the loops are ordered correctly to their isPositive boolean
                     //If they are incorrectly ordered, reverse the order.
-                    var nodesLoopsCorrected = new List<List<Node>>();
+                    var nodesLoopsCorrected = new List<List<Vertex2D>>();
                     for (var j = 0; j < polygonNodes.Count; j++)
                     {
                         var orderedLoop = polygonNodes[j];
@@ -279,7 +279,7 @@ namespace TVGL.TwoDimensional
                         }
                         nodesLoopsCorrected.Add(orderedLoop);
                     }
-                    polygonNodes = new List<List<Node>>(nodesLoopsCorrected);
+                    polygonNodes = new List<List<Vertex2D>>(nodesLoopsCorrected);
 
                     #region Ignore Negative Space Alterations
                     //If we are to ignore the negative space, we need to get rid of any loops that are inside other loops.
@@ -310,15 +310,15 @@ namespace TVGL.TwoDimensional
                         }
 
                         //Rewrite the lists 
-                        var tempOrderedLoops = new List<List<Node>>();
-                        var tempSortedLoops2 = new List<List<Node>>();
+                        var tempOrderedLoops = new List<List<Vertex2D>>();
+                        var tempSortedLoops2 = new List<List<Vertex2D>>();
                         foreach (var index in listOfLoopIDsToKeep)
                         {
                             tempOrderedLoops.Add(polygonNodes[index]);
                             tempSortedLoops2.Add(sortedPolygonNodes[index]);
                         }
-                        polygonNodes = new List<List<Node>>(tempOrderedLoops);
-                        sortedPolygonNodes = new List<List<Node>>(tempSortedLoops2);
+                        polygonNodes = new List<List<Vertex2D>>(tempOrderedLoops);
+                        sortedPolygonNodes = new List<List<Vertex2D>>(tempSortedLoops2);
 
                         //Create a new bool list and update the loop IDs and point count.
                         isPositive = new bool[polygonNodes.Count];
@@ -337,7 +337,7 @@ namespace TVGL.TwoDimensional
                     }
                     #endregion
 
-                    //Set the NodeTypes of every Node. This step is after "isPositive == null" fuction because
+                    //Set the NodeTypes of every Vertex2D. This step is after "isPositive == null" fuction because
                     //the CW/CCW order of the loops must be accurate.
                     var loopI = 0;
                     foreach (var orderedLoop in polygonNodes)
@@ -403,14 +403,14 @@ namespace TVGL.TwoDimensional
                     // 7)      else remove the negative loop from orderedLoops and merge the negative loop with the group list.
                     // 8)   Continue with Trapezoidation
                     var listPositive = isPositive.ToList();
-                    var completeListSortedLoops = new List<List<Node>>(sortedPolygonNodes);
+                    var completeListSortedLoops = new List<List<Vertex2D>>(sortedPolygonNodes);
                     var numTriangles = 0;
                     while (polygonNodes.Any())
                     {
                         //Get information about positive loop, remove from loops, and create new group
                         loopI = listPositive.FindIndex(true);
                         if (loopI == -1) throw new Exception("Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
-                        var sortedGroup = new List<Node>(sortedPolygonNodes[loopI]);
+                        var sortedGroup = new List<Vertex2D>(sortedPolygonNodes[loopI]);
                         var group = new List<int> { sortedGroup[0].LoopID };
                         listPositive.RemoveAt(loopI);
                         polygonNodes.RemoveAt(loopI);
@@ -645,9 +645,9 @@ namespace TVGL.TwoDimensional
                         foreach (var monotoneTrapPoly in monotoneTrapPolygons)
                         {
                             //Biuld the right left chains and the sorted list of all nodes
-                            var monotoneRightChain = new List<Node>();
-                            var monotoneLeftChain = new List<Node>();
-                            var sortedMonotonePolyNodes = new List<Node>();
+                            var monotoneRightChain = new List<Vertex2D>();
+                            var monotoneLeftChain = new List<Vertex2D>();
+                            var sortedMonotonePolyNodes = new List<Vertex2D>();
 
                             //Add upper node to both chains and sorted list
                             monotoneRightChain.Add(monotoneTrapPoly[0].TopNode);
@@ -799,7 +799,7 @@ namespace TVGL.TwoDimensional
         /// Gets the type of node for B.
         /// </summary>
         /// A, B, and C are counterclockwise ordered points.
-        internal static NodeType GetNodeType(Node a, Node b, Node c)
+        internal static NodeType GetNodeType(Vertex2D a, Vertex2D b, Vertex2D c)
         {
             var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(a.Coordinates, b.Coordinates, c.Coordinates);
             if (angle > Math.PI * 2) throw new Exception();
@@ -832,7 +832,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Create Trapezoid and Insert Into List
-        internal static void InsertTrapezoid(Node node, PolygonSegment leftLine, PolygonSegment rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
+        internal static void InsertTrapezoid(Vertex2D node, PolygonSegment leftLine, PolygonSegment rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
         {
             var matchesTrap = false;
             var i = 0;
@@ -853,7 +853,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Find Lines to Left or Right
-        internal static int LinesToLeft(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine, out bool isOnLine)
+        internal static int LinesToLeft(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine, out bool isOnLine)
         {
             isOnLine = false;
             leftLine = null;
@@ -874,7 +874,7 @@ namespace TVGL.TwoDimensional
                     if (xdif.IsPracticallySame(xleft)) // if approximately equal
                     {
                         //Find the shared node
-                        Node nodeOnLine;
+                        Vertex2D nodeOnLine;
                         if (leftLine == null) throw new Exception("Null Reference");
                         if (leftLine.ToPoint == line.FromPoint)
                         {
@@ -901,14 +901,14 @@ namespace TVGL.TwoDimensional
             return counter;
         }
 
-        internal static void FindLeftLine(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine)
+        internal static void FindLeftLine(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine)
         {
             bool isOnLine;
             LinesToLeft(node, lineList, out leftLine, out isOnLine);
             if (leftLine == null) throw new Exception("Failed to find line to left.");
         }
 
-        internal static int LinesToRight(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine, out bool isOnLine)
+        internal static int LinesToRight(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine, out bool isOnLine)
         {
             isOnLine = false;
             rightLine = null;
@@ -930,7 +930,7 @@ namespace TVGL.TwoDimensional
                         //Choose whichever line has the right most other node
                         //Note that this condition will only occur when line and
                         //leftLine share a node.                        
-                        Node nodeOnLine;
+                        Vertex2D nodeOnLine;
                         if (rightLine == null) throw new Exception("Null Reference");
                         if (rightLine.ToPoint == line.FromPoint)
                         {
@@ -955,7 +955,7 @@ namespace TVGL.TwoDimensional
             return counter;
         }
 
-        internal static void FindRightLine(Node node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine)
+        internal static void FindRightLine(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine)
         {
             bool isOnLine;
             LinesToRight(node, lineList, out rightLine, out isOnLine);
@@ -964,7 +964,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Insert Node in Sorted List
-        internal static int InsertNodeInSortedList(List<Node> sortedNodes, Node node)
+        internal static int InsertNodeInSortedList(List<Vertex2D> sortedNodes, Vertex2D node)
         {
             //Search for insertion location starting from the first element in the list.
             for (var i = 0; i < sortedNodes.Count; i++)
@@ -992,7 +992,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Merge Two Sorted Lists of Nodes
-        internal static void MergeSortedListsOfNodes(List<Node> sortedNodes, List<Node> negativeLoop, Node startingNode)
+        internal static void MergeSortedListsOfNodes(List<Vertex2D> sortedNodes, List<Vertex2D> negativeLoop, Vertex2D startingNode)
         {
             //For each node in negativeLoop, minus the first node (which is already in the list)
             var nodeId = sortedNodes.IndexOf(startingNode);
@@ -1034,7 +1034,7 @@ namespace TVGL.TwoDimensional
         internal static List<int[]> Triangulate(MonotonePolygon monotonePolygon)
         {
             var triangles = new List<int[]>();
-            var scan = new List<Node>();
+            var scan = new List<Vertex2D>();
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
             var sortedNodes = monotonePolygon.SortedNodes;
@@ -1129,7 +1129,7 @@ namespace TVGL.TwoDimensional
             return triangles;
         }
 
-        private static void AddTriangle(List<int[]> triangles, Node node1, Node node2, Node node3)
+        private static void AddTriangle(List<int[]> triangles, Vertex2D node1, Vertex2D node2, Vertex2D node3)
         {
             var cross = (node2.Coordinates - node1.Coordinates).Cross(node3.Coordinates - node1.Coordinates);
             if (cross >= 0) triangles.Add(new[] { node1.ReferenceID, node2.ReferenceID, node3.ReferenceID });

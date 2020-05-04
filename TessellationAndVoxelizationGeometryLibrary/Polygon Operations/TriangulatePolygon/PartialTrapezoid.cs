@@ -36,7 +36,7 @@ namespace TVGL.TwoDimensional
         /// <param name="topNode">The top node.</param>
         /// <param name="leftLine">The left line.</param>
         /// <param name="rightLine">The right line.</param>
-        internal PartialTrapezoid(Node topNode, PolygonSegment leftLine, PolygonSegment rightLine)
+        internal PartialTrapezoid(Vertex2D topNode, PolygonSegment leftLine, PolygonSegment rightLine)
         {
             TopNode = topNode;
             LeftLine = leftLine;
@@ -47,7 +47,7 @@ namespace TVGL.TwoDimensional
         ///     Gets the TopNode. Set is through constructor.
         /// </summary>
         /// <value>The top node.</value>
-        internal Node TopNode { get; private set; }
+        internal Vertex2D TopNode { get; private set; }
 
         /// <summary>
         ///     Gets the left vertical line of the trapezoid. Set is through constructor.

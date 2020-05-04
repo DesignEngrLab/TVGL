@@ -379,33 +379,6 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Adjusts the orthogonal rotations.
-        /// </summary>
-        /// <param name="convexHullVertices">The convex hull vertices.</param>
-        /// <param name="minOBB">The minimum obb.</param>
-        /// <returns>BoundingBox.</returns>
-        private static BoundingBox AdjustOrthogonalRotations(IList<Vertex> convexHullVertices, BoundingBox minOBB)
-        {
-            var failedConsecutiveRotations = 0;
-            var k = 0;
-            var i = 0;
-            do
-            {
-                //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
-                var newObb = FindOBBAlongDirection(convexHullVertices, minOBB.Directions[i++]);
-                if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
-                {
-                    minOBB = newObb;
-                    failedConsecutiveRotations = 0;
-                }
-                else failedConsecutiveRotations++;
-                if (i == 3) i = 0;
-                k++;
-            } while (failedConsecutiveRotations < 3 && k < MaxRotationsForOBB);
-            return minOBB;
-        }
-
-        /// <summary>
         ///     Class Bisector.
         /// </summary>
         internal class Bisector

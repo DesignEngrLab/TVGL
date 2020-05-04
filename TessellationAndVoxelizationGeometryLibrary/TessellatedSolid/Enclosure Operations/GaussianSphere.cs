@@ -141,7 +141,7 @@ namespace TVGL.Enclosure_Operations
     }
 
     /// <summary>
-    ///     Class Node.
+    ///     Class Vertex2D.
     /// </summary>
     internal class Node
     {
@@ -351,7 +351,7 @@ namespace TVGL.Enclosure_Operations
         ///     Nexts the node along rotation.
         /// </summary>
         /// <param name="rotation">The rotation.</param>
-        /// <returns>Node.</returns>
+        /// <returns>Vertex2D.</returns>
         internal Node NextNodeAlongRotation(Vector2 rotation)
         {
             //If dot product is positive, it matches the arc's direction which was based on node1 to node2.
@@ -364,7 +364,7 @@ namespace TVGL.Enclosure_Operations
         ///     Nexts the node.
         /// </summary>
         /// <param name="node">The node.</param>
-        /// <returns>Node.</returns>
+        /// <returns>Vertex2D.</returns>
         internal Node NextNode(Node node)
         {
             var nextNode = Nodes[0] == node ? Nodes[1] : Nodes[0];

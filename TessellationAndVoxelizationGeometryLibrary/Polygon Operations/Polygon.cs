@@ -34,25 +34,27 @@ namespace TVGL.TwoDimensional
         List<Vector2> _path;
 
 
-        public List<Node> Points
+        public List<Vertex2D> Vertices
         {
             get
             {
                 if (_points == null)
                 {
-                    _points = new List<Node>();
+                    _points = new List<Vertex2D>();
                     for (int i = 0; i < _path.Count; i++)
                     {
-                        _points.Add(new Node(_path[i], i, Index));
+                        _points.Add(new Vertex2D(_path[i], i, Index));
                     }
                 }
                 return _points;
             }
         }
-        List<Node> _points;
+        List<Vertex2D> _points;
 
-        /// The list of lines that make up a polygon. This is not set by default.
+        /// <summary>
+        /// Gets the list of lines that make up a polygon. This is not set by default.
         /// </summary>
+        /// <value>The lines.</value>
         public List<PolygonSegment> Lines
         {
             get
@@ -62,13 +64,24 @@ namespace TVGL.TwoDimensional
                     _lines = new List<PolygonSegment>();
                     var n = Path.Count - 1;
                     for (var i = 0; i < n; i++)
-                        Lines.Add(new PolygonSegment(Points[i], Points[i + 1]));
-                    Lines.Add(new PolygonSegment(Points[n], Points[0]));
+                        Lines.Add(new PolygonSegment(Vertices[i], Vertices[i + 1]));
+                    Lines.Add(new PolygonSegment(Vertices[n], Vertices[0]));
                 }
                 return _lines;
             }
         }
         List<PolygonSegment> _lines;
+
+        public List<Polygon> InnerPolygons
+        {
+            get
+            {
+                if (_innerPolygons == null)
+                    _innerPolygons = new List<Polygon>();
+                return _innerPolygons;
+            }
+        }
+        List<Polygon> _innerPolygons;
 
         /// <summary>
         /// The index of this child in its parent's child list.
@@ -83,8 +96,8 @@ namespace TVGL.TwoDimensional
             get { return Area >= 0; }
             set
             {
-                if (value) SetToCCWPositive();
-                else SetToCWNegative();
+                if (value != (Area >= 0))
+                    Reverse();
             }
         }
 
@@ -94,8 +107,17 @@ namespace TVGL.TwoDimensional
         /// </summary>
         public void Reverse()
         {
-            if (IsPositive) SetToCWNegative();
-            else SetToCCWPositive();
+            area = -Area;
+            Path.Reverse();
+
+            //Only reverse the lines if they have been generated
+            if (_lines == null) return;
+            var lines = _lines;
+            _lines = new List<PolygonSegment>();
+            var n = lines.Count;
+            for (var i = 0; i < n; i++)
+                _lines[i] = lines[n - i - 1].Reverse();
+
         }
 
 
@@ -185,52 +207,12 @@ namespace TVGL.TwoDimensional
             Index = index;
         }
 
-        public Polygon(List<Node> points, List<PolygonSegment> lines, int index = -1)
+        public Polygon(List<Vertex2D> points, List<PolygonSegment> lines, int index = -1)
         {
             _points = points;
             _lines = lines;
             Index = index;
         }
-
-        /// <summary>
-        /// Sets a polygon to counter clock wise positive
-        /// </summary>
-        private void SetToCCWPositive()
-        {
-            //Check if already positive ccw.
-            if (Area >= 0) return;
-
-            //It is negative. Reverse the path and path lines.
-            Path.Reverse();
-            area = -area;
-
-            //Only reverse the lines if they have been generated
-            if (_lines == null) return;
-            var lines = _lines;
-            _lines = new List<PolygonSegment>();
-            var n = lines.Count;
-            for (var i = 0; i < n; i++)
-                _lines[i] = lines[n - i - 1].Reverse();
-        }
-
-        private void SetToCWNegative()
-        {
-            //Check if already negative cw.
-            if (Area < 0) return;
-
-            //It is positive. Reverse the path and path lines.
-            Path.Reverse();
-            area = -area;
-
-            //Only reverse the lines if they have been generated
-            if (_lines == null) return;
-            var lines = _lines;
-            _lines = new List<PolygonSegment>();
-            var n = lines.Count;
-            for (var i = 0; i < n; i++)
-                _lines[i] = lines[n - i - 1].Reverse();
-        }
-
 
         public bool IsConvex()
         {
