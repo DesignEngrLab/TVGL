@@ -256,9 +256,9 @@ namespace TVGL
         /// <param name="bottomVertex"></param>
         /// <param name="topVertex"></param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertex(this IEnumerable<Vertex> vertices, Vector3 direction,
-            out Vertex bottomVertex,
-            out Vertex topVertex)
+        public static double GetLengthAndExtremeVertex(this IEnumerable<IVertex3D> vertices, Vector3 direction,
+            out IVertex3D bottomVertex,
+            out IVertex3D topVertex)
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -267,7 +267,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.Dot(v.Coordinates);
+                var distance =v.Dot(dir);
                 if (distance < minD)
                 {
                     bottomVertex = v;
