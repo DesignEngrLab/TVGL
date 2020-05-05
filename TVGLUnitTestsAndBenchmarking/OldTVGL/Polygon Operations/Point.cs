@@ -71,6 +71,11 @@ namespace OldTVGL
             return new[] { X - b.X, Y - b.Y };
         }
 
+        public double[] Add(PointLight b)
+        {
+            return new[] { X + b.X, Y + b.Y };
+        }
+
         //Note: This equality operator CANNOT use references, since this is a struct.
         public static bool operator ==(PointLight a, PointLight b)
         {

@@ -25,6 +25,7 @@ namespace TVGL
     /// </summary>
     public class Cylinder : PrimitiveSurface
     {
+
         /// <summary>
         ///     Determines whether [is new member of] [the specified face].
         /// </summary>
@@ -232,6 +233,9 @@ namespace TVGL
                 return false;
             }
             Radius = (centerCircle.Radius + centerCircle2.Radius) / 2; //Average
+            //Set the Anchor/Center point
+            var center = centerCircle.Center.Add(centerCircle2.Center).divide(2);
+            Anchor = MiscFunctions.Convert2DVectorTo3DVector(center, backTransform);
             return true;
         }
 
@@ -254,18 +258,18 @@ namespace TVGL
         /// <summary>
         ///     Is the cylinder positive? (false is negative)
         /// </summary>
-        public bool IsPositive;
+        public bool IsPositive { get; private set; }
 
         /// <summary>
         ///     Did the cylinder pass the cylinder checks?
         /// </summary>
-        public bool IsValid;
+        public bool IsValid { get; private set; }
 
         /// <summary>
         ///     Gets the anchor.
         /// </summary>
         /// <value>The anchor.</value>
-        public Vector3 Anchor { get; set; }
+        public Vector3 Anchor { get; private set; }
 
         /// <summary>
         ///     Gets the direction.
@@ -277,7 +281,32 @@ namespace TVGL
         ///     Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
-        public double Radius { get; set; }
+        public double Radius { get; private set; }
+
+
+        /// <summary>
+        /// Gets or sets the maximum distance along axis.
+        /// </summary>
+        /// <value>The maximum distance along axis.</value>
+        public double MaxDistanceAlongAxis { get;  set; }
+
+        /// <summary>
+        /// Gets or sets the minimum distance along axis.
+        /// </summary>
+        /// <value>The minimum distance along axis.</value>
+        public double MinDistanceAlongAxis { get; set; }
+
+        /// <summary>
+        /// Gets the height.
+        /// </summary>
+        /// <value>The height.</value>
+        public double Height { get; private set; }
+
+        /// <summary>
+        /// Gets the volume.
+        /// </summary>
+        /// <value>The volume.</value>
+        public double Volume { get; }
 
         public HashSet<Vertex> Loop1 { get; set; }
 
@@ -291,9 +320,6 @@ namespace TVGL
 
         public List<Vector2> Loop2D { get; set; }
 
-        public double MaxDistanceAlongAxis { get; set; }
-
-        public double MinDistanceAlongAxis { get; set; }
         #endregion
 
         #region Constructors
@@ -416,6 +442,18 @@ namespace TVGL
 
         internal Cylinder()
         { Type = PrimitiveSurfaceType.Cylinder; }
+
+        public Cylinder(double[] axis, double[] anchor, double radius, double dxOfBottomPlane, 
+            double dxOfTopPlane)
+        {
+            Axis = axis;
+            Anchor = anchor;
+            Radius = radius;
+            MinDistanceAlongAxis = dxOfBottomPlane;
+            MaxDistanceAlongAxis = dxOfTopPlane;
+            Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
+            Volume = Math.PI * Radius * Radius * Height;
+        }
 
         //public TessellatedSolid AsTessellatedSolid()
         //{
