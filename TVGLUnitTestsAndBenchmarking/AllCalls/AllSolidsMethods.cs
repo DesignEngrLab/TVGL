@@ -40,8 +40,8 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.ConvexHull.Vertices.OrientedBoundingBox();
             var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<IVertex3D> bottomVertices,
                   out List<IVertex3D> topVertices);
-            length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertex(Vector3.UnitX, out IVertex3D bottomVertex,
-                  out IVertex3D topVertex);
+            length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertex(Vector3.UnitX, out Vertex bottomVertex,
+                  out Vertex topVertex);
 
             #endregion
 

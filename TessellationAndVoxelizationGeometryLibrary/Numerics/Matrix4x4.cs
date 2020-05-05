@@ -1254,14 +1254,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
 
-        private struct CanonicalBasis
-        {
-            public Vector3 Row0;
-            public Vector3 Row1;
-            public Vector3 Row2;
-        };
-
-
         /// <summary>
         /// Attempts to extract the scale, translation, and rotation components from the given scale/rotation/translation matrix.
         /// If successful, the out parameters will contained the extracted values.

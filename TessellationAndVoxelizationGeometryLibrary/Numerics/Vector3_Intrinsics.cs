@@ -231,7 +231,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Multiplies two vectors together.
+        /// Multiplies two vectors together. This produces a new Vector3 where the components are
+        /// x_1 * x_2, y_1 * y_2, and z_1 * z_2
         /// </summary>
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>

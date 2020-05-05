@@ -165,7 +165,53 @@ namespace TVGL
 
         /// <summary>
         ///     Given a Direction, dir, this function returns the maximum length along this Direction
-        ///     for the provided vertices as well as the vertices that represent the extremes.
+        ///     for the provided vertices as well as the all vertices that represent the extremes.
+        ///     If you only want one the length or only need one vertex at the extreme, it is more efficient
+        ///     and easier to use GetLengthAndExtremeVertex
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="bottomVertices">The bottom vertices.</param>
+        /// <param name="topVertices">The top vertices.</param>
+        /// <returns>System.Double.</returns>
+        public static double GetLengthAndExtremeVertices(this IEnumerable<Vector3> vertices, Vector3 direction,
+            out List<Vector3> bottomVertices,
+            out List<Vector3> topVertices)
+        {
+            var length = GetLengthAndExtremeVertices(vertices.Cast<IVertex3D>(), direction, out var bottomVerticesIVertex3Ds,
+                out var topVerticesIVertex3Ds);
+            bottomVertices = bottomVerticesIVertex3Ds.Cast<Vector3>().ToList();
+            topVertices = topVerticesIVertex3Ds.Cast<Vector3>().ToList();
+            return length;
+        }
+
+        /// <summary>
+        ///     Given a Direction, dir, this function returns the maximum length along this Direction
+        ///     for the provided vertices as well as the all vertices that represent the extremes.
+        ///     If you only want one the length or only need one vertex at the extreme, it is more efficient
+        ///     and easier to use GetLengthAndExtremeVertex
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="bottomVertices">The bottom vertices.</param>
+        /// <param name="topVertices">The top vertices.</param>
+        /// <returns>System.Double.</returns>
+        public static double GetLengthAndExtremeVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
+            out List<Vertex> bottomVertices,
+            out List<Vertex> topVertices)
+        {
+            var length = GetLengthAndExtremeVertices(vertices.Cast<IVertex3D>(), direction, out var bottomVerticesIVertex3Ds,
+                out var topVerticesIVertex3Ds);
+            bottomVertices = bottomVerticesIVertex3Ds.Cast<Vertex>().ToList();
+            topVertices = topVerticesIVertex3Ds.Cast<Vertex>().ToList();
+            return length;
+        }
+
+        /// <summary>
+        ///     Given a Direction, dir, this function returns the maximum length along this Direction
+        ///     for the provided vertices as well as the all vertices that represent the extremes.
+        ///     If you only want one the length or only need one vertex at the extreme, it is more efficient
+        ///     and easier to use GetLengthAndExtremeVertex
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <param name="vertices">The vertices.</param>
@@ -206,46 +252,39 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Given a Direction, dir, this function returns the maximum length along this Direction
-        ///     for the provided vertices as well as the vertices that represent the extremes.
+        ///     Given a Direction, dir, this function returns the maximum length along this Direction and one vertex 
+        ///     that represents each extreme. Use this if you do not need all the vertices at the extremes.
         /// </summary>
-        /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
-        /// <param name="bottomVertices">The bottom vertices.</param>
-        /// <param name="topVertices">The top vertices.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="bottomVertex"></param>
+        /// <param name="topVertex"></param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(this IEnumerable<Vector3> vertices, Vector3 direction,
-            out List<Vector3> bottomVertices,
-            out List<Vector3> topVertices)
+        public static double GetLengthAndExtremeVertex(this IEnumerable<Vertex> vertices, Vector3 direction,
+            out Vertex bottomVertex,
+            out Vertex topVertex)
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertices = new List<Vector3>();
-            topVertices = new List<Vector3>();
+            bottomVertex = null;
+            topVertex = null;
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.Dot(v);
-                if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
-                    bottomVertices.Add(v);
-                else if (distance < minD)
+                var distance = v.Dot(dir);
+                if (distance < minD)
                 {
-                    bottomVertices.Clear();
-                    bottomVertices.Add(v);
+                    bottomVertex = v;
                     minD = distance;
                 }
-                if (distance.IsPracticallySame(maxD, Constants.BaseTolerance))
-                    topVertices.Add(v);
-                else if (distance > maxD)
+                if (distance > maxD)
                 {
-                    topVertices.Clear();
-                    topVertices.Add(v);
+                    topVertex = v;
                     maxD = distance;
                 }
             }
             return maxD - minD;
         }
-
         /// <summary>
         ///     Given a Direction, dir, this function returns the maximum length along this Direction and one vertex 
         ///     that represents each extreme. Use this if you do not need all the vertices at the extremes.
@@ -255,14 +294,14 @@ namespace TVGL
         /// <param name="bottomVertex"></param>
         /// <param name="topVertex"></param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertex(this IEnumerable<IVertex3D> vertices, Vector3 direction,
-            out IVertex3D bottomVertex,
-            out IVertex3D topVertex)
+        public static double GetLengthAndExtremeVertex(this IEnumerable<Vector3> vertices, Vector3 direction,
+            out Vector3 bottomVertex,
+            out Vector3 topVertex)
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertex = null;
-            topVertex = null;
+            bottomVertex = Vector3.Null;
+            topVertex = Vector3.Null;
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
@@ -583,7 +622,47 @@ namespace TVGL
 
         #endregion
 
+        #region FindABB
 
+        public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable<IVertex3D> vertices)
+        {
+            var pointsOnBox = new List<IVertex3D>[6];
+            for (int i = 0; i < 6; i++)
+                pointsOnBox[i] = new List<IVertex3D>();
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            var zMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var zMax = double.NegativeInfinity;
+            foreach (var v in vertices)
+            {
+                UpdateLimitsAndBox(v, v.X, ref xMin, pointsOnBox[0], true);
+                UpdateLimitsAndBox(v, v.X, ref xMax, pointsOnBox[1], false);
+                UpdateLimitsAndBox(v, v.Y, ref xMin, pointsOnBox[2], true);
+                UpdateLimitsAndBox(v, v.Y, ref xMax, pointsOnBox[3], false);
+                UpdateLimitsAndBox(v, v.Z, ref xMin, pointsOnBox[4], true);
+                UpdateLimitsAndBox(v, v.Z, ref xMax, pointsOnBox[5], false);
+            }
+            return new BoundingBox(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
+                new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
+                pointsOnBox);
+        }
+
+        private static void UpdateLimitsAndBox(IVertex3D vertex, double value, ref double limit, List<IVertex3D> pointsOnBox, bool isMinimum)
+        {
+            if ((isMinimum && value.IsLessThanNonNegligible(limit)) ||
+            (!isMinimum && value.IsGreaterThanNonNegligible(limit)))
+            {
+                limit = value;
+                pointsOnBox.Clear();
+                pointsOnBox.Add(vertex);
+            }
+            else if (value.IsPracticallySame(limit))
+                pointsOnBox.Add(vertex);
+        }
+
+        #endregion
 
         #region Find OBB Along Direction
 

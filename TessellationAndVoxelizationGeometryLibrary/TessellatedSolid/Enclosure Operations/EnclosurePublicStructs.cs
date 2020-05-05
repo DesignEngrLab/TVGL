@@ -200,6 +200,7 @@ namespace TVGL
                 Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
         }
 
+
         /// <summary>
         ///     The center point
         /// </summary>
@@ -234,15 +235,35 @@ namespace TVGL
         /// <summary>
         ///     Sets the Solid Representation of the bounding box
         /// </summary>
-        public TessellatedSolid AsTessellatedSolid
+        public TessellatedSolid AsTessellatedSolid()
         {
-            get
+            if (_tessellatedSolid == null)
             {
-                if (_tessellatedSolid == null)
-                    _tessellatedSolid = Extrude.ExtrusionSolidFrom3DLoops(new[] { Corners.Take(4).ToArray() },
-                        Directions[2], Dimensions[2]);
-                return _tessellatedSolid;
+                var vertices = Corners.Select(p => new Vertex(p)).ToArray();
+                var faces = new[]
+                {
+                // negative-X faces
+                new PolygonalFace(new []{vertices[0],vertices[4],vertices[7] }),
+                new PolygonalFace(new []{vertices[0],vertices[7],vertices[3] }),
+                // positive-X faces
+                new PolygonalFace(new []{vertices[6],vertices[5],vertices[1] }),
+                new PolygonalFace(new []{vertices[6],vertices[1],vertices[2] }),
+                // negative-Y faces
+                new PolygonalFace(new []{vertices[0],vertices[1],vertices[5] }),
+                new PolygonalFace(new []{vertices[0],vertices[5],vertices[4] }),
+                // positive-Y faces
+                new PolygonalFace(new []{vertices[6],vertices[2],vertices[3] }),
+                new PolygonalFace(new []{vertices[6],vertices[3],vertices[7] }),
+                // negative-Z faces
+                new PolygonalFace(new []{vertices[0],vertices[3],vertices[2] }),
+                new PolygonalFace(new []{vertices[0],vertices[2],vertices[1] }),
+                // positive-Z faces
+                new PolygonalFace(new []{vertices[6],vertices[7],vertices[4] }),
+                new PolygonalFace(new []{vertices[6],vertices[4],vertices[5] })
+            };
+                _tessellatedSolid = new TessellatedSolid(faces, vertices, false);
             }
+            return _tessellatedSolid;
         }
         private TessellatedSolid _tessellatedSolid;
 
@@ -338,7 +359,7 @@ namespace TVGL
         public BoundingBox Copy()
         {
             if (PointsOnFaces != null)
-                    return new BoundingBox(this.Dimensions, this.Directions, PointsOnFaces);
+                return new BoundingBox(this.Dimensions, this.Directions, PointsOnFaces);
             else return new BoundingBox(this.Dimensions, this.Transform);
         }
 
@@ -354,10 +375,12 @@ namespace TVGL
             var unitDir = direction.Normalize();
             CartesianDirections cartesian = CartesianDirections.ZNegative;
             if (unitDir.Dot(Directions[0]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.XPositive;
-            if (unitDir.Dot(Directions[1]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.YPositive;
-            if (unitDir.Dot(Directions[2]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.ZPositive;
-            if (unitDir.Dot(Directions[0]).IsPracticallySame(-1.0, 0.1)) cartesian = CartesianDirections.XNegative;
-            if (unitDir.Dot(Directions[1]).IsPracticallySame(-1.0, 0.1)) cartesian = CartesianDirections.YNegative;
+            else if (unitDir.Dot(Directions[1]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.YPositive;
+            else if (unitDir.Dot(Directions[2]).IsPracticallySame(1.0, 0.1)) cartesian = CartesianDirections.ZPositive;
+            else if (unitDir.Dot(Directions[0]).IsPracticallySame(-1.0, 0.1)) cartesian = CartesianDirections.XNegative;
+            else if (unitDir.Dot(Directions[1]).IsPracticallySame(-1.0, 0.1)) cartesian = CartesianDirections.YNegative;
+            else if (unitDir.Dot(Directions[2]).IsPracticallySame(-1.0, 0.1)) cartesian = CartesianDirections.ZNegative;
+            else return;
             MoveFaceOutward(cartesian, distance);
         }
         public BoundingBox MoveFaceOutwardToNewSolid(CartesianDirections face, double distance)
@@ -381,7 +404,7 @@ namespace TVGL
             }
             if (negativeFace)
             {
-                var translate = TranslationFromOrigin - Vector3.UnitVector(direction) * distance;
+                var translate = TranslationFromOrigin - Directions[direction] * distance;
                 Transform = new Matrix4x4(Transform.XBasisVector, Transform.YBasisVector,
                     Transform.ZBasisVector, translate);
             }

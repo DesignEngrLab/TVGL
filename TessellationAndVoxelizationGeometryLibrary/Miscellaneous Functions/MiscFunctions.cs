@@ -665,7 +665,7 @@ namespace TVGL
         private static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
         {
             foreach (var point2D in coordinates)
-                yield return Vector3.Transform(new Vector3(point2D, 0), transform);
+                yield return Vector3.Multiply(new Vector3(point2D, 0), transform);
         }
 
         /// <summary>
@@ -676,7 +676,7 @@ namespace TVGL
         /// <returns>TVGL.Numerics.Vector2.</returns>
         public static Vector3 ConvertTo3DLocation(this in Vector2 coordinates2D, in Matrix4x4 transform)
         {
-            return Vector3.Transform(new Vector3(coordinates2D, 0), transform);
+            return Vector3.Multiply(new Vector3(coordinates2D, 0), transform);
         }
         #endregion
 
@@ -1059,7 +1059,7 @@ namespace TVGL
             var distances = new Vector3(d1, d2, d3);
             if (!Matrix3x3.Invert(matrixOfNormals, out var mInv))
                 return Vector3.Null;
-            return distances.Transform(mInv);
+            return distances.Multiply(mInv);
         }
 
         public static Flat GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)
@@ -1113,7 +1113,7 @@ namespace TVGL
             var b = new Vector3(d1, d2, 0);
             if (!Matrix3x3.Invert(a, out var aInv))
                 pointOnLine = Vector3.Null;
-            pointOnLine = b.Transform(aInv);
+            pointOnLine = b.Multiply(aInv);
         }
 
         /// <summary>

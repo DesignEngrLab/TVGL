@@ -384,7 +384,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Transform(Vector3 position, Matrix4x4 matrix)
+        public static Vector3 Multiply(Vector3 position, Matrix4x4 matrix)
         {
             if (matrix.IsProjectiveTransform)
             {
@@ -407,7 +407,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Transform(Vector3 position, Matrix3x3 matrix)
+        public static Vector3 Multiply(Vector3 position, Matrix3x3 matrix)
         {
             return new Vector3(
                 position.X * matrix.M11 + position.Y * matrix.M21 + position.Z * matrix.M31,
@@ -437,7 +437,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="rotation">The rotation to apply.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Transform(Vector3 value, Quaternion rotation)
+        public static Vector3 Multiply(Vector3 value, Quaternion rotation)
         {
             double x2 = rotation.X + rotation.X;
             double y2 = rotation.Y + rotation.Y;
@@ -559,9 +559,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             return -value;
         }
-
-
-        #endregion 
+        #endregion
     }
 
     public interface IVertex3D

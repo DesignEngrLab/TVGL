@@ -102,16 +102,16 @@ namespace TVGL.Numerics
         { return Vector3.Lerp(value1, value2, amount); }
 
         public static Vector3 Transform(this Vector3 position, Matrix4x4 matrix)
-        { return Vector3.Transform(position, matrix); }
+        { return Vector3.Multiply(position, matrix); }
 
-        public static Vector3 Transform(this Vector3 position, Matrix3x3 matrix)
-        { return Vector3.Transform(position, matrix); }
+        public static Vector3 Multiply(this Vector3 position, Matrix3x3 matrix)
+        { return Vector3.Multiply(position, matrix); }
 
         public static Vector3 TransformNoTranslate(this Vector3 normal, Matrix4x4 matrix)
         { return Vector3.TransformNoTranslate(normal, matrix); }
 
         public static Vector3 Transform(this Vector3 value, Quaternion rotation)
-        { return Vector3.Transform(value, rotation); }
+        { return Vector3.Multiply(value, rotation); }
 
         public static Vector3 Add(this Vector3 left, Vector3 right)
         { return Vector3.Add(left, right); }
