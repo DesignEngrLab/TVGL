@@ -12,7 +12,7 @@ using TVGLUnitTestsAndBenchmarking;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    internal class Program
+    internal static class Program
     {
 
         static readonly Stopwatch stopwatch = new Stopwatch();

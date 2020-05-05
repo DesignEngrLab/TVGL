@@ -7,15 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGL Presenter", "TVGL Pres
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGL PresenterDX", "TVGL PresenterDX\TVGL PresenterDX.csproj", "{04A4763C-907A-45EE-9270-2ECB1453770F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGLTest", "TVGLTest\TVGLTest.csproj", "{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TessellationAndVoxelizationGeometryLibrary.Standard", "TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj", "{859A90C2-4B36-4486-9279-EF9DF02C0C9B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8007C04B-FC3E-48DA-AA4C-BAFC689832BD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGL PresenterDebugger", "TVGL PresenterDebugger\TVGL PresenterDebugger.csproj", "{499FD274-7530-4978-9523-90B75556E7F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGLUnitTestsAndBenchmarking", "TVGLUnitTestsAndBenchmarking\TVGLUnitTestsAndBenchmarking.csproj", "{D6A76DB6-8D75-4A24-B65C-A52762B9A883}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TVGLUnitTestsAndBenchmarking", "TVGLUnitTestsAndBenchmarking\TVGLUnitTestsAndBenchmarking.csproj", "{D6A76DB6-8D75-4A24-B65C-A52762B9A883}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,26 +69,6 @@ Global
 		{04A4763C-907A-45EE-9270-2ECB1453770F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{04A4763C-907A-45EE-9270-2ECB1453770F}.Release|x64.ActiveCfg = Release|Any CPU
 		{04A4763C-907A-45EE-9270-2ECB1453770F}.Release|x64.Build.0 = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Debug|x64.Build.0 = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.DebugSingleThread|Any CPU.ActiveCfg = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.DebugSingleThread|Any CPU.Build.0 = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.DebugSingleThread|x64.ActiveCfg = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.DebugSingleThread|x64.Build.0 = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Documentation|Any CPU.Build.0 = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Documentation|x64.ActiveCfg = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Documentation|x64.Build.0 = Debug|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Nsis|Any CPU.ActiveCfg = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Nsis|Any CPU.Build.0 = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Nsis|x64.ActiveCfg = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Nsis|x64.Build.0 = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Release|x64.ActiveCfg = Release|Any CPU
-		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Release|x64.Build.0 = Release|Any CPU
 		{859A90C2-4B36-4486-9279-EF9DF02C0C9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{859A90C2-4B36-4486-9279-EF9DF02C0C9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{859A90C2-4B36-4486-9279-EF9DF02C0C9B}.Debug|x64.ActiveCfg = Debug|x64
