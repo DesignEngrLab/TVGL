@@ -435,8 +435,7 @@ namespace TVGL
                     List<List<Vertex[]>> triangleFaceList = null;
                     try
                     {
-                        triangleFaceList = PolygonOperations.Triangulate(new [] {edges.Select(e => e.To).ToArray()},
-                            normal, out _, out _);
+                        triangleFaceList = (new[] { edges.Select(e => e.To).ToArray() }).Triangulate(normal, out _, out _);
                     }
                     catch
                     {

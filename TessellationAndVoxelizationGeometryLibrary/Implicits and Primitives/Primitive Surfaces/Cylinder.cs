@@ -223,19 +223,19 @@ namespace TVGL
 
             //Check if the loops are circular along the axis
             var path1 = Loop1.ProjectTo2DCoordinates(Axis, out var backTransform);
-            if (!PolygonOperations.IsCircular(new Polygon(path1), out var centerCircle, Constants.MediumConfidence))
+            if (!path1.IsCircular(out var centerCircle, Constants.MediumConfidence))
             {
                 return false;
             }
             var path2 = Loop2.ProjectTo2DCoordinates(Axis, out var backTransform2);
-            if (!PolygonOperations.IsCircular(new Polygon(path2), out var centerCircle2, Constants.MediumConfidence))
+            if (!path2.IsCircular(out var centerCircle2, Constants.MediumConfidence))
             {
                 return false;
             }
             Radius = (centerCircle.Radius + centerCircle2.Radius) / 2; //Average
             //Set the Anchor/Center point
-            var center = centerCircle.Center.Add(centerCircle2.Center).divide(2);
-            Anchor = MiscFunctions.Convert2DVectorTo3DVector(center, backTransform);
+            var center = (centerCircle.Center + centerCircle2.Center) / 2.0;
+            Anchor = center.ConvertTo3DLocation(backTransform);
             return true;
         }
 
@@ -288,7 +288,7 @@ namespace TVGL
         /// Gets or sets the maximum distance along axis.
         /// </summary>
         /// <value>The maximum distance along axis.</value>
-        public double MaxDistanceAlongAxis { get;  set; }
+        public double MaxDistanceAlongAxis { get; set; }
 
         /// <summary>
         /// Gets or sets the minimum distance along axis.
@@ -420,10 +420,10 @@ namespace TVGL
             if (distToOrigin < 0)
             {
                 distToOrigin *= -1;
-                axis=-1*axis;
+                axis = -1 * axis;
             }
-            center = new Vector3(center.X - distToOrigin*axis.X, center.Y - distToOrigin*axis.Y,
-                center.Z - distToOrigin*axis.Z);
+            center = new Vector3(center.X - distToOrigin * axis.X, center.Y - distToOrigin * axis.Y,
+                center.Z - distToOrigin * axis.Z);
             var d1 = MiscFunctions.DistancePointToLine(v1.Coordinates, center, axis);
             var d2 = MiscFunctions.DistancePointToLine(v2.Coordinates, center, axis);
             var d3 = MiscFunctions.DistancePointToLine(v3.Coordinates, center, axis);
@@ -443,7 +443,7 @@ namespace TVGL
         internal Cylinder()
         { Type = PrimitiveSurfaceType.Cylinder; }
 
-        public Cylinder(double[] axis, double[] anchor, double radius, double dxOfBottomPlane, 
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double dxOfBottomPlane,
             double dxOfTopPlane)
         {
             Axis = axis;

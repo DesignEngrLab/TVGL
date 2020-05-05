@@ -434,8 +434,7 @@ namespace TVGL
                 else
                 {
                     var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
-                    var triangulatedListofLists =
-                       PolygonOperations.Triangulate(new[] { faceVertices }, normal, out _, out _);
+                    var triangulatedListofLists = new[] { faceVertices }.Triangulate(normal, out _, out _);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)

@@ -82,13 +82,12 @@ namespace TVGL
             directions.Add(new Vector3(0, 1, 1).Normalize());
             directions.Add(new Vector3(0, -1, 1).Normalize());
             var minVolume = double.PositiveInfinity;
-            var boxes = directions.Select(v => new BoundingBox(new[]{double.PositiveInfinity,
-                double.PositiveInfinity,double.PositiveInfinity}, new[] { v, Vector3.UnitY, Vector3.UnitZ },
-                new Vector3(double.NegativeInfinity))).ToList();
-            var minBox = boxes[0];
+            BoundingBox minBox = null;
             for (var i = 0; i < 13; i++)
             {
-                var box = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
+                var box = new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
+                    new Matrix4x4(directions[i], Vector3.Null, Vector3.Null, Vector3.Null));
+                box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
                 if (box.Volume >= minVolume) continue;
                 minVolume = box.Volume;
                 minBox = box;
@@ -267,7 +266,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance =v.Dot(dir);
+                var distance = v.Dot(dir);
                 if (distance < minD)
                 {
                     bottomVertex = v;
@@ -357,7 +356,7 @@ namespace TVGL
 
             //Simplify the points to make sure they are the minimal convex hull
             //Only set it as the convex hull if it contains more than three points.
-            var cvxPointsSimple = PolygonOperations.Simplify(cvxPoints);
+            var cvxPointsSimple = cvxPoints.Simplify();
             if (cvxPointsSimple.Count >= 3) cvxPoints = cvxPointsSimple;
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point */
             //First, check to make sure the given convex hull has the min x-value at 0.

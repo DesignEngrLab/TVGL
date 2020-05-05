@@ -221,7 +221,7 @@ namespace TVGL
             return new BoundingCircle(radius, new Vector2(centerX, centerY));
         }
 
- 
+
 
         /// <summary>
         ///     Gets the maximum inner circle given a group of polygons and a center point.
@@ -264,7 +264,7 @@ namespace TVGL
                 if (!negativePoly.IsPointInsidePolygon(centerPoint, out var closestLineAbove,
                     out _, out var onBoundary)) continue;
                 if (onBoundary) return new BoundingCircle(0.0, centerPoint); //Null solution.
-                var d = closestLineAbove.YGivenX(centerPoint.X,out _) - centerPoint.Y; //Not negligible because not on Boundary
+                var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
                 if (d < minDistance)
                 {
                     minDistance = d;
@@ -324,7 +324,7 @@ namespace TVGL
 
                 //Now we need to figure out if the lines intersect
                 if (!MiscFunctions.SegmentSegment2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
-                    centerPoint,pointOnLine, out _)) continue;
+                    centerPoint, pointOnLine, out _)) continue;
                 //if(intersectionPoint != tempPoint) throw new Exception("Error in implementation. This should always be true.");
                 shortestDistance = d;
             }
@@ -347,7 +347,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox MinimumBoundingCylinder(this IEnumerable<Vertex> convexHullVertices)
+        public static Cylinder MinimumBoundingCylinder(this IEnumerable<Vertex> convexHullVertices)
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();
@@ -363,24 +363,22 @@ namespace TVGL
             var minCylinderVolume = double.PositiveInfinity;
             for (var i = 0; i < 13; i++)
             {
-                var box = new BoundingBox
-                {
-                    Directions = new[] { directions[i] },
-                    Volume = double.PositiveInfinity
-                };
+
+                var box = new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
+                    new Matrix4x4(directions[i], Vector3.Null, Vector3.Null, Vector3.Null));
                 box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
                 for (var j = 0; j < 3; j++)
                 {
                     var axis = box.Directions[j];
-                    var pointsOnFace_i = MiscFunctions.Get2DProjectionPoints(convexHullVertices, axis, out var backTransform);
+                    var pointsOnFace_i = convexHullVertices.ProjectTo2DCoordinates(axis, out var backTransform);
                     var circle = MinimumCircle(pointsOnFace_i);
                     var height = box.Dimensions[j];
                     var volume = height * circle.Area;
                     if (minCylinderVolume > volume)
                     {
                         minCylinderVolume = volume;
-                        var anchor = MiscFunctions.Convert2DVectorTo3DVector(new[] { circle.Center.X, circle.Center.Y, 0, 1 }, backTransform);
-                        var dxOfBottomPlane = axis.dotProduct(box.PointsOnFaces[2 * j][0].Position);
+                        var anchor = circle.Center.ConvertTo3DLocation(backTransform);
+                        var dxOfBottomPlane = box.PointsOnFaces[2 * j][0].Dot(axis);
 
                         minCylinder = new Cylinder(axis, anchor,
                                 circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);

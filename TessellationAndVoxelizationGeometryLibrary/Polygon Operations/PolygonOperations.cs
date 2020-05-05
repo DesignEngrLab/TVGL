@@ -178,12 +178,22 @@ namespace TVGL.TwoDimensional
             }
             return intersections;
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<List<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
             return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
+        /// <summary>
+        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are determined by the input.
+        /// y = startingYValue + (i+firstIntersectingIndex)*stepSize
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="startingYValue">The starting y value.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)
         {
@@ -269,11 +279,22 @@ namespace TVGL.TwoDimensional
         ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
         public static bool IsCircular(this Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
+            return IsCircular(polygon.Path, out minCircle, confidencePercentage);
+        }
+
+        /// <summary>Determines whether the specified polygon is circular.</summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="minCircle">The minimum circle.</param>
+        /// <param name="confidencePercentage">The confidence percentage.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
+        public static bool IsCircular(this IEnumerable<Vector2> polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        {
             var tolerancePercentage = 1.0 - confidencePercentage;
-            minCircle = MinimumEnclosure.MinimumCircle(polygon.Path.ToList());
+            minCircle = MinimumEnclosure.MinimumCircle(polygon);
 
             //Check if areas are close to the same
-            var polygonArea = Math.Abs(polygon.Area);
+            var polygonArea = polygon.Area();
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 

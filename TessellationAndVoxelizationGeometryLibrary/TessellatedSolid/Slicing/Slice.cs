@@ -219,8 +219,7 @@ namespace TVGL.Boolean_Operations
                 //Triangulating the polygon reverses loops (internally) if necessary and groups them together.
                 //The isPositive output is used to determine whether each loop should be positive or negative.
                 //The groupsOfLoopsIndices is a list of groups that was used to triangulate each surface.
-                var groupsOfTriangles = PolygonOperations.Triangulate(vertexLoops, direction, out var groupsOfLoopsIndices,
-                    out var isPositive, false);
+                var groupsOfTriangles = vertexLoops.Triangulate(direction, out var groupsOfLoopsIndices, out var isPositive, false);
                 //Reverse loops if necessary to match the isPositive list from the triangulation.
                 for (var i = 0; i < isPositive.Length; i++) loops[i].IsPositive = isPositive[i];
 

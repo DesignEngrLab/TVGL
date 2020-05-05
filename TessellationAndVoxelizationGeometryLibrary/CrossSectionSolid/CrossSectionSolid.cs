@@ -318,7 +318,7 @@ namespace TVGL
             {
                 var layer = new List<List<Vector2>>();
                 foreach (var coordinates in layerArray[j])
-                    layer.Add(PolygonOperations.ConvertToVector2s(coordinates).ToList());
+                    layer.Add(coordinates.ConvertToVector2s().ToList());
                 Layer2D.Add(i, layer);
                 j++;
             }

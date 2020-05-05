@@ -674,7 +674,7 @@ namespace TVGL
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <returns>TVGL.Numerics.Vector2.</returns>
-        public static Vector3 ConvertTo3DLocation(in Vector2 coordinates2D, in Matrix4x4 transform)
+        public static Vector3 ConvertTo3DLocation(this in Vector2 coordinates2D, in Matrix4x4 transform)
         {
             return Vector3.Transform(new Vector3(coordinates2D, 0), transform);
         }

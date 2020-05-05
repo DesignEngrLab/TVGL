@@ -73,7 +73,7 @@ namespace TVGL
                     //Do some polygon functions to clean up issues and try again
                     //This is important because the Get2DProjections may produce invalid paths and because
                     //triangulate will try 3 times before throwing the exception to go to the catch.
-                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                    paths = paths.Union(true, PolygonFillType.EvenOdd);
                     triangleIndices = paths.Triangulate(out _, out isPositive);
                 }
                 catch
@@ -81,10 +81,10 @@ namespace TVGL
                     try
                     {
                         //Do some polygon functions to clean up issues and try again
-                        paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-                        paths = PolygonOperations.OffsetRound(paths, extrusionHeight / 1000);
-                        paths = PolygonOperations.OffsetRound(paths, -extrusionHeight / 1000);
-                        paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                        paths = paths.Union(true, PolygonFillType.EvenOdd);
+                        paths = paths.OffsetRound(extrusionHeight / 1000);
+                        paths = paths.OffsetRound(-extrusionHeight / 1000);
+                        paths = paths.Union(true, PolygonFillType.EvenOdd);
                         triangleIndices = paths.Triangulate(out _, out isPositive);
                     }
                     catch (Exception exc)
