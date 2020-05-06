@@ -224,12 +224,12 @@ namespace TVGL
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
+            var maxD = double.NegativeInfinity;
             bottomVertices = new List<IVertex3D>();
             topVertices = new List<IVertex3D>();
-            var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = (v is Vector3) ? dir.Dot((Vector3)v) : dir.Dot(((Vertex)v).Coordinates);
+                var distance = v.Dot(dir);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomVertices.Add(v);
                 else if (distance < minD)
@@ -639,10 +639,10 @@ namespace TVGL
             {
                 UpdateLimitsAndBox(v, v.X, ref xMin, pointsOnBox[0], true);
                 UpdateLimitsAndBox(v, v.X, ref xMax, pointsOnBox[1], false);
-                UpdateLimitsAndBox(v, v.Y, ref xMin, pointsOnBox[2], true);
-                UpdateLimitsAndBox(v, v.Y, ref xMax, pointsOnBox[3], false);
-                UpdateLimitsAndBox(v, v.Z, ref xMin, pointsOnBox[4], true);
-                UpdateLimitsAndBox(v, v.Z, ref xMax, pointsOnBox[5], false);
+                UpdateLimitsAndBox(v, v.Y, ref yMin, pointsOnBox[2], true);
+                UpdateLimitsAndBox(v, v.Y, ref yMax, pointsOnBox[3], false);
+                UpdateLimitsAndBox(v, v.Z, ref zMin, pointsOnBox[4], true);
+                UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
             }
             return new BoundingBox(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
                 new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
