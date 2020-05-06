@@ -377,7 +377,7 @@ namespace TVGL
             else return new BoundingBox(this.Dimensions, this.Transform);
         }
 
-        const double oneMinusCosineOf5Degrees = 0.0038;
+        const double smallAngle = 0.0038;  // current value is one minus cosine of 5 Degrees
         /// <summary>
         /// Moves a face outward by the provided distance (or inward if distance is negative).
         /// This does not alter the bounding box, but returns a new one.
@@ -401,12 +401,12 @@ namespace TVGL
         {
             var unitDir = direction.Normalize();
             CartesianDirections cartesian = CartesianDirections.ZNegative;
-            if (unitDir.Dot(Directions[0]).IsPracticallySame(1.0, 0.0038)) cartesian = CartesianDirections.XPositive;
-            else if (unitDir.Dot(Directions[1]).IsPracticallySame(1.0, 0.0038)) cartesian = CartesianDirections.YPositive;
-            else if (unitDir.Dot(Directions[2]).IsPracticallySame(1.0, 0.0038)) cartesian = CartesianDirections.ZPositive;
-            else if (unitDir.Dot(Directions[0]).IsPracticallySame(-1.0, 0.0038)) cartesian = CartesianDirections.XNegative;
-            else if (unitDir.Dot(Directions[1]).IsPracticallySame(-1.0, 0.0038)) cartesian = CartesianDirections.YNegative;
-            else if (unitDir.Dot(Directions[2]).IsPracticallySame(-1.0, 0.0038)) cartesian = CartesianDirections.ZNegative;
+            if (unitDir.Dot(Directions[0]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.XPositive;
+            else if (unitDir.Dot(Directions[1]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.YPositive;
+            else if (unitDir.Dot(Directions[2]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.ZPositive;
+            else if (unitDir.Dot(Directions[0]).IsPracticallySame(-1.0, smallAngle)) cartesian = CartesianDirections.XNegative;
+            else if (unitDir.Dot(Directions[1]).IsPracticallySame(-1.0, smallAngle)) cartesian = CartesianDirections.YNegative;
+            else if (unitDir.Dot(Directions[2]).IsPracticallySame(-1.0, smallAngle)) cartesian = CartesianDirections.ZNegative;
             else return;
             MoveFaceOutward(cartesian, distance);
         }

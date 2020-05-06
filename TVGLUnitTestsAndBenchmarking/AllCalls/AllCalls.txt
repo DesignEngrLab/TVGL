@@ -1,5 +1,5 @@
 
-    public partial class CrossSectionSolid 
+    public class CrossSectionSolid 
         public Dictionary<int, List<List<Vertex>>> Layer3D;
         public Dictionary<int, List<List<Vector2>>> Layer2D;
         //public List<List<Vertex>>[] Layer3D { get; set; }
@@ -214,7 +214,7 @@
         public bool YInPositiveMonotonicity { get; }
         public MonotoneBox(IList<Vector2> p, int lowIndex, int hiIndex, MonotonicityChange lowMonoChange,
         public double Area()
-    public static partial class PolygonOperations
+    public static class PolygonOperations
         public static List<MonotoneBox> PartitionIntoMonotoneBoxes(IEnumerable<Vector2> polygon)
     public class Polygon
         public List<Vector2> Path
@@ -232,7 +232,7 @@
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         public Polygon(List<Vertex2D> points, List<PolygonSegment> lines, int index = -1)
         public bool IsConvex()
-    public static partial class PolygonOperations
+    public static class PolygonOperations
         public static double Perimeter(this IEnumerable<IEnumerable<Vector2>> paths)
         public static double Perimeter(this IEnumerable<Vector2> polygon)
         public static double Area(this IEnumerable<IEnumerable<Vector2>> paths)
@@ -376,12 +376,12 @@
         public double Area;
         public double Circumference;
         public BoundingCircle(double radius, Vector2 center)
-    public static partial class MinimumEnclosure
+    public static class MinimumEnclosure
         public static BoundingCircle MinimumCircle(this IEnumerable<Vector2> points)
         public static BoundingCircle MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
         public static BoundingCircle MaximumInnerCircle(this List<Polygon> polygons, Vector2 centerPoint)
         public static Cylinder MinimumBoundingCylinder(this IEnumerable<Vertex> convexHullVertices)
-    public static partial class MinimumEnclosure
+    public static class MinimumEnclosure
         public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> polygon, bool pointsAreConvexHull = false,
         public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
         public static BoundingBox OrientedBoundingBox(this IList<IVertex3D> convexHullVertices)
@@ -390,7 +390,7 @@
         public static double GetLengthAndExtremeVertex(this IEnumerable<IVertex3D> vertices, Vector3 direction,
         public static double GetLengthAndExtremePoints(this IEnumerable<Vector2> points, Vector2 direction2D,
         public static BoundingBox FindOBBAlongDirection(this IEnumerable<IVertex3D> vertices, Vector3 direction)
-    public static partial class ModifyTessellation
+    public static class ModifyTessellation
         public static void SimplifyFlatPatches(this TessellatedSolid ts)
         public static void Simplify(this TessellatedSolid ts)
         public static void Simplify(this TessellatedSolid ts, int numberOfFacesToRemove)
@@ -459,7 +459,7 @@
             public PolygonalFace OwnedFace;
             public PolygonalFace OtherFace;
             public PolygonalFace NextFace(PolygonalFace face)
-    public partial class TessellatedSolid 
+    public class TessellatedSolid 
         public PolygonalFace[] Faces { get; private set; }
         public Edge[] Edges { get; private set; }
         public Edge[] BorderEdges { get; private set; }
@@ -479,8 +479,7 @@
         public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
         public override void Transform(Matrix4x4 transformMatrix)
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
-    public partial class TessellatedSolid 
-    public partial class VoxelizedSolid 
+    public class VoxelizedSolid 
         public long Count { get; private set; }
         public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         public int[][] VoxelBounds { get; }
