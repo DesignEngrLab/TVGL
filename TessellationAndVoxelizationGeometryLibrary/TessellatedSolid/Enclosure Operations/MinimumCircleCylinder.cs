@@ -347,7 +347,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static Cylinder MinimumBoundingCylinder(this IEnumerable<Vertex> convexHullVertices)
+        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T:IVertex3D
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();
@@ -364,9 +364,9 @@ namespace TVGL
             for (var i = 0; i < 13; i++)
             {
 
-                var box = new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
-                    new Matrix4x4(directions[i], Vector3.Null, Vector3.Null, Vector3.Null));
-                box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
+                var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
+                    new[] { directions[i], Vector3.Null, Vector3.Null }, default(T), default(T), default(T));
+                box = Find_via_ChanTan_AABB_Approach<T>(convexHullVertices, box);
                 for (var j = 0; j < 3; j++)
                 {
                     var axis = box.Directions[j];

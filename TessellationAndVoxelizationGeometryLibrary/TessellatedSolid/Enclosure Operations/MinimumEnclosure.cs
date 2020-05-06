@@ -67,7 +67,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(this IList<IVertex3D> convexHullVertices)
+        public static BoundingBox OrientedBoundingBox<T>(this IList<T> convexHullVertices) where T:IVertex3D
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
             // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
@@ -82,11 +82,11 @@ namespace TVGL
             directions.Add(new Vector3(0, 1, 1).Normalize());
             directions.Add(new Vector3(0, -1, 1).Normalize());
             var minVolume = double.PositiveInfinity;
-            BoundingBox minBox = null;
+            BoundingBox<T> minBox = null;
             for (var i = 0; i < 13; i++)
             {
-                var box = new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
-                    new Matrix4x4(directions[i], Vector3.Null, Vector3.Null, Vector3.Null));
+                var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
+                    new[] { directions[i], Vector3.UnitY, Vector3.UnitZ }, default(T), default(T), default(T));
                 box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
                 if (box.Volume >= minVolume) continue;
                 minVolume = box.Volume;
@@ -124,9 +124,9 @@ namespace TVGL
                 minPointsSmallDir = maxPointsSmallDir;
                 maxPointsSmallDir = temp;
             }
-            return new BoundingBox(minBox.SortedDimensions.Reverse().ToArray(),
+            return new BoundingBox<T>(minBox.SortedDimensions.Reverse().ToArray(),
                 new[] { largestDirection, midDirection, smallestDirection },
-                new IVertex3D[][] {minPointsLargestDir,maxPointsLargestDir,minPointsMediumDir,maxPointsMediumDir,
+                new T[][] {minPointsLargestDir,maxPointsLargestDir,minPointsMediumDir,maxPointsMediumDir,
                 minPointsSmallDir,maxPointsSmallDir});
         }
 
@@ -138,7 +138,7 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="minOBB">The minimum obb.</param>
         /// <returns>BoundingBox.</returns>
-        private static BoundingBox Find_via_ChanTan_AABB_Approach(IEnumerable<IVertex3D> convexHullVertices, BoundingBox minOBB)
+        private static BoundingBox<T> Find_via_ChanTan_AABB_Approach<T>(IEnumerable<T> convexHullVertices, BoundingBox<T> minOBB) where T:IVertex3D
         {
             var failedConsecutiveRotations = 0;
             var k = 0;
@@ -146,7 +146,7 @@ namespace TVGL
             do
             {
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
-                var newObb = FindOBBAlongDirection(convexHullVertices, minOBB.Directions[i++]);
+                BoundingBox<T> newObb = FindOBBAlongDirection<T>(convexHullVertices, minOBB.Directions[i++]);
                 if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
                 {
                     minOBB = newObb;
@@ -162,51 +162,6 @@ namespace TVGL
         #endregion
 
         #region Get Length And Extreme Vertices
-
-        /// <summary>
-        ///     Given a Direction, dir, this function returns the maximum length along this Direction
-        ///     for the provided vertices as well as the all vertices that represent the extremes.
-        ///     If you only want one the length or only need one vertex at the extreme, it is more efficient
-        ///     and easier to use GetLengthAndExtremeVertex
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="bottomVertices">The bottom vertices.</param>
-        /// <param name="topVertices">The top vertices.</param>
-        /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(this IEnumerable<Vector3> vertices, Vector3 direction,
-            out List<Vector3> bottomVertices,
-            out List<Vector3> topVertices)
-        {
-            var length = GetLengthAndExtremeVertices(vertices.Cast<IVertex3D>(), direction, out var bottomVerticesIVertex3Ds,
-                out var topVerticesIVertex3Ds);
-            bottomVertices = bottomVerticesIVertex3Ds.Cast<Vector3>().ToList();
-            topVertices = topVerticesIVertex3Ds.Cast<Vector3>().ToList();
-            return length;
-        }
-
-        /// <summary>
-        ///     Given a Direction, dir, this function returns the maximum length along this Direction
-        ///     for the provided vertices as well as the all vertices that represent the extremes.
-        ///     If you only want one the length or only need one vertex at the extreme, it is more efficient
-        ///     and easier to use GetLengthAndExtremeVertex
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="bottomVertices">The bottom vertices.</param>
-        /// <param name="topVertices">The top vertices.</param>
-        /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(this IEnumerable<Vertex> vertices, Vector3 direction,
-            out List<Vertex> bottomVertices,
-            out List<Vertex> topVertices)
-        {
-            var length = GetLengthAndExtremeVertices(vertices.Cast<IVertex3D>(), direction, out var bottomVerticesIVertex3Ds,
-                out var topVerticesIVertex3Ds);
-            bottomVertices = bottomVerticesIVertex3Ds.Cast<Vertex>().ToList();
-            topVertices = topVerticesIVertex3Ds.Cast<Vertex>().ToList();
-            return length;
-        }
-
         /// <summary>
         ///     Given a Direction, dir, this function returns the maximum length along this Direction
         ///     for the provided vertices as well as the all vertices that represent the extremes.
@@ -218,15 +173,15 @@ namespace TVGL
         /// <param name="bottomVertices">The bottom vertices.</param>
         /// <param name="topVertices">The top vertices.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(this IEnumerable<IVertex3D> vertices, Vector3 direction,
-            out List<IVertex3D> bottomVertices,
-            out List<IVertex3D> topVertices)
+        public static double GetLengthAndExtremeVertices<T>(this IEnumerable<T> vertices, Vector3 direction,
+            out List<T> bottomVertices,
+            out List<T> topVertices) where T : IVertex3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
             var maxD = double.NegativeInfinity;
-            bottomVertices = new List<IVertex3D>();
-            topVertices = new List<IVertex3D>();
+            bottomVertices = new List<T>();
+            topVertices = new List<T>();
             foreach (var v in vertices)
             {
                 var distance = v.Dot(dir);
@@ -260,14 +215,15 @@ namespace TVGL
         /// <param name="bottomVertex"></param>
         /// <param name="topVertex"></param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertex(this IEnumerable<Vertex> vertices, Vector3 direction,
-            out Vertex bottomVertex,
-            out Vertex topVertex)
+        public static double GetLengthAndExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
+            out T bottomVertex,
+            out T topVertex) where T : IVertex3D
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertex = null;
-            topVertex = null;
+            bottomVertex = vertices.First(); //this is an unfortunate assignment but the compiler doesn't trust
+            topVertex = vertices.First(); // that is will get assigned in conditions below. Also, can't assign to
+                                          // null, since Vector3 is struct
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
@@ -624,11 +580,11 @@ namespace TVGL
 
         #region FindABB
 
-        public static BoundingBox FindAxisAlignedBoundingBox(this IEnumerable<IVertex3D> vertices)
+        public static BoundingBox<T> FindAxisAlignedBoundingBox<T>(this IEnumerable<T> vertices) where T:IVertex3D
         {
-            var pointsOnBox = new List<IVertex3D>[6];
+            var pointsOnBox = new List<T>[6];
             for (int i = 0; i < 6; i++)
-                pointsOnBox[i] = new List<IVertex3D>();
+                pointsOnBox[i] = new List<T>();
             var xMin = double.PositiveInfinity;
             var yMin = double.PositiveInfinity;
             var zMin = double.PositiveInfinity;
@@ -644,12 +600,12 @@ namespace TVGL
                 UpdateLimitsAndBox(v, v.Z, ref zMin, pointsOnBox[4], true);
                 UpdateLimitsAndBox(v, v.Z, ref zMax, pointsOnBox[5], false);
             }
-            return new BoundingBox(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
+            return new BoundingBox<T>(new[] { xMax - xMin, yMax - yMin, zMax - zMin },
                 new[] { Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ },
                 pointsOnBox);
         }
 
-        private static void UpdateLimitsAndBox(IVertex3D vertex, double value, ref double limit, List<IVertex3D> pointsOnBox, bool isMinimum)
+        private static void UpdateLimitsAndBox<T>(T vertex, double value, ref double limit, List<T> pointsOnBox, bool isMinimum)
         {
             if ((isMinimum && value.IsLessThanNonNegligible(limit)) ||
             (!isMinimum && value.IsGreaterThanNonNegligible(limit)))
@@ -677,7 +633,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         /// <exception cref="Exception">Volume should never be negligible, unless the input data is bad</exception>
         /// <exception cref="System.Exception"></exception>
-        public static BoundingBox FindOBBAlongDirection(this IEnumerable<IVertex3D> vertices, Vector3 direction)
+        public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVertex3D
         {
             var direction1 = direction.Normalize();
             var depth = GetLengthAndExtremeVertices(vertices, direction1, out var bottomVertices, out var topVertices);
@@ -701,7 +657,7 @@ namespace TVGL
             };
             if ((depth * boundingRectangle.Length * boundingRectangle.Width).IsNegligible())
                 throw new Exception("Volume should never be negligible, unless the input data is bad");
-            return new BoundingBox(new[] { depth, boundingRectangle.Width, boundingRectangle.Length },
+            return new BoundingBox<T>(new[] { depth, boundingRectangle.Width, boundingRectangle.Length },
                 new[] { direction1, direction2, direction3 }, verticesOnFaces);
         }
 

@@ -142,6 +142,7 @@ namespace TVGL.Numerics
         { return Vector3.Dot(vector1, vector2); }
         public static double Dot(this IVertex3D vector1, Vector3 vector2)
         {
+            if (vector1 == null) return double.NaN;
             return vector1.X * vector2.X +
                    vector1.Y * vector2.Y +
                    vector1.Z * vector2.Z;
