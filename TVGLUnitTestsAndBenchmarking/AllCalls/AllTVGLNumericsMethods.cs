@@ -171,7 +171,7 @@ namespace TVGLUnitTestsAndBenchmarking
             Vector3 sqrtVector3 = Vector3.SquareRoot(v3_1);
 
             m3x3 = new Matrix3x3();
-            v3_1 = v3_1.Transform(m3x3);
+            v3_1 = v3_1.Multiply(m3x3);
 
             m4x4 = new Matrix4x4();
             v3_1 = v3_1.Transform(m4x4);

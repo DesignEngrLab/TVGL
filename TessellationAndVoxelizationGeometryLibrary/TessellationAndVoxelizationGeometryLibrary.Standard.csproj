@@ -41,6 +41,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Numerics\README.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.0.0">
       <PrivateAssets>all</PrivateAssets>

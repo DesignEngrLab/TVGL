@@ -46,42 +46,28 @@ namespace TVGL
         /// <summary>
         ///     Vector direction of length 
         /// </summary>
-        public Vector2 LengthDirection;
+        public Vector2 Direction1;
 
         /// <summary>
         ///     Vector direction of  width
         /// </summary>
-        public Vector2 WidthDirection;
+        public Vector2 Direction2;
 
         /// <summary>
-        ///     Maximum distance along Direction 1 (length)
+        ///     Offsets are the distances defining the lines of the rectangle. They are ordered:
+        ///     Direction1-min, Direction1-max, Direction2-min, Direction2-max
         /// </summary>
-        internal double LengthDirectionMax;
-
-        /// <summary>
-        ///     Minimum distance along Direction 1 (length)
-        /// </summary>
-        internal double LengthDirectionMin;
-
-        /// <summary>
-        ///     Maximum distance along Direction 2 (width)
-        /// </summary>
-        internal double WidthDirectionMax;
-
-        /// <summary>
-        ///     Minimum distance along Direction 2 (width)
-        /// </summary>
-        internal double WidthDirectionMin;
+        internal double[] Offsets;
 
         /// <summary>
         ///     Length of Bounding Rectangle
         /// </summary>
-        public double Length;
+        public double Length1;
 
         /// <summary>
         ///     Width of Bounding Rectangle
         /// </summary>
-        public double Width;
+        public double Length2;
 
         /// <summary>
         ///     2D Center Position of the Bounding Rectangle
@@ -94,10 +80,10 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public void SetCornerPoints()
         {
-            var v1Max = LengthDirection * LengthDirectionMax;
-            var v1Min = LengthDirection * LengthDirectionMin;
-            var v2Max = WidthDirection * WidthDirectionMax;
-            var v2Min = WidthDirection * WidthDirectionMin;
+            var v1Min = Direction1 * Offsets[0];
+            var v1Max = Direction1 * Offsets[1];
+            var v2Min = Direction2 * Offsets[2];
+            var v2Max = Direction2 * Offsets[3];
             var p1 = v1Max + v2Max;
             var p2 = v1Min + v2Max;
             var p3 = v1Min + v2Min;

@@ -44,10 +44,10 @@ namespace TVGL
         public BoundingBox(double[] dimensions, Vector3[] directions, T minPointOnDirection0,
         T minPointOnDirection1, T minPointOnDirection2)
         : base(dimensions, directions,
-              new Vector3(
-            minPointOnDirection0.Dot(directions[0].Normalize()),
-            minPointOnDirection1.Dot(directions[1].Normalize()),
-            minPointOnDirection2.Dot(directions[2].Normalize())))
+             MiscFunctions.PointCommonToThreePlanes(directions[0].Normalize(),
+                 minPointOnDirection0.Dot(directions[0].Normalize()), directions[1].Normalize(),
+                 minPointOnDirection1.Dot(directions[1].Normalize()), directions[2].Normalize(),
+                 minPointOnDirection2.Dot(directions[2].Normalize())))
         { }
 
 
@@ -107,9 +107,8 @@ namespace TVGL
         /// <param name="directions">The directions.</param>
         /// <param name="translationFromOrigin">The translation to the lowest corner from the  origin.</param>
         public BoundingBox(double[] dimensions, Vector3[] directions, Vector3 translationFromOrigin)
-          : this(dimensions,
-                Matrix4x4.CreateTranslation(translationFromOrigin)
-                * new Matrix4x4(directions[0].Normalize(), directions[1].Normalize(), directions[2].Normalize(), Vector3.Zero))
+          : this(dimensions, new Matrix4x4(directions[0].Normalize(), directions[1].Normalize(), 
+              directions[2].Normalize(), translationFromOrigin))
         { }
 
         /// <summary>
@@ -206,45 +205,21 @@ namespace TVGL
             ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
             _corners = new Vector3[8];
             // ---
-            _corners[0] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0],
-                Directions[1], TranslationFromOrigin[1],
-                Directions[2], TranslationFromOrigin[2]);
+            _corners[0] = TranslationFromOrigin;
             // +--
-            _corners[1] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], TranslationFromOrigin[1],
-                Directions[2], TranslationFromOrigin[2]);
+            _corners[1] = _corners[0] + Directions[0] * Dimensions[0];
             // ++-
-            _corners[2] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], TranslationFromOrigin[2]);
+            _corners[2] = _corners[1] + Directions[1] * Dimensions[1];
             // -+-
-            _corners[3] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0],
-                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], TranslationFromOrigin[2]);
+            _corners[3] = _corners[0] + Directions[1] * Dimensions[1];
             // --+
-            _corners[4] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0],
-                Directions[1], TranslationFromOrigin[1],
-                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
+            _corners[4] = _corners[0] + Directions[2] * Dimensions[2];
             // +-+
-            _corners[5] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], TranslationFromOrigin[1],
-                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
+            _corners[5] = _corners[1] + Directions[2] * Dimensions[2];
             // +++
-            _corners[6] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0] + 0.5 * Dimensions[0],
-                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
+            _corners[6] = _corners[2] + Directions[2] * Dimensions[2];
             // -++
-            _corners[7] = MiscFunctions.PointCommonToThreePlanes(
-                Directions[0], TranslationFromOrigin[0],
-                Directions[1], TranslationFromOrigin[1] + 0.5 * Dimensions[1],
-                Directions[2], TranslationFromOrigin[2] + 0.5 * Dimensions[2]);
+            _corners[7] = _corners[3] + Directions[2] * Dimensions[2];
         }
 
         /// <summary>
@@ -309,7 +284,9 @@ namespace TVGL
                 new PolygonalFace(new []{vertices[6],vertices[7],vertices[4] }),
                 new PolygonalFace(new []{vertices[6],vertices[4],vertices[5] })
             };
-                _tessellatedSolid = new TessellatedSolid(faces, vertices, false);
+                var random = new Random();
+                _tessellatedSolid = new TessellatedSolid(faces, vertices, false, new[] {
+                    new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
             }
             return _tessellatedSolid;
         }
