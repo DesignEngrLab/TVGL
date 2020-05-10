@@ -455,10 +455,12 @@ namespace TVGL
                 if (area < bestRectangle.Area)
                 {
                     for (int i = 0; i < 4; i++)
-                    {
-                        bestExtremeIndices[i] = extremeIndices[i];
                         bestRectangle.Offsets[i] = offsets[i];
-                    }
+                    bestExtremeIndices[0] = extremeIndices[(smallestAngleIndex + 3) % 4];
+                    bestExtremeIndices[1] = extremeIndices[(smallestAngleIndex + 1) % 4];
+                    bestExtremeIndices[2] = extremeIndices[smallestAngleIndex ];
+                    bestExtremeIndices[3] = extremeIndices[(smallestAngleIndex + 2) % 4];
+
                     bestRectangle.Area = area;
                     bestRectangle.Length1 = length1;
                     bestRectangle.Length2 = length2;
@@ -491,10 +493,11 @@ namespace TVGL
             if (setPointsOnSide)
             {
                 var sidePoints = new List<Vector2>[4];
-                sidePoints[0] = FindSidePoints(bestExtremeIndices[3], bestRectangle.Offsets[0], points, bestRectangle.Direction1, lastIndex);
-                sidePoints[1] = FindSidePoints(bestExtremeIndices[1], bestRectangle.Offsets[1], points, bestRectangle.Direction1, lastIndex);
-                sidePoints[2] = FindSidePoints(bestExtremeIndices[0], bestRectangle.Offsets[2], points, bestRectangle.Direction2, lastIndex);
-                sidePoints[3] = FindSidePoints(bestExtremeIndices[2], bestRectangle.Offsets[3], points, bestRectangle.Direction2, lastIndex);
+                for (int i = 0; i < 4; i++)
+                {
+                    var direction = (i < 2) ? bestRectangle.Direction1 : bestRectangle.Direction2;
+                    sidePoints[i] = FindSidePoints(bestExtremeIndices[i], bestRectangle.Offsets[i], points, direction, lastIndex);
+                }
                 bestRectangle.PointsOnSides = sidePoints;
             }
             return bestRectangle;

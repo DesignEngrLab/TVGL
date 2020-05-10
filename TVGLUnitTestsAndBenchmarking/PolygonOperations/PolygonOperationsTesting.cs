@@ -117,7 +117,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //    new Vector2(1,-6),
             //    new Vector2(2,-5),
             //};
-            var points = MakeWavyCircularPolygon(1000000, 10, 1, 4.65432);
+            var points = MakeWavyCircularPolygon(10000, 10, 1, 4.65432);
             var br =points.BoundingRectangle();
             Presenter.ShowAndHang(new[] { points, br.CornerPoints });
         }
