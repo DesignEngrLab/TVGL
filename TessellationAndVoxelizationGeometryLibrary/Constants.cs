@@ -48,10 +48,6 @@ namespace TVGL
         internal const int DoubleToIntPointMultipler = 365760000;
         internal const double IntPointToDoubleMultipler = 1.0 / 365760000.0;
 
-        /// <summary>
-        ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
-        /// </summary>
-        internal const double ConvexHullRadiusForRobustness = 0.0000001;
 
         /// <summary>
         ///     The default color
@@ -71,7 +67,7 @@ namespace TVGL
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations
         /// </summary>
-        public const double OBBAngleTolerance = 1e-5;
+        public const double OBBTolerance = 1e-5;
 
         /// <summary>
         ///     The error for face in surface

@@ -84,20 +84,22 @@ namespace TVGL
             var v1Max = Direction1 * Offsets[1];
             var v2Min = Direction2 * Offsets[2];
             var v2Max = Direction2 * Offsets[3];
-            var p1 = v1Max + v2Max;
-            var p2 = v1Min + v2Max;
-            var p3 = v1Min + v2Min;
-            var p4 = v1Max + v2Min;
+            var p1 = v1Min + v2Min;
+            var p2 = v1Max + v2Min;
+            var p3 = v1Max + v2Max;
+            var p4 = v1Min + v2Max;
             CornerPoints = new[] { p1, p2, p3, p4 };
             var areaCheck = CornerPoints.Area();
             if (areaCheck < 0.0)
             {
                 CornerPoints = new[] { p4, p3, p2, p1 };
                 areaCheck = -areaCheck;
+                //Check to make sure the points are ordered correctly (within 1 %)
+                if (!areaCheck.IsPracticallySame(Area, 0.01 * Area))
+                    throw new Exception("Points are ordered incorrectly");
             }
 
             //Add in the center
-            var centerPosition = new[] { 0.0, 0.0 };
             var cX = 0.0;
             var cY = 0.0;
             foreach (var vertex in CornerPoints)
@@ -105,10 +107,6 @@ namespace TVGL
                 cX += vertex.X;
                 cY += vertex.Y;
             }
-
-            //Check to make sure the points are ordered correctly (within 1 %)
-            if (!areaCheck.IsPracticallySame(Area, 0.01 * Area))
-                throw new Exception("Points are ordered incorrectly");
             CenterPosition = new Vector2(0.25 * cX, 0.25 * cY);
         }
     }

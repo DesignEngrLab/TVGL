@@ -423,7 +423,7 @@ namespace TVGL
             #endregion
 
             const double oneQuarterRotation = Math.PI / 2;
-            var bestRectangle = new BoundingRectangle { Area = double.MaxValue };
+            var bestRectangle = new BoundingRectangle { Area = double.MaxValue, Offsets = new double[4] };
             var offsets = new double[4];
             var bestExtremeIndices = new int[4];
             while (smallestAngle <= oneQuarterRotation)
@@ -434,33 +434,36 @@ namespace TVGL
                 var nextIndex = extremeIndices[smallestAngleIndex] == lastIndex ? 0 : extremeIndices[smallestAngleIndex] + 1;
                 var nextPoint = points[nextIndex];
                 // unitVectorAlongSide is found from the smallestAngle to get a side coincident with the rectangle. This is used
-                // for the OTHER direction. we need the normal for the side to find the distance across.
+                // for the extremes in the OTHER direction. we need the normal for the side to find the distance across.
                 var unitVectorAlongSide = (nextPoint - currentPoint).Normalize();
-                // yes, so the vector used for distance across is 90-degree in the CCW direction. it points "into" the rectangle
-                var unitVectorPointInto = new Vector2(-unitVectorAlongSide.Y, unitVectorAlongSide.X);
-                // dotDistances[0] will be the min in this unitVectorPointInto dir and it corresponds to the current point
-                offsets[0] = unitVectorPointInto.Dot(currentPoint);
-                // dotDistances[1] will be the max in this unitVectorPointInto dir which is determined for the opposite side
-                // indicate by points[extremeIndices[(smallestAngleIndex + 2) % 4]]. Note the mod-4 let's us wrap-around
-                offsets[1] = unitVectorPointInto.Dot(points[extremeIndices[(smallestAngleIndex + 2) % 4]]);
-                var lengthHorizontal = offsets[1] - offsets[0];
                 // the opposite distance would start from the previous side to the current's, or +3 sides away
-                offsets[2] = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 3) % 4]]);
+                offsets[0] = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 3) % 4]]);
                 // this other distance would end at the nextside to the current's, or +1 sides away
-                offsets[3] = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 1) % 4]]);
-                var lengthVertical = offsets[3] - offsets[2];
-                var area = lengthHorizontal * lengthVertical;
+                offsets[1] = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 1) % 4]]);
+                // the vector used for distance across is 90-degree in the CCW direction. it points "into" the rectangle
+                var unitVectorPointInto = new Vector2(-unitVectorAlongSide.Y, unitVectorAlongSide.X);
+                // dotDistances[2] will be the min in this unitVectorPointInto dir and it corresponds to the current point
+                offsets[2] = unitVectorPointInto.Dot(currentPoint);
+                // dotDistances[3] will be the max in this unitVectorPointInto dir which is determined for the opposite side
+                // indicate by points[extremeIndices[(smallestAngleIndex + 2) % 4]]. Note the mod-4 let's us wrap-around
+                offsets[3] = unitVectorPointInto.Dot(points[extremeIndices[(smallestAngleIndex + 2) % 4]]);
+                var length1 = offsets[1] - offsets[0];
+                var length2 = offsets[3] - offsets[2];
+                var area = length1 * length2;
 
                 //If this is an improvement, set the parameters for the best bounding rectangle.
                 if (area < bestRectangle.Area)
                 {
-                    bestExtremeIndices = extremeIndices;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        bestExtremeIndices[i] = extremeIndices[i];
+                        bestRectangle.Offsets[i] = offsets[i];
+                    }
                     bestRectangle.Area = area;
-                    bestRectangle.Length1 = lengthHorizontal;
-                    bestRectangle.Length2 = lengthVertical;
-                    bestRectangle.Direction1 = unitVectorPointInto;
-                    bestRectangle.Direction2 = unitVectorAlongSide;
-                    bestRectangle.Offsets = offsets;
+                    bestRectangle.Length1 = length1;
+                    bestRectangle.Length2 = length2;
+                    bestRectangle.Direction1 = unitVectorAlongSide;
+                    bestRectangle.Direction2 = unitVectorPointInto;
                 }
                 #endregion
                 #region 4) Update angles
@@ -472,7 +475,7 @@ namespace TVGL
                 } while (unitVectorPointInto.Dot(points[nextIndex]).IsPracticallySame(offsets[0]));
                 //actually, we need go back one. otherwise we skip this line originally made by nextIndex
                 extremeIndices[smallestAngleIndex] = nextIndex == 0 ? lastIndex : nextIndex - 1;
-                double angle = GetAngleWithNext(nextIndex, points, smallestAngleIndex, lastIndex);
+                double angle = GetAngleWithNext(extremeIndices[smallestAngleIndex], points, smallestAngleIndex, lastIndex);
                 angles[smallestAngleIndex] = (angle < 0) ? double.PositiveInfinity : angle;
                 smallestAngle = angles[0];
                 smallestAngleIndex = 0;
@@ -488,19 +491,10 @@ namespace TVGL
             if (setPointsOnSide)
             {
                 var sidePoints = new List<Vector2>[4];
-                for (int i = 0; i < 4; i++)
-                {
-                    var bestExtremeOnSide = bestExtremeIndices[i];
-                    sidePoints[i] = new List<Vector2>();
-                    do
-                    {
-                        sidePoints[i].Add(points[bestExtremeOnSide--]);
-                        if (bestExtremeOnSide < 0) bestExtremeOnSide = lastIndex;
-                    } while ((i <= 1 && bestRectangle.Direction1.Dot(points[bestExtremeOnSide])
-                .IsPracticallySame(bestRectangle.Offsets[i], Constants.BaseTolerance))
-                || (i >= 2 && bestRectangle.Direction2.Dot(points[bestExtremeOnSide])
-                .IsPracticallySame(bestRectangle.Offsets[i], Constants.BaseTolerance)));
-                }
+                sidePoints[0] = FindSidePoints(bestExtremeIndices[3], bestRectangle.Offsets[0], points, bestRectangle.Direction1, lastIndex);
+                sidePoints[1] = FindSidePoints(bestExtremeIndices[1], bestRectangle.Offsets[1], points, bestRectangle.Direction1, lastIndex);
+                sidePoints[2] = FindSidePoints(bestExtremeIndices[0], bestRectangle.Offsets[2], points, bestRectangle.Direction2, lastIndex);
+                sidePoints[3] = FindSidePoints(bestExtremeIndices[2], bestRectangle.Offsets[3], points, bestRectangle.Direction2, lastIndex);
                 bestRectangle.PointsOnSides = sidePoints;
             }
             return bestRectangle;
@@ -509,13 +503,40 @@ namespace TVGL
         private static double GetAngleWithNext(int index, IList<Vector2> points, int sideIndex, int lastIndex)
         {
             var current = points[index];
-            var nextPoint = index == lastIndex ? points[1] : points[index + 1];
+            var nextPoint = index == lastIndex ? points[0] : points[index + 1];
             // for fast functions Trigonometric expressions should be avoided. And you could do so with just
             // cross and dot products but this would require vector normalization - I think square-root is
             // slower than Atan. Also Atan is more intuitive.
             return Math.Atan2(nextPoint.Y - current.Y, nextPoint.X - current.X) + CaliperOffsetAngles[sideIndex];
         }
-
+        /// <summary>
+        /// Finds the side points. We don't need to check all the points in the polygon. but we do need to check either side
+        /// of the extreme points. At first I thought only backwards, but for the 3 extremes that weren't the starting reference,
+        /// it is difficult to know if the rotation of the reference also brought new points to the side. The same logic can 
+        /// be applied to forward points as well - especially for the reference point.
+        /// </summary>
+        /// <param name="startingIndex">Index of the starting.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="points">The points.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>List&lt;Vector2&gt;.</returns>
+        private static List<Vector2> FindSidePoints(int startingIndex, double offset, IList<Vector2> points, Vector2 direction, int lastIndex)
+        {
+            var sidePoints = new List<Vector2>();
+            var index = startingIndex;
+            do
+            {
+                sidePoints.Add(points[index++]);
+                if (index > lastIndex) index = 0;
+            } while (direction.Dot(points[index]).IsPracticallySame(offset, Constants.OBBTolerance));
+            index = startingIndex == 0 ? lastIndex : startingIndex - 1;
+            while (direction.Dot(points[index]).IsPracticallySame(offset, Constants.OBBTolerance))
+            {
+                sidePoints.Add(points[index--]);
+                if (index < 0) index = lastIndex;
+            }
+            return sidePoints;
+        }
         #endregion
 
         #region FindABB

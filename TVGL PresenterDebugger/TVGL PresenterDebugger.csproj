@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Numerics\README.txt" />
 
     
     <Compile Include="..\TVGL Presenter\Presenter.cs">

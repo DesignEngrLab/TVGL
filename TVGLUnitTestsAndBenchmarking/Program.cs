@@ -23,7 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //var tVGL3Dto2DTests = new TVGL3Dto2DTests();
            // tVGL3Dto2DTests.BoxSilhouette();
 
-            PolygonOperationsTesting.TestRotatingCalipers();
+            PolygonOperationsTesting.TestBoundingRectangle();
             //PolygonOperationsTesting.TestSimplify();
 
             //BenchmarkRunner.Run<PolygonOperationsTesting> ();

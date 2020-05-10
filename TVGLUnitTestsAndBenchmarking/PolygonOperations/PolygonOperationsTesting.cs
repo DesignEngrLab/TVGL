@@ -27,7 +27,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
-        internal static IEnumerable<Vector2> MakeRandomCircularPolygon(int numSides, double radius, double delta)
+        internal static IEnumerable<Vector2> MakeStarryCircularPolygon(int numSides, double radius, double delta)
         {
             var angleIncrement = 2 * Math.PI / numSides;
 
@@ -39,9 +39,21 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
+        internal static IEnumerable<Vector2> MakeWavyCircularPolygon(int numSides, double radius, double delta, double frequency)
+        {
+            var angleIncrement = 2 * Math.PI / numSides;
+
+            for (int i = 0; i < numSides; i++)
+            {
+                var angle = i * angleIncrement;
+                yield return new Vector2(radius * Math.Cos(angle)+delta*Math.Cos(frequency*angle),
+                    radius * Math.Sin(angle) + delta * Math.Sin(frequency * angle));
+            }
+        }
+
         internal static void TestSimplify()
         {
-            IEnumerable<Vector2> polygon = MakeRandomCircularPolygon(150000, 30, 1);
+            IEnumerable<Vector2> polygon = MakeStarryCircularPolygon(150000, 30, 1);
             //Presenter.ShowAndHang(polygon);
             polygon = polygon.Simplify(20)[0];
             Presenter.ShowAndHang(polygon);
@@ -85,7 +97,7 @@ namespace TVGLUnitTestsAndBenchmarking
             Assert.Equal(area, polygon.Area(), 10);
         }
 
-        public static void TestRotatingCalipers()
+        public static void TestBoundingRectangle()
         {
             //var points = new[] {
             //    new Vector2(2.26970768, 4.28080463),
@@ -95,17 +107,17 @@ namespace TVGLUnitTestsAndBenchmarking
             //    new Vector2(19.9916172, 26.16848373),
             //    new Vector2(13.60864258, 23.92041588)
             //};
-            var points = new[] {
-                //new Vector2(0,0),
-                new Vector2(6,1),
-                new Vector2(5,2),
-                new Vector2(-1,6),
-                new Vector2(-2,5),
-                new Vector2(-6,-1),
-                new Vector2(-5,-2),
-                new Vector2(1,-6),
-                new Vector2(2,-5),
-            };
+            //var points = new[] {
+            //    new Vector2(6,1),
+            //    new Vector2(5,2),
+            //    new Vector2(-1,6),
+            //    new Vector2(-2,5),
+            //    new Vector2(-6,-1),
+            //    new Vector2(-5,-2),
+            //    new Vector2(1,-6),
+            //    new Vector2(2,-5),
+            //};
+            var points = MakeWavyCircularPolygon(1000000, 10, 1, 4.65432);
             var br =points.BoundingRectangle();
             Presenter.ShowAndHang(new[] { points, br.CornerPoints });
         }

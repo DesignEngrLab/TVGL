@@ -263,7 +263,7 @@ namespace TVGL
                         var lowerBox = thisBoxData;
                         var upperBox = nextBoxData;
                         var midBox = thisBoxData.Copy();
-                        while (!lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBAngleTolerance))
+                        while (!lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBTolerance))
                         {
                             midBox.Direction = (lowerBox.Direction + upperBox.Direction).Divide(2).Normalize();
                             midBox.Angle = (lowerBox.Angle + upperBox.Angle) / 2.0;
