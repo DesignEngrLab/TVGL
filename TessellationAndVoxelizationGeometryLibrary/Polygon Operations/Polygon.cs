@@ -237,20 +237,20 @@ namespace TVGL.TwoDimensional
             {
                 foreach (var point in _path)
                 {
-                    if (point.X > MaxX) maxX = point.X;
-                    if (point.X < MinX) minX = point.X;
-                    if (point.Y > MaxY) maxY = point.Y;
-                    if (point.Y < MinY) minY = point.Y;
+                    if (point.X > maxX) maxX = point.X;
+                    if (point.X < minX) minX = point.X;
+                    if (point.Y > maxY) maxY = point.Y;
+                    if (point.Y < minY) minY = point.Y;
                 }
             }
             else
             {
                 foreach (var point in _points)
                 {
-                    if (point.X > MaxX) maxX = point.X;
-                    if (point.X < MinX) minX = point.X;
-                    if (point.Y > MaxY) maxY = point.Y;
-                    if (point.Y < MinY) minY = point.Y;
+                    if (point.X > maxX) maxX = point.X;
+                    if (point.X < minX) minX = point.X;
+                    if (point.Y > maxY) maxY = point.Y;
+                    if (point.Y < minY) minY = point.Y;
                 }
             }
         }

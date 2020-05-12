@@ -47,11 +47,13 @@ namespace TVGL
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
-        public Vector3 Direction { get;  }
-        // in the future, wouldn't this just be
-        // { get { return new[] { TranformMatrix[2, 0], TranformMatrix[2, 1], TranformMatrix[2, 2] }; } }
+        public Vector3 Direction => TransformMatrix.ZBasisVector;
 
-        public Matrix4x4 TransformMatrix { get; set; } = Matrix4x4.Identity;
+        /// <summary>
+        /// Gets or sets the transform matrix.
+        /// </summary>
+        /// <value>The transform matrix.</value>
+        public Matrix4x4 TransformMatrix { get; set; }
 
 
         public int NumLayers { get; set; }
@@ -67,7 +69,7 @@ namespace TVGL
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
             : this(stepDistances)
         {
-            Direction = direction.Copy();
+            TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out _);
             NumLayers = stepDistances.Count;
             if (bounds != null)
                 Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
@@ -82,8 +84,9 @@ namespace TVGL
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
-            Direction = direction.Copy();
-            this.Layer2D = Layer2D;
+            //MiscFunctions.TransformToXYPlane(direction, out var backTransform);
+            //TransformMatrix = backTransform;
+            TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out var backTransform);
             Layer3D = new Dictionary<int, List<List<Vertex>>>();
             if (bounds == null)
             {
@@ -200,7 +203,7 @@ namespace TVGL
         /// n-1 extrusion will have ended on at the distance of the final cross section). 
         /// If reversed, it will simply extrude backward instead of forward.
         /// </summary>
-        public IReadOnlyCollection<PolygonalFace> ConvertToTessellatedExtrusions(bool extrudeBack = true)
+        public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack = true)
         {
             //if (!Layer3D.Any()) SetAllVertices();
             var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
@@ -214,7 +217,7 @@ namespace TVGL
             //But both methods, only result in material between the cross sections.
             if (extrudeBack)
             {
-              //  direction = -1 * direction;
+                //  direction = -1 * direction;
                 start += increment;
             }
             else stop -= increment;
@@ -223,12 +226,14 @@ namespace TVGL
                 if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i], Direction,basePlaneDistance,
-                    topPlaneDistance-basePlaneDistance);
+                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i], Direction, basePlaneDistance,
+                    topPlaneDistance - basePlaneDistance);
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
-            return faces;
+            var ts = new TessellatedSolid(faces, copyElements: false);
+            ts.Transform(this.TransformMatrix);
+            return ts;
         }
 
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)

@@ -98,16 +98,8 @@ namespace TVGL
                 if (!areaCheck.IsPracticallySame(Area, 0.01 * Area))
                     throw new Exception("Points are ordered incorrectly");
             }
-
-            //Add in the center
-            var cX = 0.0;
-            var cY = 0.0;
-            foreach (var vertex in CornerPoints)
-            {
-                cX += vertex.X;
-                cY += vertex.Y;
-            }
-            CenterPosition = new Vector2(0.25 * cX, 0.25 * cY);
+            CenterPosition = Direction1 * (Offsets[0] + 0.5 * Length1) 
+                + Direction2 * (Offsets[2] + 0.5 * Length2);
         }
     }
 

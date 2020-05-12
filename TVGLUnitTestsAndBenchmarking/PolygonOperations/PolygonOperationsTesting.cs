@@ -46,7 +46,7 @@ namespace TVGLUnitTestsAndBenchmarking
             for (int i = 0; i < numSides; i++)
             {
                 var angle = i * angleIncrement;
-                yield return new Vector2(radius * Math.Cos(angle)+delta*Math.Cos(frequency*angle),
+                yield return new Vector2(radius * Math.Cos(angle) + delta * Math.Cos(frequency * angle),
                     radius * Math.Sin(angle) + delta * Math.Sin(frequency * angle));
             }
         }
@@ -117,8 +117,16 @@ namespace TVGLUnitTestsAndBenchmarking
             //    new Vector2(1,-6),
             //    new Vector2(2,-5),
             //};
-            var points = MakeWavyCircularPolygon(10000, 10, 1, 4.65432);
-            var br =points.BoundingRectangle();
+            var points = new[]{new Vector2(-101.5999985, -34.5535698), new
+            TVGL.Numerics.Vector2(-88.9000015, -101.5999985), new            TVGL.Numerics.Vector2(-38.1000023, -158.5185089), new
+            TVGL.Numerics.Vector2(38.1000023, -158.5185089), new            TVGL.Numerics.Vector2(88.9000015, -101.5999985), new
+            TVGL.Numerics.Vector2(101.5999985, -34.5535698), new            TVGL.Numerics.Vector2(101.5999985, 34.6359444), new
+            TVGL.Numerics.Vector2(88.9000015, 203.1999969), new            TVGL.Numerics.Vector2(-88.9000015, 203.1999969), new
+            TVGL.Numerics.Vector2(-101.5999985, 34.6359444) };
+
+
+            // var points = MakeWavyCircularPolygon(10000, 10, 1, 4.65432);
+            var br = points.BoundingRectangle();
             Presenter.ShowAndHang(new[] { points, br.CornerPoints });
         }
 

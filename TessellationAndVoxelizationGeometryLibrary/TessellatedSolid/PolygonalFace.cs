@@ -72,7 +72,7 @@ namespace TVGL
             var centerZ = Vertices.Average(v => v.Z);
             Center = new Vector3(centerX, centerY, centerZ);
             bool reverseVertexOrder;
-            Normal = DetermineNormal(this.Vertices, out reverseVertexOrder, Normal);
+            Normal = DetermineNormal(this.Vertices, out reverseVertexOrder);
             if (reverseVertexOrder) Vertices.Reverse();
             Area = DetermineArea();
         }

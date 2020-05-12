@@ -46,6 +46,14 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 solid.SolidColor = new Color(100, 200, 100, 50);
                 Presenter.ShowAndHang(solid);
+                var cs = CrossSectionSolid.CreateFromTessellatedSolid(solid,CartesianDirections.YPositive, 100);
+                Presenter.ShowAndHang(cs);
+                var ts = cs.ConvertToTessellatedExtrusions();
+                Presenter.ShowAndHang(ts, solid);
+
+
+
+
                 var silhouette = TVGL.TwoDimensional.Silhouette.CreateSilhouette(solid, new Vector3(1, 1, 1));
                 Presenter.ShowAndHang(silhouette);
                 Snapshot.Match(silhouette, SnapshotNameExtension.Create(name));

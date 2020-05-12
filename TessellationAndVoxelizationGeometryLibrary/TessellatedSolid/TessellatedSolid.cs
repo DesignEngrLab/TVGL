@@ -900,9 +900,9 @@ namespace TVGL
         /// <returns></returns>
         public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)
         {
-            var copy = (TessellatedSolid)this.Copy();
-            copy.SetToOriginAndSquare(out originalBoundingBox);
-            return copy;
+            originalBoundingBox = MinimumEnclosure.OrientedBoundingBox(this);
+            Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
+            return (TessellatedSolid)TransformToNewSolid(transform);
         }
         /// <summary>
         /// Translates and Squares Tesselated Solid based on its oriented bounding box. 

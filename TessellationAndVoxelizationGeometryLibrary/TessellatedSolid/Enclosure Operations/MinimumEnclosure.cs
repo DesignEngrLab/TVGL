@@ -474,7 +474,7 @@ namespace TVGL
                 do
                 {
                     nextIndex = (nextIndex == lastIndex) ? 0 : nextIndex + 1;
-                } while (unitVectorPointInto.Dot(points[nextIndex]).IsPracticallySame(offsets[0]));
+                } while (unitVectorPointInto.Dot(points[nextIndex]).IsPracticallySame(offsets[2]));
                 //actually, we need go back one. otherwise we skip this line originally made by nextIndex
                 extremeIndices[smallestAngleIndex] = nextIndex == 0 ? lastIndex : nextIndex - 1;
                 double angle = GetAngleWithNext(extremeIndices[smallestAngleIndex], points, smallestAngleIndex, lastIndex);
@@ -605,27 +605,29 @@ namespace TVGL
             var pointsDict = vertices.ProjectTo2DCoordinatesReturnDictionary(direction1, out var backTransform);
             var boundingRectangle = RotatingCalipers2DMethod(pointsDict.Keys.ToList(), false, false, true);
             //Get the Direction vectors from rotating caliper and projection.
+            
             var direction2 = new Vector3(boundingRectangle.Direction1, 0);
             direction2 = direction2.Transform(backTransform).Normalize();
-            var direction3 = direction1.Cross(direction2);
+            var direction3 = direction1.Cross(direction2); // you could also get this from the bounding rectangle
+            // but this is quicker and more accurate to reproduce with cross-product 
             IEnumerable<T>[] verticesOnFaces = new IEnumerable<T>[6];
             verticesOnFaces[0] = bottomVertices;
             verticesOnFaces[1] = topVertices;
             verticesOnFaces[2] = boundingRectangle.PointsOnSides[0].SelectMany(p => pointsDict[p]);
             verticesOnFaces[3] = boundingRectangle.PointsOnSides[1].SelectMany(p => pointsDict[p]);
-            if (direction3.Dot(new Vector3(boundingRectangle.Direction2, 0).Transform(backTransform)) < 0)
-            {
-                verticesOnFaces[4] = boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]);
-                verticesOnFaces[5] = boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]);
-            }
-            else
-            {
+            //if (direction3.Dot(new Vector3(boundingRectangle.Direction2, 0).Transform(backTransform)) < 0)
+            //{
+            //    verticesOnFaces[4] = boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]);
+            //    verticesOnFaces[5] = boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]);
+            //}
+            //else
+            //{
                 verticesOnFaces[4] = boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]);
                 verticesOnFaces[5] = boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]);
-            }
+            //}
             if ((depth * boundingRectangle.Length1 * boundingRectangle.Length2).IsNegligible())
                 throw new Exception("Volume should never be negligible, unless the input data is bad");
-            return new BoundingBox<T>(new[] { depth, boundingRectangle.Length2, boundingRectangle.Length1 },
+            return new BoundingBox<T>(new[] { depth, boundingRectangle.Length1, boundingRectangle.Length2 },
                 new[] { direction1, direction2, direction3 }, verticesOnFaces);
         }
 
