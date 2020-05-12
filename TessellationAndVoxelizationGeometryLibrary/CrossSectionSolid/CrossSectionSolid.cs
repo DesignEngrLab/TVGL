@@ -84,9 +84,10 @@ namespace TVGL
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
-            //MiscFunctions.TransformToXYPlane(direction, out var backTransform);
-            //TransformMatrix = backTransform;
-            TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out var backTransform);
+            MiscFunctions.TransformToXYPlane(direction, out var backTransform);
+            TransformMatrix = backTransform;
+            //TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out var backTransform);
+            this.Layer2D = Layer2D;
             Layer3D = new Dictionary<int, List<List<Vertex>>>();
             if (bounds == null)
             {
