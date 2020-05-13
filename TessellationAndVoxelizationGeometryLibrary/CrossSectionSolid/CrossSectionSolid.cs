@@ -232,9 +232,7 @@ namespace TVGL
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
-            var ts = new TessellatedSolid(faces, copyElements: false);
-            ts.Transform(this.TransformMatrix);
-            return ts;
+            return new TessellatedSolid(faces, copyElements: false);
         }
 
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)
