@@ -145,9 +145,9 @@ namespace TVGL.IOFunctions
                     return null;
                 }
             }
-            return new TessellatedSolid(offData.Vertices, offData.FaceToVertexIndices,
-                offData.HasColorSpecified ? offData.Colors : null,
-                InferUnitsFromComments(offData.Comments), Path.GetFileNameWithoutExtension(filename), filename, offData.Comments,
+            return new TessellatedSolid(offData.Vertices, offData.FaceToVertexIndices, true,
+                offData.HasColorSpecified ? offData.Colors : null, InferUnitsFromComments(offData.Comments),
+                Path.GetFileNameWithoutExtension(filename), filename, offData.Comments,
                 offData.Language);
         }
 

@@ -118,9 +118,8 @@ namespace TVGL.IOFunctions
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.HasColorSpecified ? stlFileData.Colors : null,
-                    stlFileData.Units, stlFileData.Name,
-                    filename, stlFileData.Comments, stlFileData.Language);
+                results[i] = new TessellatedSolid(stlFileData.Vertices, true, stlFileData.HasColorSpecified ? stlFileData.Colors : null,
+                                   stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
@@ -250,7 +249,7 @@ namespace TVGL.IOFunctions
                 stlSolid1.Name = Path.GetFileNameWithoutExtension(filename);
             do
             {
-                var numFaces = ReadNumberAsInt(reader, typeof(uint),FormatEndiannessType.binary_little_endian);
+                var numFaces = ReadNumberAsInt(reader, typeof(uint), FormatEndiannessType.binary_little_endian);
                 if (length - 84 != numFaces * 50)
                     return false;
                 for (var i = 0; i < numFaces; i++)

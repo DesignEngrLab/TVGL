@@ -114,17 +114,16 @@ namespace TVGL.IOFunctions
                 {
                     var shell = shellData[i];
                     if (shell.Vertices.Any() && shell.FaceToVertexIndices.Any())
-                        results[i] = new TessellatedSolid(shell.Vertices,
-                            shell.FaceToVertexIndices, shell.Colors, unit,
-                            shell.Name + "_" + shell.Material.materialName,
+                        results[i] = new TessellatedSolid(shell.Vertices, shell.FaceToVertexIndices, true,
+                           shell.Colors, unit, shell.Name + "_" + shell.Material.materialName,
                             filename, shell.Comments, shell.Language);
                 }
 
                 Message.output(
                         "Successfully read in SHELL file called " + filename + " in " + (DateTime.Now - now).TotalSeconds +
                         " seconds.", 4);
-                    return results;
-                }
+                return results;
+            }
             catch
             {
                 Message.output("Unable to read in SHELL file.", 1);

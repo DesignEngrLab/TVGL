@@ -107,7 +107,7 @@ namespace TVGL
         /// <param name="directions">The directions.</param>
         /// <param name="translationFromOrigin">The translation to the lowest corner from the  origin.</param>
         public BoundingBox(double[] dimensions, Vector3[] directions, Vector3 translationFromOrigin)
-          : this(dimensions, new Matrix4x4(directions[0].Normalize(), directions[1].Normalize(), 
+          : this(dimensions, new Matrix4x4(directions[0].Normalize(), directions[1].Normalize(),
               directions[2].Normalize(), translationFromOrigin))
         { }
 
@@ -285,7 +285,7 @@ namespace TVGL
                 new PolygonalFace(new []{vertices[6],vertices[4],vertices[5] })
             };
                 var random = new Random();
-                _tessellatedSolid = new TessellatedSolid(faces, vertices, false, new[] {
+                _tessellatedSolid = new TessellatedSolid(faces, true, false, vertices, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
             }
             return _tessellatedSolid;

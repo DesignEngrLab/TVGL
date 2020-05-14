@@ -59,15 +59,16 @@ namespace TVGL
                     StoreVertexDoesNotLinkBackToFace(ts, face, vertex);
             }
             //Check if each edge has cyclic references with each vertex and each face.
-            foreach (var edge in ts.Edges)
-            {
-                if (!edge.OwnedFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OwnedFace);
-                if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
-                if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
-                if (!edge.From.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.From);
-                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > Constants.TwoPi)
-                    StoreEdgeHasBadAngle(ts, edge);
-            }
+            if (ts.Edges != null)
+                foreach (var edge in ts.Edges)
+                {
+                    if (!edge.OwnedFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OwnedFace);
+                    if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
+                    if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
+                    if (!edge.From.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.From);
+                    if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > Constants.TwoPi)
+                        StoreEdgeHasBadAngle(ts, edge);
+                }
             //Check if each vertex has cyclic references with each edge and each face.
             foreach (var vertex in ts.Vertices)
             {

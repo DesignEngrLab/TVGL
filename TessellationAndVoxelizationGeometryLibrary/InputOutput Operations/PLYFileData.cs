@@ -119,7 +119,7 @@ namespace TVGL.IOFunctions
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
-            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,
+            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, true, plyData.faceColors,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
 

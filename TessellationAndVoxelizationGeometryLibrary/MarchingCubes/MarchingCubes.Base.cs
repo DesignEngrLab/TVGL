@@ -86,7 +86,7 @@ namespace TVGL
                         MakeFacesInCube(i, j, k);
             var comments = new List<string>(solid.Comments);
             comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
-            return new TessellatedSolid(faces);
+            return new TessellatedSolid(faces, false, false);
             // vertexDictionaries.SelectMany(d => d.Values), false,
             //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
         }

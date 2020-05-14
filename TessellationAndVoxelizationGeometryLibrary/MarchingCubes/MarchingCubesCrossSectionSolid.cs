@@ -88,7 +88,7 @@ namespace TVGL
             // for (var k = 0; k < numGridZ - 1; k++)
             var comments = new List<string>(solid.Comments);
             comments.Add("tessellation (via marching cubes) of the cross-section solid, " + solid.Name);
-            return new TessellatedSolid(faces);
+            return new TessellatedSolid(faces, false, false);
         }
 
         private TessellatedSolid GenerateBetweenLayers()
@@ -111,7 +111,7 @@ namespace TVGL
             // for (var k = 0; k < numGridZ - 1; k++)
             var comments = new List<string>(solid.Comments);
             comments.Add("tessellation (via marching cubes) of the cross-section solid, " + solid.Name);
-            return new TessellatedSolid(faces);
+            return new TessellatedSolid(faces,false,false);
         }
 
         private double[,] CreateDistanceGridBruteForce(List<Polygon> layer)
@@ -288,7 +288,7 @@ namespace TVGL
                 } while (atLeastOneSuccessfulChange || numSteps <= numStepsInHalfWidth);
             }
             if (convexSign != 0 && lastSegment.Y * segment.X < 0) // then it is possible there are additional points around the corner that need 
-                                               //to be evaluated
+                                                                  //to be evaluated
             {
                 if (Math.Abs(lastSegment.X) < Math.Abs(lastSegment.Y))
                     ExpandLastCornerHorizontally(fromPoint, lastSegment, grid, iMin, iMax, jMin, jMax, convexSign);

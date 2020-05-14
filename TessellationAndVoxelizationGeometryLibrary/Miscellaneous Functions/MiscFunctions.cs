@@ -431,7 +431,7 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="Exception"></exception>
-        public static List<TessellatedSolid> GetMultipleSolids(TessellatedSolid ts)
+        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts)
         {
             var solids = new List<TessellatedSolid>();
             var seperateSolids = new List<List<PolygonalFace>>();
@@ -462,7 +462,7 @@ namespace TVGL
             }
             foreach (var seperateSolid in seperateSolids)
             {
-                solids.Add(new TessellatedSolid(seperateSolid));
+                solids.Add(new TessellatedSolid(seperateSolid,true,false));
                 count += seperateSolid.Count;
             }
             return solids;

@@ -177,9 +177,8 @@ namespace TVGL.IOFunctions
                 for (int i = 0; i < vertices.Count; i++)
                     vertices[i] = vertices[i].Transform(tMatrix);
             }
-            return new TessellatedSolid(vertices,
-                amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                colors, this.Units, name + "_" + amfObject.id, this.FileName,
+            return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(), 
+                true, colors, this.Units, name + "_" + amfObject.id, this.FileName,
                 amfObject.metadata.Select(md => md.ToString()).ToList(), this.Language);
         }
 

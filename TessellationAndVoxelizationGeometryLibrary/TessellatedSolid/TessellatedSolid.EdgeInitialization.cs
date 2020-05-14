@@ -34,7 +34,7 @@ namespace TVGL
     /// </remarks>
     public partial class TessellatedSolid : Solid
     {
-        private void MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices)
+        public void MakeEdges()
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
@@ -51,7 +51,7 @@ namespace TVGL
             // then we spit back the remainingEdges.
             var loops = OrganizeIntoLoops(singleSidedEdges, out var remainingEdges);
             // well, even if they were in loops - sometimes we can't triangulate - yet moreRemainingEdges
-            edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out newFaces, out var moreRemainingEdges));
+            edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out var newFaces, out var moreRemainingEdges));
             remainingEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
             // well, the edgelist is definitely going to work out so, we are going to need to make
             // sure that they are known to their vertices for the next few steps - so here we take 
@@ -61,7 +61,7 @@ namespace TVGL
             // finally, the remainingEdges may be close enough that they should have been matched together
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out removedVertices));
+            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out var removedVertices));
             BorderEdges = borderEdges.ToArray();
             // now, we have list, we can do some finally cleanup and stitching
             NumberOfEdges = edgeList.Count;
@@ -83,6 +83,8 @@ namespace TVGL
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;
             }
+            AddFaces(newFaces);
+            RemoveVertices(removedVertices);
         }
         /// <summary>
         ///     The first pass to making edges. It returns the good ones, and two lists of bad ones. The first, overDefinedEdges,

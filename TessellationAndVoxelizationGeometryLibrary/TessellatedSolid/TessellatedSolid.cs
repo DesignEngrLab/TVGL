@@ -115,14 +115,14 @@ namespace TVGL
         /// matches with the STL format.
         /// </summary>
         /// <param name="vertsPerFace">The verts per face.</param>
+        /// <param name="makeEdges">if set to <c>true</c> [make edges].</param>
         /// <param name="colors">The colors.</param>
         /// <param name="units">The units.</param>
         /// <param name="name">The name.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        /// 
-        public TessellatedSolid(IList<List<Vector3>> vertsPerFace, IList<Color> colors,
+        public TessellatedSolid(IList<List<Vector3>> vertsPerFace, bool makeEdges, IList<Color> colors,
             UnitType units = UnitType.unspecified, string name = "", string filename = "", List<string> comments = null,
             string language = "")
             : base(units, name, filename, comments, language)
@@ -131,7 +131,7 @@ namespace TVGL
             MakeVertices(vertsPerFace, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
-            CompleteInitiation();
+            CompleteInitiation(makeEdges);
         }
 
         /// <summary>
@@ -140,13 +140,14 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="makeEdges">if set to <c>true</c> [make edges].</param>
         /// <param name="colors">The colors.</param>
         /// <param name="units">The units.</param>
         /// <param name="name">The name.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices,
+        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices, bool makeEdges,
             IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
@@ -154,7 +155,7 @@ namespace TVGL
             MakeVertices(vertices, faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
-            CompleteInitiation();
+            CompleteInitiation(makeEdges);
         }
         [OnSerializing]
         protected void OnSerializingMethod(StreamingContext context)
@@ -205,10 +206,7 @@ namespace TVGL
             DefineAxisAlignedBoundingBoxAndTolerance(coords);
             MakeVertices(coords, faceIndices);
             MakeFaces(faceIndices, colors);
-
-            MakeEdges(out var newFaces, out var removedVertices);
-            AddFaces(newFaces);
-            RemoveVertices(removedVertices);
+            MakeEdges();
 
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
@@ -251,77 +249,105 @@ namespace TVGL
         /// for cases in which the faces and vertices are already defined.
         /// </summary>
         /// <param name="faces">The faces.</param>
+        /// <param name="makeEdges">if set to <c>true</c> [make edges].</param>
+        /// <param name="copyElements">if set to <c>true</c> [copy elements].</param>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="copyElements"></param>
         /// <param name="colors">The colors.</param>
         /// <param name="units">The units.</param>
         /// <param name="name">The name.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IEnumerable<PolygonalFace> faces, IEnumerable<Vertex> vertices = null, bool copyElements = true,
-            IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+        public TessellatedSolid(IEnumerable<PolygonalFace> faces, bool makeEdges, bool copyElements = true,
+            IEnumerable<Vertex> vertices = null, IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
-            NumberOfFaces = faces.Count();
             if (vertices == null)
-            {
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
+            if (colors != null && colors.Count() == 1)
+            {
+                SolidColor = colors[0];
+                HasUniformColor = true;
             }
-            NumberOfVertices = vertices.Count();
+            var manyInputColors = (colors != null && colors.Count() > 1);
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Coordinates));
-            //Create a copy of the vertex and face (This is NON-Destructive!)
-            Vertices = new Vertex[NumberOfVertices];
-            var simpleCompareDict = new Dictionary<Vertex, Vertex>();
-            int i = 0;
-            foreach (var origVertex in vertices)
+            if (copyElements)
             {
-                var vertex = copyElements ? origVertex.Copy() : origVertex;
-                vertex.IndexInList = i;
-                vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
-                Vertices[i] = vertex;
-                simpleCompareDict.Add(origVertex, vertex);
-                i++;
+                NumberOfVertices = vertices.Count();
+                Vertices = new Vertex[NumberOfVertices];
+                var simpleCompareDict = new Dictionary<Vertex, Vertex>();
+                int i = 0;
+                foreach (var origVertex in vertices)
+                {
+                    var vertex = copyElements ? origVertex.Copy() : origVertex;
+                    vertex.IndexInList = i;
+                    vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
+                    Vertices[i] = vertex;
+                    simpleCompareDict.Add(origVertex, vertex);
+                    i++;
+                }
+                NumberOfFaces = faces.Count();
+                Faces = new PolygonalFace[NumberOfFaces];
+                i = 0;
+                foreach (var origFace in faces)
+                {
+                    //Keep "CreatedInFunction" to help with debug
+                    var face = copyElements ? origFace.Copy() : origFace;
+                    face.PartOfConvexHull = false;
+                    face.IndexInList = i;
+                    var faceVertices = new List<Vertex>();
+                    foreach (var vertex in origFace.Vertices)
+                    {
+                        var newVertex = simpleCompareDict[vertex];
+                        faceVertices.Add(newVertex);
+                        newVertex.Faces.Add(face);
+                    }
+                    face.Vertices = faceVertices;
+                    if (HasUniformColor)
+                        face.Color = SolidColor;
+                    else if (manyInputColors)
+                    {
+                        var j = i < colors.Count - 1 ? i : colors.Count - 1;
+                        face.Color = colors[j];
+                        if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
+                    }
+                    Faces[i] = face;
+                    i++;
+                }
             }
-
-            HasUniformColor = true;
-            if (colors == null || !colors.Any())
-                SolidColor = new Color(Constants.DefaultColor);
-            else SolidColor = colors[0];
-            Faces = new PolygonalFace[NumberOfFaces];
-            i = 0;
-            foreach (var origFace in faces)
+            else
             {
-                //Keep "CreatedInFunction" to help with debug
-                var face = copyElements ? origFace.Copy() : origFace;
-                face.PartOfConvexHull = false;
-                face.IndexInList = i;
-                var faceVertices = new List<Vertex>();
-                foreach (var vertex in origFace.Vertices)
+                Vertices = vertices.ToArray();
+                NumberOfVertices = Vertices.Length;
+                for (int i = 0; i < NumberOfVertices; i++)
                 {
-                    var newVertex = simpleCompareDict[vertex];
-                    faceVertices.Add(newVertex);
-                    newVertex.Faces.Add(face);
+                    Vertices[i].IndexInList = i;
+                    Vertices[i].PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
                 }
-                face.Vertices = faceVertices;
-                face.Color = SolidColor;
-                if (colors != null)
+                Faces = faces.ToArray();
+                NumberOfFaces = Faces.Length;
+                for (int i = 0; i < NumberOfFaces; i++)
                 {
-                    var j = i < colors.Count - 1 ? i : colors.Count - 1;
-                    face.Color = colors[j];
-                    if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
+                    var face = Faces[i];
+                    face.IndexInList = i;
+                    face.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
+                    if (HasUniformColor)
+                        face.Color = SolidColor;
+                    else if (manyInputColors)
+                    {
+                        var j = i < colors.Count - 1 ? i : colors.Count - 1;
+                        face.Color = colors[j];
+                        if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
+                    }
                 }
-                Faces[i] = face;
-                i++;
             }
-            CompleteInitiation();
+            CompleteInitiation(makeEdges);
         }
 
-        private void CompleteInitiation()
+        private void CompleteInitiation(bool makeEdges)
         {
-            MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices);
-            AddFaces(newFaces);
-            RemoveVertices(removedVertices);
+            if (makeEdges) MakeEdges();
+             
             DefineCenterVolumeAndSurfaceArea(Faces, out Vector3 center, out double volume, out double surfaceArea);
             Center = center;
             Volume = volume;
@@ -881,9 +907,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public override Solid Copy()
         {
-            return new TessellatedSolid(Vertices.Select(vertex => new Vector3(vertex.Coordinates)).ToList(),
-                Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
-                Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
+            return new TessellatedSolid(Faces, Edges != null, true, Vertices, null, Units, Name + "_Copy",
                 FileName, Comments, Language);
         }
 

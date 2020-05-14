@@ -232,7 +232,17 @@ namespace TVGL
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
-            return new TessellatedSolid(faces, copyElements: false);
+            return new TessellatedSolid(faces,false, false);
+        }
+
+        public TessellatedSolid ConvertToLoftedTessellatedSolid()
+        {
+            foreach (var layer in Layer2D)
+            {
+                layer.Value.GetShallowPolygonTrees();
+            }
+            var faces = new List<PolygonalFace>();
+            return new TessellatedSolid(faces, false, false);
         }
 
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)

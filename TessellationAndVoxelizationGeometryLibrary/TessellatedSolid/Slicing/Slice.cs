@@ -159,7 +159,8 @@ namespace TVGL.Boolean_Operations
         /// <param name="solids"></param>
         public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
-            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, true, null, unitType)).ToList();
+            solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, true,
+                false, units: unitType)).ToList();
         }
 
         /// <summary>
@@ -172,9 +173,9 @@ namespace TVGL.Boolean_Operations
         public static void MakeSingleSolidOnEachSideOfInfitePlane(this ContactData contactData, UnitType unitType, out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
         {
             var positiveSideFaces = new List<PolygonalFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            positiveSideSolid = new TessellatedSolid(positiveSideFaces, null, true, null, unitType);
+            positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, false, units: unitType);
             var negativeSideFaces = new List<PolygonalFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            negativeSideSolid = new TessellatedSolid(negativeSideFaces, null, true, null, unitType);
+            negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, false, units: unitType);
         }
 
 
@@ -867,7 +868,7 @@ namespace TVGL.Boolean_Operations
                 OffSideVertex = offSideVertex;
                 OriginalOffSideVertex = offSideVertex;
                 OnSideVertex = Edge.OtherVertex(OffSideVertex);
-                IntersectVertex =new Vertex(MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
+                IntersectVertex = new Vertex(MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal,
                     plane.DistanceToOrigin - planeOffset, edge.To.Coordinates, edge.From.Coordinates));
                 if (IntersectVertex == null) throw new Exception("Cannot Be Null");
             }
