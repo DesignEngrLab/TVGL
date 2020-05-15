@@ -12,7 +12,7 @@ namespace TVGL
     /// </summary>
     public class ContactData
     {
-        internal ContactData(IEnumerable<SolidContactData>solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Flat plane)
+        internal ContactData(IEnumerable<SolidContactData> solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Flat plane)
         {
             SolidContactData = new List<SolidContactData>(solidContactData);
             IntersectionGroups = new List<IntersectionGroup>(intersectionGroups);
@@ -79,7 +79,7 @@ namespace TVGL
             }
 
             var area2 = polygonalFaces.Sum(face => face.Area);
-            if (!Area.IsPracticallySame(area2, 0.01*Area)) Debug.WriteLine("SolidContactData loop area and face area do not match.");
+            if (!Area.IsPracticallySame(area2, 0.01 * Area)) Debug.WriteLine("SolidContactData loop area and face area do not match.");
             //Set Immutable Lists
             OnSideContactFaces = onSideContactFaces;
             PositiveLoops = positiveLoops;
@@ -101,7 +101,7 @@ namespace TVGL
         public double Volume()
         {
             if (_volume > 0) return _volume;
-            _volume = TessellatedSolid.CalculateVolume(AllFaces, out _);
+            TessellatedSolid.CalculateVolumeAndCenter(AllFaces, out _volume, out _);
             return _volume;
         }
 
@@ -111,7 +111,7 @@ namespace TVGL
         /// Gets the positive loops.
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly IEnumerable<Loop> PositiveLoops;  
+        public readonly IEnumerable<Loop> PositiveLoops;
 
         /// <summary>
         /// Gets the loops of negative area (i.e. holes).
@@ -192,10 +192,10 @@ namespace TVGL
             return loopIndices;
         }
 
-        public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops, 
+        public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops,
             IEnumerable<List<Vector2>> intersection2D, int index)
         {
-            GroupOfLoops = new HashSet<GroupOfLoops>{posSideGroupOfLoops, negSideGroupOfLoops };
+            GroupOfLoops = new HashSet<GroupOfLoops> { posSideGroupOfLoops, negSideGroupOfLoops };
             Intersection2D = new List<List<Vector2>>(intersection2D);
             Index = index;
         }
@@ -230,7 +230,7 @@ namespace TVGL
         {
             get
             {
-                var allLoops = new List<Loop>() { PositiveLoop};
+                var allLoops = new List<Loop>() { PositiveLoop };
                 allLoops.AddRange(NegativeLoops);
                 return allLoops;
             }
@@ -288,7 +288,7 @@ namespace TVGL
             foreach (var negativeLoop in NegativeLoops)
             {
                 onSideContactFaces.AddRange(negativeLoop.OnSideContactFaces);
-                foreach(var vertex in negativeLoop.StraddleEdgeOnSideVertices) StraddleEdgeOnSideVertices.Add(vertex);
+                foreach (var vertex in negativeLoop.StraddleEdgeOnSideVertices) StraddleEdgeOnSideVertices.Add(vertex);
 
                 foreach (var straddleFaceIndex in negativeLoop.StraddleFaceIndices)
                 {
@@ -305,15 +305,15 @@ namespace TVGL
             AdjOnsideFaceIndices = adjOnsideFaceIndices;
         }
 
-        
+
     }
 
 
     /// <summary>
-        /// The Loop class is basically a list of ContactElements that form a path. Usually, this path
-        /// is closed, hence the name "loop", but it may be used and useful for open paths as well.
-        /// </summary>
-        public class Loop
+    /// The Loop class is basically a list of ContactElements that form a path. Usually, this path
+    /// is closed, hence the name "loop", but it may be used and useful for open paths as well.
+    /// </summary>
+    public class Loop
     {
         /// <summary>
         /// The vertices making up this loop
@@ -389,11 +389,11 @@ namespace TVGL
         /// <param name="fromPositiveSide"></param>
         /// <param name="straddleEdgeOnSideVertices"></param>
         /// <param name="isClosed">is closed.</param>
-        internal Loop(IList<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, Vector3 normal, 
+        internal Loop(IList<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, Vector3 normal,
             IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool fromPositiveSide,
             IEnumerable<Vertex> straddleEdgeOnSideVertices, bool isClosed = true)
         {
-            if (!IsClosed) Message.output("loop not closed!",3);
+            if (!IsClosed) Message.output("loop not closed!", 3);
             VertexLoop = vertexLoop.ToArray();
             OnSideContactFaces = onSideContactFaces;
             IsClosed = isClosed;
@@ -408,4 +408,4 @@ namespace TVGL
         }
     }
 }
-  
+

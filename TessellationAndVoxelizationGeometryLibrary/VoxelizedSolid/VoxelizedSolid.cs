@@ -91,7 +91,7 @@ namespace TVGL.Voxelization
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
             VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
-            numVoxelsX = (int)Math.Ceiling(Dimensions.X/VoxelSideLength);
+            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
             numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
             numVoxelsZ = (int)Math.Ceiling(Dimensions.Z / VoxelSideLength);
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
@@ -276,7 +276,46 @@ namespace TVGL.Voxelization
 
         }
 
-        public override Matrix3x3 InertiaTensor { get => base.InertiaTensor; set => base.InertiaTensor = value; }
+        protected override void CalculateCenter()
+        {
+
+            Count = 0;
+            var xTotal = 0;
+            var yTotal = 0;
+            var zTotal = 0;
+            for (int j = 0; j < numVoxelsY; j++)
+                for (int k = 0; k < numVoxelsZ; k++)
+                {
+                    var voxelRow = voxels[j + zMultiplier * k];
+                    var rowCount = voxelRow.Count;
+                    xTotal += rowCount * voxelRow.TotalXPosition();
+                    yTotal += rowCount * j;
+                    zTotal += rowCount * k;
+                    Count += rowCount;
+                }
+            _center = new Vector3  //is this right?
+            (
+                VoxelSideLength * xTotal / Count,
+                VoxelSideLength * yTotal / Count,
+                VoxelSideLength * zTotal / Count
+            );
+        }
+
+        protected override void CalculateVolume()
+        {
+            _volume = Count * Math.Pow(VoxelSideLength, 3);
+        }
+
+        protected override void CalculateSurfaceArea()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void CalculateInertiaTensor()
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
 

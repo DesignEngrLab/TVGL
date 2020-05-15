@@ -115,27 +115,8 @@ namespace TVGL.Voxelization
         #region Set/update properties
         public void UpdateProperties()
         {
-            Count = 0;
-            var xTotal = 0.0;
-            var yTotal = 0.0;
-            var zTotal = 0.0;
-            for (int j = 0; j < numVoxelsY; j++)
-                for (int k = 0; k < numVoxelsZ; k++)
-                {
-                    var voxelRow = voxels[j + zMultiplier * k];
-                    var rowCount = voxelRow.Count;
-                    xTotal += rowCount * voxelRow.AverageXPosition();
-                    yTotal += rowCount * j;
-                    zTotal += rowCount * k;
-                    Count += rowCount;
-                }
-            Volume = Count * Math.Pow(VoxelSideLength, 3);
-            Center = new Vector3  //is this right?
-            (
-                VoxelSideLength * xTotal / Count,
-                VoxelSideLength * yTotal / Count,
-                VoxelSideLength * zTotal / Count
-            );
+            CalculateCenter();
+            CalculateVolume();
         }
 
 

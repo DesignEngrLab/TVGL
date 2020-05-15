@@ -43,7 +43,72 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector3 Center { get; set; }
+        public Vector3 Center
+        {
+            get
+            {
+                if (_center.IsNull())  CalculateCenter();
+                return _center;
+            }
+        }
+
+        protected abstract void CalculateCenter();
+
+        protected Vector3 _center = Vector3.Null;
+        /// <summary>
+        ///     Gets the volume.
+        /// </summary>
+        /// <value>The volume.</value>
+        public double Volume
+        {
+            get
+            {
+                if (double.IsNaN(_volume))  CalculateVolume();
+                return _volume;
+            }
+        }
+
+        protected abstract void CalculateVolume();
+
+        protected double _volume = double.NaN;
+
+       
+        /// <summary>
+        ///     Gets the surface area.
+        /// </summary>
+        /// <value>The surface area.</value>
+        public double SurfaceArea
+        {
+            get
+            {
+                if (double.IsNaN(_surfaceArea))  CalculateSurfaceArea();
+                return _surfaceArea;
+            }
+        }
+
+        protected abstract void CalculateSurfaceArea();
+
+        protected double _surfaceArea = double.NaN;
+
+
+
+        /// <summary>
+        /// Gets or sets the inertia tensor.
+        /// </summary>
+        /// <value>The inertia tensor.</value>
+        [JsonIgnore]
+        public Matrix3x3 InertiaTensor
+        {
+            get
+            {
+                if (_inertiaTensor.IsNull()) CalculateInertiaTensor();
+                return _inertiaTensor;
+            }
+        }
+
+        protected abstract void CalculateInertiaTensor();
+
+        protected Matrix3x3 _inertiaTensor = Matrix3x3.Null;
 
 
         /// <summary>
@@ -52,31 +117,13 @@ namespace TVGL
         /// <value>The bounds.</value>
         public Vector3[] Bounds { get; set; }
 
-        public double XMin { get => Bounds[0].X;  }
+        public double XMin { get => Bounds[0].X; }
         public double XMax { get => Bounds[1].X; }
         public double YMin { get => Bounds[0].Y; }
         public double YMax { get => Bounds[1].Y; }
         public double ZMin { get => Bounds[0].Z; }
         public double ZMax { get => Bounds[1].Z; }
 
-
-        /// <summary>
-        ///     Gets the volume.
-        /// </summary>
-        /// <value>The volume.</value>
-        public double Volume { get; set; }
-
-        /// <summary>
-        ///     Gets and sets the mass.
-        /// </summary>
-        /// <value>The mass.</value>
-        public double Mass { get; set; }
-
-        /// <summary>
-        ///     Gets the surface area.
-        /// </summary>
-        /// <value>The surface area.</value>
-        public double SurfaceArea { get; set; }
 
         /// <summary>
         ///     The name of solid
@@ -116,16 +163,6 @@ namespace TVGL
         ///     The has uniform color
         /// </summary>
         public bool HasUniformColor { get; set; }
-
-
-        /// <summary>
-        /// Gets or sets the inertia tensor.
-        /// </summary>
-        /// <value>The inertia tensor.</value>
-        [JsonIgnore]
-        public virtual Matrix3x3 InertiaTensor { get; set; }
-        internal Matrix3x3 _inertiaTensor;
-
 
         /// <summary>
         ///     The solid color
@@ -177,7 +214,6 @@ namespace TVGL
         public abstract Solid TransformToNewSolid(Matrix4x4 transformationMatrix);
 
         public abstract Solid Copy();
-
 
 
         // everything else gets stored here

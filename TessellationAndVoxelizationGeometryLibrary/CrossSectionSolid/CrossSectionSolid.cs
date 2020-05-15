@@ -150,6 +150,10 @@ namespace TVGL
             //Layer 3D is optional and may be null, but Layer2D cannot be null.
             if (feature3D != null) Layer3D[layer].Add(feature3D);
             Layer2D[layer].Add(feature2D);
+            _volume = double.NaN;
+            _center = Vector3.Null;
+            _inertiaTensor = Matrix3x3.Null;
+            _surfaceArea = double.NaN;
         }
 
         public void SetAllVertices()
@@ -165,37 +169,6 @@ namespace TVGL
                 layer.Add(polygon.ConvertTo3DLocations(Direction, StepDistances[i]).Select(v => new Vertex(v)).ToList());
             }
         }
-
-        public void SetVolume(bool extrudeBack = true)
-        {
-            Volume = 0.0;
-            var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
-            var stop = Layer2D.Where(p => p.Value.Any()).LastOrDefault().Key;
-            var reverse = start < stop ? 1 : -1;
-            //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
-            //Otherwise, extrude the first loop and all other loops forward, except the last loop.
-            //Which of these extrusion options you choose depends on how the cross sections were defined.
-            //But both methods, only result in material between the cross sections.
-            if (extrudeBack) start += reverse;
-            else stop -= reverse;
-            for (var i = start; i * reverse <= stop * reverse; i += reverse) //Include the last index, since we already modified start or stop
-            {
-                double distance;
-                if (extrudeBack) distance = Math.Abs(StepDistances[i] - StepDistances[i - reverse]);//current - prior (reverse extrusion)        
-                else distance = Math.Abs(StepDistances[i + reverse] - StepDistances[i]); //next - current (forward extrusion)
-                Volume += distance * Layer2D[i].Sum(p => p.Area());
-            }
-        }
-        //public void SetVolume()
-        //{
-        //    Volume = 0.0;
-        //    for (var i = 0; i < NumLayers - 1; i++) //Include the last index, since we already modified start or stop
-        //    {
-        //        if (Layer2D[i] == null || !Layer2D[i].Any() || Layer2D[i + 1] == null || !Layer2D[i + 1].Any()) continue;
-        //        var halfThickness = 0.5 * (StepDistances[i + 1] - StepDistances[i]);
-        //        Volume += halfThickness * (Layer2D[i].Sum(p => p.Area) + Layer2D[i].Sum(p => p.Area));
-        //    }
-        //}
 
         /// <summary>
         /// Layer2D and 3D can be indexed in the forward or reverse order from the step distances.
@@ -232,7 +205,7 @@ namespace TVGL
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
-            return new TessellatedSolid(faces,false, false);
+            return new TessellatedSolid(faces, false, false);
         }
 
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
@@ -242,7 +215,7 @@ namespace TVGL
                 layer.Value.GetShallowPolygonTrees();
             }
             var faces = new List<PolygonalFace>();
-            return new TessellatedSolid(faces, false, false);
+            return new TessellatedSolid(faces, false);
         }
 
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)
@@ -290,9 +263,13 @@ namespace TVGL
                 }
                 solid.Layer3D.Add(layer.Key, newLoops);
             }
-            if (!Volume.IsNegligible()) solid.Volume = Volume;
+            solid._volume = _volume;
+            solid._center = _center;
+            solid._inertiaTensor = _inertiaTensor;
+            solid._surfaceArea = _surfaceArea;
             return solid;
         }
+
 
         public override void Transform(Matrix4x4 transformMatrix)
         {
@@ -336,6 +313,44 @@ namespace TVGL
                 Layer2D.Add(i, layer);
                 j++;
             }
+        }
+
+        protected override void CalculateCenter()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void CalculateVolume()
+        {
+            _volume = 0.0;
+            var index = StepDistances.Keys.First();
+            var prevDistance = StepDistances.Values.First();
+            var layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+            var prevArea = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area());
+            foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
+            {
+                index = stepDistanceKVP.Key;
+                var distance = stepDistanceKVP.Value;
+                layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+                var area = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area());
+                _volume += (prevArea + area) / (distance - prevDistance);
+                prevArea = area;
+                prevDistance = distance;
+            }
+            _volume *= 0.5; //actually, this is the trapezoidal volume between every layer. It's subtle, but since
+            // we sum the area (5 lines above) instead of averaging them (to get the trapezoid area), we simply
+            // divide by 2 at the end for simplicity/efficiency/accuracy.
+            if (_volume < 0) _volume = -_volume;
+        }
+
+        protected override void CalculateSurfaceArea()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void CalculateInertiaTensor()
+        {
+            throw new NotImplementedException();
         }
     }
 }

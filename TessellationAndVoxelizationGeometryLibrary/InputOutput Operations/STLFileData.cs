@@ -118,7 +118,8 @@ namespace TVGL.IOFunctions
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices, true, stlFileData.HasColorSpecified ? stlFileData.Colors : null,
+                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count<=Constants.MaxNumberFacesDefaultFullTS,
+                    stlFileData.HasColorSpecified ? stlFileData.Colors : null,
                                    stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
             Message.output(

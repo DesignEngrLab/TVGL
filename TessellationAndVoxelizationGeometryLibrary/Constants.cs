@@ -23,6 +23,7 @@ namespace TVGL
     /// </summary>
     public static class Constants
     {
+        internal const int MaxNumberFacesDefaultFullTS = 50000;
         internal const double TwoPi = 2 * Math.PI;
         internal const double HalfPi = Math.PI / 2;
         internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion

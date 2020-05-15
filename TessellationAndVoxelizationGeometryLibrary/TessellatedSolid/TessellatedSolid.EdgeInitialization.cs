@@ -62,10 +62,16 @@ namespace TVGL
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
             edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out var removedVertices));
-            BorderEdges = borderEdges.ToArray();
+            if (borderEdges.Count > 0)
+            {
+                if (Errors == null) Errors = new TessellationError();
+                if (Errors.SingledSidedEdges == null)
+                    Errors.SingledSidedEdges = new List<Edge>(borderEdges);
+                else Errors.SingledSidedEdges.AddRange(borderEdges);
+            }
             // now, we have list, we can do some finally cleanup and stitching
             NumberOfEdges = edgeList.Count;
-            Edges = new Edge[NumberOfEdges];
+            _edges = new Edge[NumberOfEdges];
             for (var i = 0; i < NumberOfEdges; i++)
             {
                 //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor

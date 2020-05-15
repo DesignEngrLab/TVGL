@@ -70,5 +70,25 @@ namespace TVGL
             var marchingCubesAlgorithm = new MarchingCubesImplicit(this, 0.7);
             return marchingCubesAlgorithm.Generate();
         }
+
+        protected override void CalculateCenter()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void CalculateVolume()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void CalculateSurfaceArea()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void CalculateInertiaTensor()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

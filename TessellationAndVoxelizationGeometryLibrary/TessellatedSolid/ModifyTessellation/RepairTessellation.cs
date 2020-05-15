@@ -59,7 +59,6 @@ namespace TVGL
                     StoreVertexDoesNotLinkBackToFace(ts, face, vertex);
             }
             //Check if each edge has cyclic references with each vertex and each face.
-            if (ts.Edges != null)
                 foreach (var edge in ts.Edges)
                 {
                     if (!edge.OwnedFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OwnedFace);
@@ -401,7 +400,7 @@ namespace TVGL
             Message.output("Some errors found. Attempting to Repair...", 2);
             var completelyRepaired = true;
             if (ts.Errors.ModelIsInsideOut)
-                completelyRepaired = TurnModelInsideOut(ts);
+                completelyRepaired = ts.TurnModelInsideOut();
             if (ts.Errors.EdgesWithBadAngle != null)
                 completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
             //Note that negligible faces are not truly errors, so they are not repaired
@@ -414,35 +413,7 @@ namespace TVGL
             return completelyRepaired;
         }
 
-
-        private static bool TurnModelInsideOut(TessellatedSolid ts)
-        {
-            ts.Volume = -1 * ts.Volume;
-            ts._inertiaTensor = Matrix3x3.Null;
-            foreach (var face in ts.Faces)
-            {
-                face.Normal = face.Normal * -1;
-                //var firstVertex = face.Vertices[0];
-                //face.Vertices.RemoveAt(0);
-                //face.Vertices.Insert(1, firstVertex);
-                face.Vertices.Reverse();
-                var firstEdge = face.Edges[0];
-                face.Edges.RemoveAt(0);
-                face.Edges.Insert(1, firstEdge);
-                face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
-            }
-            foreach (var edge in ts.Edges)
-            {
-                edge.Curvature = (CurvatureType)(-1 * (int)edge.Curvature);
-                edge.InternalAngle = Constants.TwoPi - edge.InternalAngle;
-                var tempFace = edge.OwnedFace;
-                edge.OwnedFace = edge.OtherFace;
-                edge.OtherFace = tempFace;
-            }
-            return true;
-        }
-
-        /// <summary>
+                /// <summary>
         ///     Flips the faces based on bad angles.
         /// </summary>
         /// <param name="ts">The ts.</param>
