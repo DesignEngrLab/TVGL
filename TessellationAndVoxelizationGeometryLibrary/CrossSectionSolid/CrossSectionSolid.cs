@@ -177,7 +177,7 @@ namespace TVGL
         /// n-1 extrusion will have ended on at the distance of the final cross section). 
         /// If reversed, it will simply extrude backward instead of forward.
         /// </summary>
-        public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack = true)
+        public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
             //if (!Layer3D.Any()) SetAllVertices();
             var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
@@ -205,7 +205,7 @@ namespace TVGL
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
-            return new TessellatedSolid(faces, false, false);
+            return new TessellatedSolid(faces, createFullVersion, false);
         }
 
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
@@ -215,7 +215,7 @@ namespace TVGL
                 layer.Value.GetShallowPolygonTrees();
             }
             var faces = new List<PolygonalFace>();
-            return new TessellatedSolid(faces, false);
+            return new TessellatedSolid(faces, false, false);
         }
 
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)

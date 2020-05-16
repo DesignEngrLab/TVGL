@@ -141,7 +141,7 @@ namespace TVGL
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
-            MakeVertices(vertices, faceToVertexIndices);
+            MakeVertices(vertices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
             if (createFullVersion) CompleteInitiation();
@@ -193,7 +193,7 @@ namespace TVGL
                     colors[i] = new Color(colorStringsArray[i]);
             }
             DefineAxisAlignedBoundingBoxAndTolerance(coords);
-            MakeVertices(coords, faceIndices);
+            MakeVertices(coords);
             MakeFaces(faceIndices, colors);
             MakeEdges();
 
@@ -247,7 +247,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IEnumerable<PolygonalFace> faces, bool createFullVersion, bool copyElements = true,
+        public TessellatedSolid(IEnumerable<PolygonalFace> faces, bool createFullVersion, bool copyElements,
             IEnumerable<Vertex> vertices = null, IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
@@ -257,26 +257,42 @@ namespace TVGL
                 HasUniformColor = true;
             }
             var manyInputColors = (colors != null && colors.Count() > 1);
+            int i = 0;
             if (vertices == null)
-                vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
+            {
+                vertices = new HashSet<Vertex>();
+                foreach (var face in faces)
+                {
+                    foreach (var vertex in face.Vertices)
+                    {
+                        if (vertices.Contains(vertex)) continue;
+                        ((HashSet<Vertex>)vertices).Add(vertex);
+                        vertex.IndexInList = i;
+                        i++;
+                    }
+                }
+            }
+            Vertices = vertices.ToArray();
+            NumberOfVertices = vertices.Count();
+            Vertices = new Vertex[NumberOfVertices];
+                var simpleCompareDict = new Dictionary<Vertex, Vertex>();
+            if (copyElements)
+            {
+                foreach (var origVertex in vertices)
+                {
+                    var vertex = copyElements ? origVertex.Copy() : origVertex;
+                    vertex.IndexInList = i;
+                    vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
+                    Vertices[i] = vertex;
+                    simpleCompareDict.Add(origVertex, vertex);
+                    i++;
+                }
+            }
             if (createFullVersion)
             {
                 DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Coordinates));
                 if (copyElements)
                 {
-                    NumberOfVertices = vertices.Count();
-                    Vertices = new Vertex[NumberOfVertices];
-                    var simpleCompareDict = new Dictionary<Vertex, Vertex>();
-                    int i = 0;
-                    foreach (var origVertex in vertices)
-                    {
-                        var vertex = copyElements ? origVertex.Copy() : origVertex;
-                        vertex.IndexInList = i;
-                        vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
-                        Vertices[i] = vertex;
-                        simpleCompareDict.Add(origVertex, vertex);
-                        i++;
-                    }
                     NumberOfFaces = faces.Count();
                     Faces = new PolygonalFace[NumberOfFaces];
                     i = 0;
@@ -308,16 +324,9 @@ namespace TVGL
                 }
                 else
                 {
-                    Vertices = vertices.ToArray();
-                    NumberOfVertices = Vertices.Length;
-                    for (int i = 0; i < NumberOfVertices; i++)
-                    {
-                        Vertices[i].IndexInList = i;
-                        Vertices[i].PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
-                    }
                     Faces = faces.ToArray();
                     NumberOfFaces = Faces.Length;
-                    for (int i = 0; i < NumberOfFaces; i++)
+                    for (i = 0; i < NumberOfFaces; i++)
                     {
                         var face = Faces[i];
                         face.IndexInList = i;
@@ -340,8 +349,7 @@ namespace TVGL
                 {
                     NumberOfFaces = faces.Count();
                     Faces = new PolygonalFace[NumberOfFaces];
-                    var simpleCompareDict = new Dictionary<Vertex, Vertex>();
-                    var i = 0;
+                    i = 0;
                     foreach (var origFace in faces)
                     {
                         //Keep "CreatedInFunction" to help with debug
@@ -372,7 +380,7 @@ namespace TVGL
                 {
                     Faces = faces.ToArray();
                     NumberOfFaces = Faces.Length;
-                    for (int i = 0; i < NumberOfFaces; i++)
+                    for ( i = 0; i < NumberOfFaces; i++)
                     {
                         var face = Faces[i];
                         face.IndexInList = i;
@@ -603,50 +611,6 @@ namespace TVGL
             MakeVertices(listOfVertices);
         }
 
-        /// <summary>
-        ///     Makes the vertices.
-        /// </summary>
-        /// <param name="vertices"></param>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        internal void MakeVertices(IList<Vector3> vertices, IList<int[]> faceToVertexIndices)
-        {
-            var numDecimalPoints = 0;
-            //Gets the number of decimal places
-            while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
-            var listOfVertices = new List<Vector3>();
-            var simpleCompareDict = new Dictionary<Vector3, int>();
-            //in order to reduce compare times we use a string comparer and dictionary
-            foreach (var faceToVertexIndex in faceToVertexIndices)
-            {
-                for (var i = 0; i < faceToVertexIndex.Length; i++)
-                {
-                    //Get vertex from un-updated list of vertices
-                    var vertex = vertices[faceToVertexIndex[i]];
-                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
-                     * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
-                    //First, round the vertices. This will catch bidirectional tolerancing (+/-)
-                    vertex = new Vector3(Math.Round(vertex.X, numDecimalPoints),
-                        Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
-
-                    if (simpleCompareDict.ContainsKey(vertex))
-                    {
-                        // if it's in the dictionary, update the faceToVertexIndex
-                        faceToVertexIndex[i] = simpleCompareDict[vertex];
-                    }
-                    else
-                    {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
-                        * the position in the locationIndices. */
-                        var newIndex = listOfVertices.Count;
-                        listOfVertices.Add(vertex);
-                        simpleCompareDict.Add(vertex, newIndex);
-                        faceToVertexIndex[i] = newIndex;
-                    }
-                }
-            }
-            //Make vertices from the double arrays
-            MakeVertices(listOfVertices);
-        }
         /// <summary>
         ///     Makes the vertices, and set CheckSum multiplier
         /// </summary>
