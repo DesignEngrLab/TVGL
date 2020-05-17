@@ -46,10 +46,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 solid.SolidColor = new Color(100, 200, 100, 50);
                 Presenter.ShowAndHang(solid);
-                var cs = CrossSectionSolid.CreateFromTessellatedSolid(solid,CartesianDirections.YPositive, 100);
+                var cs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 100);
                 Presenter.ShowAndHang(cs);
-                var ts = cs.ConvertToTessellatedExtrusions();
-                Presenter.ShowAndHang(ts, solid);
+                var ts = cs.ConvertToTessellatedExtrusions(true, false);
+                Presenter.ShowAndHang(ts);
 
 
 

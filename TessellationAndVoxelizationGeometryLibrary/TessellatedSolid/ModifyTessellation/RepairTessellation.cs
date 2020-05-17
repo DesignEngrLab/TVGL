@@ -414,56 +414,6 @@ namespace TVGL
         }
 
 
-
-        /// <summary>
-        ///     Makes the vertices.
-        /// </summary>
-        /// <param name="vertices"></param>
-        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        internal static void RestartVerticesToAvoidSingleSidedEdges(this TessellatedSolid ts, IList<Vector3> vertices, IList<int[]> faceToVertexIndices)
-        {
-            var numDecimalPoints = 0;
-            //Gets the number of decimal places. this is the crucial part where we consolidate vertices...
-            while (Math.Round(ts.SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
-            var listOfVertices = new List<Vector3>();
-            var simpleCompareDict = new Dictionary<Vector3, int>();
-            //in order to reduce compare times we use a string comparer and dictionary
-            foreach (var faceToVertexIndex in faceToVertexIndices)
-            {
-                for (var i = 0; i < faceToVertexIndex.Length; i++)
-                {
-                    //Get vertex from un-updated list of vertices
-                    var vertex = vertices[faceToVertexIndex[i]];
-                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
-                     * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
-                    //First, round the vertices. This will catch bidirectional tolerancing (+/-)
-                    vertex = new Vector3(Math.Round(vertex.X, numDecimalPoints),
-                        Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
-
-                    if (simpleCompareDict.ContainsKey(vertex))
-                    {
-                        // if it's in the dictionary, update the faceToVertexIndex
-                        faceToVertexIndex[i] = simpleCompareDict[vertex];
-                    }
-                    else
-                    {
-                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
-                        * the position in the locationIndices. */
-                        var newIndex = listOfVertices.Count;
-                        listOfVertices.Add(vertex);
-                        simpleCompareDict.Add(vertex, newIndex);
-                        faceToVertexIndex[i] = newIndex;
-                    }
-                }
-            }
-            //Make vertices from the double arrays
-            throw new NotImplementedException();
-            //ts.NumberOfVertices = listOfVertices.Count;
-            //ts.Vertices = new Vertex[NumberOfVertices];
-            //for (var i = 0; i < NumberOfVertices; i++)
-            //    Vertices[i] = new Vertex(listOfVertices[i], i);
-        }
-
         /// <summary>
         ///     Flips the faces based on bad angles.
         /// </summary>

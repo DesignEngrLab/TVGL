@@ -220,7 +220,7 @@ namespace TVGL.TwoDimensional
                     thisPoint = sortedPoints[pIndex];
                 }
                 if (needToOffset)
-                    y += Math.Min(stepSize, sortedPoints[pIndex + 1].Y) / 10.0;
+                    y += Math.Min(stepSize, sortedPoints[pIndex].Y) / 10.0;
 
                 var numIntersects = currentLines.Count;
                 var intersects = new double[numIntersects];

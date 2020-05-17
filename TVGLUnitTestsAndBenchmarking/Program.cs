@@ -20,7 +20,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-           var tVGL3Dto2DTests = new TVGL3Dto2DTests();
+            //Voxels.InitialTest();
+            var tVGL3Dto2DTests = new TVGL3Dto2DTests();
             tVGL3Dto2DTests.BoxSilhouette();
 
             PolygonOperationsTesting.TestBoundingRectangle();

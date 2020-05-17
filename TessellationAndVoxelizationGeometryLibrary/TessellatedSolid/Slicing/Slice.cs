@@ -16,7 +16,7 @@ namespace TVGL.Boolean_Operations
     /// </summary>
     public static class Slice
     {
-        #region Define Contact at a Flat Plane
+         #region Define Contact at a Flat Plane
 
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,

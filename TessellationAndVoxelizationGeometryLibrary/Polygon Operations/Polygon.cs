@@ -38,17 +38,11 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_points == null)
-                {
-                    _points = new List<Vertex2D>();
-                    for (int i = 0; i < _path.Count; i++)
-                    {
-                        _points.Add(new Vertex2D(_path[i], i, Index));
-                    }
-                }
+                if (_points == null) MakeVertices();
                 return _points;
             }
         }
+
         List<Vertex2D> _points;
 
         /// <summary>
@@ -61,16 +55,39 @@ namespace TVGL.TwoDimensional
             {
                 if (_lines == null)
                 {
-                    _lines = new List<PolygonSegment>();
-                    var n = Path.Count - 1;
-                    for (var i = 0; i < n; i++)
-                        Lines.Add(new PolygonSegment(Vertices[i], Vertices[i + 1]));
-                    Lines.Add(new PolygonSegment(Vertices[n], Vertices[0]));
+                    if (_points == null) MakeVertices();
+                    MakeLineSegments();
                 }
                 return _lines;
             }
         }
         List<PolygonSegment> _lines;
+        private void MakeVertices()
+        {
+            var numPoints = _path.Count;
+            var _pointsArray = new Vertex2D[numPoints];
+            for (int i = 0; i < numPoints; i++)
+                _pointsArray[i] = new Vertex2D(_path[i], i, Index);
+            _points = _pointsArray.ToList();
+        }
+        private void MakeLineSegments()
+        {
+            var numPoints = _points.Count;
+            _lines = new List<PolygonSegment>();
+            for (int i = 1; i <= numPoints; i++)
+            {
+                var fromNode = _points[i - 1];
+                var toNode = _points[i % numPoints]; // note the mod operator and the fact that the for loop 
+                // goes to and including numPoints. this allows for the last line to connect the last point 
+                // back to the first. it is intended to avoid rewriting the following four lines of code.
+                var polySegment = new PolygonSegment(fromNode, toNode);
+                fromNode.StartLine = polySegment;
+                toNode.EndLine = polySegment;
+                _lines.Add(polySegment);
+            }
+        }
+
+
 
         public List<Polygon> InnerPolygons
         {

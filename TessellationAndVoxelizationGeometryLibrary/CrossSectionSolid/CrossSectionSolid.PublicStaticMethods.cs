@@ -91,7 +91,7 @@ namespace TVGL
                     thisVertex = sortedVertices[vIndex];
                 }
                 if (needToOffset)
-                    z += Math.Min(stepSize, sortedVertices[vIndex + 1].Z - z) / 10.0;
+                    z += Math.Min(stepSize, sortedVertices[vIndex].Z - z) / 10.0;
                 if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
                 else loopsAlongZ[step] = new List<List<Vector2>>();
             }

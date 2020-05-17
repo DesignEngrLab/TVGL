@@ -135,8 +135,8 @@ namespace TVGL.Voxelization
             var decomp = CrossSectionSolid.GetUniformlySpacedSlices(ts, CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
-            Parallel.For(0, numVoxelsZ, k =>
-            //for (var k = 0; k < numVoxelsZ; k++)
+            //Parallel.For(0, numVoxelsZ, k =>
+            for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
                 if (loops.Any())
@@ -159,7 +159,8 @@ namespace TVGL.Voxelization
                         }
                     }
                 }
-            });
+            }
+            //);
         }
 
 

@@ -39,6 +39,15 @@ namespace TVGL
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
             var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
+
+            while (singleSidedEdges.Count > edgeList.Count) // this is real bad. the number of single side edges is more than
+                                                            // the number that were successfully matched up. This means we need to try hard to merged vertices
+            {
+                RestartVerticesToAvoidSingleSidedEdges();
+                edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
+                if (singleSidedEdges.Count > edgeList.Count) SameTolerance *= 2;
+            }
+
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
             // moreSingleSidedEdges
@@ -92,6 +101,58 @@ namespace TVGL
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
         }
+
+
+
+
+
+        /// <summary>
+        ///     Makes the vertices.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        private void RestartVerticesToAvoidSingleSidedEdges()
+        {
+            var faceIndices = Faces.Select(f => f.Vertices.Select(v => v.IndexInList).ToArray()).ToArray();
+            var colors = Faces.Select(f => f.Color).ToArray();
+            var numDecimalPoints = 0;
+            //Gets the number of decimal places. this is the crucial part where we consolidate vertices...
+            while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            var coords = new List<Vector3>();
+            var simpleCompareDict = new Dictionary<Vector3, int>();
+            //in order to reduce compare times we use a string comparer and dictionary
+            foreach (var faceToVertexIndex in faceIndices)
+            {
+                for (var i = 0; i < faceToVertexIndex.Length; i++)
+                {
+                    //Get vertex from list of vertices
+                    var vertex = Vertices[faceToVertexIndex[i]];
+                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
+                     * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
+                    //First, round the vertices. This will catch bidirectional tolerancing (+/-)
+                    var position = new Vector3(Math.Round(vertex.X, numDecimalPoints),
+                          Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
+
+                    if (simpleCompareDict.ContainsKey(position))
+                    {
+                        // if it's in the dictionary, update the faceToVertexIndex
+                        faceToVertexIndex[i] = simpleCompareDict[position];
+                    }
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                        * the position in the locationIndices. */
+                        var newIndex = coords.Count;
+                        coords.Add(position);
+                        simpleCompareDict.Add(position, newIndex);
+                        faceToVertexIndex[i] = newIndex;
+                    }
+                }
+            }
+            MakeVertices(coords);
+            MakeFaces(faceIndices, colors);
+        }
+
         /// <summary>
         ///     The first pass to making edges. It returns the good ones, and two lists of bad ones. The first, overDefinedEdges,
         ///     are those which appear to have more than two faces interfacing with the edge. This happens when CAD tools

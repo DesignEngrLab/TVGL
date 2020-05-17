@@ -101,7 +101,7 @@ namespace TVGL.TwoDimensional
             // 5: If isPositive == null, then 
             var successful = false;
             var attempts = 0;
-            var random = new Random(12345);
+            var random = new Random();
             //Create return variables. These intializations are unnecessary but C# won't compile unless it's sure that we set these
             //before exiting. 
             List<List<int[]>> triangleFaceList = new List<List<int[]>>();
@@ -138,26 +138,13 @@ namespace TVGL.TwoDimensional
                     foreach (var origLoop in polygons)
                     {
                         var nodes = new List<Vertex2D>();
-                        var polygonSegments = new List<PolygonSegment>();
                         foreach (var coordinates in origLoop)
                             nodes.Add(new Vertex2D(coordinates.Transform(randRotMatrix), pointCount++, loopsCount));
-                        for (int i = 1; i < nodes.Count; i++)
-                        {
-                            var fromNode = nodes[i - 1];
-                            var toNode = nodes[i];
-                            var polySegment = new PolygonSegment(fromNode, toNode);
-                            fromNode.StartLine = polySegment;
-                            toNode.EndLine = polySegment;
-                            polygonSegments.Add(polySegment);
-                        }
-                        var lastPolySegment = new PolygonSegment(nodes[^1], nodes[0]);
-                        nodes[^1].StartLine = lastPolySegment;
-                        nodes[0].EndLine = lastPolySegment;
-                        polygonSegments.Add(lastPolySegment);
-                        var sortedLoop = nodes.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
-                        polygonNodes.Add(nodes);
+                        var polygon = new Polygon(nodes, null, loopsCount);
+                        var sortedLoop = polygon.Vertices.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
+                        polygonNodes.Add(polygon.Vertices);
                         sortedPolygonNodes.Add(sortedLoop);
-                        polygonLines.Add(polygonSegments);
+                        polygonLines.Add(polygon.Lines);
                         loopsCount++;
                     }
                     #endregion
