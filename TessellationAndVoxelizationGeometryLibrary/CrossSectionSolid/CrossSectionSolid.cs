@@ -189,7 +189,7 @@ namespace TVGL
         {
             foreach (var layer in Layer2D)
             {
-                layer.Value.GetShallowPolygonTrees();
+                PolygonOperations.CreatePolygons(layer.Value);
             }
             var faces = new List<PolygonalFace>();
             return new TessellatedSolid(faces, false, false);

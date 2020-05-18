@@ -100,6 +100,17 @@ namespace TVGL.TwoDimensional
         }
         List<Polygon> _innerPolygons;
 
+        public IEnumerable<Polygon> AllPolygons
+        {
+            get
+            {
+                yield return this;
+                foreach (var innerPolygon in InnerPolygons)
+                    foreach (var polygon in innerPolygon.AllPolygons)
+                        yield return polygon;
+            }
+        }
+
         /// <summary>
         /// The index of this child in its parent's child list.
         /// </summary>
@@ -146,7 +157,7 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (double.IsNaN(area))
-                    area = Path.Area();
+                    area = Path.Area() + InnerPolygons.Sum(p => p.Area);
                 return area;
             }
         }

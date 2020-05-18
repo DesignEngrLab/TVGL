@@ -21,12 +21,12 @@ namespace TVGL.TwoDimensional
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
-            var polyTrees = shape.GetShallowPolygonTrees();
+            var polyTrees = CreatePolygons(shape);
             return SliceAtLine(polyTrees, lineNormalDirection, distanceAlongDirection, out negativeSidePolygons, out positiveSidePolygons,
                    offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
         }
 
-        public static Vector2[] SliceAtLine(this IEnumerable<ShallowPolygonTree> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
+        public static Vector2[] SliceAtLine(this IEnumerable<Polygon> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
@@ -45,7 +45,7 @@ namespace TVGL.TwoDimensional
             return intersections.OrderBy(v => lineDir.Dot(v)).ToArray();
         }
 
-        public static Vector2[] SliceAtLine(this ShallowPolygonTree shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection,
+        public static Vector2[] SliceAtLine(this Polygon shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {

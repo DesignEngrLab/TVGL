@@ -7,7 +7,7 @@ using TVGL.Numerics;
 using TVGL.TwoDimensional;
 using TVGL.Voxelization;
 
-namespace TVGL.MathOperations
+namespace TVGL
 {
     /// <summary>
     /// 

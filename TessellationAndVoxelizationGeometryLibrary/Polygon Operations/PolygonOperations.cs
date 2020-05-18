@@ -113,15 +113,72 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Gets the Shallow Polygon Trees for a given set of paths. 
+        /// Gets the Shallow Polygon Trees for a given set of paths.
         /// </summary>
-        /// <param name="paths"></param>
-        /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths)
+        /// <param name="paths">The paths.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
+        public static Polygon[] CreatePolygons(this IEnumerable<IEnumerable<Vector2>> paths)
         {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
+            //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
+            //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
+
+            //The correct order for shallow polygon trees is as follows.
+            //The first polygon in the list is always positive. The next positive polygon signals the start of a new 
+            //shallow tree. Any polygons in-between those belong to the earlier shallow tree.
+
+            //Assumption: Ordered even-odd polygons. 
+            //Example: A negative polygon must be between two concentric positive polygons.
+
+            //By ordering the polygons, we are gauranteed to do the outermost positive polygons first.
+            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort());
+            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
+            foreach (var path in paths)
+            {
+                var polygon = new Polygon(path);
+                var area = polygon.Area;
+                if (area < 0) negativePolygons.Add(area, polygon);
+                if (area > 0) positivePolygons.Add(area, polygon);
+            }
+            var result = positivePolygons.Values.ToArray();
+            //2) Find the positive polygon that this negative polygon is inside.
+            //The negative polygon belongs to the smallest positive polygon that it fits inside.
+            //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
+            //and the reversed ordering, gaurantee that we get the correct shallow tree.
+            foreach (var negativePolygonKVP in negativePolygons)
+            {
+                var isInside = false;
+                var area = negativePolygonKVP.Key;
+                var negativePolygon = negativePolygonKVP.Value;
+                //Start with the smallest positive polygon           
+                foreach (var polygon in result)
+                {
+                    if (-area < polygon.Area
+                        && polygon.IsPointInsidePolygon(negativePolygon.Path[0], out _, out _, out _)
+                        && polygon.IsPolygonIntersectingPolygon(negativePolygon))
+                    {
+                        polygon.InnerPolygons.Add(negativePolygon);
+                        //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
+                        isInside = true;
+                        break;
+                    }
+                }
+
+                if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
+            }
+
+            //Set the polygon indices
+            var polygonCount = 0;
+            foreach (var polygon in result)
+            {
+                polygon.Index = polygonCount;
+                foreach (var hole in polygon.InnerPolygons)
+                    hole.Index = polygonCount;
+                polygonCount += 1 + polygon.InnerPolygons.Count;
+            }
+            return result;
         }
- 
+
 
         #region Line Intersections with Polygon
 
@@ -877,7 +934,7 @@ namespace TVGL.TwoDimensional
                 minLength = totalLength * 0.001;
             }
             //Setup Clipper
-            var clip = new ClipperOffset(2, minLength* Constants.DoubleToIntPointMultipler);
+            var clip = new ClipperOffset(2, minLength * Constants.DoubleToIntPointMultipler);
             clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
@@ -915,7 +972,7 @@ namespace TVGL.TwoDimensional
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="simplifyPriorToUnion"></param>
@@ -931,7 +988,7 @@ namespace TVGL.TwoDimensional
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -946,7 +1003,7 @@ namespace TVGL.TwoDimensional
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -960,7 +1017,7 @@ namespace TVGL.TwoDimensional
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
