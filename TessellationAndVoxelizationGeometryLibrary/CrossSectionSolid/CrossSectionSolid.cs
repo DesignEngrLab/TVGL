@@ -12,23 +12,20 @@ namespace TVGL
     public partial class CrossSectionSolid : Solid
     {
         /// <summary>
-        /// Layers are the 2D and 3D layers for every cross section in this feature.
-        /// Layer 3D is optional and may be null, but Layer2D cannot be null.
+        /// Layers are the 2D polygons for every cross section in this feature.
         /// The solid volume representation assumes that the cross sections are defined,
-        /// such that the first valid loop and subsequent loops in layer3D will be extruded 
+        /// such that the first valid loop and subsequent loops in  will be extruded 
         /// forward along the given direction, but not extruding the last cross section, which
         /// forms the end of the solid. 
         /// 
         /// A few features:
-        /// 1) Layer2D and 3D can be empty layers at the start and end of the step indices. This 
+        /// 1) Layer2D can be empty layers at the start and end of the step indices. This 
         /// can be useful when joining solids of different sizes along the same direction.
-        /// 2) Layer2D and 3D can be indexed in the reverse order from the step distances.
+        /// 2) Layer2D can be indexed in the reverse order from the step distances.
         /// This can be useful when working in a bi-directional scope. If reversed, it will
         /// extrude backward from the first valid loop in Layer3D up until the last valid loop
         /// in the list.
         /// </summary>
-        [JsonIgnore]
-        public Dictionary<int, List<List<Vertex>>> Layer3D;
         [JsonIgnore]
         public Dictionary<int, List<List<Vector2>>> Layer2D;
 
@@ -62,7 +59,6 @@ namespace TVGL
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
             Layer2D = new Dictionary<int, List<List<Vector2>>>();
-            Layer3D = new Dictionary<int, List<List<Vertex>>>();
             StepDistances = stepDistances;
         }
 
@@ -88,7 +84,6 @@ namespace TVGL
             TransformMatrix = backTransform;
             //TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out var backTransform);
             this.Layer2D = Layer2D;
-            Layer3D = new Dictionary<int, List<List<Vertex>>>();
             if (bounds == null)
             {
                 var xmin = double.PositiveInfinity;
@@ -142,13 +137,8 @@ namespace TVGL
 
         public void Add(List<Vertex> feature3D, List<Vector2> feature2D, int layer)
         {
-            if (!Layer3D.ContainsKey(layer))
-            {
-                Layer3D[layer] = new List<List<Vertex>>();
+            if (!Layer2D.ContainsKey(layer))
                 Layer2D[layer] = new List<List<Vector2>>();
-            }
-            //Layer 3D is optional and may be null, but Layer2D cannot be null.
-            if (feature3D != null) Layer3D[layer].Add(feature3D);
             Layer2D[layer].Add(feature2D);
             _volume = double.NaN;
             _center = Vector3.Null;
@@ -156,19 +146,6 @@ namespace TVGL
             _surfaceArea = double.NaN;
         }
 
-        public void SetAllVertices()
-        {
-            foreach (var layer in Layer2D) SetVerticesByLayer(layer.Key);
-        }
-
-        public void SetVerticesByLayer(int i)
-        {
-            var layer = Layer3D[i] = new List<List<Vertex>>();
-            foreach (var polygon in Layer2D[i])
-            {
-                layer.Add(polygon.ConvertTo3DLocations(Direction, StepDistances[i]).Select(v => new Vertex(v)).ToList());
-            }
-        }
 
         /// <summary>
         /// Layer2D and 3D can be indexed in the forward or reverse order from the step distances.
@@ -247,21 +224,6 @@ namespace TVGL
             foreach (var layer in Layer2D)
             {
                 solid.Layer2D.Add(layer.Key, new List<List<Vector2>>(layer.Value));
-            }
-            //To create an unlinked copy for layer3D, we need to create new lists and copy the vertices
-            foreach (var layer in Layer3D)
-            {
-                var newLoops = new List<List<Vertex>>();
-                foreach (var loop in layer.Value)
-                {
-                    var newLoop = new List<Vertex>();
-                    foreach (var vertex in loop)
-                    {
-                        newLoop.Add(vertex.Copy());
-                    }
-                    newLoops.Add(newLoop);
-                }
-                solid.Layer3D.Add(layer.Key, newLoops);
             }
             solid._volume = _volume;
             solid._center = _center;
