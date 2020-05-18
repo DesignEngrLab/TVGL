@@ -380,17 +380,17 @@ namespace TVGL
             #region 2) Get Extreme Points and initial angles
             var extremeIndices = new int[4];
             //Point0 = min X, (at the lowest Y value for ties. This is established above)
-            while (points[extremeIndices[0]].X >= points[extremeIndices[0] + 1].X) extremeIndices[0]++;
+            while (points[extremeIndices[0]].X >= points[(extremeIndices[0] + 1) % (lastIndex + 1)].X) extremeIndices[0]++;
             //Point1 = min Y (at the max X value for ties. This is done in the following while-loop)
             extremeIndices[1] = extremeIndices[0];
-            while (points[extremeIndices[1]].Y >= points[extremeIndices[1] + 1].Y) extremeIndices[1]++;
+            while (points[extremeIndices[1]].Y >= points[(extremeIndices[1] + 1) % (lastIndex + 1)].Y) extremeIndices[1]++;
             //Point2 = max X (at the max Y value for ties
             extremeIndices[2] = extremeIndices[1];
             while (points[extremeIndices[2]].X <= points[(extremeIndices[2] + 1) % (lastIndex + 1)].X) extremeIndices[2]++;
             //Point3 = max Y (at the min X for ties). Need to be careful of the value exceeding the index for this list.
             // It's possible that the answer to this is 0, so that will need to checked if we get that far
             extremeIndices[3] = extremeIndices[2];
-            while (points[extremeIndices[3]].Y <= points[extremeIndices[3] + 1].Y)
+            while (points[extremeIndices[3]].Y <= points[(extremeIndices[3] + 1) % (lastIndex + 1)].Y)
             {
                 extremeIndices[3]++;
                 if (extremeIndices[3] == lastIndex)
