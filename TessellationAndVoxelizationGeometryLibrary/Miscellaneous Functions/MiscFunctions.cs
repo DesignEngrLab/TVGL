@@ -462,7 +462,7 @@ namespace TVGL
             }
             foreach (var seperateSolid in seperateSolids)
             {
-                solids.Add(new TessellatedSolid(seperateSolid,true,false));
+                solids.Add(new TessellatedSolid(seperateSolid, true, false));
                 count += seperateSolid.Count;
             }
             return solids;
@@ -1265,17 +1265,6 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Distances the point to point.
-        /// </summary>
-        /// <param name="p1">point, p1.</param>
-        /// <param name="p2">point, p2.</param>
-        /// <returns>the distance between the two 3D points.</returns>
-        public static double DistancePointToPoint(Vertex v1, Vertex v2)
-        {
-            return v1.Coordinates.Distance(v2.Coordinates);
-        }
-
-        /// <summary>
         ///     Returns the signed distance of the point to the plane.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -1342,23 +1331,6 @@ namespace TVGL
             return IsVertexInsideTriangle(vertices, intersectionPoint, true) ? intersectionPoint : Vector3.Null;
         }
 
-        /// <summary>
-        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that plane.Returns null if the intersection point is not on the line segment.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vertex PointOnPlaneFromIntersectingLineSegment(Vector3 normalOfPlane, double distOfPlane, Vertex point1,
-            Vertex point2)
-        {
-            var position =
-                PointOnPlaneFromIntersectingLineSegment(normalOfPlane, distOfPlane, point1.Coordinates, point2.Coordinates);
-            return position == null ? null : new Vertex(position);
-        }
 
         /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
@@ -1432,6 +1404,7 @@ namespace TVGL
             var d1 = normalOfPlane.Dot(point1);
             var d2 = normalOfPlane.Dot(point2);
             var fraction = (d1 - distOfPlane) / (d1 - d2);
+            if (fraction < 0 || fraction > 1) return Vector3.Null;
             return Vector3.Lerp(point1, point2, fraction);
         }
 
@@ -1444,7 +1417,7 @@ namespace TVGL
         /// <param name="line"></param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        internal static Vector2 Vector2OnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, PolygonSegment line)
+        internal static Vector2 PointOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, PolygonSegment line)
         {
             Vector2OnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
                 line.ToPoint.X, line.FromPoint.Y, out var x, out var y);

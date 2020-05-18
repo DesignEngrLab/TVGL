@@ -61,8 +61,6 @@ namespace TVGL.TwoDimensional
             var intersectionLines = new HashSet<PolygonSegment>();
             var collinearSegments = new HashSet<PolygonSegment>();
             var collinearPoints = new HashSet<Vector2>();
-            var linesPositiveSide = new List<PolygonSegment>();
-            var linesNegativeSide = new List<PolygonSegment>();
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = distanceAlongDirection * lineNormalDirection;
             var sortedPoints = new SortedList<double, (Vector2, PolygonSegment, bool)>();
@@ -72,10 +70,6 @@ namespace TVGL.TwoDimensional
                     var fromPointAlongDir = line.FromPoint.Coordinates.Dot(lineNormalDirection);
                     var toPointAlongDir = line.ToPoint.Coordinates.Dot(lineNormalDirection);
                     if (fromPointAlongDir == distanceAlongDirection) collinearPoints.Add(line.FromPoint.Coordinates);
-                    if (fromPointAlongDir <= distanceAlongDirection && toPointAlongDir <= distanceAlongDirection)
-                        linesNegativeSide.Add(line);
-                    else if (fromPointAlongDir >= distanceAlongDirection && toPointAlongDir >= distanceAlongDirection)
-                        linesPositiveSide.Add(line);
                     else if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
                         anchorpoint, lineDir, out var intersectionPoint, true))
                     {

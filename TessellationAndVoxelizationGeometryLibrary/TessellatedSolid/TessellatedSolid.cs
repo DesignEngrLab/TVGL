@@ -273,21 +273,30 @@ namespace TVGL
                 }
             }
             Vertices = vertices.ToArray();
-            NumberOfVertices = vertices.Count();
-            Vertices = new Vertex[NumberOfVertices];
-                var simpleCompareDict = new Dictionary<Vertex, Vertex>();
+            NumberOfVertices = Vertices.Length;
+            var simpleCompareDict = new Dictionary<Vertex, Vertex>();
             if (copyElements)
             {
-                foreach (var origVertex in vertices)
+                for (i = 0; i < NumberOfVertices; i++)
                 {
-                    var vertex = copyElements ? origVertex.Copy() : origVertex;
+                    var origVertex = Vertices[i];
+                    var vertex = origVertex.Copy();
                     vertex.IndexInList = i;
                     vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
                     Vertices[i] = vertex;
                     simpleCompareDict.Add(origVertex, vertex);
-                    i++;
                 }
             }
+            else
+            {
+                for (i = 0; i < NumberOfVertices; i++)
+                {
+                    var vertex = Vertices[i];
+                    vertex.IndexInList = i;
+                    vertex.PartOfConvexHull = false; //We will find the convex hull vertices during CompleteInitiation
+                }
+            }
+
             if (createFullVersion)
             {
                 DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Coordinates));
@@ -299,7 +308,7 @@ namespace TVGL
                     foreach (var origFace in faces)
                     {
                         //Keep "CreatedInFunction" to help with debug
-                        var face = copyElements ? origFace.Copy() : origFace;
+                        var face = origFace.Copy();
                         face.PartOfConvexHull = false;
                         face.IndexInList = i;
                         var faceVertices = new List<Vertex>();
@@ -380,7 +389,7 @@ namespace TVGL
                 {
                     Faces = faces.ToArray();
                     NumberOfFaces = Faces.Length;
-                    for ( i = 0; i < NumberOfFaces; i++)
+                    for (i = 0; i < NumberOfFaces; i++)
                     {
                         var face = Faces[i];
                         face.IndexInList = i;
@@ -698,12 +707,13 @@ namespace TVGL
 
         internal void RemoveVertices(List<int> removeIndices)
         {
+            var numToRemove = removeIndices.Count;
+            if (numToRemove == 0) return;
+            var offset = 0;
             foreach (var vertexIndex in removeIndices)
             {
                 RemoveReferencesToVertex(Vertices[vertexIndex]);
             }
-            var offset = 0;
-            var numToRemove = removeIndices.Count;
             removeIndices.Sort();
             NumberOfVertices -= numToRemove;
             var newVertices = new Vertex[NumberOfVertices];

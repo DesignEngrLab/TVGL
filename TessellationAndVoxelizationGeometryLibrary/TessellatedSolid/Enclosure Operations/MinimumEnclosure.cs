@@ -386,7 +386,7 @@ namespace TVGL
             while (points[extremeIndices[1]].Y >= points[extremeIndices[1] + 1].Y) extremeIndices[1]++;
             //Point2 = max X (at the max Y value for ties
             extremeIndices[2] = extremeIndices[1];
-            while (points[extremeIndices[2]].X <= points[extremeIndices[2] + 1].X) extremeIndices[2]++;
+            while (points[extremeIndices[2]].X <= points[(extremeIndices[2] + 1) % (lastIndex + 1)].X) extremeIndices[2]++;
             //Point3 = max Y (at the min X for ties). Need to be careful of the value exceeding the index for this list.
             // It's possible that the answer to this is 0, so that will need to checked if we get that far
             extremeIndices[3] = extremeIndices[2];
@@ -458,7 +458,7 @@ namespace TVGL
                         bestRectangle.Offsets[i] = offsets[i];
                     bestExtremeIndices[0] = extremeIndices[(smallestAngleIndex + 3) % 4];
                     bestExtremeIndices[1] = extremeIndices[(smallestAngleIndex + 1) % 4];
-                    bestExtremeIndices[2] = extremeIndices[smallestAngleIndex ];
+                    bestExtremeIndices[2] = extremeIndices[smallestAngleIndex];
                     bestExtremeIndices[3] = extremeIndices[(smallestAngleIndex + 2) % 4];
 
                     bestRectangle.Area = area;
@@ -605,7 +605,7 @@ namespace TVGL
             var pointsDict = vertices.ProjectTo2DCoordinatesReturnDictionary(direction1, out var backTransform);
             var boundingRectangle = RotatingCalipers2DMethod(pointsDict.Keys.ToList(), false, false, true);
             //Get the Direction vectors from rotating caliper and projection.
-            
+
             var direction2 = new Vector3(boundingRectangle.Direction1, 0);
             direction2 = direction2.Transform(backTransform).Normalize();
             var direction3 = direction1.Cross(direction2); // you could also get this from the bounding rectangle
@@ -622,8 +622,8 @@ namespace TVGL
             //}
             //else
             //{
-                verticesOnFaces[4] = boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]);
-                verticesOnFaces[5] = boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]);
+            verticesOnFaces[4] = boundingRectangle.PointsOnSides[2].SelectMany(p => pointsDict[p]);
+            verticesOnFaces[5] = boundingRectangle.PointsOnSides[3].SelectMany(p => pointsDict[p]);
             //}
             if ((depth * boundingRectangle.Length1 * boundingRectangle.Length2).IsNegligible())
                 throw new Exception("Volume should never be negligible, unless the input data is bad");
