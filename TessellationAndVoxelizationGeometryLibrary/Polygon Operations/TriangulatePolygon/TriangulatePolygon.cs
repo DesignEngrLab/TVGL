@@ -101,7 +101,7 @@ namespace TVGL.TwoDimensional
             // 5: If isPositive == null, then 
             var successful = false;
             var attempts = 0;
-            var random = new Random();
+            var random = new Random(1);
             //Create return variables. These intializations are unnecessary but C# won't compile unless it's sure that we set these
             //before exiting. 
             List<List<int[]>> triangleFaceList = new List<List<int[]>>();

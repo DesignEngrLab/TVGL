@@ -157,8 +157,8 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (double.IsNaN(area))
-                    area = Path.Area() + InnerPolygons.Sum(p => p.Area);
-                return area;
+                    area = Path.Area();
+                return area + InnerPolygons.Sum(p => p.Area);
             }
         }
 

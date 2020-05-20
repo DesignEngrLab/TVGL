@@ -58,7 +58,7 @@ namespace TVGLUnitTestsAndBenchmarking
             c.Area();
             c.Create2DMedialAxis();
             c.Difference(d);
-            c.GetShallowPolygonTrees();
+            c.CreateShallowPolygonTrees();
             c.Intersection(d);
             c.OffsetMiter(5.0);
             c.OffsetRound(5.0);

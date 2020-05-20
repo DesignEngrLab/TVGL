@@ -118,7 +118,7 @@ namespace TVGL.TwoDimensional
         /// <param name="paths">The paths.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
-        public static Polygon[] CreatePolygons(this IEnumerable<IEnumerable<Vector2>> paths)
+        public static Polygon[] CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths)
         {
             //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
             //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
