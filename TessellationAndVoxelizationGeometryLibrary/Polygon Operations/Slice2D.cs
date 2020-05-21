@@ -63,50 +63,63 @@ namespace TVGL.TwoDimensional
             var collinearPoints = new HashSet<Vector2>();
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = distanceAlongDirection * lineNormalDirection;
-            var sortedPoints = new SortedList<double, (Vector2, PolygonSegment, bool)>();
+            var sortedPoints = new SortedList<double, (Vector2, PolygonSegment)>();
             foreach (var polygons in shallowPolygonTree.AllPolygons)
                 foreach (var line in polygons.Lines)
                 {
-                    var fromPointAlongDir = line.FromPoint.Coordinates.Dot(lineNormalDirection);
-                    var toPointAlongDir = line.ToPoint.Coordinates.Dot(lineNormalDirection);
-                    if (fromPointAlongDir == distanceAlongDirection) collinearPoints.Add(line.FromPoint.Coordinates);
-                    else if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
-                        anchorpoint, lineDir, out var intersectionPoint, true))
+                    if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
+                         anchorpoint, lineDir, out var intersectionPoint, true))
                     {
                         if (intersectionPoint.IsNull()) // this only happens in polygon line segment is collinear with separation line
+                        {
                             collinearSegments.Add(line);
+                            /* In order to avoid adding points more than once, we only add if the "To" points. 
+                             * The "From" points will be added when they are "To"'s */
+                            collinearPoints.Add(line.ToPoint.Coordinates);
+                        }
+                        else
+                        {
+                            intersectionLines.Add(line);
+                            if (line.ToPoint.Coordinates.IsPracticallySame(intersectionPoint))
+                                collinearPoints.Add(line.ToPoint.Coordinates);
+                        }
                         var distanceAlong = lineDir.Dot(intersectionPoint);
-                        sortedPoints.Add(distanceAlong, (intersectionPoint, line, toPointAlongDir > distanceAlongDirection));
-                        intersectionLines.Add(line);
+                        sortedPoints.Add(distanceAlong, (intersectionPoint, line));
+                            //!line.ToPoint.Coordinates.Dot(lineNormalDirection).IsLessThanNonNegligible(distanceAlongDirection));
                     }
-                    else throw new Exception("A line was not left nor right, nor crossing the line. That doesn't make sense.");
                 }
             // we don't really need the distances, so  convert the values to an array
             var pointsOnLineTuples = sortedPoints.Values.ToArray();
             // this is what is returned. although now sure if this is useful in any case
-            var intersectionPoints = pointsOnLineTuples.Select(p => p.Item1).ToArray();
 
             #region patching up negative side polygons
-            for (int i = 0; i < sortedPoints.Count; i++)
+            for (int i = 0; i < pointsOnLineTuples.Length; i++)
             {
                 // the first segment in the list should be passing from negative side to positive side (item3 should be true)
                 var newSegmentTupleA = pointsOnLineTuples[i];
                 i++;
                 //  the second segment in the list should be passing from the positive to the negative side (item should be false)
                 var newSegmentTupleB = pointsOnLineTuples[i];
+                // throw an error if that's not the case
+                //if (!newSegmentTupleA.Item3 || newSegmentTupleB.Item3)
+                //    throw new Exception("the first should always be positive and the second should be negative.");
 
-                // get the coordinates of the points on the line. note that the use may want these shifted
-                var negSideFrom = newSegmentTupleA.Item1 + offsetAtLineForNegativeSide * lineNormalDirection;
-                var negSideTo = newSegmentTupleB.Item1 + offsetAtLineForNegativeSide * lineNormalDirection;
-
-                if (!newSegmentTupleA.Item3 || newSegmentTupleB.Item3) throw new Exception("the first should always be positive and the second should be negative.");
+                // get the coordinates of the points on the line. note that the user may want these shifted
+                var negSideFrom = newSegmentTupleA.Item1;
+                var negSideTo = newSegmentTupleB.Item1;
+                if (offsetAtLineForNegativeSide != 0)
+                {
+                    negSideFrom += offsetAtLineForNegativeSide * lineNormalDirection;
+                    negSideTo += offsetAtLineForNegativeSide * lineNormalDirection;
+                }
                 // see if there is an existing polygon that ends where this one start
-                var existingNegSidePolygon = negativeSidePolygons.FirstOrDefault(p => p.Last().Equals(negSideFrom));
+                var existingNegSidePolygon = negativeSidePolygons.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
                 if (existingNegSidePolygon == null)
                 {
-                    existingNegSidePolygon = new List<Vector2> { negSideFrom };
+                    existingNegSidePolygon = new List<Vector2>();
                     negativeSidePolygons.Add(existingNegSidePolygon);
                 }
+                existingNegSidePolygon.Add(negSideFrom);
                 existingNegSidePolygon.Add(negSideTo);
                 var polySegment = newSegmentTupleB.Item2;
                 do
@@ -126,15 +139,20 @@ namespace TVGL.TwoDimensional
                 i--;
                 var newSegmentTupleB = pointsOnLineTuples[i];
 
-                var posSideFrom = newSegmentTupleA.Item1 - offsetAtLineForPositiveSide * lineNormalDirection;
-                var posSideTo = newSegmentTupleB.Item1 - offsetAtLineForPositiveSide * lineNormalDirection;
-
-                var existingPosSidePolygon = positiveSidePolygons.FirstOrDefault(p => p.Last().Equals(posSideFrom));
+                var posSideFrom = newSegmentTupleA.Item1;
+                var posSideTo = newSegmentTupleB.Item1;
+                if (offsetAtLineForPositiveSide != 0)
+                {
+                    posSideFrom -= offsetAtLineForPositiveSide * lineNormalDirection;
+                    posSideTo -= offsetAtLineForPositiveSide * lineNormalDirection;
+                }
+                var existingPosSidePolygon = positiveSidePolygons.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
                 if (existingPosSidePolygon == null)
                 {
-                    existingPosSidePolygon = new List<Vector2> { posSideFrom };
+                    existingPosSidePolygon = new List<Vector2>();
                     positiveSidePolygons.Add(existingPosSidePolygon);
                 }
+                existingPosSidePolygon.Add(posSideFrom);
                 existingPosSidePolygon.Add(posSideTo);
                 var polySegment = newSegmentTupleB.Item2;
                 do
@@ -147,7 +165,7 @@ namespace TVGL.TwoDimensional
 
             }
             #endregion
-            return intersectionPoints;
+            return pointsOnLineTuples.Select(p => p.Item1).ToArray();
         }
     }
 }

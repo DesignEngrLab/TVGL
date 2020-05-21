@@ -160,7 +160,7 @@ namespace TVGL.Boolean_Operations
         public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
         {
             solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, true,
-                false, units: unitType)).ToList();
+                true, units: unitType)).ToList();
         }
 
         /// <summary>
@@ -173,9 +173,9 @@ namespace TVGL.Boolean_Operations
         public static void MakeSingleSolidOnEachSideOfInfitePlane(this ContactData contactData, UnitType unitType, out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
         {
             var positiveSideFaces = new List<PolygonalFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, false, units: unitType);
+            positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, true, units: unitType);
             var negativeSideFaces = new List<PolygonalFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, false, units: unitType);
+            negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, true, units: unitType);
         }
 
 

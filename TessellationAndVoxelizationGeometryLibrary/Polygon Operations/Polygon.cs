@@ -23,7 +23,7 @@ namespace TVGL.TwoDimensional
                 if (_path == null)
                 {
                     _path = new List<Vector2>();
-                    foreach (var point in _points)
+                    foreach (var point in _vertices)
                     {
                         _path.Add(new Vector2(point.X, point.Y));
                     }
@@ -38,12 +38,12 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_points == null) MakeVertices();
-                return _points;
+                if (_vertices == null) MakeVertices();
+                return _vertices;
             }
         }
 
-        List<Vertex2D> _points;
+        List<Vertex2D> _vertices;
 
         /// <summary>
         /// Gets the list of lines that make up a polygon. This is not set by default.
@@ -55,7 +55,7 @@ namespace TVGL.TwoDimensional
             {
                 if (_lines == null)
                 {
-                    if (_points == null) MakeVertices();
+                    if (_vertices == null) MakeVertices();
                     MakeLineSegments();
                 }
                 return _lines;
@@ -68,16 +68,16 @@ namespace TVGL.TwoDimensional
             var _pointsArray = new Vertex2D[numPoints];
             for (int i = 0; i < numPoints; i++)
                 _pointsArray[i] = new Vertex2D(_path[i], i, Index);
-            _points = _pointsArray.ToList();
+            _vertices = _pointsArray.ToList();
         }
         private void MakeLineSegments()
         {
-            var numPoints = _points.Count;
+            var numPoints = Vertices.Count;
             _lines = new List<PolygonSegment>();
             for (int i = 1; i <= numPoints; i++)
             {
-                var fromNode = _points[i - 1];
-                var toNode = _points[i % numPoints]; // note the mod operator and the fact that the for loop 
+                var fromNode = Vertices[i - 1];
+                var toNode = Vertices[i % numPoints]; // note the mod operator and the fact that the for loop 
                 // goes to and including numPoints. this allows for the last line to connect the last point 
                 // back to the first. it is intended to avoid rewriting the following four lines of code.
                 var polySegment = new PolygonSegment(fromNode, toNode);
@@ -224,20 +224,41 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Polygon Constructor. Assumes path is closed and not self-intersecting.
+        /// Initializes a new instance of the <see cref="Polygon"/> class.
+        /// Assumes path is closed and not self-intersecting.
         /// </summary>
-        /// <param name="coordinates"></param>
-        /// <param name="setLines"></param>
-        /// <param name="index"></param>
-        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
+        /// <param name="coordinates">The coordinates.</param>
+        /// <param name="createLines">if set to <c>true</c> [create lines].</param>
+        /// <param name="index">The index.</param>
+        public Polygon(IEnumerable<Vector2> coordinates, bool createLines = true, int index = -1)
         {
             _path = coordinates.ToList();
             Index = index;
+            if (createLines) MakeLineSegments();
         }
 
-        public Polygon(List<Vertex2D> points, List<PolygonSegment> lines, int index = -1)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Polygon"/> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="createLines">if set to <c>true</c> [create lines].</param>
+        /// <param name="index">The index.</param>
+        public Polygon(List<Vertex2D> vertices, bool createLines = true, int index = -1)
         {
-            _points = points;
+            _vertices = vertices;
+            if (createLines) MakeLineSegments();
+            Index = index;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Polygon"/> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="lines">The lines.</param>
+        /// <param name="index">The index.</param>
+        public Polygon(List<Vertex2D> vertices, List<PolygonSegment> lines, int index = -1)
+        {
+            _vertices = vertices;
             _lines = lines;
             Index = index;
         }
@@ -273,7 +294,7 @@ namespace TVGL.TwoDimensional
             }
             else
             {
-                foreach (var point in _points)
+                foreach (var point in _vertices)
                 {
                     if (point.X > maxX) maxX = point.X;
                     if (point.X < minX) minX = point.X;

@@ -140,7 +140,7 @@ namespace TVGL.TwoDimensional
                         var nodes = new List<Vertex2D>();
                         foreach (var coordinates in origLoop)
                             nodes.Add(new Vertex2D(coordinates.Transform(randRotMatrix), pointCount++, loopsCount));
-                        var polygon = new Polygon(nodes, null, loopsCount);
+                        var polygon = new Polygon(nodes, true, loopsCount);
                         var sortedLoop = polygon.Vertices.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
                         polygonNodes.Add(polygon.Vertices);
                         sortedPolygonNodes.Add(sortedLoop);

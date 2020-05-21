@@ -135,7 +135,7 @@ namespace TVGL.TwoDimensional
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path);
+                var polygon = new Polygon(path, true);
                 var area = polygon.Area;
                 if (area < 0) negativePolygons.Add(area, polygon);
                 if (area > 0) positivePolygons.Add(area, polygon);

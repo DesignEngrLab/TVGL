@@ -1533,31 +1533,6 @@ namespace TVGL
         }
         #endregion
 
-        /// <summary>
-        ///     Finds the point on the plane made by a line intersecting
-        ///     with that plane.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane. Can be 2D or 3D. </param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="line"></param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        internal static Vector2 PointOn2DPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, PolygonSegment line)
-        {
-            PointOn2DPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
-                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
-            return new Vector2(x, y);
-        }
-
-        public static void PointOn2DPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane,
-            double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
-        {
-            var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product
-            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position.Z = 0.0
-            var fraction = (d1 - distOfPlane) / (d1 - d2);
-            x = fromPointX * fraction + toPointX * (1 - fraction);
-            y = fromPointY * fraction + toPointY * (1 - fraction);
-        }
         #endregion
 
         #region Create 2D Circle Paths

@@ -129,6 +129,38 @@ namespace TVGLUnitTestsAndBenchmarking
             var br = points.BoundingRectangle();
             Presenter.ShowAndHang(new[] { points, br.CornerPoints });
         }
+        public static void TestSlice2D()
+        {
+            //var points = new[] {
+            //    new Vector2(2.26970768, 4.28080463),
+            //    new Vector2(5.84034252, 0),
+            //    new Vector2(12.22331619, 2.24806976),
+            //    new Vector2(23.56225014, 21.88767815),
+            //    new Vector2(19.9916172, 26.16848373),
+            //    new Vector2(13.60864258, 23.92041588)
+            //        };
+            var poly1 = new[] {
+                new Vector2(6,1),
+                new Vector2(5,2),
+                new Vector2(-1,6),
+                new Vector2(-2,5),
+                new Vector2(-6,-1),
+                new Vector2(-5,-2),
+                new Vector2(1,-6),
+                new Vector2(2,-5),
+            };
+            var hole1 = new[] {
+                new Vector2(1,1),
+                new Vector2(1,-1),
+                new Vector2(-1,1),
+                new Vector2(-2,2),
+            };
+            var polyTree = new[] { poly1, hole1 };
+            Presenter.ShowAndHang(polyTree);
+            polyTree.SliceAtLine(new Vector2(1, -0.1).Normalize(), 0, out var negPolys, out var posPolys,-0.3,-0.3);
+          
+            Presenter.ShowAndHang(new[] { negPolys, posPolys });
+        }
 
     }
 }

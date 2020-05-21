@@ -45,6 +45,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 Presenter.ShowAndHang(ts);
                 var vs = new VoxelizedSolid(ts, 333);
                 Presenter.ShowAndHang(vs);
+                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.ZNegative);
+                Presenter.ShowAndHang(extrudeSolid);
+                var difference = extrudeSolid.SubtractToNewSolid(vs);
+                Presenter.ShowAndHang(difference);
+
                 //Snapshot.Match(vs, SnapshotNameExtension.Create(name));
             }
         }
