@@ -257,27 +257,20 @@ namespace TVGL
                 HasUniformColor = true;
             }
             var manyInputColors = (colors != null && colors.Count() > 1);
-            int i = 0;
             if (vertices == null)
             {
                 vertices = new HashSet<Vertex>();
                 foreach (var face in faces)
-                {
                     foreach (var vertex in face.Vertices)
-                    {
-                        if (vertices.Contains(vertex)) continue;
-                        ((HashSet<Vertex>)vertices).Add(vertex);
-                        vertex.IndexInList = i;
-                        i++;
-                    }
-                }
+                        if (!vertices.Contains(vertex))
+                            ((HashSet<Vertex>)vertices).Add(vertex);
             }
             Vertices = vertices.ToArray();
             NumberOfVertices = Vertices.Length;
             var simpleCompareDict = new Dictionary<Vertex, Vertex>();
             if (copyElements)
             {
-                for (i = 0; i < NumberOfVertices; i++)
+                for (var i = 0; i < NumberOfVertices; i++)
                 {
                     var origVertex = Vertices[i];
                     var vertex = origVertex.Copy();
@@ -289,7 +282,7 @@ namespace TVGL
             }
             else
             {
-                for (i = 0; i < NumberOfVertices; i++)
+                for (var i = 0; i < NumberOfVertices; i++)
                 {
                     var vertex = Vertices[i];
                     vertex.IndexInList = i;
@@ -304,7 +297,7 @@ namespace TVGL
                 {
                     NumberOfFaces = faces.Count();
                     Faces = new PolygonalFace[NumberOfFaces];
-                    i = 0;
+                    var i = 0;
                     foreach (var origFace in faces)
                     {
                         //Keep "CreatedInFunction" to help with debug
@@ -335,7 +328,7 @@ namespace TVGL
                 {
                     Faces = faces.ToArray();
                     NumberOfFaces = Faces.Length;
-                    for (i = 0; i < NumberOfFaces; i++)
+                    for (var i = 0; i < NumberOfFaces; i++)
                     {
                         var face = Faces[i];
                         face.IndexInList = i;
@@ -358,7 +351,7 @@ namespace TVGL
                 {
                     NumberOfFaces = faces.Count();
                     Faces = new PolygonalFace[NumberOfFaces];
-                    i = 0;
+                    var i = 0;
                     foreach (var origFace in faces)
                     {
                         //Keep "CreatedInFunction" to help with debug
@@ -389,7 +382,7 @@ namespace TVGL
                 {
                     Faces = faces.ToArray();
                     NumberOfFaces = Faces.Length;
-                    for (i = 0; i < NumberOfFaces; i++)
+                    for (var i = 0; i < NumberOfFaces; i++)
                     {
                         var face = Faces[i];
                         face.IndexInList = i;

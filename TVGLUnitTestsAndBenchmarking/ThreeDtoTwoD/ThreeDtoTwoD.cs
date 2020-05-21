@@ -7,6 +7,7 @@ using TVGL.IOFunctions;
 using Snapshooter.Xunit;
 using Snapshooter;
 using System.Linq;
+using TVGL.Boolean_Operations;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -39,6 +40,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
+                solid.SliceOnInfiniteFlat(new Flat(solid.Center,
+                    new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()).Normalize()), out var solids, out _);
                 if (solid.Errors != null)
                 {
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());

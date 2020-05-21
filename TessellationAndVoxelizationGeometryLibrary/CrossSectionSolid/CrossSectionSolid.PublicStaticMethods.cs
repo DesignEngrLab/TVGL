@@ -112,7 +112,8 @@ namespace TVGL
                 do
                 {
                     unusedEdges.Remove(currentEdge);
-                    var intersectVertex = MiscFunctions.Vector2OnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From, currentEdge.To);
+                    var intersectVertex = MiscFunctions.PointOnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From.Coordinates,
+                        currentEdge.To.Coordinates);
                     loop.Add(intersectVertex);
                     var nextFace = (currentEdge.From.Z < ZOfPlane) ? currentEdge.OtherFace : currentEdge.OwnedFace;
                     Edge nextEdge = null;

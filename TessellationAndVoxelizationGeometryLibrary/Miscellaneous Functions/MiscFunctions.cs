@@ -266,7 +266,7 @@ namespace TVGL
         }
         #endregion
 
-
+        #region Area of 3D Polygon
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon in 3D space (loops)
         ///     This is faster than projecting to a 2D surface first in a seperate function.
@@ -423,6 +423,7 @@ namespace TVGL
             }
             return area;
         }
+        #endregion
 
         #region Split Tesselated Solid into multiple solids if faces are disconnected 
         /// <summary>
@@ -1289,7 +1290,10 @@ namespace TVGL
         {
             return normalOfPlane.Dot(point) - signedDistanceToPlane;
         }
+        #endregion
 
+        #region Find Intersecting Element
+        #region Point on Face
         /// <summary>
         ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
         ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
@@ -1300,10 +1304,11 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnFaceFromIntersectingLine(this PolygonalFace face, Vector3 point1, Vector3 point2)
+        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face,  Vector3 point1,
+            Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
             var positions = face.Vertices.Select(vertex => vertex.Coordinates).ToList();
-            return PointOnFaceFromIntersectingLine(positions, face.Normal, point1, point2);
+            return PointOnTriangleFromLine(positions, face.Normal, point1, point2,out relativeDistance,onBoundaryIsInside);
         }
 
         /// <summary>
@@ -1316,164 +1321,15 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <param name="vertices"></param>
         /// <returns>Vertex.</returns>
-        public static Vector3 PointOnFaceFromIntersectingLine(List<Vector3> vertices, Vector3 normal, Vector3 point1,
-            Vector3 point2)
+        public static Vector3 PointOnTriangleFromLine(this List<Vector3> vertices, Vector3 normal, Vector3 point1,
+            Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
-            var planeDistance = normal.Dot(vertices[0]);
-            var d1 = normal.Dot(point1);
-            var d2 = normal.Dot(point2);
-            if (Math.Sign(planeDistance - d1) == Math.Sign(planeDistance - d2)) return Vector3.Null; //Points must be on either side of triangle
-            var denominator = d2 - d1;
-            if (denominator == 0) return Vector3.Null; //The points form a perpendicular line to the face
-            var fraction = (planeDistance - d1) / denominator;
-            var intersectionPoint = Vector3.Lerp(point1, point2, fraction);
-
-            return IsVertexInsideTriangle(vertices, intersectionPoint, true) ? intersectionPoint : Vector3.Null;
+            var distanceToOrigin = normal.Dot(vertices[0]);
+            var newPoint = PointOnPlaneFromIntersectingLine(normal, distanceToOrigin, point1, point2,out  relativeDistance);
+            if (newPoint.IsNull()) return Vector3.Null;
+            return IsVertexInsideTriangle(vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
 
-
-        /// <summary>
-        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that plane. Returns null if the intersection point is not on the line segment.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnPlaneFromIntersectingLineSegment(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
-            Vector3 point2)
-        {
-            var position = PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1, point2);
-            var d1 = point2.Subtract(point1).Length();
-            var d2 = point2.Subtract(position).Length();
-            var d3 = point1.Subtract(position).Length();
-            return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : Vector3.Null;
-        }
-
-        /// <summary>
-        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that plane.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector2 Vector2OnZPlaneFromIntersectingLine(double distOfPlane, Vertex point1,
-            Vertex point2)
-        {
-            var toFactor = (distOfPlane - point1.Z) / (point2.Z - point1.Z);
-            var fromFactor = 1 - toFactor;
-
-            return new Vector2(fromFactor * point1.X + toFactor * point2.X,
-                fromFactor * point1.Y + toFactor * point2.Y);
-        }
-
-        /// <summary>
-        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that plane.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnPlaneFromIntersectingLine(Flat plane, Vector3 point1,
-            Vector3 point2)
-        {
-            return PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, point1, point2);
-        }
-
-        /// <summary>
-        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that plane.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
-            Vector3 point2)
-        {
-            var d1 = normalOfPlane.Dot(point1);
-            var d2 = normalOfPlane.Dot(point2);
-            var fraction = (d1 - distOfPlane) / (d1 - d2);
-            if (fraction < 0 || fraction > 1) return Vector3.Null;
-            return Vector3.Lerp(point1, point2, fraction);
-        }
-
-        /// <summary>
-        ///     Finds the point on the plane made by a line intersecting
-        ///     with that plane.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane. Can be 2D or 3D. </param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="line"></param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        internal static Vector2 PointOnPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, PolygonSegment line)
-        {
-            Vector2OnPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
-                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
-            return new Vector2(x, y);
-        }
-
-        public static void Vector2OnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane,
-            double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
-        {
-            var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product
-            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position.Z = 0.0
-            var fraction = (d1 - distOfPlane) / (d1 - d2);
-            x = fromPointX * fraction + toPointX * (1 - fraction);
-            y = fromPointY * fraction + toPointY * (1 - fraction);
-        }
-
-        /// <summary>
-        ///     Finds the point on the plane made by a ray. If that ray is not going to pass through the
-        ///     that plane, then null is returned.
-        /// </summary>
-        /// <param name="normalOfPlane">The normal of plane.</param>
-        /// <param name="distOfPlane">The dist of plane.</param>
-        /// <param name="rayPosition">The ray position.</param>
-        /// <param name="rayDirection">The ray direction.</param>
-        /// <param name="signedDistance"></param>
-        /// <returns>Vertex.</returns>
-        public static Vector3 PointOnPlaneFromRay(Vector3 normalOfPlane, double distOfPlane, Vector3 rayPosition,
-            Vector3 rayDirection, out double signedDistance)
-        {
-            var dot = rayDirection.Dot(normalOfPlane);
-            signedDistance = 0.0;
-            if (dot == 0) return Vector3.Null;
-
-            var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
-            signedDistance = d1 / dot;
-            if (signedDistance.IsNegligible()) return rayPosition;
-            return rayPosition + (rayDirection * signedDistance);
-        }
-
-        /// <summary>
-        ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
-        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
-        ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
-        ///     are considered "inside."
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="vertex">The vertex.</param>
-        /// <param name="direction">The direction.</param>
-        /// <param name="signedDistance">The signed distance.</param>
-        /// 
-        /// <returns>Vertex.</returns>
-        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vertex vertex, Vector3 direction,
-            out double signedDistance)
-        {
-            return PointOnTriangleFromLine(face, vertex.Coordinates, direction, out signedDistance);
-        }
 
         /// <summary>
         ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
@@ -1486,12 +1342,12 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vector3 point3D, Vector3 direction,
+        public static Vector3 PointOnTriangleFromRay(PolygonalFace face, Vector3 point3D, Vector3 direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             var distanceToOrigin = face.Normal.Dot(face.Vertices[0].Coordinates);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
-            if (newPoint == null) return Vector3.Null;
+            if (newPoint.IsNull()) return Vector3.Null;
             return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
 
@@ -1533,8 +1389,174 @@ namespace TVGL
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.Z - point3D.Z);
                     break;
             }
-
             return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
+        }
+        #endregion
+
+        #region Point on Plane
+        /// <summary>
+        /// Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        /// with that plane.
+        /// </summary>
+        /// <param name="plane">The plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="relativeDistance">The relative distance of the plane. If zero, then at point1. If one, then at point2.
+        /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one, 
+        /// then intersection is on the other side of point2.</param>
+        /// <returns>IntersectionPoint.</returns>
+        public static Vector3 PointOnPlaneFromIntersectingLine(Flat plane, Vector3 point1, Vector3 point2, out double relativeDistance)
+        {
+            return PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, point1, point2, out relativeDistance);
+        }
+
+        /// <summary>
+        /// Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        /// with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="relativeDistance">The relative distance of the plane. If zero, then at point1. If one, then at point2.
+        /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one, 
+        /// then intersection is on the other side of point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Vector3 PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
+            Vector3 point2, out double relativeDistance)
+        {
+            var d1 = normalOfPlane.Dot(point1);
+            var d2 = normalOfPlane.Dot(point2);
+            relativeDistance = (d1 - distOfPlane) / (d1 - d2);
+            return Vector3.Lerp(point1, point2, relativeDistance);
+        }
+
+        /// <summary>
+        /// Finds the point on the plane made by a ray. If that ray is not going to pass through the
+        /// that plane, then null is returned.
+        /// </summary>
+        /// <param name="plane">The plane.</param>
+        /// <param name="rayPosition">The ray position.</param>
+        /// <param name="rayDirection">The ray direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <returns>Vertex.</returns>
+        public static Vector3 PointOnPlaneFromRay(Flat plane, Vector3 rayPosition,
+            Vector3 rayDirection, out double signedDistance)
+        {
+            return PointOnPlaneFromRay(plane.Normal, plane.DistanceToOrigin, rayPosition, rayDirection, out signedDistance);
+        }
+
+        /// <summary>
+        ///     Finds the point on the plane made by a ray. If that ray is not going to pass through the
+        ///     that plane, then null is returned.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="rayPosition">The ray position.</param>
+        /// <param name="rayDirection">The ray direction.</param>
+        /// <param name="signedDistance"></param>
+        /// <returns>Vertex.</returns>
+        public static Vector3 PointOnPlaneFromRay(Vector3 normalOfPlane, double distOfPlane, Vector3 rayPosition,
+            Vector3 rayDirection, out double signedDistance)
+        {
+            var dot = rayDirection.Dot(normalOfPlane);
+            signedDistance = 0.0;
+            if (dot == 0) return Vector3.Null;
+
+            var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
+            signedDistance = d1 / dot;
+            if (signedDistance.IsNegligible()) return rayPosition;
+            return rayPosition + (rayDirection * signedDistance);
+        }
+
+
+
+
+        /// <summary>
+        ///     Finds the point on the x-plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Vector3 PointOnXPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+            Vector3 point2)
+        {
+            var toFactor = (distOfPlane - point1.X) / (point2.X - point1.X);
+            var fromFactor = 1 - toFactor;
+
+            return new Vector3(distOfPlane, fromFactor * point1.Y + toFactor * point2.Y, fromFactor * point1.Z + toFactor * point2.Z);
+        }
+
+        /// <summary>
+        ///     Finds the point on the y-plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Vector3 PointOnYPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+            Vector3 point2)
+        {
+            var toFactor = (distOfPlane - point1.Y) / (point2.Y - point1.Y);
+            var fromFactor = 1 - toFactor;
+
+            return new Vector3(fromFactor * point1.X + toFactor * point2.X, distOfPlane,
+                fromFactor * point1.Z + toFactor * point2.Z);
+        }
+
+        /// <summary>
+        ///     Finds the point on the z- plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane. Note, the result is a Vector2 - just the x and y value. The z-value would be the input, distOfPlane
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Vector2 PointOnZPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+            Vector3 point2)
+        {
+            var toFactor = (distOfPlane - point1.Z) / (point2.Z - point1.Z);
+            var fromFactor = 1 - toFactor;
+
+            return new Vector2(fromFactor * point1.X + toFactor * point2.X,
+                fromFactor * point1.Y + toFactor * point2.Y);
+        }
+        #endregion
+
+        /// <summary>
+        ///     Finds the point on the plane made by a line intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane. Can be 2D or 3D. </param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="line"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        internal static Vector2 PointOn2DPlaneFromIntersectingLine(Vector2 normalOfPlane, double distOfPlane, PolygonSegment line)
+        {
+            PointOn2DPlaneFromIntersectingLine(normalOfPlane.X, normalOfPlane.Y, distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
+            return new Vector2(x, y);
+        }
+
+        public static void PointOn2DPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane,
+            double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
+        {
+            var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product
+            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position.Z = 0.0
+            var fraction = (d1 - distOfPlane) / (d1 - d2);
+            x = fromPointX * fraction + toPointX * (1 - fraction);
+            y = fromPointY * fraction + toPointY * (1 - fraction);
         }
         #endregion
 
