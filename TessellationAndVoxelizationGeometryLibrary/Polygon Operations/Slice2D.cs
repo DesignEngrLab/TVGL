@@ -49,6 +49,9 @@ namespace TVGL.TwoDimensional
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
+            // like 3D slicing, it is too complicated to try and manage collinear points or line segments. it is better to just change the slice
+            // distance by some small amount. This is checked and handled in the ShiftLineToAvoidCollinearPoints
+            distanceAlongDirection = ShiftLineToAvoidCollinearPoints(shallowPolygonTree, lineNormalDirection, distanceAlongDirection);
             negativeSidePolygons = new List<List<Vector2>>();
             positiveSidePolygons = new List<List<Vector2>>();
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
@@ -59,8 +62,6 @@ namespace TVGL.TwoDimensional
 
             //(1) Find the intersection lines and the lines to the left of the current distance      
             var intersectionLines = new HashSet<PolygonSegment>();
-            var collinearSegments = new HashSet<PolygonSegment>();
-            var collinearPoints = new HashSet<Vector2>();
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = distanceAlongDirection * lineNormalDirection;
             var sortedPoints = new SortedList<double, (Vector2, PolygonSegment)>();
@@ -68,24 +69,12 @@ namespace TVGL.TwoDimensional
                 foreach (var line in polygons.Lines)
                 {
                     if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
-                         anchorpoint, lineDir, out var intersectionPoint, true))
+                         anchorpoint, lineDir, out var intersectionPoint))
                     {
-                        if (intersectionPoint.IsNull()) // this only happens in polygon line segment is collinear with separation line
-                        {
-                            collinearSegments.Add(line);
-                            /* In order to avoid adding points more than once, we only add if the "To" points. 
-                             * The "From" points will be added when they are "To"'s */
-                            collinearPoints.Add(line.ToPoint.Coordinates);
-                        }
-                        else
-                        {
-                            intersectionLines.Add(line);
-                            if (line.ToPoint.Coordinates.IsPracticallySame(intersectionPoint))
-                                collinearPoints.Add(line.ToPoint.Coordinates);
-                        }
+                        intersectionLines.Add(line);
                         var distanceAlong = lineDir.Dot(intersectionPoint);
                         sortedPoints.Add(distanceAlong, (intersectionPoint, line));
-                            //!line.ToPoint.Coordinates.Dot(lineNormalDirection).IsLessThanNonNegligible(distanceAlongDirection));
+                        //!line.ToPoint.Coordinates.Dot(lineNormalDirection).IsLessThanNonNegligible(distanceAlongDirection));
                     }
                 }
             // we don't really need the distances, so  convert the values to an array
@@ -166,6 +155,45 @@ namespace TVGL.TwoDimensional
             }
             #endregion
             return pointsOnLineTuples.Select(p => p.Item1).ToArray();
+        }
+
+        private static double ShiftLineToAvoidCollinearPoints(Polygon shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection)
+        {
+            // for simplicity set the tolerance and nextStep, which is the delta so that IsPracticallySame won't return true. 
+            var tolerance = Constants.BaseTolerance;
+            var nextStep = 1.1 * tolerance;
+            var collinearPointFound = false;
+            var closestPointAbove = double.PositiveInfinity;
+            var closestPointBelow = double.NegativeInfinity;
+            // search through all points to see if any are collinear. If not, keep track of the closest points
+            foreach (var polygons in shallowPolygonTree.AllPolygons)
+                foreach (var vertex in polygons.Vertices)
+                {
+                    var vDistance = vertex.Coordinates.Dot(lineNormalDirection);
+                    if (vDistance.IsPracticallySame(distanceAlongDirection, tolerance)) collinearPointFound = true;
+                    else
+                    {
+                        vDistance -= distanceAlongDirection;
+                        if (vDistance > 0)
+                        { if (closestPointAbove > vDistance) closestPointAbove = vDistance; }
+                        else if (closestPointBelow < vDistance) closestPointBelow = vDistance;
+                    }
+                }
+            // nothing is collinear (or within tolerance), so return original value
+            if (!collinearPointFound) return distanceAlongDirection;
+            // if there are collinear points, but next non collinear is greater than 2 nextSteps (s.t. collinear won't be detected there)
+            // then return the original distance plus 110% of the tolerance (i.e. nextStep)
+            if (closestPointAbove >= 2 * nextStep) return distanceAlongDirection + nextStep;
+            // same for the reverse
+            if (-closestPointBelow >= 2 * nextStep) return distanceAlongDirection - nextStep;
+            // otherwise, there are points that are going to be collinear with this new value, so we recurse in both directions. moving to the
+            // closestPointAbove and the closestPointBelow means that there will be overlap on the inner side, but hopefully not on the outer side.
+            // thus calling one of the previous two conditions. At any rate, this "can" recurse to arbitrary depth, which provideds robustness. 
+            // But it is unlikely to do so. So, it is still quite robust.
+            var nextPositiveStep = ShiftLineToAvoidCollinearPoints(shallowPolygonTree, lineNormalDirection, distanceAlongDirection + closestPointAbove);
+            var nextNegativeStep = ShiftLineToAvoidCollinearPoints(shallowPolygonTree, lineNormalDirection, distanceAlongDirection + closestPointBelow);
+            if (nextPositiveStep - distanceAlongDirection < distanceAlongDirection - nextNegativeStep) return nextPositiveStep;
+            else return nextNegativeStep;
         }
     }
 }
