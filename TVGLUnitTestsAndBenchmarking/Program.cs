@@ -21,6 +21,7 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
         {
             Voxels.InitialTest();
+            return;
             var tVGL3Dto2DTests = new TVGL3Dto2DTests();
             tVGL3Dto2DTests.BoxSilhouette();
 

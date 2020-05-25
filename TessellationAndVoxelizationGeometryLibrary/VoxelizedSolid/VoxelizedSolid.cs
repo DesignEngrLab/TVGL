@@ -42,7 +42,6 @@ namespace TVGL.Voxelization
         public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         public int[][] VoxelBounds { get; }
         public double VoxelSideLength { get; private set; }
-        public Vector3 TessToVoxSpace { get; }
         public Vector3 Dimensions { get; private set; }
         public Vector3 Offset => Bounds[0];
         public int numVoxelsX { get; private set; }

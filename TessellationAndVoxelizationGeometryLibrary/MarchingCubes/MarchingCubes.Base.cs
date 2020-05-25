@@ -30,9 +30,9 @@ namespace TVGL
             _xMin = solid.XMin - buffer;
             _yMin = solid.YMin - buffer;
             _zMin = solid.ZMin - buffer;
-            _xMax = solid.XMax + buffer;
-            _yMax = solid.YMax + buffer;
-            _zMax = solid.ZMax + buffer;
+            var _xMax = solid.XMax + buffer;
+            var _yMax = solid.YMax + buffer;
+            var _zMax = solid.ZMax + buffer;
             numGridX = (int)Math.Ceiling((_xMax - _xMin) / discretization) + 1;
             numGridY = (int)Math.Ceiling((_yMax - _yMin) / discretization) + 1;
             numGridZ = (int)Math.Ceiling((_zMax - _zMin) / discretization) + 1;
@@ -60,11 +60,10 @@ namespace TVGL
         protected readonly Vector3[] GridOffsetTable;
         readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         protected readonly List<PolygonalFace> faces;
-        protected const double fractionOfGridToExpand = 1.05;
+        protected const double fractionOfGridToExpand = 0.05;
         #region to be assigned in inherited constructor
         protected int numGridX, numGridY, numGridZ;
         protected double _xMin, _yMin, _zMin;
-        protected double _xMax, _yMax, _zMax;
         protected int yMultiplier;
         protected int zMultiplier;
         #endregion

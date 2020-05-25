@@ -33,7 +33,7 @@ namespace TVGL
 
         public ImplicitSolid()
         {
-            Bounds = new[] { new Vector3(0.0,0.0,0.0),new Vector3(10.0,10.0,10.0)};
+            Bounds = new[] { new Vector3(0.0, 0.0, 0.0), new Vector3(10.0, 10.0, 10.0) };
         }
         public override Solid Copy()
         {
@@ -59,10 +59,10 @@ namespace TVGL
 
         private double Evaluate(double x, double y, double z)
         {
-            var center = new Vector3(5, 5, 5 );
+            var center = new Vector3(5, 5, 5);
             var queriedPoint = new Vector3(x, y, z);
             var radius = 3.0;
-            return (queriedPoint-center).Length() - radius;
+            return (queriedPoint - center).Length() - radius;
         }
 
         public TessellatedSolid ConvertToTessellatedSolid()

@@ -42,13 +42,13 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 }
                 ts.SolidColor = new Color(100, 200, 100, 50);
-                Presenter.ShowAndHang(ts);
-                var vs = new VoxelizedSolid(ts, 333);
-                Presenter.ShowAndHang(vs);
-                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.ZNegative);
-                Presenter.ShowAndHang(extrudeSolid);
-                var difference = extrudeSolid.SubtractToNewSolid(vs);
-                Presenter.ShowAndHang(difference);
+                //Presenter.ShowAndHang(ts);
+                var vs = new VoxelizedSolid(ts, 10000);
+                //Presenter.ShowAndHang(vs);
+                var extrudeSolid = vs.DraftToNewSolid(CartesianDirections.XNegative);
+                //Presenter.ShowAndHang(extrudeSolid);
+                extrudeSolid.Subtract(vs);
+                Presenter.ShowAndHang(extrudeSolid.ConvertToTessellatedSolidMarchingCubes(50));
 
                 //Snapshot.Match(vs, SnapshotNameExtension.Create(name));
             }
