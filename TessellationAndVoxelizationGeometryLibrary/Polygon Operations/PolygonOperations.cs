@@ -93,9 +93,18 @@ namespace TVGL.TwoDimensional
             return polygon.Area() > 0;
         }
 
+        /// <summary>
+        /// Converts the to a 1D collection of doubles.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
         public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vector2> coordinates)
         {
-            return coordinates.SelectMany(p => p.Position);
+            foreach (var coordinate in coordinates)
+            {
+                yield return coordinate.X;
+                yield return coordinate.Y;
+            }
         }
 
         public static IEnumerable<Vector2> ConvertToVector2s(this IEnumerable<double> coordinates)
@@ -116,9 +125,17 @@ namespace TVGL.TwoDimensional
         /// Gets the Shallow Polygon Trees for a given set of paths.
         /// </summary>
         /// <param name="paths">The paths.</param>
+        /// <param name="vertexNegPosOrderIsCorrect">if set to <c>true</c> [vertices are properly ordered to represents positive (CCW) and negative (CW) polygons].</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
-        public static Polygon[] CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths)
+        public static Polygon[] CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
+            bool vertexNegPosOrderIsCorrect, out int[] connectingIndices)
+        {
+            if (vertexNegPosOrderIsCorrect) return CreateShallowPolygonTreesProperlyOrdered(paths, out connectingIndices);
+            else return CreateShallowPolygonTreesUnordered(paths, out connectingIndices);
+        }
+        private static Polygon[] CreateShallowPolygonTreesProperlyOrdered(this IEnumerable<IEnumerable<Vector2>> paths,
+            out int[] connectingIndices)
         {
             //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
             //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
@@ -133,13 +150,15 @@ namespace TVGL.TwoDimensional
             //By ordering the polygons, we are gauranteed to do the outermost positive polygons first.
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort());
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
+            var index = 0;
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path, true);
+                var polygon = new Polygon(path, true, index++);
                 var area = polygon.Area;
                 if (area < 0) negativePolygons.Add(area, polygon);
                 if (area > 0) positivePolygons.Add(area, polygon);
             }
+            connectingIndices = new int[index];
             var result = positivePolygons.Values.ToArray();
             //2) Find the positive polygon that this negative polygon is inside.
             //The negative polygon belongs to the smallest positive polygon that it fits inside.
@@ -151,13 +170,13 @@ namespace TVGL.TwoDimensional
                 var area = negativePolygonKVP.Key;
                 var negativePolygon = negativePolygonKVP.Value;
                 //Start with the smallest positive polygon           
-                foreach (var polygon in result)
+                foreach (var positivePolygon in result)
                 {
-                    if (-area < polygon.Area
-                        && polygon.IsPointInsidePolygon(negativePolygon.Path[0], out _, out _, out _)
-                        && polygon.IsPolygonIntersectingPolygon(negativePolygon))
+                    if (-area < positivePolygon.Area
+                        && positivePolygon.IsPointInsidePolygon(negativePolygon.Vertices[0].Coordinates, out _, out _, out _)
+                        && positivePolygon.IsPolygonIntersectingPolygon(negativePolygon))
                     {
-                        polygon.InnerPolygons.Add(negativePolygon);
+                        positivePolygon.InnerPolygons.Add(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
                         isInside = true;
                         break;
@@ -168,15 +187,80 @@ namespace TVGL.TwoDimensional
             }
 
             //Set the polygon indices
-            var polygonCount = 0;
+            index = 0;
             foreach (var polygon in result)
             {
-                polygon.Index = polygonCount;
+                connectingIndices[polygon.Index] = index;
+                polygon.Index = index++;
                 foreach (var hole in polygon.InnerPolygons)
-                    hole.Index = polygonCount;
-                polygonCount += 1 + polygon.InnerPolygons.Count;
+                {
+                    connectingIndices[hole.Index] = index++;
+                    hole.Index = polygon.Index;
+                }
+                //index += 1 + polygon.InnerPolygons.Count;
             }
             return result;
+        }
+
+        private static Polygon[] CreateShallowPolygonTreesUnordered(this IEnumerable<IEnumerable<Vector2>> paths, out int[] connectingIndices)
+        {
+            var polygons = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
+            var index = 0;
+            foreach (var path in paths)
+            {
+                var polygon = new Polygon(path, true, index++);
+                var area = polygon.Area;
+                if (area < 0)
+                {
+                    polygon.Reverse();
+                    area = -area;
+                }
+                polygons.Add(area, polygon);
+            }
+            connectingIndices = new int[index];
+            var result = new List<Polygon>();
+            foreach (var polygon in polygons.Values)
+            {
+                for (int i = 0; i < result.Count; i++)
+                {
+                    var outerPolygon = result[i];
+                    if (outerPolygon.IsPointInsidePolygon(polygon.Vertices[0].Coordinates, out _, out _, out _)
+                        && outerPolygon.IsPolygonIntersectingPolygon(polygon))
+                    {
+                        var insideAHoleOfOuterPolygon = false;
+                        foreach (var innerPolygon in outerPolygon.InnerPolygons)
+                        {
+                            if (innerPolygon.IsPointInsidePolygon(polygon.Vertices[0].Coordinates, out _, out _, out _)
+                                && innerPolygon.IsPolygonIntersectingPolygon(polygon))
+                            {
+                                result.Add(polygon);
+                                insideAHoleOfOuterPolygon = true;
+                                break;
+                            }
+                        }
+                        if (!insideAHoleOfOuterPolygon)
+                        {
+                            polygon.Reverse();
+                            outerPolygon.InnerPolygons.Add(polygon);
+                        }
+                        break;
+                    }
+                }
+            }
+            //Set the polygon indices
+            index = 0;
+            foreach (var polygon in result)
+            {
+                connectingIndices[polygon.Index] = index;
+                polygon.Index = index++;
+                foreach (var hole in polygon.InnerPolygons)
+                {
+                    connectingIndices[hole.Index] = index++;
+                    hole.Index = polygon.Index;
+                }
+                //index += 1 + polygon.InnerPolygons.Count;
+            }
+            return result.ToArray();
         }
 
 
@@ -356,9 +440,17 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
-        ///     below, but does allow determination of whether a point is on the boundary.
+        /// Determines if a point is inside a polygon. The polygon can be positive or negative. In either case,
+        /// the result is true is the polygon encloses the point. Additionaly output parameters can be used to
+        /// locate the closest line above or below the point.
         /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="closestLineAbove">The closest line above.</param>
+        /// <param name="closestLineBelow">The closest line below.</param>
+        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
         internal static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion, out PolygonSegment closestLineAbove,
             out PolygonSegment closestLineBelow, out bool onBoundary, bool onBoundaryIsInside = true)
         {
@@ -431,18 +523,14 @@ namespace TVGL.TwoDimensional
 
 
         /// <summary>
-        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
-        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
-        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
-        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
-        ///     Major Assumptions: 
-        ///     1) The polygon can be convex
-        ///     2) The direction of the polygon does not matter  
-        /// 
-        ///     Updated by Brandon Massoni: 8.11.2017
+        /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        /// The polygon must not be self-intersecting but the direction of the polygon does not matter.
+        /// Updated by Brandon Massoni: 8.11.2017
         /// </summary>
-        /// <param name="path"></param>
-        /// <param name="pointInQuestion"></param>
+        /// <param name="path">The path.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
         public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
         {
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
@@ -454,7 +542,7 @@ namespace TVGL.TwoDimensional
             var polygonIsBelowPoint = false;
             foreach (var point in path)
             {
-                if (point == pointInQuestion)
+                if (point.IsPracticallySame(pointInQuestion))
                     return onBoundaryIsInside;
                 if (point.X > qX) polygonIsLeftOfPoint = true;
                 else if (point.X < qX) polygonIsRightOfPoint = true;
@@ -465,19 +553,31 @@ namespace TVGL.TwoDimensional
                 // this is like the AABB check. 
                 return false;
 
-            //2) Next, see how many lines are to the left of the point, using a fixed y value.
-            //This compact, effecient 7 lines of code is from W. Randolph Franklin
-            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
+            //2) Next, see how many lines are to the right of the point. This is inspired by the compact 7 lines of 
+            //   code is from W. Randolph Franklin https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html . However,
+            //   extra conditions are added for boundary at little to no computational expense.
             var inside = false;
             for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            // this novel for-loop implementation of i and j is brilliant (compact and efficient). use this in other places!!
             {
-                if ((path[i].Y > pointInQuestion.Y) != (path[j].Y > pointInQuestion.Y) &&
-                     pointInQuestion.X < (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                if (path[i].Y == path[j].Y) // line is horizontal
                 {
-                    inside = !inside;
+                    // see if point has same Y value
+                    if (path[i].Y == pointInQuestion.Y && (path[i].X >= pointInQuestion.X) != (path[j].X >= pointInQuestion.X))
+                        return onBoundaryIsInside;
+                    else return false;
+                }
+                else if ((path[i].Y > pointInQuestion.Y) != (path[j].Y > pointInQuestion.Y))
+                // we can use strict inequalities here since we check the endpoints in loop above
+                {   // so, the polygon line starts above (higher Y-value) the point and end below it (lower Y-value) 
+                    // what is the x coordinate on the line at the point's Y value
+                    var xCoordWithSameY = (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X;
+                    if (pointInQuestion.X.IsPracticallySame(xCoordWithSameY))
+                        return onBoundaryIsInside;
+                    else if (pointInQuestion.X < xCoordWithSameY)
+                        inside = !inside; // it is inside if the number of lines to the right of the point is odd
                 }
             }
-
             return inside;
         }
 
@@ -630,11 +730,11 @@ namespace TVGL.TwoDimensional
                     var smallestArea = crossProductsArray[index];
                     if (deltaArea < sign * smallestArea)
                     { //one tricky little bug! in order to keep this fast, we first dequeue before examining
-                        // the result. if the resulting index produces more area than we need we switch to the
-                        // concave queue. That dequeueing and updating will want this last index on the queues
-                        // if it is a neighbor to a new one being removing. Confusing, eh? So, we need to put it
-                        // back in. Looks kludge-y but this only happens once, and it's better to do this once
-                        // then add more logic to the above statements that would slow it down.
+                      // the result. if the resulting index produces more area than we need we switch to the
+                      // concave queue. That dequeueing and updating will want this last index on the queues
+                      // if it is a neighbor to a new one being removing. Confusing, eh? So, we need to put it
+                      // back in. Looks kludge-y but this only happens once, and it's better to do this once
+                      // then add more logic to the above statements that would slow it down.
                         relevantSortedList.Enqueue(index, smallestArea);
                         break;
                     }

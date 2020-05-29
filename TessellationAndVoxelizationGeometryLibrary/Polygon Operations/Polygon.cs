@@ -114,7 +114,20 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// The index of this child in its parent's child list.
         /// </summary>
-        public int Index { get; set; }
+        public int Index
+        {
+            get { return index; }
+            set
+            {
+                if (index == value) return;
+                index = value;
+                if (_vertices != null)
+                    foreach (var v in Vertices)
+                    {
+                        v.LoopID = index;
+                    }
+            }
+        }
 
         /// <summary>
         /// Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.
@@ -213,6 +226,8 @@ namespace TVGL.TwoDimensional
         /// Minimum Y value
         /// </summary>
         private double minY = double.PositiveInfinity;
+        private int index;
+
         public double MinY
         {
             get

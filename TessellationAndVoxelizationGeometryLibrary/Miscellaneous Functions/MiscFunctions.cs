@@ -560,8 +560,8 @@ namespace TVGL
         /// <param name="locations">The locations.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple locations under a single point.
-        /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
-        /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
+        /// If not provided or less than zero, then one point will be made for each vertex. If zero to 1e-15, then the coordinates 
+        /// will match at the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
         /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
@@ -1304,11 +1304,11 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face,  Vector3 point1,
+        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vector3 point1,
             Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
             var positions = face.Vertices.Select(vertex => vertex.Coordinates).ToList();
-            return PointOnTriangleFromLine(positions, face.Normal, point1, point2,out relativeDistance,onBoundaryIsInside);
+            return PointOnTriangleFromLine(positions, face.Normal, point1, point2, out relativeDistance, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -1325,7 +1325,7 @@ namespace TVGL
             Vector3 point2, out double relativeDistance, bool onBoundaryIsInside = true)
         {
             var distanceToOrigin = normal.Dot(vertices[0]);
-            var newPoint = PointOnPlaneFromIntersectingLine(normal, distanceToOrigin, point1, point2,out  relativeDistance);
+            var newPoint = PointOnPlaneFromIntersectingLine(normal, distanceToOrigin, point1, point2, out relativeDistance);
             if (newPoint.IsNull()) return Vector3.Null;
             return IsVertexInsideTriangle(vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
@@ -1684,7 +1684,38 @@ namespace TVGL
             return facesAbove.Count % 2 != 0 && facesBelow.Count % 2 != 0;
             //Even number of intercepts, means the vertex is inside
         }
+        #endregion
 
+        /// <summary>
+        /// Converts the to a 1D collection of doubles.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
+        public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vector3> coordinates)
+        {   // this is not really the place for this function, but since it's so similar to the function above it; 
+            // it seems okay to leave it here (where else would it go?)
+            foreach (var coordinate in coordinates)
+            {
+                yield return coordinate.X;
+                yield return coordinate.Y;
+                yield return coordinate.Z;
+            }
+        }
+
+        /// <summary>
+        /// Converts the to a 1D collection of doubles.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
+        public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vertex> coordinates)
+        {   // this is not really the place for this function, but since it's so similar to the function above it; 
+            // it seems okay to leave it here (where else would it go?)
+            foreach (var coordinate in coordinates)
+            {
+                yield return coordinate.X;
+                yield return coordinate.Y;
+                yield return coordinate.Z;
+            }
+        }
     }
-    #endregion
 }

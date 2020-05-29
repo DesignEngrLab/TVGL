@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using MIConvexHull;
+using Newtonsoft.Json;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
@@ -104,6 +105,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 else return Z;
             }
         }
+
+        [JsonIgnore]
         public double[] Position => new[] { X, Y, Z };
 
         #endregion Public Static Properties

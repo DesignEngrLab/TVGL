@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using MIConvexHull;
+using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -71,6 +72,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         double IVertex2D.X => X;
 
         double IVertex2D.Y => Y;
+
+        [JsonIgnore]
 
         public double[] Position => new[] { X, Y };
 

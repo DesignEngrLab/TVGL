@@ -158,7 +158,7 @@ namespace TVGL
             serializationData.Add("FaceIndices",
                 JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
             serializationData.Add("VertexCoords",
-               JToken.FromObject(Vertices.SelectMany(v => v.Coordinates.Position)));
+               JToken.FromObject(Vertices.ConvertTo1DDoublesCollection()));
             serializationData.Add("Colors",
             (HasUniformColor || Faces.All(f => f.Color.Equals(Faces[0].Color)))
             ? SolidColor.ToString()

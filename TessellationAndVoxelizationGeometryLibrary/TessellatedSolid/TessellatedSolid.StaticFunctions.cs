@@ -49,6 +49,5 @@ namespace TVGL
                 if (vertex == edge.From) edge.From = null;
             }
         }
-
     }
 }

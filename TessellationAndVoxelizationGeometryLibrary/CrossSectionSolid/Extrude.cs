@@ -24,7 +24,7 @@ namespace TVGL
         public static TessellatedSolid ExtrusionSolidFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
             double extrusionHeight, bool midPlane = false)
         {
-            return new TessellatedSolid(ExtrusionFacesFrom3DLoops(loops, extrudeDirection, extrusionHeight, midPlane),false, false);
+            return new TessellatedSolid(ExtrusionFacesFrom3DLoops(loops, extrudeDirection, extrusionHeight, midPlane), false, false);
         }
 
         /// <summary>
@@ -48,23 +48,23 @@ namespace TVGL
             // find transform to the XY plane and store the backTransform (the transform back to the original)
             var transform = MiscFunctions.TransformToXYPlane(extrudeDirection, out var backTransform);
             // make paths, the 2D polygons represening the 3D loops
-            var paths = loops.Select(loop => loop.ProjectTo2DCoordinates(transform));
+            var paths = loops.Select(loop => loop.ProjectTo2DCoordinates(transform, 0, true));
             // the basePlaneDistance defines the plane closer to the origin. we can get this from the any input coordinate
             var basePlaneDistance = extrudeDirection.Dot(loops.First().First());
             if (midPlane) basePlaneDistance -= extrusionHeight / 2.0;
-            return ExtrusionFacesFrom2DPolygons(paths, extrudeDirection, basePlaneDistance, extrusionHeight);
+            return ExtrusionFacesFrom2DPolygons(paths.CreateShallowPolygonTrees(false, out _), extrudeDirection, basePlaneDistance, extrusionHeight);
         }
 
 
-        public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
+        public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<Polygon> paths, Vector3 basePlaneNormal,
             double basePlaneDistance, double extrusionHeight)
         {
-            List<List<int[]>> triangleIndices;
-            bool[] isPositive;
+            List<List<int[]>> triangleIndices = null;
+            List<List<Vector2>> pathsPath = null;
             #region First, run the triangulate polygons to define how the ends of the extruded shape will be defined
             try
             {
-                triangleIndices = paths.Triangulate(out _, out isPositive);
+                triangleIndices = paths.Triangulate(out _, false);
             }
             catch
             {
@@ -73,26 +73,28 @@ namespace TVGL
                     //Do some polygon functions to clean up issues and try again
                     //This is important because the Get2DProjections may produce invalid paths and because
                     //triangulate will try 3 times before throwing the exception to go to the catch.
-                    paths = paths.Union(true, PolygonFillType.EvenOdd);
-                    triangleIndices = paths.Triangulate(out _, out isPositive);
+                    pathsPath = paths.Select(p => p.Path).Union(true, PolygonFillType.EvenOdd);
+                    triangleIndices = pathsPath.Triangulate(out _, out var isPositive);
                 }
                 catch
                 {
-                    try
-                    {
-                        //Do some polygon functions to clean up issues and try again
-                        paths = paths.Union(true, PolygonFillType.EvenOdd);
-                        paths = paths.OffsetRound(extrusionHeight / 1000);
-                        paths = paths.OffsetRound(-extrusionHeight / 1000);
-                        paths = paths.Union(true, PolygonFillType.EvenOdd);
-                        triangleIndices = paths.Triangulate(out _, out isPositive);
-                    }
-                    catch (Exception exc)
-                    {
-                        Debug.WriteLine("Tried extrusion three-times and it failed." + exc.Message);
-                        return null;
-                    }
+                    /*
+                        try
+                        {
+                            //Do some polygon functions to clean up issues and try again
+                           var pathsPath = paths.Select(p => p.Path).Union(true, PolygonFillType.EvenOdd);
+                            pathsPath = paths.OffsetRound(extrusionHeight / 1000);
+                            pathsPath = paths.OffsetRound(-extrusionHeight / 1000);
+                            pathsPath = paths.Union(true, PolygonFillType.EvenOdd);
+                            triangleIndices = pathsPath.Triangulate(out _, out isPositive);
+                        }
+                        catch (Exception exc)
+                        {
+                            Debug.WriteLine("Tried extrusion three-times and it failed." + exc.Message);
+                            return null;
+                        } */
                 }
+
             }
             #endregion
 
@@ -101,7 +103,7 @@ namespace TVGL
             var int2VertexDict = new Dictionary<int, Vertex>();
             var baseVertices = new List<List<Vertex>>();
             var vertexID = 0;
-            foreach (var loop in paths)
+            foreach (var loop in pathsPath)
             {
                 var vertexLoop = new List<Vertex>();
                 baseVertices.Add(vertexLoop);
@@ -129,7 +131,7 @@ namespace TVGL
             {
                 var vertexLoop = new List<Vertex>();
                 topVertices.Add(vertexLoop);
-                foreach (var position2D in loop)
+                foreach (var position2D in loop.Path)
                 {
                     var position3D = new Vector3(position2D, 0);
                     var newVertex = new Vertex(position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal, vertexID);
@@ -151,18 +153,18 @@ namespace TVGL
             {
                 var topLoop = topVertices[index];
                 var baseLoop = baseVertices[index];
-                if (vectorLoop.ToArray().Area() > 0 == isPositive[index]) //then loop is  in the proper direction
-                {
-                    result.Add(new PolygonalFace(new[] { topLoop[^1], baseLoop[^1], topLoop[0] }));
-                    result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[^1], baseLoop[0] }));
-                    for (int i = 1; i < topLoop.Count; i++)
-                    {
-                        result.Add(new PolygonalFace(new[] { topLoop[i - 1], baseLoop[i - 1], topLoop[i] }));
-                        result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i - 1], baseLoop[i] }));
-                    }
-                }
-                else
-                {
+                //if (vectorLoop.ToArray().Area() > 0 == isPositive[index]) //then loop is  in the proper direction
+                //{
+                //    result.Add(new PolygonalFace(new[] { topLoop[^1], baseLoop[^1], topLoop[0] }));
+                //    result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[^1], baseLoop[0] }));
+                //    for (int i = 1; i < topLoop.Count; i++)
+                //    {
+                //        result.Add(new PolygonalFace(new[] { topLoop[i - 1], baseLoop[i - 1], topLoop[i] }));
+                //        result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i - 1], baseLoop[i] }));
+                //    }
+                //}
+                //else
+                //{
                     result.Add(new PolygonalFace(new[] { topLoop[^1], topLoop[0], baseLoop[^1] }));
                     result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[0], baseLoop[^1] }));
                     for (int i = 1; i < topLoop.Count; i++)
@@ -170,7 +172,7 @@ namespace TVGL
                         result.Add(new PolygonalFace(new[] { topLoop[i - 1], topLoop[i], baseLoop[i - 1] }));
                         result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i], baseLoop[i - 1] }));
                     }
-                }
+                //}
             }
             #endregion
             return result;

@@ -177,7 +177,7 @@ namespace TVGL
                 if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i], Direction, basePlaneDistance,
+                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i].CreateShallowPolygonTrees(false, out _), Direction, basePlaneDistance,
                     topPlaneDistance - basePlaneDistance);
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
@@ -187,11 +187,35 @@ namespace TVGL
 
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
         {
+            var polygons = new Polygon[Layer2D.Count][];
+            var faces = new List<PolygonalFace>();
+            var previousLayerWasEmpty = true;
+            var i = 0;
             foreach (var layer in Layer2D)
             {
-                PolygonOperations.CreateShallowPolygonTrees(layer.Value);
+                /*
+                if (layer.Value == null)
+                {
+                    if (!previousLayerWasEmpty) //then need to triangulate the last layer facing up
+                    {
+                        polygons[i-1].tri
+                    }
+                    previousLayerWasEmpty = true;
+                }
+                else
+                {
+                    polygons[i] = layer.Value.CreateShallowPolygonTrees();
+                    previousKey = layer.Key;
+                    if (previousLayerWasEmpty) // then need to triangulate this layer facing down
+                    {
+
+                    }
+                    previousLayerWasEmpty = false;
+                }
+                */
+                i++;
             }
-            var faces = new List<PolygonalFace>();
+
             return new TessellatedSolid(faces, false, false);
         }
 

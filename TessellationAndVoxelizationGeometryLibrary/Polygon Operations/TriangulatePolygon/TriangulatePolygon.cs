@@ -82,8 +82,57 @@ namespace TVGL.TwoDimensional
         /// </exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<List<int[]>> Triangulate(this IEnumerable<IEnumerable<Vector2>> polygons, out List<List<int>> groupsOfLoops,
+        public static List<List<int[]>> Triangulate(this IEnumerable<IEnumerable<Vector2>> paths, out List<List<int>> groupsOfLoops,
             out bool[] isPositive, bool ignoreNegativeSpace = false)
+        {
+            var polygons = paths.CreateShallowPolygonTrees(false, out var connectingIndices);
+            isPositive = new bool[connectingIndices.Length];
+            var index = 0;
+            foreach (var poly in polygons)
+            {
+                var connectingIndex = connectingIndices.FindIndex(x => x == index);
+                isPositive[connectingIndex] = true;
+                index++;
+                foreach (var hole in poly.InnerPolygons)
+                {
+                    connectingIndex = connectingIndices.FindIndex(x => x == index);
+                    isPositive[connectingIndex] = false;
+                    index++;
+                }
+            }
+            return polygons.Triangulate(out groupsOfLoops, ignoreNegativeSpace);
+        }
+
+        /// <summary>
+        /// Triangulates a list of loops into faces in O(n*log(n)) time.
+        /// If ignoring negative space, the function will fill in holes. 
+        /// DO NOT USE "ignoreNegativeSpace" for watertight geometry.
+        /// </summary>
+        /// <param name="points2D">The points2 d.</param>
+        /// <param name="groupsOfLoops">The groups of loops.</param>
+        /// <param name="isPositive">The is positive.</param>
+        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
+        /// <exception cref="System.Exception">
+        /// Inputs into 'TriangulatePolygon' are unbalanced
+        /// or
+        /// Duplicate point found
+        /// or
+        /// Incorrect balance of node types
+        /// or
+        /// Incorrect balance of node types
+        /// or
+        /// Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.
+        /// or
+        /// Trapezoidation failed to complete properly. Check to see that the assumptions are met.
+        /// or
+        /// Incorrect number of triangles created in triangulate function
+        /// or
+        /// </exception>
+        /// <exception cref="Exception"></exception>
+        /// <exception cref="Exception"></exception>
+        public static List<List<int[]>> Triangulate(this IEnumerable<Polygon> polygons, out List<List<int>> groupsOfLoops,
+             bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -106,7 +155,6 @@ namespace TVGL.TwoDimensional
             //before exiting. 
             List<List<int[]>> triangleFaceList = new List<List<int[]>>();
             groupsOfLoops = new List<List<int>>();
-            isPositive = Array.Empty<bool>();
             do
             {
                 try
@@ -135,6 +183,7 @@ namespace TVGL.TwoDimensional
                     var theta = 2 * Math.PI * random.NextDouble();
                     var randRotMatrix = Matrix3x3.CreateRotation(theta);
                     var loopsCount = 0;
+                    /*
                     foreach (var origLoop in polygons)
                     {
                         var nodes = new List<Vertex2D>();
@@ -147,13 +196,14 @@ namespace TVGL.TwoDimensional
                         polygonLines.Add(polygon.Lines);
                         loopsCount++;
                     }
+                    */
                     #endregion
 
 
                     #region Get the number of positive and negative loops. 
                     var negativeLoopCount = 0;
                     var positiveLoopCount = 0;
-                    isPositive = new bool[loopsCount];
+                    var isPositive = new bool[loopsCount];
                     //First, find the first node from each loop and then sort them. This determines the order the loops
                     //will be visited in.
                     var sortedFirstNodes = sortedPolygonNodes.Select(sortedLoop => sortedLoop[0])
@@ -308,11 +358,9 @@ namespace TVGL.TwoDimensional
                         sortedPolygonNodes = new List<List<Vertex2D>>(tempSortedLoops2);
 
                         //Create a new bool list and update the loop IDs and point count.
-                        isPositive = new bool[polygonNodes.Count];
                         pointCount = 0;
                         for (var j = 0; j < polygonNodes.Count; j++)
                         {
-                            isPositive[j] = true;
                             //Update the LoopID's. Note that the nodes in the 
                             //sorted loops are the same nodes.
                             pointCount = pointCount + polygonNodes[j].Count;
@@ -772,7 +820,6 @@ namespace TVGL.TwoDimensional
                         throw new Exception("Triangulation failed after " + attempts +
                                             " attempts. Points may be too close to distinguish.");
                     }
-                    isPositive = null;
                     attempts++;
                 }
             }
