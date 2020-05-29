@@ -177,8 +177,10 @@ namespace TVGL
                 if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-                var layerfaces = Extrude.ExtrusionFacesFrom2DPolygons(Layer2D[i].CreateShallowPolygonTrees(false, out _), Direction, basePlaneDistance,
-                    topPlaneDistance - basePlaneDistance);
+                List<PolygonalFace> layerfaces = null;
+                if (Layer2D[i].CreateShallowPolygonTrees(false, out var polygons, out _))
+                    layerfaces = polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon, Direction, basePlaneDistance,
+                     topPlaneDistance - basePlaneDistance)).ToList();
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }

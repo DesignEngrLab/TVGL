@@ -118,6 +118,12 @@ namespace TVGL.TwoDimensional
             }
         }
         double _horizontalSlope = double.NaN;
+
+        public double XMax => (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
+        public double XMin => (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
+        public double YMax => (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+        public double YMin => (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+
         #endregion
 
         #region Constructor

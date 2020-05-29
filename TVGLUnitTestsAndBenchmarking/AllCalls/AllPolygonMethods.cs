@@ -18,7 +18,7 @@ namespace TVGLUnitTestsAndBenchmarking
             isItTrueThat = poly1.IsConvex();
             isItTrueThat = poly1.IsPositive;
             var poly2 = new Polygon(PolygonOperationsTesting.MakeCircularPolygon(5, 5));
-            poly1.IsPolygonIntersectingPolygon(poly2);
+            poly1.GetPolygonRelationshipAndIntersections(poly2,out var intersections);
             List<PolygonSegment> lines = poly1.Lines;
             var extrema = poly1.MaxX;
             extrema = poly1.MaxY;
@@ -58,7 +58,7 @@ namespace TVGLUnitTestsAndBenchmarking
             c.Area();
             c.Create2DMedialAxis();
             c.Difference(d);
-            c.CreateShallowPolygonTrees();
+            c.CreateShallowPolygonTrees(false,out var polygons, out _);
             c.Intersection(d);
             c.OffsetMiter(5.0);
             c.OffsetRound(5.0);

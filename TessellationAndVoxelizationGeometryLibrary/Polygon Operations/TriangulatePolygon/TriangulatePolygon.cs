@@ -36,6 +36,7 @@ namespace TVGL.TwoDimensional
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
             var points2D = loops.Select(loop => loop.ProjectTo2DCoordinates(normal, out _).ToArray()).ToArray();
+            points2D.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices);
             var triangleIndices = Triangulate(points2D, out groupsOfLoops, out isPositive, ignoreNegativeSpace);
             var int2VertexDict = new Dictionary<int, Vertex>();
             var vertexID = 0;
@@ -85,7 +86,10 @@ namespace TVGL.TwoDimensional
         public static List<List<int[]>> Triangulate(this IEnumerable<IEnumerable<Vector2>> paths, out List<List<int>> groupsOfLoops,
             out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
-            var polygons = paths.CreateShallowPolygonTrees(false, out var connectingIndices);
+            if (!paths.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices))
+            {
+
+            }
             isPositive = new bool[connectingIndices.Length];
             var index = 0;
             foreach (var poly in polygons)
@@ -111,7 +115,7 @@ namespace TVGL.TwoDimensional
         /// <param name="points2D">The points2 d.</param>
         /// <param name="groupsOfLoops">The groups of loops.</param>
         /// <param name="isPositive">The is positive.</param>
-        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <param name="onlyOuterPolygons">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
         /// <exception cref="System.Exception">
         /// Inputs into 'TriangulatePolygon' are unbalanced
@@ -131,23 +135,36 @@ namespace TVGL.TwoDimensional
         /// </exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<List<int[]>> Triangulate(this IEnumerable<Polygon> polygons, out List<List<int>> groupsOfLoops,
-             bool ignoreNegativeSpace = false)
-        {
-            //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
-            //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
-            //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
-            //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
-            //Ex 3) If a positive loop intersects itself, it should be two separate positive loops.
+        //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
+        //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
+        //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
+        //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
+        //Ex 3) If a positive loop intersects itself, it should be two separate positive loops.
 
-            //ROBUST FEATURES:
-            // 1: Two positive loops may share a point, because they are processed separately.
-            // 2: Loops can be in given CW or CCW, because as long as the isPositive boolean is correct, 
-            // the code recognizes when the loop should be reversed.
-            // 3: If isPositive == null, CW and CCW ordering for the loops is unknown. A preprocess step can build a new isPositive variable.
-            // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
-            // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
-            // 5: If isPositive == null, then 
+        //ROBUST FEATURES:
+        // 1: Two positive loops may share a point, because they are processed separately.
+        // 2: Loops can be in given CW or CCW, because as long as the isPositive boolean is correct, 
+        // the code recognizes when the loop should be reversed.
+        // 3: If isPositive == null, CW and CCW ordering for the loops is unknown. A preprocess step can build a new isPositive variable.
+        // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
+        // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
+        // 5: If isPositive == null, then 
+        public static List<List<int[]>> Triangulate(this IEnumerable<Polygon> polygons, out List<List<int>> groupsOfLoops,
+             bool onlyOuterPolygons = false)
+        {
+            var polygonList = polygons.OrderByDescending(p => p.Area).ToList();
+            if (onlyOuterPolygons)
+            {   // this is a n^2 check. but no other way to do it. however, there shouldn't be many polygons and having them ordered reduces
+                // the number of checks
+                for (int i = polygonList.Count - 2; i >= 0; i--)
+                {
+                    for (int j = polygonList.Count - 1; j > i; j--)
+                    {
+                        if (polygonList[i].IsPointInsidePolygon(polygonList[j].Vertices[0].Coordinates, out _, out _, out _))
+                            polygonList.RemoveAt(j);
+                    }
+                }
+            }
             var successful = false;
             var attempts = 0;
             var random = new Random(1);
@@ -323,7 +340,7 @@ namespace TVGL.TwoDimensional
                     //All negative loops must be inside, so remove them.
                     //Some positive loops may be nested inside a negative then a postive, and therefore they are inside a positive. Remove them.
                     //Note that sorted groups were modifies earlier with this bool.
-                    if (ignoreNegativeSpace)
+                    if (onlyOuterPolygons)
                     {
                         var listOfLoopIDsToKeep = new List<int>();
                         foreach (var positiveLoop1 in polygonNodes)
@@ -479,7 +496,8 @@ namespace TVGL.TwoDimensional
                             //Check if negative loop is inside polygon 
                             //note that listPositive changes order /size , while isPositive is static like loopID.
                             //Similarly points2D is static.
-                            if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false) //if first point in the sorted loop and loop is negative 
+                            if (node == completeListSortedLoops[node.LoopID][0] && !isPositive[node.LoopID])
+                            //if first point in the sorted loop and loop is negative 
                             {
                                 bool isInside;
                                 bool isOnLine;

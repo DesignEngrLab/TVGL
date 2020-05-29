@@ -692,6 +692,37 @@ namespace TVGL
         /// </summary>
         ZPositive = 3
     }
+
+    /// <summary>
+    /// Enum PolygonRelationship
+    /// </summary>
+    [Flags]
+    public enum PolygonRelationship : byte
+    {
+        Separated = 0, //xb0000 0000
+        Intersect = 1, //xb0000 0001
+        SeparatedButBordersTouch = 2, //xb0000 0010
+
+        BIsCompletelyInsideA = 4, //xb0000 0100
+        BVerticesInsideAButLinesIntersect = 5, //xb0000 0101
+        BInsideAButBordersTouch = 6,  //xb0000 0110
+
+        AIsCompletelyInsideB = 8, //xb0000 1000
+        AVerticesInsideBButLinesIntersect = 9, //xb0000 1001
+        AInsideBButBordersTouch = 10, //xb1000 1010
+    }
+    /// <summary>
+    /// Enum PolygonRelationship
+    /// </summary>
+    public enum PolygonSegmentRelationship
+    {
+        Unconnected = -1,
+        IntersectNominal = 0,
+        EndPointsTouch = 1,
+        ConnectInT = 2,
+        CollinearAndOverlapping = 3,
+    }
+
     /// <summary>
     ///     A comparer for optimization that can be used for either
     ///     minimization or maximization.

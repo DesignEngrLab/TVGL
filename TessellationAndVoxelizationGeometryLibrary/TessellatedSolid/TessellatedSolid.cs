@@ -462,7 +462,7 @@ namespace TVGL
         /// 
         internal void MakeFaces(IEnumerable<List<Vector3>> vertsPerFace, IList<Color> colors)
         {
-            var vertexLocations = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToList();
+            IList<List<Vector3>> vertexLocations = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToArray();
             HasUniformColor = true;
             if (colors == null || !colors.Any() || colors.All(c => c == null))
                 SolidColor = new Color(Constants.DefaultColor);

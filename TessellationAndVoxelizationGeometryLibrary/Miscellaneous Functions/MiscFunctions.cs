@@ -909,13 +909,80 @@ namespace TVGL
         /// <param name="intersectionPoint"></param>
         /// <param name="considerCollinearOverlapAsIntersect"></param>
         /// <returns></returns>
-        internal static bool PolygonSegmentIntersection(this PolygonSegment line1, PolygonSegment line2, out Vector2 intersectionPoint,
-            bool considerCollinearOverlapAsIntersect = false)
+        internal static PolygonSegmentRelationship PolygonSegmentIntersection(this PolygonSegment line1, PolygonSegment line2,
+            out Vector2 intersectionPoint, double tolerance = Constants.BaseTolerance)
         {
-            return
-                SegmentSegment2DIntersection(line1.FromPoint.Coordinates, line1.ToPoint.Coordinates,
-                line2.FromPoint.Coordinates, line2.ToPoint.Coordinates,
-                out intersectionPoint, considerCollinearOverlapAsIntersect);
+            intersectionPoint = Vector2.Null;
+            var vCross = line1.Vector.Cross(line2.Vector); //2D cross product, determines if parallel
+            // first check if bounding boxes overlap. If they don't then return false here
+            if (line1.XMax < line2.XMin || line2.XMax < line1.XMin ||
+                line1.YMax < line2.YMin || line2.YMax < line1.YMin)
+                return PolygonSegmentRelationship.Unconnected;
+            // okay, so bounding boxes overlap
+            //first a quick check to see if points are the same
+            if (line1.FromPoint.Coordinates.IsPracticallySame(line2.FromPoint.Coordinates)
+                || line1.FromPoint.Coordinates.IsPracticallySame(line2.ToPoint.Coordinates))
+            {
+                intersectionPoint = line1.FromPoint.Coordinates;
+                return PolygonSegmentRelationship.EndPointsTouch;
+            }
+            if (line1.ToPoint.Coordinates.IsPracticallySame(line2.FromPoint.Coordinates)
+                || line1.ToPoint.Coordinates.IsPracticallySame(line2.ToPoint.Coordinates))
+            {
+                intersectionPoint = line1.ToPoint.Coordinates;
+                return PolygonSegmentRelationship.EndPointsTouch;
+            }
+            var vStarts = line2.FromPoint.Coordinates - line1.FromPoint.Coordinates; // the vector connecting starts
+            if (vCross.IsNegligible(tolerance))
+            {   // the two lines are parallel (cross product will be zero)
+
+                // if vStats is also parallel with the line vector (either 1 or 2 since they are parallel to each other)
+                // and since bounding boxes do overlap, then the lines are collinear and overlapping
+                // the intersection point is technically not a single value but an infinite set of points, so we leave it as null
+                if (vStarts.Cross(line1.Vector).IsNegligible(tolerance))
+                    return PolygonSegmentRelationship.CollinearAndOverlapping;
+                return PolygonSegmentRelationship.Unconnected; // otherwise the lines are parallel but not at same distance/intercept
+            }
+            // that's all the "edge cases", now simply to check the intersection for the conventional case
+            // solve for the t scalar values for the two lines.
+            // the line is define as all values of t from 0 to 1 in the equations
+            // line1(t_1) = (1 - t_1)*line1.p1 + t_1*line1.p2
+            // line2(t_2) = (1 - t_1)*line1.p1 + t_2*line2.p2
+            // solve as a system of two equations
+            //   |   vp_x      vq_x   | |  t_1  |    | vStarts_x  |
+            //   |                    |*|       | =  |            |
+            //   |   vp_y      vq_y   | |  t_2  |    | vStarts_y  |
+            var oneOverdeterminnant = 1 / vCross;
+            var aInv11 = line2.Vector.Y * oneOverdeterminnant;
+            var aInv12 = -line2.Vector.X * oneOverdeterminnant;
+            var aInv21 = -line1.Vector.Y * oneOverdeterminnant;
+            var aInv22 = line1.Vector.X * oneOverdeterminnant;
+            var t_1 = aInv11 * vStarts.X + aInv12 * vStarts.Y;
+            var t_2 = aInv21 * vStarts.X + aInv22 * vStarts.Y;
+            if (t_1.IsNegligible(tolerance))
+            {
+                intersectionPoint = line1.FromPoint.Coordinates;
+                return PolygonSegmentRelationship.ConnectInT;
+            }
+            if (t_1.IsPracticallySame(1, tolerance))
+            {
+                intersectionPoint = line1.ToPoint.Coordinates;
+                return PolygonSegmentRelationship.ConnectInT;
+            }
+            if (t_2.IsNegligible(tolerance))
+            {
+                intersectionPoint = line2.FromPoint.Coordinates;
+                return PolygonSegmentRelationship.ConnectInT;
+            }
+            if (t_2.IsPracticallySame(1, tolerance))
+            {
+                intersectionPoint = line2.ToPoint.Coordinates;
+                return PolygonSegmentRelationship.ConnectInT;
+            }
+            if (t_1 < 0 || t_1 > 1 || t_2 < 0 || t_2 > 1) return PolygonSegmentRelationship.Unconnected;
+            intersectionPoint = 0.5 * ((1 - t_1) * line1.FromPoint.Coordinates + t_1 * line1.ToPoint.Coordinates
+                + (1 - t_2) * line2.FromPoint.Coordinates + t_2 * line2.ToPoint.Coordinates);
+            return PolygonSegmentRelationship.IntersectNominal;
         }
 
         /// <summary>

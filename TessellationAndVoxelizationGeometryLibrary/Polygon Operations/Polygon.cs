@@ -119,6 +119,7 @@ namespace TVGL.TwoDimensional
             get { return index; }
             set
             {
+                if (value < 0) throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
                 if (index == value) return;
                 index = value;
                 if (_vertices != null)

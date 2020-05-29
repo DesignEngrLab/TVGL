@@ -1,4 +1,5 @@
 ﻿using ClipperLib;
+using Newtonsoft.Json.Linq;
 using Priority_Queue;
 using System;
 using System.Collections;
@@ -128,14 +129,14 @@ namespace TVGL.TwoDimensional
         /// <param name="vertexNegPosOrderIsCorrect">if set to <c>true</c> [vertices are properly ordered to represents positive (CCW) and negative (CW) polygons].</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
-        public static Polygon[] CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool vertexNegPosOrderIsCorrect, out int[] connectingIndices)
+        public static bool CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
+            bool vertexNegPosOrderIsCorrect, out Polygon[] polygons, out int[] connectingIndices)
         {
-            if (vertexNegPosOrderIsCorrect) return CreateShallowPolygonTreesProperlyOrdered(paths, out connectingIndices);
-            else return CreateShallowPolygonTreesUnordered(paths, out connectingIndices);
+            if (vertexNegPosOrderIsCorrect) return CreateShallowPolygonTreesProperlyOrdered(paths, out polygons, out connectingIndices);
+            else return CreateShallowPolygonTreesUnordered(paths, out polygons, out connectingIndices);
         }
-        private static Polygon[] CreateShallowPolygonTreesProperlyOrdered(this IEnumerable<IEnumerable<Vector2>> paths,
-            out int[] connectingIndices)
+        private static bool CreateShallowPolygonTreesProperlyOrdered(this IEnumerable<IEnumerable<Vector2>> paths,
+           out Polygon[] polygons, out int[] connectingIndices)
         {
             //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
             //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
@@ -159,7 +160,7 @@ namespace TVGL.TwoDimensional
                 if (area > 0) positivePolygons.Add(area, polygon);
             }
             connectingIndices = new int[index];
-            var result = positivePolygons.Values.ToArray();
+            polygons = positivePolygons.Values.ToArray();
             //2) Find the positive polygon that this negative polygon is inside.
             //The negative polygon belongs to the smallest positive polygon that it fits inside.
             //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
@@ -170,11 +171,15 @@ namespace TVGL.TwoDimensional
                 var area = negativePolygonKVP.Key;
                 var negativePolygon = negativePolygonKVP.Value;
                 //Start with the smallest positive polygon           
-                foreach (var positivePolygon in result)
+                foreach (var positivePolygon in polygons)
                 {
-                    if (-area < positivePolygon.Area
-                        && positivePolygon.IsPointInsidePolygon(negativePolygon.Vertices[0].Coordinates, out _, out _, out _)
-                        && positivePolygon.IsPolygonIntersectingPolygon(negativePolygon))
+                    if (-area > positivePolygon.Area) continue;
+                    var polygonRelationship = positivePolygon.GetPolygonRelationshipAndIntersections(negativePolygon, out _);
+                    if (((byte)polygonRelationship & 0b1) != 0)  // the "1" flag is intersection. We can't handle that here.
+                        return false;
+                    if (((byte)polygonRelationship & 0b010) != 0)  // the "2" flag means that boundaries touch.
+                        return false;
+                    if (((byte)polygonRelationship & 0b100) != 0)  // the "4" flag is B is inside A. We can do that
                     {
                         positivePolygon.InnerPolygons.Add(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
@@ -182,13 +187,12 @@ namespace TVGL.TwoDimensional
                         break;
                     }
                 }
-
-                if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
+                if (!isInside) return false; // Negative polygon was not inside any positive polygons
             }
 
             //Set the polygon indices
             index = 0;
-            foreach (var polygon in result)
+            foreach (var polygon in polygons)
             {
                 connectingIndices[polygon.Index] = index;
                 polygon.Index = index++;
@@ -199,12 +203,14 @@ namespace TVGL.TwoDimensional
                 }
                 //index += 1 + polygon.InnerPolygons.Count;
             }
-            return result;
+            return true;
         }
 
-        private static Polygon[] CreateShallowPolygonTreesUnordered(this IEnumerable<IEnumerable<Vector2>> paths, out int[] connectingIndices)
+        private static bool CreateShallowPolygonTreesUnordered(this IEnumerable<IEnumerable<Vector2>> paths,
+            out Polygon[] polygons, out int[] connectingIndices)
         {
-            var polygons = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
+            var polygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
+            polygons = null;
             var index = 0;
             foreach (var path in paths)
             {
@@ -215,25 +221,33 @@ namespace TVGL.TwoDimensional
                     polygon.Reverse();
                     area = -area;
                 }
-                polygons.Add(area, polygon);
+                polygonDictionary.Add(area, polygon);
             }
             connectingIndices = new int[index];
-            var result = new List<Polygon>();
-            foreach (var polygon in polygons.Values)
+            var polygonList = new List<Polygon>();
+            foreach (var polygon in polygonDictionary.Values)
             {
-                for (int i = 0; i < result.Count; i++)
+                for (int i = 0; i < polygonList.Count; i++)
                 {
-                    var outerPolygon = result[i];
-                    if (outerPolygon.IsPointInsidePolygon(polygon.Vertices[0].Coordinates, out _, out _, out _)
-                        && outerPolygon.IsPolygonIntersectingPolygon(polygon))
+                    var outerPolygon = polygonList[i];
+                    var polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
+                    if (((byte)polygonRelationship & 0b1) != 0)  // the "1" flag is intersection. We can't handle that here.
+                        return false;
+                    if (((byte)polygonRelationship & 0b010) != 0)  // the "2" flag means that boundaries touch.
+                        return false;
+                    if (((byte)polygonRelationship & 0b100) != 0)  // the "4" flag is B is inside A. We can do that
                     {
                         var insideAHoleOfOuterPolygon = false;
                         foreach (var innerPolygon in outerPolygon.InnerPolygons)
                         {
-                            if (innerPolygon.IsPointInsidePolygon(polygon.Vertices[0].Coordinates, out _, out _, out _)
-                                && innerPolygon.IsPolygonIntersectingPolygon(polygon))
+                            var innerPolygonRelationship = innerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
+                            if (((byte)innerPolygonRelationship & 0b1) != 0)  // the "1" flag is intersection. We can't handle that here.
+                                return false;
+                            if (((byte)innerPolygonRelationship & 0b010) != 0)  // the "2" flag means that boundaries touch.
+                                return false;
+                            if (((byte)innerPolygonRelationship & 0b100) != 0)  // the "4" flag is B is inside A. We can do that
                             {
-                                result.Add(polygon);
+                                polygonList.Add(polygon);
                                 insideAHoleOfOuterPolygon = true;
                                 break;
                             }
@@ -249,7 +263,7 @@ namespace TVGL.TwoDimensional
             }
             //Set the polygon indices
             index = 0;
-            foreach (var polygon in result)
+            foreach (var polygon in polygonList)
             {
                 connectingIndices[polygon.Index] = index;
                 polygon.Index = index++;
@@ -260,7 +274,8 @@ namespace TVGL.TwoDimensional
                 }
                 //index += 1 + polygon.InnerPolygons.Count;
             }
-            return result.ToArray();
+            polygons= polygonList.ToArray();
+            return true;
         }
 
 
@@ -521,6 +536,54 @@ namespace TVGL.TwoDimensional
             return numberAbove % 2 != 0;
         }
 
+        /// <summary>
+        /// Determines if a point is inside a polygon. The polygon can be positive or negative. In either case,
+        /// the result is true is the polygon encloses the point. Additionaly output parameters can be used to
+        /// locate the closest line above or below the point.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="closestLineAbove">The closest line above.</param>
+        /// <param name="closestLineBelow">The closest line below.</param>
+        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
+        internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vector2> pointsInQuestion,
+            out bool onBoundary, bool onBoundaryIsInside = true, double tolerance = Constants.BaseTolerance)
+        {
+            var numberAbove = 0;
+            onBoundary = false;
+            var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X);
+            var sortedLines = new Queue<PolygonSegment>(polygon.Lines.OrderBy(line => line.XMin));
+            foreach (var p in sortedPoints)
+            {
+                while (sortedLines.Peek().XMax < p.X) sortedLines.Dequeue();
+                foreach (var line in sortedLines)
+                {
+                    if (line.XMin > p.X) break;
+                    if (p.IsPracticallySame(line.FromPoint.Coordinates, tolerance) ||
+                     p.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
+                    {
+                        onBoundary = true;
+                        if (!onBoundaryIsInside) return false;
+                    }
+                    var lineYValue = line.YGivenX(p.X, out _);
+                    var yDistance = lineYValue - p.Y;
+                    if (yDistance.IsNegligible(tolerance))
+                    {
+                        onBoundary = true;
+                        if (!onBoundaryIsInside) return false;
+                    }
+                    else if (yDistance > 0)
+                    {
+                        numberAbove++;
+                    }
+                }
+                if (numberAbove % 2 == 0) return false;
+            }
+            return true;
+        }
+
 
         /// <summary>
         /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
@@ -581,65 +644,71 @@ namespace TVGL.TwoDimensional
             return inside;
         }
 
-        /// <summary>
-        /// This algorithm returns whether two polygons intersect. It can be used to triangle/triangle intersections,
-        /// or any abitrary set of polygons. If two polygons are touching, they are not considered to be intersecting.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <returns></returns>
-        //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
-        // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
-        public static bool IsPolygonIntersectingPolygon(this Polygon subject, Polygon clip)
+
+        public static PolygonRelationship GetPolygonRelationshipAndIntersections(this Polygon polygonA, Polygon polygonB,
+            out List<PolygonSegmentIntersection> intersections)
         {
-            //Get the axis aligned bounding box of the path. This is super fast.
-            //If the point is inside the bounding box, continue to check with more detailed methods, 
-            //Else, return false.
-            if (subject.MinX > clip.MaxX ||
-                subject.MaxX < clip.MinX ||
-                subject.MinY > clip.MaxY ||
-                subject.MaxY < clip.MinY) return false;
-
-            //Check if either polygon is fully encompassed by the other
-            if (clip.Path.Any(p => IsPointInsidePolygon(subject, p, out _, out _, out _))) return true;
-            if (subject.Path.Any(p => IsPointInsidePolygon(clip, p, out _, out _, out _))) return true;
-
-            //Else, any remaining intersection will be defined by one or more crossing lines
-            //Check for intersections between all but one of the clip lines with all of the subject lines.
-            //This is enough to test for intersection because we have already performed a point check.
-            //This makes very little difference for large polygons, but cuts 9 operations down to 6 for 
-            //a triangle/triangle intersection
-            var clipPathLength = clip.Path.Count;
-            var subjectPathLength = subject.Path.Count;
-            //This next section gathers the points rather than using polygon.PathLines, so that the 
-            //PathLines do not need to be set (we don't even use them in LineLineIntersection).
-            for (var i = 0; i < clipPathLength - 1; i++) //-1 since we only need two lines
+            intersections = new List<PolygonSegmentIntersection>();
+            //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
+            // safely return that the polygons are separated.
+            if (polygonA.MinX > polygonB.MaxX ||
+                polygonA.MaxX < polygonB.MinX ||
+                polygonA.MinY > polygonB.MaxY ||
+                polygonA.MaxY < polygonB.MinY) return PolygonRelationship.Separated;
+            //Else, we need to check for intersections between all lines of the two
+            // To avoid an n-squared check (all of A's lines with all of B's), we sort the lines by their XMin
+            // values and store in two separate queues
+            var aLines = new Queue<PolygonSegment>(polygonA.Lines.OrderBy(line => line.XMin));
+            var bLines = new Queue<PolygonSegment>(polygonB.Lines.OrderBy(line => line.XMin));
+            while (aLines.Any() && bLines.Any())
             {
-                var point1 = clip.Path[i];
-                var point2 = (i == clipPathLength - 1) ? clip.Path[0] : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
-                for (var j = 0; j < subjectPathLength; j++) //Need to consider all the lines
+                SetCurrentToLowestXLine(aLines, bLines, out PolygonSegment currentLine, out Queue<PolygonSegment> otherQueue);
+                foreach (var otherLine in otherQueue)
                 {
-                    var point3 = subject.Path[j];
-                    var point4 = (j == subjectPathLength - 1) ? subject.Path[0] : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
-                    if (MiscFunctions.SegmentSegment2DIntersection(point1, point2, point3, point4, out var intersectionPoint, false))
-                    {
-                        if (intersectionPoint == point1 ||
-                            intersectionPoint == point1 ||
-                            intersectionPoint == point3 ||
-                            intersectionPoint == point4)
-                        {
-                            continue;
-                        }
-                        //Else
-                        return true;
-                    }
+                    if (currentLine.XMax < otherLine.XMin) break;
+                    var segmentRelationship = currentLine.PolygonSegmentIntersection(otherLine, out var intersection);
+                    if (segmentRelationship >= 0)
+                        intersections.Add(new PolygonSegmentIntersection(currentLine, otherLine, intersection, segmentRelationship));
                 }
             }
-
-            //No intersections identified. Return false.
-            return false;
+            if (intersections.Count > 0)
+            {
+                var noNominalIntersections = !intersections.Any(intersect =>
+                intersect.relationship == PolygonSegmentRelationship.IntersectNominal);
+                if (polygonA.ArePointsInsidePolygon(polygonB.Path, out _, false))
+                {
+                    if (noNominalIntersections) return PolygonRelationship.BInsideAButBordersTouch;
+                    return PolygonRelationship.BVerticesInsideAButLinesIntersect;
+                }
+                if (polygonB.ArePointsInsidePolygon(polygonA.Path, out _, false))
+                {
+                    if (noNominalIntersections) return PolygonRelationship.AInsideBButBordersTouch;
+                    return PolygonRelationship.AVerticesInsideBButLinesIntersect;
+                }
+                if (noNominalIntersections) return PolygonRelationship.SeparatedButBordersTouch;
+                return PolygonRelationship.Intersect;
+            }
+            if (polygonA.IsPointInsidePolygon(polygonB.Vertices[0].Coordinates, out _, out _, out _, false))
+                return PolygonRelationship.BIsCompletelyInsideA;
+            if (polygonB.IsPointInsidePolygon(polygonA.Vertices[0].Coordinates, out _, out _, out _, false))
+                return PolygonRelationship.AIsCompletelyInsideB;
+            return PolygonRelationship.Separated;
         }
 
+        private static void SetCurrentToLowestXLine(Queue<PolygonSegment> aLines, Queue<PolygonSegment> bLines,
+            out PolygonSegment currentLine, out Queue<PolygonSegment> otherQueue)
+        {
+            if (aLines.Peek().XMin < bLines.Peek().XMin)
+            {
+                currentLine = aLines.Dequeue();
+                otherQueue = bLines;
+            }
+            else
+            {
+                currentLine = bLines.Dequeue();
+                otherQueue = aLines;
+            }
+        }
 
         #region Clockwise / CounterClockwise Ordering
 
@@ -2411,6 +2480,22 @@ namespace TVGL.TwoDimensional
                 //} ********commenting out this check. It should be in unit testing - not slow down this method*** 
             }
             return mirror;
+        }
+
+        public readonly struct PolygonSegmentIntersection
+        {
+            public readonly PolygonSegment segmentA;
+            public readonly PolygonSegment segmentB;
+            public readonly Vector2 intersection;
+            public readonly PolygonSegmentRelationship relationship;
+
+            public PolygonSegmentIntersection(PolygonSegment segmentA, PolygonSegment segmentB, Vector2 intersection, PolygonSegmentRelationship relationship)
+            {
+                this.segmentA = segmentA;
+                this.segmentB = segmentB;
+                this.intersection = intersection;
+                this.relationship = relationship;
+            }
         }
     }
 }
