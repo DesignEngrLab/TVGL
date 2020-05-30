@@ -119,8 +119,8 @@ namespace TVGL.TwoDimensional
             get { return index; }
             set
             {
-                if (value < 0) throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
                 if (index == value) return;
+                if (value < 0) throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
                 index = value;
                 if (_vertices != null)
                     foreach (var v in Vertices)
@@ -227,7 +227,7 @@ namespace TVGL.TwoDimensional
         /// Minimum Y value
         /// </summary>
         private double minY = double.PositiveInfinity;
-        private int index;
+        private int index = -1;
 
         public double MinY
         {
@@ -246,11 +246,15 @@ namespace TVGL.TwoDimensional
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
-        public Polygon(IEnumerable<Vector2> coordinates, bool createLines = true, int index = -1)
+        public Polygon(IEnumerable<Vector2> coordinates, bool createLines, bool removeSelfIntersections, int index = -1)
         {
             _path = coordinates.ToList();
             Index = index;
-            if (createLines) MakeLineSegments();
+            if (createLines || removeSelfIntersections) MakeLineSegments();
+            if (removeSelfIntersections)
+            {
+
+            }
         }
 
         /// <summary>
@@ -259,7 +263,7 @@ namespace TVGL.TwoDimensional
         /// <param name="vertices">The vertices.</param>
         /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
-        public Polygon(List<Vertex2D> vertices, bool createLines = true, int index = -1)
+        public Polygon(List<Vertex2D> vertices, bool createLines, int index = -1)
         {
             _vertices = vertices;
             if (createLines) MakeLineSegments();

@@ -153,6 +153,17 @@ namespace TVGL.TwoDimensional
 
 
         #region Methods
+
+        /// <summary>
+        /// Determines whether [is adjacent to] [the specified other]. That is, do they share an endpoint or not.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <returns><c>true</c> if [is adjacent to] [the specified other]; otherwise, <c>false</c>.</returns>
+        public bool IsAdjacentTo(PolygonSegment other)
+        {
+            return (FromPoint == other.ToPoint
+                || ToPoint == other.FromPoint);
+        }
         /// <summary>
         /// Gets the other point that makes up this line.
         /// </summary>

@@ -36,7 +36,7 @@ namespace TVGL.TwoDimensional
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
             var points2D = loops.Select(loop => loop.ProjectTo2DCoordinates(normal, out _).ToArray()).ToArray();
-            points2D.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices);
+            points2D.CreateShallowPolygonTrees(false, false, out var polygons, out var connectingIndices);
             var triangleIndices = Triangulate(points2D, out groupsOfLoops, out isPositive, ignoreNegativeSpace);
             var int2VertexDict = new Dictionary<int, Vertex>();
             var vertexID = 0;
@@ -86,7 +86,7 @@ namespace TVGL.TwoDimensional
         public static List<List<int[]>> Triangulate(this IEnumerable<IEnumerable<Vector2>> paths, out List<List<int>> groupsOfLoops,
             out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
-            if (!paths.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices))
+            if (!paths.CreateShallowPolygonTrees(false, false, out var polygons, out var connectingIndices))
             {
 
             }

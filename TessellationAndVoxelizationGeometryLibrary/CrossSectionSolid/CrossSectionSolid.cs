@@ -178,7 +178,7 @@ namespace TVGL
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 List<PolygonalFace> layerfaces = null;
-                if (Layer2D[i].CreateShallowPolygonTrees(false, out var polygons, out _))
+                if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
                     layerfaces = polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon, Direction, basePlaneDistance,
                      topPlaneDistance - basePlaneDistance)).ToList();
                 if (layerfaces == null) continue;

@@ -126,16 +126,20 @@ namespace TVGL.TwoDimensional
         /// Gets the Shallow Polygon Trees for a given set of paths.
         /// </summary>
         /// <param name="paths">The paths.</param>
-        /// <param name="vertexNegPosOrderIsCorrect">if set to <c>true</c> [vertices are properly ordered to represents positive (CCW) and negative (CW) polygons].</param>
+        /// <param name="vertexNegPosOrderIsGuaranteedCorrect">if set to <c>true</c> [vertices are properly ordered to represents positive (CCW) and negative (CW) polygons].</param>
+        /// <param name="pathsAreNotSelfIntersecting">if set to <c>true</c> [paths are known to not be self-intersecting]. Like the previous boolean, computaional time can
+        /// be saved if these two are known going into this function.</param>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="connectingIndices">The connecting indices.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
         public static bool CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool vertexNegPosOrderIsCorrect, out Polygon[] polygons, out int[] connectingIndices)
+            bool vertexNegPosOrderIsGuaranteedCorrect, bool pathsAreNotSelfIntersecting, out Polygon[] polygons, out int[] connectingIndices)
         {
-            if (vertexNegPosOrderIsCorrect) return CreateShallowPolygonTreesProperlyOrdered(paths, out polygons, out connectingIndices);
-            else return CreateShallowPolygonTreesUnordered(paths, out polygons, out connectingIndices);
+            if (vertexNegPosOrderIsGuaranteedCorrect) return CreateShallowPolygonTreesProperlyOrdered(paths, !pathsAreNotSelfIntersecting, out polygons, out connectingIndices);
+            else return CreateShallowPolygonTreesUnordered(paths, !pathsAreNotSelfIntersecting, out polygons, out connectingIndices);
         }
-        private static bool CreateShallowPolygonTreesProperlyOrdered(this IEnumerable<IEnumerable<Vector2>> paths,
+        private static bool CreateShallowPolygonTreesProperlyOrdered(this IEnumerable<IEnumerable<Vector2>> paths, bool removeSelfIntersections,
            out Polygon[] polygons, out int[] connectingIndices)
         {
             //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
@@ -154,7 +158,7 @@ namespace TVGL.TwoDimensional
             var index = 0;
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path, true, index++);
+                var polygon = new Polygon(path, true, removeSelfIntersections, index++);
                 var area = polygon.Area;
                 if (area < 0) negativePolygons.Add(area, polygon);
                 if (area > 0) positivePolygons.Add(area, polygon);
@@ -206,7 +210,7 @@ namespace TVGL.TwoDimensional
             return true;
         }
 
-        private static bool CreateShallowPolygonTreesUnordered(this IEnumerable<IEnumerable<Vector2>> paths,
+        private static bool CreateShallowPolygonTreesUnordered(this IEnumerable<IEnumerable<Vector2>> paths, bool removeSelfIntersections,
             out Polygon[] polygons, out int[] connectingIndices)
         {
             var polygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
@@ -214,7 +218,7 @@ namespace TVGL.TwoDimensional
             var index = 0;
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path, true, index++);
+                var polygon = new Polygon(path, true, removeSelfIntersections, index++);
                 var area = polygon.Area;
                 if (area < 0)
                 {
@@ -274,7 +278,7 @@ namespace TVGL.TwoDimensional
                 }
                 //index += 1 + polygon.InnerPolygons.Count;
             }
-            polygons= polygonList.ToArray();
+            polygons = polygonList.ToArray();
             return true;
         }
 
@@ -284,7 +288,7 @@ namespace TVGL.TwoDimensional
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, false, false)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
@@ -295,7 +299,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, false, false)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
@@ -337,7 +341,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p)), startingYValue,
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, false, false)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         /// <summary>
@@ -548,21 +552,32 @@ namespace TVGL.TwoDimensional
         /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
-        internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vector2> pointsInQuestion,
+        internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vertex2D> pointsInQuestion,
             out bool onBoundary, bool onBoundaryIsInside = true, double tolerance = Constants.BaseTolerance)
         {
-            var numberAbove = 0;
+            var sortedLines = polygon.Lines.OrderBy(line => line.XMin).ToList();
+            var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
+            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Count, sortedPoints, out onBoundary, onBoundaryIsInside, tolerance);
+        }
+        internal static bool ArePointsInsidePolygonLines(IList<PolygonSegment> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
+            out bool onBoundary, bool onBoundaryIsInside = true, double tolerance = Constants.BaseTolerance)
+        {
+            var evenNumberOfCrossings = true; // starting at zero. 
+            var lineIndex = 0;
             onBoundary = false;
-            var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X);
-            var sortedLines = new Queue<PolygonSegment>(polygon.Lines.OrderBy(line => line.XMin));
             foreach (var p in sortedPoints)
             {
-                while (sortedLines.Peek().XMax < p.X) sortedLines.Dequeue();
-                foreach (var line in sortedLines)
+                while (p.X > sortedLines[lineIndex].XMax)
                 {
+                    lineIndex++;
+                    if (lineIndex == numSortedLines) return false;
+                }
+                for (int i = lineIndex; i < numSortedLines; i++)
+                {
+                    var line = sortedLines[lineIndex];
                     if (line.XMin > p.X) break;
-                    if (p.IsPracticallySame(line.FromPoint.Coordinates, tolerance) ||
-                     p.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
+                    if (p.Coordinates.IsPracticallySame(line.FromPoint.Coordinates, tolerance) ||
+                     p.Coordinates.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
                     {
                         onBoundary = true;
                         if (!onBoundaryIsInside) return false;
@@ -576,10 +591,12 @@ namespace TVGL.TwoDimensional
                     }
                     else if (yDistance > 0)
                     {
-                        numberAbove++;
+                        evenNumberOfCrossings = !evenNumberOfCrossings;
                     }
                 }
-                if (numberAbove % 2 == 0) return false;
+                if (evenNumberOfCrossings)
+                    //then the number of lines above this are even (0, 2, 4), which means it's outside
+                    return false;
             }
             return true;
         }
@@ -645,106 +662,8 @@ namespace TVGL.TwoDimensional
         }
 
 
-        public static PolygonRelationship GetPolygonRelationshipAndIntersections(this Polygon polygonA, Polygon polygonB,
-            out List<PolygonSegmentIntersection> intersections)
-        {
-            intersections = new List<PolygonSegmentIntersection>();
-            //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
-            // safely return that the polygons are separated.
-            if (polygonA.MinX > polygonB.MaxX ||
-                polygonA.MaxX < polygonB.MinX ||
-                polygonA.MinY > polygonB.MaxY ||
-                polygonA.MaxY < polygonB.MinY) return PolygonRelationship.Separated;
-            //Else, we need to check for intersections between all lines of the two
-            // To avoid an n-squared check (all of A's lines with all of B's), we sort the lines by their XMin
-            // values and store in two separate queues
-            var aLines = new Queue<PolygonSegment>(polygonA.Lines.OrderBy(line => line.XMin));
-            var bLines = new Queue<PolygonSegment>(polygonB.Lines.OrderBy(line => line.XMin));
-            while (aLines.Any() && bLines.Any())
-            {
-                SetCurrentToLowestXLine(aLines, bLines, out PolygonSegment currentLine, out Queue<PolygonSegment> otherQueue);
-                foreach (var otherLine in otherQueue)
-                {
-                    if (currentLine.XMax < otherLine.XMin) break;
-                    var segmentRelationship = currentLine.PolygonSegmentIntersection(otherLine, out var intersection);
-                    if (segmentRelationship >= 0)
-                        intersections.Add(new PolygonSegmentIntersection(currentLine, otherLine, intersection, segmentRelationship));
-                }
-            }
-            if (intersections.Count > 0)
-            {
-                var noNominalIntersections = !intersections.Any(intersect =>
-                intersect.relationship == PolygonSegmentRelationship.IntersectNominal);
-                if (polygonA.ArePointsInsidePolygon(polygonB.Path, out _, false))
-                {
-                    if (noNominalIntersections) return PolygonRelationship.BInsideAButBordersTouch;
-                    return PolygonRelationship.BVerticesInsideAButLinesIntersect;
-                }
-                if (polygonB.ArePointsInsidePolygon(polygonA.Path, out _, false))
-                {
-                    if (noNominalIntersections) return PolygonRelationship.AInsideBButBordersTouch;
-                    return PolygonRelationship.AVerticesInsideBButLinesIntersect;
-                }
-                if (noNominalIntersections) return PolygonRelationship.SeparatedButBordersTouch;
-                return PolygonRelationship.Intersect;
-            }
-            if (polygonA.IsPointInsidePolygon(polygonB.Vertices[0].Coordinates, out _, out _, out _, false))
-                return PolygonRelationship.BIsCompletelyInsideA;
-            if (polygonB.IsPointInsidePolygon(polygonA.Vertices[0].Coordinates, out _, out _, out _, false))
-                return PolygonRelationship.AIsCompletelyInsideB;
-            return PolygonRelationship.Separated;
-        }
 
-        private static void SetCurrentToLowestXLine(Queue<PolygonSegment> aLines, Queue<PolygonSegment> bLines,
-            out PolygonSegment currentLine, out Queue<PolygonSegment> otherQueue)
-        {
-            if (aLines.Peek().XMin < bLines.Peek().XMin)
-            {
-                currentLine = aLines.Dequeue();
-                otherQueue = bLines;
-            }
-            else
-            {
-                currentLine = bLines.Dequeue();
-                otherQueue = aLines;
-            }
-        }
 
-        #region Clockwise / CounterClockwise Ordering
-
-        /// <summary>
-        /// Sets a polygon to counter clock wise positive
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        /// <assumptions>
-        /// 1. the polygon is closed
-        /// 2. the last point is not repeated.
-        /// 3. the polygon is simple (does not intersect itself or have holes)
-        /// </assumptions>
-        private static List<Vector2> CCWPositive(IEnumerable<Vector2> p)
-        {
-            var polygon = new List<Vector2>(p);
-            var area = p.Area();
-            if (area < 0) polygon.Reverse();
-            return polygon;
-        }
-
-        /// <summary>
-        /// Sets a polygon to clock wise negative
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        private static List<Vector2> CWNegative(IEnumerable<Vector2> p)
-        {
-            var polygon = new List<Vector2>(p);
-            var area = p.Area();
-            if (area > 0) polygon.Reverse();
-            return polygon;
-        }
-
-        #endregion
 
         #region Simplify
         public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
@@ -759,8 +678,8 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
-            var polygon = path.ToArray();
-            var numPoints = polygon.Length;
+            var polygon = path.ToList();
+            var numPoints = polygon.Count;
             var origArea = Math.Abs(polygon.Area()); //take absolute value s.t. it works on holes as well
             #region build initial list of cross products
             // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points. I'm very tempted
@@ -848,14 +767,14 @@ namespace TVGL.TwoDimensional
         ///                   + " is more than the total number of points in the polygon(s).</exception>
         public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
         {
-            var polygons = path.Select(p => p.ToArray()).ToArray();
-            var numPoints = polygons.Select(p => p.Length).ToArray();
+            var polygons = path.Select(p => p.ToList()).ToList();
+            var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             #region build initial list of cross products
             var cornerQueue = new SimplePriorityQueue<int, double>(new AbsoluteValueSort());
             var crossProductsArray = new double[numPoints.Sum()];
             var index = 0;
-            for (int j = 0; j < polygons.Length; j++)
+            for (int j = 0; j < polygons.Count; j++)
             {
                 AddCrossProductToQueue(polygons[j][^1], polygons[j][0], polygons[j][1], cornerQueue, crossProductsArray, index++);
                 for (int i = 1; i < numPoints[j] - 1; i++)
@@ -871,7 +790,7 @@ namespace TVGL.TwoDimensional
                 var cornerIndex = index;
                 var polygonIndex = 0;
                 // the index is from stringing together all the original polygons into one long array
-                while (cornerIndex >= polygons[polygonIndex].Length) cornerIndex -= polygons[polygonIndex++].Length;
+                while (cornerIndex >= polygons[polygonIndex].Count) cornerIndex -= polygons[polygonIndex++].Count;
                 polygons[polygonIndex][cornerIndex] = Vector2.Null;
 
                 // find the four neighbors - two on each side. the closest two (prevIndex and nextIndex) need to be updated
@@ -909,7 +828,7 @@ namespace TVGL.TwoDimensional
             return result;
         }
 
-        private static int FindValidNeighborIndex(int index, bool forward, Vector2[] polygon, int numPoints)
+        private static int FindValidNeighborIndex(int index, bool forward, IList<Vector2> polygon, int numPoints)
         {
             int increment = forward ? 1 : -1;
             do

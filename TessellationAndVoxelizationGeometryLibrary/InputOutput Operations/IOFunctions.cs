@@ -390,8 +390,10 @@ namespace TVGL.IOFunctions
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary: return "ply";
                 case FileType.SHELL: return "shell";
-                case FileType.TVGL: return "tvgl";
-                default: return "";
+                default:
+                    //case FileType.TVGL:
+                    return "tvgl";
+                    //return "";
             }
         }
         /// <summary>
@@ -949,7 +951,7 @@ namespace TVGL.IOFunctions
         {
             if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
-            filename = Path.GetDirectoryName(filename)+Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename) 
+            filename = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename)
                 + "." + GetExtensionFromFileType(fileType);
             using (var fileStream = File.OpenWrite(filename))
                 return Save(fileStream, solid, fileType);

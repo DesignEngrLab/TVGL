@@ -41,6 +41,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine("    ===>" + filename + " has errors: " + ts.Errors.ToString());
                     continue;
                 }
+                IO.Save(ts, dir + "/3_bananas");
                 ts.SolidColor = new Color(100, 200, 100, 50);
                 //Presenter.ShowAndHang(ts);
                 var vs = new VoxelizedSolid(ts, 10000);

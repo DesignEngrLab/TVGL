@@ -230,7 +230,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingCircle MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
         {
-            var polygons = paths.Select(path => new Polygon(path)).ToList();
+            var polygons = paths.Select(path => new Polygon(path, true, false)).ToList();
             return MaximumInnerCircle(polygons, centerPoint);
         }
 
@@ -347,7 +347,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T:IVertex3D
+        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();

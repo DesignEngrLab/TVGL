@@ -915,8 +915,8 @@ namespace TVGL
             intersectionPoint = Vector2.Null;
             var vCross = line1.Vector.Cross(line2.Vector); //2D cross product, determines if parallel
             // first check if bounding boxes overlap. If they don't then return false here
-            if (line1.XMax < line2.XMin || line2.XMax < line1.XMin ||
-                line1.YMax < line2.YMin || line2.YMax < line1.YMin)
+            if (line1.YMax < line2.YMin || line2.YMax < line1.YMin
+                || line1.XMax < line2.XMin || line2.XMax < line1.XMin)
                 return PolygonSegmentRelationship.Unconnected;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
