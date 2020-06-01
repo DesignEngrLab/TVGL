@@ -74,10 +74,10 @@ namespace TVGL.TwoDimensional
         {
             var numPoints = Vertices.Count;
             _lines = new List<PolygonSegment>();
-            for (int i = 1; i <= numPoints; i++)
+            for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
             {
-                var fromNode = Vertices[i - 1];
-                var toNode = Vertices[i % numPoints]; // note the mod operator and the fact that the for loop 
+                var fromNode = Vertices[j];
+                var toNode = Vertices[i]; // note the mod operator and the fact that the for loop 
                 // goes to and including numPoints. this allows for the last line to connect the last point 
                 // back to the first. it is intended to avoid rewriting the following four lines of code.
                 var polySegment = new PolygonSegment(fromNode, toNode);
@@ -246,15 +246,11 @@ namespace TVGL.TwoDimensional
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
-        public Polygon(IEnumerable<Vector2> coordinates, bool createLines, bool removeSelfIntersections, int index = -1)
+        public Polygon(IEnumerable<Vector2> coordinates, bool createLines, int index = -1)
         {
             _path = coordinates.ToList();
             Index = index;
-            if (createLines || removeSelfIntersections) MakeLineSegments();
-            if (removeSelfIntersections)
-            {
-
-            }
+            if (createLines) MakeLineSegments();
         }
 
         /// <summary>

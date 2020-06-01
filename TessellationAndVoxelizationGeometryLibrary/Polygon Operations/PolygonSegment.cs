@@ -124,6 +124,12 @@ namespace TVGL.TwoDimensional
         public double YMax => (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
         public double YMin => (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
 
+
+        /// <summary>
+        /// Gets the index in list.
+        /// </summary>
+        /// <value>The index in list.</value>
+        public int IndexInList => ToPoint.IndexInList;
         #endregion
 
         #region Constructor

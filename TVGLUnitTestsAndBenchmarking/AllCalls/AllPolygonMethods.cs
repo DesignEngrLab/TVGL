@@ -12,12 +12,12 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Run()
         {
             #region Polygon Functions
-            var poly1 = new Polygon(PolygonOperationsTesting.MakeCircularPolygon(4, 4), false,false);
+            var poly1 = new Polygon(PolygonOperationsTesting.MakeCircularPolygon(4, 4), false);
             double area = poly1.Area;
             bool isItTrueThat = poly1.IsCircular(out var minCircle);
             isItTrueThat = poly1.IsConvex();
             isItTrueThat = poly1.IsPositive;
-            var poly2 = new Polygon(PolygonOperationsTesting.MakeCircularPolygon(5, 5),false,false);
+            var poly2 = new Polygon(PolygonOperationsTesting.MakeCircularPolygon(5, 5),false);
             poly1.GetPolygonRelationshipAndIntersections(poly2, out var intersections);
             List<PolygonSegment> lines = poly1.Lines;
             var extrema = poly1.MaxX;

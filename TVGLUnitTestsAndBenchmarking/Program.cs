@@ -20,18 +20,19 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            Voxels.InitialTest();
-            return;
-            var tVGL3Dto2DTests = new TVGL3Dto2DTests();
-            tVGL3Dto2DTests.BoxSilhouette();
+            PolygonOperationsTesting.TestRemoveSelfIntersect();
+            //Voxels.InitialTest();
+            //return;
+            //var tVGL3Dto2DTests = new TVGL3Dto2DTests();
+            //tVGL3Dto2DTests.BoxSilhouette();
 
-            PolygonOperationsTesting.TestSlice2D();
-            PolygonOperationsTesting.TestBoundingRectangle();
-            PolygonOperationsTesting.TestSimplify();
+            //PolygonOperationsTesting.TestSlice2D();
+            //PolygonOperationsTesting.TestBoundingRectangle();
+            //PolygonOperationsTesting.TestSimplify();
 
-            BenchmarkRunner.Run<PolygonOperationsTesting>();
-            var po = new PolygonOperationsTesting();
-            po.Perimeter(4, 10);
+            //BenchmarkRunner.Run<PolygonOperationsTesting>();
+            //var po = new PolygonOperationsTesting();
+            //po.Perimeter(4, 10);
            // Console.WriteLine(summary);
         }
     }

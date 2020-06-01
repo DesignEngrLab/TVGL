@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public class PolygonOperationsTesting
     {
-        static Random r = new Random(1);
+        static Random r = new Random(2);
         static double r100 => 200.0 * r.NextDouble() - 100.0;
 
         internal static IEnumerable<Vector2> MakeCircularPolygon(int numSides, double radius)
@@ -39,6 +39,14 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
+        internal static IEnumerable<Vector2> MakeRandomComplexPolygon(int numSides, double boxRadius)
+        {
+            for (int i = 0; i < numSides; i++)
+            {
+                yield return new Vector2(2 * boxRadius * r.NextDouble() - boxRadius, 2 * boxRadius * r.NextDouble() - boxRadius);
+            }
+        }
+
         internal static IEnumerable<Vector2> MakeWavyCircularPolygon(int numSides, double radius, double delta, double frequency)
         {
             var angleIncrement = 2 * Math.PI / numSides;
@@ -51,6 +59,20 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
+        internal static void TestRemoveSelfIntersect()
+        {
+            for (int i = 6; i < 200; i++)
+            {
+                r = new Random(i);
+                Console.WriteLine(i);
+                var coords = MakeRandomComplexPolygon(120, 30).ToList();
+                Presenter.ShowAndHang(coords);
+                var polygon = new Polygon(coords, true);
+               var polygons = polygon.RemoveSelfIntersections();
+                Presenter.ShowAndHang(polygons.Select(p=>p.Path));
+                //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
+            }
+        }
         internal static void TestSimplify()
         {
             IEnumerable<Vector2> polygon = MakeStarryCircularPolygon(150000, 30, 1);
@@ -157,8 +179,8 @@ namespace TVGLUnitTestsAndBenchmarking
             };
             var polyTree = new[] { poly1, hole1 };
             Presenter.ShowAndHang(polyTree);
-            polyTree.SliceAtLine(new Vector2(1, -0.1).Normalize(), 0, out var negPolys, out var posPolys,-0.3,-0.3);
-          
+            polyTree.SliceAtLine(new Vector2(1, -0.1).Normalize(), 0, out var negPolys, out var posPolys, -0.3, -0.3);
+
             Presenter.ShowAndHang(new[] { negPolys, posPolys });
         }
 

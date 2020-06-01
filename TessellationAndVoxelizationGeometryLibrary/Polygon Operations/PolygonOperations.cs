@@ -158,7 +158,7 @@ namespace TVGL.TwoDimensional
             var index = 0;
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path, true, removeSelfIntersections, index++);
+                var polygon = new Polygon(path, true, index++);
                 var area = polygon.Area;
                 if (area < 0) negativePolygons.Add(area, polygon);
                 if (area > 0) positivePolygons.Add(area, polygon);
@@ -218,7 +218,7 @@ namespace TVGL.TwoDimensional
             var index = 0;
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path, true, removeSelfIntersections, index++);
+                var polygon = new Polygon(path, true, index++);
                 var area = polygon.Area;
                 if (area < 0)
                 {
@@ -288,7 +288,7 @@ namespace TVGL.TwoDimensional
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, false, false)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, false)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
@@ -299,7 +299,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, false, false)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, false)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
@@ -341,7 +341,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, false, false)), startingYValue,
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, false)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         /// <summary>
@@ -1054,315 +1054,6 @@ namespace TVGL.TwoDimensional
 
         #endregion
 
-        #region Boolean Operations
-
-        #region Union
-
-        /// <summary>
-        /// Union. Joins paths that are touching into merged larger subject.
-        /// Use CreatePolygons to correctly order the polygons inside one another.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <param name="polyFill"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, bool simplifyPriorToUnion = true,
-            PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, (IEnumerable<List<Vector2>>)subject, null, simplifyPriorToUnion);
-        }
-
-
-        /// <summary>
-        /// Union. Joins paths that are touching into merged larger subject.
-        /// Use CreatePolygons to correctly order the polygons inside one another.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
-        }
-
-
-        /// <summary>
-        /// Union. Joins paths that are touching into merged larger subject.
-        /// Use CreatePolygons to correctly order the polygons inside one another.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, new[] { subject }, new[] { clip }, simplifyPriorToUnion);
-        }
-
-        /// <summary>
-        /// Union. Joins paths that are touching into merged larger subject.
-        /// Use CreatePolygons to correctly order the polygons inside one another.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new[] { clip }, simplifyPriorToUnion);
-        }
-
-        #endregion
-
-        #region Difference
-        /// <summary>
-        /// Difference. Gets the difference between two sets of polygons. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToDifference"></param>
-        /// <param name="polyFill"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
-            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
-        }
-
-        /// <summary>
-        /// Difference. Gets the difference between two sets of polygons. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToDifference"></param>
-        /// <param name="polyFill"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Difference(new[] { subject }, new[] { clip }, simplifyPriorToDifference, polyFill);
-        }
-
-        /// <summary>
-        /// Difference. Gets the difference between two sets of polygons. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToDifference"></param>
-        /// <param name="polyFill"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Difference(subject, new[] { clip }, simplifyPriorToDifference, polyFill);
-        }
-
-        /// <summary>
-        /// Difference. Gets the difference between two sets of polygons. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToDifference"></param>
-        /// <param name="polyFill"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clip,
-            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Difference(new[] { subject }, clip, simplifyPriorToDifference, polyFill);
-        }
-        #endregion
-
-        #region Intersection
-        /// <summary>
-        /// Intersection. Gets the areas covered by both the subjects and the clips. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToIntersection"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Intersection(new[] { subject }, new[] { clip }, simplifyPriorToIntersection, polyFill);
-        }
-
-        /// <summary>
-        /// Intersection. Gets the areas covered by both the subjects and the clips.
-        /// </summary>
-        /// <param name="subjects"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToIntersection"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Intersection(subjects, new[] { clip }, simplifyPriorToIntersection, polyFill);
-        }
-
-        /// <summary>
-        /// Intersection. Gets the areas covered by both the subjects and the clips. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clips"></param>
-        /// <param name="simplifyPriorToIntersection"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Intersection(new[] { subject }, clips, simplifyPriorToIntersection, polyFill);
-        }
-
-        /// <summary>
-        /// Intersection. Gets the areas covered by both the subjects and the clips.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToIntersection"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
-        }
-        #endregion
-
-        #region Xor
-
-        /// <summary>
-        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToXor"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
-            bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
-        }
-
-        /// <summary>
-        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToXor"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Xor(new[] { subject }, new[] { clip }, simplifyPriorToXor, polyFill);
-        }
-
-        /// <summary>
-        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
-        /// </summary>
-        /// <param name="subjects"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToXor"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip,
-            bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Xor(subjects, new[] { clip }, simplifyPriorToXor, polyFill);
-        }
-
-        /// <summary>
-        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips.  
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clips"></param>
-        /// <param name="simplifyPriorToXor"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToXor = true,
-            PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Xor(new[] { subject }, clips, simplifyPriorToXor, polyFill);
-        }
-
-        #endregion
-
-        private static List<List<Vector2>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType,
-            IEnumerable<IEnumerable<Vector2>> subject,
-           IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToBooleanOperation = true)
-        {
-            var fillType = fillMethod switch
-            {
-                PolygonFillType.Positive => PolyFillType.pftPositive,
-                PolygonFillType.Negative => PolyFillType.pftNegative,
-                PolygonFillType.NonZero => PolyFillType.pftNonZero,
-                PolygonFillType.EvenOdd => PolyFillType.pftEvenOdd,
-                _ => throw new NotImplementedException(),
-            };
-
-            if (simplifyPriorToBooleanOperation)
-            {
-                subject = subject.Select(path => Simplify(path));
-                //If not null
-                clip = clip?.Select(path => Simplify(path));
-            }
-
-            if (!subject.Any())
-            {
-                if (clip == null || !clip.Any())
-                {
-                    return new List<List<Vector2>>();
-                }
-                //Use the clip as the subject if this is a union operation and the clip is not null.
-                if (clipType == ClipType.ctUnion)
-                {
-                    subject = clip;
-                    clip = null;
-                }
-            }
-
-            //Setup Clipper
-            var clipper = new Clipper() { StrictlySimple = true };
-
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var subjectIntLoops = new List<List<IntPoint>>();
-            foreach (var loop in subject)
-            {
-                var intLoop = loop.Select(point
-                    => new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler)).ToList();
-                if (intLoop.Count > 2) subjectIntLoops.Add(intLoop);
-            }
-            clipper.AddPaths(subjectIntLoops, PolyType.ptSubject, true);
-
-            if (clip != null)
-            {
-                var clipIntLoops = new List<List<IntPoint>>();
-                foreach (var loop in clip)
-                {
-                    var intLoop = loop.Select(point
-                        => new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler)).ToList();
-                    if (intLoop.Count > 2) clipIntLoops.Add(intLoop);
-                }
-                clipper.AddPaths(clipIntLoops, PolyType.ptClip, true);
-            }
-
-            //Begin an evaluation
-            var clipperSolution = new List<List<IntPoint>>();
-            var result = clipper.Execute(clipType, clipperSolution, fillType, fillType);
-            if (!result) throw new Exception("Clipper Union Failed");
-
-            //Convert back to points
-            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point
-                => new Vector2(point.X * Constants.IntPointToDoubleMultipler, point.Y * Constants.IntPointToDoubleMultipler))
-            .ToList()).ToList();
-            return solution;
-        }
-        #endregion
 
         private static int NumberOfLinesBelow(SweepEvent se1, SweepList sweepLines)
         {
@@ -2399,22 +2090,6 @@ namespace TVGL.TwoDimensional
                 //} ********commenting out this check. It should be in unit testing - not slow down this method*** 
             }
             return mirror;
-        }
-
-        public readonly struct PolygonSegmentIntersection
-        {
-            public readonly PolygonSegment segmentA;
-            public readonly PolygonSegment segmentB;
-            public readonly Vector2 intersection;
-            public readonly PolygonSegmentRelationship relationship;
-
-            public PolygonSegmentIntersection(PolygonSegment segmentA, PolygonSegment segmentB, Vector2 intersection, PolygonSegmentRelationship relationship)
-            {
-                this.segmentA = segmentA;
-                this.segmentB = segmentB;
-                this.intersection = intersection;
-                this.relationship = relationship;
-            }
         }
     }
 }

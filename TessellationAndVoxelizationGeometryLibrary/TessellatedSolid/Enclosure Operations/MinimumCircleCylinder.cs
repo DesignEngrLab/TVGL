@@ -230,7 +230,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingCircle MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
         {
-            var polygons = paths.Select(path => new Polygon(path, true, false)).ToList();
+            var polygons = paths.Select(path => new Polygon(path, true)).ToList();
             return MaximumInnerCircle(polygons, centerPoint);
         }
 

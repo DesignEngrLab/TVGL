@@ -1184,8 +1184,8 @@ namespace TVGL.TwoDimensional
         private static void AddTriangle(List<int[]> triangles, Vertex2D node1, Vertex2D node2, Vertex2D node3)
         {
             var cross = (node2.Coordinates - node1.Coordinates).Cross(node3.Coordinates - node1.Coordinates);
-            if (cross >= 0) triangles.Add(new[] { node1.ReferenceID, node2.ReferenceID, node3.ReferenceID });
-            else triangles.Add(new[] { node3.ReferenceID, node2.ReferenceID, node1.ReferenceID });
+            if (cross >= 0) triangles.Add(new[] { node1.IndexInList, node2.IndexInList, node3.IndexInList });
+            else triangles.Add(new[] { node3.IndexInList, node2.IndexInList, node1.IndexInList });
         }
         #endregion
     }

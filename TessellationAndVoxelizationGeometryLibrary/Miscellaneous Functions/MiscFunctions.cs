@@ -932,33 +932,38 @@ namespace TVGL
                 intersectionPoint = line1.ToPoint.Coordinates;
                 return PolygonSegmentRelationship.EndPointsTouch;
             }
-            var vStarts = line2.FromPoint.Coordinates - line1.FromPoint.Coordinates; // the vector connecting starts
+            var vStart = line2.FromPoint.Coordinates - line1.FromPoint.Coordinates; // the vector connecting starts
             if (vCross.IsNegligible(tolerance))
             {   // the two lines are parallel (cross product will be zero)
 
                 // if vStats is also parallel with the line vector (either 1 or 2 since they are parallel to each other)
                 // and since bounding boxes do overlap, then the lines are collinear and overlapping
                 // the intersection point is technically not a single value but an infinite set of points, so we leave it as null
-                if (vStarts.Cross(line1.Vector).IsNegligible(tolerance))
+                if (vStart.Cross(line1.Vector).IsNegligible(tolerance))
                     return PolygonSegmentRelationship.CollinearAndOverlapping;
                 return PolygonSegmentRelationship.Unconnected; // otherwise the lines are parallel but not at same distance/intercept
             }
             // that's all the "edge cases", now simply to check the intersection for the conventional case
             // solve for the t scalar values for the two lines.
             // the line is define as all values of t from 0 to 1 in the equations
-            // line1(t_1) = (1 - t_1)*line1.p1 + t_1*line1.p2
-            // line2(t_2) = (1 - t_1)*line1.p1 + t_2*line2.p2
+            // line1(t_1) = (1 - t_1)*line1.From + t_1*line1.To
+            // line2(t_2) = (1 - t_2)*line2.From + t_2*line2.To
+            // ...solving for the x-value at the intersection...
+            // xIntersect =  (1 - t_1)*line1.From.X + t_1*line1.To.X = (1 - t_2)*line2.From.X + t_2*line2.To.X (Eq.1)
+            // yIntersect =  (1 - t_1)*line1.From.Y + t_1*line1.To.Y = (1 - t_2)*line2.From.Y + t_2*line2.To.Y (Eq.2)
+            //rewriting Eq.1 as...
+            // t_1*(line1.To.X - line1.From.X) + t_2*(line2.From.X - line2.To.X) = line2.From.X - line1.From.X 
+            // which can be simplified to...
+            // t_1*(line1.Vector.X) - t_2*(line2.Vector.X) = vStart.X
+            // similiarly for Y
+            // t_1*(line1.Vector.Y) - t_2*(line2.Vector.Y) = vStart.Y
             // solve as a system of two equations
-            //   |   vp_x      vq_x   | |  t_1  |    | vStarts_x  |
-            //   |                    |*|       | =  |            |
-            //   |   vp_y      vq_y   | |  t_2  |    | vStarts_y  |
+            //   |   line1.Vector.X      -line2.Vector.X   | |  t_1  |    | vStart.X  |
+            //   |                                         |*|       | =  |           |
+            //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
             var oneOverdeterminnant = 1 / vCross;
-            var aInv11 = line2.Vector.Y * oneOverdeterminnant;
-            var aInv12 = -line2.Vector.X * oneOverdeterminnant;
-            var aInv21 = -line1.Vector.Y * oneOverdeterminnant;
-            var aInv22 = line1.Vector.X * oneOverdeterminnant;
-            var t_1 = aInv11 * vStarts.X + aInv12 * vStarts.Y;
-            var t_2 = aInv21 * vStarts.X + aInv22 * vStarts.Y;
+            var t_1 = oneOverdeterminnant * (line2.Vector.Y * vStart.X - line2.Vector.X * vStart.Y);
+            var t_2 = oneOverdeterminnant * (line1.Vector.Y * vStart.X - line1.Vector.X * vStart.Y);
             if (t_1.IsNegligible(tolerance))
             {
                 intersectionPoint = line1.FromPoint.Coordinates;
