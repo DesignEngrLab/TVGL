@@ -84,7 +84,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region Constructor
-        
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Node" /> class.
         /// </summary>
@@ -96,7 +96,20 @@ namespace TVGL.TwoDimensional
             Coordinates = currentPoint;
             IndexInList = referenceID;
         }
-
+        internal Vertex2D Copy()
+        {
+            return new Vertex2D
+            {
+                Coordinates = this.Coordinates,
+                IndexInList = this.IndexInList,
+                IsLeftChain = this.IsLeftChain,
+                IsRightChain = this.IsRightChain,
+                LoopID = this.LoopID,
+                Type = this.Type
+            };
+        }
+        // the following private argument-less constructor is only used in the copy function
+        private Vertex2D() { }
         #endregion
     }
 }

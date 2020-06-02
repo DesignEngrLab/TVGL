@@ -20,6 +20,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            PolygonOperationsTesting.TestUnionSimple();
             PolygonOperationsTesting.TestRemoveSelfIntersect();
             //Voxels.InitialTest();
             //return;

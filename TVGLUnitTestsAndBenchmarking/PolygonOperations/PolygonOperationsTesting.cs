@@ -68,10 +68,32 @@ namespace TVGLUnitTestsAndBenchmarking
                 var coords = MakeRandomComplexPolygon(120, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords, true);
-               var polygons = polygon.RemoveSelfIntersections();
-                Presenter.ShowAndHang(polygons.Select(p=>p.Path));
+                var polygons = polygon.RemoveSelfIntersections();
+                Presenter.ShowAndHang(polygons.Path);
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             }
+        }
+        internal static void TestUnionSimple()
+        {
+            //for (int i = 6; i < 200; i++)
+            //{
+            //    r = new Random(i);
+            //    Console.WriteLine(i);
+            var coords1 = MakeStarryCircularPolygon(50, 30, 5).ToList();
+            var coords2 = MakeWavyCircularPolygon(100, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
+
+            Presenter.ShowAndHang(new[] { coords1, coords2 });
+            var polygon1 = new Polygon(coords1, true);
+            var polygon2 = new Polygon(coords2, false);
+            polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
+            var polygon3 = polygon1.Union(polygon2, intersections);
+            Presenter.ShowAndHang(new[] { coords1, coords2, polygon3.Path });
+            var polygon4 = polygon1.Intersect(polygon2, intersections);
+            Presenter.ShowAndHang(new[] { coords1, coords2, polygon4.Path });
+            var polygon5 = polygon1.Subtract(polygon2, intersections);
+            Presenter.ShowAndHang(new[] { coords1, coords2, polygon5.Path });
+            //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
+            //}
         }
         internal static void TestSimplify()
         {

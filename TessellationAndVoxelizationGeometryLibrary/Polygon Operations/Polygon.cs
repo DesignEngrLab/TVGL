@@ -151,15 +151,16 @@ namespace TVGL.TwoDimensional
         {
             area = -Area;
             Path.Reverse();
-
+            if (_vertices != null)
+                _vertices.Reverse();
             //Only reverse the lines if they have been generated
-            if (_lines == null) return;
-            var lines = _lines;
-            _lines = new List<PolygonSegment>();
-            var n = lines.Count;
-            for (var i = 0; i < n; i++)
-                _lines[i] = lines[n - i - 1].Reverse();
-
+            _lines = null;
+            _vertices = null;
+            if (_innerPolygons!=null)
+            {
+                foreach (var innerPolygon in _innerPolygons)
+                    innerPolygon.Reverse();
+            }
         }
 
 
@@ -279,6 +280,26 @@ namespace TVGL.TwoDimensional
             Index = index;
         }
 
+        public Polygon Copy()
+        {
+            var thisPath = _path == null ? null : new List<Vector2>(_path);
+            var thisVertices = _vertices == null ? null : _vertices.Select(v => v.Copy()).ToList();
+            var thisInnerPolygons = _innerPolygons == null ? null : _innerPolygons.Select(p => p.Copy()).ToList();
+            return new Polygon
+            {
+                index = this.index,
+                area = this.area,
+                maxX = this.maxX,
+                maxY = this.maxY,
+                minX = this.minX,
+                minY = this.minY,
+                _path = thisPath,
+                _vertices = thisVertices,
+                _innerPolygons = thisInnerPolygons
+            };
+        }
+        // the following private argument-less constructor is only used in the copy function
+        private Polygon() { }
         public bool IsConvex()
         {
             if (!Area.IsGreaterThanNonNegligible()) return false; //It must have an area greater than zero

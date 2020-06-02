@@ -7,12 +7,14 @@ using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
-    public readonly struct IntersectionData
+    public struct IntersectionData
     {
         public readonly PolygonSegment segmentA;
         public readonly PolygonSegment segmentB;
         public readonly Vector2 intersectCoordinates;
         public readonly PolygonSegmentRelationship relationship;
+        public bool EnteredA;
+        public bool EnteredB;
 
         public IntersectionData(PolygonSegment segmentA, PolygonSegment segmentB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
         {
@@ -20,6 +22,9 @@ namespace TVGL.TwoDimensional
             this.segmentB = segmentB;
             this.intersectCoordinates = intersectionPoint;
             this.relationship = relationship;
+            EnteredA = false;
+            EnteredB = false;
         }
+
     }
 }
