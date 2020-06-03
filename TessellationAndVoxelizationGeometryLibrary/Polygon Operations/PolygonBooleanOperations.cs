@@ -1,11 +1,6 @@
 ﻿using ClipperLib;
-using Newtonsoft.Json.Linq;
-using Priority_Queue;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -59,7 +54,7 @@ namespace TVGL.TwoDimensional
                     }
                 }          // I hate that there is duplicate code here, but I don't know if there is a better way
                 else       // (I tried several). The subtle difference in the last IntersectionData constructor
-                {          // where the order of A then B is used in defining segmentA and segmentB
+                {          // where the order of A then B is used in defining segmentA and EdgeB
                     var current = bLines[bIndex++];
                     var otherIndex = aIndex;
                     while (otherIndex < aLines.Length && current.XMax > aLines[otherIndex].XMin)
@@ -74,8 +69,8 @@ namespace TVGL.TwoDimensional
             }
             if (intersections.Count > 0)
             {
-                var noNominalIntersections = !intersections.Any(intersect =>
-                intersect.relationship == PolygonSegmentRelationship.IntersectNominal);
+                var noNominalIntersections = intersections.All(intersect
+                    => intersect.Relationship != PolygonSegmentRelationship.IntersectNominal);
                 if (ArePointsInsidePolygonLines(aLines, aLines.Length, orderedBPoints, out _, false))
                 {
                     if (noNominalIntersections) return PolygonRelationship.BInsideAButBordersTouch;
@@ -142,76 +137,43 @@ namespace TVGL.TwoDimensional
             return intersections;
         }
 
-
-
-        #region Clockwise / CounterClockwise Ordering
-
-        /// <summary>
-        /// Sets a polygon to counter clock wise positive
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        /// <assumptions>
-        /// 1. the polygon is closed
-        /// 2. the last point is not repeated.
-        /// 3. the polygon is simple (does not intersect itself or have holes)
-        /// </assumptions>
-        private static List<Vector2> CCWPositive(IEnumerable<Vector2> p)
-        {
-            var polygon = new List<Vector2>(p);
-            var area = p.Area();
-            if (area < 0) polygon.Reverse();
-            return polygon;
-        }
-
-        /// <summary>
-        /// Sets a polygon to clock wise negative
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        private static List<Vector2> CWNegative(IEnumerable<Vector2> p)
-        {
-            var polygon = new List<Vector2>(p);
-            var area = p.Area();
-            if (area > 0) polygon.Reverse();
-            return polygon;
-        }
-
-        #endregion
-
         #region Boolean Operations
-        public static Polygon RemoveSelfIntersections(this Polygon polygon)
+        public static Polygon RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
         {
-            return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections());
+            return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections(), minAllowableArea);
         }
-        public static Polygon RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections)
+        public static Polygon RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
+            double minAllowableArea = Constants.BaseTolerance)
         {
             if (intersections.Count == 0) return polygon;
-            var readOnlyIntersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
-            var usedIntersectionLookup = new HashSet<int>[readOnlyIntersectionLookup.Length];
+            var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var polygons = new List<Polygon>();
-            while (GetNextIntersection(readOnlyIntersectionLookup, usedIntersectionLookup, out var startIndex, out var currentEdgeIndex))
+            var id = 0;
+            while (GetNextStartingIntersection(intersectionLookup, intersections, false, 0, out var startIntersection,
+                out var currentEdge))
             {
-                Polygon thispolygon = MakePolygonThroughIntersections(readOnlyIntersectionLookup, usedIntersectionLookup, intersections, 
-                    startIndex,polygon.Lines[currentEdgeIndex],false,false);
-                if (!thispolygon.IsPositive) thispolygon.Reverse();
-                polygons.Add(thispolygon);
+                var polygonCoordinates
+                    = MakePolygonThroughIntersections(intersectionLookup, intersections,
+                        startIntersection, currentEdge, false, false).ToList();
+                var area = polygonCoordinates.Area();
+                if (area.IsNegligible(minAllowableArea)) continue;
+                if (area < 0) continue; //polygonCoordinates.Reverse();
+                polygons.Add(new Polygon(polygonCoordinates, true, id++));
             }
             polygons = polygons.OrderByDescending(p => p.Area).ToList();
-            int i = 0;
+            var i = 0;
             while (polygons.Count > 1)
             {
                 var outerPolygon = polygons[i];
                 var j = i + 1;
                 while (j < polygons.Count)
                 {
-                    var polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygons[j], out _);
-                    if (polygonRelationship == PolygonRelationship.BIsCompletelyInsideA || polygonRelationship == PolygonRelationship.Separated)
-                        j++;
+                    var polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygons[j], out intersections);
+                    if (polygonRelationship == PolygonRelationship.Separated) j++;
+                    // this should follow the switch statement in Union
                     else
                     {
-                        polygons[i] = outerPolygon = outerPolygon.Union(polygons[j])[0];
+                        polygons[i] = polygons[i].Union(polygons[j], intersections, minAllowableArea)[0];
                         polygons.RemoveAt(j);
                     }
                 }
@@ -222,61 +184,92 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Gets the next intersection by looking throught the intersectionLookupList. It'll return false, when there are none left.
+        /// Gets the next intersection by looking through the intersectionLookupList. It'll return false, when there are none left.
         /// </summary>
         /// <param name="intersectionLookup">The intersection lookup.</param>
         /// <param name="intersections">The intersections.</param>
-        /// <param name="start">The start.</param>
-        /// <param name="segmentAIsReference">if set to <c>true</c> [segment a is reference].</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <param name="onlyVisitOnce">if set to <c>true</c> [only visit once].</param>
+        /// <param name="crossProductSign">The cross product sign.</param>
+        /// <param name="intersectionIndex">Index of the intersection.</param>
+        /// <param name="currentEdgeIndex">Index of the current edge.</param>
+        /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private static bool GetNextIntersection(List<int>[] readOnlyIntersectionLookup, HashSet<int>[] usedIntersectionLookup, 
-          out int intersectionIndex, out int currentEdgeIndex)
+        private static bool GetNextStartingIntersection(List<int>[] intersectionLookup, List<IntersectionData> intersections, bool onlyVisitOnce,
+         int crossProductSign, out IntersectionData nextStartingIntersection, out PolygonSegment currentEdge)
         {
-            intersectionIndex = -1;
-            for (int edgeIndex = 0; edgeIndex < readOnlyIntersectionLookup.Length; edgeIndex++)
+            for (int edgeIndex = 0; edgeIndex < intersectionLookup.Length; edgeIndex++)
             {
-                if (readOnlyIntersectionLookup[edgeIndex] == null) continue;
-                foreach (var index in readOnlyIntersectionLookup[edgeIndex])
+                if (intersectionLookup[edgeIndex] == null) continue;
+                foreach (var index in intersectionLookup[edgeIndex])
                 {
-                    if (usedIntersectionLookup[edgeIndex] == null || !usedIntersectionLookup[edgeIndex].Contains(index))
-                    {
-                        intersectionIndex = index;
-                        currentEdgeIndex = edgeIndex;
-                        return true;
-                    }
+                    var intersectionData = intersections[index];
+                    if (onlyVisitOnce && (intersectionData.EnteredA || intersectionData.EnteredB)) continue;
+                    var enteringEdgeA = edgeIndex == intersectionData.EdgeA.IndexInList;
+                    if (enteringEdgeA && intersectionData.EnteredA) continue; //you can enter twice but you've already entered A before (would need to use EdgeB to start here)
+                    if (!enteringEdgeA && intersectionData.EnteredB) continue; //you can enter twice but you've already entered B before (would need to use EdgeA to start here)
+                    var cross = (enteringEdgeA ? 1 : -1)
+                                // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
+                                * intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
+
+                   //if (crossProductSign != 0 && enteringEdgeA && crossProductSign * cross < 0) continue; // then will have to wait for EdgeB
+                    //if (crossProductSign != 0 && !enteringEdgeA && crossProductSign * cross < 0) continue; // entering EdgeB but cross product is wrong
+                    if (crossProductSign != 0 && crossProductSign * cross < 0) continue; // entering EdgeB but cross product is wrong
+                    // what about when crossProduct is zero - like in a line Intersection.Relationship will be in line
+                    currentEdge = enteringEdgeA ? intersectionData.EdgeA : intersectionData.EdgeB;
+                    nextStartingIntersection = intersectionData;
+                    return true;
                 }
             }
-            currentEdgeIndex = -1;
+
+            nextStartingIntersection = null;
+            currentEdge = null;
             return false;
         }
 
-        private static Polygon MakePolygonThroughIntersections(List<int>[] readonlyIntersectionLookup, HashSet<int>[] usedIntersectionLookup,
-            List<IntersectionData> intersections, int indexOfNewIntersection, PolygonSegment currentEdge, bool recordForBothEdges, bool switchDirections)
+        /// <summary>
+        /// Makes the polygon through intersections.
+        /// </summary>
+        /// <param name="intersectionLookup">The readonly intersection lookup.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <param name="intersectionIndex">The index of new intersection.</param>
+        /// <param name="currentEdge">The current edge.</param>
+        /// <param name="onlyVisitOnce">if set to <c>true</c> [only visit once].</param>
+        /// <param name="switchDirections">if set to <c>true</c> [switch directions].</param>
+        /// <returns>Polygon.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private static List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup,
+            List<IntersectionData> intersections, IntersectionData intersectionData, PolygonSegment currentEdge, bool onlyVisitOnce, bool switchDirections)
         {
             var newPath = new List<Vector2>();
-            var forward=true; // as in following the edges in the forward direction (from...to). If false, then traverse backwards
-            do
+            var forward = true; // as in following the edges in the forward direction (from...to). If false, then traverse backwards
+            while ((onlyVisitOnce && !intersectionData.EnteredA && !intersectionData.EnteredB)
+                || (!onlyVisitOnce && intersectionData.EdgeA == currentEdge && !intersectionData.EnteredA)
+                || (!onlyVisitOnce && intersectionData.EdgeB == currentEdge && !intersectionData.EnteredB))
             {
-                var intersectionData = intersections[indexOfNewIntersection];
-                if (recordForBothEdges || currentEdge == intersectionData.segmentA)
-                    intersectionData.EnteredA = true;
-                if (recordForBothEdges || currentEdge == intersectionData.segmentA)
-                    intersectionData.EnteredB = true;
-                RecordIntersectionInUsedLookup(usedIntersectionLookup, currentEdge, indexOfNewIntersection,
-                    recordForBothEdges, intersectionData);
-                if (intersectionData.relationship == PolygonSegmentRelationship.CollinearAndOverlapping
-                    || intersectionData.relationship == PolygonSegmentRelationship.ConnectInT
-                    || intersectionData.relationship == PolygonSegmentRelationship.EndPointsTouch)
+                currentEdge = currentEdge == intersectionData.EdgeA ? intersectionData.EdgeB : intersectionData.EdgeA;
+                if ((currentEdge == intersectionData.EdgeA) == forward) intersectionData.EnteredA = true;
+                else intersectionData.EnteredB = true;
+                //if (currentEdge == intersectionData.EdgeA)
+                //{
+                //    intersectionData.EnteredA = true;
+                //    currentEdge = intersectionData.EdgeB;
+                //}
+                //else
+                //{
+                //    intersectionData.EnteredB = true;
+                //    currentEdge = intersectionData.EdgeA;
+                //}
+                if (intersectionData.Relationship == PolygonSegmentRelationship.CollinearAndOverlapping
+                    || intersectionData.Relationship == PolygonSegmentRelationship.ConnectInT
+                    || intersectionData.Relationship == PolygonSegmentRelationship.EndPointsTouch)
                     throw new NotImplementedException();
-                currentEdge = (currentEdge == intersectionData.segmentA) ? intersectionData.segmentB
-                    : intersectionData.segmentA;
-                var intersectionCoordinates = intersectionData.intersectCoordinates;
+                var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 newPath.Add(intersectionCoordinates);
-                while (!NextIntersectionOnThisEdge(readonlyIntersectionLookup, currentEdge, intersections,
-                   intersectionCoordinates, out indexOfNewIntersection))
+                int intersectionIndex;
+                if (switchDirections) forward = !forward;
+                while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
+                   intersectionCoordinates, out intersectionIndex))
                 {
-                    if (switchDirections) forward = !forward;
                     if (forward)
                     {
                         newPath.Add(currentEdge.ToPoint.Coordinates);
@@ -285,63 +278,46 @@ namespace TVGL.TwoDimensional
                     else
                     {
                         newPath.Add(currentEdge.FromPoint.Coordinates);
-                        currentEdge = currentEdge.FromPoint.StartLine;
+                        currentEdge = currentEdge.FromPoint.EndLine;
                     }
                     intersectionCoordinates = Vector2.Null;
                 }
-            } while (usedIntersectionLookup[currentEdge.IndexInList] == null
-            || !usedIntersectionLookup[currentEdge.IndexInList].Contains(indexOfNewIntersection));
-            return new Polygon(newPath, false);
-        }
-
-        private static void RecordIntersectionInUsedLookup(HashSet<int>[] usedIntersectionLookup,
-            PolygonSegment currentEdge, in int indexOfNewIntersection, in bool recordForBothEdges,
-            IntersectionData intersectionData)
-        {
-            if (usedIntersectionLookup[currentEdge.IndexInList] == null)
-                usedIntersectionLookup[currentEdge.IndexInList] = new HashSet<int>();
-            usedIntersectionLookup[currentEdge.IndexInList].Add(indexOfNewIntersection);
-            if (recordForBothEdges)
-            {
-                var otherEdgeIndex = intersectionData.segmentA.IndexInList == currentEdge.IndexInList
-                    ? intersectionData.segmentB.IndexInList
-                    : intersectionData.segmentA.IndexInList;
-                if (usedIntersectionLookup[otherEdgeIndex] == null)
-                    usedIntersectionLookup[otherEdgeIndex] = new HashSet<int>();
-                usedIntersectionLookup[otherEdgeIndex].Add(indexOfNewIntersection);
+                intersectionData = intersections[intersectionIndex];
             }
+
+            return newPath;
         }
 
-        private static bool NextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<IntersectionData> allIntersections,
-        Vector2 formerIntersectCoords, out int indexOfItersection)
+        private static bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<IntersectionData> allIntersections,
+        Vector2 formerIntersectCoords, out int indexOfIntersection)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
-            indexOfItersection = -1;
+            indexOfIntersection = -1;
             if (intersectionIndices == null)
                 return false;
             var minDistanceToIntersection = double.PositiveInfinity;
             foreach (var index in intersectionIndices)
             {
                 var thisIntersectData = allIntersections[index];
-                var distance = double.NaN;
-                if (thisIntersectData.relationship == PolygonSegmentRelationship.CollinearAndOverlapping)
+                double distance;
+                if (thisIntersectData.Relationship == PolygonSegmentRelationship.CollinearAndOverlapping)
                 {
-                    var otherLine = (thisIntersectData.segmentA == currentEdge) ? thisIntersectData.segmentB : thisIntersectData.segmentA;
+                    var otherLine = (thisIntersectData.EdgeA == currentEdge) ? thisIntersectData.EdgeB : thisIntersectData.EdgeA;
                     var fromDist = currentEdge.Vector.Dot(otherLine.FromPoint.Coordinates - currentEdge.FromPoint.Coordinates);
                     var toDist = currentEdge.Vector.Dot(otherLine.ToPoint.Coordinates - currentEdge.FromPoint.Coordinates);
                     var thisLength = currentEdge.Vector.LengthSquared();
                     throw new NotImplementedException();
                 }
                 else distance = formerIntersectCoords.IsNull()
-                        ? currentEdge.Vector.Dot(thisIntersectData.intersectCoordinates - currentEdge.FromPoint.Coordinates)
-                        : currentEdge.Vector.Dot(thisIntersectData.intersectCoordinates - formerIntersectCoords);
+                        ? currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - currentEdge.FromPoint.Coordinates)
+                        : currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - formerIntersectCoords);
                 if (distance > 0 && minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;
-                    indexOfItersection = index;
+                    indexOfIntersection = index;
                 }
             }
-            return indexOfItersection >= 0;
+            return indexOfIntersection >= 0;
         }
 
         private static List<int>[] MakeIntersectionLookupList(int numLines, List<IntersectionData> intersections)
@@ -349,11 +325,14 @@ namespace TVGL.TwoDimensional
             var result = new List<int>[numLines];
             for (int i = 0; i < intersections.Count; i++)
             {
-                var index = intersections[i].segmentA.IndexInList;
-                if (result[index] == null) result[index] = new List<int>();
+                var intersection = intersections[i];
+                intersection.EnteredA = false;
+                intersection.EnteredB = false;
+                var index = intersection.EdgeA.IndexInList;
+                result[index] ??= new List<int>();
                 result[index].Add(i);
-                index = intersections[i].segmentB.IndexInList;
-                if (result[index] == null) result[index] = new List<int>();
+                index = intersection.EdgeB.IndexInList;
+                result[index] ??= new List<int>();
                 result[index].Add(i);
             }
             return result;
@@ -362,19 +341,18 @@ namespace TVGL.TwoDimensional
         #endregion
 
 
-        #region Boolean Operations
+        #region New Boolean Operations
 
-        #region Union
-        public static Polygon[] Union(this Polygon polygonA, Polygon polygonB)
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
             switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
             {
                 case PolygonRelationship.Separated:
-                    return new[] { polygonA.Copy(), polygonB.Copy() };
+                    return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
                 case PolygonRelationship.BIsCompletelyInsideA:
-                    return new[] { polygonA.Copy() };
+                    return new List<Polygon> { polygonA.Copy() };
                 case PolygonRelationship.AIsCompletelyInsideB:
-                    return new[] { polygonB.Copy() };
+                    return new List<Polygon> { polygonB.Copy() };
                 default:
                     //case PolygonRelationship.Intersect:
                     //case PolygonRelationship.SeparatedButBordersTouch:
@@ -382,92 +360,111 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.BInsideAButBordersTouch:
                     //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
                     //case PolygonRelationship.AInsideBButBordersTouch:
-                    return new[] { Union(polygonA, polygonB, intersections) };
+                    return Union(polygonA, polygonB, intersections, minAllowableArea);
             }
         }
-        public static Polygon Union(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections)
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
+        {
+            return BooleanOperation(polygonA, polygonB, intersections, true, false, -1, minAllowableArea);
+        }
+        public static List<Polygon> BooleanOperation(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, bool onlyVisitOnce, bool switchDirection,
+            int crossProductSign, double minAllowableArea = Constants.BaseTolerance)
         {
             var id = 0;
+            foreach (var polygon in polygonA.AllPolygons)
+            {
+                foreach (var vertex in polygon.Vertices)
+                    vertex.IndexInList = id++;
+            }
+            // temporarily number the vertices so that each has a unique number. this is important for the Intersection Lookup List
             foreach (var polygon in polygonB.AllPolygons)
             {
                 foreach (var vertex in polygon.Vertices)
                     vertex.IndexInList = id++;
             }
-
-            foreach (var polygon in polygonA.AllPolygons)
+            var intersectionLookup = MakeIntersectionLookupList(id, intersections);
+            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
+            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
+            while (GetNextStartingIntersection(intersectionLookup, intersections, onlyVisitOnce, crossProductSign, out var startIndex,
+                out var startEdge))
             {
-                foreach (var vertex in polygonA.Vertices)
-                    vertex.IndexInList = id++;
+                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startIndex,
+                    startEdge, onlyVisitOnce, switchDirection).ToList();
+                var area = polyCoordinates.Area();
+                if (area.IsNegligible(minAllowableArea)) continue;
+                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
+                else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
             }
-            var readOnlyIntersectionLookup = MakeIntersectionLookupList(id, intersections);
-            var usedIntersectionLookup = new HashSet<int>[id];
-            // get the first intersection
-            var cross = intersections[0].segmentA.Vector.Cross(intersections[0].segmentB.Vector);
-            var result = MakePolygonThroughIntersections(readOnlyIntersectionLookup, usedIntersectionLookup, intersections,
-                0, cross > 0 ? intersections[0].segmentB : intersections[0].segmentA,true,false);
+            // reset ids for polygon B
             id = 0;
-            foreach (var vertex in polygonA.Vertices)
+            foreach (var vertex in polygonB.Vertices)
                 vertex.IndexInList = id++;
-            return result;
+
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
         }
-        public static Polygon[] Intersect(this Polygon polygonA, Polygon polygonB)
+        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
             switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
             {
                 case PolygonRelationship.Separated:
-                    return new[] { polygonA.Copy(), polygonB.Copy() };
+                    return new List<Polygon>();
                 case PolygonRelationship.BIsCompletelyInsideA:
-                    return new[] { polygonB.Copy() };
+                    return new List<Polygon> { polygonB.Copy() };
                 case PolygonRelationship.AIsCompletelyInsideB:
-                    return new[] { polygonA.Copy() };
+                    return new List<Polygon> { polygonA.Copy() };
                 default:
-                    return new[] { Intersect(polygonA, polygonB, intersections) };
+                    return Intersect(polygonA, polygonB, intersections, minAllowableArea);
             }
         }
-        public static Polygon Intersect(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections)
+        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
         {
-            var id = 0;
-            foreach (var vertex in polygonB.Vertices)
-                vertex.IndexInList = id++;
-            foreach (var vertex in polygonA.Vertices)
-                vertex.IndexInList = id++;
-            var readOnlyIntersectionLookup = MakeIntersectionLookupList(id, intersections);
-            var usedIntersectionLookup = new HashSet<int>[id];
-            // get the first intersection
-            var cross = intersections[0].segmentA.Vector.Cross(intersections[0].segmentB.Vector);
-            var result = MakePolygonThroughIntersections(readOnlyIntersectionLookup, usedIntersectionLookup, intersections,
-                0, cross < 0 ? intersections[0].segmentB : intersections[0].segmentA,true,false);
-            id = 0;
-            foreach (var vertex in polygonA.Vertices)
-                vertex.IndexInList = id++;
-            return result;
+            return BooleanOperation(polygonA, polygonB, intersections, true, false, +1, minAllowableArea);
         }
 
-        public static Polygon[] Subtract(this Polygon polygonA, Polygon polygonB)
+        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
-            var negativeB = polygonB.Copy();
-            negativeB.Reverse();
-            return Intersect(polygonA, negativeB);
+            switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
+            {
+                case PolygonRelationship.Separated:
+                case PolygonRelationship.SeparatedButBordersTouch:
+                    return new List<Polygon> { polygonA.Copy() };
+                // hmm, what to do in this case. if no intersection make loop (MakePathThroughIntersections) will fail
+                //case PolygonRelationship.BIsCompletelyInsideA:
+                // return new[] { polygonB.Copy() };
+                case PolygonRelationship.AIsCompletelyInsideB:
+                    return new List<Polygon>();
+                default:
+                    return Subtract(polygonA, polygonB, intersections, minAllowableArea);
+            }
         }
-        public static Polygon Subtract(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections)
+        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
         {
-            var id = 0;
-            foreach (var vertex in polygonB.Vertices)
-                vertex.IndexInList = id++;
-            foreach (var vertex in polygonA.Vertices)
-                vertex.IndexInList = id++;
-            var readOnlyIntersectionLookup = MakeIntersectionLookupList(id, intersections);
-            var usedIntersectionLookup = new HashSet<int>[id];
-            // get the first intersection
-            var cross = intersections[0].segmentA.Vector.Cross(intersections[0].segmentB.Vector);
-            var result = MakePolygonThroughIntersections(readOnlyIntersectionLookup, usedIntersectionLookup, intersections,
-                0, cross < 0 ? intersections[0].segmentB : intersections[0].segmentA, true, true);
-            id = 0;
-            foreach (var vertex in polygonA.Vertices)
-                vertex.IndexInList = id++;
-            return result;
+            return BooleanOperation(polygonA, polygonB, intersections, true, true, -1, minAllowableArea);
         }
+        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
+        {
+            switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
+            {
+                case PolygonRelationship.Separated:
+                case PolygonRelationship.SeparatedButBordersTouch:
+                    return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
+                // hmm, what to do in this case. if no intersection make loop (MakePathThroughIntersections) will fail
+                //case PolygonRelationship.BIsCompletelyInsideA:
+                // return new[] { polygonB.Copy() };
+                //case PolygonRelationship.AIsCompletelyInsideB:
+                //    return Array.Empty<Polygon>();
+                default:
+                    return ExclusiveOr(polygonA, polygonB, intersections, minAllowableArea);
+            }
+        }
+        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
+        {
+            return BooleanOperation(polygonA, polygonB, intersections, false, true, -1, minAllowableArea);
+        }
+        #endregion
 
+        #region Clipper Boolean Functions
+        #region union
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
         /// Use CreatePolygons to correctly order the polygons inside one another.

@@ -79,19 +79,21 @@ namespace TVGLUnitTestsAndBenchmarking
             //{
             //    r = new Random(i);
             //    Console.WriteLine(i);
-            var coords1 = MakeStarryCircularPolygon(50, 30, 5).ToList();
-            var coords2 = MakeWavyCircularPolygon(100, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
+            var coords1 = MakeStarryCircularPolygon(5, 30, 5).ToList();
+            var coords2 = MakeWavyCircularPolygon(6, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
 
             Presenter.ShowAndHang(new[] { coords1, coords2 });
             var polygon1 = new Polygon(coords1, true);
             var polygon2 = new Polygon(coords2, false);
             polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
-            var polygon3 = polygon1.Union(polygon2, intersections);
-            Presenter.ShowAndHang(new[] { coords1, coords2, polygon3.Path });
-            var polygon4 = polygon1.Intersect(polygon2, intersections);
-            Presenter.ShowAndHang(new[] { coords1, coords2, polygon4.Path });
-            var polygon5 = polygon1.Subtract(polygon2, intersections);
-            Presenter.ShowAndHang(new[] { coords1, coords2, polygon5.Path });
+            //var polygon3 = polygon1.Union(polygon2, intersections);
+            //Presenter.ShowAndHang(new[] { coords1, coords2, polygon3[0].Path });
+            //var polygon4 = polygon1.Intersect(polygon2, intersections);
+            //Presenter.ShowAndHang(new[] { coords1, coords2, polygon4[0].Path });
+            var polygon5 = polygon1.ExclusiveOr(polygon2, intersections);
+            Presenter.ShowAndHang(new[] { coords1, coords2, polygon5[0].Path });
+            polygon5 = polygon2.Subtract(polygon1, intersections);
+            Presenter.ShowAndHang(new[] { coords1, coords2, polygon5[0].Path });
             //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             //}
         }

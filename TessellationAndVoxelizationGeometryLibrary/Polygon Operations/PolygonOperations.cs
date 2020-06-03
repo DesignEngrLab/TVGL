@@ -282,6 +282,62 @@ namespace TVGL.TwoDimensional
             return true;
         }
 
+        /// <summary>
+        /// Creates the shallow polygon trees following boolean operations. The name follows the public methods,
+        /// this is meant to be used only internally as it requires several assumptions:
+        /// 1. positive polgyons are ordered by increasing area (from 0 to +inf)
+        /// 2. negative polygons are ordered by increasing area (from -inf to 0)
+        /// 3. there are not intersections between the solids (this should be the result following the boolean
+        /// operation; however, it is possible that they share a vertex (e.g. in XOR))
+        /// </summary>
+        /// <param name="Polygons">The positive polygons.</param>
+        /// <param name="negativePolygons">The negative polygons.</param>
+        /// <returns>Polygon[].</returns>
+        /// <exception cref="Exception">Intersections still exist between hole and positive polygon.</exception>
+        /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
+        private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> polygons,
+            SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
+        {
+            //2) Find the positive polygon that this negative polygon is inside.
+            //The negative polygon belongs to the smallest positive polygon that it fits inside.
+            //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
+            //and the reversed ordering, gaurantee that we get the correct shallow tree.
+            foreach (var negativePolygon in negativePolygons)
+            {
+                var isInside = false;
+                //Start with the smallest positive polygon           
+                foreach (var positivePolygon in polygons)
+                {
+                    if (-negativePolygon.Area > positivePolygon.Area) continue;
+                    foreach (var vector2 in negativePolygon.Path)
+                    {
+                        if (!positivePolygon.IsPointInsidePolygon(vector2, out _, out _, out var onBoundary, true))
+                            // negative has a point outside of positive. no point in checking other points
+                            break;
+                        if (!onBoundary)
+                        {
+                            positivePolygon.InnerPolygons.Add(negativePolygon);
+                            //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
+                            isInside = true;
+                            break;
+                        }
+                    }
+                }
+                if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
+            }
+            //Set the polygon indices
+            var index = 0;
+            foreach (var polygon in polygons)
+            {
+                polygon.Index = index++;
+                foreach (var hole in polygon.InnerPolygons)
+                {
+                    hole.Index = polygon.Index;
+                }
+            }
+            return polygons;
+        }
+
 
         #region Line Intersections with Polygon
 
@@ -1285,7 +1341,7 @@ namespace TVGL.TwoDimensional
                 var path = ComputePath(se1, currentPathID, depth, parentID, result);
                 if (depth % 2 != 0) //Odd
                 {
-                    path = CWNegative(path);
+                    if (path.Area() > 0) path.Reverse();
                 }
                 solution.Add(path);
                 //if (parent != -1) //parent path ID
@@ -1943,8 +1999,8 @@ namespace TVGL.TwoDimensional
                                 if (previousSweepEvent == null || previousSweepEvent.PolygonType == se2.PolygonType)
                                 {
                                     break; //ok to insert before (Will be marked as a duplicate event)
-                                    //If the previousSweepEvent and se2 have the same polygon type, insert se1 before se2.
-                                    //This is to help with determining the result using the previous other line.
+                                           //If the previousSweepEvent and se2 have the same polygon type, insert se1 before se2.
+                                           //This is to help with determining the result using the previous other line.
                                 }
                                 //Else increment and continue;                         
                             }

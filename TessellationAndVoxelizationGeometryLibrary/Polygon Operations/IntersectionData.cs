@@ -1,27 +1,58 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TVGL.Numerics;
+﻿using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
-    public struct IntersectionData
+    /// <summary>
+    /// Class IntersectionData.
+    /// </summary>
+    public class IntersectionData
     {
-        public readonly PolygonSegment segmentA;
-        public readonly PolygonSegment segmentB;
-        public readonly Vector2 intersectCoordinates;
-        public readonly PolygonSegmentRelationship relationship;
-        public bool EnteredA;
-        public bool EnteredB;
+        /// <summary>
+        /// Gets Polygon Edge A.
+        /// </summary>
+        /// <value>The edge a.</value>
+        public PolygonSegment EdgeA { get; }
+        /// <summary>
+        /// Gets Polygon Edge B.
+        /// </summary>
+        /// <value>The edge b.</value>
+        public PolygonSegment EdgeB { get; }
+        /// <summary>
+        /// Gets the intersection coordinates.
+        /// </summary>
+        /// <value>The intersect coordinates.</value>
+        public Vector2 IntersectCoordinates { get; }
+        /// <summary>
+        /// Gets the relationship.
+        /// </summary>
+        /// <value>The relationship.</value>
+        public PolygonSegmentRelationship Relationship { get; }
+        /// <summary>
+        /// Gets or sets a value indicating whether [EdgeA has already been entered].
+        /// This is used internally in polygon operations.
+        /// </summary>
+        /// <value><c>true</c> if [entered a]; otherwise, <c>false</c>.</value>
+        internal bool EnteredA { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether [EdgeB has already been entered].
+        /// This is used internally in polygon operations.
+        /// </summary>
+        /// <value><c>true</c> if [entered b]; otherwise, <c>false</c>.</value>
+        internal bool EnteredB { get; set; }
 
-        public IntersectionData(PolygonSegment segmentA, PolygonSegment segmentB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IntersectionData"/> class.
+        /// </summary>
+        /// <param name="edgeA">The edge a.</param>
+        /// <param name="edgeB">The edge b.</param>
+        /// <param name="intersectionPoint">The intersection point.</param>
+        /// <param name="relationship">The relationship.</param>
+        internal IntersectionData(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
         {
-            this.segmentA = segmentA;
-            this.segmentB = segmentB;
-            this.intersectCoordinates = intersectionPoint;
-            this.relationship = relationship;
+            this.EdgeA = edgeA;
+            this.EdgeB = edgeB;
+            this.IntersectCoordinates = intersectionPoint;
+            this.Relationship = relationship;
             EnteredA = false;
             EnteredB = false;
         }
