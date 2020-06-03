@@ -79,24 +79,63 @@ namespace TVGLUnitTestsAndBenchmarking
             //{
             //    r = new Random(i);
             //    Console.WriteLine(i);
-            var coords1 = MakeStarryCircularPolygon(5, 30, 5).ToList();
-            var coords2 = MakeWavyCircularPolygon(6, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
+            var coords1 = MakeStarryCircularPolygon(50, 30, 15).ToList();
+            var coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
 
             Presenter.ShowAndHang(new[] { coords1, coords2 });
             var polygon1 = new Polygon(coords1, true);
             var polygon2 = new Polygon(coords2, false);
             polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
-            //var polygon3 = polygon1.Union(polygon2, intersections);
-            //Presenter.ShowAndHang(new[] { coords1, coords2, polygon3[0].Path });
-            //var polygon4 = polygon1.Intersect(polygon2, intersections);
-            //Presenter.ShowAndHang(new[] { coords1, coords2, polygon4[0].Path });
+            var polygon3 = polygon1.Union(polygon2, intersections);
+            Presenter.ShowAndHang(new[] { coords1, coords2, polygon3[0].Path });
+            var polygon4 = polygon1.Intersect(polygon2, intersections);
+            Presenter.ShowAndHang(new[] { coords1, coords2, polygon4[0].Path });
             var polygon5 = polygon1.ExclusiveOr(polygon2, intersections);
-            Presenter.ShowAndHang(new[] { coords1, coords2, polygon5[0].Path });
+            Presenter.ShowAndHang(polygon5.Select(p => p.Path));
+            polygon5 = polygon1.Subtract(polygon2, intersections);
+            Presenter.ShowAndHang(polygon5.Select(p => p.Path));
             polygon5 = polygon2.Subtract(polygon1, intersections);
-            Presenter.ShowAndHang(new[] { coords1, coords2, polygon5[0].Path });
+            Presenter.ShowAndHang(polygon5.Select(p => p.Path));
             //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             //}
         }
+        [Params(10, 100, 1000, 10000)]
+        public int N;
+
+        private List<Vector2> coords1;
+        private List<Vector2> coords2;
+        private Polygon polygon1;
+        private Polygon polygon2;
+
+        [GlobalSetup]
+        public void Setup()
+        {
+            coords1 = MakeStarryCircularPolygon(N, 30, 15).ToList();
+            coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
+            polygon1 = new Polygon(coords1, true);
+            polygon2 = new Polygon(coords2, true);
+        }
+
+
+        [Benchmark(Description = "my functions")]
+        public void BenchmarkMyBooleanSimple()
+        {
+            var polygon3 = polygon1.Union(polygon2);
+            polygon3 = polygon1.Intersect(polygon2);
+            polygon3 = polygon1.ExclusiveOr(polygon2);
+            polygon3 = polygon1.Subtract(polygon2);
+        }
+
+
+        [Benchmark(Description = "clipper")]
+        public void BenchmarkClipperSimple()
+        {
+            var coords3 =PolygonOperations.Union(coords1,coords2);
+            coords3 = PolygonOperations.Intersection(coords1, coords2);
+            coords3 = coords1.Difference(coords2);
+            coords3 = coords1.Xor(coords2);
+        }
+
         internal static void TestSimplify()
         {
             IEnumerable<Vector2> polygon = MakeStarryCircularPolygon(150000, 30, 1);
@@ -105,10 +144,11 @@ namespace TVGLUnitTestsAndBenchmarking
             Presenter.ShowAndHang(polygon);
         }
 
-        //[Benchmark(Description = "from Ienumerable")]
-        //[Arguments(10, 4)]
-        //[Arguments(20, 4)]
-        //[Arguments(10, 4000)]
+        /*
+        [Benchmark(Description = "from Ienumerable")]
+        [Arguments(10, 4)]
+        [Arguments(20, 4)]
+        [Arguments(10, 4000)]
         [Arguments(20, 10000)]
         [Theory]
         [InlineData(10, 4)]
@@ -142,7 +182,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var polygon = MakeCircularPolygon(numSides, radius);
             Assert.Equal(area, polygon.Area(), 10);
         }
-
+        */
         public static void TestBoundingRectangle()
         {
             //var points = new[] {

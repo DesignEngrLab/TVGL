@@ -20,8 +20,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            PolygonOperationsTesting.TestUnionSimple();
-            PolygonOperationsTesting.TestRemoveSelfIntersect();
+            //PolygonOperationsTesting.TestUnionSimple();
+            //PolygonOperationsTesting.TestRemoveSelfIntersect();
             //Voxels.InitialTest();
             //return;
             //var tVGL3Dto2DTests = new TVGL3Dto2DTests();
@@ -31,10 +31,13 @@ namespace TVGLUnitTestsAndBenchmarking
             //PolygonOperationsTesting.TestBoundingRectangle();
             //PolygonOperationsTesting.TestSimplify();
 
-            //BenchmarkRunner.Run<PolygonOperationsTesting>();
-            //var po = new PolygonOperationsTesting();
-            //po.Perimeter(4, 10);
-           // Console.WriteLine(summary);
+
+            var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
         }
+
+        //BenchmarkRunner.Run<PolygonOperationsTesting>();
+        //    var po = new PolygonOperationsTesting();
+        //po.Perimeter(4, 10);
+        //Console.WriteLine(summary);
     }
 }
