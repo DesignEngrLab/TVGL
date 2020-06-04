@@ -61,15 +61,17 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal static void TestRemoveSelfIntersect()
         {
-            for (int i = 6; i < 200; i++)
+            for (int i = 0; i < 200; i++)
             {
                 r = new Random(i);
                 Console.WriteLine(i);
-                var coords = MakeRandomComplexPolygon(120, 30).ToList();
+                var coords = MakeWavyCircularPolygon(500, 30, 172, 5).ToList();
+                //var coords = MakeRandomComplexPolygon(10, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords, true);
                 var polygons = polygon.RemoveSelfIntersections();
-                Presenter.ShowAndHang(polygons.Path);
+                Presenter.ShowAndHang(polygons.Select(p => p.Path));
+                //Presenter.ShowAndHang(polygons.Path);
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             }
         }
@@ -79,23 +81,25 @@ namespace TVGLUnitTestsAndBenchmarking
             //{
             //    r = new Random(i);
             //    Console.WriteLine(i);
-            var coords1 = MakeStarryCircularPolygon(50, 30, 15).ToList();
-            var coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
+            var coords1 = MakeStarryCircularPolygon(30, 30, 16).ToList();
+            var coords2 = MakeWavyCircularPolygon(20, 25, 3, 2.5);//.Select(p => p + new Vector2(15, 10)).ToList();
 
             Presenter.ShowAndHang(new[] { coords1, coords2 });
             var polygon1 = new Polygon(coords1, true);
             var polygon2 = new Polygon(coords2, false);
-            polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
-            var polygon3 = polygon1.Union(polygon2, intersections);
+            //polygon2.Reverse();
+            var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
+            var polygon3 = polygon1.Union(polygon2, a,intersections);
+            var coords3 = PolygonOperations.Union(coords1, coords2);
+            Presenter.ShowAndHang(new[] { coords3[0], polygon3[0].Path });
+            polygon3 = polygon1.Intersect(polygon3[0]);
             Presenter.ShowAndHang(new[] { coords1, coords2, polygon3[0].Path });
-            var polygon4 = polygon1.Intersect(polygon2, intersections);
-            Presenter.ShowAndHang(new[] { coords1, coords2, polygon4[0].Path });
-            var polygon5 = polygon1.ExclusiveOr(polygon2, intersections);
-            Presenter.ShowAndHang(polygon5.Select(p => p.Path));
-            polygon5 = polygon1.Subtract(polygon2, intersections);
-            Presenter.ShowAndHang(polygon5.Select(p => p.Path));
-            polygon5 = polygon2.Subtract(polygon1, intersections);
-            Presenter.ShowAndHang(polygon5.Select(p => p.Path));
+            polygon3 = polygon1.ExclusiveOr(polygon2);
+            Presenter.ShowAndHang(polygon3.Select(p => p.Path));
+            polygon3 = polygon1.Subtract(polygon2,a, intersections);
+            Presenter.ShowAndHang(polygon3.Select(p => p.Path));
+            polygon3 = polygon2.Subtract(polygon1,a, intersections);
+            Presenter.ShowAndHang(polygon3.Select(p => p.Path));
             //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             //}
         }
@@ -122,18 +126,18 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var polygon3 = polygon1.Union(polygon2);
             polygon3 = polygon1.Intersect(polygon2);
-            polygon3 = polygon1.ExclusiveOr(polygon2);
-            polygon3 = polygon1.Subtract(polygon2);
+            //polygon3 = polygon1.ExclusiveOr(polygon2);
+            //polygon3 = polygon1.Subtract(polygon2);
         }
 
 
         [Benchmark(Description = "clipper")]
         public void BenchmarkClipperSimple()
         {
-            var coords3 =PolygonOperations.Union(coords1,coords2);
+            var coords3 = PolygonOperations.Union(coords1, coords2);
             coords3 = PolygonOperations.Intersection(coords1, coords2);
-            coords3 = coords1.Difference(coords2);
-            coords3 = coords1.Xor(coords2);
+            //coords3 = coords1.Difference(coords2);
+            //coords3 = coords1.Xor(coords2);
         }
 
         internal static void TestSimplify()

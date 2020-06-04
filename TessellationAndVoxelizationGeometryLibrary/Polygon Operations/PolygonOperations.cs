@@ -285,7 +285,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Creates the shallow polygon trees following boolean operations. The name follows the public methods,
         /// this is meant to be used only internally as it requires several assumptions:
-        /// 1. positive polgyons are ordered by increasing area (from 0 to +inf)
+        /// 1. positive polygons are ordered by increasing area (from 0 to +inf)
         /// 2. negative polygons are ordered by increasing area (from -inf to 0)
         /// 3. there are not intersections between the solids (this should be the result following the boolean
         /// operation; however, it is possible that they share a vertex (e.g. in XOR))
@@ -298,7 +298,7 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> polygons,
             SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
         {
-            //2) Find the positive polygon that this negative polygon is inside.
+            //  Find the positive polygon that this negative polygon is inside.
             //The negative polygon belongs to the smallest positive polygon that it fits inside.
             //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
             //and the reversed ordering, gaurantee that we get the correct shallow tree.

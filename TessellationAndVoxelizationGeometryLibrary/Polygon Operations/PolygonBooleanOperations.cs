@@ -138,49 +138,28 @@ namespace TVGL.TwoDimensional
         }
 
         #region Boolean Operations
-        public static Polygon RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
         {
             return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections(), minAllowableArea);
         }
-        public static Polygon RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
             double minAllowableArea = Constants.BaseTolerance)
         {
-            if (intersections.Count == 0) return polygon;
+            // if (intersections.Count == 0) return new List<Polygon> {polygon};
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
-            var polygons = new List<Polygon>();
-            var id = 0;
-            while (GetNextStartingIntersection(intersectionLookup, intersections,  -1, out var startIntersection,
-                out var currentEdge))
+            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
+            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
+            while (GetNextStartingIntersection(intersectionLookup, intersections, -1, out var startingIntersection,
+                out var startEdge))
             {
-                var polygonCoordinates
-                    = MakePolygonThroughIntersections(intersectionLookup, intersections,
-                        startIntersection, currentEdge, false).ToList();
-                var area = polygonCoordinates.Area();
+                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
+                    startEdge, false).ToList();
+                var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0) continue; //polygonCoordinates.Reverse();
-                polygons.Add(new Polygon(polygonCoordinates, true, id++));
+                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
+                else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
             }
-            polygons = polygons.OrderByDescending(p => p.Area).ToList();
-            var i = 0;
-            while (polygons.Count > 1)
-            {
-                var outerPolygon = polygons[i];
-                var j = i + 1;
-                while (j < polygons.Count)
-                {
-                    var polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygons[j], out intersections);
-                    if (polygonRelationship == PolygonRelationship.Separated) j++;
-                    // this should follow the switch statement in Union
-                    else
-                    {
-                        polygons[i] = polygons[i].Union(polygons[j], intersections, minAllowableArea)[0];
-                        polygons.RemoveAt(j);
-                    }
-                }
-                i++;
-                if (i == polygons.Count) i = 0;
-            }
-            return polygons[0];
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
         }
 
         /// <summary>
@@ -253,7 +232,7 @@ namespace TVGL.TwoDimensional
                 int intersectionIndex;
                 if (switchDirections) forward = !forward;
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                   intersectionCoordinates, out intersectionIndex))
+                   intersectionCoordinates, forward, out intersectionIndex))
                 {
                     if (forward)
                     {
@@ -274,7 +253,7 @@ namespace TVGL.TwoDimensional
         }
 
         private static bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<IntersectionData> allIntersections,
-        Vector2 formerIntersectCoords, out int indexOfIntersection)
+        Vector2 formerIntersectCoords, bool forward, out int indexOfIntersection)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
             indexOfIntersection = -1;
@@ -293,9 +272,11 @@ namespace TVGL.TwoDimensional
                     var thisLength = currentEdge.Vector.LengthSquared();
                     throw new NotImplementedException();
                 }
-                else distance = formerIntersectCoords.IsNull()
-                        ? currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - currentEdge.FromPoint.Coordinates)
-                        : currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - formerIntersectCoords);
+
+                var vector = forward ? currentEdge.Vector : -currentEdge.Vector;
+                var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords :
+                    forward ? currentEdge.FromPoint.Coordinates : currentEdge.ToPoint.Coordinates;
+                distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
                 if (distance > 0 && minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;
@@ -329,27 +310,36 @@ namespace TVGL.TwoDimensional
 
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
-            switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
+            var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
+            return Union(polygonA, polygonB, relationship, intersections, minAllowableArea);
+        }
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, List<IntersectionData> intersections,
+            double minAllowableArea = Constants.BaseTolerance)
+        {
+            switch (polygonRelationship)
             {
                 case PolygonRelationship.Separated:
                     return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
                 case PolygonRelationship.BIsCompletelyInsideA:
-                    return new List<Polygon> { polygonA.Copy() };
+                    var polygonACopy = polygonA.Copy();
+                    if (!polygonB.IsPositive)
+                        polygonACopy.InnerPolygons.Add(polygonB.Copy());
+                    return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
-                    return new List<Polygon> { polygonB.Copy() };
+                    var polygonBCopy = polygonB.Copy();
+                    if (!polygonA.IsPositive)
+                        polygonBCopy.InnerPolygons.Add(polygonA.Copy());
+                    return new List<Polygon> { polygonBCopy };
+
+                //case PolygonRelationship.Intersect:
+                //case PolygonRelationship.SeparatedButBordersTouch:
+                //case PolygonRelationship.BVerticesInsideAButLinesIntersect:
+                //case PolygonRelationship.BInsideAButBordersTouch:
+                //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
+                //case PolygonRelationship.AInsideBButBordersTouch:
                 default:
-                    //case PolygonRelationship.Intersect:
-                    //case PolygonRelationship.SeparatedButBordersTouch:
-                    //case PolygonRelationship.BVerticesInsideAButLinesIntersect:
-                    //case PolygonRelationship.BInsideAButBordersTouch:
-                    //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
-                    //case PolygonRelationship.AInsideBButBordersTouch:
-                    return Union(polygonA, polygonB, intersections, minAllowableArea);
+                    return BooleanOperation(polygonA, polygonB, intersections, false, -1, minAllowableArea);
             }
-        }
-        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
-        {
-            return BooleanOperation(polygonA, polygonB, intersections, false, -1, minAllowableArea);
         }
         public static List<Polygon> BooleanOperation(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, bool switchDirection,
             int crossProductSign, double minAllowableArea = Constants.BaseTolerance)
@@ -388,65 +378,97 @@ namespace TVGL.TwoDimensional
         }
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
-            switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
-            {
-                case PolygonRelationship.Separated:
-                    return new List<Polygon>();
-                case PolygonRelationship.BIsCompletelyInsideA:
-                    return new List<Polygon> { polygonB.Copy() };
-                case PolygonRelationship.AIsCompletelyInsideB:
-                    return new List<Polygon> { polygonA.Copy() };
-                default:
-                    return Intersect(polygonA, polygonB, intersections, minAllowableArea);
-            }
+            var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
+            return Intersect(polygonA, polygonB, relationship, intersections, minAllowableArea);
         }
-        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
         {
-            return BooleanOperation(polygonA, polygonB, intersections, false, +1, minAllowableArea);
+            return polygonRelationship switch
+            {
+                PolygonRelationship.Separated => new List<Polygon>(),
+                PolygonRelationship.BIsCompletelyInsideA => new List<Polygon> { polygonB.Copy() },
+                PolygonRelationship.AIsCompletelyInsideB => new List<Polygon> { polygonA.Copy() },
+                //case PolygonRelationship.Intersect:
+                //case PolygonRelationship.SeparatedButBordersTouch:
+                //case PolygonRelationship.BVerticesInsideAButLinesIntersect:
+                //case PolygonRelationship.BInsideAButBordersTouch:
+                //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
+                //case PolygonRelationship.AInsideBButBordersTouch:
+                _ => BooleanOperation(polygonA, polygonB, intersections, false, +1, minAllowableArea)
+            };
         }
 
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
-            switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
+            var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
+            return Subtract(polygonA, polygonB, relationship, intersections, minAllowableArea);
+        }
+
+        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB,
+            PolygonRelationship polygonRelationship, List<IntersectionData> intersections,
+            double minAllowableArea = Constants.BaseTolerance)
+        {
+            switch (polygonRelationship)
             {
                 case PolygonRelationship.Separated:
                 case PolygonRelationship.SeparatedButBordersTouch:
                     return new List<Polygon> { polygonA.Copy() };
-                // hmm, what to do in this case. if no intersection make loop (MakePathThroughIntersections) will fail
-                //case PolygonRelationship.BIsCompletelyInsideA:
-                // return new[] { polygonB.Copy() };
+                case PolygonRelationship.BIsCompletelyInsideA:
+                    var polygonACopy = polygonA.Copy();
+                    if (polygonB.IsPositive)
+                    {
+                        var polygonBCopy = polygonB.Copy();
+                        polygonBCopy.Reverse();
+                        polygonACopy.InnerPolygons.Add(polygonBCopy);
+                    }
+                    return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
                     return new List<Polygon>();
                 default:
-                    return Subtract(polygonA, polygonB, intersections, minAllowableArea);
+                    return BooleanOperation(polygonA, polygonB, intersections, true, -1, minAllowableArea);
             }
         }
-        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
-        {
-            return BooleanOperation(polygonA, polygonB, intersections, true, -1, minAllowableArea);
-        }
+
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
-            switch (GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections))
+            var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
+            return ExclusiveOr(polygonA, polygonB, relationship, intersections, minAllowableArea);
+        }
+
+        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, 
+            List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
+        {
+            switch (polygonRelationship)
             {
                 case PolygonRelationship.Separated:
                 case PolygonRelationship.SeparatedButBordersTouch:
                     return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
-                // hmm, what to do in this case. if no intersection make loop (MakePathThroughIntersections) will fail
-                //case PolygonRelationship.BIsCompletelyInsideA:
-                // return new[] { polygonB.Copy() };
-                //case PolygonRelationship.AIsCompletelyInsideB:
-                //    return Array.Empty<Polygon>();
+                case PolygonRelationship.BIsCompletelyInsideA:
+                    var polygonACopy1 = polygonA.Copy();
+                    if (polygonB.IsPositive)
+                    {
+                        var polygonBCopy1 = polygonB.Copy();
+                        polygonBCopy1.Reverse();
+                        polygonACopy1.InnerPolygons.Add(polygonBCopy1);
+                    }
+                    return new List<Polygon> { polygonACopy1 };
+                case PolygonRelationship.AIsCompletelyInsideB:
+                    var polygonBCopy2 = polygonB.Copy();
+                    if (polygonA.IsPositive)
+                    {
+                        var polygonACopy2 = polygonA.Copy();
+                        polygonACopy2.Reverse();
+                        polygonBCopy2.InnerPolygons.Add(polygonACopy2);
+                    }
+                    return new List<Polygon> { polygonBCopy2 };
                 default:
-                    return ExclusiveOr(polygonA, polygonB, intersections, minAllowableArea);
-            }
-        }
-        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
-        {
-            var firstSubtraction= BooleanOperation(polygonA, polygonB, intersections, true, -1, minAllowableArea);
-            var secondSubtraction= BooleanOperation(polygonB, polygonA, intersections, true, -1, minAllowableArea);
+            var firstSubtraction = BooleanOperation(polygonA, polygonB,  intersections,
+                true, -1, minAllowableArea);
+            var secondSubtraction = BooleanOperation(polygonB, polygonA, intersections, 
+                true, -1, minAllowableArea);
             firstSubtraction.AddRange(secondSubtraction);
             return firstSubtraction;
+            }
         }
         #endregion
 

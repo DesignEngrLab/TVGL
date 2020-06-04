@@ -167,6 +167,16 @@ namespace TVGL
             return -1;
         }
 
+        internal static PolygonRelationship Converse(this PolygonRelationship relationship)
+        {
+            if (((byte)relationship & 0b1100) == 0)  // flags "4" and "8" indicate that A>B or B>A
+                                                     // so if both are zero, then nothing to flip
+                return relationship;
+            var firstTwoBits = (byte)relationship & 0b11;
+            if (((byte)relationship & 0b100) != 0) // the "2" flag means that boundaries touch.
+                return (PolygonRelationship)(firstTwoBits + 8);
+            return (PolygonRelationship)(firstTwoBits + 4);
+        }
 
         #region new known colors
 
@@ -709,8 +719,9 @@ namespace TVGL
 
         AIsCompletelyInsideB = 8, //xb0000 1000
         AVerticesInsideBButLinesIntersect = 9, //xb0000 1001
-        AInsideBButBordersTouch = 10, //xb1000 1010
+        AInsideBButBordersTouch = 10, //xb000 1010
     }
+
     /// <summary>
     /// Enum PolygonRelationship
     /// </summary>

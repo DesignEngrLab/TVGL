@@ -8,6 +8,7 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 using TVGLUnitTestsAndBenchmarking;
 
 namespace TVGLUnitTestsAndBenchmarking
@@ -20,7 +21,10 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            //PolygonOperationsTesting.TestUnionSimple();
+
+            // var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
+
+            PolygonOperationsTesting.TestUnionSimple();
             //PolygonOperationsTesting.TestRemoveSelfIntersect();
             //Voxels.InitialTest();
             //return;
@@ -32,7 +36,6 @@ namespace TVGLUnitTestsAndBenchmarking
             //PolygonOperationsTesting.TestSimplify();
 
 
-            var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
         }
 
         //BenchmarkRunner.Run<PolygonOperationsTesting>();
