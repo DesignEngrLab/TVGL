@@ -11,6 +11,13 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// Gets the polygon relationship of PolygonA to PolygonB and the intersections between them.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <returns>PolygonRelationship.</returns>
         public static PolygonRelationship GetPolygonRelationshipAndIntersections(this Polygon polygonA, Polygon polygonB,
     out List<IntersectionData> intersections)
         {
@@ -23,99 +30,139 @@ namespace TVGL.TwoDimensional
                 polygonA.MaxY < polygonB.MinY) return PolygonRelationship.Separated;
             //Else, we need to check for intersections between all lines of the two
             // To avoid an n-squared check (all of A's lines with all of B's), we sort the lines by their XMin
-            // values and store in two separate queues
-            var orderedAPoints = polygonA.Vertices.OrderBy(p => p.X).ToList();
-            var hashOfLines = polygonA.Lines.ToHashSet();
-            var aLines = GetOrderedLines(orderedAPoints, hashOfLines);
-            // instead of the prev. 3 lines a simpler solution would be the following line.
-            // var aLines = polygonA.Lines.OrderBy(line => line.XMin).ToList();
-            // However, we will need to sort the vertices in the ArePointsInsidePolygon below. and - even 
-            // though there is some expense in setting up and checking the HashSet O(n) (since checking 
-            // hashset n times), the above sort is faster since the condition in line.XMin is avoided
-            var orderedBPoints = polygonB.Vertices.OrderBy(p => p.X).ToList();
-            hashOfLines = polygonB.Lines.ToHashSet();
-            var bLines = GetOrderedLines(orderedBPoints, hashOfLines);
+            // value. Instead of directly sorting the Lines, which will have many repeat XMin values (since every
+            // pair of lines meet at the a given point), the points are sorted first. These sorted points are
+            // used in the ArePointsInsidePolygon function as well.
+            // the prev. 3 lines a simpler solution would be the following line.
+            var orderedAPoints = polygonA.AllPolygons.SelectMany(poly => poly.Vertices).OrderBy(p => p.X).ToList();
+            if (polygonA.Lines.Count == polygonB.Lines.Count) ; //this silly little line is simply to ensure that the Lines
+            // property has been invoked before the next function (GetOrderedLines), which requires that lines and vertices be properly connected
+            var aLines = GetOrderedLines(orderedAPoints);
+            //repeat for the lines in B
+            var orderedBPoints = (polygonB.AllPolygons.SelectMany(poly => poly.Vertices)).OrderBy(p => p.X).ToList();
+            var bLines = GetOrderedLines(orderedBPoints);
 
             var aIndex = 0;
             var bIndex = 0;
-            while (aIndex < aLines.Length && bIndex < bLines.Length)
+            while (aIndex < aLines.Length && bIndex < bLines.Length) // this while loop increments both B lines and A lines
             {
-                if (aLines[aIndex].XMin < bLines[bIndex].XMin)
+                if (aLines[aIndex].XMin < bLines[bIndex].XMin) // if the next A-line is lower compare it to all B-lines
                 {
-                    var current = aLines[aIndex++];
-                    var otherIndex = bIndex;
-                    while (otherIndex < bLines.Length && current.XMax > bLines[otherIndex].XMin)
-                    {
-                        var other = bLines[otherIndex++];
-                        var segmentRelationship = current.PolygonSegmentIntersection(other, out var intersection);
-                        if (segmentRelationship >= 0)
-                            intersections.Add(new IntersectionData(current, other, intersection,
+                    var aLine = aLines[aIndex++];
+                    var localBIndex = bIndex; //the localBIndex is incremented in the following loop, but we
+                                              //need to come back to the main bIndex above
+                    while (localBIndex < bLines.Length && aLine.XMax > bLines[localBIndex].XMin)
+                    {  // the real savings comes from the second condition in the while loop. We do not need to check bLines
+                        // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
+                        var bLine = bLines[localBIndex++];
+                        var segmentRelationship = aLine.PolygonSegmentIntersection(bLine, out var intersection);
+                        if (segmentRelationship >= 0) //the separated PolygonSegmentRelationship has a value of -1 all meaningful
+                                                      //interactions are 0 or greate
+                            intersections.Add(new IntersectionData(aLine, bLine, intersection,
                                 segmentRelationship));
                     }
                 }          // I hate that there is duplicate code here, but I don't know if there is a better way
-                else       // (I tried several). The subtle difference in the last IntersectionData constructor
-                {          // where the order of A then B is used in defining segmentA and EdgeB
-                    var current = bLines[bIndex++];
-                    var otherIndex = aIndex;
-                    while (otherIndex < aLines.Length && current.XMax > aLines[otherIndex].XMin)
+                else       // (I tried several). Other than the name, the blocking difference is in the last
+                           // IntersectionData constructor where the order of A then B is used in defining segmentA 
+                {          // and EdgeB
+                    var bLine = bLines[bIndex++];
+                    var localAIndex = aIndex;
+                    while (localAIndex < aLines.Length && bLine.XMax > aLines[localAIndex].XMin)
                     {
-                        var other = aLines[otherIndex++];
-                        var segmentRelationship = current.PolygonSegmentIntersection(other, out var intersection);
+                        var aLine = aLines[localAIndex++];
+                        var segmentRelationship = bLine.PolygonSegmentIntersection(aLine, out var intersection);
                         if (segmentRelationship >= 0)
-                            intersections.Add(new IntersectionData(other, current, intersection,
+                            intersections.Add(new IntersectionData(aLine, bLine, intersection,
                                 segmentRelationship));
                     }
                 }
             }
-            if (intersections.Count > 0)
+            if (intersections.Any(intersect => intersect.Relationship == PolygonSegmentRelationship.IntersectNominal))
             {
-                var noNominalIntersections = intersections.All(intersect
-                    => intersect.Relationship != PolygonSegmentRelationship.IntersectNominal);
                 if (ArePointsInsidePolygonLines(aLines, aLines.Length, orderedBPoints, out _, false))
-                {
-                    if (noNominalIntersections) return PolygonRelationship.BInsideAButBordersTouch;
                     return PolygonRelationship.BVerticesInsideAButLinesIntersect;
-                }
                 if (ArePointsInsidePolygonLines(bLines, bLines.Length, orderedAPoints, out _, false))
-                {
-                    if (noNominalIntersections) return PolygonRelationship.AInsideBButBordersTouch;
                     return PolygonRelationship.AVerticesInsideBButLinesIntersect;
-                }
-                if (noNominalIntersections) return PolygonRelationship.SeparatedButBordersTouch;
                 return PolygonRelationship.Intersect;
             }
-            if (polygonA.IsPointInsidePolygon(polygonB.Vertices[0].Coordinates, out _, out _, out _, false))
-                return PolygonRelationship.BIsCompletelyInsideA;
-            if (polygonB.IsPointInsidePolygon(polygonA.Vertices[0].Coordinates, out _, out _, out _, false))
-                return PolygonRelationship.AIsCompletelyInsideB;
+
+            bool onBoundary;
+            if (BoundingBoxEncompasses(polygonA, polygonB))
+            {
+                foreach (var hole in polygonA.Holes)
+                {
+                    if (hole.IsNonIntersectingPolygonInside(polygonB, out onBoundary))
+                    {
+                        if (onBoundary) return PolygonRelationship.BInsideAButBordersTouch;
+                        return PolygonRelationship.BIsInsideHoleOfA;
+                    }
+                }
+                if (polygonA.IsNonIntersectingPolygonInside(polygonB, out onBoundary))
+                {
+                    if (onBoundary) return PolygonRelationship.BInsideAButBordersTouch;
+                    return PolygonRelationship.BIsCompletelyInsideA;
+                }
+            }
+            else if (BoundingBoxEncompasses(polygonB, polygonA))
+            {
+                foreach (var hole in polygonB.Holes)
+                {
+                    if (hole.IsNonIntersectingPolygonInside(polygonA, out onBoundary))
+                    {
+                        if (onBoundary) return PolygonRelationship.AInsideBButBordersTouch;
+                        return PolygonRelationship.AIsInsideHoleOfB;
+                    }
+                }
+                if (polygonB.IsNonIntersectingPolygonInside(polygonA, out onBoundary))
+                {
+                    if (onBoundary) return PolygonRelationship.AInsideBButBordersTouch;
+                    return PolygonRelationship.AIsCompletelyInsideB;
+                }
+            }
             return PolygonRelationship.Separated;
-            // todo: holes! how to check if B is inside a hole of A. what if it fully encompasses a hole of A
+        }
+
+        private static bool BoundingBoxEncompasses(this Polygon polygonA, Polygon polygonB)
+        {
+            return (polygonA.MaxX >= polygonB.MaxX
+                && polygonA.MaxY >= polygonB.MaxY
+                && polygonA.MinX <= polygonB.MinX
+                && polygonA.MinY <= polygonB.MinY);
         }
 
 
-        private static PolygonSegment[] GetOrderedLines(List<Vertex2D> orderedPoints, HashSet<PolygonSegment> hashOfLines)
+        private static PolygonSegment[] GetOrderedLines(List<Vertex2D> orderedPoints)
         {
             var length = orderedPoints.Count;
             var result = new PolygonSegment[length];
+            var smallHashOfLinesOfEqualX = new HashSet<PolygonSegment>();
             var k = 0;
             for (int i = 0; i < length; i++)
             {
                 var point = orderedPoints[i];
-                if (hashOfLines.Contains(point.EndLine))
-                {
-                    hashOfLines.Remove(point.EndLine);
+                if (point.EndLine.OtherPoint(point).X > point.X)
                     result[k++] = point.EndLine;
-                }
-                if (hashOfLines.Contains(point.StartLine))
+                else if (point.EndLine.OtherPoint(point).X == point.X &&
+                         !smallHashOfLinesOfEqualX.Contains(point.EndLine))
                 {
-                    hashOfLines.Remove(point.StartLine);
-                    result[k++] = point.StartLine;
+                    result[k++] = point.EndLine;
+                    smallHashOfLinesOfEqualX.Add(point.EndLine);
                 }
+                if (point.StartLine.OtherPoint(point).X > point.X)
+                    result[k++] = point.StartLine;
+                else if (point.StartLine.OtherPoint(point).X == point.X &&
+                         !smallHashOfLinesOfEqualX.Contains(point.StartLine))
+                {
+                    result[k++] = point.StartLine;
+                    smallHashOfLinesOfEqualX.Add(point.StartLine);
+                }
+
+                if (k >= length) break;
             }
             return result;
         }
 
-        public static List<IntersectionData> GetSelfIntersections(this Polygon polygonA)
+        private static List<IntersectionData> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<IntersectionData>();
             var numLines = polygonA.Lines.Count;
@@ -138,14 +185,14 @@ namespace TVGL.TwoDimensional
         }
 
         #region Boolean Operations
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
+        public static Polygon RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
         {
             return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections(), minAllowableArea);
         }
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
+        public static Polygon RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
             double minAllowableArea = Constants.BaseTolerance)
         {
-            // if (intersections.Count == 0) return new List<Polygon> {polygon};
+            if (intersections.Count == 0) return polygon.Copy();
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
@@ -159,7 +206,7 @@ namespace TVGL.TwoDimensional
                 if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
                 else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
             }
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values)[0];
         }
 
         /// <summary>
@@ -323,12 +370,12 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.BIsCompletelyInsideA:
                     var polygonACopy = polygonA.Copy();
                     if (!polygonB.IsPositive)
-                        polygonACopy.InnerPolygons.Add(polygonB.Copy());
+                        polygonACopy.AddHole(polygonB.Copy());
                     return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
                     var polygonBCopy = polygonB.Copy();
                     if (!polygonA.IsPositive)
-                        polygonBCopy.InnerPolygons.Add(polygonA.Copy());
+                        polygonBCopy.AddHole(polygonA.Copy());
                     return new List<Polygon> { polygonBCopy };
 
                 //case PolygonRelationship.Intersect:
@@ -419,7 +466,7 @@ namespace TVGL.TwoDimensional
                     {
                         var polygonBCopy = polygonB.Copy();
                         polygonBCopy.Reverse();
-                        polygonACopy.InnerPolygons.Add(polygonBCopy);
+                        polygonACopy.AddHole(polygonBCopy);
                     }
                     return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
@@ -435,7 +482,7 @@ namespace TVGL.TwoDimensional
             return ExclusiveOr(polygonA, polygonB, relationship, intersections, minAllowableArea);
         }
 
-        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, 
+        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship,
             List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
         {
             switch (polygonRelationship)
@@ -449,7 +496,7 @@ namespace TVGL.TwoDimensional
                     {
                         var polygonBCopy1 = polygonB.Copy();
                         polygonBCopy1.Reverse();
-                        polygonACopy1.InnerPolygons.Add(polygonBCopy1);
+                        polygonACopy1.AddHole(polygonBCopy1);
                     }
                     return new List<Polygon> { polygonACopy1 };
                 case PolygonRelationship.AIsCompletelyInsideB:
@@ -458,16 +505,16 @@ namespace TVGL.TwoDimensional
                     {
                         var polygonACopy2 = polygonA.Copy();
                         polygonACopy2.Reverse();
-                        polygonBCopy2.InnerPolygons.Add(polygonACopy2);
+                        polygonBCopy2.AddHole(polygonACopy2);
                     }
                     return new List<Polygon> { polygonBCopy2 };
                 default:
-            var firstSubtraction = BooleanOperation(polygonA, polygonB,  intersections,
-                true, -1, minAllowableArea);
-            var secondSubtraction = BooleanOperation(polygonB, polygonA, intersections, 
-                true, -1, minAllowableArea);
-            firstSubtraction.AddRange(secondSubtraction);
-            return firstSubtraction;
+                    var firstSubtraction = BooleanOperation(polygonA, polygonB, intersections,
+                        true, -1, minAllowableArea);
+                    var secondSubtraction = BooleanOperation(polygonB, polygonA, intersections,
+                        true, -1, minAllowableArea);
+                    firstSubtraction.AddRange(secondSubtraction);
+                    return firstSubtraction;
             }
         }
         #endregion
@@ -483,7 +530,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, bool simplifyPriorToUnion = true,
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, bool simplifyPriorToUnion = false,
             PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, (IEnumerable<List<Vector2>>)subject, null, simplifyPriorToUnion);
@@ -499,7 +546,8 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
+            bool simplifyPriorToUnion = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
@@ -514,7 +562,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, new[] { subject }, new[] { clip }, simplifyPriorToUnion);
         }
@@ -528,7 +576,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, new[] { clip }, simplifyPriorToUnion);
         }
@@ -546,7 +594,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
-            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+            bool simplifyPriorToDifference = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
         }
@@ -560,7 +608,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Difference(new[] { subject }, new[] { clip }, simplifyPriorToDifference, polyFill);
         }
@@ -574,7 +622,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Difference(subject, new[] { clip }, simplifyPriorToDifference, polyFill);
         }
@@ -589,7 +637,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clip,
-            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+            bool simplifyPriorToDifference = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Difference(new[] { subject }, clip, simplifyPriorToDifference, polyFill);
         }
@@ -604,7 +652,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Intersection(new[] { subject }, new[] { clip }, simplifyPriorToIntersection, polyFill);
         }
@@ -617,7 +665,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Intersection(subjects, new[] { clip }, simplifyPriorToIntersection, polyFill);
         }
@@ -630,7 +678,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToIntersection = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Intersection(new[] { subject }, clips, simplifyPriorToIntersection, polyFill);
         }
@@ -643,7 +691,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToIntersection = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
         }
@@ -660,7 +708,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
-            bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+            bool simplifyPriorToXor = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
         }
@@ -673,7 +721,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToXor = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Xor(new[] { subject }, new[] { clip }, simplifyPriorToXor, polyFill);
         }
@@ -687,7 +735,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip,
-            bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+            bool simplifyPriorToXor = false, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Xor(subjects, new[] { clip }, simplifyPriorToXor, polyFill);
         }
@@ -700,7 +748,7 @@ namespace TVGL.TwoDimensional
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToXor = true,
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToXor = false,
             PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Xor(new[] { subject }, clips, simplifyPriorToXor, polyFill);
@@ -710,7 +758,7 @@ namespace TVGL.TwoDimensional
 
         private static List<List<Vector2>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType,
             IEnumerable<IEnumerable<Vector2>> subject,
-           IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToBooleanOperation = true)
+           IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToBooleanOperation = false)
         {
             var fillType = fillMethod switch
             {

@@ -3,6 +3,7 @@ using Xunit;
 using TVGL.Numerics;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using TVGL.TwoDimensional;
@@ -14,7 +15,15 @@ namespace TVGLUnitTestsAndBenchmarking
     public class PolygonOperationsTesting
     {
         static Random r = new Random(2);
-        static double r100 => 200.0 * r.NextDouble() - 100.0;
+
+        static double rand(double radius)
+        {
+            return 2.0 * radius * r.NextDouble() - radius;
+        }
+        static int rand(int radius)
+        {
+            return (int)r.Next(radius);
+        }
 
         internal static IEnumerable<Vector2> MakeCircularPolygon(int numSides, double radius)
         {
@@ -65,12 +74,12 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 r = new Random(i);
                 Console.WriteLine(i);
-                var coords = MakeWavyCircularPolygon(500, 30, 172, 5).ToList();
+                var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
                 //var coords = MakeRandomComplexPolygon(10, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords, true);
-                var polygons = polygon.RemoveSelfIntersections();
-                Presenter.ShowAndHang(polygons.Select(p => p.Path));
+                polygon = polygon.RemoveSelfIntersections();
+                Presenter.ShowAndHang(polygon);
                 //Presenter.ShowAndHang(polygons.Path);
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             }
@@ -79,31 +88,144 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //for (int i = 6; i < 200; i++)
             //{
-            //    r = new Random(i);
+            //r = new Random(i);
             //    Console.WriteLine(i);
-            var coords1 = MakeStarryCircularPolygon(30, 30, 16).ToList();
-            var coords2 = MakeWavyCircularPolygon(20, 25, 3, 2.5);//.Select(p => p + new Vector2(15, 10)).ToList();
-
-            Presenter.ShowAndHang(new[] { coords1, coords2 });
+            var coords1 = MakeStarryCircularPolygon(10, 30, 1).ToList();
+            var hole1 = MakeStarryCircularPolygon(8, 15, 3).ToList();
+            //var coords2 = MakeWavyCircularPolygon(10000, 30, 10, 5).ToList();
+            var coords2 = new[] { new Vector2(5, 40), new Vector2(-5, 40), new Vector2(-5, -40), new Vector2(5, -40) };
+            var stopWatch = new Stopwatch();
+            stopWatch.Restart();
             var polygon1 = new Polygon(coords1, true);
-            var polygon2 = new Polygon(coords2, false);
-            //polygon2.Reverse();
+            polygon1.RemoveSelfIntersections();
+            polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
+            Presenter.ShowAndHang(polygon1);
+            var polygon2 = new Polygon(coords2, true);
+
+            Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+
             var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
-            var polygon3 = polygon1.Union(polygon2, a,intersections);
-            var coords3 = PolygonOperations.Union(coords1, coords2);
-            Presenter.ShowAndHang(new[] { coords3[0], polygon3[0].Path });
-            polygon3 = polygon1.Intersect(polygon3[0]);
-            Presenter.ShowAndHang(new[] { coords1, coords2, polygon3[0].Path });
-            polygon3 = polygon1.ExclusiveOr(polygon2);
-            Presenter.ShowAndHang(polygon3.Select(p => p.Path));
-            polygon3 = polygon1.Subtract(polygon2,a, intersections);
-            Presenter.ShowAndHang(polygon3.Select(p => p.Path));
-            polygon3 = polygon2.Subtract(polygon1,a, intersections);
-            Presenter.ShowAndHang(polygon3.Select(p => p.Path));
+
+            var polygon3 = polygon1.Union(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon2.Subtract(polygon1, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.Subtract(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.ExclusiveOr(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+            //stopWatch.Restart();
+            //var coords3 = PolygonOperations.Union(coords1, coords2);
+            //Console.Write(stopWatch.Elapsed);
+            //Presenter.ShowAndHang(new[] { coords3[0], polygon3[0].Path });
+            //polygon3 = polygon1.Intersect(polygon3[0]);
+            //Presenter.ShowAndHang(new[] { coords1, coords2, polygon3[0].Path });
+            //polygon3 = polygon1.ExclusiveOr(polygon2);
+            //Presenter.ShowAndHang(polygon3.Select(p => p.Path));
+            //polygon3 = polygon1.Subtract(polygon2,a, intersections);
+            //Presenter.ShowAndHang(polygon3.Select(p => p.Path));
+            //polygon3 = polygon2.Subtract(polygon1,a, intersections);
+            //Presenter.ShowAndHang(polygon3.Select(p => p.Path));
             //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             //}
+            Console.ReadKey();
         }
-        [Params(10, 100, 1000, 10000)]
+
+        internal static void TestBooleanCompare()
+        {
+            var stopwatch = new Stopwatch();
+            for (int i = 4; i < 10000; i *= 2)
+            {
+                Console.WriteLine(i + " sides");
+                var coords1 = MakeStarryCircularPolygon(i, 30, 1).ToList();
+                var hole1 = MakeStarryCircularPolygon(i, 21, 1).Reverse().ToList();
+                var coords2 = MakeStarryCircularPolygon(i, 30, 1).ToList();
+                for (int j = 0; j < coords2.Count; j++)
+                    coords2[j] += new Vector2(15, 10);
+                var hole2 = MakeStarryCircularPolygon(i, 21, 1).Reverse().ToList();
+                for (int j = 0; j < hole2.Count; j++)
+                    hole2[j] += new Vector2(15, 11);
+                //polygon1 = new Polygon(coords1, true);
+                //polygon2 = new Polygon(coords2, true);
+
+                var polygon1 = new Polygon(coords1, true);
+                polygon1.AddHole(new Polygon(hole1, false));
+                var polygon2 = new Polygon(coords2, false);
+                polygon2.AddHole(new Polygon(hole2, false));
+                //polygon2.Transform(Matrix3x3.CreateTranslation(15, 15));
+                var clipperPoly1 = new[] { coords1, hole1 };
+                var clipperPoly2 = new[] { coords2, hole2 };
+                //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+
+                stopwatch.Restart();
+                var polygon3 = polygon1.Union(polygon2);
+                Console.WriteLine("union mines: {0}", stopwatch.Elapsed);
+                stopwatch.Restart();
+                var coords3 = PolygonOperations.Union(clipperPoly1, clipperPoly2);
+                Console.WriteLine("union clipper: {0}", stopwatch.Elapsed);
+                ShowComparison(i, "union", polygon3, coords3);
+                stopwatch.Restart();
+                polygon3 = polygon1.Intersect(polygon2);
+                Console.WriteLine("interset mine: {0}", stopwatch.Elapsed);
+                stopwatch.Restart();
+                coords3 = PolygonOperations.Intersection(clipperPoly1, clipperPoly2);
+                Console.WriteLine("intersect clipper: {0}", stopwatch.Elapsed);
+                ShowComparison(i, "intersect", polygon3, coords3);
+                //polygon3 = polygon1.ExclusiveOr(polygon2);
+                //coords3 = clipperPoly1.Xor(clipperPoly2);
+                //ShowComparison(i, "exclusive or", polygon3, coords3);
+                stopwatch.Restart();
+                polygon3 = polygon1.Subtract(polygon2);
+                Console.WriteLine("subtract mine: {0}", stopwatch.Elapsed);
+                stopwatch.Restart();
+                coords3 = clipperPoly1.Difference(clipperPoly2);
+                Console.WriteLine("subtract clipper: {0}", stopwatch.Elapsed);
+                ShowComparison(i, "1subtract2", polygon3, coords3);
+                stopwatch.Restart();
+                polygon3 = polygon2.Subtract(polygon1);
+                Console.WriteLine("subtract mine: {0}", stopwatch.Elapsed);
+                stopwatch.Restart();
+                coords3 = clipperPoly2.Difference(clipperPoly1);
+                Console.WriteLine("subtract clipper: {0}", stopwatch.Elapsed);
+                ShowComparison(i, "2subtract1", polygon3, coords3);
+
+
+            }
+        }
+
+        private static void ShowComparison(int trial, string name, List<Polygon> polygon3, List<List<Vector2>> coords3)
+        {
+            var area = coords3.Sum(poly => poly.Area());
+            var peri = coords3.Perimeter();
+            var numPolygons = polygon3.Sum(poly => poly.AllPolygons.Count());
+            var numPolyVerts = polygon3.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
+            if (numPolygons == coords3.Count
+                && numPolyVerts == coords3.Sum(loop => loop.Count)
+                && area.IsPracticallySame(polygon3.Sum(p => p.Area), 1e-5)
+                && peri.IsPracticallySame(polygon3.Sum(p => p.Perimeter), 1e-5))
+                Console.WriteLine("*****{0}: {1} matches", trial, name);
+            else
+            {
+                Console.WriteLine("{0}: {1} does not match", trial, name);
+                Console.WriteLine("number: {0}  : {1} ", numPolygons, coords3.Count);
+                Console.WriteLine("verts: {0}  : {1} ", numPolyVerts, coords3.Sum(loop => loop.Count));
+                Console.WriteLine("area: {0}  : {1} ", polygon3.Sum(p => p.Area), area);
+                Console.WriteLine("perimeter: {0}  : {1} ", polygon3.Sum(p => p.Perimeter), peri);
+
+                Presenter.ShowAndHang(polygon3);
+                Presenter.ShowAndHang(coords3);
+                var polyAsCoords = polygon3.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
+                polyAsCoords.AddRange(coords3);
+                Presenter.ShowAndHang(polyAsCoords);
+                Console.WriteLine();
+                Console.WriteLine();
+            }
+        }
+
+        [Params(10, 30, 100, 300, 1000, 3000, 5000)]
         public int N;
 
         private List<Vector2> coords1;
@@ -116,18 +238,20 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             coords1 = MakeStarryCircularPolygon(N, 30, 15).ToList();
             coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
-            polygon1 = new Polygon(coords1, true);
-            polygon2 = new Polygon(coords2, true);
+            //polygon1 = new Polygon(coords1, true);
+            //polygon2 = new Polygon(coords2, true);
         }
 
 
         [Benchmark(Description = "my functions")]
         public void BenchmarkMyBooleanSimple()
         {
+            polygon1 = new Polygon(coords1, true);
+            polygon2 = new Polygon(coords2, true);
             var polygon3 = polygon1.Union(polygon2);
             polygon3 = polygon1.Intersect(polygon2);
-            //polygon3 = polygon1.ExclusiveOr(polygon2);
-            //polygon3 = polygon1.Subtract(polygon2);
+            polygon3 = polygon1.ExclusiveOr(polygon2);
+            polygon3 = polygon1.Subtract(polygon2);
         }
 
 
@@ -136,8 +260,8 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var coords3 = PolygonOperations.Union(coords1, coords2);
             coords3 = PolygonOperations.Intersection(coords1, coords2);
-            //coords3 = coords1.Difference(coords2);
-            //coords3 = coords1.Xor(coords2);
+            coords3 = coords1.Difference(coords2);
+            coords3 = coords1.Xor(coords2);
         }
 
         internal static void TestSimplify()

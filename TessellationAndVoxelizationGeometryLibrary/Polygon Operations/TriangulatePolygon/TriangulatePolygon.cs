@@ -97,7 +97,7 @@ namespace TVGL.TwoDimensional
                 var connectingIndex = connectingIndices.FindIndex(x => x == index);
                 isPositive[connectingIndex] = true;
                 index++;
-                foreach (var hole in poly.InnerPolygons)
+                foreach (var hole in poly.Holes)
                 {
                     connectingIndex = connectingIndices.FindIndex(x => x == index);
                     isPositive[connectingIndex] = false;

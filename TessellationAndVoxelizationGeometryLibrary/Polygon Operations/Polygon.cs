@@ -28,9 +28,11 @@ namespace TVGL.TwoDimensional
                         _path.Add(new Vector2(point.X, point.Y));
                     }
                 }
+
                 return _path;
             }
         }
+
         List<Vector2> _path;
 
 
@@ -58,54 +60,74 @@ namespace TVGL.TwoDimensional
                     if (_vertices == null) MakeVertices();
                     MakeLineSegments();
                 }
+
                 return _lines;
             }
         }
+
         List<PolygonSegment> _lines;
+
         private void MakeVertices()
         {
-            var numPoints = _path.Count;
-            var _pointsArray = new Vertex2D[numPoints];
-            for (int i = 0; i < numPoints; i++)
-                _pointsArray[i] = new Vertex2D(_path[i], i, Index);
-            _vertices = _pointsArray.ToList();
+            foreach (var polygon in AllPolygons)
+            {
+                var numPoints = polygon._path.Count;
+                var pointsArray = new Vertex2D[numPoints];
+                for (int i = 0; i < numPoints; i++)
+                    pointsArray[i] = new Vertex2D(polygon._path[i], i, Index);
+                polygon._vertices = pointsArray.ToList();
+            }
         }
+
         private void MakeLineSegments()
         {
-            var numPoints = Vertices.Count;
-            _lines = new List<PolygonSegment>();
-            for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
+            foreach (var polygon in AllPolygons)
             {
-                var fromNode = Vertices[j];
-                var toNode = Vertices[i]; // note the mod operator and the fact that the for loop 
-                // goes to and including numPoints. this allows for the last line to connect the last point 
-                // back to the first. it is intended to avoid rewriting the following four lines of code.
-                var polySegment = new PolygonSegment(fromNode, toNode);
-                fromNode.StartLine = polySegment;
-                toNode.EndLine = polySegment;
-                _lines.Add(polySegment);
+                var numPoints = polygon.Vertices.Count;
+                polygon._lines = new List<PolygonSegment>();
+                for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
+                {
+                    var fromNode = polygon.Vertices[j];
+                    var toNode = polygon.Vertices[i]; // note the mod operator and the fact that the for loop 
+                    // goes to and including numPoints. this allows for the last line to connect the last point 
+                    // back to the first. it is intended to avoid rewriting the following four lines of code.
+                    var polySegment = new PolygonSegment(fromNode, toNode);
+                    fromNode.StartLine = polySegment;
+                    toNode.EndLine = polySegment;
+                    polygon._lines.Add(polySegment);
+                }
             }
         }
 
 
-
-        public List<Polygon> InnerPolygons
+        public void AddHole(Polygon polygon)
+        {
+            if (polygon is null || (polygon._path is null && polygon._vertices is null)) return;
+            if (polygon.IsPositive) polygon.Reverse();
+            _holes ??= new List<Polygon>();
+            _holes.Add(polygon);
+            if (polygon._lines is null && _lines != null)
+                polygon.MakeLineSegments();
+        }
+        public IEnumerable<Polygon> Holes
         {
             get
             {
-                if (_innerPolygons == null)
-                    _innerPolygons = new List<Polygon>();
-                return _innerPolygons;
+                if (_holes is null) yield break;
+                foreach (var hole in _holes)
+                    yield return hole;
             }
         }
-        List<Polygon> _innerPolygons;
+
+        List<Polygon> _holes;
 
         public IEnumerable<Polygon> AllPolygons
         {
             get
             {
                 yield return this;
-                foreach (var innerPolygon in InnerPolygons)
+                if (_holes is null) yield break;
+                foreach (var innerPolygon in _holes)
                     foreach (var polygon in innerPolygon.AllPolygons)
                         yield return polygon;
             }
@@ -116,11 +138,12 @@ namespace TVGL.TwoDimensional
         /// </summary>
         public int Index
         {
-            get { return index; }
+            get => index;
             set
             {
                 if (index == value) return;
-                if (value < 0) throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
+                if (value < 0)
+                    throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
                 index = value;
                 if (_vertices != null)
                     foreach (var v in Vertices)
@@ -156,9 +179,9 @@ namespace TVGL.TwoDimensional
             //Only reverse the lines if they have been generated
             _lines = null;
             _vertices = null;
-            if (_innerPolygons!=null)
+            if (_holes != null)
             {
-                foreach (var innerPolygon in _innerPolygons)
+                foreach (var innerPolygon in _holes)
                     innerPolygon.Reverse();
             }
         }
@@ -173,11 +196,26 @@ namespace TVGL.TwoDimensional
             {
                 if (double.IsNaN(area))
                     area = Path.Area();
-                return area + InnerPolygons.Sum(p => p.Area);
+                return area + Holes.Sum(p => p.Area);
             }
         }
 
         private double area = double.NaN;
+
+        /// <summary>
+        /// Gets the area of the polygon. Negative Area for holes.
+        /// </summary>
+        public double Perimeter
+        {
+            get
+            {
+                if (double.IsNaN(perimeter))
+                    perimeter = Path.Perimeter();
+                return perimeter + Holes.Sum(p => p.Perimeter);
+            }
+        }
+
+        private double perimeter = double.NaN;
 
         /// <summary>
         /// Maxiumum X value
@@ -228,6 +266,7 @@ namespace TVGL.TwoDimensional
         /// Minimum Y value
         /// </summary>
         private double minY = double.PositiveInfinity;
+
         private int index = -1;
 
         public double MinY
@@ -284,7 +323,7 @@ namespace TVGL.TwoDimensional
         {
             var thisPath = _path == null ? null : new List<Vector2>(_path);
             var thisVertices = _vertices == null ? null : _vertices.Select(v => v.Copy()).ToList();
-            var thisInnerPolygons = _innerPolygons == null ? null : _innerPolygons.Select(p => p.Copy()).ToList();
+            var thisInnerPolygons = _holes == null ? null : _holes.Select(p => p.Copy()).ToList();
             return new Polygon
             {
                 index = this.index,
@@ -295,11 +334,15 @@ namespace TVGL.TwoDimensional
                 minY = this.minY,
                 _path = thisPath,
                 _vertices = thisVertices,
-                _innerPolygons = thisInnerPolygons
+                _holes = thisInnerPolygons
             };
         }
+
         // the following private argument-less constructor is only used in the copy function
-        private Polygon() { }
+        private Polygon()
+        {
+        }
+
         public bool IsConvex()
         {
             if (!Area.IsGreaterThanNonNegligible()) return false; //It must have an area greater than zero
@@ -307,13 +350,15 @@ namespace TVGL.TwoDimensional
             foreach (var secondLine in Lines)
             {
                 var cross = firstLine.Vector.Cross(secondLine.Vector);
-                if (secondLine.Length.IsNegligible(0.0000001)) continue;// without updating the first line             
+                if (secondLine.Length.IsNegligible(0.0000001)) continue; // without updating the first line             
                 if (cross < 0)
                 {
                     return false;
                 }
+
                 firstLine = secondLine;
             }
+
             return true;
         }
 
@@ -339,6 +384,36 @@ namespace TVGL.TwoDimensional
                     if (point.Y < minY) minY = point.Y;
                 }
             }
+        }
+
+        /// <summary>
+        /// Transforms the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        public void Transform(Matrix3x3 transformMatrix)
+        {
+            foreach (var polygon in AllPolygons)
+            {
+                polygon.minX = double.PositiveInfinity;
+                polygon.minY = double.PositiveInfinity;
+                polygon.maxX = double.NegativeInfinity;
+                polygon.maxY = double.NegativeInfinity;
+                for (var i = 0; i < polygon.Path.Count; i++)
+                {
+                    var v = polygon.Path[i];
+                    polygon.Path[i] = v = v.Transform(transformMatrix);
+                    if (minX > v.X) minX = v.X;
+                    if (minY > v.Y) minY = v.Y;
+                    if (maxX < v.X) maxX = v.X;
+                    if (maxY < v.Y) maxY = v.Y;
+                }
+            }
+
+            area = double.NaN;
+            perimeter = double.NaN;
+
+            MakeVertices();
+            MakeLineSegments();
         }
     }
 }

@@ -713,13 +713,17 @@ namespace TVGL
         Intersect = 1, //xb0000 0001
         SeparatedButBordersTouch = 2, //xb0000 0010
 
-        BIsCompletelyInsideA = 4, //xb0000 0100
-        BVerticesInsideAButLinesIntersect = 5, //xb0000 0101
-        BInsideAButBordersTouch = 6,  //xb0000 0110
-
         AIsCompletelyInsideB = 8, //xb0000 1000
         AVerticesInsideBButLinesIntersect = 9, //xb0000 1001
         AInsideBButBordersTouch = 10, //xb000 1010
+        AIsInsideHoleOfB = 12,  //xb0000 1100
+
+        BIsCompletelyInsideA = 16, //xb0001 0000
+        BVerticesInsideAButLinesIntersect = 17, //xb0001 0001
+        BInsideAButBordersTouch = 18,  //xb0001 0010
+        BIsInsideHoleOfA = 20,  //xb0001 0100
+        
+
     }
 
     /// <summary>

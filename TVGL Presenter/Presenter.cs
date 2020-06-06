@@ -25,6 +25,7 @@ using OxyPlot;
 using TVGL.Voxelization;
 using System;
 using TVGL.Numerics;
+using Polygon = TVGL.TwoDimensional.Polygon;
 
 namespace TVGL
 {
@@ -87,12 +88,19 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IEnumerable<List<Vector2>> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            var points = polygons.Select(polygon => polygon).ToList();
+            var points = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
             window.ShowDialog();
+        }
+
+
+        public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        {
+            ShowAndHang(new[] {polygon}, title, plot2DType, closeShape, marker);
         }
 
 

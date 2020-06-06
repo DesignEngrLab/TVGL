@@ -38,7 +38,7 @@ namespace OldTVGL
             AllPolygons.Select(polygon => polygon.Path.Select(point => point.Light).ToList()).ToList();
 
         /// <summary>
-        /// Gets the area of the shallow polygon tree (OuterPolygon - InnerPolygons)
+        /// Gets the area of the shallow polygon tree (OuterPolygon - Holes)
         /// </summary>
         public double Area => AllPolygons.Sum(p => p.Area);
 

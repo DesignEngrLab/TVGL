@@ -185,7 +185,7 @@ namespace TVGL.TwoDimensional
                         return false;
                     if (((byte)polygonRelationship & 0b100) != 0)  // the "4" flag is B is inside A. We can do that
                     {
-                        positivePolygon.InnerPolygons.Add(negativePolygon);
+                        positivePolygon.AddHole(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
                         isInside = true;
                         break;
@@ -200,12 +200,12 @@ namespace TVGL.TwoDimensional
             {
                 connectingIndices[polygon.Index] = index;
                 polygon.Index = index++;
-                foreach (var hole in polygon.InnerPolygons)
+                foreach (var hole in polygon.Holes)
                 {
                     connectingIndices[hole.Index] = index++;
                     hole.Index = polygon.Index;
                 }
-                //index += 1 + polygon.InnerPolygons.Count;
+                //index += 1 + polygon.Holes.Count;
             }
             return true;
         }
@@ -242,7 +242,7 @@ namespace TVGL.TwoDimensional
                     if (((byte)polygonRelationship & 0b100) != 0)  // the "4" flag is B is inside A. We can do that
                     {
                         var insideAHoleOfOuterPolygon = false;
-                        foreach (var innerPolygon in outerPolygon.InnerPolygons)
+                        foreach (var innerPolygon in outerPolygon.Holes)
                         {
                             var innerPolygonRelationship = innerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
                             if (((byte)innerPolygonRelationship & 0b1) != 0)  // the "1" flag is intersection. We can't handle that here.
@@ -259,7 +259,7 @@ namespace TVGL.TwoDimensional
                         if (!insideAHoleOfOuterPolygon)
                         {
                             polygon.Reverse();
-                            outerPolygon.InnerPolygons.Add(polygon);
+                            outerPolygon.AddHole(polygon);
                         }
                         break;
                     }
@@ -271,12 +271,12 @@ namespace TVGL.TwoDimensional
             {
                 connectingIndices[polygon.Index] = index;
                 polygon.Index = index++;
-                foreach (var hole in polygon.InnerPolygons)
+                foreach (var hole in polygon.Holes)
                 {
                     connectingIndices[hole.Index] = index++;
                     hole.Index = polygon.Index;
                 }
-                //index += 1 + polygon.InnerPolygons.Count;
+                //index += 1 + polygon.Holes.Count;
             }
             polygons = polygonList.ToArray();
             return true;
@@ -298,6 +298,27 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> polygons,
             SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
         {
+            int i = 0;
+            while (i < polygons.Count)
+            {
+                var foundToBeInsideOfOther = false;
+                int j = i;
+                while (++j < polygons.Count)
+                {
+                    if (polygons[j].IsNonIntersectingPolygonInside(polygons[i], out _))
+                    {
+                        foundToBeInsideOfOther = true;
+                        break;
+                    }
+                }
+                if (foundToBeInsideOfOther)
+                {
+                    foreach (var hole in polygons[i].Holes)
+                        polygons[j].AddHole(hole);
+                    polygons.RemoveAt(i);
+                }
+                else i++;
+            }
             //  Find the positive polygon that this negative polygon is inside.
             //The negative polygon belongs to the smallest positive polygon that it fits inside.
             //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
@@ -306,23 +327,22 @@ namespace TVGL.TwoDimensional
             {
                 var isInside = false;
                 //Start with the smallest positive polygon           
-                foreach (var positivePolygon in polygons)
+                for (var j = 0; j < polygons.Count; j++)
                 {
-                    if (-negativePolygon.Area > positivePolygon.Area) continue;
-                    foreach (var vector2 in negativePolygon.Path)
+                    var positivePolygon = polygons[j];
+                    if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary))
                     {
-                        if (!positivePolygon.IsPointInsidePolygon(vector2, out _, out _, out var onBoundary, true))
-                            // negative has a point outside of positive. no point in checking other points
-                            break;
-                        if (!onBoundary)
-                        {
-                            positivePolygon.InnerPolygons.Add(negativePolygon);
-                            //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
-                            isInside = true;
-                            break;
-                        }
+                        if (onBoundary)
+                            polygons[j] = positivePolygon.Union(negativePolygon)[0]; // i don't know if this is a problem, but the
+                                                                                     // new polygon at j may be smaller (now that it has a big hole in it ) than the preceding ones. I don't think
+                                                                                     // we need to maintain ordered by area - since the first loop above will already merge positive loops
+                        else positivePolygon.AddHole(negativePolygon);
+                        //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
+                        isInside = true;
+                        break;
                     }
                 }
+
                 if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
             }
             //Set the polygon indices
@@ -330,7 +350,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons)
             {
                 polygon.Index = index++;
-                foreach (var hole in polygon.InnerPolygons)
+                foreach (var hole in polygon.Holes)
                 {
                     hole.Index = polygon.Index;
                 }
@@ -339,6 +359,21 @@ namespace TVGL.TwoDimensional
         }
 
 
+        private static bool IsNonIntersectingPolygonInside(this Polygon outer, Polygon inner, out bool onBoundary)
+        {
+            onBoundary = false;
+            if (Math.Abs(inner.Area) > outer.Area) return false;
+            foreach (var vector2 in inner.Path)
+            {
+                if (!outer.IsPointInsidePolygon(vector2, out _, out _, out var thisPointOnBoundary, true))
+                    // negative has a point outside of positive. no point in checking other points
+                    return false;
+                if (thisPointOnBoundary) onBoundary = true;
+                else
+                    return true;
+            }
+            return true; //all points are on boundary!
+        }
         #region Line Intersections with Polygon
 
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
