@@ -296,8 +296,9 @@ namespace TVGL.TwoDimensional
         /// <exception cref="Exception">Intersections still exist between hole and positive polygon.</exception>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
         private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> polygons,
-            SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
-        {
+            IEnumerable<Polygon> negativePolygons)
+            //SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
+            {
             int i = 0;
             while (i < polygons.Count)
             {
@@ -325,7 +326,7 @@ namespace TVGL.TwoDimensional
             //and the reversed ordering, gaurantee that we get the correct shallow tree.
             foreach (var negativePolygon in negativePolygons)
             {
-                var isInside = false;
+                //var isInside = false;
                 //Start with the smallest positive polygon           
                 for (var j = 0; j < polygons.Count; j++)
                 {
@@ -338,12 +339,11 @@ namespace TVGL.TwoDimensional
                                                                                      // we need to maintain ordered by area - since the first loop above will already merge positive loops
                         else positivePolygon.AddHole(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
-                        isInside = true;
+                        //isInside = true;
                         break;
                     }
                 }
-
-                if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
+                //if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
             }
             //Set the polygon indices
             var index = 0;

@@ -24,6 +24,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
             // var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
 
+            PolygonOperationsTesting.TestOffsetting();
             PolygonOperationsTesting.TestBooleanCompare();
                 //PolygonOperationsTesting.TestUnionSimple();
             //PolygonOperationsTesting.TestRemoveSelfIntersect();

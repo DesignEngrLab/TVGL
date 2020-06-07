@@ -185,14 +185,14 @@ namespace TVGL.TwoDimensional
         }
 
         #region Boolean Operations
-        public static Polygon RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
         {
             return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections(), minAllowableArea);
         }
-        public static Polygon RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
             double minAllowableArea = Constants.BaseTolerance)
         {
-            if (intersections.Count == 0) return polygon.Copy();
+            if (intersections.Count == 0) return new List<Polygon>{ polygon.Copy() };
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
@@ -206,7 +206,20 @@ namespace TVGL.TwoDimensional
                 if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
                 else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
             }
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values)[0];
+
+            foreach (var intersectionData in intersections)
+                intersectionData.Visited = false;
+            while (GetNextStartingIntersection(intersectionLookup, intersections, 1, out var startingIntersection,
+                out var startEdge))
+            {
+                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
+                    startEdge, false).ToList();
+                var area = polyCoordinates.Area();
+                if (area.IsNegligible(minAllowableArea)) continue;
+                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
+                else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
+            }
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
         }
 
         /// <summary>

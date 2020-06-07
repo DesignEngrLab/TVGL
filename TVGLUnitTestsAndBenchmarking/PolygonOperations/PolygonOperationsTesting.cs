@@ -78,8 +78,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var coords = MakeRandomComplexPolygon(10, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords, true);
-                polygon = polygon.RemoveSelfIntersections();
-                Presenter.ShowAndHang(polygon);
+              var  polygons = polygon.RemoveSelfIntersections();
+                Presenter.ShowAndHang(polygons);
                 //Presenter.ShowAndHang(polygons.Path);
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             }
@@ -376,5 +376,23 @@ namespace TVGLUnitTestsAndBenchmarking
             Presenter.ShowAndHang(new[] { negPolys, posPolys });
         }
 
+        public static void TestOffsetting()
+        {
+            var coords1 = MakeStarryCircularPolygon(5, 30, 8).ToList();
+            var hole1 = MakeStarryCircularPolygon(8, 15, 8).ToList();
+            hole1.Reverse();
+            var polygon1 = new Polygon(coords1, true);
+            polygon1.RemoveSelfIntersections();
+            polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
+            //var polygon1 = new Polygon(coords1, true);
+           // Presenter.ShowAndHang(polygon1);
+           // var polygons2 = polygon1.OffsetRound(2, 0.05);
+            var polygons3 = polygon1.OffsetRound(-8, 0.05);
+                //polygons3.AddRange(polygons2);
+            polygons3.Add(polygon1);
+            Presenter.ShowAndHang(polygons3);
+
+
+        }
     }
 }

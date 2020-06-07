@@ -1115,6 +1115,33 @@ namespace TVGL
             return true;
         }
 
+
+        /// <summary>
+        /// Lines the line2 d intersection.
+        /// </summary>
+        /// <param name="pAnchor">The p anchor.</param>
+        /// <param name="pDirection">The p direction.</param>
+        /// <param name="qAnchor">The q anchor.</param>
+        /// <param name="qDirection">The q direction.</param>
+        /// <returns>TVGL.Numerics.Vector2.</returns>
+        public static Vector2 LineLine2DIntersection(Vector2 pAnchor, Vector2 pDirection, Vector2 qAnchor, Vector2 qDirection)
+        {
+            if (pDirection.IsPracticallySame(qDirection, Constants.BaseTolerance)) return Vector2.Null;
+
+            // solve for the t scalar values for the two lines.
+            // the line is define as all values of t from 0 to 1 in the equations
+            // p-line(t_p) = pAnchor + t_p*pDir
+            // q-line(t_q) = qAnchor + t_q*qDir
+            // solve as a system of two equations
+            //   |   pDirection_x      -qDirection_x   | |  t_p  |    | qAnchor_x - pAnchor_x  |
+            //   |                                     |*|       | =  |                        |
+            //   |   pDirection_y      -qDirection_y   | |  t_q  |    | qAnchor_y - pAnchor_y  |
+            var oneOverdeterminnant = 1.0 / (pDirection.Y * qDirection.X - pDirection.X * qDirection.Y);
+            var t_p = oneOverdeterminnant * ((qAnchor.Y - pAnchor.Y) * qDirection.X - (qAnchor.X - pAnchor.X) * qDirection.Y);
+
+            return pAnchor + t_p * pDirection;
+        }
+
         /// <summary>
         ///     Find the point common to three planes.
         /// </summary>
