@@ -192,7 +192,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
             double minAllowableArea = Constants.BaseTolerance)
         {
-            if (intersections.Count == 0) return new List<Polygon>{ polygon.Copy() };
+            if (intersections.Count == 0) return new List<Polygon> { polygon.Copy() };
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
@@ -443,19 +443,34 @@ namespace TVGL.TwoDimensional
         }
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
         {
-            return polygonRelationship switch
+            switch (polygonRelationship)
             {
-                PolygonRelationship.Separated => new List<Polygon>(),
-                PolygonRelationship.BIsCompletelyInsideA => new List<Polygon> { polygonB.Copy() },
-                PolygonRelationship.AIsCompletelyInsideB => new List<Polygon> { polygonA.Copy() },
+                case PolygonRelationship.Separated: return new List<Polygon>();
+                case PolygonRelationship.BIsCompletelyInsideA:
+                    if (polygonB.IsPositive) return new List<Polygon> { polygonB.Copy() };
+                    else
+                    {
+                        var polygonACopy = polygonA.Copy();
+                        polygonACopy.AddHole(polygonB.Copy());
+                        return new List<Polygon> { polygonACopy };
+                    }
+                case PolygonRelationship.AIsCompletelyInsideB:
+                    if (polygonA.IsPositive) return new List<Polygon> { polygonA.Copy() };
+                    else
+                    {
+                        var polygonBCopy = polygonB.Copy();
+                        polygonBCopy.AddHole(polygonA.Copy());
+                        return new List<Polygon> { polygonBCopy };
+                    }
                 //case PolygonRelationship.Intersect:
                 //case PolygonRelationship.SeparatedButBordersTouch:
                 //case PolygonRelationship.BVerticesInsideAButLinesIntersect:
                 //case PolygonRelationship.BInsideAButBordersTouch:
                 //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
                 //case PolygonRelationship.AInsideBButBordersTouch:
-                _ => BooleanOperation(polygonA, polygonB, intersections, false, +1, minAllowableArea)
-            };
+                default:
+                    return BooleanOperation(polygonA, polygonB, intersections, false, +1, minAllowableArea);
+            }
         }
 
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)

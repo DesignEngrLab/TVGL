@@ -297,8 +297,8 @@ namespace TVGL.TwoDimensional
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
         private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> polygons,
             IEnumerable<Polygon> negativePolygons)
-            //SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
-            {
+        //SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
+        {
             int i = 0;
             while (i < polygons.Count)
             {
@@ -313,11 +313,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
                 if (foundToBeInsideOfOther)
-                {
-                    foreach (var hole in polygons[i].Holes)
-                        polygons[j].AddHole(hole);
                     polygons.RemoveAt(i);
-                }
                 else i++;
             }
             //  Find the positive polygon that this negative polygon is inside.
@@ -326,7 +322,7 @@ namespace TVGL.TwoDimensional
             //and the reversed ordering, gaurantee that we get the correct shallow tree.
             foreach (var negativePolygon in negativePolygons)
             {
-                //var isInside = false;
+                var isInside = false;
                 //Start with the smallest positive polygon           
                 for (var j = 0; j < polygons.Count; j++)
                 {
@@ -334,16 +330,21 @@ namespace TVGL.TwoDimensional
                     if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary))
                     {
                         if (onBoundary)
-                            polygons[j] = positivePolygon.Union(negativePolygon)[0]; // i don't know if this is a problem, but the
-                                                                                     // new polygon at j may be smaller (now that it has a big hole in it ) than the preceding ones. I don't think
-                                                                                     // we need to maintain ordered by area - since the first loop above will already merge positive loops
+                        {
+                            var newPolys = positivePolygon.Intersect(negativePolygon);
+                            polygons[j] = newPolys[0]; // i don't know if this is a problem, but the
+                            // new polygon at j may be smaller (now that it has a big hole in it ) than the preceding ones. I don't think
+                            // we need to maintain ordered by area - since the first loop above will already merge positive loops
+                            for (int k = 1; k < newPolys.Count; k++)
+                                polygons.Add(newPolys[i]);
+                        }
                         else positivePolygon.AddHole(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
                         //isInside = true;
                         break;
                     }
                 }
-                //if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
+                if (!isInside) polygons.Add(negativePolygon); //this feels like it should come with a warning. but perhaps the user/developer intends to create a negative polygon
             }
             //Set the polygon indices
             var index = 0;
@@ -357,6 +358,7 @@ namespace TVGL.TwoDimensional
             }
             return polygons;
         }
+
 
 
         private static bool IsNonIntersectingPolygonInside(this Polygon outer, Polygon inner, out bool onBoundary)

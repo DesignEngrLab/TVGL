@@ -378,18 +378,18 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void TestOffsetting()
         {
-            var coords1 = MakeStarryCircularPolygon(5, 30, 8).ToList();
-            var hole1 = MakeStarryCircularPolygon(8, 15, 8).ToList();
+            var coords1 = MakeStarryCircularPolygon(5, 22, 8).ToList();
+            var hole1 = MakeStarryCircularPolygon(8, 14, 5).ToList();
             hole1.Reverse();
             var polygon1 = new Polygon(coords1, true);
-            polygon1.RemoveSelfIntersections();
-            polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
+            polygon1 = polygon1.Intersect(new Polygon(hole1, false))[0];
+            Presenter.ShowAndHang(polygon1);
             //var polygon1 = new Polygon(coords1, true);
-           // Presenter.ShowAndHang(polygon1);
-           // var polygons2 = polygon1.OffsetRound(2, 0.05);
-            var polygons3 = polygon1.OffsetRound(-8, 0.05);
+            // Presenter.ShowAndHang(polygon1);
+            // var polygons2 = polygon1.OffsetRound(2, 0.05);
+            var polygons3 = polygon1.OffsetRound(-3, 0.05);
                 //polygons3.AddRange(polygons2);
-            polygons3.Add(polygon1);
+            //polygons3.Add(polygon1);
             Presenter.ShowAndHang(polygons3);
 
 
