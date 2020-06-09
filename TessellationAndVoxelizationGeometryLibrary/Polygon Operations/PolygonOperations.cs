@@ -329,6 +329,7 @@ namespace TVGL.TwoDimensional
                     var positivePolygon = polygons[j];
                     if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary))
                     {
+                        isInside = true;
                         if (onBoundary)
                         {
                             var newPolys = positivePolygon.Intersect(negativePolygon);

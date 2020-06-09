@@ -155,8 +155,8 @@ namespace TVGL.TwoDimensional
 
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
-            if (polygon.MaxX - polygon.MinX < 2 * offset || polygon.MaxY - polygon.MinY < 2 * offset) return new List<Polygon>();
-            var positivePolygons = new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle), true)
+            if (polygon.MaxX - polygon.MinX < -2 * offset || polygon.MaxY - polygon.MinY < -2 * offset) return new List<Polygon>();
+            var polygons = new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle), true)
                 .RemoveSelfIntersections();
             var negativePolygons = new List<Polygon>();
             foreach (var hole in polygon.Holes)
@@ -167,10 +167,17 @@ namespace TVGL.TwoDimensional
                 foreach (var newHole in newHoles)
                     negativePolygons.Add(newHole);
             }
-            var polygons = new List<Polygon>();
-            foreach (var poly in positivePolygons)
+            for (var i = 0; i < polygons.Count; i++)
+            {
                 foreach (var hole in negativePolygons)
-                    polygons.AddRange(poly.Subtract(hole));
+                {
+                    var result = polygons[i].Subtract(hole);
+                    polygons[i] = result[0];
+                    for (int j = 1; j < result.Count; j++)
+                        polygons.Add(result[i]);
+                }
+            }
+
             return polygons;
         }
 
@@ -207,6 +214,7 @@ namespace TVGL.TwoDimensional
                     pointsList.Add(firstPoint);
                     var lastPoint = point + offset * nextUnitNormal;
                     var firstToLastVector = lastPoint - firstPoint;
+                    var firstToLastNormal = new Vector2(firstToLastVector.Y,-firstToLastVector.X);
                     // to avoid "costly" call to Math.Sin and Math.Cos, we create the transform matrix that 1) translates to origin
                     // 2) rotates by the angle, and 3) translates back
                     var transform = Matrix3x3.CreateTranslation(-point) * rotMatrix *
@@ -216,7 +224,7 @@ namespace TVGL.TwoDimensional
                     // the starting point of the curve with the last point must always be in the same direction (positive dot-product)
                     // with the new line segment
                     //todo: this is not correct need to fix
-                    while (firstToLastVector.Dot(nextPoint - firstPoint) > 0)
+                    while (firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
                     {
                         pointsList.Add(nextPoint);
                         firstPoint = nextPoint;

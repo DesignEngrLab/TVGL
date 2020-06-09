@@ -78,7 +78,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var coords = MakeRandomComplexPolygon(10, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords, true);
-              var  polygons = polygon.RemoveSelfIntersections();
+                var polygons = polygon.RemoveSelfIntersections();
                 Presenter.ShowAndHang(polygons);
                 //Presenter.ShowAndHang(polygons.Path);
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
@@ -230,6 +230,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
         private List<Vector2> coords1;
         private List<Vector2> coords2;
+        private List<List<Vector2>> coords3;
         private Polygon polygon1;
         private Polygon polygon2;
 
@@ -238,6 +239,8 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             coords1 = MakeStarryCircularPolygon(N, 30, 15).ToList();
             coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
+            coords1 = coords1.Xor(coords2)[0];
+            polygon1 = new Polygon(coords1, true);
             //polygon1 = new Polygon(coords1, true);
             //polygon2 = new Polygon(coords2, true);
         }
@@ -246,22 +249,24 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark(Description = "my functions")]
         public void BenchmarkMyBooleanSimple()
         {
-            polygon1 = new Polygon(coords1, true);
-            polygon2 = new Polygon(coords2, true);
-            var polygon3 = polygon1.Union(polygon2);
-            polygon3 = polygon1.Intersect(polygon2);
-            polygon3 = polygon1.ExclusiveOr(polygon2);
-            polygon3 = polygon1.Subtract(polygon2);
+            var polygon3 = polygon1.OffsetRound(5.0, 0.005);
+            //polygon1 = new Polygon(coords1, true);
+            //polygon2 = new Polygon(coords2, true);
+            //var polygon3 = polygon1.Union(polygon2);
+            //polygon3 = polygon1.Intersect(polygon2);
+            //polygon3 = polygon1.ExclusiveOr(polygon2);
+            //polygon3 = polygon1.Subtract(polygon2);
         }
 
 
         [Benchmark(Description = "clipper")]
         public void BenchmarkClipperSimple()
         {
-            var coords3 = PolygonOperations.Union(coords1, coords2);
-            coords3 = PolygonOperations.Intersection(coords1, coords2);
-            coords3 = coords1.Difference(coords2);
-            coords3 = coords1.Xor(coords2);
+            var coords4 = coords1.OffsetRound(5.0, 0.005);
+            //var coords3 = PolygonOperations.Union(coords1, coords2);
+            //coords3 = PolygonOperations.Intersection(coords1, coords2);
+            //coords3 = coords1.Difference(coords2);
+            //coords3 = coords1.Xor(coords2);
         }
 
         internal static void TestSimplify()
@@ -378,17 +383,17 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void TestOffsetting()
         {
-            var coords1 = MakeStarryCircularPolygon(5, 22, 8).ToList();
-            var hole1 = MakeStarryCircularPolygon(8, 14, 5).ToList();
+            var coords1 = MakeStarryCircularPolygon(50, 28, 8).ToList();
+            var hole1 = MakeStarryCircularPolygon(80, 14, 5).ToList();
             hole1.Reverse();
             var polygon1 = new Polygon(coords1, true);
             polygon1 = polygon1.Intersect(new Polygon(hole1, false))[0];
-            Presenter.ShowAndHang(polygon1);
+            //Presenter.ShowAndHang(polygon1);
             //var polygon1 = new Polygon(coords1, true);
             // Presenter.ShowAndHang(polygon1);
             // var polygons2 = polygon1.OffsetRound(2, 0.05);
-            var polygons3 = polygon1.OffsetRound(-3, 0.05);
-                //polygons3.AddRange(polygons2);
+            var polygons3 = polygon1.OffsetRound(1, 0.05);
+            //polygons3.AddRange(polygons2);
             //polygons3.Add(polygon1);
             Presenter.ShowAndHang(polygons3);
 
