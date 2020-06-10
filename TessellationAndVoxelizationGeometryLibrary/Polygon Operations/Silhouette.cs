@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param>
         /// <returns></returns>
-        internal static List<List<Vector2>> Slow(IList<PolygonalFace> faces, Vector3 normal, double minAngle = 0.1,
+        internal static List<Polygon> Slow(IList<PolygonalFace> faces, Vector3 normal, double minAngle = 0.1,
             double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180);
@@ -56,13 +56,14 @@ namespace TVGL.TwoDimensional
             //var projectedFacePolygons = positiveFaces.ToDictionary(f => f, f => GetPolygonFromFace(f, projectedPoints, true));
             //Use GetPolygonFromFace and force to be positive faces with true"
             var projectedFacePolygons2 = positiveFaces.Select(f => GetPolygonFromFace(f, projectedPoints, true)).ToList().Where(p => p.Area() > minPathAreaToConsider);
-            var solution = PolygonOperations.Union(projectedFacePolygons2, false).ToList();
+            var projectedFacePolygons2List = projectedFacePolygons2.Select(p => new Polygon(p, true)).ToList();
+            var solution = PolygonOperations.Union(projectedFacePolygons2List).ToList();
 
             //Offset by enough to account for minimum angle 
             var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;
 
             //Remove tiny polygons and slivers 
-            solution = PolygonOperations.Simplify(solution);
+            solution = solution.Simplify().ToList();
             var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
             var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
             //Presenter.ShowAndHang(significantSolution);
@@ -76,7 +77,7 @@ namespace TVGL.TwoDimensional
         /// <param name="normal"></param>
         /// <param name="minAngle"></param>
         /// <returns></returns>
-        public static List<List<Vector2>> CreateSilhouette(this TessellatedSolid ts, Vector3 normal, double minAngle = 0.1)
+        public static List<Polygon> CreateSilhouette(this TessellatedSolid ts, Vector3 normal, double minAngle = 0.1)
         {
             var depthOfPart = ts.Vertices.GetLengthAndExtremeVertex(normal, out _, out _);
             return CreateSilhouette(ts.Faces, normal, ts, minAngle, ts.SameTolerance, depthOfPart);
@@ -92,7 +93,7 @@ namespace TVGL.TwoDimensional
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param> 
         /// <returns></returns>
-        public static List<List<Vector2>> CreateSilhouette(IList<PolygonalFace> faces, Vector3 normal, TessellatedSolid originalSolid, double minAngle = 0.1,
+        public static List<Polygon> CreateSilhouette(IList<PolygonalFace> faces, Vector3 normal, TessellatedSolid originalSolid, double minAngle = 0.1,
         double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             //Get the positive faces into a dictionary
@@ -109,7 +110,7 @@ namespace TVGL.TwoDimensional
             foreach (var face in faces)
             {
                 if (face.Area.IsNegligible()) continue;
-                var dot = normal.Dot(face.Normal);               
+                var dot = normal.Dot(face.Normal);
                 if (dot.IsGreaterThanNonNegligible(angleTolerance2))
                 {
                     allPositives.Add(face.IndexInList, face);
@@ -169,7 +170,8 @@ namespace TVGL.TwoDimensional
             {
                 projectedPoints.Add(vertex.IndexInList, MiscFunctions.ConvertTo2DCoordinates(vertex.Coordinates, transform));
             }
-            var projectedFacePolygons = positiveFaces.ToDictionary(f => f.IndexInList, f => GetPathFromFace(f, projectedPoints, true));
+            var projectedFacePolygons = positiveFaces.ToDictionary(f => f.IndexInList,
+                f => GetPathFromFace(f, projectedPoints, true));
 
             //Get all the surfaces
             var allSurfaces = SeperateIntoSurfaces(allPositives);
@@ -201,21 +203,22 @@ namespace TVGL.TwoDimensional
             //Presenter.ShowAndHang(originalSolid);
 
             //Get the surface paths from all the surfaces and union them together
-            var solution = GetSurfacePaths(allSurfaces, normal, minPathAreaToConsider, originalSolid, projectedFacePolygons).ToList();
+            var solution = GetSurfacePaths(allSurfaces, normal, minPathAreaToConsider, originalSolid,
+                    projectedFacePolygons).ToList();
 
             var positiveEdgeFacePolygons = new List<List<Vector2>>();
             var flattenTransform = MiscFunctions.TransformToXYPlane(normal, out _);
-            foreach(var face in positiveEdgeFaces)
+            foreach (var face in positiveEdgeFaces)
             {
                 var polygon = new List<Vector2>(face.Vertices.ProjectTo2DCoordinates(flattenTransform));
-                if (polygon.Area()<0) polygon.Reverse();
+                if (polygon.Area() < 0) polygon.Reverse();
                 positiveEdgeFacePolygons.Add(polygon);
             }
-          
+
             try //Try to merge them all at once
             {
-                solution = PolygonOperations.Union(solution, positiveEdgeFacePolygons, false, PolygonFillType.NonZero);
-            }         
+                solution = solution.Union();
+            }
             catch
             {
                 //Do them one at a time, skipping those that fail
@@ -223,15 +226,15 @@ namespace TVGL.TwoDimensional
                 {
                     try
                     {
-                        solution = PolygonOperations.Union(solution, face, false, PolygonFillType.NonZero);
+                        solution = solution.Union();
                     }
-                    catch 
+                    catch
                     {
                         continue;
                     }
                 }
             }
-          
+
 
             //Offset by enough to account for minimum angle 
             var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;
@@ -241,27 +244,27 @@ namespace TVGL.TwoDimensional
             //This is helpful when the polygon is nearly self-intersecting. 
             //Then offset back out.  
 
-            solution = PolygonOperations.Simplify(solution, 0.001);
-            var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
+            solution = PolygonOperations.Simplify(solution, 0.001).ToList();
+            var offsetPolygons = solution.OffsetMiter(scale);
             offsetPolygons = EliminateOverhangPolygons(offsetPolygons, projectedFacePolygons);
-            var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
+            var significantSolution = offsetPolygons.OffsetMiter(-scale);
 
             return significantSolution;
         }
 
         #region Eliminate Overhangs
-        private static List<List<Vector2>> EliminateOverhangPolygons(List<List<Vector2>> nonSelfIntersectingPaths,
-                    Dictionary<int, List<Vector2>> projectedFacePolygons)
+        private static List<Polygon> EliminateOverhangPolygons(List<Polygon> nonSelfIntersectingPaths,
+                    Dictionary<int, Polygon> projectedFacePolygons)
         {
-            var correctedSurfacePath = new List<List<Vector2>>();
-            var negativePaths = new List<List<Vector2>>();
+            var correctedSurfacePath = new List<Polygon>();
+            var negativePaths = new List<Polygon>();
             foreach (var path in nonSelfIntersectingPaths)
             {
-                if (path.Count < 3) continue; //Don't include lines. It must be a valid polygon.
+                if (path.Path.Count < 3) continue; //Don't include lines. It must be a valid polygon.
                 //If the area is negative, we need to check if it is a hole or an overhang
                 //If it is an overhang, we ignore it. An overhang exists if any the points
                 //in the path are inside any of the positive faces touching the path
-                var area2D = path.Area();
+                var area2D = path.Area;
                 if (Math.Sign(area2D) > 0)
                 {
                     correctedSurfacePath.Add(path);
@@ -281,22 +284,23 @@ namespace TVGL.TwoDimensional
                 //If any adjacent face centers are inside the surface path, then it is an overhang
                 //Note: regardless of whether the face is further than the loop in question or 
                 //before, being inside the loop is enough to say that it is not a hole.
-                if (path.Count > 3)
+                if (path.Path.Count > 3)
                 {
                     //Presenter.ShowAndHang(path);
                     //Presenter.ShowVertexPathsWithSolid(new List<List<List<Vertex>>> { loops },
                     //    new List<TessellatedSolid> { originalSolid });
                 }
 
-                var polygons = new HashSet<List<Vector2>>(projectedFacePolygons.Values);
+                var polygons = new HashSet<Polygon>(projectedFacePolygons.Values);
 
-                //Get a few points that are inside the polygon (It is non-self intersecting,
-                //but taking the center may not work.)
-                var pathCenterX = path.Average(v => v.X);
-                var pathCenterY = path.Average(v => v.Y);
+                // not sure I get what the point of this is. The centerPointIsValid boolean is found by checking
+                // if the average of the polygon points (which is technically not its true center) is inside
+                // of the polygon
+                var pathCenterX = path.Path.Average(v => v.X);
+                var pathCenterY = path.Path.Average(v => v.Y);
                 var centerPoint = new Vector2(pathCenterX, pathCenterY);
                 var centerPointIsValid = false;
-                if (path.IsPointInsidePolygon(centerPoint))
+                if (path.IsPointInsidePolygon(centerPoint, out _, out _, out _))
                 {
                     //A negative polygon may be inside of a positive polygon without issue, however, 
                     //If there is a negative polygon inside a negative polygon an issue may arise.
@@ -305,7 +309,7 @@ namespace TVGL.TwoDimensional
                     else
                     {
                         centerPointIsValid = negativePaths.Where(otherPath => otherPath != path).Any(otherPath =>
-                            path.IsPointInsidePolygon(centerPoint, true));
+                            path.IsPointInsidePolygon(centerPoint, out _, out _, out _));
                     }
                 }
 
@@ -322,26 +326,26 @@ namespace TVGL.TwoDimensional
                     var count = 0;
                     while (!centerPointIsValid && count < 1000)
                     {
-                        var r1 = rnd.Next(path.Count);
-                        var r2 = rnd.Next(path.Count);
-                        var r3 = rnd.Next(path.Count);
+                        var r1 = rnd.Next(path.Path.Count);
+                        var r2 = rnd.Next(path.Path.Count);
+                        var r3 = rnd.Next(path.Path.Count);
                         while (r1 == r2)
                         {
                             //Get a new r2
-                            r2 = rnd.Next(path.Count);
+                            r2 = rnd.Next(path.Path.Count);
                         }
                         while (r3 == r2 || r3 == r1)
                         {
                             //Get a new r3
-                            r3 = rnd.Next(path.Count);
+                            r3 = rnd.Next(path.Path.Count);
                         }
-                        var p1 = path[r1];
-                        var p2 = path[r2];
-                        var p3 = path[r3];
+                        var p1 = path.Path[r1];
+                        var p2 = path.Path[r2];
+                        var p3 = path.Path[r3];
                         var centerX = (p1.X + p2.X + p3.X) / 3;
                         var centerY = (p1.Y + p2.Y + p3.Y) / 3;
                         var newCenter = new Vector2(centerX, centerY);
-                        if (path.IsPointInsidePolygon(newCenter))
+                        if (path.IsPointInsidePolygon(newCenter, out _, out _, out _))
                         {
                             centerPoint = newCenter;
 
@@ -352,7 +356,7 @@ namespace TVGL.TwoDimensional
                             else
                             {
                                 centerPointIsValid = negativePaths.Where(otherPath => otherPath != path).Any(otherPath =>
-                                path.IsPointInsidePolygon(newCenter, true));
+                                path.IsPointInsidePolygon(newCenter, out _, out _, out _));
                             }
                         }
                         count++;
@@ -364,7 +368,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
 
-                if (polygons.Any(p => p.IsPointInsidePolygon(centerPoint, true)))
+                if (polygons.Any(p => p.IsPointInsidePolygon(centerPoint, out _, out _, out _)))
                 {
                     //This is an overhang
                     //path.Reverse();
@@ -381,13 +385,13 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region GetSurfacePaths
-        private static IEnumerable<List<Vector2>> GetSurfacePaths(List<HashSet<PolygonalFace>> surfaces, Vector3 normal,
-            double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, List<Vector2>> projectedFacePolygons)
+        private static IEnumerable<Polygon> GetSurfacePaths(List<HashSet<PolygonalFace>> surfaces, Vector3 normal,
+            double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, Polygon> projectedFacePolygons)
         {
             originalSolid.HasUniformColor = false;
             var flattenTransform = MiscFunctions.TransformToXYPlane(normal, out _);
             var red = new Color(KnownColors.Red);
-            var allPaths = new List<List<Vector2>>();
+            var allPaths = new List<Polygon>();
             foreach (var surface in surfaces)
             {
                 //Get the surface inner and outer edges
@@ -409,7 +413,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
 
-                var surfacePaths = new List<List<Vector2>>();
+                var surfacePaths = new List<Polygon>();
                 var assignedEdges = new HashSet<Edge>();
                 while (outerEdges.Any())
                 {
@@ -557,8 +561,8 @@ namespace TVGL.TwoDimensional
 
                     //Get2DProjections does not project directionally (normal and normal * -1) return the same transform)
                     //However, the way we are unioning the polygons and eliminating overhand polygons seems to be taking care of this
-                    var surfacePath = loop.ProjectTo2DCoordinates(flattenTransform).ToList();
-                    var area2D = surfacePath.Area();
+                    var surfacePath = new Polygon(loop.ProjectTo2DCoordinates(flattenTransform), false);
+                    var area2D = surfacePath.Area;
                     if (area2D.IsNegligible(minAreaToConsider)) continue;
 
                     //Trust the ordering from the face normals. A self intersecting polygon may have a negative area, 
@@ -578,7 +582,7 @@ namespace TVGL.TwoDimensional
             //negative regions. This is undesirable, since we do not want to union a hole
             //with an overlapping region. For this reason, Union Non-Zero is used. It keeps
             //the holes in their proper orientation and does not combine them together. 
-            var nonSelfIntersectingPaths = PolygonOperations.Union(allPaths, false, PolygonFillType.NonZero);
+            var nonSelfIntersectingPaths = PolygonOperations.Union(allPaths);
             var correctedSurfacePath = EliminateOverhangPolygons(nonSelfIntersectingPaths, projectedFacePolygons);
             //if (allPaths.Sum(p => p.Count) > 10) Presenter.ShowAndHang(nonSelfIntersectingPaths);
 
@@ -615,14 +619,14 @@ namespace TVGL.TwoDimensional
         }
         #endregion
 
-        private static List<Vector2> GetPathFromFace(PolygonalFace face, Dictionary<int, Vector2> projectedPoints, bool forceToBePositive)
+        private static Polygon GetPathFromFace(PolygonalFace face, Dictionary<int, Vector2> projectedPoints, bool forceToBePositive)
         {
             if (face.Vertices.Count != 3) throw new Exception("This method was only developed with triangles in mind.");
             //Make sure the polygon is ordered correctly (we already know this face is positive)
             var points = face.Vertices.Select(v => projectedPoints[v.IndexInList]).ToList();
             var area = points.Area();
             if (forceToBePositive && area < 0) points.Reverse();
-            return points;
+            return new Polygon(points, true);
         }
 
         private static List<Vector2> GetPolygonFromFace(PolygonalFace face, Dictionary<int, Vector2> projectedPoints, bool forceToBePositive)

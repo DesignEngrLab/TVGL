@@ -177,7 +177,7 @@ namespace TVGL
     /// </summary>
     public class IntersectionGroup
     {
-        public readonly List<List<Vector2>> Intersection2D;
+        public readonly List<Polygon> Intersection2D;
         public readonly HashSet<GroupOfLoops> GroupOfLoops;
         public List<int> GetLoopIndices()
         {
@@ -193,10 +193,10 @@ namespace TVGL
         }
 
         public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops,
-            IEnumerable<List<Vector2>> intersection2D, int index)
+            List<Polygon> intersection2D, int index)
         {
             GroupOfLoops = new HashSet<GroupOfLoops> { posSideGroupOfLoops, negSideGroupOfLoops };
-            Intersection2D = new List<List<Vector2>>(intersection2D);
+            Intersection2D = intersection2D;
             Index = index;
         }
 
@@ -258,22 +258,20 @@ namespace TVGL
 
         public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
-        public List<List<Vector2>> CrossSection2D;
+        public Polygon CrossSection2D;
 
         public void SetCrossSection2D(Flat plane)
         {
-            var paths = new List<List<Vector2>>();
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
             var positivePath = PositiveLoop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
             if (positivePath.Area() < 0) positivePath.Reverse();
-            paths.Add(positivePath);
+            CrossSection2D=new Polygon(positivePath, true);
             foreach (var loop in NegativeLoops)
             {
                 var negativePath = loop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
                 if (negativePath.Area() > 0) negativePath.Reverse();
-                paths.Add(negativePath);
+                CrossSection2D.AddHole(new Polygon(negativePath, true));
             }
-            CrossSection2D = paths.Union();
         }
 
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)

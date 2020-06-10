@@ -16,7 +16,7 @@ namespace TVGL.Boolean_Operations
     /// </summary>
     public static class Slice
     {
-         #region Define Contact at a Flat Plane
+        #region Define Contact at a Flat Plane
 
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,
@@ -266,10 +266,9 @@ namespace TVGL.Boolean_Operations
                 //Find all the negative side groups that it intersects with.
                 foreach (var negGroup in negSideGroups)
                 {
-                    var intersection =
-                        PolygonOperations.Intersection(posGroup.CrossSection2D, negGroup.CrossSection2D);
+                    var intersection = posGroup.CrossSection2D.Intersect(negGroup.CrossSection2D);
                     if (intersection == null || !intersection.Any() ||
-                        intersection.Sum(p => p.Area()).IsNegligible()) continue;
+                        intersection.Sum(p => p.Area).IsNegligible()) continue;
                     //Check if this intersection should be paired with an existing intersection group.
                     var intersectionGroupFound = false;
                     foreach (var intersectionGroup in intersectionGroups)

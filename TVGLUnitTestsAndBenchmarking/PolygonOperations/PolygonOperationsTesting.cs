@@ -247,7 +247,7 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
 
-        [Benchmark(Description = "my functions")]
+       // [Benchmark(Description = "my functions")]
         public void BenchmarkMyBooleanSimple()
         {
             var polygon3 = polygon1.OffsetRound(5.0, 0.005);
@@ -260,7 +260,7 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
 
-        [Benchmark(Description = "clipper")]
+        //[Benchmark(Description = "clipper")]
         public void BenchmarkClipperSimple()
         {
             //var coords4 = coords1.OffsetRound(5.0, 0.005);

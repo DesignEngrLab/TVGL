@@ -36,20 +36,20 @@ namespace TVGLUnitTestsAndBenchmarking
             a.ConvertTo3DLocations(Vector3.UnitX, 1.0);
             a.ConvexHull2D();
             var b = PolygonOperationsTesting.MakeCircularPolygon(5, 5);
-            a.Difference(b);
+            //a.Difference(b);
             var length = a.GetLengthAndExtremePoints(new Vector2(1, 1), out List<Vector2> bottomPoints,
                 out List<Vector2> topPoints);
-            a.Intersection(b);
+            //a.Intersection(b);
             a.IsRectangular(out var dimensions);
             a.MinimumCircle();
-            a.OffsetMiter(5.0);
-            a.OffsetRound(5.0);
-            a.OffsetSquare(5.0);
+            //a.OffsetMiter(5.0);
+            //a.OffsetRound(5.0);
+            //a.OffsetSquare(5.0);
             a.Perimeter();
             a.Simplify();
             a.Simplify(10);
-            a.Union(b);
-            a.Xor(b);
+            //a.Union(b);
+            //a.Xor(b);
             #endregion
 
             #region IEnumerable<IEnumerable<Vector2>>
@@ -57,20 +57,20 @@ namespace TVGLUnitTestsAndBenchmarking
             var d = (IEnumerable<IEnumerable<Vector2>>)(new[] { PolygonOperationsTesting.MakeCircularPolygon(5, 5) });
             c.Area();
             c.Create2DMedialAxis();
-            c.Difference(d);
+            //c.Difference(d);
             c.CreateShallowPolygonTrees(false, false, out var polygons, out _);
-            c.Intersection(d);
-            c.OffsetMiter(5.0);
-            c.OffsetRound(5.0);
-            c.OffsetSquare(5.0);
+            //c.Intersection(d);
+            //c.OffsetMiter(5.0);
+            //c.OffsetRound(5.0);
+            //c.OffsetSquare(5.0);
             c.Perimeter();
             c.ExtrusionFacesFrom2DPolygons(Vector3.UnitX, 1.0, 4.0);
             c.Simplify();
             c.Simplify(10);
             c.SliceAtLine(Vector2.UnitX, 1.0, out var negativeSidePolys, out var positiveSidePolys);
             c.Triangulate(out var groupOfLoops, out var isPositive);
-            c.Union(b);
-            c.Xor(b);
+            //c.Union(b);
+            //c.Xor(b);
             #endregion
 
 

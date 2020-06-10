@@ -30,7 +30,7 @@ namespace TVGL.TwoDimensional
             {
                 var perimeter = positivePolygon.Perimeter();
                 var sampled = PolygonOperations.Simplify(positivePolygon);
-                var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * perimeter).First();
+                var smaller = PolygonOperations.OffsetRound(new Polygon(sampled, true), -0.001 * perimeter).First();
 
                 //Delaunay Medial Axis             
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
@@ -39,15 +39,15 @@ namespace TVGL.TwoDimensional
                 {
                     var triangleCenterLineVertices = new List<Vector2>();
                     var edge1Center = 0.5 * (triangle.Vertices[0] + triangle.Vertices[1]);
-                    if (smaller.IsPointInsidePolygon(edge1Center))
+                    if (smaller.IsPointInsidePolygon(edge1Center, out _, out _,out _))
                         triangleCenterLineVertices.Add(edge1Center);
 
                     var edge2Center = 0.5 * (triangle.Vertices[1] + triangle.Vertices[2]);
-                    if (smaller.IsPointInsidePolygon(edge2Center))
+                    if (smaller.IsPointInsidePolygon(edge2Center, out _, out _, out _))
                         triangleCenterLineVertices.Add(edge2Center);
 
                     var edge3Center = 0.5 * (triangle.Vertices[2] + triangle.Vertices[0]);
-                    if (smaller.IsPointInsidePolygon(edge3Center))
+                    if (smaller.IsPointInsidePolygon(edge3Center, out _, out _, out _))
                         triangleCenterLineVertices.Add(edge3Center);
 
                     if (triangleCenterLineVertices.Any())

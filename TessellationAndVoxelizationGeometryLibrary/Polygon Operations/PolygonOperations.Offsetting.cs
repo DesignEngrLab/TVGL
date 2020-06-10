@@ -26,6 +26,11 @@ namespace TVGL.TwoDimensional
         {
             return Offset(path, offset, false);
         }
+        public static List<Polygon> OffsetMiter(this List<Polygon> path, double offset)
+        {
+            return Offset(path, offset, false);
+        }
+
 
         public static List<Polygon> OffsetRound(this Polygon path, double offset, double maxCircleDeviation = double.NaN)
         {
@@ -33,8 +38,15 @@ namespace TVGL.TwoDimensional
                 ? Constants.DefaultRoundOffsetDeltaAngle
                 : 2 * Math.Acos(1 - Math.Abs(maxCircleDeviation / offset));
             return Offset(path, offset, true, deltaAngle);
-
         }
+        public static List<Polygon> OffsetRound(this List<Polygon> path, double offset, double maxCircleDeviation = double.NaN)
+        {
+            var deltaAngle = double.IsNaN(maxCircleDeviation)
+                ? Constants.DefaultRoundOffsetDeltaAngle
+                : 2 * Math.Acos(1 - Math.Abs(maxCircleDeviation / offset));
+            return Offset(path, offset, true, deltaAngle);
+        }
+
 
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter,
             double deltaAngle = double.NaN)
