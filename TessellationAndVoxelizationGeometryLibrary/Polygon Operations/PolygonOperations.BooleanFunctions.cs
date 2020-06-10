@@ -1,5 +1,4 @@
-﻿using ClipperLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
@@ -368,13 +367,12 @@ namespace TVGL.TwoDimensional
 
         #region New Boolean Operations
 
-        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB)
         {
             var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
-            return Union(polygonA, polygonB, relationship, intersections, minAllowableArea);
+            return Union(polygonA, polygonB, relationship, intersections);
         }
-        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, List<IntersectionData> intersections,
-            double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, List<IntersectionData> intersections)
         {
             switch (polygonRelationship)
             {
@@ -398,8 +396,33 @@ namespace TVGL.TwoDimensional
                 //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
                 //case PolygonRelationship.AInsideBButBordersTouch:
                 default:
-                    return BooleanOperation(polygonA, polygonB, intersections, false, -1, minAllowableArea);
+                    return BooleanOperation(polygonA, polygonB, intersections, false, -1);
             }
+        }
+        public static List<Polygon> Union(this IEnumerable<Polygon> polygons)
+        {
+            var polygonList = polygons.ToList();
+            while (true)
+            {
+                var numPolygons = polygonList.Count;
+                var relationships = new PolygonRelationship[numPolygons - 1];
+                var allIntersections = new List<IntersectionData>[numPolygons - 1];
+                var allSeparated = true;
+                for (int i = 1; i < polygonList.Count; i++)
+                {
+                    relationships[i - 1] =
+                        GetPolygonRelationshipAndIntersections(polygonList[i - 1], polygonList[i],
+                            out var intersections);
+                    allIntersections[i] = intersections;
+                    if (relationships[i - 1] != 0) allSeparated = false;
+                }
+
+                if (allSeparated) break;
+                var indices = Enumerable.Range(1, numPolygons);
+                polygonList = indices.AsParallel().SelectMany(index => Union(polygonList[index - 1], polygonList[index],
+                    relationships[index], allIntersections[index])).ToList();
+            }
+            return polygonList;
         }
         public static List<Polygon> BooleanOperation(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, bool switchDirection,
             int crossProductSign, double minAllowableArea = Constants.BaseTolerance)

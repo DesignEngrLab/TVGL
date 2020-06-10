@@ -1,7 +1,6 @@
-﻿using ClipperLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Runtime.CompilerServices;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -14,6 +13,11 @@ namespace TVGL.TwoDimensional
         #region TVGL Offsetting
 
         public static List<Polygon> OffsetSquare(this Polygon path, double offset)
+        {
+            return Offset(path, offset, true);
+        }
+
+        public static List<Polygon> OffsetSquare(this List<Polygon> path, double offset)
         {
             return Offset(path, offset, true);
         }
@@ -32,32 +36,41 @@ namespace TVGL.TwoDimensional
 
         }
 
-        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
+        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter,
+            double deltaAngle = double.NaN)
         {
-            if (polygon.MaxX - polygon.MinX < -2 * offset || polygon.MaxY - polygon.MinY < -2 * offset) return new List<Polygon>();
-            var polygons = new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle), true)
-                .RemoveSelfIntersections();
+            return Offset(new[] { polygon }, offset, notMiter, deltaAngle);
+        }
+        private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter, double deltaAngle = double.NaN)
+        {
+            var positivePolygons = new List<Polygon>();
             var negativePolygons = new List<Polygon>();
-            foreach (var hole in polygon.Holes)
+            foreach (var polygon in polygons)
             {
-                if (hole.MaxX - hole.MinX < 2 * offset || hole.MaxY - hole.MinY < 2 * offset) continue;
-                var holeCoords = OffsetRoutineBackwards(hole.Lines, -offset, false, deltaAngle);
-                var newHoles = new Polygon(holeCoords, true).RemoveSelfIntersections();
-                foreach (var newHole in newHoles)
-                    negativePolygons.Add(newHole);
+                if (polygon.MaxX - polygon.MinX < -2 * offset || polygon.MaxY - polygon.MinY < -2 * offset) continue;
+                positivePolygons.AddRange(new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle), true)
+                    .RemoveSelfIntersections());
+                foreach (var hole in polygon.Holes)
+                {
+                    if (hole.MaxX - hole.MinX < 2 * offset || hole.MaxY - hole.MinY < 2 * offset) continue;
+                    var holeCoords = OffsetRoutineBackwards(hole.Lines, -offset, false, deltaAngle);
+                    var newHoles = new Polygon(holeCoords, true).RemoveSelfIntersections();
+                    foreach (var newHole in newHoles)
+                        negativePolygons.Add(newHole);
+                }
             }
-            for (var i = 0; i < polygons.Count; i++)
+            for (var i = 0; i < positivePolygons.Count; i++)
             {
                 foreach (var hole in negativePolygons)
                 {
-                    var result = polygons[i].Subtract(hole);
-                    polygons[i] = result[0];
+                    var result = positivePolygons[i].Subtract(hole);
+                    positivePolygons[i] = result[0];
                     for (int j = 1; j < result.Count; j++)
-                        polygons.Add(result[i]);
+                        positivePolygons.Add(result[i]);
                 }
             }
 
-            return polygons;
+            return positivePolygons;
         }
 
         private static List<Vector2> OffsetRoutineForward(List<PolygonSegment> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
@@ -93,7 +106,7 @@ namespace TVGL.TwoDimensional
                     pointsList.Add(firstPoint);
                     var lastPoint = point + offset * nextUnitNormal;
                     var firstToLastVector = lastPoint - firstPoint;
-                    var firstToLastNormal = new Vector2(firstToLastVector.Y,-firstToLastVector.X);
+                    var firstToLastNormal = new Vector2(firstToLastVector.Y, -firstToLastVector.X);
                     // to avoid "costly" call to Math.Sin and Math.Cos, we create the transform matrix that 1) translates to origin
                     // 2) rotates by the angle, and 3) translates back
                     var transform = Matrix3x3.CreateTranslation(-point) * rotMatrix *

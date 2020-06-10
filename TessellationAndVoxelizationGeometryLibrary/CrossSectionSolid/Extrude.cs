@@ -88,7 +88,7 @@ namespace TVGL
         {
             List<List<int[]>> triangleIndices;
             bool[] isPositive;
-            var paths = polygon.AllPolygons.Select(p => p.Path);
+            var paths = polygon.AllPolygons.Select(p => p).ToList();  //.Path);
             #region First, run the triangulate polygons to define how the ends of the extruded shape will be defined
             try
             {
@@ -101,7 +101,7 @@ namespace TVGL
                     //Do some polygon functions to clean up issues and try again
                     //This is important because the Get2DProjections may produce invalid paths and because
                     //triangulate will try 3 times before throwing the exception to go to the catch.
-                    paths = paths.Union(true, PolygonFillType.EvenOdd);
+                    paths = paths.Union();
                     triangleIndices = paths.Triangulate(out _, out isPositive);
                 }
                 catch
@@ -109,8 +109,8 @@ namespace TVGL
                     try
                     {
                         //Do some polygon functions to clean up issues and try again
-                        paths = paths.Union(true, PolygonFillType.EvenOdd);
-                        paths = paths.OffsetRound(extrusionHeight / 1000);
+                        paths = paths.Union();
+                        paths = paths.(extrusionHeight / 1000);
                         paths = paths.OffsetRound(-extrusionHeight / 1000);
                         paths = paths.Union(true, PolygonFillType.EvenOdd);
                         triangleIndices = paths.Triangulate(out _, out isPositive);

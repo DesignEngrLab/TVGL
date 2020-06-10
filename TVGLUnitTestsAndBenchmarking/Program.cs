@@ -22,11 +22,11 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
         {
 
-             //var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
+            //var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
 
             PolygonOperationsTesting.TestOffsetting();
             //PolygonOperationsTesting.TestBooleanCompare();
-                //PolygonOperationsTesting.TestUnionSimple();
+            //PolygonOperationsTesting.TestUnionSimple();
             //PolygonOperationsTesting.TestRemoveSelfIntersect();
             //Voxels.InitialTest();
             //return;
@@ -44,5 +44,22 @@ namespace TVGLUnitTestsAndBenchmarking
         //    var po = new PolygonOperationsTesting();
         //po.Perimeter(4, 10);
         //Console.WriteLine(summary);
+    }
+
+    class test
+    {
+        internal void run()
+        {
+            var x = 1.23;
+            SquareAllTheNumbers(x);
+        }
+
+        private void SquareAllTheNumbers(IEnumerable<double> values)
+        {
+            foreach (var value in values)
+            {
+                Console.WriteLine(Math.Sqrt(value));
+            }
+        }
     }
 }

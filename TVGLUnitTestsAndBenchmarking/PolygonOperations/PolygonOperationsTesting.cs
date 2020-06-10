@@ -161,6 +161,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
                 stopwatch.Restart();
+                /*
                 var polygon3 = polygon1.Union(polygon2);
                 Console.WriteLine("union mines: {0}", stopwatch.Elapsed);
                 stopwatch.Restart();
@@ -191,7 +192,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 coords3 = clipperPoly2.Difference(clipperPoly1);
                 Console.WriteLine("subtract clipper: {0}", stopwatch.Elapsed);
                 ShowComparison(i, "2subtract1", polygon3, coords3);
-
+                */
 
             }
         }
@@ -239,7 +240,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             coords1 = MakeStarryCircularPolygon(N, 30, 15).ToList();
             coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
-            coords1 = coords1.Xor(coords2)[0];
+            //coords1 = coords1.Xor(coords2)[0];
             polygon1 = new Polygon(coords1, true);
             //polygon1 = new Polygon(coords1, true);
             //polygon2 = new Polygon(coords2, true);
@@ -262,7 +263,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark(Description = "clipper")]
         public void BenchmarkClipperSimple()
         {
-            var coords4 = coords1.OffsetRound(5.0, 0.005);
+            //var coords4 = coords1.OffsetRound(5.0, 0.005);
             //var coords3 = PolygonOperations.Union(coords1, coords2);
             //coords3 = PolygonOperations.Intersection(coords1, coords2);
             //coords3 = coords1.Difference(coords2);
