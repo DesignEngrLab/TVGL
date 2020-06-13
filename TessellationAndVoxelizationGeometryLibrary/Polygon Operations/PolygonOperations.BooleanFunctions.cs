@@ -10,7 +10,6 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
-        #region Boolean Operations
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
         {
             return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections(), minAllowableArea);
@@ -189,10 +188,41 @@ namespace TVGL.TwoDimensional
             return result;
         }
 
-        #endregion
+        public static List<Polygon> BooleanOperation(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, bool switchDirection,
+            int crossProductSign, double minAllowableArea = Constants.BaseTolerance)
+        {
+            var id = 0;
+            foreach (var polygon in polygonA.AllPolygons)
+            {
+                foreach (var vertex in polygon.Vertices)
+                    vertex.IndexInList = id++;
+            }
+            // temporarily number the vertices so that each has a unique number. this is important for the Intersection Lookup List
+            foreach (var polygon in polygonB.AllPolygons)
+            {
+                foreach (var vertex in polygon.Vertices)
+                    vertex.IndexInList = id++;
+            }
+            var intersectionLookup = MakeIntersectionLookupList(id, intersections);
+            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
+            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
+            while (GetNextStartingIntersection(intersectionLookup, intersections, crossProductSign, out var startIndex,
+                out var startEdge))
+            {
+                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startIndex,
+                    startEdge, switchDirection).ToList();
+                var area = polyCoordinates.Area();
+                if (area.IsNegligible(minAllowableArea)) continue;
+                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
+                else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
+            }
+            // reset ids for polygon B
+            id = 0;
+            foreach (var vertex in polygonB.Vertices)
+                vertex.IndexInList = id++;
 
-
-        #region New Boolean Operations
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
+        }
 
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB)
         {
@@ -229,63 +259,30 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Union(this IEnumerable<Polygon> polygons)
         {
             var polygonList = polygons.ToList();
-            while (true)
+            var numPolygons = -1;
+            while (numPolygons != polygonList.Count)
             {
-                var numPolygons = polygonList.Count;
-                var relationships = new PolygonRelationship[numPolygons - 1];
-                var allIntersections = new List<IntersectionData>[numPolygons - 1];
+                numPolygons = polygonList.Count;
+                var relationships = new PolygonRelationship[numPolygons / 2];
+                var allIntersections = new List<IntersectionData>[numPolygons / 2];
                 var allSeparated = true;
-                for (int i = 1; i < polygonList.Count; i++)
+                for (int i = 0; i < polygonList.Count; i += 2)
                 {
-                    relationships[i - 1] =
-                        GetPolygonRelationshipAndIntersections(polygonList[i - 1], polygonList[i],
-                            out var intersections);
+                    var polygonRelationship = GetPolygonRelationshipAndIntersections(polygonList[2 * i + 1],
+                        polygonList[2 * i], out var intersections);
+                    if (polygonRelationship != 0) allSeparated = false;
+                    relationships[i] = polygonRelationship;
                     allIntersections[i] = intersections;
-                    if (relationships[i - 1] != 0) allSeparated = false;
                 }
 
                 if (allSeparated) break;
-                var indices = Enumerable.Range(1, numPolygons);
-                polygonList = indices.AsParallel().SelectMany(index => Union(polygonList[index - 1], polygonList[index],
+                var indices = Enumerable.Range(0, numPolygons / 2);
+                polygonList = indices.AsParallel().SelectMany(index => Union(polygonList[2 * index + 1], polygonList[2 * index],
                     relationships[index], allIntersections[index])).ToList();
             }
             return polygonList;
         }
-        public static List<Polygon> BooleanOperation(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, bool switchDirection,
-            int crossProductSign, double minAllowableArea = Constants.BaseTolerance)
-        {
-            var id = 0;
-            foreach (var polygon in polygonA.AllPolygons)
-            {
-                foreach (var vertex in polygon.Vertices)
-                    vertex.IndexInList = id++;
-            }
-            // temporarily number the vertices so that each has a unique number. this is important for the Intersection Lookup List
-            foreach (var polygon in polygonB.AllPolygons)
-            {
-                foreach (var vertex in polygon.Vertices)
-                    vertex.IndexInList = id++;
-            }
-            var intersectionLookup = MakeIntersectionLookupList(id, intersections);
-            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
-            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersectionLookup, intersections, crossProductSign, out var startIndex,
-                out var startEdge))
-            {
-                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startIndex,
-                    startEdge, switchDirection).ToList();
-                var area = polyCoordinates.Area();
-                if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
-                else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
-            }
-            // reset ids for polygon B
-            id = 0;
-            foreach (var vertex in polygonB.Vertices)
-                vertex.IndexInList = id++;
 
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
-        }
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
         {
             var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
@@ -321,6 +318,33 @@ namespace TVGL.TwoDimensional
                 default:
                     return BooleanOperation(polygonA, polygonB, intersections, false, +1, minAllowableArea);
             }
+        }
+
+        public static List<Polygon> Intersect(this IEnumerable<Polygon> polygons)
+        {
+            var polygonList = polygons.ToList();
+            var numPolygons = -1;
+            while (true) // the same condition fromthe Union operation won't always work for intersect
+                //numPolygons != polygonList.Count
+                // this is because one could intersect two object and get two new objects
+            {
+                numPolygons = polygonList.Count;
+                var relationships = new PolygonRelationship[numPolygons / 2];
+                var allIntersections = new List<IntersectionData>[numPolygons / 2];
+                for (int i = 0; i < polygonList.Count; i += 2)
+                {
+                    var polygonRelationship = GetPolygonRelationshipAndIntersections(polygonList[2 * i + 1],
+                        polygonList[2 * i], out var intersections);
+                    if (polygonRelationship == 0) return new List<Polygon>();
+                    relationships[i] = polygonRelationship;
+                    allIntersections[i] = intersections;
+                }
+                var indices = Enumerable.Range(0, numPolygons / 2);
+
+                polygonList = indices.AsParallel().SelectMany(index => Union(polygonList[2 * index + 1], polygonList[2 * index],
+                    relationships[index], allIntersections[index])).ToList();
+            }
+            return polygonList;
         }
 
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
@@ -395,6 +419,5 @@ namespace TVGL.TwoDimensional
                     return firstSubtraction;
             }
         }
-        #endregion
     }
 }

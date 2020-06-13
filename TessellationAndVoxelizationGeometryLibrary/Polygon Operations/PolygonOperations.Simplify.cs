@@ -77,7 +77,7 @@ namespace TVGL.TwoDimensional
                     var index = relevantSortedList.Dequeue();
                     var smallestArea = crossProductsArray[index];
                     if (deltaArea < sign * smallestArea)
-                    { //one tricky little bug! in order to keep this fast, we first dequeue before examining
+                    { //this was one tricky little bug! in order to keep this fast, we first dequeue before examining
                       // the result. if the resulting index produces more area than we need we switch to the
                       // concave queue. That dequeueing and updating will want this last index on the queues
                       // if it is a neighbor to a new one being removing. Confusing, eh? So, we need to put it
@@ -195,7 +195,7 @@ namespace TVGL.TwoDimensional
                 var resultPolygon = new List<Vector2>();
                 foreach (var corner in polygon)
                     if (!corner.IsNull()) resultPolygon.Add(corner);
-                if (resultPolygon.Count > 0)
+                if (resultPolygon.Count > 2)
                     result.Add(resultPolygon);
             }
             return result;
