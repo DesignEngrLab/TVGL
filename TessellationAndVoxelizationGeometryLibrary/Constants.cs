@@ -733,7 +733,7 @@ namespace TVGL
     /// </summary>
     public enum PolygonSegmentRelationship
     {
-        Unconnected = -1,
+        Separated = -1,
         IntersectNominal = 0,
         EndPointsTouch = 1,
         ConnectInT = 2,

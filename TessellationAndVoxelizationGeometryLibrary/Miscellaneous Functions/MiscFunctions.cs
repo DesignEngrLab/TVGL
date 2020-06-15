@@ -946,7 +946,7 @@ namespace TVGL
             // first check if bounding boxes overlap. If they don't then return false here
             if (line1.YMax < line2.YMin || line2.YMax < line1.YMin
                 || line1.XMax < line2.XMin || line2.XMax < line1.XMin)
-                return PolygonSegmentRelationship.Unconnected;
+                return PolygonSegmentRelationship.Separated;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
             if (line1.FromPoint.Coordinates.IsPracticallySame(line2.FromPoint.Coordinates)
@@ -970,7 +970,7 @@ namespace TVGL
                 // the intersection point is technically not a single value but an infinite set of points, so we leave it as null
                 if (vStart.Cross(line1.Vector).IsNegligible(tolerance))
                     return PolygonSegmentRelationship.CollinearAndOverlapping;
-                return PolygonSegmentRelationship.Unconnected; // otherwise the lines are parallel but not at same distance/intercept
+                return PolygonSegmentRelationship.Separated; // otherwise the lines are parallel but not at same distance/intercept
             }
             // that's all the "edge cases", now simply to check the intersection for the conventional case
             // solve for the t scalar values for the two lines.
@@ -1013,7 +1013,7 @@ namespace TVGL
                 intersectionPoint = line2.ToPoint.Coordinates;
                 return PolygonSegmentRelationship.ConnectInT;
             }
-            if (t_1 < 0 || t_1 > 1 || t_2 < 0 || t_2 > 1) return PolygonSegmentRelationship.Unconnected;
+            if (t_1 < 0 || t_1 > 1 || t_2 < 0 || t_2 > 1) return PolygonSegmentRelationship.Separated;
             intersectionPoint = 0.5 * ((1 - t_1) * line1.FromPoint.Coordinates + t_1 * line1.ToPoint.Coordinates
                 + (1 - t_2) * line2.FromPoint.Coordinates + t_2 * line2.ToPoint.Coordinates);
             return PolygonSegmentRelationship.IntersectNominal;

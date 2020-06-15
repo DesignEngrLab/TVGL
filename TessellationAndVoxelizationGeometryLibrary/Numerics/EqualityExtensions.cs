@@ -86,25 +86,27 @@ namespace TVGL.Numerics
         }
 
         /// <summary>
-        ///     Determines whether [is greater than] [the specified y] and not practically the same.
+        /// Determines whether [is greater than] [the specified y] and not practically the same.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
+        /// <param name="optionalTolerance">The optional tolerance.</param>
         /// <returns><c>true</c> if [is greater than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
-        public static bool IsGreaterThanNonNegligible(this double x, double y = 0)
+        public static bool IsGreaterThanNonNegligible(this double x, double y = 0, double optionalTolerance = DefaultEqualityTolerance)
         {
-            return (x > y && !IsPracticallySame(x, y));
+            return (x > y && !IsPracticallySame(x, y, optionalTolerance));
         }
 
         /// <summary>
-        ///     Determines whether [is less than] [the specified y] and not practically the same.
+        /// Determines whether [is less than] [the specified y] and not practically the same.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
+        /// <param name="optionalTolerance">The optional tolerance.</param>
         /// <returns><c>true</c> if [is less than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
-        public static bool IsLessThanNonNegligible(this double x, double y = 0)
+        public static bool IsLessThanNonNegligible(this double x, double y = 0, double optionalTolerance = DefaultEqualityTolerance)
         {
-            return (x < y && !IsPracticallySame(x, y));
+            return (x < y && !IsPracticallySame(x, y, optionalTolerance));
         }
 
 

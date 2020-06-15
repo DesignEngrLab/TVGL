@@ -22,11 +22,11 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
         {
 
-            var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
+            //var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
 
             //PolygonOperationsTesting.TestOffsetting();
             //PolygonOperationsTesting.TestBooleanCompare();
-            //PolygonOperationsTesting.TestUnionSimple();
+            PolygonOperationsTesting.TestUnionSimple();
             //PolygonOperationsTesting.TestRemoveSelfIntersect();
             //Voxels.InitialTest();
             //return;
