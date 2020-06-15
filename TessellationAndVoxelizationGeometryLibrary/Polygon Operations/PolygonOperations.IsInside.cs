@@ -249,6 +249,24 @@ namespace TVGL.TwoDimensional
             return PolygonRelationship.Separated;
         }
 
+
+        /// <summary>
+        /// Returns true is polygons overlap at more than their boundary. This is simply a small wrapper to the bigger function: 
+        /// GetPolygonRelationshipAndIntersections. However, in certain contexts, one may simply want a boolean especially if used
+        /// in conditional expressions. This is meant to serve in those purposes.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <param name="relationship">The relationship.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public static bool PolygonsOverlap(this Polygon polygonA, Polygon polygonB, out List<IntersectionData> intersections, out PolygonRelationship relationship)
+        {
+            relationship = polygonA.GetPolygonRelationshipAndIntersections(polygonB, out intersections);
+            return relationship != PolygonRelationship.Separated && relationship != PolygonRelationship.SeparatedButBordersTouch;
+        }
+
+
         private static bool BoundingBoxEncompasses(this Polygon polygonA, Polygon polygonB)
         {
             return (polygonA.MaxX >= polygonB.MaxX

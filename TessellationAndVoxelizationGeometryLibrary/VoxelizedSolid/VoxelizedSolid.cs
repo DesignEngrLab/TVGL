@@ -140,7 +140,7 @@ namespace TVGL.Voxelization
                 var loops = decomp[k];
                 if (loops.Any())
                 {
-                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongY(loops.Select(p => new Polygon(p, false)), yBegin, numVoxelsY,
+                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongY(loops, yBegin, numVoxelsY,
                         VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
                     for (int j = 0; j < numYlines; j++)

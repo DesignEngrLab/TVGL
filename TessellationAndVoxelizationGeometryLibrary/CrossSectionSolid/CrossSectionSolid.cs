@@ -27,11 +27,10 @@ namespace TVGL
         /// in the list.
         /// </summary>
         [JsonIgnore]
-        public Dictionary<int, List<List<Vector2>>> Layer2D;
+        public Dictionary<int, IList<Polygon>> Layer2D;
 
-        // an alternate approach without using dictionaries should be pursued
-        //public List<List<Vertex>>[] Layer3D { get; set; }
-        //public List<List<Vector2>>[] Layer2D { get; }
+        // an alternate approach without using dictionaries could be pursued
+        //public List<Polygon>[] Layer2D { get; }
 
         /// <summary>
         /// Step distances stores the distance along direction for each index.
@@ -58,7 +57,7 @@ namespace TVGL
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
-            Layer2D = new Dictionary<int, List<List<Vector2>>>();
+            Layer2D = new Dictionary<int, IList<Polygon>>();
             StepDistances = stepDistances;
         }
 
@@ -73,8 +72,8 @@ namespace TVGL
             SameTolerance = sameTolerance;
         }
 
-        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<List<Vector2>>> Layer2D, Vector3[] bounds = null,
-            UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance,
+            Dictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances;
@@ -92,7 +91,7 @@ namespace TVGL
                 var ymax = double.NegativeInfinity;
                 foreach (var layer in Layer2D)
                     foreach (var polygon in layer.Value)
-                        foreach (var point in polygon)
+                        foreach (var point in polygon.Path)
                         {
                             if (xmin > point.X) xmin = point.X;
                             if (ymin > point.Y) ymin = point.Y;
@@ -124,7 +123,7 @@ namespace TVGL
             var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
             var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
-            var layerDict = new Dictionary<int, List<List<Vector2>>>();
+            var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
             var directionVector = new double[3];
@@ -135,10 +134,10 @@ namespace TVGL
             return cs;
         }
 
-        public void Add(List<Vertex> feature3D, List<Vector2> feature2D, int layer)
+        public void Add(List<Vertex> feature3D, Polygon feature2D, int layer)
         {
             if (!Layer2D.ContainsKey(layer))
-                Layer2D[layer] = new List<List<Vector2>>();
+                Layer2D[layer] = new List<Polygon>();
             Layer2D[layer].Add(feature2D);
             _volume = double.NaN;
             _center = Vector3.Null;
@@ -157,8 +156,8 @@ namespace TVGL
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
             //if (!Layer3D.Any()) SetAllVertices();
-            var start = Layer2D.Where(p => p.Value.Any()).FirstOrDefault().Key;
-            var stop = Layer2D.Where(p => p.Value.Any()).LastOrDefault().Key;
+            var start = Layer2D.Where(p => p.Value.Count > 1).FirstOrDefault().Key;
+            var stop = Layer2D.Where(p => p.Value.Count > 1).LastOrDefault().Key;
             var increment = start < stop ? 1 : -1;
             //var direction = increment == 1 ? Direction : -1 * Direction;
             var faces = new List<PolygonalFace>();
@@ -178,9 +177,9 @@ namespace TVGL
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 List<PolygonalFace> layerfaces = null;
-                if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-                    layerfaces = polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon, Direction, basePlaneDistance,
-                     topPlaneDistance - basePlaneDistance)).ToList();
+                //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
+                layerfaces = Layer2D[i].SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon, Direction,
+                    basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
@@ -249,7 +248,7 @@ namespace TVGL
             //Recreate the loops, so that the lists are not linked to the original.
             foreach (var layer in Layer2D)
             {
-                solid.Layer2D.Add(layer.Key, new List<List<Vector2>>(layer.Value));
+                solid.Layer2D.Add(layer.Key, new List<Polygon>(layer.Value));
             }
             solid._volume = _volume;
             solid._center = _center;
@@ -281,7 +280,7 @@ namespace TVGL
         {
             serializationData = new Dictionary<string, JToken>();
             serializationData.Add("CrossSections",
-                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => p.ConvertTo1DDoublesCollection()))));
+                JToken.FromObject(Layer2D.Values.Select(polygonlist => polygonlist.Select(p => p.Path.ConvertTo1DDoublesCollection()))));
             FirstIndex = Layer2D.Keys.First();
             LastIndex = Layer2D.Keys.Last();
         }
@@ -291,13 +290,13 @@ namespace TVGL
         {
             JArray jArray = (JArray)serializationData["CrossSections"];
             var layerArray = jArray.ToObject<double[][][]>();
-            Layer2D = new Dictionary<int, List<List<Vector2>>>();
+            Layer2D = new Dictionary<int, IList<Polygon>>();
             var j = 0;
             for (int i = FirstIndex; i <= LastIndex; i++)
             {
-                var layer = new List<List<Vector2>>();
+                var layer = new List<Polygon>();
                 foreach (var coordinates in layerArray[j])
-                    layer.Add(coordinates.ConvertToVector2s().ToList());
+                    layer.Add(new Polygon(coordinates.ConvertToVector2s().ToList(), false));
                 Layer2D.Add(i, layer);
                 j++;
             }
@@ -314,13 +313,13 @@ namespace TVGL
             var index = StepDistances.Keys.First();
             var prevDistance = StepDistances.Values.First();
             var layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
-            var prevArea = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area());
+            var prevArea = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area);
             foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
             {
                 index = stepDistanceKVP.Key;
                 var distance = stepDistanceKVP.Value;
                 layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
-                var area = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area());
+                var area = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area);
                 _volume += (prevArea + area) / (distance - prevDistance);
                 prevArea = area;
                 prevDistance = distance;

@@ -578,7 +578,7 @@ namespace TVGL
             {
                 if (s is CrossSectionSolid)
                 {
-                    var contours = MakeLinesVisual3D(((CrossSectionSolid)s).Layer2D.Values, ((CrossSectionSolid)s).StepDistances.Values, true);
+                    var contours = MakeLinesVisual3D(((CrossSectionSolid)s).GetCrossSectionsAs3DLoops(), true);
                     models.AddRange(contours);
                     foreach (var contour in contours)
                         window.view1.Children.Add(contour);
@@ -828,18 +828,15 @@ namespace TVGL
         }
 
 
-        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<List<Vector2>>> xYPaths,
-            IEnumerable<double> zValues, bool closePaths = true)
+        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<IList<Vector3>>> xYZPaths,
+            bool closePaths = true)
         {
             var lineVisuals = new List<LinesVisual3D>();
-            var zEnumerator = zValues.GetEnumerator();
-            foreach (var layer in xYPaths)
+            foreach (var layer in xYZPaths)
             {
-                zEnumerator.MoveNext();
-                var z = zEnumerator.Current;
                 foreach (var polygon in layer)
                 {
-                    var contour = polygon.Select(point => new Point3D(point.X, point.Y, z)).ToList();
+                    var contour = polygon.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
                     //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
                     foreach (var t in contour)

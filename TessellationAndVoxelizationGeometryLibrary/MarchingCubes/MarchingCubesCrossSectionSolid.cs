@@ -171,7 +171,7 @@ namespace TVGL
             //Console.WriteLine("");
             return grid;
         }
-        private double[,] CreateDistanceGrid(List<List<Vector2>> layer)
+        private double[,] CreateDistanceGrid(IList<Polygon> layer)
         {
             var allIntersections = PolygonOperations.AllPolygonIntersectionPointsAlongY(layer, _yMin, numGridY, discretization, out var firstIntersectingIndex);
             var allIntersectionsEnumerator = allIntersections.GetEnumerator();
@@ -203,18 +203,18 @@ namespace TVGL
             }
             foreach (var polygon in layer)
             {
-                var numSegments = polygon.Count;
-                var fromPoint = polygon[numSegments - 1];
-                var lastPoint = polygon[numSegments - 2];
-                var polygonMinX = polygon.Min(p => p.X);
-                var polygonMinY = polygon.Min(p => p.Y);
-                var polygonMaxX = polygon.Max(p => p.X);
-                var polygonMaxY = polygon.Max(p => p.Y);
+                var numSegments = polygon.Path.Count;
+                var fromPoint = polygon.Path[numSegments - 1];
+                var lastPoint = polygon.Path[numSegments - 2];
+                var polygonMinX = polygon.MinX;
+                var polygonMinY = polygon.MinY;
+                var polygonMaxX = polygon.MaxX;
+                var polygonMaxY = polygon.MaxY;
                 var iMin = Math.Max((int)((polygonMinX - _xMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);
                 var iMax = Math.Min((int)((polygonMaxX - _xMin) * coordToGridFactor) + Constants.MarchingCubesBufferFactor + 1, numGridX);
                 var jMin = Math.Max((int)((polygonMinY - _yMin) * coordToGridFactor) - Constants.MarchingCubesBufferFactor, 0);
                 var jMax = Math.Min((int)((polygonMaxY - _yMin) * coordToGridFactor) + Constants.MarchingCubesBufferFactor + 1, numGridY);
-                foreach (var toPoint in polygon)
+                foreach (var toPoint in polygon.Path)
                 {
                     if (Math.Abs(toPoint.Y - fromPoint.Y) > Math.Abs(toPoint.X - fromPoint.X))
                         ExpandHorizontally(lastPoint, fromPoint, toPoint, grid, iMin, iMax, jMin, jMax);

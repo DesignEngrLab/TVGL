@@ -8,22 +8,22 @@ namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
-        public CrossSectionSolid CreateConstantCrossSectionSolid(IEnumerable<IEnumerable<Vector2>> bottomPolygon, Matrix4x4 transform, 
+        public CrossSectionSolid CreateUniformCrossSectionSolid(IEnumerable<IEnumerable<Vector2>> bottomPolygon, Matrix4x4 transform,
             double sameToleranceTVGL, UnitType unitsTVGL)
         {
             throw new NotImplementedException();
         }
 
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
-            IEnumerable<IEnumerable<Vector2>> shape, double sameTolerance, UnitType units)
+        public static CrossSectionSolid CreateUniformCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
+            IEnumerable<Polygon> shape, double sameTolerance, UnitType units)
         {
+            var shapeList = shape as IList<Polygon> ?? shape.ToList();
             var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
-            var layers2D = new Dictionary<int, List<List<Vector2>>> { { 0, shape.Select(a => new List<Vector2>(a)).ToList() }, 
-                { 1, shape.Select(a => new List<Vector2>(a)).ToList() } };
+            var layers2D = new Dictionary<int, IList<Polygon>> { { 0, shapeList }, { 1, shapeList } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
-        public static List<List<Vector2>>[] GetUniformlySpacedSlices(TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
+        public static List<Polygon>[] GetUniformlySpacedSlices(TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
             double stepSize = double.NaN)
         {
             if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
@@ -55,19 +55,19 @@ namespace TVGL
             }
         }
 
-        private static List<List<Vector2>>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
+        private static List<Polygon>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
         {
             throw new NotImplementedException();
         }
 
-        private static List<List<Vector2>>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
+        private static List<Polygon>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
         {
             throw new NotImplementedException();
         }
 
-        static List<List<Vector2>>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
+        static List<Polygon>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
         {
-            List<List<Vector2>>[] loopsAlongZ = new List<List<Vector2>>[numSteps];
+            var loopsAlongZ = new List<Polygon>[numSteps];
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -93,19 +93,19 @@ namespace TVGL
                 if (needToOffset)
                     z += Math.Min(stepSize, sortedVertices[vIndex].Z - z) / 10.0;
                 if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
-                else loopsAlongZ[step] = new List<List<Vector2>>();
+                else loopsAlongZ[step] = new List<Polygon>();
             }
             return loopsAlongZ;
         }
 
-        private static List<List<Vector2>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
+        private static List<Polygon> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
-            var loops = new List<List<Vector2>>();
+            var loops = new List<Polygon>();
 
             var unusedEdges = new HashSet<Edge>(penetratingEdges);
             while (unusedEdges.Any())
             {
-                var loop = new List<Vector2>();
+                var path = new List<Vector2>();
                 var firstEdgeInLoop = unusedEdges.First();
                 var finishedLoop = false;
                 var currentEdge = firstEdgeInLoop;
@@ -114,7 +114,7 @@ namespace TVGL
                     unusedEdges.Remove(currentEdge);
                     var intersectVertex = MiscFunctions.PointOnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From.Coordinates,
                         currentEdge.To.Coordinates);
-                    loop.Add(intersectVertex);
+                    path.Add(intersectVertex);
                     var nextFace = (currentEdge.From.Z < ZOfPlane) ? currentEdge.OtherFace : currentEdge.OwnedFace;
                     Edge nextEdge = null;
                     foreach (var whichEdge in nextFace.Edges)
@@ -123,7 +123,7 @@ namespace TVGL
                         if (whichEdge == firstEdgeInLoop)
                         {
                             finishedLoop = true;
-                            loops.Add(new List<Vector2>(loop));
+                            loops.Add(new Polygon(path, false));
                             break;
                         }
                         else if (unusedEdges.Contains(whichEdge))
@@ -135,7 +135,7 @@ namespace TVGL
                     if (!finishedLoop && nextEdge == null)
                     {
                         Console.WriteLine("Incomplete loop.");
-                        loops.Add(new List<Vector2>(loop));
+                        loops.Add(new Polygon(path, false));
                     }
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);
@@ -156,10 +156,10 @@ namespace TVGL
                 result[k++] = layer;
                 for (int j = 0; j < numLoops; j++)
                 {
-                    var loop = new Vector3[layerKeyValuePair.Value[j].Count];
+                    var loop = new Vector3[layerKeyValuePair.Value[j].Path.Count];
                     layer[j] = loop;
                     for (int i = 0; i < loop.Length; i++)
-                        loop[i] =(new Vector3(layerKeyValuePair.Value[j][i], zValue)).Transform(TransformMatrix);
+                        loop[i] = (new Vector3(layerKeyValuePair.Value[j].Path[i], zValue)).Transform(TransformMatrix);
                 }
             }
             return result;
