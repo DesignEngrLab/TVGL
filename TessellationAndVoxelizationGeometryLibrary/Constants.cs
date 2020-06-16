@@ -736,8 +736,13 @@ namespace TVGL
         Separated = -1,
         IntersectNominal = 0,
         EndPointsTouch = 1,
-        ConnectInT = 2,
-        CollinearAndOverlapping = 3,
+        EndPointsCross = 2,
+        TJunctionACrosses = 3,
+        TJunctionAMerges = 4,
+        TJunctionAReflects = 5,
+        TJunctionBCrosses = 6,
+        TJunctionBMerges = 7,
+        TJunctionBReflects = 8,
     }
 
     /// <summary>

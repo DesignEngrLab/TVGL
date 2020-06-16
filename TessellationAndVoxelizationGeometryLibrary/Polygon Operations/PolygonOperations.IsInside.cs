@@ -182,11 +182,13 @@ namespace TVGL.TwoDimensional
                     {  // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
                         var bLine = bLines[localBIndex++];
-                        var segmentRelationship = aLine.PolygonSegmentIntersection(bLine, out var intersection);
+                        var segmentRelationship = aLine.PolygonSegmentIntersection(bLine, out var intersection, out var intersectionPointForBMerging);
                         if (segmentRelationship >= 0) //the separated PolygonSegmentRelationship has a value of -1 all meaningful
                                                       //interactions are 0 or greate
-                            intersections.Add(new IntersectionData(aLine, bLine, intersection,
-                                segmentRelationship));
+                            intersections.Add(new IntersectionData(aLine, bLine, intersection, segmentRelationship));
+                        if (intersectionPointForBMerging != null)
+                            intersections.Add(new IntersectionData(aLine, bLine, intersectionPointForBMerging,
+                                PolygonSegmentRelationship.TJunctionBMerges));
                     }
                 }          // I hate that there is duplicate code here, but I don't know if there is a better way
                 else       // (I tried several). Other than the name, the blocking difference is in the last
@@ -197,10 +199,12 @@ namespace TVGL.TwoDimensional
                     while (localAIndex < aLines.Length && bLine.XMax > aLines[localAIndex].XMin)
                     {
                         var aLine = aLines[localAIndex++];
-                        var segmentRelationship = bLine.PolygonSegmentIntersection(aLine, out var intersection);
+                        var segmentRelationship = aLine.PolygonSegmentIntersection(bLine, out var intersection, out var intersectionPointForBMerging);
                         if (segmentRelationship >= 0)
-                            intersections.Add(new IntersectionData(aLine, bLine, intersection,
-                                segmentRelationship));
+                            intersections.Add(new IntersectionData(aLine, bLine, intersection, segmentRelationship));
+                        if (intersectionPointForBMerging != null)
+                            intersections.Add(new IntersectionData(aLine, bLine, intersectionPointForBMerging,
+                                PolygonSegmentRelationship.TJunctionBMerges));
                     }
                 }
             }
@@ -270,46 +274,64 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Detemines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
         /// fromPoint Inclusive, and the toPoint exclusive. This if lines seem to touch are their endpoints, it is only recorded
-        /// if both points are from points. Also no "close" operations are used (e.g. IsPracticallySame). Because the method is 
+        /// if both points are from points. Also no "close" operations are used (e.g. IsPracticallySame). Because the method is
         /// intended to be invoked for all lines on the polygon, this prevents an intersection from being caught by muliple lines,
         /// makes the methods simplier (easier to debug and edit) and quicker.
         /// If two lines are colinear, they are not considered intersecting.
         /// </summary>
-        /// <param name="line1"></param>
-        /// <param name="line2"></param>
-        /// <param name="intersectionPoint"></param>
-        /// <returns></returns>
-        private static PolygonSegmentRelationship PolygonSegmentIntersection(this PolygonSegment line1, PolygonSegment line2,
-            out Vector2 intersectionPoint)
+        /// <param name="lineA">The line a.</param>
+        /// <param name="lineB">The line b.</param>
+        /// <param name="intersectionPoint">The intersection point.</param>
+        /// <param name="intersectionPointForBMerging">The intersection point for b merging.</param>
+        /// <returns>PolygonSegmentRelationship.</returns>
+        private static PolygonSegmentRelationship PolygonSegmentIntersection(this PolygonSegment lineA, PolygonSegment lineB,
+            out Vector2 intersectionPoint, out Vector2 intersectionPointForBMerging)
         {
             intersectionPoint = Vector2.Null;
+            intersectionPointForBMerging = Vector2.Null;
             // first check if bounding boxes overlap. If they don't then return false here
-            if (line1.YMax < line2.YMin || line2.YMax < line1.YMin
-                || line1.XMax < line2.XMin || line2.XMax < line1.XMin)
+            if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin
+                || lineA.XMax < lineB.XMin || lineB.XMax < lineA.XMin)
                 return PolygonSegmentRelationship.Separated;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if (line1.FromPoint.Coordinates.IsPracticallySame(line2.FromPoint.Coordinates))
+            var vCross = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
+            if (lineA.FromPoint.Coordinates.IsPracticallySame(lineB.FromPoint.Coordinates))
             {
-                intersectionPoint = line1.FromPoint.Coordinates;
+                intersectionPoint = lineA.FromPoint.Coordinates;
+                if (vCross * (lineA.FromPoint.EndLine.Vector.Cross(lineB.FromPoint.EndLine.Vector)) > 0)
+                    // if the cross products are in the same direction then the two polygons cross each other at this intersection point
+                    return PolygonSegmentRelationship.EndPointsCross;
                 return PolygonSegmentRelationship.EndPointsTouch;
             }
-            var vCross = line1.Vector.Cross(line2.Vector); //2D cross product, determines if parallel
-            var vStart = line2.FromPoint.Coordinates - line1.FromPoint.Coordinates; // the vector connecting starts
+            var vStart = lineB.FromPoint.Coordinates - lineA.FromPoint.Coordinates; // the vector connecting starts
             if (vCross.IsNegligible())  // the two lines are parallel (cross product will be zero)
-            { 
+            {
                 // if vStart is also parallel with the line vector (either 1 or 2 since they are parallel to each other)
                 // and since bounding boxes do overlap, then the lines are collinear and overlapping
-                // the intersection point is technically not a single value but an infinite set of points, but given
-                if (vStart.Cross(line1.Vector).IsNegligible())
+                if (vStart.Cross(lineA.Vector).IsNegligible())
                 {
-            var vStart = line2.FromPoint.Coordinates - line1.FromPoint.Coordinates; // the vector connecting starts
-
-                    return PolygonSegmentRelationship.CollinearAndOverlapping;
+                    // there are four cases that need to be determined now: (#1) the from of line-A is on line-B (TJunctionAMerges),
+                    // (#2) the from of line-B is on line-A (TJunctionBMerges), (#3) both are occuring (in which case we use the secondRareIntersectionPoint)
+                    // or (#4) neither, which means that the toPoints of the lines are coincident with the overlapping line segmnet, but the from's 
+                    // are not.
+                    var aIsInsideB = ((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(vStart) < 0);
+                    var bIsInsideA = ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(vStart) < 0);
+                    if (aIsInsideB)
+                    {
+                        intersectionPoint = lineA.FromPoint.Coordinates;
+                        if (bIsInsideA) intersectionPointForBMerging = lineB.FromPoint.Coordinates; //*** here is the only place the secondRareIntersectionPoint is used
+                        return PolygonSegmentRelationship.TJunctionAMerges;
+                    }
+                    if (bIsInsideA)
+                    {
+                        intersectionPoint = lineB.FromPoint.Coordinates;
+                        return PolygonSegmentRelationship.TJunctionBMerges;
+                    }
                 }
                 return PolygonSegmentRelationship.Separated; // otherwise the lines are parallel but not at same distance/intercept
             }
-            // that's all the "edge cases", now simply to check the intersection for the conventional case
+            // now check the intersection by detecting where non-parallel lines cross
             // solve for the t scalar values for the two lines.
             // the line is define as all values of t from 0 to 1 in the equations
             // line1(t_1) = (1 - t_1)*line1.From + t_1*line1.To
@@ -328,20 +350,26 @@ namespace TVGL.TwoDimensional
             //   |                                         |*|       | =  |           |
             //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
             var oneOverdeterminnant = 1 / vCross;
-            var t_1 = oneOverdeterminnant * (line2.Vector.Y * vStart.X - line2.Vector.X * vStart.Y);
-            var t_2 = oneOverdeterminnant * (line1.Vector.Y * vStart.X - line1.Vector.X * vStart.Y);
+            var t_1 = oneOverdeterminnant * (lineB.Vector.Y * vStart.X - lineB.Vector.X * vStart.Y);
+            var t_2 = oneOverdeterminnant * (lineA.Vector.Y * vStart.X - lineA.Vector.X * vStart.Y);
             if (t_1 < 0 || t_1 > 1 || t_2 < 0 || t_2 > 1) return PolygonSegmentRelationship.Separated;
             if (t_1.IsNegligible())
             {
-                intersectionPoint = line1.FromPoint.Coordinates;
-                return PolygonSegmentRelationship.ConnectInT;
+                intersectionPoint = lineA.FromPoint.Coordinates;
+                // so, A's from is on B's line, but does polygon A cross here or does it reflect back
+                // to the same side. if vCross is in the same direction as the previous line-A with line-B, then - yes, it crosses
+                if (vCross * (lineA.FromPoint.EndLine.Vector.Cross(lineB.Vector)) > 0)
+                    return PolygonSegmentRelationship.TJunctionACrosses;
+                return PolygonSegmentRelationship.TJunctionAReflects;
             }
             if (t_2.IsNegligible())
             {
-                intersectionPoint = line2.FromPoint.Coordinates;
-                return PolygonSegmentRelationship.ConnectInT;
+                intersectionPoint = lineB.FromPoint.Coordinates;
+                if (vCross * lineA.Vector.Cross(lineB.FromPoint.EndLine.Vector) > 0)
+                    return PolygonSegmentRelationship.TJunctionBCrosses;
+                else return PolygonSegmentRelationship.TJunctionBReflects;
             }
-            intersectionPoint = line1.FromPoint.Coordinates + t_1 * line1.Vector;
+            intersectionPoint = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
             return PolygonSegmentRelationship.IntersectNominal;
         }
 
@@ -400,10 +428,13 @@ namespace TVGL.TwoDimensional
                     var other = orderedLines[j];
                     if (current.XMax < orderedLines[j].XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
-                    var segmentRelationship = current.PolygonSegmentIntersection(other, out var intersection);
-                    if (segmentRelationship >= 0)
-                        intersections.Add(new IntersectionData(current, other, intersection,
-                            segmentRelationship));
+                    var segmentRelationship = current.PolygonSegmentIntersection(other, out var intersection, out var intersectionPointForBMerging);
+                    if (segmentRelationship >= 0) //the separated PolygonSegmentRelationship has a value of -1 all meaningful
+                                                  //interactions are 0 or greater
+                        intersections.Add(new IntersectionData(current, other, intersection, segmentRelationship));
+                    if (intersectionPointForBMerging != null)
+                        intersections.Add(new IntersectionData(current, other, intersectionPointForBMerging,
+                            PolygonSegmentRelationship.TJunctionBMerges));
                 }
             }
             return intersections;
