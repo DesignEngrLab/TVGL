@@ -711,6 +711,11 @@ namespace TVGL
     [Flags]
     public enum PolygonRelationship : byte
     {
+        // byte 0(1): 1 if intersecting
+        // byte 1(2): 1 if borders touch but not intersecting
+        // byte 2(4): 1 if inside a hole of the other (not touching or intersecting)
+        // byte 3(8): 1 if A is inside B
+        // byte 4(16): 1 if B is inside A
         Separated = 0, //xb0000 0000
         Intersect = 1, //xb0000 0001
         SeparatedButBordersTouch = 2, //xb0000 0010
@@ -731,18 +736,29 @@ namespace TVGL
     /// <summary>
     /// Enum PolygonRelationship
     /// </summary>
-    public enum PolygonSegmentRelationship
+    public enum PolygonSegmentRelationship :byte
     {
-        Separated = -1,
-        IntersectNominal = 0,
-        EndPointsTouch = 1,
-        EndPointsCross = 2,
-        TJunctionACrosses = 3,
-        TJunctionAMerges = 4,
-        TJunctionAReflects = 5,
-        TJunctionBCrosses = 6,
-        TJunctionBMerges = 7,
-        TJunctionBReflects = 8,
+        // byte 0(1): 1 if any connection, 0 is separated
+        // byte 1(2): 1 if nominal intersection
+        // byte 2(4): 1 if endpoints connects
+        // byte 3(8): 1 if lines coincide/merge/collinear
+        // byte 4(16): 1 if A T-junction
+        // byte 5(32): 1 if B T-junction
+        // byte 6(64): 1 if collinear in opposite direction, 0 is same direction
+        Separated = 0, //xb0000 0000
+        IntersectNominal = 3, //xb0000 0011
+        EndPointsTouch = 5, //xb0000 0101
+        EndPointsCross = 7, //xb0000 0111
+
+        TJunctionAReflects = 17, //xb0001 0001
+        TJunctionACrosses = 19, //xb0001 0011
+        TJunctionAMergeSameDir = 25, //xb0001 1001
+        TJunctionAMergeOppDir =89, //xb0101 1001
+
+        TJunctionBReflects = 33, //xb0010 0001
+        TJunctionBCrosses = 35, //xb0010 0011
+        TJunctionBMergeSameDir = 41, //xb0110 1001
+        TJunctionBMergeOppDir = 105, //xb0110 1001
     }
 
     /// <summary>
