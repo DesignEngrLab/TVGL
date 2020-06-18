@@ -246,11 +246,16 @@ namespace TVGL.TwoDimensional
             else return PolygonRelationship.SeparatedButBordersTouch;
         }
 
+        /// <summary>
+        /// Determines if coincident polygons intersect.
+        /// </summary>
+        /// <param name="intersections">The intersections.</param>
+        /// <returns>PolygonRelationship.</returns>
         private static PolygonRelationship DetermineIfCoincidentPolygonsIntersect(List<IntersectionData> intersections)
         {
-            // gather  all the intersections that are coincident or reflect
+            // gather  all the intersections that are coincident or reflect (by reflect, we mean not intersecting. 0b10=1 for intersect)
             var mergeIntersects = intersections.Where(intersect => ((byte)intersect.Relationship & 0b110000) != 0
-                 && ((byte)intersect.Relationship & 0b10) == 0).ToList();
+                                                                   && ((byte)intersect.Relationship & 0b10) == 0).ToList();
             var allCoincidentChains = new List<List<IntersectionData>>();
 
             while (mergeIntersects.Count > 0)
@@ -288,7 +293,13 @@ namespace TVGL.TwoDimensional
                 allCoincidentChains.Add(coincidentChain);
             }
             if (allCoincidentChains.Count <= 1) return PolygonRelationship.SeparatedButBordersTouch;
-
+            foreach (var coincidentChain in allCoincidentChains)
+            {
+                if (coincidentChain[0].EdgeA.FromPoint.EndLine.Vector.Cross(coincidentChain[0].EdgeB.Vector)
+                    * coincidentChain[^1].EdgeA.Vector.Cross(coincidentChain[^1].EdgeB.Vector) > 0)
+                    return PolygonRelationship.Intersect;
+            }
+            return PolygonRelationship.SeparatedButBordersTouch;
         }
 
 
@@ -323,7 +334,7 @@ namespace TVGL.TwoDimensional
         /// <param name="intersectionPoint">The intersection point.</param>
         /// <param name="intersectionPointForBMerging">The intersection point for b merging.</param>
         /// <returns>PolygonSegmentRelationship.</returns>
-        private static void PolygonSegmentIntersection(this PolygonSegment lineA, PolygonSegment lineB,
+        private static void PolygonSegmentIntersection(PolygonSegment lineA, PolygonSegment lineB,
             List<IntersectionData> intersections)
         {
             // first check if bounding boxes overlap. If they don't then return false here
@@ -335,10 +346,17 @@ namespace TVGL.TwoDimensional
             var vCross = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
             if (lineA.FromPoint.Coordinates.IsPracticallySame(lineB.FromPoint.Coordinates))
             {
-                intersections.Add(new IntersectionData(lineA, lineB, lineA.FromPoint.Coordinates,
-                    vCross * (lineA.FromPoint.EndLine.Vector.Cross(lineB.FromPoint.EndLine.Vector)) > 0
-                        ? PolygonSegmentRelationship.EndPointsCross
-                        : PolygonSegmentRelationship.EndPointsTouch));
+                if (vCross.IsNegligible())
+                {
+                    intersections.Add(new IntersectionData(lineA, lineB, lineA.FromPoint.Coordinates,
+                        lineA.Vector.Dot(lineB.Vector) > 0
+                            ? PolygonSegmentRelationship.TJunctionAMergeSameDir
+                            : PolygonSegmentRelationship.TJunctionAMergeOppDir));
+                }
+                else intersections.Add(new IntersectionData(lineA, lineB, lineA.FromPoint.Coordinates,
+                   vCross * (lineA.FromPoint.EndLine.Vector.Cross(lineB.FromPoint.EndLine.Vector)) > 0
+                       ? PolygonSegmentRelationship.EndPointsCross
+                       : PolygonSegmentRelationship.EndPointsTouch));
                 return;
             }
 
@@ -472,7 +490,7 @@ namespace TVGL.TwoDimensional
                     var other = orderedLines[j];
                     if (current.XMax < orderedLines[j].XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
-                    PolygonSegmentIntersection(current,other, intersections);
+                    PolygonSegmentIntersection(current, other, intersections);
                 }
             }
             return intersections;

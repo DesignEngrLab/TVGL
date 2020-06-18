@@ -307,7 +307,7 @@ namespace TVGL.TwoDimensional
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersectionLookup, intersections, -1, out var startingIntersection,
+            while (GetNextStartingIntersection(intersections, -1, false, out var startingIntersection,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
@@ -320,7 +320,7 @@ namespace TVGL.TwoDimensional
 
             foreach (var intersectionData in intersections)
                 intersectionData.Visited = false;
-            while (GetNextStartingIntersection(intersectionLookup, intersections, 1, out var startingIntersection,
+            while (GetNextStartingIntersection(intersections, 1, false, out var startingIntersection,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
@@ -364,7 +364,7 @@ namespace TVGL.TwoDimensional
             var intersectionLookup = MakeIntersectionLookupList(id, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersectionLookup, intersections, crossProductSign, out var startIndex,
+            while (GetNextStartingIntersection(intersections, crossProductSign, switchDirection, out var startIndex,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startIndex,
@@ -392,29 +392,19 @@ namespace TVGL.TwoDimensional
         /// <param name="currentEdge">The current edge.</param>
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private static bool GetNextStartingIntersection(List<int>[] intersectionLookup, List<IntersectionData> intersections,
-         int crossProductSign, out IntersectionData nextStartingIntersection, out PolygonSegment currentEdge)
+        private static bool GetNextStartingIntersection(List<IntersectionData> intersections, int crossProductSign, bool switchingOperator,
+            out IntersectionData nextStartingIntersection, out PolygonSegment currentEdge)
         {
-            for (int edgeIndex = 0; edgeIndex < intersectionLookup.Length; edgeIndex++)
+            foreach (var intersectionData in intersections)
             {
-                if (intersectionLookup[edgeIndex] == null) continue;
-                foreach (var index in intersectionLookup[edgeIndex])
-                {
-                    var intersectionData = intersections[index];
-                    if (intersectionData.Visited) continue;
-                    var enteringEdgeA = edgeIndex == intersectionData.EdgeA.IndexInList;
-                    var cross = (enteringEdgeA ? 1 : -1)
-                                // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
-                                * intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
-
-                    if (crossProductSign * cross < 0) continue; //cross product does not have expected sign. Instead, the intersection will have
-                    // to be entered from the other edge
-
-                    // what about when crossProduct is zero - like in a line Intersection.Relationship will be in line
-                    currentEdge = enteringEdgeA ? intersectionData.EdgeA : intersectionData.EdgeB;
-                    nextStartingIntersection = intersectionData;
-                    return true;
-                }
+                if (intersectionData.Visited) continue;
+                var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
+                // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
+                if (cross.IsNegligible()) continue;  // what about when crossProduct is zero - like in a line Intersection.Relationship will be in line
+                currentEdge = (crossProductSign * cross > 0) ? intersectionData.EdgeA : intersectionData.EdgeB;
+                //cross product does not have expected sign. Instead, the intersection will have  to be entered from the other edge
+                nextStartingIntersection = intersectionData;
+                return true;
             }
 
             nextStartingIntersection = null;
@@ -444,10 +434,9 @@ namespace TVGL.TwoDimensional
                 // the following ternary operator switch the line segment. if A is current, then make B current and vice-versa
                 currentEdge = currentEdge == intersectionData.EdgeA ? intersectionData.EdgeB : intersectionData.EdgeA;
                 intersectionData.Visited = true; //set the visited to true to stop this while loop (see condition above) and
-                //prevent starting from this intersection in GetNextStartingIntersection
+                                                 //prevent starting from this intersection in GetNextStartingIntersection
                 if (intersectionData.Relationship == PolygonSegmentRelationship.CollinearAndOverlapping
-                    || intersectionData.Relationship == PolygonSegmentRelationship.ConnectInT
-                    || intersectionData.Relationship == PolygonSegmentRelationship.EndPointsTouch)
+                    || intersectionData.Relationship == PolygonSegmentRelationship.ConnectInT)
                     throw new NotImplementedException();
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 newPath.Add(intersectionCoordinates);
@@ -455,9 +444,10 @@ namespace TVGL.TwoDimensional
                 if (switchDirections) forward = !forward;
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                   intersectionCoordinates, forward, out intersectionIndex))
-                   // when this returns true (a valid intersection is found - even if previously visited), then we break
-                   // out of the loop. The intersection is identified here, but processed above
+                   intersectionCoordinates, forward, out intersectionIndex)
+                       && (switchDirections || ((byte)intersections[intersectionIndex].Relationship & 0b10) != 0))
+                // when this returns true (a valid intersection is found - even if previously visited), then we break
+                // out of the loop. The intersection is identified here, but processed above
                 {
                     if (forward)
                     {
@@ -470,8 +460,8 @@ namespace TVGL.TwoDimensional
                         currentEdge = currentEdge.FromPoint.EndLine;
                     }
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
-                    // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
-                    // the edge that concern us. We want that function to report the first one for the edge
+                                                            // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
+                                                            // the edge that concern us. We want that function to report the first one for the edge
                 }
                 intersectionData = intersections[intersectionIndex];
             }
