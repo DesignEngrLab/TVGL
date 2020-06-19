@@ -431,21 +431,23 @@ namespace TVGL.TwoDimensional
             var forward = true; // as in following the edges in the forward direction (from...to). If false, then traverse backwards
             while (!intersectionData.Visited)
             {
+                var currentEdgeIsFromPolygonA = currentEdge == intersectionData.EdgeA;
                 // the following ternary operator switch the line segment. if A is current, then make B current and vice-versa
-                currentEdge = currentEdge == intersectionData.EdgeA ? intersectionData.EdgeB : intersectionData.EdgeA;
+                var intersectionCoordinates = intersectionData.IntersectCoordinates;
+                if (((byte)intersectionData.Relationship & 0b11) == 0
+                    || (currentEdgeIsFromPolygonA && ((byte)intersectionData.Relationship & 0b01) == 0)
+                    || (!currentEdgeIsFromPolygonA && ((byte)intersectionData.Relationship & 0b10) == 0))
+                    newPath.Add(intersectionData.IntersectCoordinates);
+              
+                currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeB : intersectionData.EdgeA;
                 intersectionData.Visited = true; //set the visited to true to stop this while loop (see condition above) and
                                                  //prevent starting from this intersection in GetNextStartingIntersection
-                if (intersectionData.Relationship == PolygonSegmentRelationship.CollinearAndOverlapping
-                    || intersectionData.Relationship == PolygonSegmentRelationship.ConnectInT)
-                    throw new NotImplementedException();
-                var intersectionCoordinates = intersectionData.IntersectCoordinates;
-                newPath.Add(intersectionCoordinates);
                 int intersectionIndex;
                 if (switchDirections) forward = !forward;
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
                    intersectionCoordinates, forward, out intersectionIndex)
-                       && (switchDirections || ((byte)intersections[intersectionIndex].Relationship & 0b10) != 0))
+                       && (switchDirections || ((byte)intersections[intersectionIndex].Relationship >= 0b11100)))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
@@ -493,14 +495,14 @@ namespace TVGL.TwoDimensional
             {
                 var thisIntersectData = allIntersections[index];
                 double distance;
-                if (thisIntersectData.Relationship == PolygonSegmentRelationship.CollinearAndOverlapping)
-                {
-                    var otherLine = (thisIntersectData.EdgeA == currentEdge) ? thisIntersectData.EdgeB : thisIntersectData.EdgeA;
-                    var fromDist = currentEdge.Vector.Dot(otherLine.FromPoint.Coordinates - currentEdge.FromPoint.Coordinates);
-                    var toDist = currentEdge.Vector.Dot(otherLine.ToPoint.Coordinates - currentEdge.FromPoint.Coordinates);
-                    var thisLength = currentEdge.Vector.LengthSquared();
-                    throw new NotImplementedException();
-                }
+                //if (thisIntersectData.Relationship == PolygonSegmentRelationship.CollinearAndOverlapping)
+                //{
+                //    var otherLine = (thisIntersectData.EdgeA == currentEdge) ? thisIntersectData.EdgeB : thisIntersectData.EdgeA;
+                //    var fromDist = currentEdge.Vector.Dot(otherLine.FromPoint.Coordinates - currentEdge.FromPoint.Coordinates);
+                //    var toDist = currentEdge.Vector.Dot(otherLine.ToPoint.Coordinates - currentEdge.FromPoint.Coordinates);
+                //    var thisLength = currentEdge.Vector.LengthSquared();
+                //    throw new NotImplementedException();
+                //}
 
                 var vector = forward ? currentEdge.Vector : -currentEdge.Vector;
                 var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords :

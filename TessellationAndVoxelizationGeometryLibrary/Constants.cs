@@ -721,12 +721,12 @@ namespace TVGL
         SeparatedButBordersTouch = 2, //xb0000 0010
 
         AIsCompletelyInsideB = 8, //xb0000 1000
-        AVerticesInsideBButLinesIntersect = 9, //xb0000 1001
+        //AVerticesInsideBButLinesIntersect = 9, //xb0000 1001
         AInsideBButBordersTouch = 10, //xb000 1010
         AIsInsideHoleOfB = 12,  //xb0000 1100
 
         BIsCompletelyInsideA = 16, //xb0001 0000
-        BVerticesInsideAButLinesIntersect = 17, //xb0001 0001
+        //BVerticesInsideAButLinesIntersect = 17, //xb0001 0001
         BInsideAButBordersTouch = 18,  //xb0001 0010
         BIsInsideHoleOfA = 20,  //xb0001 0100
         
@@ -738,27 +738,48 @@ namespace TVGL
     /// </summary>
     public enum PolygonSegmentRelationship :byte
     {
-        // byte 0(1): 1 if any connection, 0 is separated
-        // byte 1(2): 1 if nominal intersection
-        // byte 2(4): 1 if endpoints connects
-        // byte 3(8): 1 if lines coincide/merge/collinear
-        // byte 4(16): 1 if A T-junction
-        // byte 5(32): 1 if B T-junction
-        // byte 6(64): 1 if collinear in opposite direction, 0 is same direction
-        Separated = 0, //xb0000 0000
-        IntersectNominal = 3, //xb0000 0011
-        EndPointsTouch = 5, //xb0000 0101
-        EndPointsCross = 7, //xb0000 0111
+        // byte 0(1): at the from point for line A (T joint)
+        // byte 1(2) at the from  point for line B (T joint)
+        // therefore, these define where the intersection is:
+        //      0: at an intermediate point for both line segments (this is like 99% of the time)
+        //      3(0b11): at the from points for both lineA and lineB
+        // bytes 2,3 & 4 indicate how the inside of the polygons overlap
+        // byte 2(4): 1 if known, 0 if unknown. Can only be unknown if current and previous line 
+        //            segements are all parallel, which would be very rare
+        // byte 3(8): 1 if polygonA encompasses polygonB
+        // byte 4(16): 1 if polygonB encompasses polygonA
+        // therefore:
+        // 0bxx0yy, "unknown": (i.e. byte2 is 0) means that lines are parallel and interaction is unknown 
+        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
+        // 0b001yy: "glance": it is known that the insides of A & B do not overlap at this intersection.
+        //                    Instead, they glance off of one another
+        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
+        // 0b011yy: "AEncompassB": it is known that the insides of A fully encompass B at this intersection.
+        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
+        // 0b101yy: "BEncompassA": it is known that the insides of B fully encompass A at this intersection.
+        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
+        // 0b111yy: "Overlap" (proper intersection): it is known that A encloses part of B and B encloses are of A
+        //           For this case, bytes 0 & 1 can have all four values
+        Unknown_AStart = 1, //xb 000-01
+        Unknown_BStart = 2, //xb 000-10
+        Unknown_BothStart = 3, //xb 000-11
 
-        TJunctionAReflects = 17, //xb0001 0001
-        TJunctionACrosses = 19, //xb0001 0011
-        TJunctionAMergeSameDir = 25, //xb0001 1001
-        TJunctionAMergeOppDir =89, //xb0101 1001
+        Glance_AStart = 5, //xb 001-01
+        Glance_BStart = 6, //xb 001-10
+        Glance_BothStart = 7, //xb 001-11
 
-        TJunctionBReflects = 33, //xb0010 0001
-        TJunctionBCrosses = 35, //xb0010 0011
-        TJunctionBMergeSameDir = 41, //xb0110 1001
-        TJunctionBMergeOppDir = 105, //xb0110 1001
+        AEncompassB_AStart = 13, //xb 011-01
+        AEncompassB_BStart = 14, //xb 011-10
+        AEncompassB_BothStart = 15, //xb 011-11
+
+        BEncompassA_AStart = 21, //xb 101-01
+        BEncompassA_BStart = 22, //xb 101-10
+        BEncompassA_BothStart = 23, //xb 101-11
+
+        Overlap_Intermediate = 28, //xb 111-00
+        Overlap_AStart = 29, //xb 111-01
+        Overlap_BStart = 30, //xb 111-10
+        Overlap_BothStart = 31, //xb 111-11
     }
 
     /// <summary>
