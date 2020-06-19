@@ -103,7 +103,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //Presenter.ShowAndHang(polygon1);
             var polygon2 = new Polygon(coords2, true);
 
-            //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+            Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
             var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
 

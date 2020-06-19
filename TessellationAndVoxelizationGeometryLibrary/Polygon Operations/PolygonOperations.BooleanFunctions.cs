@@ -397,16 +397,23 @@ namespace TVGL.TwoDimensional
         {
             foreach (var intersectionData in intersections)
             {
-                if (intersectionData.Visited|| (byte)intersectionData.Relationship < 0b11100) continue;
-                var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
-                // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
-                if (cross.IsNegligible()) continue;  // what about when crossProduct is zero - like in a line Intersection.Relationship will be in line
-                currentEdge = (crossProductSign * cross > 0) ? intersectionData.EdgeA : intersectionData.EdgeB;
+                if (intersectionData.Visited || (byte)intersectionData.Relationship < 0b11100) continue;
+                // don't want to start at t intersection that has already been visited or is not an overlap...although I'm not sure the the latter is 
+                // universally true
+                if (switchingOperator)
+                    currentEdge = intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList
+                        ? intersectionData.EdgeA
+                        : intersectionData.EdgeB;
+                else
+                {
+                    var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
+                    // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
+                    currentEdge = crossProductSign * cross > 0 ? intersectionData.EdgeA : intersectionData.EdgeB;
+                }
                 //cross product does not have expected sign. Instead, the intersection will have  to be entered from the other edge
                 nextStartingIntersection = intersectionData;
                 return true;
             }
-
             nextStartingIntersection = null;
             currentEdge = null;
             return false;
@@ -438,7 +445,7 @@ namespace TVGL.TwoDimensional
                     || (currentEdgeIsFromPolygonA && ((byte)intersectionData.Relationship & 0b01) == 0)
                     || (!currentEdgeIsFromPolygonA && ((byte)intersectionData.Relationship & 0b10) == 0))
                     newPath.Add(intersectionData.IntersectCoordinates);
-              
+
                 currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeB : intersectionData.EdgeA;
                 intersectionData.Visited = true; //set the visited to true to stop this while loop (see condition above) and
                                                  //prevent starting from this intersection in GetNextStartingIntersection
