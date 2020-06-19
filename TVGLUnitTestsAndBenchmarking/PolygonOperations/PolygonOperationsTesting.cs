@@ -92,6 +92,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //    Console.WriteLine(i);
             var coords1 = MakeStarryCircularPolygon(10, 30, 1).ToList();
             var hole1 = MakeStarryCircularPolygon(8, 15, 3).ToList();
+            hole1.Reverse();
             //var coords2 = MakeWavyCircularPolygon(10000, 30, 10, 5).ToList();
             var coords2 = new[] { new Vector2(5, 40), new Vector2(-5, 40), new Vector2(-5, -40), new Vector2(5, -40) };
             var stopWatch = new Stopwatch();
@@ -99,17 +100,17 @@ namespace TVGLUnitTestsAndBenchmarking
             var polygon1 = new Polygon(coords1, true);
             polygon1.RemoveSelfIntersections();
             polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
-            Presenter.ShowAndHang(polygon1);
+            //Presenter.ShowAndHang(polygon1);
             var polygon2 = new Polygon(coords2, true);
 
-            Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+            //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
             var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
 
-            var polygon3 = polygon1.Union(polygon2, a, intersections);
-            Presenter.ShowAndHang(polygon3);
+            //var polygon3 = polygon1.Union(polygon2, a, intersections);
+            //Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon2.Subtract(polygon1, a, intersections);
+            var polygon3 = polygon2.Subtract(polygon1, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.Subtract(polygon2, a, intersections);
@@ -247,7 +248,7 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
 
-       // [Benchmark(Description = "my functions")]
+        // [Benchmark(Description = "my functions")]
         public void BenchmarkMyBooleanSimple()
         {
             var polygon3 = polygon1.OffsetRound(5.0, 0.005);

@@ -397,7 +397,7 @@ namespace TVGL.TwoDimensional
         {
             foreach (var intersectionData in intersections)
             {
-                if (intersectionData.Visited) continue;
+                if (intersectionData.Visited|| (byte)intersectionData.Relationship < 0b11100) continue;
                 var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
                 // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
                 if (cross.IsNegligible()) continue;  // what about when crossProduct is zero - like in a line Intersection.Relationship will be in line
@@ -447,7 +447,7 @@ namespace TVGL.TwoDimensional
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
                    intersectionCoordinates, forward, out intersectionIndex)
-                       && (switchDirections || ((byte)intersections[intersectionIndex].Relationship >= 0b11100)))
+                       || !(switchDirections || ((byte)intersections[intersectionIndex].Relationship >= 0b11100)))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
