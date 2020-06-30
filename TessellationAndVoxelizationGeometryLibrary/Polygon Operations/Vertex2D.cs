@@ -110,6 +110,13 @@ namespace TVGL.TwoDimensional
         }
         // the following private argument-less constructor is only used in the copy function
         private Vertex2D() { }
+
+
+        public override string ToString()
+        {
+            return "{" + X + "," + Y + "}";
+        }
+
         #endregion
     }
 }

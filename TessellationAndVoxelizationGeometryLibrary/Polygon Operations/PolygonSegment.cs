@@ -238,6 +238,12 @@ namespace TVGL.TwoDimensional
             }
             return HorizontalSlope * (yval - FromPoint.Y) + FromPoint.X;
         }
+
+        public override string ToString()
+        {
+            return "from: " + FromPoint + " to: " + ToPoint;
+        }
+
         #endregion
     }
 

@@ -9,6 +9,7 @@ using BenchmarkDotNet.Attributes;
 using TVGL.TwoDimensional;
 using System.Linq;
 using TVGL;
+//using OldTVGL;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -34,6 +35,17 @@ namespace TVGLUnitTestsAndBenchmarking
                 var angle = i * angleIncrement;
                 yield return new Vector2(radius * Math.Cos(angle), radius * Math.Sin(angle));
             }
+        }
+        internal static IEnumerable<Vector2> MakeOctogonPolygon(double xMin, double yMin, double xMax, double yMax, double horizChop, double vertChop)
+        {
+            yield return new Vector2(xMin + horizChop, yMin);
+            yield return new Vector2(xMax - horizChop, yMin);
+            yield return new Vector2(xMax, yMin + vertChop);
+            yield return new Vector2(xMax, yMax - vertChop);
+            yield return new Vector2(xMax - horizChop, yMax);
+            yield return new Vector2(xMin + horizChop, yMax);
+            yield return new Vector2(xMin, yMax - vertChop);
+            yield return new Vector2(xMin, yMin + vertChop);
         }
 
         internal static IEnumerable<Vector2> MakeStarryCircularPolygon(int numSides, double radius, double delta)
@@ -90,16 +102,17 @@ namespace TVGLUnitTestsAndBenchmarking
             //{
             //r = new Random(i);
             //    Console.WriteLine(i);
-            var coords1 = MakeStarryCircularPolygon(10, 30, 1).ToList();
-            var hole1 = MakeStarryCircularPolygon(8, 15, 3).ToList();
-            hole1.Reverse();
+            var coords1 = MakeOctogonPolygon(0, 0, 10, 10, 2, 2).ToList();
+            var coords2 = MakeOctogonPolygon(10, 5, 20, 15, 2, 2).ToList();
+            //var hole1 = MakeStarryCircularPolygon(8, 15, 3).ToList();
+            //hole1.Reverse();
             //var coords2 = MakeWavyCircularPolygon(10000, 30, 10, 5).ToList();
-            var coords2 = new[] { new Vector2(5, 40), new Vector2(-5, 40), new Vector2(-5, -40), new Vector2(5, -40) };
+            //var coords2 = new[] { new Vector2(5, 40), new Vector2(-5, 40), new Vector2(-5, -40), new Vector2(5, -40) };
             var stopWatch = new Stopwatch();
             stopWatch.Restart();
             var polygon1 = new Polygon(coords1, true);
-            polygon1.RemoveSelfIntersections();
-            polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
+            // polygon1.RemoveSelfIntersections();
+            // polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
             //Presenter.ShowAndHang(polygon1);
             var polygon2 = new Polygon(coords2, true);
 
@@ -107,10 +120,10 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
 
-            //var polygon3 = polygon1.Union(polygon2, a, intersections);
-            //Presenter.ShowAndHang(polygon3);
+            var polygon3 = polygon1.Union(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
 
-            var polygon3 = polygon2.Subtract(polygon1, a, intersections);
+            polygon3 = polygon2.Subtract(polygon1, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.Subtract(polygon2, a, intersections);
@@ -157,23 +170,29 @@ namespace TVGLUnitTestsAndBenchmarking
                 var polygon2 = new Polygon(coords2, false);
                 polygon2.AddHole(new Polygon(hole2, false));
                 //polygon2.Transform(Matrix3x3.CreateTranslation(15, 15));
-                var clipperPoly1 = new[] { coords1, hole1 };
-                var clipperPoly2 = new[] { coords2, hole2 };
+                var clipperPoly1 = new[] {
+                    coords1.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList(),
+                    hole1.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList()
+                };
+                var clipperPoly2 = new[] {
+                    coords2.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList(),
+                    hole2.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList()
+                };
                 //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
                 stopwatch.Restart();
-                /*
+
                 var polygon3 = polygon1.Union(polygon2);
-                Console.WriteLine("union mines: {0}", stopwatch.Elapsed);
+                Console.WriteLine("union mine: {0}", stopwatch.Elapsed);
                 stopwatch.Restart();
-                var coords3 = PolygonOperations.Union(clipperPoly1, clipperPoly2);
+                var coords3 = OldTVGL.PolygonOperations.Union(clipperPoly1, clipperPoly2);
                 Console.WriteLine("union clipper: {0}", stopwatch.Elapsed);
                 ShowComparison(i, "union", polygon3, coords3);
                 stopwatch.Restart();
                 polygon3 = polygon1.Intersect(polygon2);
                 Console.WriteLine("interset mine: {0}", stopwatch.Elapsed);
                 stopwatch.Restart();
-                coords3 = PolygonOperations.Intersection(clipperPoly1, clipperPoly2);
+                coords3 = OldTVGL.PolygonOperations.Intersection(clipperPoly1, clipperPoly2);
                 Console.WriteLine("intersect clipper: {0}", stopwatch.Elapsed);
                 ShowComparison(i, "intersect", polygon3, coords3);
                 //polygon3 = polygon1.ExclusiveOr(polygon2);
@@ -183,23 +202,25 @@ namespace TVGLUnitTestsAndBenchmarking
                 polygon3 = polygon1.Subtract(polygon2);
                 Console.WriteLine("subtract mine: {0}", stopwatch.Elapsed);
                 stopwatch.Restart();
-                coords3 = clipperPoly1.Difference(clipperPoly2);
+                coords3 = OldTVGL.PolygonOperations.Difference(clipperPoly1, clipperPoly2);
                 Console.WriteLine("subtract clipper: {0}", stopwatch.Elapsed);
                 ShowComparison(i, "1subtract2", polygon3, coords3);
                 stopwatch.Restart();
                 polygon3 = polygon2.Subtract(polygon1);
                 Console.WriteLine("subtract mine: {0}", stopwatch.Elapsed);
                 stopwatch.Restart();
-                coords3 = clipperPoly2.Difference(clipperPoly1);
+                coords3 = OldTVGL.PolygonOperations.Difference(clipperPoly2, clipperPoly1);
                 Console.WriteLine("subtract clipper: {0}", stopwatch.Elapsed);
                 ShowComparison(i, "2subtract1", polygon3, coords3);
-                */
+
 
             }
         }
 
-        private static void ShowComparison(int trial, string name, List<Polygon> polygon3, List<List<Vector2>> coords3)
+        private static void ShowComparison(int trial, string name, List<Polygon> polygon3, List<List<OldTVGL.PointLight>> pointLights)
         {
+            var coords3 = new List<List<Vector2>>(pointLights.Select(listOfPoints
+                =>listOfPoints.Select(v=>new Vector2(v.X,v.Y)).ToList()));
             var area = coords3.Sum(poly => poly.Area());
             var peri = coords3.Perimeter();
             var numPolygons = polygon3.Sum(poly => poly.AllPolygons.Count());

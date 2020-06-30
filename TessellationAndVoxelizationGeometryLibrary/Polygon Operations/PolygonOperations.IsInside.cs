@@ -147,7 +147,7 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonRelationship.</returns>
         public static PolygonRelationship GetPolygonRelationshipAndIntersections(this Polygon polygonA, Polygon polygonB,
-    out List<IntersectionData> intersections)
+            out List<IntersectionData> intersections)
         {
             intersections = new List<IntersectionData>();
             //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
@@ -179,7 +179,7 @@ namespace TVGL.TwoDimensional
                     var aLine = aLines[aIndex++];
                     var localBIndex = bIndex; //the localBIndex is incremented in the following loop, but we
                                               //need to come back to the main bIndex above
-                    while (localBIndex < bLines.Length && aLine.XMax > bLines[localBIndex].XMin)
+                    while (localBIndex < bLines.Length && aLine.XMax >= bLines[localBIndex].XMin)
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
                         AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections);
@@ -188,13 +188,13 @@ namespace TVGL.TwoDimensional
                 {
                     var bLine = bLines[bIndex++];
                     var localAIndex = aIndex;
-                    while (localAIndex < aLines.Length && bLine.XMax > aLines[localAIndex].XMin)
+                    while (localAIndex < aLines.Length && bLine.XMax >= aLines[localAIndex].XMin)
                         AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections);
                 }
             }
             if (CheckForIntersection(intersections))
             {
-                // I don't have a reason to check for these after all. It is still an intersection and other
+                // I don't have a reason to check the following cases after all. It is still an intersection and other
                 // parts of the code treat it as such.
                 //if (ArePointsInsidePolygonLines(aLines, aLines.Length, orderedBPoints, out _, true))
                 //    return PolygonRelationship.BVerticesInsideAButLinesIntersect;
@@ -354,7 +354,9 @@ namespace TVGL.TwoDimensional
                         //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
                         // either from Point, then we do not record it. It will be recorded when the next segment is checked
                     }
-                    if (!intersectionFound) return;// otherwise the lines are parallel but not at same distance/intercept
+                    if (!intersectionFound) return;// otherwise the lines are parallel but not at same distance/intercept or they are
+                    //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
+                    //Instead those will be solved in the next/adjacent polygon segment
                 }
                 else
                 {
@@ -404,46 +406,48 @@ namespace TVGL.TwoDimensional
         }
 
         private static PolygonSegmentRelationship DeterminePolygonSegmentRelationship(PolygonSegment lineA, PolygonSegment lineB,
-            PolygonSegment prevA, PolygonSegment prevB, double vCross, byte relationshipByte)
+            PolygonSegment prevA, PolygonSegment prevB, double lineACrossLineB, byte relationshipByte)
         {
             if (relationshipByte >= 0b11) return (PolygonSegmentRelationship)relationshipByte; //this only happens when line-A and line-B are not parallel and
             // it is known that there is an intermediate point (the default case). So, the value of the relationshipByte is already set to 28 (0b11100).
-            var prevCross = prevA.Vector.Cross(prevB.Vector);
-            if (!vCross.IsNegligible() || !prevCross.IsNegligible())
+            var prevACrossPrevB = prevA.Vector.Cross(prevB.Vector);
+            if (!lineACrossLineB.IsNegligible() || !prevACrossPrevB.IsNegligible())
             {
-                var aCrossPrevB = lineA.Vector.Cross(prevB.Vector);
-                var aPrevCrossB = prevA.Vector.Cross(lineB.Vector);
+                var lineACrossPrevB = lineA.Vector.Cross(prevB.Vector);
+                var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
                 var aCross = prevA.Vector.Cross(lineA.Vector);
                 var bCross = prevB.Vector.Cross(lineB.Vector);
-                // regarding the next two booleans...when A corner is convex (aCross>=0), then we check if the two cross products with the
-                // two b lines are BOTH positive. When A's corner is concave, it is a OR for the two cross products
-                var lineBIsInsideA = (aCross > 0 && vCross > 0 && aPrevCrossB > 0) ||
-                                     (aCross <= 0 && (vCross > 0 || aPrevCrossB > 0));
+                // regarding the next two booleans...when A corner is convex (aCross>=0), then we check if the two cross products made with the
+                // a given b line are BOTH positive - meaning that the b line is between the A lines.
+                // When A's corner is concave, we check for the oppositve convex angle of A - to see if the B line is between those
+                // that's the easy part! getting the changes in sign correct makes it more complicated.
+                var lineBIsInsideA = (aCross >= 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
+                                         (aCross < 0 && !(lineACrossLineB < 0 && prevACrossLineB < 0));
                 // this expression is the same, but the previous B vector is into the corner and thus, we need to negate it (or rather just check for negative)
-                var prevLineBIsInsideA = (aCross > 0 && prevCross < 0 && aCrossPrevB < 0) ||
-                                         (aCross <= 0 && (prevCross < 0 || aCrossPrevB < 0));
+                var prevLineBIsInsideA = (aCross >= 0 && lineACrossPrevB < 0 && prevACrossPrevB < 0) || 
+                                             (aCross < 0 && !(lineACrossPrevB > 0 && prevACrossPrevB > 0));
                 // we actually have to do the same with lineB - it's not enough to know if A is inside B
-                var lineAIsInsideB = (bCross > 0 && vCross > 0 && aCrossPrevB < 0) ||
-                                     (bCross <= 0 && (vCross > 0 || aCrossPrevB < 0));
-                var prevLineAIsInsideB = (bCross > 0 && prevCross < 0 && aPrevCrossB > 0) ||
-                                         (bCross <= 0 && (prevCross < 0 || aPrevCrossB > 0));
+                var lineAIsInsideB = (bCross >= 0 && lineACrossLineB < 0 && lineACrossPrevB < 0) ||
+                                         (bCross < 0 && !(lineACrossLineB > 0 && lineACrossPrevB > 0));
+                var prevLineAIsInsideB = (bCross > 0 && prevACrossLineB > 0 && prevACrossPrevB > 0) || 
+                                            (bCross < 0 && !(prevACrossLineB < 0 && prevACrossPrevB < 0));
                 // in the remaining conditions there are 16 possible combinations of the four booleans: lineBIsInsideA-prevLineBIsInsideA--lineAIsInsideB-prevLineAIsInsideB
                 // first off, if they are all false, then it clearly is a "glance"
                 if (!(lineBIsInsideA || prevLineBIsInsideA || lineAIsInsideB || prevLineAIsInsideB)) // FF-FF
                     relationshipByte += 0b00100; //glance
                 // if there is a true on both sides then we have an overlap
-                if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB)
-                ) // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
+                else if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
+                 // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
                     relationshipByte += 0b11100;
-                if ((lineBIsInsideA || prevLineBIsInsideA) && (!lineAIsInsideB && !prevLineAIsInsideB)
-                ) // TF-FF, FT-FF, TT-FF (although, I don't think TF-FF or FT-FF can occur)
+                else if ((lineBIsInsideA || prevLineBIsInsideA) && (!lineAIsInsideB && !prevLineAIsInsideB))
+                 // TF-FF, FT-FF, TT-FF (although, I don't think TF-FF or FT-FF can occur)
                     relationshipByte += 0b01100;
-                if ((!lineBIsInsideA && !prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB)
-                ) // FF-TF, FF-FT, FF-TT (although, I don't think FF-TF or FF-FT can occur)
+                else if ((!lineBIsInsideA && !prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
+                 // FF-TF, FF-FT, FF-TT (although, I don't think FF-TF or FF-FT can occur)
                     relationshipByte += 0b10100;
-            }
-            /*else*/ // both vCross is Negligible and prevCross is negligible, which mean all the lines are parallel
+            /*else*/ // both lineACrossLineB is Negligible and prevCross is negligible, which mean all the lines are parallel
             // which means unknown, which means  add 0b000000 to the relationByte, which mean do nothing!
+            }
             return (PolygonSegmentRelationship)relationshipByte;
         }
 
