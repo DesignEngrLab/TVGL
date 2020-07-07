@@ -56,7 +56,7 @@ namespace TVGL.TwoDimensional
                 //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
                 //case PolygonRelationship.AInsideBButBordersTouch:
                 default:
-                    return BooleanOperation(polygonA, polygonB, intersections, false, -1);
+                    return BooleanOperation(polygonA, polygonB, intersections, false, true);
             }
         }
         /// <summary>
@@ -144,7 +144,7 @@ namespace TVGL.TwoDimensional
                 //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
                 //case PolygonRelationship.AInsideBButBordersTouch:
                 default:
-                    return BooleanOperation(polygonA, polygonB, intersections, false, +1, minAllowableArea);
+                    return BooleanOperation(polygonA, polygonB, intersections, false, false, minAllowableArea);
             }
         }
 
@@ -227,7 +227,7 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.AIsCompletelyInsideB:
                     return new List<Polygon>();
                 default:
-                    return BooleanOperation(polygonA, polygonB, intersections, true, -1, minAllowableArea);
+                    return BooleanOperation(polygonA, polygonB, intersections, true, false, minAllowableArea);
             }
         }
 
@@ -286,9 +286,9 @@ namespace TVGL.TwoDimensional
                     return new List<Polygon> { polygonBCopy2 };
                 default:
                     var firstSubtraction = BooleanOperation(polygonA, polygonB, intersections,
-                        true, -1, minAllowableArea);
+                        true, false, minAllowableArea);
                     var secondSubtraction = BooleanOperation(polygonB, polygonA, intersections,
-                        true, -1, minAllowableArea);
+                        true, false, minAllowableArea);
                     firstSubtraction.AddRange(secondSubtraction);
                     return firstSubtraction;
             }
@@ -307,7 +307,7 @@ namespace TVGL.TwoDimensional
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersections, -1, false, out var startingIntersection,
+            while (GetNextStartingIntersection(intersections, true, false, out var startingIntersection,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
@@ -320,7 +320,7 @@ namespace TVGL.TwoDimensional
 
             foreach (var intersectionData in intersections)
                 intersectionData.Visited = false;
-            while (GetNextStartingIntersection(intersections, 1, false, out var startingIntersection,
+            while (GetNextStartingIntersection(intersections, false, false, out var startingIntersection,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
@@ -347,7 +347,7 @@ namespace TVGL.TwoDimensional
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         private static List<Polygon> BooleanOperation(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, bool switchDirection,
-                    int crossProductSign, double minAllowableArea = Constants.BaseTolerance)
+                    bool startInside, double minAllowableArea = Constants.BaseTolerance)
         {
             var id = 0;
             foreach (var polygon in polygonA.AllPolygons)
@@ -364,7 +364,7 @@ namespace TVGL.TwoDimensional
             var intersectionLookup = MakeIntersectionLookupList(id, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersections, crossProductSign, switchDirection, out var startIndex,
+            while (GetNextStartingIntersection(intersections, startInside, switchDirection, out var startIndex,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startIndex,
@@ -392,18 +392,36 @@ namespace TVGL.TwoDimensional
         /// <param name="currentEdge">The current edge.</param>
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private static bool GetNextStartingIntersection(List<IntersectionData> intersections, int crossProductSign, bool switchingOperator,
+        private static bool GetNextStartingIntersection(List<IntersectionData> intersections, bool startInside, bool switchingOperator,
             out IntersectionData nextStartingIntersection, out PolygonSegment currentEdge)
         {
             foreach (var intersectionData in intersections)
             {
-                if (intersectionData.Visited || (byte)intersectionData.Relationship < 0b11100) continue;
-
-                var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
-                // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
-                currentEdge = crossProductSign * cross > 0 ? intersectionData.EdgeA : intersectionData.EdgeB;
-
-                if (switchingOperator && currentEdge.IndexInList != Math.Max(intersectionData.EdgeA.IndexInList,
+                if (intersectionData.Visited)
+                    continue;
+                if ((byte)intersectionData.Relationship < 4) // then Unknown
+                    continue;
+                if ((byte)intersectionData.Relationship < 8) // then Glance
+                {
+                    if (startInside && !switchingOperator) //Glance actually works for Union operations which have startInside true and switchingOperator as false
+                        currentEdge = ((byte)intersectionData.Relationship & 0b1) == 0 ? intersectionData.EdgeA : intersectionData.EdgeB;
+                    else continue;
+                }
+                else if ((byte)intersectionData.Relationship < 16) // then AEncompassB
+                {
+                    currentEdge = startInside ? intersectionData.EdgeB : intersectionData.EdgeA;
+                }
+                else if ((byte)intersectionData.Relationship < 24) // then BEncompassA
+                {
+                    currentEdge = startInside ? intersectionData.EdgeA : intersectionData.EdgeB;
+                }
+                else // then Overlap
+                {
+                    var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
+                    // cross product is from the entering edge to the other. We use the "enteringEdgeA" boolean to flip the sign if we are really entering B
+                    currentEdge = (cross > 0) == startInside ? intersectionData.EdgeB : intersectionData.EdgeA;
+                }
+                if (switchingOperator && currentEdge.IndexInList == Math.Max(intersectionData.EdgeA.IndexInList,
                     intersectionData.EdgeB.IndexInList)) continue;
                 nextStartingIntersection = intersectionData;
                 return true;
@@ -447,8 +465,7 @@ namespace TVGL.TwoDimensional
                 if (switchDirections) forward = !forward;
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                   intersectionCoordinates, forward, out intersectionIndex)
-                       || !(switchDirections || ((byte)intersections[intersectionIndex].Relationship >= 0b11100)))
+                   intersectionCoordinates, forward, out intersectionIndex))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
@@ -492,24 +509,15 @@ namespace TVGL.TwoDimensional
             if (intersectionIndices == null)
                 return false;
             var minDistanceToIntersection = double.PositiveInfinity;
+            var vector = forward ? currentEdge.Vector : -currentEdge.Vector;
+            var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords :
+                forward ? currentEdge.FromPoint.Coordinates : currentEdge.ToPoint.Coordinates;
             foreach (var index in intersectionIndices)
             {
                 var thisIntersectData = allIntersections[index];
-                double distance;
-                //if (thisIntersectData.Relationship == PolygonSegmentRelationship.CollinearAndOverlapping)
-                //{
-                //    var otherLine = (thisIntersectData.EdgeA == currentEdge) ? thisIntersectData.EdgeB : thisIntersectData.EdgeA;
-                //    var fromDist = currentEdge.Vector.Dot(otherLine.FromPoint.Coordinates - currentEdge.FromPoint.Coordinates);
-                //    var toDist = currentEdge.Vector.Dot(otherLine.ToPoint.Coordinates - currentEdge.FromPoint.Coordinates);
-                //    var thisLength = currentEdge.Vector.LengthSquared();
-                //    throw new NotImplementedException();
-                //}
-
-                var vector = forward ? currentEdge.Vector : -currentEdge.Vector;
-                var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords :
-                    forward ? currentEdge.FromPoint.Coordinates : currentEdge.ToPoint.Coordinates;
-                distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
-                if (distance > 0 && minDistanceToIntersection > distance)
+                var distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
+                if (distance < 0 || (distance == 0 && !formerIntersectCoords.IsNull())) continue;
+                if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;
                     indexOfIntersection = index;

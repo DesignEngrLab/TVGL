@@ -102,8 +102,9 @@ namespace TVGLUnitTestsAndBenchmarking
             //{
             //r = new Random(i);
             //    Console.WriteLine(i);
-            var coords1 = MakeOctogonPolygon(0, 0, 10, 10, 2, 2).ToList();
+            var coords1 = MakeOctogonPolygon(0, 10, 10, 20, 2, 2).ToList();
             var coords2 = MakeOctogonPolygon(10, 5, 20, 15, 2, 2).ToList();
+
             //var hole1 = MakeStarryCircularPolygon(8, 15, 3).ToList();
             //hole1.Reverse();
             //var coords2 = MakeWavyCircularPolygon(10000, 30, 10, 5).ToList();
@@ -145,6 +146,55 @@ namespace TVGLUnitTestsAndBenchmarking
             //Presenter.ShowAndHang(polygon3.Select(p => p.Path));
             //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             //}
+            Console.ReadKey();
+        }
+        internal static void TestEdgeCase2()
+        {
+            //for (int i = 6; i < 200; i++)
+            //{
+            //r = new Random(i);
+            //    Console.WriteLine(i);
+            var coords1 = new List<Vector2>
+            {
+                new Vector2(0,0),
+                new Vector2(10,0),
+                new Vector2(0,10),
+
+            };
+            var coords2 = new List<Vector2>
+            {
+                new Vector2(0,0),
+                new Vector2(4,0),
+                new Vector2(6,4),
+                new Vector2(3,7),
+
+            };
+
+
+            var stopWatch = new Stopwatch();
+            stopWatch.Restart();
+            var polygon1 = new Polygon(coords1, true);
+            // polygon1.RemoveSelfIntersections();
+            // polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
+            //Presenter.ShowAndHang(polygon1);
+            var polygon2 = new Polygon(coords2, true);
+
+            Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+
+            var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
+
+            var polygon3 = polygon1.Union(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.Subtract(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.ExclusiveOr(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.Intersect(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
+           
             Console.ReadKey();
         }
 
@@ -227,8 +277,8 @@ namespace TVGLUnitTestsAndBenchmarking
             var numPolyVerts = polygon3.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
             if (numPolygons == coords3.Count
                 && numPolyVerts == coords3.Sum(loop => loop.Count)
-                && area.IsPracticallySame(polygon3.Sum(p => p.Area), 1e-5)
-                && peri.IsPracticallySame(polygon3.Sum(p => p.Perimeter), 1e-5))
+                && area.IsPracticallySame(polygon3.Sum(p => p.Area), 1e-3)
+                && peri.IsPracticallySame(polygon3.Sum(p => p.Perimeter), 1e-3))
                 Console.WriteLine("*****{0}: {1} matches", trial, name);
             else
             {

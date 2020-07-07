@@ -35,7 +35,7 @@ namespace TVGL.Numerics
         /// <param name="v2">The second vector.</param>
         /// <param name="optionalTolerance">An optional tolerance.</param>
         /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
-        public static bool IsPracticallySame(this Vector2 v1, Vector2 v2, double optionalTolerance = double.NaN)
+        public static bool IsPracticallySame(this Vector2 v1, Vector2 v2, double optionalTolerance = DefaultEqualityTolerance)
         {
             return IsNegligible(v1 - v2, optionalTolerance);
         }
@@ -48,7 +48,7 @@ namespace TVGL.Numerics
         /// <param name="v2">The v2.</param>
         /// <param name="optionalTolerance">An optional tolerance.</param>
         /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
-        public static bool IsPracticallySame(this Vector3 v1, Vector3 v2, double optionalTolerance = double.NaN)
+        public static bool IsPracticallySame(this Vector3 v1, Vector3 v2, double optionalTolerance = DefaultEqualityTolerance)
         {
             return IsNegligible(v1 - v2, optionalTolerance);
         }

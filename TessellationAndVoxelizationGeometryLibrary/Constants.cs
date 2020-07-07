@@ -729,59 +729,50 @@ namespace TVGL
         //BVerticesInsideAButLinesIntersect = 17, //xb0001 0001
         BInsideAButBordersTouch = 18,  //xb0001 0010
         BIsInsideHoleOfA = 20,  //xb0001 0100
-        
+
 
     }
 
     /// <summary>
     /// Enum PolygonRelationship
     /// </summary>
-    public enum PolygonSegmentRelationship :byte
+    [Flags]
+    public enum PolygonSegmentRelationship
     {
-        // byte 0(1): the intersection is at the from point for line A (T joint)
-        // byte 1(2) the intersection is at the from  point for line B (T joint)
-        // therefore, these define where the intersection is:
-        //      0: at an intermediate point for both line segments (this is like 99% of the time)
-        //      3(0b11): at the from points for both lineA and lineB (which can only happen if collinear, but
-        //                     - actually - we'd want to make two separate IntersectionData objects for these).
-        // bytes 2,3 & 4 indicate how the inside of the polygons overlap
-        // byte 2(4): 1 if known, 0 if unknown. Can only be unknown if current and previous line 
-        //            segements are all parallel, which would be very rare
-        // byte 3(8): 1 if polygonA encompasses polygonB at this intersection
-        // byte 4(16): 1 if polygonB encompasses polygonA at this intersection
-        // therefore:
-        // 0bxx0,yy, "unknown": (i.e. byte2 is 0) means that lines are parallel and interaction is unknown 
+        Unknown = 0,
+        AtStartOfA = 1, // byte 0(1): the intersection is at the from point for line A (T joint)
+        AtStartOfB = 2, // byte 1(2) the intersection is at the from  point for line B (T joint)
+        // therefore the value is zero when at an intermediate point 
+        // for both line segments (this is like 99% of the time). 
+        LinesSharePoint = AtStartOfA | AtStartOfB, // 0b11: at the from points for both lineA and lineB 
+
+        AEncompassesB = 4, //if polygonA encompasses polygonB at this intersection
+        BEncompassesA = 8, // if polygonB encompasses polygonA at this intersection
+        Overlapping = AEncompassesB | BEncompassesA, // normally there is some encompasses of the other for both
+        AllParallel = 16, //because the lines before and after the point are all parallel it is impossible to tell
+        // if one encompasses the other. There when AllParallel is one, the previous two should be off
+        // some details in the combinations:
+        // 0b1xx,yy: as was just stated - 16 means that lines are parallel and interaction is unknown 
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00; and bytes 3 & 4
-        //           would both be 0
-        // 0b001,yy: "glance": it is known that the insides of A & B do not overlap at this intersection.
+        //           should both be 0
+        // 0b000,yy: "glance": it is known that the insides of A & B do not overlap at this intersection.
         //                    Instead, they glance off of one another
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0b011,yy: "AEncompassB": it is known that the insides of A fully encompass B at this intersection.
+        // 0b001,yy: "AEncompassB": it is known that the insides of A fully encompass B at this intersection.
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0b101,yy: "BEncompassA": it is known that the insides of B fully encompass A at this intersection.
+        // 0b010,yy: "BEncompassA": it is known that the insides of B fully encompass A at this intersection.
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0b111,yy: "Overlap" (proper intersection): it is known that A encloses part of B and B encloses are of A
+        // 0b011,yy: "Overlap" (proper intersection): it is known that A encloses part of B and B encloses are of A
         //           For this case, bytes 0 & 1 can have all four values
-        Unknown_AStart = 1, //xb 000,01
-        Unknown_BStart = 2, //xb 000,10
-        Unknown_BothStart = 3, //xb 000,11
 
-        Glance_AStart = 5, //xb 001,01
-        Glance_BStart = 6, //xb 001,10
-        Glance_BothStart = 7, //xb 001,11
-
-        AEncompassB_AStart = 13, //xb 011,01
-        AEncompassB_BStart = 14, //xb 011,10
-        AEncompassB_BothStart = 15, //xb 011,11
-
-        BEncompassA_AStart = 21, //xb 101,01
-        BEncompassA_BStart = 22, //xb 101,10
-        BEncompassA_BothStart = 23, //xb 101,11
-
-        Overlap_Intermediate = 28, //xb 111,00
-        Overlap_AStart = 29, //xb 111,01
-        Overlap_BStart = 30, //xb 111,10
-        Overlap_BothStart = 31, //xb 111,11
+        // these final three are rare. They indicate whether the line is the same after the intersection -
+        // that is, do they merge to the same line.
+        SameLineAfterPoint = 32,
+        // or are they the same before the point
+        SameLineBeforePoint = 64,
+        //if one of the prior two are set, then you can also indicate whether the are in the same or opposite
+        // directions
+        OppositeDirections = 128,
     }
 
     /// <summary>
