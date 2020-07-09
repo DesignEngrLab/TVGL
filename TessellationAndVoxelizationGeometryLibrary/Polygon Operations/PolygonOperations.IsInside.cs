@@ -419,14 +419,14 @@ namespace TVGL.TwoDimensional
             if (relationship == PolygonSegmentRelationship.Overlapping) return relationship; //this only happens when line-A and line-B are not parallel and
             // it is known that there is an intermediate point (the default case). So, the value of the relationshipByte is already set.
             var prevACrossPrevB = prevA.Vector.Cross(prevB.Vector);
+            //todo
             if (prevACrossPrevB.IsNegligible()) relationship |= PolygonSegmentRelationship.SameLineBeforePoint;
 
+            if ((relationship & PolygonSegmentRelationship.SameLineAfterPoint) == PolygonSegmentRelationship.SameLineAfterPoint 
+                && prevACrossPrevB.IsNegligible())
+                return relationship | PolygonSegmentRelationship.CoincidentLines;
+
             var aCross = prevA.Vector.Cross(lineA.Vector);
-
-            if ((relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 && prevACrossPrevB.IsNegligible()
-                && aCross.IsNegligible())
-                return relationship | PolygonSegmentRelationship.AllParallel;
-
             var bCross = prevB.Vector.Cross(lineB.Vector);
             var lineACrossPrevB = lineA.Vector.Cross(prevB.Vector);
             var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);

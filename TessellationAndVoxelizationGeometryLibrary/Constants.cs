@@ -749,29 +749,30 @@ namespace TVGL
         AEncompassesB = 4, //if polygonA encompasses polygonB at this intersection
         BEncompassesA = 8, // if polygonB encompasses polygonA at this intersection
         Overlapping = AEncompassesB | BEncompassesA, // normally there is some encompasses of the other for both
-        AllParallel = 16, //because the lines before and after the point are all parallel it is impossible to tell
-        // if one encompasses the other. There when AllParallel is one, the previous two should be off
+        CoincidentLines = 16, // the lines before and/or after the point are on top of each other - this may make it 
+        // is impossible to tell if one encompasses the other. 
         // some details in the combinations:
-        // 0b1xx,yy: as was just stated - 16 means that lines are parallel and interaction is unknown 
+        // 0b100,yy: the interaction is unknown 
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00; and bytes 3 & 4
         //           should both be 0
         // 0b000,yy: "glance": it is known that the insides of A & B do not overlap at this intersection.
         //                    Instead, they glance off of one another
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0b001,yy: "AEncompassB": it is known that the insides of A fully encompass B at this intersection.
+        //         Technically, you can have CoincidentLines and still have it glance
+        // 0bx01,yy: "AEncompassB": it is known that the insides of A fully encompass B at this intersection.
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0b010,yy: "BEncompassA": it is known that the insides of B fully encompass A at this intersection.
+        // 0bx10,yy: "BEncompassA": it is known that the insides of B fully encompass A at this intersection.
         //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0b011,yy: "Overlap" (proper intersection): it is known that A encloses part of B and B encloses are of A
+        // 0bx11,yy: "Overlap" (proper intersection): it is known that A encloses part of B and B encloses are of A
         //           For this case, bytes 0 & 1 can have all four values
 
-        // these final three are rare. They indicate whether the line is the same after the intersection -
-        // that is, do they merge to the same line.
+        // these final three are rare. They indicate more detail is CoincidentLines is true. Otherwise they 
+        // should be left as zero (and ignored)
+        // the lines merge into the same line after the point (for the A direction).
         SameLineAfterPoint = 32,
-        // or are they the same before the point
+        // the lines are the same before the point (for the A direction)
         SameLineBeforePoint = 64,
-        //if one of the prior two are set, then you can also indicate whether the are in the same or opposite
-        // directions
+        // if the lines are moving in opposite directions, set the last bit to true
         OppositeDirections = 128,
     }
 
