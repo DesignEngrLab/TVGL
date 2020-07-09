@@ -27,19 +27,7 @@ namespace TVGL
     /// </summary>
     public class PolygonalFace : TessellationBaseClass
     {
-        /// <summary>
-        ///     Defines the face curvature. Depends on DefineEdgeAngle
-        /// </summary>
-        public void DefineFaceCurvature()
-        {
-            if (Edges.Any(e => e == null || e.Curvature == CurvatureType.Undefined))
-                Curvature = CurvatureType.Undefined;
-            else if (Edges.All(e => e.Curvature != CurvatureType.Concave))
-                Curvature = CurvatureType.Convex;
-            else if (Edges.All(e => e.Curvature != CurvatureType.Convex))
-                Curvature = CurvatureType.Concave;
-            else Curvature = CurvatureType.SaddleOrFlat;
-        }
+
 
         /// <summary>
         ///     Copies this instance. Does not include reference lists.
@@ -49,15 +37,26 @@ namespace TVGL
         {
             return new PolygonalFace
             {
-                Area = Area,
-                Center = (Vector3)Center,
-                Curvature = Curvature,
+                _area = _area,
+                _center = _center,
+                _curvature = _curvature,
                 Color = Color,
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
                 Normal = Normal,
                 Vertices = new List<Vertex>()
             };
+        }
+
+        internal void Invert()
+        {
+            Normal = Normal * -1;
+            //var firstVertex = face.Vertices[0];
+            //face.Vertices.RemoveAt(0);
+            //face.Vertices.Insert(1, firstVertex);
+            Vertices.Reverse();
+            Edges.Reverse();
+            _curvature = (CurvatureType)(-1 * (int)_curvature);
         }
 
         //Set new normal and area. 
@@ -67,14 +66,11 @@ namespace TVGL
         /// </summary>
         public void Update()
         {
-            var centerX = Vertices.Average(v => v.X);
-            var centerY = Vertices.Average(v => v.Y);
-            var centerZ = Vertices.Average(v => v.Z);
-            Center = new Vector3(centerX, centerY, centerZ);
+            _center = Vector3.Null;
             bool reverseVertexOrder;
             Normal = DetermineNormal(this.Vertices, out reverseVertexOrder);
             if (reverseVertexOrder) Vertices.Reverse();
-            Area = DetermineArea();
+            _area = double.NaN;
         }
 
         /// <summary>
@@ -187,7 +183,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true) :this()
+        public PolygonalFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true) : this()
         {
             foreach (var v in vertices)
             {
@@ -195,14 +191,9 @@ namespace TVGL
                 if (connectVerticesBackToFace)
                     v.Faces.Add(this);
             }
-            var centerX = Vertices.Average(v => v.X);
-            var centerY = Vertices.Average(v => v.Y);
-            var centerZ = Vertices.Average(v => v.Z);
-            Center = new Vector3(centerX, centerY, centerZ);
             bool reverseVertexOrder;
             Normal = DetermineNormal(Vertices, out reverseVertexOrder);
             if (reverseVertexOrder) Vertices.Reverse();
-            Area = DetermineArea();
         }
 
         /// <summary>
@@ -220,33 +211,11 @@ namespace TVGL
                 if (connectVerticesBackToFace)
                     v.Faces.Add(this);
             }
-            var centerX = Vertices.Average(v => v.X);
-            var centerY = Vertices.Average(v => v.Y);
-            var centerZ = Vertices.Average(v => v.Z);
-            Center = new Vector3(centerX, centerY, centerZ);
             bool reverseVertexOrder;
             Normal = DetermineNormal(Vertices, out reverseVertexOrder, normal);
             if (reverseVertexOrder) Vertices.Reverse();
-            Area = DetermineArea();
         }
 
-        /// <summary>
-        ///     Determines the area.
-        /// </summary>
-        /// <returns>System.Double.</returns>
-        internal double DetermineArea()
-        {
-            var area = 0.0;
-            for (var i = 2; i < Vertices.Count; i++)
-            {
-                var edge1 = Vertices[1].Coordinates.Subtract(Vertices[0].Coordinates);
-                var edge2 = Vertices[2].Coordinates.Subtract(Vertices[0].Coordinates);
-                // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-                area += Math.Abs(edge1.Cross(edge2).Dot(Normal)) / 2;
-            }
-            //If not a number, the triangle is actually a straight line. Set the area = 0, and let repair function fix this.
-            return double.IsNaN(area) ? 0.0 : area;
-        }
 
         /// <summary>
         /// Determines the normal.
@@ -413,13 +382,56 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector3 Center { get; internal set; }
+        public Vector3 Center
+        {
+            get
+            {
+                if (_center.IsNull())
+                {
+                    _center = Vector3.Zero;
+                    foreach (var v in Vertices)
+                        _center += v.Coordinates;
+                    _center /= 3;
+                }
+                _center = new Vector3();
+                return _center;
+            }
+        }
+        Vector3 _center = Vector3.Null;
 
         /// <summary>
         ///     Gets the area.
         /// </summary>
         /// <value>The area.</value>
-        public double Area { get; internal set; }
+        public double Area
+        {
+            get
+            {
+                if (double.IsNaN(_area))
+                    DetermineArea();
+                return _area;
+            }
+        }
+        double _area = double.NaN;
+
+        /// <summary>
+        ///     Determines the area.
+        /// </summary>
+        /// <returns>System.Double.</returns>
+        internal double DetermineArea()
+        {
+            var area = 0.0;
+            for (var i = 2; i < Vertices.Count; i++)
+            {
+                var edge1 = Vertices[1].Coordinates.Subtract(Vertices[0].Coordinates);
+                var edge2 = Vertices[2].Coordinates.Subtract(Vertices[0].Coordinates);
+                // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
+                area += 0.5 * Math.Abs(edge1.Cross(edge2).Dot(Normal));
+            }
+            //If not a number, the triangle is actually a straight line. Set the area = 0, and let repair function fix this.
+            return double.IsNaN(area) ? 0.0 : area;
+        }
+
 
         /// <summary>
         ///     Gets or sets the color.
@@ -447,6 +459,30 @@ namespace TVGL
                 }
                 return adjacentFaces;
             }
+        }
+
+        public override CurvatureType Curvature
+        {
+            get
+            {
+                if (_curvature == CurvatureType.Undefined) DefineFaceCurvature();
+                return _curvature;
+            }
+        }
+        CurvatureType _curvature = CurvatureType.Undefined;
+
+        /// <summary>
+        ///     Defines the face curvature. Depends on DefineEdgeAngle
+        /// </summary>
+        public void DefineFaceCurvature()
+        {
+            if (Edges.Any(e => e == null || e.Curvature == CurvatureType.Undefined))
+                _curvature = CurvatureType.Undefined;
+            else if (Edges.All(e => e.Curvature != CurvatureType.Concave))
+                _curvature = CurvatureType.Convex;
+            else if (Edges.All(e => e.Curvature != CurvatureType.Convex))
+                _curvature = CurvatureType.Concave;
+            else _curvature = CurvatureType.SaddleOrFlat;
         }
 
         #endregion

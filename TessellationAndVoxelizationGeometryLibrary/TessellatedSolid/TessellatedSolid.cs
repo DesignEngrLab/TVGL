@@ -1046,27 +1046,10 @@ namespace TVGL
         {
             _volume = -1 * _volume;
             _inertiaTensor = Matrix3x3.Null;
-            foreach (var face in Faces)
-            {
-                face.Normal = face.Normal * -1;
-                //var firstVertex = face.Vertices[0];
-                //face.Vertices.RemoveAt(0);
-                //face.Vertices.Insert(1, firstVertex);
-                face.Vertices.Reverse();
-                var firstEdge = face.Edges[0];
-                face.Edges.RemoveAt(0);
-                face.Edges.Insert(1, firstEdge);
-                face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
-            }
+            foreach (var face in Faces) face.Invert();
+
             if (_edges != null)
-                foreach (var edge in Edges)
-                {
-                    edge.Curvature = (CurvatureType)(-1 * (int)edge.Curvature);
-                    edge.InternalAngle = Constants.TwoPi - edge.InternalAngle;
-                    var tempFace = edge.OwnedFace;
-                    edge.OwnedFace = edge.OtherFace;
-                    edge.OtherFace = tempFace;
-                }
+                foreach (var edge in Edges) edge.Invert();
             return true;
         }
 
