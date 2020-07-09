@@ -744,7 +744,8 @@ namespace TVGL
         AtStartOfB = 2, // byte 1(2) the intersection is at the from  point for line B (T joint)
         // therefore the value is zero when at an intermediate point 
         // for both line segments (this is like 99% of the time). 
-        LinesSharePoint = AtStartOfA | AtStartOfB, // 0b11: at the from points for both lineA and lineB 
+
+        BothLinesStartAtPoint = AtStartOfA | AtStartOfB, // 0b11: at the from points for both lineA and lineB 
 
         AEncompassesB = 4, //if polygonA encompasses polygonB at this intersection
         BEncompassesA = 8, // if polygonB encompasses polygonA at this intersection

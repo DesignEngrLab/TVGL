@@ -42,7 +42,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Returns the vector (1,1,1).
+        /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
         public static Vector3 Null
         {

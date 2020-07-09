@@ -437,9 +437,7 @@ namespace TVGL
                     else break;
                 }
                 if (edgesToUpdate.Count < face.Edges.Count) continue;
-                face.Normal = face.Normal * -1;
-                face.Edges.Reverse();
-                face.Vertices.Reverse();
+                face.Invert();
                 foreach (var edge in edgesToUpdate)
                     if (!allEdgesToUpdate.Contains(edge)) allEdgesToUpdate.Add(edge);
             }

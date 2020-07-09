@@ -18,7 +18,6 @@ namespace TVGLUnitTestsAndBenchmarking
             var ts = new TessellatedSolid();
             ts = new TessellatedSolid(new[] { new List<Vector3>() }, true, new TVGL.Color[0]);
             ts = new TessellatedSolid(new Vector3[0], new[] { new[] { 1, 2, 3 } }, true, new TVGL.Color[0]);
-            ts = new TessellatedSolid(new[] { new PolygonalFace() }, true, true);
             ts.AddPrimitive(new Flat());
             ts.CheckModelIntegrity();
             ts.ClassifyPrimitiveSurfaces();

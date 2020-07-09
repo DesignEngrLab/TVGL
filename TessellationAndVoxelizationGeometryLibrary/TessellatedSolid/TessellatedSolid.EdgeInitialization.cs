@@ -92,8 +92,8 @@ namespace TVGL
                 SetAndGetEdgeChecksum(edge);
                 // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
                 // face has no area (collapsed to a line).
-                if (otherFace.Normal.IsNull()) otherFace.Normal = ownedFace.Normal;
-                if (ownedFace.Normal.IsNull()) ownedFace.Normal = otherFace.Normal;
+                if (otherFace.Normal.IsNull()) otherFace.AdoptNeighborsNormal(ownedFace);
+                if (ownedFace.Normal.IsNull()) ownedFace.AdoptNeighborsNormal(otherFace);
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;

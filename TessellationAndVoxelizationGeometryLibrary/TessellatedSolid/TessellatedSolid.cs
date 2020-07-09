@@ -197,11 +197,6 @@ namespace TVGL
             MakeFaces(faceIndices, colors);
             MakeEdges();
 
-            foreach (var face in Faces)
-                face.DefineFaceCurvature();
-            foreach (var v in Vertices)
-                v.DefineCurvature();
-
             if (serializationData.ContainsKey("ConvexHullVertices"))
             {
                 jArray = (JArray)serializationData["ConvexHullVertices"];
@@ -404,10 +399,6 @@ namespace TVGL
         {
             MakeEdges();
             CalculateVolume();
-            foreach (var face in Faces)
-                face.DefineFaceCurvature();
-            foreach (var v in Vertices)
-                v.DefineCurvature();
             ModifyTessellation.CheckModelIntegrity(this);
             ConvexHull = new TVGLConvexHull(this);
             if (ConvexHull.Vertices != null)
@@ -542,7 +533,7 @@ namespace TVGL
                     listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices) { Color = color });
                 else
                 {
-                    var normal = PolygonalFace.DetermineNormal(faceVertices, out bool reverseVertexOrder);
+                    var normal = MiscFunctions.DetermineNormalPolygon(faceVertices.Length,faceVertices, out _, Vector3.Null);
                     var triangulatedListofLists = new[] { faceVertices }.Triangulate(normal, out _, out _);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
@@ -1132,7 +1123,7 @@ namespace TVGL
                 matrixC = matrixC * matrixA * matrixA.GetDeterminant();
                 matrixCtotal = matrixCtotal + matrixC;
             }
-            // todo fix this and COM calculation
+            // todo fix this calculation
             //var translateMatrix = new double[,] { { 0 }, { 0 }, { 0 } };
             ////what is this crazy equations?
             //var matrixCprime =

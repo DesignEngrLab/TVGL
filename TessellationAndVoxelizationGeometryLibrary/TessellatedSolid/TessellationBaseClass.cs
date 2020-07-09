@@ -30,7 +30,7 @@ namespace TVGL
         ///     Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        public Vector3 Normal { get; internal set; }
+        public abstract Vector3 Normal { get; }
 
     }
 }

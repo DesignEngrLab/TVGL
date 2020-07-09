@@ -704,7 +704,7 @@ namespace TVGL.Boolean_Operations
             {
                 //Make one new edge and one new face. Set the ownership of this edge.
                 var newFace =
-                    new PolygonalFace(new List<Vertex> { st1.OnSideVertex, st1.IntersectVertex, st2.OnSideVertex },
+                    new PolygonalFace(new [] { st1.OnSideVertex, st1.IntersectVertex, st2.OnSideVertex },
                         sharedFace.Normal, false);
                 newEdges.Last().OtherFace = newFace;
                 if (!lastNewFace)
@@ -753,10 +753,10 @@ namespace TVGL.Boolean_Operations
             {
                 //Create two new faces
                 var newFace1 =
-                    new PolygonalFace(new List<Vertex> { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
+                    new PolygonalFace(new [] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
                         sharedFace.Normal, false);
                 var newFace2 =
-                    new PolygonalFace(new List<Vertex> { st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex },
+                    new PolygonalFace(new [] { st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex },
                         sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace1;
@@ -806,7 +806,7 @@ namespace TVGL.Boolean_Operations
             {
                 //Make two new edges and one new face. Set the ownership of the edges.
                 var newFace =
-                    new PolygonalFace(new List<Vertex> { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
+                    new PolygonalFace(new [] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
                         sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace;

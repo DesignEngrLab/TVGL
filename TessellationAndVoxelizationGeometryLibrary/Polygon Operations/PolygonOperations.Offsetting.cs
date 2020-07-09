@@ -124,10 +124,8 @@ namespace TVGL.TwoDimensional
                     var transform = Matrix3x3.CreateTranslation(-point) * rotMatrix *
                                     Matrix3x3.CreateTranslation(point);
                     var nextPoint = firstPoint.Transform(transform);
-                    // the problem with this matrix transform is figuring out when to stop. It turns out that the vector connecting
-                    // the starting point of the curve with the last point must always be in the same direction (positive dot-product)
-                    // with the new line segment
-                    //todo: this is not correct need to fix
+                    // the challenge with this matrix transform is figuring out when to stop. But we know that all the new points must to on
+                    // positive side of the line connectings the first and last points. This is defined by the following dot-product
                     while (firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
                     {
                         pointsList.Add(nextPoint);

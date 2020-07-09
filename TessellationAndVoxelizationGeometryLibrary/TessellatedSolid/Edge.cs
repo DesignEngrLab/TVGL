@@ -199,6 +199,29 @@ namespace TVGL
         }
         CurvatureType _curvature = CurvatureType.Undefined;
 
+
+        /// <summary>
+        /// Gets the normal.
+        /// </summary>
+        /// <value>The normal.</value>
+        public override Vector3 Normal
+        {
+            get
+            {
+                if (_normal.IsNull()) DetermineNormal();
+                return _normal;
+            }
+        }
+
+
+        Vector3 _normal = Vector3.Null;
+        private void DetermineNormal()
+        {
+            throw new NotImplementedException();
+        }
+
+
+
         /// <summary>
         ///     Updates the edge vector and length, if a vertex has been moved.
         /// </summary>

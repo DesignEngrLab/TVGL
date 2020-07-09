@@ -298,15 +298,18 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
             double minAllowableArea = Constants.BaseTolerance)
         {
+            var isSubtract = false;
+            var isUnion = true;
+            var boothApproachDirections = true;
             if (intersections.Count == 0) return new List<Polygon> { polygon.Copy() };
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersections, false, true, true, out var startingIntersection,
+            while (GetNextStartingIntersection(intersections, isSubtract, isUnion, boothApproachDirections, out var startingIntersection,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, false).ToList();
+                    startEdge, isSubtract, isUnion).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
                 if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
@@ -350,7 +353,7 @@ namespace TVGL.TwoDimensional
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, isSubtract).ToList();
+                    startEdge, isSubtract, isUnion).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
                 if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
@@ -491,36 +494,42 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <param name="intersectionData">The intersection data.</param>
         /// <param name="currentEdge">The current edge.</param>
-        /// <param name="switchDirections">if set to <c>true</c> [switch directions].</param>
+        /// <param name="isSubtract">if set to <c>true</c> [switch directions].</param>
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private static List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup,
-            List<IntersectionData> intersections, IntersectionData intersectionData, PolygonSegment currentEdge, bool switchDirections)
+            List<IntersectionData> intersections, IntersectionData intersectionData, PolygonSegment currentEdge, bool isSubtract, bool isUnion)
         {
             var newPath = new List<Vector2>();
             var forward = true; // as in following the edges in the forward direction (from...to). If false, then traverse backwards
             var currentEdgeIsFromPolygonA = currentEdge == intersectionData.EdgeA;
             while ((currentEdgeIsFromPolygonA && !intersectionData.VisitedA) || (!currentEdgeIsFromPolygonA && !intersectionData.VisitedB))
             {
-                // the following ternary operator switch the line segment. if A is current, then make B current and vice-versa
-                var intersectionCoordinates = intersectionData.IntersectCoordinates;
-                //todo
-                if (((byte)intersectionData.Relationship & 0b11) == 0
-                    || (currentEdgeIsFromPolygonA && ((byte)intersectionData.Relationship & 0b01) == 0)
-                    || (!currentEdgeIsFromPolygonA && ((byte)intersectionData.Relationship & 0b10) == 0))
-                    newPath.Add(intersectionData.IntersectCoordinates);
-
                 if (currentEdgeIsFromPolygonA) intersectionData.VisitedA = true;
                 else intersectionData.VisitedB = true;
+                
+                var intersectionCoordinates = intersectionData.IntersectCoordinates;
+                // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
+                // current polygon edge
+                if ((intersectionData.Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) == 0
+                    || (currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0)
+                    || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0))
+                    newPath.Add(intersectionCoordinates);
 
                 //are there times when you don't want to switch to the other polygon like union - encompass
                 //todo - there are cases when you don't switch like if A encompass B and union - oh! but you start on B's lines...better check that
-                currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeB : intersectionData.EdgeA;
+                if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
+                    currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeB : intersectionData.EdgeA;
+                else if ((intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
+                    currentEdge = (isUnion || isSubtract) ? intersectionData.EdgeA : intersectionData.EdgeB;
+                else if ((intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
+                    currentEdge = isUnion ? intersectionData.EdgeB : intersectionData.EdgeA;
+                else currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
 
-                if (switchDirections) forward = !forward;
+                if (isSubtract) forward = !forward;
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                   intersectionCoordinates, forward, out intersectionData))
+                        intersectionData.IntersectCoordinates, forward, out intersectionData))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {

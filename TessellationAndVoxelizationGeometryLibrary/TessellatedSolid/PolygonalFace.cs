@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.IOFunctions.amfclasses;
 using TVGL.Numerics;
 
 
@@ -43,14 +44,14 @@ namespace TVGL
                 Color = Color,
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
-                Normal = Normal,
+                _normal = _normal,
                 Vertices = new List<Vertex>()
             };
         }
 
         internal void Invert()
         {
-            Normal = Normal * -1;
+            _normal *= -1;
             //var firstVertex = face.Vertices[0];
             //face.Vertices.RemoveAt(0);
             //face.Vertices.Insert(1, firstVertex);
@@ -67,9 +68,7 @@ namespace TVGL
         public void Update()
         {
             _center = Vector3.Null;
-            bool reverseVertexOrder;
-            Normal = DetermineNormal(this.Vertices, out reverseVertexOrder);
-            if (reverseVertexOrder) Vertices.Reverse();
+            _normal = Vector3.Null;
             _area = double.NaN;
         }
 
@@ -145,33 +144,16 @@ namespace TVGL
             return index == Vertices.Count - 1 ? Vertices[0] : Vertices[index + 1];
         }
 
+        internal void AdoptNeighborsNormal(PolygonalFace ownedFace)
+        {
+            _normal = ownedFace.Normal;
+        }
+
         #region Constructors
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
-        /// <param name="normal">The normal.</param>
-        /// <param name="color">The color.</param>
-        public PolygonalFace(Vector3 normal, Color color)
-            : this(normal)
-        {
-            Color = color;
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
-        /// </summary>
-        /// <param name="normal">The normal.</param>
-        public PolygonalFace(Vector3 normal)
-            : this()
-        {
-            Normal = normal;
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
-        /// </summary>
-        public PolygonalFace()
+        private PolygonalFace()
         {
             Vertices = new List<Vertex>();
             Edges = new List<Edge>();
@@ -191,158 +173,40 @@ namespace TVGL
                 if (connectVerticesBackToFace)
                     v.Faces.Add(this);
             }
-            bool reverseVertexOrder;
-            Normal = DetermineNormal(Vertices, out reverseVertexOrder);
-            if (reverseVertexOrder) Vertices.Reverse();
         }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="normal">A guess for the normal vector.</param>
+        /// <param name="suggestedNormal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, Vector3 normal, bool connectVerticesBackToFace = true)
-            : this()
+        public PolygonalFace(IEnumerable<Vertex> vertices, Vector3 suggestedNormal, bool connectVerticesBackToFace = true)
+            : this(vertices, connectVerticesBackToFace)
         {
-            foreach (var v in vertices)
-            {
-                Vertices.Add(v);
-                if (connectVerticesBackToFace)
-                    v.Faces.Add(this);
-            }
             bool reverseVertexOrder;
-            Normal = DetermineNormal(Vertices, out reverseVertexOrder, normal);
+            _normal = MiscFunctions.DetermineNormalPolygon(Vertices.Count, Vertices, out reverseVertexOrder, suggestedNormal);
             if (reverseVertexOrder) Vertices.Reverse();
         }
 
-
         /// <summary>
-        /// Determines the normal.
+        /// Gets the normal.
         /// </summary>
-        /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="prevNormal">The normal.</param>
-        /// <returns>System.Vector3.</returns>
-        public static Vector3 DetermineNormal(IList<Vertex> vertices, out bool reverseVertexOrder, Vector3 prevNormal)
+        /// <value>The normal.</value>
+        public override Vector3 Normal
         {
-            var n = vertices.Count;
-            if (n == 3) return DetermineNormalTriangle(vertices[0], vertices[1], vertices[2], out reverseVertexOrder, prevNormal);
-            else return DetermineNormalPolygon(n, vertices, out reverseVertexOrder, prevNormal);
-        }
-        public static Vector3 DetermineNormal(IList<Vertex> vertices, out bool reverseVertexOrder)
-        {
-            var n = vertices.Count;
-            if (n == 3)
+            get
             {
-                reverseVertexOrder = false;
-                return DetermineNormalTriangle(vertices[0], vertices[1], vertices[2]);
+                if (_normal.IsNull())
+                    _normal = ((Vertices[1].Coordinates - Vertices[0].Coordinates)
+                        .Cross(Vertices[2].Coordinates - Vertices[0].Coordinates))
+                        .Normalize();
+                return _normal;
             }
-            else return DetermineNormalPolygon(n, vertices, out reverseVertexOrder, Vector3.Null);
         }
+        Vector3 _normal = Vector3.Null;
 
-        internal static Vector3 DetermineNormalTriangle(Vertex vertex1, Vertex vertex2, Vertex vertex3)
-        {
-            return ((vertex2.Coordinates - vertex1.Coordinates)
-                .Cross(vertex3.Coordinates - vertex1.Coordinates))
-                .Normalize();
-        }
-        internal static Vector3 DetermineNormalTriangle(Vertex vertex1, Vertex vertex2, Vertex vertex3, out bool reverseVertexOrder, Vector3 prevNormal)
-        {
-            reverseVertexOrder = false;
-            var calcNormal = DetermineNormalTriangle(vertex1, vertex2, vertex3);
-            if (prevNormal.IsNull()) return calcNormal;
-            if (prevNormal.Length().IsPracticallySame(1, Constants.BaseTolerance)) prevNormal = prevNormal.Normalize();
-            if ((-1 * calcNormal).IsPracticallySame(prevNormal, Constants.SameFaceNormalDotTolerance))
-            {
-                reverseVertexOrder = true;
-                return -1 * calcNormal;
-            }
-            return calcNormal;
-        }
-        internal static Vector3 DetermineNormalPolygon(int numSides, IList<Vertex> vertices, out bool reverseVertexOrder, Vector3 prevNormal)
-        {
-            reverseVertexOrder = false;
-            var edgeVectors = new Vector3[numSides];
-            List<Vector3> normals = new List<Vector3>();
-            edgeVectors[0] = vertices[0].Coordinates - vertices[numSides - 1].Coordinates;
-            for (var i = 1; i < numSides; i++)
-            {
-                edgeVectors[i] = vertices[i].Coordinates - vertices[i - 1].Coordinates;
-                var tempCross = edgeVectors[i - 1].Cross(edgeVectors[i]).Normalize();
-                if (tempCross.IsNull()) continue;
-                if (prevNormal != null)
-                {     // a guess at the normal (usually from an STL file) may be passed
-                    // in to this function. If we find that the guess matches this first one
-                    // (it's first because normals is empty), then we simply exit with the provided
-                    // value.
-                    if (tempCross.IsPracticallySame(prevNormal, Constants.SameFaceNormalDotTolerance))
-                        return tempCross;
-                    if ((-1 * tempCross).IsPracticallySame(prevNormal, Constants.SameFaceNormalDotTolerance))
-                    {
-                        reverseVertexOrder = true;
-                        return -1 * tempCross;
-                    }
-                }
-                if (numSides == 3) // this is just a triangle that should be in proper order
-                    return tempCross;
-                // chances are one will exit in the above if statement. All the remaining code in this method
-                // is for cases where there is a bigger polygon - potentially with concavities or collinear points
-                if (normals == null)
-                    normals = new List<Vector3>();
-                normals.Add(tempCross);
-            }
-            var lastCross = edgeVectors[numSides - 1].Cross(edgeVectors[0]).Normalize();
-            if (!lastCross.IsNull()) normals.Add(lastCross);
 
-            numSides = normals.Count;
-            if (numSides == 0) // this would happen if the face collapse to a line.
-                return new Vector3(double.NaN, double.NaN, double.NaN);
-            // before we just average these normals, let's check that they agree.
-            // the DotsOfNormals simply takes the dot product of adjacent
-            // normals. If they're all close to one, then we can average and return.
-            var DotsOfNormals = new List<double>();
-            DotsOfNormals.Add(normals[0].Dot(normals[numSides - 1]));
-            for (var i = 1; i < numSides; i++) DotsOfNormals.Add(normals[i].Dot(normals[i - 1]));
-            // if all are close to one (or at least positive), then the face is a convex polygon. Now,
-            // we can simply average and return the answer.
-            var isConvex = DotsOfNormals.All(x => x > 0);
-            if (isConvex)
-            {
-                var newNormal = normals.Aggregate((current, c) => current + c).Normalize();
-                // even though the normal provide was wrong above (or nonexistent)
-                // we still check it to see if this is the correct direction.
-                if (prevNormal == null || newNormal.Dot(prevNormal) >= 0) return newNormal;
-                // else reverse the order 
-                reverseVertexOrder = true;
-                return newNormal * -1;
-            }
-            // now, the rare case in which the polygon face is not convex, the only .
-            if (prevNormal != null)
-            {
-                //
-                // well, here the guess may be useful. We'll insert it into the list of Dots
-                // and then do a tally
-                DotsOfNormals[0] = prevNormal.Dot(normals[0]);
-                DotsOfNormals.Insert(0, prevNormal.Dot(normals[numSides - 1]));
-            }
-            var likeFirstNormal = true;
-            var numLikeFirstNormal = 1;
-            foreach (var d in DotsOfNormals)
-            {
-                // this tricky little function keeps track of how many are in the same direction
-                // as the first one.
-                if (d < 0) likeFirstNormal = !likeFirstNormal;
-                if (likeFirstNormal) numLikeFirstNormal++;
-            }
-            // if the majority are like the first one, then use that one (which may have been the guess).
-            if (2 * numLikeFirstNormal >= normals.Count) return normals[0].Normalize();
-            // otherwise, go with the opposite (so long as there isn't an original guess)
-            if (prevNormal == null) return normals[0].Normalize() * -1;
-            //finally, assume the original guess is right, and reverse the order
-            reverseVertexOrder = true;
-            return normals[0].Normalize();
-        }
         #endregion
 
         #region Properties
@@ -461,6 +325,10 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Gets the curvature.
+        /// </summary>
+        /// <value>The curvature.</value>
         public override CurvatureType Curvature
         {
             get
@@ -474,7 +342,7 @@ namespace TVGL
         /// <summary>
         ///     Defines the face curvature. Depends on DefineEdgeAngle
         /// </summary>
-        public void DefineFaceCurvature()
+        private void DefineFaceCurvature()
         {
             if (Edges.Any(e => e == null || e.Curvature == CurvatureType.Undefined))
                 _curvature = CurvatureType.Undefined;
