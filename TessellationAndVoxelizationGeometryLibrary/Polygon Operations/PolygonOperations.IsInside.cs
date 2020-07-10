@@ -251,15 +251,15 @@ namespace TVGL.TwoDimensional
             var atLeastOneBEncompassingA = false;
             foreach (var intersectionData in intersections)
             {
-                if ((byte)intersectionData.Relationship >= 28)
+                if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
                     return true;
-                else if ((byte)intersectionData.Relationship >= 13 && (byte)intersectionData.Relationship <= 15)
+                else if ((intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
                 {
                     if (atLeastOneBEncompassingA)
                         return true;
                     atLeastOneAEncompassingB = true;
                 }
-                else if ((byte)intersectionData.Relationship >= 21 && (byte)intersectionData.Relationship <= 23)
+                else if ((intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
                 {
                     if (atLeastOneAEncompassingB)
                         return true;

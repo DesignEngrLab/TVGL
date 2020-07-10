@@ -39,11 +39,13 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.Separated:
                     return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
                 case PolygonRelationship.BIsCompletelyInsideA:
+                case PolygonRelationship.BInsideAButBordersTouch:
                     var polygonACopy = polygonA.Copy();
                     if (!polygonB.IsPositive)
                         polygonACopy.AddHole(polygonB.Copy());
                     return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
+                case PolygonRelationship.AInsideBButBordersTouch:
                     var polygonBCopy = polygonB.Copy();
                     if (!polygonA.IsPositive)
                         polygonBCopy.AddHole(polygonA.Copy());
@@ -51,10 +53,6 @@ namespace TVGL.TwoDimensional
 
                 //case PolygonRelationship.Intersect:
                 //case PolygonRelationship.SeparatedButBordersTouch:
-                //case PolygonRelationship.BVerticesInsideAButLinesIntersect:
-                //case PolygonRelationship.BInsideAButBordersTouch:
-                //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
-                //case PolygonRelationship.AInsideBButBordersTouch:
                 default:
                     return BooleanOperation(polygonA, polygonB, intersections, false, true, false);
             }
@@ -120,8 +118,13 @@ namespace TVGL.TwoDimensional
         {
             switch (polygonRelationship)
             {
-                case PolygonRelationship.Separated: return new List<Polygon>();
+                case PolygonRelationship.SeparatedButBordersTouch:
+                case PolygonRelationship.Separated:
+                case PolygonRelationship.AIsInsideHoleOfB:
+                case PolygonRelationship.BIsInsideHoleOfA:
+                    return new List<Polygon>();
                 case PolygonRelationship.BIsCompletelyInsideA:
+                case PolygonRelationship.BInsideAButBordersTouch:
                     if (polygonB.IsPositive) return new List<Polygon> { polygonB.Copy() };
                     else
                     {
@@ -130,6 +133,7 @@ namespace TVGL.TwoDimensional
                         return new List<Polygon> { polygonACopy };
                     }
                 case PolygonRelationship.AIsCompletelyInsideB:
+                case PolygonRelationship.AInsideBButBordersTouch:
                     if (polygonA.IsPositive) return new List<Polygon> { polygonA.Copy() };
                     else
                     {
@@ -138,11 +142,6 @@ namespace TVGL.TwoDimensional
                         return new List<Polygon> { polygonBCopy };
                     }
                 //case PolygonRelationship.Intersect:
-                //case PolygonRelationship.SeparatedButBordersTouch:
-                //case PolygonRelationship.BVerticesInsideAButLinesIntersect:
-                //case PolygonRelationship.BInsideAButBordersTouch:
-                //case PolygonRelationship.AVerticesInsideBButLinesIntersect:
-                //case PolygonRelationship.AInsideBButBordersTouch:
                 default:
                     return BooleanOperation(polygonA, polygonB, intersections, false, false, false, minAllowableArea);
             }
@@ -214,6 +213,7 @@ namespace TVGL.TwoDimensional
             {
                 case PolygonRelationship.Separated:
                 case PolygonRelationship.SeparatedButBordersTouch:
+                case PolygonRelationship.BIsInsideHoleOfA:
                     return new List<Polygon> { polygonA.Copy() };
                 case PolygonRelationship.BIsCompletelyInsideA:
                     var polygonACopy = polygonA.Copy();
@@ -225,8 +225,12 @@ namespace TVGL.TwoDimensional
                     }
                     return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
+                case PolygonRelationship.AInsideBButBordersTouch:
+                case PolygonRelationship.AIsInsideHoleOfB:
                     return new List<Polygon>();
                 default:
+                    //case PolygonRelationship.Intersect:
+                    //case PolygonRelationship.BInsideAButBordersTouch:
                     return BooleanOperation(polygonA, polygonB, intersections, true, false, false, minAllowableArea);
             }
         }
@@ -265,8 +269,11 @@ namespace TVGL.TwoDimensional
             {
                 case PolygonRelationship.Separated:
                 case PolygonRelationship.SeparatedButBordersTouch:
+                case PolygonRelationship.AIsInsideHoleOfB:
+                case PolygonRelationship.BIsInsideHoleOfA:
                     return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
                 case PolygonRelationship.BIsCompletelyInsideA:
+                case PolygonRelationship.BInsideAButBordersTouch:
                     var polygonACopy1 = polygonA.Copy();
                     if (polygonB.IsPositive)
                     {
@@ -276,6 +283,7 @@ namespace TVGL.TwoDimensional
                     }
                     return new List<Polygon> { polygonACopy1 };
                 case PolygonRelationship.AIsCompletelyInsideB:
+                case PolygonRelationship.AInsideBButBordersTouch:
                     var polygonBCopy2 = polygonB.Copy();
                     if (polygonA.IsPositive)
                     {
@@ -284,6 +292,7 @@ namespace TVGL.TwoDimensional
                         polygonBCopy2.AddHole(polygonACopy2);
                     }
                     return new List<Polygon> { polygonBCopy2 };
+                //case PolygonRelationship.Intersect:
                 default:
                     return BooleanOperation(polygonA, polygonB, intersections, true, false, true, minAllowableArea);
             }
@@ -507,29 +516,31 @@ namespace TVGL.TwoDimensional
             {
                 if (currentEdgeIsFromPolygonA) intersectionData.VisitedA = true;
                 else intersectionData.VisitedB = true;
-                
+
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
                 // current polygon edge
                 if ((intersectionData.Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) == 0
-                    || (currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0)
-                    || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0))
+                    || (currentEdgeIsFromPolygonA && (!forward || (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0))
+                    || (!currentEdgeIsFromPolygonA && (!forward || (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0)))
                     newPath.Add(intersectionCoordinates);
 
                 //are there times when you don't want to switch to the other polygon like union - encompass
-                //todo - there are cases when you don't switch like if A encompass B and union - oh! but you start on B's lines...better check that
-                if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
+                if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == 0) // glance - stay on same polygon
+                    currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
+                else if (isSubtract || (intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
+                    // always switch if subtracting. If the conventional case, then also switch
                     currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeB : intersectionData.EdgeA;
                 else if ((intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
-                    currentEdge = (isUnion || isSubtract) ? intersectionData.EdgeA : intersectionData.EdgeB;
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
+                    // if A encompasses B then A for union, B for intersection (subtract and Xor would already be handled by previous condition)
+                    currentEdge = isUnion ? intersectionData.EdgeA : intersectionData.EdgeB;
+                else //if ((intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0) // opposite of last condition
                     currentEdge = isUnion ? intersectionData.EdgeB : intersectionData.EdgeA;
-                else currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
 
                 if (isSubtract) forward = !forward;
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                        intersectionData.IntersectCoordinates, forward, out intersectionData))
+                        intersectionCoordinates, forward, out intersectionData))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
