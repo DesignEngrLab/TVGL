@@ -24,19 +24,19 @@ namespace TVGLUnitTestsAndBenchmarking
 
             //var summary = BenchmarkRunner.Run(typeof(PolygonOperationsTesting).Assembly);
 
-            //PolygonOperationsTesting.TestOffsetting();
+          //  PolygonOperationsTesting.TestOffsetting();
             //PolygonOperationsTesting.TestBooleanCompare();
             PolygonOperationsTesting.TestUnionSimple();
             PolygonOperationsTesting.TestEdgeCase2();
             PolygonOperationsTesting.TestRemoveSelfIntersect();
-            //Voxels.InitialTest();
-            //return;
-            //var tVGL3Dto2DTests = new TVGL3Dto2DTests();
-            //tVGL3Dto2DTests.BoxSilhouette();
+            Voxels.InitialTest();
+            return;
+            var tVGL3Dto2DTests = new TVGL3Dto2DTests();
+            tVGL3Dto2DTests.BoxSilhouette();
 
-            //PolygonOperationsTesting.TestSlice2D();
-            //PolygonOperationsTesting.TestBoundingRectangle();
-            //PolygonOperationsTesting.TestSimplify();
+            PolygonOperationsTesting.TestSlice2D();
+            PolygonOperationsTesting.TestBoundingRectangle();
+            PolygonOperationsTesting.TestSimplify();
 
 
         }

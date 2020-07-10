@@ -13,7 +13,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
-        private static bool IsNonIntersectingPolygonInside(this Polygon outer, Polygon inner, out bool onBoundary)
+        internal static bool IsNonIntersectingPolygonInside(this Polygon outer, Polygon inner, out bool onBoundary)
         {
             onBoundary = false;
             if (Math.Abs(inner.Area) > outer.Area) return false;
@@ -289,11 +289,10 @@ namespace TVGL.TwoDimensional
 
         /// <summary>
         /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
-        /// fromPoint Inclusive, and the toPoint exclusive. This if lines seem to touch are their endpoints, it is only recorded
+        /// fromPoint Inclusive, and the toPoint exclusive. Thus, if lines touch at their endpoints, it is only recorded
         /// if both points are from points. Also no "close" operations are used (e.g. IsPracticallySame). Because the method is
-        /// intended to be invoked for all lines on the polygon, this prevents an intersection from being caught by muliple lines,
-        /// makes the methods simpler (easier to debug and edit) and quicker.
-        /// If two lines are collinear, they are not considered intersecting.
+        /// intended to be invoked for all lines on the polygon, this prevents an intersection from being caught by multiple lines,
+        /// and makes the methods simpler (easier to debug and edit) and quicker.
         /// </summary>
         /// <param name="lineA">The line a.</param>
         /// <param name="lineB">The line b.</param>
@@ -317,11 +316,18 @@ namespace TVGL.TwoDimensional
             {
                 intersectionCoordinates = lineA.FromPoint.Coordinates;
                 relationship = PolygonSegmentRelationship.BothLinesStartAtPoint;
-                if (lineACrossLineB.IsNegligible()) // the two lines are parallel (cross product will be zero)
-                {
-                    if (lineA.Vector.Dot(lineB.Vector) < 0) relationship |= PolygonSegmentRelationship.OppositeDirections;
-                    else relationship |= PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.CoincidentLines;
-                }
+                if (lineACrossLineB.IsNegligible() && lineA.Vector.Dot(lineB.Vector) > 0)
+                    // the two lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
+                    relationship |= PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.CoincidentLines;
+                if (prevA.Vector.Cross(prevB.Vector).IsNegligible() && prevA.Vector.Dot(prevB.Vector) > 0)
+                    // the two previous lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
+                    relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
+                if (lineA.Vector.Cross(prevB.Vector).IsNegligible() && lineA.Vector.Dot(prevB.Vector) < 0)
+                    // the two lines are going in the opposite direction but the line-A coincides with previous line-B
+                    relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections;
+                if (lineB.Vector.Cross(prevA.Vector).IsNegligible() && lineB.Vector.Dot(prevA.Vector) < 0)
+                    // the two lines are going in the opposite direction but the line-B coincides with previous line-A
+                    relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections;
             }
             else
             {
@@ -348,14 +354,16 @@ namespace TVGL.TwoDimensional
                             prevB = lineB;
                         }
                         if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointCross) < 0)
-                        { // now check the otherway. Note, since vStart is backwards here, we just make the other vector backwards as well
-                            prevA = lineA;
+                        { // now check the other way. Note, since vStart is backwards here, we just make the other vector backwards as well
+                           
                             if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
                                 intersections.Add(new IntersectionData(lineA, lineB, lineB.FromPoint.Coordinates,
-                                    DeterminePolygonSegmentRelationship(lineA, lineB, prevA, prevB, lineACrossLineB,
-                                     relationship | PolygonSegmentRelationship.AtStartOfB | PolygonSegmentRelationship.SameLineAfterPoint)));
+                                    DeterminePolygonSegmentRelationship(lineA, lineB, lineA, lineB.FromPoint.EndLine, lineACrossLineB,
+                                        PolygonSegmentRelationship.AtStartOfB | PolygonSegmentRelationship.CoincidentLines |
+                                        PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.OppositeDirections)));
                             else
                             {
+                                prevA = lineA;
                                 relationship |= PolygonSegmentRelationship.AtStartOfB | PolygonSegmentRelationship.SameLineAfterPoint;
                                 intersectionCoordinates = lineB.FromPoint.Coordinates;
                                 intersectionFound = true;
@@ -364,7 +372,7 @@ namespace TVGL.TwoDimensional
                         //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
                         // either from Point, then we do not record it. It will be recorded when the next segment is checked
                     }
-                    if (!intersectionFound) return;// otherwise the lines are parallel but not at same distance/intercept or they are
+                    if (!intersectionFound) return;// otherwise the lines are parallel but not at same distance/intercept. Or, they are
                     //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
                     //Instead those will be solved in the next/adjacent polygon segment
                 }
@@ -390,8 +398,9 @@ namespace TVGL.TwoDimensional
                     //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
                     var oneOverdeterminnant = 1 / lineACrossLineB;
                     var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointCross.X - lineB.Vector.X * fromPointCross.Y);
+                    if (t_1 < 0 || t_1 >= 1) return;
                     var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointCross.X - lineA.Vector.X * fromPointCross.Y);
-                    if (t_1 < 0 || t_1 >= 1 || t_2 < 0 || t_2 >= 1) return; // PolygonSegmentRelationship.Separated;
+                    if (t_2 < 0 || t_2 >= 1) return;
                     if (t_1.IsNegligible())
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates;
@@ -424,15 +433,17 @@ namespace TVGL.TwoDimensional
             var prevACrossPrevB = prevA.Vector.Cross(prevB.Vector);
             var lineACrossPrevB = lineA.Vector.Cross(prevB.Vector);
             var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
-            //in the above function, we detect if the two lines are Coincident, but not the if the previous lines are coincident
+
+            //in the calling function (AddIntersectionBetweenLines), we detect if the two lines are Coincident, but not if the previous lines are coincident
+            // the prerequisite for this is that the previous lines have the same slope (0 cross product)
             if (prevACrossPrevB.IsNegligible())
             {
                 if (prevA.Vector.Dot(prevB.Vector) > 0)
                     relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
-                else if ((relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != PolygonSegmentRelationship.BothLinesStartAtPoint)
-                    // this is weird one, but if - in the previous method - it was determined that both lines start at this point
-                    // and the aforementioned conditions show that the prevoius lines are parallel but opposite in direction, then these lines
-                    // are not coincident. however, if they are add the flags...(some of which may have already been set)
+                // then opposite directions but could be parallel lines (e.g. example of touching octagons, slightly offset)
+                // so, previous lines overlap only if #1: polygons share a point
+                else if (((relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0 && lineACrossPrevB.IsNegligible())
+                    || ((relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0 && prevACrossLineB.IsNegligible()))
                     relationship |= PolygonSegmentRelationship.OppositeDirections |
                                     PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
             }

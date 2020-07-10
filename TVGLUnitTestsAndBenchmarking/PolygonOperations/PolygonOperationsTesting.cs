@@ -127,7 +127,7 @@ namespace TVGLUnitTestsAndBenchmarking
             polygon3 = polygon2.Subtract(polygon1, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon1.Subtract(polygon2, a, intersections);
+             polygon3 = polygon1.Subtract(polygon2, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.ExclusiveOr(polygon2, a, intersections);
@@ -183,10 +183,10 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
 
-            //var polygon3 = polygon1.Union(polygon2, a, intersections);
-            //Presenter.ShowAndHang(polygon3);
+            var polygon3 = polygon1.Union(polygon2, a, intersections);
+            Presenter.ShowAndHang(polygon3);
 
-           var polygon3 = polygon1.Subtract(polygon2, a, intersections);
+            polygon3 = polygon1.Subtract(polygon2, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.ExclusiveOr(polygon2, a, intersections);
