@@ -46,7 +46,7 @@ namespace TVGL.TwoDimensional
             var index = 0;
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path, true, index++);
+                var polygon = new Polygon(path, index++);
                 var area = polygon.Area;
                 if (area < 0) negativePolygons.Add(area, polygon);
                 if (area > 0) positivePolygons.Add(area, polygon);
@@ -113,7 +113,7 @@ namespace TVGL.TwoDimensional
             var index = 0;
             foreach (var path in paths)
             {
-                var polygon = new Polygon(path, true, index++);
+                var polygon = new Polygon(path, index++);
                 var area = polygon.Area;
                 if (area < 0)
                 {
@@ -287,15 +287,15 @@ namespace TVGL.TwoDimensional
         private static IEnumerable<Polygon> CreateShallowPolygonTreesOrderedListsAndVertices(
             this IEnumerable<IEnumerable<Vector2>> paths)
         {
-            Polygon positivePolygon = new Polygon(paths.First(), false);
+            Polygon positivePolygon = new Polygon(paths.First());
             foreach (var path in paths.Skip(1))
             {
                 if (path.Area() < 0)
-                    positivePolygon.AddHole(new Polygon(path, false));
+                    positivePolygon.AddHole(new Polygon(path));
                 else
                 {
                     yield return positivePolygon;
-                    positivePolygon = new Polygon(path, false);
+                    positivePolygon = new Polygon(path);
                 }
             }
         }

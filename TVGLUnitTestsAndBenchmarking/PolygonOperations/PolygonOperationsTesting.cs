@@ -89,7 +89,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
                 //var coords = MakeRandomComplexPolygon(10, 30).ToList();
                 Presenter.ShowAndHang(coords);
-                var polygon = new Polygon(coords, true);
+                var polygon = new Polygon(coords);
                 var polygons = polygon.RemoveSelfIntersections();
                 Presenter.ShowAndHang(polygons);
                 //Presenter.ShowAndHang(polygons.Path);
@@ -102,8 +102,8 @@ namespace TVGLUnitTestsAndBenchmarking
             //{
             //r = new Random(i);
             //    Console.WriteLine(i);
-            var coords1 = MakeOctogonPolygon(0, 10, 10, 20, 2, 2).ToList();
-            var coords2 = MakeOctogonPolygon(10, 5, 20, 15, 2, 2).ToList();
+            var coords1 =MakeOctogonPolygon(0, 0, 10, 10, 2, 2).ToList();
+            var coords2 = MakeOctogonPolygon(-2, 2,10, 8, 3, 2.6).ToList();
 
             //var hole1 = MakeStarryCircularPolygon(8, 15, 3).ToList();
             //hole1.Reverse();
@@ -111,11 +111,11 @@ namespace TVGLUnitTestsAndBenchmarking
             //var coords2 = new[] { new Vector2(5, 40), new Vector2(-5, 40), new Vector2(-5, -40), new Vector2(5, -40) };
             var stopWatch = new Stopwatch();
             stopWatch.Restart();
-            var polygon1 = new Polygon(coords1, true);
+            var polygon1 = new Polygon(coords1);
             // polygon1.RemoveSelfIntersections();
             // polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
             //Presenter.ShowAndHang(polygon1);
-            var polygon2 = new Polygon(coords2, true);
+            var polygon2 = new Polygon(coords2);
 
             Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
@@ -124,13 +124,16 @@ namespace TVGLUnitTestsAndBenchmarking
             var polygon3 = polygon1.Union(polygon2, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon2.Subtract(polygon1, a, intersections);
+            polygon3 = polygon2.Intersect(polygon1, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
-             polygon3 = polygon1.Subtract(polygon2, a, intersections);
+            polygon3 = polygon1.Subtract(polygon2);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon1.ExclusiveOr(polygon2, a, intersections);
+            polygon3 = polygon2.Subtract(polygon1);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon2.ExclusiveOr(polygon1);
             Presenter.ShowAndHang(polygon3);
             //stopWatch.Restart();
             //var coords3 = PolygonOperations.Union(coords1, coords2);
@@ -173,11 +176,11 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var stopWatch = new Stopwatch();
             stopWatch.Restart();
-            var polygon1 = new Polygon(coords1, true);
+            var polygon1 = new Polygon(coords1);
             // polygon1.RemoveSelfIntersections();
             // polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
             //Presenter.ShowAndHang(polygon1);
-            var polygon2 = new Polygon(coords2, true);
+            var polygon2 = new Polygon(coords2);
 
             //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
@@ -215,10 +218,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 //polygon1 = new Polygon(coords1, true);
                 //polygon2 = new Polygon(coords2, true);
 
-                var polygon1 = new Polygon(coords1, true);
-                polygon1.AddHole(new Polygon(hole1, false));
-                var polygon2 = new Polygon(coords2, false);
-                polygon2.AddHole(new Polygon(hole2, false));
+                var polygon1 = new Polygon(coords1);
+                polygon1.AddHole(new Polygon(hole1));
+                var polygon2 = new Polygon(coords2);
+                polygon2.AddHole(new Polygon(hole2));
                 //polygon2.Transform(Matrix3x3.CreateTranslation(15, 15));
                 var clipperPoly1 = new[] {
                     coords1.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList(),
@@ -313,7 +316,7 @@ namespace TVGLUnitTestsAndBenchmarking
             coords1 = MakeStarryCircularPolygon(N, 30, 15).ToList();
             coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
             //coords1 = coords1.Xor(coords2)[0];
-            polygon1 = new Polygon(coords1, true);
+            polygon1 = new Polygon(coords1);
             //polygon1 = new Polygon(coords1, true);
             //polygon2 = new Polygon(coords2, true);
         }
@@ -459,8 +462,8 @@ namespace TVGLUnitTestsAndBenchmarking
             var coords1 = MakeStarryCircularPolygon(50, 28, 8).ToList();
             var hole1 = MakeStarryCircularPolygon(80, 14, 5).ToList();
             hole1.Reverse();
-            var polygon1 = new Polygon(coords1, true);
-            polygon1 = polygon1.Intersect(new Polygon(hole1, false))[0];
+            var polygon1 = new Polygon(coords1);
+            polygon1 = polygon1.Intersect(new Polygon(hole1))[0];
             //Presenter.ShowAndHang(polygon1);
             //var polygon1 = new Polygon(coords1, true);
             // Presenter.ShowAndHang(polygon1);

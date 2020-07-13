@@ -265,12 +265,12 @@ namespace TVGL
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
             var positivePath = PositiveLoop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
             if (positivePath.Area() < 0) positivePath.Reverse();
-            CrossSection2D=new Polygon(positivePath, true);
+            CrossSection2D=new Polygon(positivePath);
             foreach (var loop in NegativeLoops)
             {
                 var negativePath = loop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
                 if (negativePath.Area() > 0) negativePath.Reverse();
-                CrossSection2D.AddHole(new Polygon(negativePath, true));
+                CrossSection2D.AddHole(new Polygon(negativePath));
             }
         }
 

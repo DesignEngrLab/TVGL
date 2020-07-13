@@ -27,10 +27,10 @@ namespace TVGLUnitTestsAndBenchmarking
           //  PolygonOperationsTesting.TestOffsetting();
             //PolygonOperationsTesting.TestBooleanCompare();
             PolygonOperationsTesting.TestUnionSimple();
-            PolygonOperationsTesting.TestEdgeCase2();
-            PolygonOperationsTesting.TestRemoveSelfIntersect();
-            Voxels.InitialTest();
-            return;
+            //PolygonOperationsTesting.TestEdgeCase2();
+            //PolygonOperationsTesting.TestRemoveSelfIntersect();
+            //Voxels.InitialTest();
+            //return;
             var tVGL3Dto2DTests = new TVGL3Dto2DTests();
             tVGL3Dto2DTests.BoxSilhouette();
 

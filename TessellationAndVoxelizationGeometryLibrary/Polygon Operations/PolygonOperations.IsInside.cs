@@ -34,7 +34,7 @@ namespace TVGL.TwoDimensional
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, false)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
@@ -45,7 +45,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, false)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
@@ -56,11 +56,11 @@ namespace TVGL.TwoDimensional
             var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().X;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
-            var pIndex = 0;
+            var pointIndex = 0;
             for (int i = firstIntersectingIndex; i < numSteps; i++)
             {
                 var x = startingXValue + i * stepSize;
-                var thisPoint = sortedPoints[pIndex];
+                var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
                 while (thisPoint.X <= x)
                 {
@@ -69,12 +69,12 @@ namespace TVGL.TwoDimensional
                     else currentLines.Add(thisPoint.StartLine);
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
                     else currentLines.Add(thisPoint.EndLine);
-                    pIndex++;
-                    if (pIndex == sortedPoints.Count) return intersections;
-                    thisPoint = sortedPoints[pIndex];
+                    pointIndex++;
+                    if (pointIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
-                    x += Math.Min(stepSize, sortedPoints[pIndex + 1].X) / 10.0;
+                    x += Math.Min(stepSize, sortedPoints[pointIndex + 1].X) / 10.0;
                 var numIntersects = currentLines.Count;
                 var intersects = new double[numIntersects];
                 var index = 0;
@@ -87,7 +87,7 @@ namespace TVGL.TwoDimensional
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, false)), startingYValue,
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         /// <summary>
@@ -108,12 +108,13 @@ namespace TVGL.TwoDimensional
             var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().Y;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
-            var pIndex = 0;
+            var pointIndex = 0;
             for (int i = firstIntersectingIndex; i < numSteps; i++)
             {
                 var y = startingYValue + i * stepSize;
-                var thisPoint = sortedPoints[pIndex];
+                var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
+                // this while loop updates the current lines. 
                 while (thisPoint.Y <= y)
                 {
                     if (y.IsPracticallySame(thisPoint.Y)) needToOffset = true;
@@ -121,12 +122,12 @@ namespace TVGL.TwoDimensional
                     else currentLines.Add(thisPoint.StartLine);
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
                     else currentLines.Add(thisPoint.EndLine);
-                    pIndex++;
-                    if (pIndex == sortedPoints.Count) return intersections;
-                    thisPoint = sortedPoints[pIndex];
+                    pointIndex++;
+                    if (pointIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
-                    y += Math.Min(stepSize, sortedPoints[pIndex].Y) / 10.0;
+                    y += Math.Min(stepSize, sortedPoints[pointIndex].Y) / 10.0;
 
                 var numIntersects = currentLines.Count;
                 var intersects = new double[numIntersects];
@@ -162,9 +163,7 @@ namespace TVGL.TwoDimensional
             // value. Instead of directly sorting the Lines, which will have many repeat XMin values (since every
             // pair of lines meet at the a given point), the points are sorted first. These sorted points are
             // used in the ArePointsInsidePolygon function as well.
-            // the prev. 3 lines a simpler solution would be the following line.
             var orderedAPoints = polygonA.AllPolygons.SelectMany(poly => poly.Vertices).OrderBy(p => p.X).ToList();
-            if (polygonA.Lines.Count == polygonB.Lines.Count) ; //this silly little line is simply to ensure that the Lines
             // property has been invoked before the next function (GetOrderedLines), which requires that lines and vertices be properly connected
             var aLines = GetOrderedLines(orderedAPoints);
             //repeat for the lines in B

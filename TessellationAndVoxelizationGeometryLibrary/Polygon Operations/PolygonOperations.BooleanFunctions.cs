@@ -321,8 +321,8 @@ namespace TVGL.TwoDimensional
                     startEdge, isSubtract, isUnion).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
-                else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
+                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
+                else positivePolygons.Add(area, new Polygon(polyCoordinates));
             }
             return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
         }
@@ -365,8 +365,8 @@ namespace TVGL.TwoDimensional
                     startEdge, isSubtract, isUnion).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates, false));
-                else positivePolygons.Add(area, new Polygon(polyCoordinates, false));
+                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
+                else positivePolygons.Add(area, new Polygon(polyCoordinates));
             }
             // reset ids for polygon B
             id = 0;
@@ -583,8 +583,6 @@ namespace TVGL.TwoDimensional
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
-
-
                     if (forward)
                     {
                         newPath.Add(currentEdge.ToPoint.Coordinates);
@@ -595,12 +593,6 @@ namespace TVGL.TwoDimensional
                         newPath.Add(currentEdge.FromPoint.Coordinates);
                         currentEdge = currentEdge.FromPoint.EndLine;
                     }
-
-
-
-
-                    //currentEdge = forward ? currentEdge.ToPoint.StartLine : currentEdge.FromPoint.EndLine;
-                    //newPath.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
                                                             // the edge that concern us. We want that function to report the first one for the edge

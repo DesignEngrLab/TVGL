@@ -30,7 +30,7 @@ namespace TVGL.TwoDimensional
             {
                 var perimeter = positivePolygon.Perimeter();
                 var sampled = PolygonOperations.Simplify(positivePolygon);
-                var smaller = PolygonOperations.OffsetRound(new Polygon(sampled, true), -0.001 * perimeter).First();
+                var smaller = PolygonOperations.OffsetRound(new Polygon(sampled), -0.001 * perimeter).First();
 
                 //Delaunay Medial Axis             
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);

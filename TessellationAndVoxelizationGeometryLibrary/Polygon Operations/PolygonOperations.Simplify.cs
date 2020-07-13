@@ -19,9 +19,9 @@ namespace TVGL.TwoDimensional
         }
         public static Polygon Simplify(this Polygon polygon, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.Simplify(allowableChangeInAreaFraction), true);
+            var simplifiedPositivePolygon = new Polygon(polygon.Path.Simplify(allowableChangeInAreaFraction));
             foreach (var polygonHole in polygon.Holes)
-                simplifiedPositivePolygon.AddHole(new Polygon(polygonHole.Path.Simplify(allowableChangeInAreaFraction), true));
+                simplifiedPositivePolygon.AddHole(new Polygon(polygonHole.Path.Simplify(allowableChangeInAreaFraction)));
             return simplifiedPositivePolygon;
         }
 

@@ -123,7 +123,7 @@ namespace TVGL
                         if (whichEdge == firstEdgeInLoop)
                         {
                             finishedLoop = true;
-                            loops.Add(new Polygon(path, false));
+                            loops.Add(new Polygon(path));
                             break;
                         }
                         else if (unusedEdges.Contains(whichEdge))
@@ -135,7 +135,7 @@ namespace TVGL
                     if (!finishedLoop && nextEdge == null)
                     {
                         Console.WriteLine("Incomplete loop.");
-                        loops.Add(new Polygon(path, false));
+                        loops.Add(new Polygon(path));
                     }
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);

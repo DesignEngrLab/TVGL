@@ -36,36 +36,16 @@ namespace TVGL.TwoDimensional
         List<Vector2> _path;
 
 
-        public List<Vertex2D> Vertices
-        {
-            get
-            {
-                if (_vertices == null) MakeVertices();
-                return _vertices;
-            }
-        }
-
+        public List<Vertex2D> Vertices => _vertices;
         List<Vertex2D> _vertices;
 
         /// <summary>
         /// Gets the list of lines that make up a polygon. This is not set by default.
         /// </summary>
         /// <value>The lines.</value>
-        public List<PolygonSegment> Lines
-        {
-            get
-            {
-                if (_lines == null)
-                {
-                    if (_vertices == null) MakeVertices();
-                    MakeLineSegments();
-                }
+        public List<PolygonSegment> Lines => _lines;
 
-                return _lines;
-            }
-        }
-
-        List<PolygonSegment> _lines;
+        private List<PolygonSegment> _lines;
 
         private void MakeVertices()
         {
@@ -111,9 +91,7 @@ namespace TVGL.TwoDimensional
             if (polygon is null || (polygon._path is null && polygon._vertices is null)) return;
             if (polygon.IsPositive) polygon.Reverse();
             _holes ??= new List<Polygon>();
-            if (polygon._lines is null && _lines != null)
-                polygon.MakeLineSegments();
-            for (int i = _holes.Count-1; i >=0; i--)
+            for (int i = _holes.Count - 1; i >= 0; i--)
                 if (polygon.IsNonIntersectingPolygonInside(_holes[i], out _))
                     _holes.RemoveAt(i);
             _holes.Add(polygon);
@@ -304,11 +282,12 @@ namespace TVGL.TwoDimensional
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
-        public Polygon(IEnumerable<Vector2> coordinates, bool createLines, int index = -1)
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
             _path = coordinates.ToList();
             Index = index;
-            if (createLines) MakeLineSegments();
+            MakeVertices();
+            MakeLineSegments();
         }
 
         /// <summary>
@@ -317,11 +296,11 @@ namespace TVGL.TwoDimensional
         /// <param name="vertices">The vertices.</param>
         /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
-        public Polygon(List<Vertex2D> vertices, bool createLines, int index = -1)
+        public Polygon(List<Vertex2D> vertices, int index = -1)
         {
             _vertices = vertices;
-            if (createLines) MakeLineSegments();
             Index = index;
+            MakeLineSegments();
         }
 
         /// <summary>

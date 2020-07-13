@@ -56,7 +56,7 @@ namespace TVGL.TwoDimensional
             //var projectedFacePolygons = positiveFaces.ToDictionary(f => f, f => GetPolygonFromFace(f, projectedPoints, true));
             //Use GetPolygonFromFace and force to be positive faces with true"
             var projectedFacePolygons2 = positiveFaces.Select(f => GetPolygonFromFace(f, projectedPoints, true)).ToList().Where(p => p.Area() > minPathAreaToConsider);
-            var projectedFacePolygons2List = projectedFacePolygons2.Select(p => new Polygon(p, true)).ToList();
+            var projectedFacePolygons2List = projectedFacePolygons2.Select(p => new Polygon(p)).ToList();
             var solution = PolygonOperations.Union(projectedFacePolygons2List).ToList();
 
             //Offset by enough to account for minimum angle 
@@ -561,7 +561,7 @@ namespace TVGL.TwoDimensional
 
                     //Get2DProjections does not project directionally (normal and normal * -1) return the same transform)
                     //However, the way we are unioning the polygons and eliminating overhand polygons seems to be taking care of this
-                    var surfacePath = new Polygon(loop.ProjectTo2DCoordinates(flattenTransform), false);
+                    var surfacePath = new Polygon(loop.ProjectTo2DCoordinates(flattenTransform));
                     var area2D = surfacePath.Area;
                     if (area2D.IsNegligible(minAreaToConsider)) continue;
 
@@ -626,7 +626,7 @@ namespace TVGL.TwoDimensional
             var points = face.Vertices.Select(v => projectedPoints[v.IndexInList]).ToList();
             var area = points.Area();
             if (forceToBePositive && area < 0) points.Reverse();
-            return new Polygon(points, true);
+            return new Polygon(points);
         }
 
         private static List<Vector2> GetPolygonFromFace(PolygonalFace face, Dictionary<int, Vector2> projectedPoints, bool forceToBePositive)
