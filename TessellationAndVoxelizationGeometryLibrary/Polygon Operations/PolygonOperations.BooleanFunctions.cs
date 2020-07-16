@@ -450,9 +450,9 @@ namespace TVGL.TwoDimensional
                 {
                     if (isUnion && (intersectionData.Relationship & PolygonSegmentRelationship.CoincidentLines) != 0b0)
                     { //the only time non-overlapping intersections are useful is when we are doing union and lines are coincident
-                        if (!intersectionData.VisitedB&&
+                        if (!intersectionData.VisitedB &&
                             ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
-                             (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0) 
+                             (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0)
                             ||
                             ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
                               (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0))
@@ -548,25 +548,13 @@ namespace TVGL.TwoDimensional
             {
                 if (currentEdgeIsFromPolygonA) intersectionData.VisitedA = true;
                 else intersectionData.VisitedB = true;
-
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
                 // current polygon edge
                 if (!forward || (currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0b0)
                  || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0b0))
                     newPath.Add(intersectionCoordinates);
-
-                //are there times when you don't want to switch to the other polygon like union - encompass
-                if (isSubtract || (intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping
-                               || (intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0 && isUnion)
-                    // always switch if subtracting. If the conventional case, then also switch
-                    currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
-                    // if A encompasses B then A for union, B for intersection (subtract and Xor would already be handled by previous condition)
-                    currentEdgeIsFromPolygonA = isUnion;
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0) // opposite of last condition
-                    currentEdgeIsFromPolygonA = !isUnion;
-                //else they glance off of one another and currentEdgeIsFromPolygonA should stay the same
+                currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;
                 currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
                 if (isSubtract) forward = !forward;
                 if (!forward && ((currentEdgeIsFromPolygonA &&
@@ -575,11 +563,9 @@ namespace TVGL.TwoDimensional
                                   (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)))
                     currentEdge = currentEdge.FromPoint.EndLine;
 
-
                 // the following while loop add all the points along the subpath until the next intersection is encountered
-
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                        intersectionCoordinates, forward, out intersectionData))
+                        intersectionCoordinates, forward, isSubtract, isUnion, out intersectionData))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
@@ -614,7 +600,7 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private static bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<IntersectionData> allIntersections,
-        Vector2 formerIntersectCoords, bool forward, out IntersectionData indexOfIntersection)
+        Vector2 formerIntersectCoords, bool forward, bool isSubtract, bool isUnion, out IntersectionData indexOfIntersection)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
             indexOfIntersection = null;
@@ -627,6 +613,17 @@ namespace TVGL.TwoDimensional
             foreach (var index in intersectionIndices)
             {
                 var thisIntersectData = allIntersections[index];
+                // if the two polygons just "glance" off of one another at this intersection, then don't consider this as a valid place to switch
+                if ((thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0)
+                    continue;
+                // if union and current edge is on the outer polygon, then don't consider this as a valid place to switch
+                if (isUnion && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB)
+                    || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)))
+                    continue;
+                // if intersect and current edge is on the inner polygon, then don't consider this as a valid place to switch
+                if (!isSubtract && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)
+                    || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB)))
+                    continue;
                 var distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
                 if (distance < 0 || (distance == 0 && !formerIntersectCoords.IsNull())) continue;
                 if (minDistanceToIntersection > distance)
