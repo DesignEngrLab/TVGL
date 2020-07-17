@@ -127,13 +127,13 @@ namespace TVGLUnitTestsAndBenchmarking
             polygon3 = polygon2.Intersect(polygon1, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon1.Subtract(polygon2);
+            polygon3 = polygon1.Subtract(polygon2, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon2.Subtract(polygon1);
+            polygon3 = polygon2.Subtract(polygon1, a, intersections);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon2.ExclusiveOr(polygon1);
+            polygon3 = polygon2.ExclusiveOr(polygon1, a, intersections);
             Presenter.ShowAndHang(polygon3);
             //stopWatch.Restart();
             //var coords3 = PolygonOperations.Union(coords1, coords2);

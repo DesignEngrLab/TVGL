@@ -391,6 +391,7 @@ namespace TVGL.TwoDimensional
         {
             foreach (var intersectionData in intersections)
             {
+                #region first some conditions that tell us to skip this intersection
                 if ((intersectionData.Relationship & PolygonSegmentRelationship.CoincidentLines) != 0b0)
                 {  // this addresses the special cases where lines are coincident
                     if ((intersectionData.Relationship & (PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.SameLineAfterPoint))
@@ -410,116 +411,79 @@ namespace TVGL.TwoDimensional
                     continue;
                 if (!bothApproachDirections && (intersectionData.VisitedA || intersectionData.VisitedB))
                     continue;
+                #endregion
 
-                //if (bothApproachDirections)
-                //{
-                //    if (!intersectionData.VisitedA)
-                //    {
-                //        nextStartingIntersection = intersectionData;
-                //        currentEdge = intersectionData.EdgeA;
-                //        return true;
-                //    }
-                //    else if (!intersectionData.VisitedB)
-                //    {
-                //        nextStartingIntersection = intersectionData;
-                //        currentEdge = intersectionData.EdgeB;
-                //        return true;
-                //    }
-                //    else continue;
-                //}
-                //if (intersectionData.VisitedA || intersectionData.VisitedB)
-                //    continue;
-                if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
+                // now look at 00 ("glance"), 11 ("overlapping"), 10 ("A encompasses B"), and 01 ("B encompasses A")
+                #region "Glance" A and B touch but are only abutting one another. no overlap in regions
+                if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0 && isUnion &&
+                    (intersectionData.Relationship & PolygonSegmentRelationship.CoincidentLines) != 0b0)
+                { //the only time non-overlapping intersections are intereseting is when we are doing union and lines are coincident
+                  // otherwise you simply stay on the same polygon you enter with
+                    if (!intersectionData.VisitedB &&
+                        ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
+                         (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0)
+                        ||
+                        ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
+                          (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0))
+                    {
+                        currentEdge = intersectionData.EdgeB;
+                        nextStartingIntersection = intersectionData;
+                        return true;
+                    }
+                    else if (!intersectionData.VisitedA &&
+                             ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
+                              (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)
+                             ||
+                             ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
+                              (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0))
+                    {
+                        currentEdge = intersectionData.EdgeA;
+                        nextStartingIntersection = intersectionData;
+                        return true;
+                    }
+                }
+                #endregion
+                #region Overlapping. The conventional case where A and B cross into one another
+                else if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
                 {
                     var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
                     var switchSign = (isSubtract || isUnion) ? 1 : -1;
-                    if (switchSign * cross < 0 && !intersectionData.VisitedA)
+                    if (switchSign * cross < 0 && !intersectionData.VisitedA && (!isSubtract || bothApproachDirections ||
+                        intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList))
                     {
                         currentEdge = intersectionData.EdgeA;
                         nextStartingIntersection = intersectionData;
                         return true;
                     }
-                    if (switchSign * cross > 0 && !intersectionData.VisitedB && !isSubtract)
+                    if (switchSign * cross > 0 && !intersectionData.VisitedB && (!isSubtract || bothApproachDirections ||
+                        intersectionData.EdgeB.IndexInList < intersectionData.EdgeA.IndexInList))
                     {
                         currentEdge = intersectionData.EdgeB;
                         nextStartingIntersection = intersectionData;
                         return true;
                     }
                 }
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0) // then they "glance" off of one another
+                #endregion
+                #region Polygon A encompasses all of polygon B at this intersection 
+                else if (isSubtract && !intersectionData.VisitedA && intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList &&
+                    (intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
                 {
-                    if (isUnion && (intersectionData.Relationship & PolygonSegmentRelationship.CoincidentLines) != 0b0)
-                    { //the only time non-overlapping intersections are useful is when we are doing union and lines are coincident
-                        if (!intersectionData.VisitedB &&
-                            ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
-                             (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0)
-                            ||
-                            ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
-                              (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0))
-                        {
-                            currentEdge = intersectionData.EdgeB;
-                            nextStartingIntersection = intersectionData;
-                            return true;
-                        }
-                        else if (!intersectionData.VisitedA &&
-                                 ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
-                                  (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)
-                                 ||
-                                 ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
-                                  (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0))
-                        {
-                            currentEdge = intersectionData.EdgeA;
-                            nextStartingIntersection = intersectionData;
-                            return true;
-                        }
-                    }
+                    currentEdge = intersectionData.EdgeA;
+                    nextStartingIntersection = intersectionData;
+                    return true;
 
-                    else if (!intersectionData.VisitedA)
-                    {
-                        currentEdge = intersectionData.EdgeA;
-                        nextStartingIntersection = intersectionData;
-                        return true;
-                    }
-                    else if (!intersectionData.VisitedB)
-                    {
-                        currentEdge = intersectionData.EdgeB;
-                        nextStartingIntersection = intersectionData;
-                        return true;
-                    }
                 }
-                // if B encompass A 
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
+                #endregion
+                #region Polygon B encompasses all of polygon A at this intersection
+
+                else if (isSubtract && !intersectionData.VisitedB && intersectionData.EdgeB.IndexInList < intersectionData.EdgeA.IndexInList &&
+                    (intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
                 {
-                    if (isSubtract) continue;
-                    if (isUnion && !intersectionData.VisitedA)
-                    {
-                        currentEdge = intersectionData.EdgeA;
-                        nextStartingIntersection = intersectionData;
-                        return true;
-                    }
-                    else if (!isUnion && !intersectionData.VisitedB)
-                    {
-                        currentEdge = intersectionData.EdgeB;
-                        nextStartingIntersection = intersectionData;
-                        return true;
-                    }
+                    currentEdge = intersectionData.EdgeB;
+                    nextStartingIntersection = intersectionData;
+                    return true;
                 }
-                // if B encompass A 
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
-                {
-                    if (isUnion && !intersectionData.VisitedB)
-                    {
-                        currentEdge = intersectionData.EdgeB;
-                        nextStartingIntersection = intersectionData;
-                        return true;
-                    }
-                    else if ((!isUnion || isSubtract) && !intersectionData.VisitedA)
-                    {
-                        currentEdge = intersectionData.EdgeA;
-                        nextStartingIntersection = intersectionData;
-                        return true;
-                    }
-                }
+                #endregion
             }
             nextStartingIntersection = null;
             currentEdge = null;
@@ -613,17 +577,23 @@ namespace TVGL.TwoDimensional
             foreach (var index in intersectionIndices)
             {
                 var thisIntersectData = allIntersections[index];
+
                 // if the two polygons just "glance" off of one another at this intersection, then don't consider this as a valid place to switch
-                if ((thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0)
-                    continue;
+                if (((thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0)
                 // if union and current edge is on the outer polygon, then don't consider this as a valid place to switch
-                if (isUnion && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB)
+                || (isUnion && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB)
                     || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)))
-                    continue;
                 // if intersect and current edge is on the inner polygon, then don't consider this as a valid place to switch
-                if (!isSubtract && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)
-                    || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB)))
+                || (!isSubtract && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)
+                    || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB))))
+                {
+                    // well, even though the intersection is a valid place to switch, we need to mark that it is visited so that we don't start here next time
+                    // GetNextStartingIntersection gets called
+                    if (currentEdge == thisIntersectData.EdgeA) thisIntersectData.VisitedA = true;
+                    else thisIntersectData.VisitedB = true;
                     continue;
+                }
+
                 var distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
                 if (distance < 0 || (distance == 0 && !formerIntersectCoords.IsNull())) continue;
                 if (minDistanceToIntersection > distance)

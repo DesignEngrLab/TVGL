@@ -194,7 +194,7 @@ namespace TVGL.TwoDimensional
         /// this is meant to be used only internally as it requires several assumptions:
         /// 1. positive polygons are ordered by increasing area (from 0 to +inf)
         /// 2. negative polygons are ordered by increasing area (from -inf to 0)
-        /// 3. there are not intersections between the solids (this should be the result following the boolean
+        /// 3. there are not intersections between the polygons (this should be the result following the boolean
         /// operation; however, it is possible that they share a vertex (e.g. in XOR))
         /// </summary>
         /// <param name="Polygons">The positive polygons.</param>

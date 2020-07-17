@@ -330,11 +330,11 @@ namespace TVGL.TwoDimensional
             }
             else
             {
-                var fromPointCross = lineB.FromPoint.Coordinates - lineA.FromPoint.Coordinates; // the vector connecting starts
+                var fromPointVector = lineB.FromPoint.Coordinates - lineA.FromPoint.Coordinates; // the vector connecting starts
                 if (lineACrossLineB.IsNegligible()) // the two lines are parallel (cross product will be zero)
                 {
                     var intersectionFound = false;
-                    if (fromPointCross.Cross(lineA.Vector).IsNegligible())
+                    if (fromPointVector.Cross(lineA.Vector).IsNegligible())
                     {
                         // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
                         // and since bounding boxes do overlap, then the lines are collinear and overlapping
@@ -344,7 +344,7 @@ namespace TVGL.TwoDimensional
                         // where a second IntersectionData is added
                         relationship |= PolygonSegmentRelationship.CoincidentLines;
                         if (lineA.Vector.Dot(lineB.Vector) < 0) relationship |= PolygonSegmentRelationship.OppositeDirections;
-                        if ((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(fromPointCross) < 0)
+                        if ((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(fromPointVector) < 0)
                         {   // since vStart goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
                             // opposite then lineA.FromPoint is on lineB
                             intersectionCoordinates = lineA.FromPoint.Coordinates;
@@ -352,7 +352,7 @@ namespace TVGL.TwoDimensional
                             intersectionFound = true;
                             prevB = lineB;
                         }
-                        if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointCross) < 0)
+                        if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointVector) < 0)
                         { // now check the other way. Note, since vStart is backwards here, we just make the other vector backwards as well
                            
                             if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
@@ -396,9 +396,9 @@ namespace TVGL.TwoDimensional
                     //   |                                         |*|       | =  |           |
                     //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
                     var oneOverdeterminnant = 1 / lineACrossLineB;
-                    var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointCross.X - lineB.Vector.X * fromPointCross.Y);
+                    var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointVector.X - lineB.Vector.X * fromPointVector.Y);
                     if (t_1 < 0 || t_1 >= 1) return;
-                    var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointCross.X - lineA.Vector.X * fromPointCross.Y);
+                    var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointVector.X - lineA.Vector.X * fromPointVector.Y);
                     if (t_2 < 0 || t_2 >= 1) return;
                     if (t_1.IsNegligible())
                     {
@@ -463,7 +463,7 @@ namespace TVGL.TwoDimensional
             // we actually have to do the same with lineB - it's not enough to know if A is inside B
             var lineAIsInsideB = (bCornerCross >= 0 && lineACrossLineB < 0 && lineACrossPrevB < 0) ||
                                      (bCornerCross < 0 && !(lineACrossLineB > 0 && lineACrossPrevB > 0));
-            var prevLineAIsInsideB = (bCornerCross > 0 && prevACrossLineB > 0 && prevACrossPrevB > 0) ||
+            var prevLineAIsInsideB = (bCornerCross >= 0 && prevACrossLineB > 0 && prevACrossPrevB > 0) ||
                                         (bCornerCross < 0 && !(prevACrossLineB < 0 && prevACrossPrevB < 0));
             // in the remaining conditions there are 16 possible combinations of the four booleans: lineBIsInsideA-prevLineBIsInsideA--lineAIsInsideB-prevLineAIsInsideB
             // first off, if they are all false, then it clearly is a "glance" and no need to do anything
