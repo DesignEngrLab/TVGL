@@ -26,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
           //  PolygonOperationsTesting.TestOffsetting();
             //PolygonOperationsTesting.TestBooleanCompare();
-            PolygonOperationsTesting.TestUnionSimple();
+            //PolygonOperationsTesting.TestUnionSimple();
             //PolygonOperationsTesting.TestEdgeCase2();
             //PolygonOperationsTesting.TestRemoveSelfIntersect();
             //Voxels.InitialTest();

@@ -39,6 +39,18 @@ namespace TVGL.TwoDimensional
         public List<Vertex2D> Vertices => _vertices;
         List<Vertex2D> _vertices;
 
+        internal List<Vertex2D> OrderedXVertices
+        {
+            get
+            {
+                if (_orderedXVertices == null || _orderedXVertices.Count == 0)
+                    _orderedXVertices = AllPolygons.SelectMany(poly => poly.Vertices).OrderBy(p => p.X).ToList();
+                return _orderedXVertices;
+
+            } 
+        }
+        List<Vertex2D> _orderedXVertices;
+
         /// <summary>
         /// Gets the list of lines that make up a polygon. This is not set by default.
         /// </summary>
@@ -321,7 +333,7 @@ namespace TVGL.TwoDimensional
             var thisPath = _path == null ? null : new List<Vector2>(_path);
             var thisVertices = _vertices == null ? null : _vertices.Select(v => v.Copy()).ToList();
             var thisInnerPolygons = _holes == null ? null : _holes.Select(p => p.Copy()).ToList();
-            return new Polygon
+            var copiedPolygon = new Polygon
             {
                 index = this.index,
                 area = this.area,
@@ -330,9 +342,11 @@ namespace TVGL.TwoDimensional
                 minX = this.minX,
                 minY = this.minY,
                 _path = thisPath,
-                _vertices = thisVertices,
                 _holes = thisInnerPolygons
             };
+            copiedPolygon.MakeVertices();
+            copiedPolygon.MakeLineSegments();
+            return copiedPolygon;
         }
 
         // the following private argument-less constructor is only used in the copy function

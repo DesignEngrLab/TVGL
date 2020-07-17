@@ -41,12 +41,12 @@ namespace TVGLUnitTestsAndBenchmarking
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                Presenter.ShowAndHang(solid);
-                var vs = new VoxelizedSolid(solid, 100);
-                Presenter.ShowAndHang(vs);
+                //Presenter.ShowAndHang(solid);
+                //var vs = new VoxelizedSolid(solid, 100);
+                //Presenter.ShowAndHang(vs);
 
-                vs.Draft(CartesianDirections.XNegative);
-                Presenter.ShowAndHang(vs);
+                //vs.Draft(CartesianDirections.XNegative);
+                //Presenter.ShowAndHang(vs);
                 //solid.SliceOnInfiniteFlat(new Flat(solid.Center,
                 //    new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()).Normalize()), out var solids, out _);
                 if (solid.Errors != null)
@@ -55,11 +55,11 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 }
                 solid.SolidColor = new Color(100, 200, 100, 50);
-                Presenter.ShowAndHang(solid);
-                var cs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 100);
-                Presenter.ShowAndHang(cs);
-                var ts = cs.ConvertToTessellatedExtrusions(true, false);
-                Presenter.ShowAndHang(ts);
+                //Presenter.ShowAndHang(solid);
+                //var cs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 100);
+                //Presenter.ShowAndHang(cs);
+                //var ts = cs.ConvertToTessellatedExtrusions(true, false);
+                //Presenter.ShowAndHang(ts);
 
 
 

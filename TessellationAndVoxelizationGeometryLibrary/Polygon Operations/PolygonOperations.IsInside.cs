@@ -163,11 +163,11 @@ namespace TVGL.TwoDimensional
             // value. Instead of directly sorting the Lines, which will have many repeat XMin values (since every
             // pair of lines meet at the a given point), the points are sorted first. These sorted points are
             // used in the ArePointsInsidePolygon function as well.
-            var orderedAPoints = polygonA.AllPolygons.SelectMany(poly => poly.Vertices).OrderBy(p => p.X).ToList();
+            var orderedAPoints = polygonA.OrderedXVertices;
             // property has been invoked before the next function (GetOrderedLines), which requires that lines and vertices be properly connected
             var aLines = GetOrderedLines(orderedAPoints);
             //repeat for the lines in B
-            var orderedBPoints = (polygonB.AllPolygons.SelectMany(poly => poly.Vertices)).OrderBy(p => p.X).ToList();
+            var orderedBPoints = polygonB.OrderedXVertices;
             var bLines = GetOrderedLines(orderedBPoints);
 
             var aIndex = 0;
@@ -321,10 +321,9 @@ namespace TVGL.TwoDimensional
                 if (prevA.Vector.Cross(prevB.Vector).IsNegligible() && prevA.Vector.Dot(prevB.Vector) > 0)
                     // the two previous lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
                     relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
-                if (lineA.Vector.Cross(prevB.Vector).IsNegligible() && lineA.Vector.Dot(prevB.Vector) < 0)
+                if (lineA.Vector.Cross(prevB.Vector).IsNegligible() && lineA.Vector.Dot(prevB.Vector) < 0
                     // the two lines are going in the opposite direction but the line-A coincides with previous line-B
-                    relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections;
-                if (lineB.Vector.Cross(prevA.Vector).IsNegligible() && lineB.Vector.Dot(prevA.Vector) < 0)
+                    || lineB.Vector.Cross(prevA.Vector).IsNegligible() && lineB.Vector.Dot(prevA.Vector) < 0)
                     // the two lines are going in the opposite direction but the line-B coincides with previous line-A
                     relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections;
             }
@@ -354,7 +353,7 @@ namespace TVGL.TwoDimensional
                         }
                         if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointVector) < 0)
                         { // now check the other way. Note, since vStart is backwards here, we just make the other vector backwards as well
-                           
+
                             if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
                                 intersections.Add(new IntersectionData(lineA, lineB, lineB.FromPoint.Coordinates,
                                     DeterminePolygonSegmentRelationship(lineA, lineB, lineA, lineB.FromPoint.EndLine, lineACrossLineB,
@@ -502,7 +501,9 @@ namespace TVGL.TwoDimensional
             var k = 0;
             for (int i = 0; i < length; i++)
             {
+                
                 var point = orderedPoints[i];
+                if (point.EndLine == null) ;
                 if (point.EndLine.OtherPoint(point).X > point.X)
                     result[k++] = point.EndLine;
                 else if (point.EndLine.OtherPoint(point).X == point.X &&
