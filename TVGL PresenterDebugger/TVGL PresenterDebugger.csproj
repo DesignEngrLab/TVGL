@@ -3,11 +3,21 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>TVGL_PresenterDebugger</RootNamespace>
     <UseWPF>true</UseWPF>
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\bin\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\obj\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewFaRules.csv" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Numerics\README.txt" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Properties\Resources.Designer.cs" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Properties\Resources.resx" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj.user" />
 
     
     <Compile Include="..\TVGL Presenter\Presenter.cs">
@@ -19,14 +29,6 @@
     <Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs">
       <Link>Window3DPlot.xaml.cs</Link>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv">
-      <Link>TVGL\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv</Link>
-    </None>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewFaRules.csv">
-      <Link>TVGL\Implicits and Primitives\Primitive Classification\NewFaRules.csv</Link>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

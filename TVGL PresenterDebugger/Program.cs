@@ -1,5 +1,4 @@
-using BenchmarkDotNet.Running;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,21 +8,21 @@ using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
-using TVGLUnitTestsAndBenchmarking;
 
-namespace TVGLUnitTestsAndBenchmarking
+namespace TVGLPresenterDebugger
 {
     internal static class Program
     {
+
 
         static readonly Stopwatch stopwatch = new Stopwatch();
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
 
-
         [STAThread]
         private static void Main(string[] args)
         {
+
             DirectoryInfo dir;
             if (Directory.Exists("../../../../TestFiles"))
             {
@@ -35,8 +34,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            var random = new Random();
-            var fileNames = dir.GetFiles("Pump10*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("Pump10*").OrderBy(x => r.Next()).ToArray();
             //var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
@@ -72,5 +70,6 @@ namespace TVGLUnitTestsAndBenchmarking
                 Presenter.ShowAndHang(silhouette);
             }
         }
+
     }
 }

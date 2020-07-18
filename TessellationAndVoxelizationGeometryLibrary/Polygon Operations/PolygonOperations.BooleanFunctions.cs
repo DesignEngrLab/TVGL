@@ -73,6 +73,7 @@ namespace TVGL.TwoDimensional
             //unionFound = false;
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
+                Presenter.ShowAndHang(polygonList);
                 for (int j = i - 1; j >= 0; j--)
                 {
                     var polygonRelationship = GetPolygonRelationshipAndIntersections(polygonList[i],
