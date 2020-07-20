@@ -24,7 +24,7 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
         public static bool CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool vertexNegPosOrderIsGuaranteedCorrect, bool pathsAreNotSelfIntersecting, out Polygon[] polygons,
+            bool vertexNegPosOrderIsGuaranteedCorrect, bool pathsAreNotSelfIntersecting, out List<Polygon> polygons,
             out int[] connectingIndices)
         {
             if (vertexNegPosOrderIsGuaranteedCorrect)
@@ -36,7 +36,7 @@ namespace TVGL.TwoDimensional
         }
 
         internal static bool CreateShallowPolygonTreesOrderedVertexLoops(this IEnumerable<IEnumerable<Vector2>> paths,
-            out Polygon[] polygons, out int[] connectingIndices)
+            out List<Polygon> polygons, out int[] connectingIndices)
         {
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort());
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
@@ -53,10 +53,10 @@ namespace TVGL.TwoDimensional
         }
 
         internal static bool CreateShallowPolygonTreesOrderedVertexLoops(SortedDictionary<double, Polygon> positivePolygons,
-            SortedDictionary<double, Polygon> negativePolygons, int count, out Polygon[] polygons, out int[] connectingIndices)
+            SortedDictionary<double, Polygon> negativePolygons, int count, out List<Polygon> polygons, out int[] connectingIndices)
         {
             connectingIndices = new int[count];
-            polygons = positivePolygons.Values.ToArray();
+            polygons = positivePolygons.Values.ToList();
             //2) Find the positive polygon that this negative polygon is inside.
             //The negative polygon belongs to the smallest positive polygon that it fits inside.
             //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
@@ -105,7 +105,7 @@ namespace TVGL.TwoDimensional
         }
 
         private static bool CreateShallowPolygonTreesUnorderedVertexLoops(this IEnumerable<IEnumerable<Vector2>> paths,
-            out Polygon[] polygons, out int[] connectingIndices)
+            out List<Polygon> polygons, out int[] connectingIndices)
         {
             var polygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
             polygons = null;
@@ -124,12 +124,12 @@ namespace TVGL.TwoDimensional
             }
 
             connectingIndices = new int[index];
-            var polygonList = new List<Polygon>();
+            polygons = new List<Polygon>();
             foreach (var polygon in polygonDictionary.Values)
             {
-                for (int i = 0; i < polygonList.Count; i++)
+                for (int i = 0; i < polygons.Count; i++)
                 {
-                    var outerPolygon = polygonList[i];
+                    var outerPolygon = polygons[i];
                     PolygonRelationship polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
                     if (((byte)polygonRelationship & 0b1) != 0
                     ) // the "1" flag is intersection. We can't handle that here.
@@ -152,7 +152,7 @@ namespace TVGL.TwoDimensional
                             if (((byte)innerPolygonRelationship & 0b100) != 0
                             ) // the "4" flag is B is inside A. We can do that
                             {
-                                polygonList.Add(polygon);
+                                polygons.Add(polygon);
                                 insideAHoleOfOuterPolygon = true;
                                 break;
                             }
@@ -171,7 +171,7 @@ namespace TVGL.TwoDimensional
 
             //Set the polygon indices
             index = 0;
-            foreach (var polygon in polygonList)
+            foreach (var polygon in polygons)
             {
                 connectingIndices[polygon.Index] = index;
                 polygon.Index = index++;
@@ -184,7 +184,6 @@ namespace TVGL.TwoDimensional
                 //index += 1 + polygon.Holes.Count;
             }
 
-            polygons = polygonList.ToArray();
             return true;
         }
 

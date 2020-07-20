@@ -23,7 +23,7 @@ namespace TVGL.TwoDimensional
             return polygons.Union();
         }
 
-        private static Polygon[] GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, double lowerDistance, double upperDistance)
+        private static List<Polygon> GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, double lowerDistance, double upperDistance)
         {
             var transform = MiscFunctions.TransformToXYPlane(direction, out _);
             var visitedFaces = new List<PolygonalFace>();
@@ -61,7 +61,7 @@ namespace TVGL.TwoDimensional
             return ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform);
         }
 
-        private static Polygon[] ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform)
+        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform)
         {
             var positivePolygons = new List<Polygon>();
             var negativePolygons = new List<Polygon>();
@@ -106,8 +106,7 @@ namespace TVGL.TwoDimensional
             foreach (var path in negativePolygons) negativePolygonDictionary.Add(path.Area, path);
             PolygonOperations.CreateShallowPolygonTreesOrderedVertexLoops(positivePolygonDictionary, negativePolygonDictionary,
                 positivePolygons.Count + negativePolygons.Count, out var resultingPolygons, out _);
-            resultingPolygons.Union();
-            Presenter.ShowAndHang(resultingPolygons);
+            resultingPolygons = resultingPolygons.Union();
             return resultingPolygons;
         }
     }
