@@ -61,12 +61,12 @@ namespace TVGL.TwoDimensional
             {
                 if (polygon.MaxX - polygon.MinX < -2 * offset || polygon.MaxY - polygon.MinY < -2 * offset) continue;
                 positivePolygons.AddRange(new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle))
-                    .RemoveSelfIntersections());
+                    .RemoveSelfIntersections(true,out _));
                 foreach (var hole in polygon.Holes)
                 {
                     if (hole.MaxX - hole.MinX < 2 * offset || hole.MaxY - hole.MinY < 2 * offset) continue;
                     var holeCoords = OffsetRoutineBackwards(hole.Lines, -offset, false, deltaAngle);
-                    var newHoles = new Polygon(holeCoords).RemoveSelfIntersections();
+                    var newHoles = new Polygon(holeCoords).RemoveSelfIntersections(true, out _);
                     foreach (var newHole in newHoles)
                         negativePolygons.Add(newHole);
                 }

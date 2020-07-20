@@ -93,20 +93,26 @@ namespace TVGL.TwoDimensional
 
 
         /// <summary>
-        /// Adds the hole to the polygon. This method assume that there are no intersections between the hole polygon
+        /// Adds the hole to the polygon. This method assumes that there are no intersections between the hole polygon
         /// and the host polygon. However, it does check and remove holes in the host that are fully inside of the
         /// new hole.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        public void AddHole(Polygon polygon)
+        public bool AddHole(Polygon polygon)
         {
-            if (polygon is null || (polygon._path is null && polygon._vertices is null)) return;
+            if (polygon is null || (polygon._path is null && polygon._vertices is null)) return false;
+            if (!this.IsNonIntersectingPolygonInside(polygon, out _)) return false;
             if (polygon.IsPositive) polygon.Reverse();
             _holes ??= new List<Polygon>();
             for (int i = _holes.Count - 1; i >= 0; i--)
+            {
+                if (_holes[i].IsNonIntersectingPolygonInside(polygon, out _))
+                    return false;
                 if (polygon.IsNonIntersectingPolygonInside(_holes[i], out _))
                     _holes.RemoveAt(i);
+            }
             _holes.Add(polygon);
+            return true;
         }
 
         /// <summary>

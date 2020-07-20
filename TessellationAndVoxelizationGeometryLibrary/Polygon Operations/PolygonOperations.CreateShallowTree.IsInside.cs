@@ -1,7 +1,5 @@
-﻿using Priority_Queue;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -30,15 +28,14 @@ namespace TVGL.TwoDimensional
             out int[] connectingIndices)
         {
             if (vertexNegPosOrderIsGuaranteedCorrect)
-                return CreateShallowPolygonTreesOrderedVertexLoops(paths, !pathsAreNotSelfIntersecting, out polygons,
+                return CreateShallowPolygonTreesOrderedVertexLoops(paths, out polygons,
                     out connectingIndices);
             else
-                return CreateShallowPolygonTreesUnorderedVertexLoops(paths, !pathsAreNotSelfIntersecting, out polygons,
+                return CreateShallowPolygonTreesUnorderedVertexLoops(paths, out polygons,
                     out connectingIndices);
         }
 
-        private static bool CreateShallowPolygonTreesOrderedVertexLoops(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool removeSelfIntersections,
+        internal static bool CreateShallowPolygonTreesOrderedVertexLoops(this IEnumerable<IEnumerable<Vector2>> paths,
             out Polygon[] polygons, out int[] connectingIndices)
         {
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort());
@@ -51,8 +48,14 @@ namespace TVGL.TwoDimensional
                 if (area < 0) negativePolygons.Add(area, polygon);
                 if (area > 0) positivePolygons.Add(area, polygon);
             }
+            return CreateShallowPolygonTreesOrderedVertexLoops(positivePolygons, negativePolygons, index,
+                out polygons, out connectingIndices);
+        }
 
-            connectingIndices = new int[index];
+        internal static bool CreateShallowPolygonTreesOrderedVertexLoops(SortedDictionary<double, Polygon> positivePolygons,
+            SortedDictionary<double, Polygon> negativePolygons, int count, out Polygon[] polygons, out int[] connectingIndices)
+        {
+            connectingIndices = new int[count];
             polygons = positivePolygons.Values.ToArray();
             //2) Find the positive polygon that this negative polygon is inside.
             //The negative polygon belongs to the smallest positive polygon that it fits inside.
@@ -69,12 +72,12 @@ namespace TVGL.TwoDimensional
                     if (-area > positivePolygon.Area) continue;
                     var polygonRelationship =
                         positivePolygon.GetPolygonRelationshipAndIntersections(negativePolygon, out _);
-                    if (((byte) polygonRelationship & 0b1) != 0
+                    if (((byte)polygonRelationship & 0b1) != 0
                     ) // the "1" flag is intersection. We can't handle that here.
                         return false;
-                    if (((byte) polygonRelationship & 0b010) != 0) // the "2" flag means that boundaries touch.
+                    if (((byte)polygonRelationship & 0b010) != 0) // the "2" flag means that boundaries touch.
                         return false;
-                    if (((byte) polygonRelationship & 0b100) != 0) // the "4" flag is B is inside A. We can do that
+                    if (((byte)polygonRelationship & 0b100) != 0) // the "4" flag is B is inside A. We can do that
                     {
                         positivePolygon.AddHole(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
@@ -82,30 +85,26 @@ namespace TVGL.TwoDimensional
                         break;
                     }
                 }
-
                 if (!isInside) return false; // Negative polygon was not inside any positive polygons
             }
 
             //Set the polygon indices
-            index = 0;
+            count = 0;
             foreach (var polygon in polygons)
             {
-                connectingIndices[polygon.Index] = index;
-                polygon.Index = index++;
+                if (polygon.Index < 0) continue;
+                connectingIndices[polygon.Index] = count;
+                polygon.Index = count++;
                 foreach (var hole in polygon.Holes)
                 {
-                    connectingIndices[hole.Index] = index++;
+                    connectingIndices[hole.Index] = count++;
                     hole.Index = polygon.Index;
                 }
-
-                //index += 1 + polygon.Holes.Count;
             }
-
             return true;
         }
 
         private static bool CreateShallowPolygonTreesUnorderedVertexLoops(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool removeSelfIntersections,
             out Polygon[] polygons, out int[] connectingIndices)
         {
             var polygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
@@ -131,26 +130,26 @@ namespace TVGL.TwoDimensional
                 for (int i = 0; i < polygonList.Count; i++)
                 {
                     var outerPolygon = polygonList[i];
-                    var polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
-                    if (((byte) polygonRelationship & 0b1) != 0
+                    PolygonRelationship polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
+                    if (((byte)polygonRelationship & 0b1) != 0
                     ) // the "1" flag is intersection. We can't handle that here.
                         return false;
-                    if (((byte) polygonRelationship & 0b010) != 0) // the "2" flag means that boundaries touch.
+                    if (((byte)polygonRelationship & 0b010) != 0) // the "2" flag means that boundaries touch.
                         return false;
-                    if (((byte) polygonRelationship & 0b100) != 0) // the "4" flag is B is inside A. We can do that
+                    if (((byte)polygonRelationship & 0b100) != 0) // the "4" flag is B is inside A. We can do that
                     {
                         var insideAHoleOfOuterPolygon = false;
                         foreach (var innerPolygon in outerPolygon.Holes)
                         {
                             var innerPolygonRelationship =
                                 innerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
-                            if (((byte) innerPolygonRelationship & 0b1) != 0
+                            if (((byte)innerPolygonRelationship & 0b1) != 0
                             ) // the "1" flag is intersection. We can't handle that here.
                                 return false;
-                            if (((byte) innerPolygonRelationship & 0b010) != 0
+                            if (((byte)innerPolygonRelationship & 0b010) != 0
                             ) // the "2" flag means that boundaries touch.
                                 return false;
-                            if (((byte) innerPolygonRelationship & 0b100) != 0
+                            if (((byte)innerPolygonRelationship & 0b100) != 0
                             ) // the "4" flag is B is inside A. We can do that
                             {
                                 polygonList.Add(polygon);
@@ -202,18 +201,17 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon[].</returns>
         /// <exception cref="Exception">Intersections still exist between hole and positive polygon.</exception>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
-        private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> polygons,
-                IEnumerable<Polygon> negativePolygons)
-            //SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
+        private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> positivePolygons,
+                IEnumerable<Polygon> negativePolygons, out List<Polygon> strayHoles)
         {
+            //first, remove any positive polygons that are nested inside of bigger ones
             int i = 0;
-            while (i < polygons.Count)
+            while (i < positivePolygons.Count)
             {
                 var foundToBeInsideOfOther = false;
-                int j = i;
-                while (++j < polygons.Count)
+                for (int j = i + 1; j < positivePolygons.Count; j++)
                 {
-                    if (polygons[j].IsNonIntersectingPolygonInside(polygons[i], out _))
+                    if (positivePolygons[j].IsNonIntersectingPolygonInside(positivePolygons[i], out _))
                     {
                         foundToBeInsideOfOther = true;
                         break;
@@ -221,10 +219,10 @@ namespace TVGL.TwoDimensional
                 }
 
                 if (foundToBeInsideOfOther)
-                    polygons.RemoveAt(i);
+                    positivePolygons.RemoveAt(i);
                 else i++;
             }
-
+            strayHoles = new List<Polygon>();
             //  Find the positive polygon that this negative polygon is inside.
             //The negative polygon belongs to the smallest positive polygon that it fits inside.
             //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
@@ -233,20 +231,20 @@ namespace TVGL.TwoDimensional
             {
                 var isInside = false;
                 //Start with the smallest positive polygon           
-                for (var j = 0; j < polygons.Count; j++)
+                for (var j = 0; j < positivePolygons.Count; j++)
                 {
-                    var positivePolygon = polygons[j];
+                    var positivePolygon = positivePolygons[j];
                     if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary))
                     {
                         isInside = true;
                         if (onBoundary)
                         {
                             var newPolys = positivePolygon.Intersect(negativePolygon);
-                            polygons[j] = newPolys[0]; // i don't know if this is a problem, but the
+                            positivePolygons[j] = newPolys[0]; // i don't know if this is a problem, but the
                             // new polygon at j may be smaller (now that it has a big hole in it ) than the preceding ones. I don't think
                             // we need to maintain ordered by area - since the first loop above will already merge positive loops
                             for (int k = 1; k < newPolys.Count; k++)
-                                polygons.Add(newPolys[i]);
+                                positivePolygons.Add(newPolys[i]);
                         }
                         else positivePolygon.AddHole(negativePolygon);
 
@@ -256,14 +254,14 @@ namespace TVGL.TwoDimensional
                     }
                 }
 
-                if (!isInside)
-                    polygons.Add(
-                        negativePolygon); //this feels like it should come with a warning. but perhaps the user/developer intends to create a negative polygon
+                if (!isInside) strayHoles.Add(negativePolygon);
+                //this feels like it should come with a warning. but perhaps the user/developer intends to create 
+                // a negative polygon
+                // actually, in silhouette this function is called and may result in loose holes
             }
-
             //Set the polygon indices
             var index = 0;
-            foreach (var polygon in polygons)
+            foreach (var polygon in positivePolygons)
             {
                 polygon.Index = index++;
                 foreach (var hole in polygon.Holes)
@@ -271,15 +269,14 @@ namespace TVGL.TwoDimensional
                     hole.Index = polygon.Index;
                 }
             }
-
-            return polygons;
+            return positivePolygons;
         }
 
 
 
         /// <summary>
-        /// Creates the shallow polygon trees from ordered lists and vertices. This means that the loops are one positive loops
-        /// followed by the inner negative holes, then another positive loops and it's holes.
+        /// Creates the shallow polygon trees from ordered lists and vertices. This means that the loops are one 
+        /// positive loop followed by the inner negative holes, then another positive loops and it's holes.
         /// This is an internal/private function which is quick and currently used by Simplify
         /// </summary>
         /// <param name="paths">The paths.</param>

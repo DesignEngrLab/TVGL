@@ -66,7 +66,7 @@ namespace TVGLPresenterDebugger
 
 
 
-                var silhouette = TVGL.TwoDimensional.Silhouette.CreateSilhouette(solid, new Vector3(1, 1, 1));
+                var silhouette = solid.CreateSilhouette(new Vector3(1, 1, 1));
                 Presenter.ShowAndHang(silhouette);
             }
         }

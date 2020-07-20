@@ -67,13 +67,8 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Union(this IEnumerable<Polygon> polygons)
         {
             var polygonList = polygons.ToList();
-            //bool unionFound;
-            //do
-            //{
-            //unionFound = false;
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
-                Presenter.ShowAndHang(polygonList);
                 for (int j = i - 1; j >= 0; j--)
                 {
                     var polygonRelationship = GetPolygonRelationshipAndIntersections(polygonList[i],
@@ -91,7 +86,6 @@ namespace TVGL.TwoDimensional
                     break; // to stop the inner loop
                 }
             }
-            //} while (unionFound) ;
             return polygonList;
         }
         #endregion
@@ -306,17 +300,30 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region RemoveSelfIntersections Public Method
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool noHoles, out List<Polygon> strayHoles,
+            double minAllowableArea = Constants.BaseTolerance)
         {
-            return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections(), minAllowableArea);
+            return RemoveSelfIntersections(polygon, polygon.GetSelfIntersections(), noHoles, out strayHoles, minAllowableArea);
         }
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, List<IntersectionData> intersections,
-            double minAllowableArea = Constants.BaseTolerance)
+           bool noHoles, out List<Polygon> strayHoles, double minAllowableArea = Constants.BaseTolerance)
         {
             var isSubtract = false;
             var isUnion = true;
             var boothApproachDirections = true;
-            if (intersections.Count == 0) return new List<Polygon> { polygon.Copy() };
+            if (intersections.Count == 0)
+            {
+                if (polygon.IsPositive)
+                {
+                    strayHoles = new List<Polygon>();
+                    return new List<Polygon> { polygon.Copy() };
+                }
+                else
+                {
+                    strayHoles = new List<Polygon> { polygon.Copy() };
+                    return new List<Polygon>();
+                }
+            }
             var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
             var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
             var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
@@ -327,10 +334,16 @@ namespace TVGL.TwoDimensional
                     startEdge, isSubtract, isUnion).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
+                if (area < 0 && noHoles)
+                {
+                    polyCoordinates.Reverse();
+                    positivePolygons.Add(area, new Polygon(polyCoordinates));
+                }
+                else if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
                 else positivePolygons.Add(area, new Polygon(polyCoordinates));
             }
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
+                out strayHoles);
         }
         #endregion
 
@@ -379,7 +392,8 @@ namespace TVGL.TwoDimensional
             foreach (var vertex in polygonB.Vertices)
                 vertex.IndexInList = id++;
 
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values);
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
+                out _);
         }
 
         /// <summary>
@@ -532,7 +546,7 @@ namespace TVGL.TwoDimensional
 
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                        intersectionCoordinates, forward, isSubtract, isUnion, out intersectionData))
+                        intersectionCoordinates, forward, isSubtract, isUnion, out intersectionData, ref currentEdgeIsFromPolygonA))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
@@ -563,14 +577,14 @@ namespace TVGL.TwoDimensional
         /// <param name="allIntersections">All intersections.</param>
         /// <param name="formerIntersectCoords">The former intersect coords.</param>
         /// <param name="forward">if set to <c>true</c> [forward].</param>
-        /// <param name="indexOfIntersection">The index of intersection.</param>
+        /// <param name="newIntersection">The index of intersection.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private static bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<IntersectionData> allIntersections,
-        Vector2 formerIntersectCoords, bool forward, bool isSubtract, bool isUnion, out IntersectionData indexOfIntersection)
+        Vector2 formerIntersectCoords, bool forward, bool isSubtract, bool isUnion, out IntersectionData newIntersection, ref bool currentEdgeIsFromPolygonA)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
-            indexOfIntersection = null;
+            newIntersection = null;
             if (intersectionIndices == null)
                 return false;
             var minDistanceToIntersection = double.PositiveInfinity;
@@ -580,7 +594,7 @@ namespace TVGL.TwoDimensional
             foreach (var index in intersectionIndices)
             {
                 var thisIntersectData = allIntersections[index];
-
+                if (formerIntersectCoords.Equals(thisIntersectData.IntersectCoordinates)) continue;
                 // if the two polygons just "glance" off of one another at this intersection, then don't consider this as a valid place to switch
                 if (((thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0)
                 // if union and current edge is on the outer polygon, then don't consider this as a valid place to switch
@@ -597,14 +611,15 @@ namespace TVGL.TwoDimensional
                 }
 
                 var distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
-                if (distance < 0 || (distance == 0 && !formerIntersectCoords.IsNull())) continue;
+                if (distance < 0) continue;
                 if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;
-                    indexOfIntersection = thisIntersectData;
+                    newIntersection = thisIntersectData;
                 }
             }
-            return indexOfIntersection != null;
+            currentEdgeIsFromPolygonA = newIntersection?.EdgeA == currentEdge;
+            return newIntersection != null;
         }
 
         /// <summary>
