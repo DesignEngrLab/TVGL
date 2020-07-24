@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
-            CreateShallowPolygonTrees(shape, false, true, out var polyTrees, out _);
+            CreateShallowPolygonTrees(shape, false, out var polyTrees, out _);
             return SliceAtLine(polyTrees, lineNormalDirection, distanceAlongDirection, out negativeSidePolygons, out positiveSidePolygons,
                    offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
         }

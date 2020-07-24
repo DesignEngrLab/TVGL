@@ -101,14 +101,14 @@ namespace TVGL.TwoDimensional
         public bool AddHole(Polygon polygon)
         {
             if (polygon is null || (polygon._path is null && polygon._vertices is null)) return false;
-            if (!this.IsNonIntersectingPolygonInside(polygon, out _)) return false;
+            if (this.IsNonIntersectingPolygonInside(polygon, out _) == false) return false;
             if (polygon.IsPositive) polygon.Reverse();
             _holes ??= new List<Polygon>();
             for (int i = _holes.Count - 1; i >= 0; i--)
             {
-                if (_holes[i].IsNonIntersectingPolygonInside(polygon, out _))
+                if (_holes[i].IsNonIntersectingPolygonInside(polygon, out _) == true)
                     return false;
-                if (polygon.IsNonIntersectingPolygonInside(_holes[i], out _))
+                if (polygon.IsNonIntersectingPolygonInside(_holes[i], out _) == true)
                     _holes.RemoveAt(i);
             }
             _holes.Add(polygon);

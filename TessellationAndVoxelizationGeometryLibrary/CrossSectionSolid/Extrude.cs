@@ -50,7 +50,7 @@ namespace TVGL
             // the basePlaneDistance defines the plane closer to the origin. we can get this from the any input coordinate
             var basePlaneDistance = extrudeDirection.Dot(loops.First().First());
             if (midPlane) basePlaneDistance -= extrusionHeight / 2.0;
-            if (paths.CreateShallowPolygonTrees(false, false, out var polygons, out _))
+            if (paths.CreateShallowPolygonTrees(false, out var polygons, out _))
                 return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
                  extrudeDirection, basePlaneDistance, extrusionHeight)).ToList();
             else return null;
@@ -68,7 +68,7 @@ namespace TVGL
         public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
             double basePlaneDistance, double extrusionHeight)
         {
-            if (paths.CreateShallowPolygonTrees(false, false, out var polygons, out _))
+            if (paths.CreateShallowPolygonTrees(false, out var polygons, out _))
                 return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
                  basePlaneNormal, basePlaneDistance, extrusionHeight)).ToList();
             return null;

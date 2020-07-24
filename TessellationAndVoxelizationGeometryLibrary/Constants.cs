@@ -167,15 +167,13 @@ namespace TVGL
             return -1;
         }
 
-        internal static PolygonRelationship Converse(this PolygonRelationship relationship)
+        internal static PolygonRelationship SwitchAAndBPolygonRelationship(this PolygonRelationship relationship)
         {
-            if (((byte)relationship & 0b1100) == 0)  // flags "4" and "8" indicate that A>B or B>A
-                                                     // so if both are zero, then nothing to flip
-                return relationship;
-            var firstTwoBits = (byte)relationship & 0b11;
-            if (((byte)relationship & 0b100) != 0) // the "2" flag means that boundaries touch.
-                return (PolygonRelationship)(firstTwoBits + 8);
-            return (PolygonRelationship)(firstTwoBits + 4);
+            if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.AInsideB)
+                return PolygonRelationship.BInsideA | ((PolygonRelationship)(~PolygonRelationship.AInsideB));
+            if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.BInsideA)
+                return PolygonRelationship.AInsideB | ((PolygonRelationship)(~(byte)PolygonRelationship.BInsideA));
+            return relationship;
         }
 
         #region new known colors
@@ -709,28 +707,39 @@ namespace TVGL
     /// Enum PolygonRelationship
     /// </summary>
     [Flags]
-    public enum PolygonRelationship : byte
+    public enum PolygonRelationship
     {
-        // byte 0(1): 1 if intersecting
-        // byte 1(2): 1 if borders touch but not intersecting
-        // byte 2(4): 1 if inside a hole of the other (not touching or intersecting)
-        // byte 3(8): 1 if A is inside B
-        // byte 4(16): 1 if B is inside A
-        Separated = 0, //xb0000 0000
-        Intersect = 1, //xb0000 0001
-        SeparatedButBordersTouch = 2, //xb0000 0010
+        // Here are the atomic flags
+        EdgesCross = 1,
+        CoincidentVertices = 2,
+        CoincidentEdges = 4,
+        AInsideB = 8,
+        BInsideA = 16,
+        InsideHole = 32,
+        // the following are the valid combinations of flags
+        // first when two polygons are separated 
+        Separated = 0,
+        SeparatedButVerticesTouch = CoincidentVertices,
+        SeparatedButEdgesTouch = CoincidentEdges,
 
-        AIsCompletelyInsideB = 8, //xb0000 1000
-        //AVerticesInsideBButLinesIntersect = 9, //xb0000 1001
-        AInsideBButBordersTouch = 10, //xb000 1010
-        AIsInsideHoleOfB = 12,  //xb0000 1100
+        // A is inside B
+        AIsCompletelyInsideB = AInsideB,
+        AIsInsideBButVerticesTouch = AInsideB | CoincidentVertices,
+        AIsInsideBButEdgesTouch = AInsideB | CoincidentEdges,
+        AIsInsideHoleOfB = AInsideB | InsideHole,
+        AIsInsideHoleOfBButVerticesTouch = AInsideB | InsideHole | CoincidentVertices,
+        AIsInsideHoleOfBButEdgesTouch = AInsideB | InsideHole | CoincidentEdges,
 
-        BIsCompletelyInsideA = 16, //xb0001 0000
-        //BVerticesInsideAButLinesIntersect = 17, //xb0001 0001
-        BInsideAButBordersTouch = 18,  //xb0001 0010
-        BIsInsideHoleOfA = 20,  //xb0001 0100
+        // B is inside A
+        BIsCompletelyInsideA = BInsideA,
+        BIsInsideAButVerticesTouch = BInsideA | CoincidentVertices,
+        BIsInsideAButEdgesTouch = BInsideA | CoincidentEdges,
+        BIsInsideHoleOfA = BInsideA | InsideHole,
+        BIsInsideHoleOfABButVerticesTouch = BInsideA | InsideHole | CoincidentVertices,
+        BIsInsideHoleOfABButEdgesTouch = BInsideA | InsideHole | CoincidentEdges,
 
-
+        // Intersection is inside A
+        Intersection = BInsideA | AInsideB
     }
 
     /// <summary>

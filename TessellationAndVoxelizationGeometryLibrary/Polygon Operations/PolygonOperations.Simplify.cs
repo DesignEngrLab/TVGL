@@ -97,6 +97,10 @@ namespace TVGL.TwoDimensional
                     int nextnextIndex = FindValidNeighborIndex(nextIndex, true, polygon, numPoints);
                     int prevIndex = FindValidNeighborIndex(index, false, polygon, numPoints);
                     int prevprevIndex = FindValidNeighborIndex(prevIndex, false, polygon, numPoints);
+                    // if the polygon has been reduced to 2 points, then we're going to delete it
+                    if (nextnextIndex == prevIndex || nextIndex == prevprevIndex) // then reduced to two points.
+                        continue;
+
                     // now, add these new crossproducts both to the dictionary and to the sortedLists. Note, that nothing is
                     // removed from the sorted lists here. it is more efficient to just remove them if they bubble to the top of the list, 
                     // which is done in PopNextSmallestArea
@@ -204,11 +208,30 @@ namespace TVGL.TwoDimensional
         private static int FindValidNeighborIndex(int index, bool forward, IList<Vector2> polygon, int numPoints)
         {
             int increment = forward ? 1 : -1;
+            var hitLimit = false;
             do
             {
                 index += increment;
-                if (index < 0) index = numPoints - 1;
-                else if (index == numPoints) index = 0;
+                if (index < 0)
+                {
+                    index = numPoints - 1;
+                    if (hitLimit)
+                    {
+                        index = -1;
+                        break;
+                    }
+                    hitLimit = true;
+                }
+                else if (index == numPoints)
+                {
+                    index = 0;
+                    if (hitLimit)
+                    {
+                        index = -1;
+                        break;
+                    }
+                    hitLimit = true;
+                }
             }
             while (polygon[index].IsNull());
             return index;

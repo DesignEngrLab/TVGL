@@ -43,7 +43,7 @@ namespace TVGLPresenterDebugger
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                //Presenter.ShowAndHang(solid);
+                Presenter.ShowAndHang(solid);
                 //var vs = new VoxelizedSolid(solid, 100);
                 //Presenter.ShowAndHang(vs);
 
@@ -65,9 +65,11 @@ namespace TVGLPresenterDebugger
 
 
 
-
-                var silhouette = solid.CreateSilhouette(new Vector3(1, 1, 1));
-                Presenter.ShowAndHang(silhouette);
+                for (int i = 0; i < 33; i++)
+                {
+                    var silhouette = solid.CreateSilhouette(new Vector3(r.NextDouble()-0.5, r.NextDouble() - 0.5, r.NextDouble() - 0.5));
+                    Presenter.ShowAndHang(silhouette);
+                }
             }
         }
 

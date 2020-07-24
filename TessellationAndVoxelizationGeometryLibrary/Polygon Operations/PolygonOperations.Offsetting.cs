@@ -256,7 +256,7 @@ namespace TVGL.TwoDimensional
                 int j = i;
                 while (++j < polygons.Count)
                 {
-                    if (polygons[j].IsNonIntersectingPolygonInside(polygons[i], out _))
+                    if (polygons[j].IsNonIntersectingPolygonInside(polygons[i], out _) == true)
                     {
                         foundToBeInsideOfOther = true;
                         break;
@@ -281,7 +281,7 @@ namespace TVGL.TwoDimensional
                 for (var j = 0; j < polygons.Count; j++)
                 {
                     var positivePolygon = polygons[j];
-                    if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary))
+                    if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary) == true)
                     {
                         if (onBoundary)
                             polygons[j] = positivePolygon.Union(negativePolygon)[0]; // i don't know if this is a problem, but the

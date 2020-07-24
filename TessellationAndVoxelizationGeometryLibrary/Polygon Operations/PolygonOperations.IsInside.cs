@@ -13,7 +13,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
-        internal static bool IsNonIntersectingPolygonInside(this Polygon outer, Polygon inner, out bool onBoundary)
+        internal static bool? IsNonIntersectingPolygonInside(this Polygon outer, Polygon inner, out bool onBoundary)
         {
             onBoundary = false;
             if (Math.Abs(inner.Area) > outer.Area) return false;
@@ -26,7 +26,7 @@ namespace TVGL.TwoDimensional
                 else
                     return true;
             }
-            return true; //all points are on boundary!
+            return null; //all points are on boundary, so it is unclear if it is inside
         }
 
         #region Line Intersections with Polygon
@@ -152,6 +152,7 @@ namespace TVGL.TwoDimensional
             out List<IntersectionData> intersections)
         {
             intersections = new List<IntersectionData>();
+            var possibleDuplicates = new List<(int, PolygonSegment, PolygonSegment)>();
             //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
             // safely return that the polygons are separated.
             if (polygonA.MinX > polygonB.MaxX ||
@@ -182,109 +183,105 @@ namespace TVGL.TwoDimensional
                     while (localBIndex < bLines.Length && aLine.XMax >= bLines[localBIndex].XMin)
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
-                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections);
+                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates);
                 }
                 else
                 {
                     var bLine = bLines[bIndex++];
                     var localAIndex = aIndex;
                     while (localAIndex < aLines.Length && bLine.XMax >= aLines[localAIndex].XMin)
-                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections);
+                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates);
                 }
             }
-            if (CheckForIntersection(intersections))
+
+            if (intersections.Count == 0)
             {
-                // I don't have a reason to check the following cases after all. It is still an intersection and other
-                // parts of the code treat it as such.
-                //if (ArePointsInsidePolygonLines(aLines, aLines.Length, orderedBPoints, out _, true))
-                //    return PolygonRelationship.BVerticesInsideAButLinesIntersect;
-                //if (ArePointsInsidePolygonLines(bLines, bLines.Length, orderedAPoints, out _, true))
-                //    return PolygonRelationship.AVerticesInsideBButLinesIntersect;
-                return PolygonRelationship.Intersect;
-            }
-            // so, there are no interesections that indicate an overlap - only places where the polygons 
-            // touch or have collinear edges
-            bool onBoundary;
-            if (BoundingBoxEncompasses(polygonA, polygonB))
-            {
-                foreach (var hole in polygonA.Holes)
+                // so, there are no interesections that indicate an overlap - only places where the polygons 
+                // touch or have collinear edges
+                if (polygonA.HasABoundingBoxThatEncompasses(polygonB))
                 {
-                    if (hole.IsNonIntersectingPolygonInside(polygonB, out onBoundary))
+                    foreach (var hole in polygonA.Holes)
                     {
-                        if (intersections.Count > 0) return PolygonRelationship.BInsideAButBordersTouch;
-                        return PolygonRelationship.BIsInsideHoleOfA;
+                        if (hole.IsNonIntersectingPolygonInside(polygonB, out _) == true)
+                            return PolygonRelationship.BIsInsideHoleOfA;
+                    }
+                    if (polygonA.IsNonIntersectingPolygonInside(polygonB, out _) == true)
+                        return PolygonRelationship.BIsCompletelyInsideA;
+                }
+                else if (polygonB.HasABoundingBoxThatEncompasses(polygonA))
+                {
+                    foreach (var hole in polygonB.Holes)
+                    {
+                        if (hole.IsNonIntersectingPolygonInside(polygonA, out _) == true)
+                            return PolygonRelationship.AIsInsideHoleOfB;
+                    }
+                    if (polygonB.IsNonIntersectingPolygonInside(polygonA, out _) == true)
+                        return PolygonRelationship.AIsCompletelyInsideB;
+                }
+                return PolygonRelationship.Separated;
+            }
+
+            RemoveDuplicateIntersections(possibleDuplicates, intersections);
+            var atLeastOneAEncompassB = intersections.Any(intersection => (intersection.Relationship &
+            PolygonSegmentRelationship.AEncompassesB) == PolygonSegmentRelationship.AEncompassesB);
+            var atLeastOneBEncompassA = intersections.Any(intersection => (intersection.Relationship &
+            PolygonSegmentRelationship.BEncompassesA) == PolygonSegmentRelationship.BEncompassesA);
+
+            if (atLeastOneAEncompassB && atLeastOneBEncompassA)
+                return PolygonRelationship.Intersection;
+
+            var atLeastOneCoincident = intersections.Any(intersection => (intersection.Relationship &
+            PolygonSegmentRelationship.CoincidentLines) == PolygonSegmentRelationship.CoincidentLines);
+
+            if (atLeastOneAEncompassB)
+                return atLeastOneCoincident ? PolygonRelationship.BIsInsideAButEdgesTouch
+                                   : PolygonRelationship.BIsInsideAButVerticesTouch;
+            if (atLeastOneBEncompassA)
+                return atLeastOneCoincident ? PolygonRelationship.AIsInsideBButEdgesTouch
+                                   : PolygonRelationship.AIsInsideBButVerticesTouch;
+            else // they are separated but there are intersections (since not caught by intersections.Count == 0 condition)
+            {
+                if (polygonA.HasABoundingBoxThatEncompasses(polygonB))
+                {
+                    foreach (var hole in polygonA.Holes)
+                    {
+                        if (hole.IsNonIntersectingPolygonInside(polygonB, out _) == true)
+                            return atLeastOneCoincident ? PolygonRelationship.BIsInsideHoleOfABButEdgesTouch
+                      : PolygonRelationship.BIsInsideHoleOfABButVerticesTouch;
                     }
                 }
-                if (polygonA.IsNonIntersectingPolygonInside(polygonB, out onBoundary))
+                else if (polygonB.HasABoundingBoxThatEncompasses(polygonA))
                 {
-                    if (intersections.Count > 0) return PolygonRelationship.BInsideAButBordersTouch;
-                    return PolygonRelationship.BIsCompletelyInsideA;
-                }
-            }
-            else if (BoundingBoxEncompasses(polygonB, polygonA))
-            {
-                foreach (var hole in polygonB.Holes)
-                {
-                    if (hole.IsNonIntersectingPolygonInside(polygonA, out onBoundary))
+                    foreach (var hole in polygonB.Holes)
                     {
-                        if (intersections.Count > 0) return PolygonRelationship.AInsideBButBordersTouch;
-                        return PolygonRelationship.AIsInsideHoleOfB;
+                        if (hole.IsNonIntersectingPolygonInside(polygonA, out _) == true)
+                            return atLeastOneCoincident ? PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
+                        : PolygonRelationship.AIsInsideHoleOfBButVerticesTouch;
                     }
                 }
-                if (polygonB.IsNonIntersectingPolygonInside(polygonA, out onBoundary))
-                {
-                    if (intersections.Count > 0) return PolygonRelationship.AInsideBButBordersTouch;
-                    return PolygonRelationship.AIsCompletelyInsideB;
-                }
+                return atLeastOneCoincident ? PolygonRelationship.SeparatedButEdgesTouch
+                      : PolygonRelationship.SeparatedButVerticesTouch;
             }
-            if (intersections.Count == 0) return PolygonRelationship.Separated;
-            // what remains are polygons that are exterior to one another but touch: #1 only vertex to vertex
-            // (PolygonSegmentRelationship.EndPointsTouch), #2 only vertex to edge (PolygonSegmentRelationship.
-            // TJunctionXReflects), or #3 edge to edge (PolygonSegmentRelationship.TJunctionBMerges).
-            else return PolygonRelationship.SeparatedButBordersTouch;
         }
 
-        private static bool CheckForIntersection(List<IntersectionData> intersections)
+        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<IntersectionData> intersections)
         {
-            var atLeastOneAEncompassingB = false;
-            var atLeastOneBEncompassingA = false;
-            foreach (var intersectionData in intersections)
+            foreach (var dupeData in possibleDuplicates)
             {
-                if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
-                    return true;
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
+                var duplicateIntersection = intersections[dupeData.index];
+
+                for (int i = 0; i < intersections.Count; i++)
                 {
-                    if (atLeastOneBEncompassingA)
-                        return true;
-                    atLeastOneAEncompassingB = true;
-                }
-                else if ((intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
-                {
-                    if (atLeastOneAEncompassingB)
-                        return true;
-                    atLeastOneBEncompassingA = true;
+                    if (i == dupeData.index) continue;
+                    if (intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB &&
+                       duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, Constants.BaseTolerance))
+                    {
+                        intersections.RemoveAt(dupeData.index);
+                        break;
+                    }
                 }
             }
-            return false;
         }
-
-
-        /// <summary>
-        /// Returns true is polygons overlap at more than their boundary. This is simply a small wrapper to the bigger function: 
-        /// GetPolygonRelationshipAndIntersections. However, in certain contexts, one may simply want a boolean especially if used
-        /// in conditional expressions. This is meant to serve in those purposes.
-        /// </summary>
-        /// <param name="polygonA">The polygon a.</param>
-        /// <param name="polygonB">The polygon b.</param>
-        /// <param name="intersections">The intersections.</param>
-        /// <param name="relationship">The relationship.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool PolygonsOverlap(this Polygon polygonA, Polygon polygonB, out List<IntersectionData> intersections, out PolygonRelationship relationship)
-        {
-            relationship = polygonA.GetPolygonRelationshipAndIntersections(polygonB, out intersections);
-            return relationship != PolygonRelationship.Separated && relationship != PolygonRelationship.SeparatedButBordersTouch;
-        }
-
 
         /// <summary>
         /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
@@ -298,7 +295,7 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonSegmentRelationship.</returns>
         private static void AddIntersectionBetweenLines(PolygonSegment lineA, PolygonSegment lineB,
-            List<IntersectionData> intersections)
+            List<IntersectionData> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates)
         {
             // first check if bounding boxes overlap. If they don't then return false here
             if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin
@@ -321,11 +318,15 @@ namespace TVGL.TwoDimensional
                 if (prevA.Vector.Cross(prevB.Vector).IsNegligible() && prevA.Vector.Dot(prevB.Vector) > 0)
                     // the two previous lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
                     relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
-                if (lineA.Vector.Cross(prevB.Vector).IsNegligible() && lineA.Vector.Dot(prevB.Vector) < 0
+                if (lineA.Vector.Cross(prevB.Vector).IsNegligible() && lineA.Vector.Dot(prevB.Vector) < 0)
                     // the two lines are going in the opposite direction but the line-A coincides with previous line-B
-                    || lineB.Vector.Cross(prevA.Vector).IsNegligible() && lineB.Vector.Dot(prevA.Vector) < 0)
+                    relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections
+                        | PolygonSegmentRelationship.SameLineAfterPoint;
+                // the two lines are going in the opposite direction but the line-B coincides with previous line-A
+                if (lineB.Vector.Cross(prevA.Vector).IsNegligible() && lineB.Vector.Dot(prevA.Vector) < 0)
                     // the two lines are going in the opposite direction but the line-B coincides with previous line-A
-                    relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections;
+                    relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections
+                        | PolygonSegmentRelationship.SameLineBeforePoint;
             }
             else
             {
@@ -404,17 +405,23 @@ namespace TVGL.TwoDimensional
                         intersectionCoordinates = lineA.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfA;
                         prevB = lineB;
+                        if (t_2.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                     else if (t_2.IsNegligible())
                     {
                         intersectionCoordinates = lineB.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfB;
                         prevA = lineA;
+                        if (t_1.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
                     }
                     else
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
                         relationship = PolygonSegmentRelationship.Overlapping;
+                        if (t_1.IsPracticallySame(1.0, 1e-12) && t_2.IsPracticallySame(1.0, 1e-12))
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
+                        else if (t_1.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                        else if (t_2.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                 }
             }
@@ -434,16 +441,15 @@ namespace TVGL.TwoDimensional
 
             //in the calling function (AddIntersectionBetweenLines), we detect if the two lines are Coincident, but not if the previous lines are coincident
             // the prerequisite for this is that the previous lines have the same slope (0 cross product)
-            if (prevACrossPrevB.IsNegligible())
+            if (prevACrossPrevB.IsNegligible()
+                && (relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != PolygonSegmentRelationship.BothLinesStartAtPoint)
             {
-                if (prevA.Vector.Dot(prevB.Vector) > 0)
-                    relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
-                // then opposite directions but could be parallel lines (e.g. example of touching octagons, slightly offset)
-                // so, previous lines overlap only if #1: polygons share a point
-                else if (((relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0 && lineACrossPrevB.IsNegligible())
-                    || ((relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0 && prevACrossLineB.IsNegligible()))
-                    relationship |= PolygonSegmentRelationship.OppositeDirections |
-                                    PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
+                // given that overlapping is handled above, then - at this point - we are AtStartOfA, AtStartOfB. Both is handled in previous
+                // function, then if AtStartOfA then prevB == lineB, vice verse for AtStartOfB
+                relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
+                // then opposite directions but could be parallel lines
+                if (prevA.Vector.Dot(prevB.Vector) < 0)
+                    relationship |= PolygonSegmentRelationship.OppositeDirections;
             }
 
             var aCornerCross = prevA.Vector.Cross(lineA.Vector);
@@ -455,15 +461,15 @@ namespace TVGL.TwoDimensional
             // When A's corner is concave, we check for the opposite convex angle of A - to see if the B line is between those
             // that's the easy part! getting the changes in sign correct makes it more complicated.
             var lineBIsInsideA = (aCornerCross >= 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
-                                     (aCornerCross < 0 && !(lineACrossLineB < 0 && prevACrossLineB < 0));
+                                 (aCornerCross < 0 && !(lineACrossLineB <= 0 && prevACrossLineB <= 0));
             // this expression is the same, but the previous B vector is into the corner and thus, we need to negate it (or rather just check for negative)
             var prevLineBIsInsideA = (aCornerCross >= 0 && lineACrossPrevB < 0 && prevACrossPrevB < 0) ||
-                                         (aCornerCross < 0 && !(lineACrossPrevB > 0 && prevACrossPrevB > 0));
+                                     (aCornerCross < 0 && !(lineACrossPrevB >= 0 && prevACrossPrevB >= 0));
             // we actually have to do the same with lineB - it's not enough to know if A is inside B
             var lineAIsInsideB = (bCornerCross >= 0 && lineACrossLineB < 0 && lineACrossPrevB < 0) ||
-                                     (bCornerCross < 0 && !(lineACrossLineB > 0 && lineACrossPrevB > 0));
+                                 (bCornerCross < 0 && !(lineACrossLineB >= 0 && lineACrossPrevB >= 0));
             var prevLineAIsInsideB = (bCornerCross >= 0 && prevACrossLineB > 0 && prevACrossPrevB > 0) ||
-                                        (bCornerCross < 0 && !(prevACrossLineB < 0 && prevACrossPrevB < 0));
+                                     (bCornerCross < 0 && !(prevACrossLineB <= 0 && prevACrossPrevB <= 0));
             // in the remaining conditions there are 16 possible combinations of the four booleans: lineBIsInsideA-prevLineBIsInsideA--lineAIsInsideB-prevLineAIsInsideB
             // first off, if they are all false, then it clearly is a "glance" and no need to do anything
             // second: if there is a positive on both sides then overlapping
@@ -484,7 +490,7 @@ namespace TVGL.TwoDimensional
             return relationship;
         }
 
-        private static bool BoundingBoxEncompasses(this Polygon polygonA, Polygon polygonB)
+        private static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
         {
             return (polygonA.MaxX >= polygonB.MaxX
                 && polygonA.MaxY >= polygonB.MaxY
@@ -501,7 +507,7 @@ namespace TVGL.TwoDimensional
             var k = 0;
             for (int i = 0; i < length; i++)
             {
-                
+
                 var point = orderedPoints[i];
                 if (point.EndLine == null) ;
                 if (point.EndLine.OtherPoint(point).X > point.X)
@@ -529,6 +535,7 @@ namespace TVGL.TwoDimensional
         private static List<IntersectionData> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<IntersectionData>();
+            var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
             var numLines = polygonA.Lines.Count;
             var orderedLines = polygonA.Lines.OrderBy(line => line.XMin).ToList();
             for (int i = 0; i < numLines - 1; i++)
@@ -539,9 +546,10 @@ namespace TVGL.TwoDimensional
                     var other = orderedLines[j];
                     if (current.XMax < orderedLines[j].XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections);
+                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates);
                 }
             }
+            RemoveDuplicateIntersections(possibleDuplicates, intersections);
             return intersections;
         }
 

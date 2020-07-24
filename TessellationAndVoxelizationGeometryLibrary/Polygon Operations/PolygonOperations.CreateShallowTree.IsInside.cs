@@ -24,7 +24,7 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;Polygon&gt;.</returns>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
         public static bool CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool vertexNegPosOrderIsGuaranteedCorrect, bool pathsAreNotSelfIntersecting, out List<Polygon> polygons,
+            bool vertexNegPosOrderIsGuaranteedCorrect, out List<Polygon> polygons,
             out int[] connectingIndices)
         {
             if (vertexNegPosOrderIsGuaranteedCorrect)
@@ -57,12 +57,12 @@ namespace TVGL.TwoDimensional
         {
             connectingIndices = new int[count];
             polygons = positivePolygons.Values.ToList();
-            //2) Find the positive polygon that this negative polygon is inside.
-            //The negative polygon belongs to the smallest positive polygon that it fits inside.
-            //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
-            //and the reversed ordering, gaurantee that we get the correct shallow tree.
             foreach (var negativePolygonKVP in negativePolygons)
             {
+                // Find the positive polygon that this negative polygon is inside.
+                //The negative polygon belongs to the smallest positive polygon that it fits inside.
+                //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
+                //and the reversed ordering, gaurantee that we get the correct shallow tree.
                 var isInside = false;
                 var area = negativePolygonKVP.Key;
                 var negativePolygon = negativePolygonKVP.Value;
@@ -72,12 +72,14 @@ namespace TVGL.TwoDimensional
                     if (-area > positivePolygon.Area) continue;
                     var polygonRelationship =
                         positivePolygon.GetPolygonRelationshipAndIntersections(negativePolygon, out _);
-                    if (((byte)polygonRelationship & 0b1) != 0
-                    ) // the "1" flag is intersection. We can't handle that here.
+                    if (polygonRelationship == PolygonRelationship.Intersection)
                         return false;
-                    if (((byte)polygonRelationship & 0b010) != 0) // the "2" flag means that boundaries touch.
+                    if ((polygonRelationship & (PolygonRelationship.EdgesCross | PolygonRelationship.CoincidentVertices
+                        | PolygonRelationship.CoincidentEdges | PolygonRelationship.AInsideB | PolygonRelationship.InsideHole)) != 0)
                         return false;
-                    if (((byte)polygonRelationship & 0b100) != 0) // the "4" flag is B is inside A. We can do that
+
+                    if ((polygonRelationship & PolygonRelationship.BInsideA) != 0
+                        && (polygonRelationship & PolygonRelationship.InsideHole) == 0)
                     {
                         positivePolygon.AddHole(negativePolygon);
                         //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
@@ -97,6 +99,7 @@ namespace TVGL.TwoDimensional
                 polygon.Index = count++;
                 foreach (var hole in polygon.Holes)
                 {
+                if (hole.Index < 0) continue;
                     connectingIndices[hole.Index] = count++;
                     hole.Index = polygon.Index;
                 }
@@ -130,40 +133,18 @@ namespace TVGL.TwoDimensional
                 for (int i = 0; i < polygons.Count; i++)
                 {
                     var outerPolygon = polygons[i];
-                    PolygonRelationship polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
-                    if (((byte)polygonRelationship & 0b1) != 0
-                    ) // the "1" flag is intersection. We can't handle that here.
+                    var polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
+
+                    if (polygonRelationship == PolygonRelationship.Intersection)
                         return false;
-                    if (((byte)polygonRelationship & 0b010) != 0) // the "2" flag means that boundaries touch.
+                    if ((polygonRelationship & (PolygonRelationship.EdgesCross | PolygonRelationship.CoincidentVertices
+                        | PolygonRelationship.CoincidentEdges | PolygonRelationship.AInsideB | PolygonRelationship.InsideHole)) != 0)
                         return false;
-                    if (((byte)polygonRelationship & 0b100) != 0) // the "4" flag is B is inside A. We can do that
+                    if ((polygonRelationship & PolygonRelationship.BInsideA) != 0
+                        && (polygonRelationship & PolygonRelationship.InsideHole) == 0)
                     {
-                        var insideAHoleOfOuterPolygon = false;
-                        foreach (var innerPolygon in outerPolygon.Holes)
-                        {
-                            var innerPolygonRelationship =
-                                innerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
-                            if (((byte)innerPolygonRelationship & 0b1) != 0
-                            ) // the "1" flag is intersection. We can't handle that here.
-                                return false;
-                            if (((byte)innerPolygonRelationship & 0b010) != 0
-                            ) // the "2" flag means that boundaries touch.
-                                return false;
-                            if (((byte)innerPolygonRelationship & 0b100) != 0
-                            ) // the "4" flag is B is inside A. We can do that
-                            {
-                                polygons.Add(polygon);
-                                insideAHoleOfOuterPolygon = true;
-                                break;
-                            }
-                        }
-
-                        if (!insideAHoleOfOuterPolygon)
-                        {
-                            polygon.Reverse();
-                            outerPolygon.AddHole(polygon);
-                        }
-
+                        polygon.Reverse();
+                        outerPolygon.AddHole(polygon);
                         break;
                     }
                 }
@@ -210,7 +191,7 @@ namespace TVGL.TwoDimensional
                 var foundToBeInsideOfOther = false;
                 for (int j = i + 1; j < positivePolygons.Count; j++)
                 {
-                    if (positivePolygons[j].IsNonIntersectingPolygonInside(positivePolygons[i], out _))
+                    if (positivePolygons[j].IsNonIntersectingPolygonInside(positivePolygons[i], out _) == true)
                     {
                         foundToBeInsideOfOther = true;
                         break;
@@ -233,7 +214,7 @@ namespace TVGL.TwoDimensional
                 for (var j = 0; j < positivePolygons.Count; j++)
                 {
                     var positivePolygon = positivePolygons[j];
-                    if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary))
+                    if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary) == true)
                     {
                         isInside = true;
                         if (onBoundary)
