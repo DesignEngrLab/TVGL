@@ -141,9 +141,12 @@ namespace TVGL.TwoDimensional
             {
                 yield return this;
                 if (_holes is null) yield break;
-                foreach (var innerPolygon in _holes)
-                    foreach (var polygon in innerPolygon.AllPolygons)
-                        yield return polygon;
+                foreach (var polygon in _holes)
+                    yield return polygon;
+                //if we want to allow deep polygon trees, then the commented code below would allow this (but would need to 
+                //comment the previous line ("yield return polygon;").
+                //foreach (var innerPolygon in polygon.AllPolygons)
+                //    yield return innerPolygon;
             }
         }
 
@@ -337,7 +340,6 @@ namespace TVGL.TwoDimensional
         public Polygon Copy()
         {
             var thisPath = _path == null ? null : new List<Vector2>(_path);
-            var thisVertices = _vertices == null ? null : _vertices.Select(v => v.Copy()).ToList();
             var thisInnerPolygons = _holes == null ? null : _holes.Select(p => p.Copy()).ToList();
             var copiedPolygon = new Polygon
             {
@@ -349,6 +351,25 @@ namespace TVGL.TwoDimensional
                 minY = this.minY,
                 _path = thisPath,
                 _holes = thisInnerPolygons
+            };
+            copiedPolygon.MakeVertices();
+            copiedPolygon.MakeLineSegments();
+            return copiedPolygon;
+        }
+        public Polygon Copy(bool invert = false)
+        {
+            if (!invert) return Copy();
+            var thisPath = Path;
+            thisPath.Reverse();
+            var copiedPolygon = new Polygon
+            {
+                index = this.index,
+                area = this.area,
+                maxX = this.maxX,
+                maxY = this.maxY,
+                minX = this.minX,
+                minY = this.minY,
+                _path = thisPath,
             };
             copiedPolygon.MakeVertices();
             copiedPolygon.MakeLineSegments();

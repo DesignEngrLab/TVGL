@@ -739,7 +739,11 @@ namespace TVGL
         BIsInsideHoleOfABButEdgesTouch = BInsideA | InsideHole | CoincidentEdges,
 
         // Intersection is inside A
-        Intersection = BInsideA | AInsideB
+        Intersection = BInsideA | AInsideB,
+
+            //Equal
+        Equal = 64,
+        EqualButOpposite = 128
     }
 
     /// <summary>

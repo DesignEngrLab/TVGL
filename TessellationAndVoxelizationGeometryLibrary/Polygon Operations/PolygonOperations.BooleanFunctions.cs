@@ -366,24 +366,10 @@ namespace TVGL.TwoDimensional
             var intersections = polygon.GetSelfIntersections();
             var isSubtract = false;
             var isUnion = true;
-            var boothApproachDirections = true;
-            if (intersections.Count == 0)
-            {
-                if (polygon.IsPositive)
-                {
-                    strayHoles = new List<Polygon>();
-                    return new List<Polygon> { polygon.Copy() };
-                }
-                else
-                {
-                    strayHoles = new List<Polygon> { polygon.Copy() };
-                    return new List<Polygon>();
-                }
-            }
-            var intersectionLookup = MakeIntersectionLookupList(polygon.Lines.Count, intersections);
-            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
-            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersections, isSubtract, isUnion, boothApproachDirections, out var startingIntersection,
+            var bothApproachDirections = true;
+            var intersectionLookup = MakeIntersectionLookupList(intersections, polygon, null, out var positivePolygons,
+                out var negativePolygons, isSubtract, isUnion, bothApproachDirections); //store negative in increasing (from -inf to 0) area
+            while (GetNextStartingIntersection(intersections, isSubtract, isUnion, bothApproachDirections, out var startingIntersection,
                 out var startEdge))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
@@ -398,8 +384,20 @@ namespace TVGL.TwoDimensional
                 else if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
                 else positivePolygons.Add(area, new Polygon(polyCoordinates));
             }
+            //var startIndex = 0;
+            //foreach (var poly in polygon.AllPolygons)
+            //{
+            //    if (startIndex >= newPolygonStartIndices.Count) break;
+            //    if (poly.Vertices[0].IndexInList == newPolygonStartIndices[startIndex])
+            //    {
+            //        if (poly.IsPositive)
+            //            positivePolygons.Add(poly.Area, poly.Copy());
+            //        else negativePolygons.Add(poly.Area, poly.Copy());
+            //        startIndex += 2;
+            //    }
+            //}
             return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
-                out strayHoles);
+                out strayHoles, false, true);
         }
         #endregion
 
@@ -418,42 +416,11 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> BooleanOperation(this Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, bool isSubtract,
                     bool isUnion, bool bothApproachDirections, double minAllowableArea = Constants.BaseTolerance)
         {
-            var id = 0;
-            var newPolygonStartIndices = new List<int>();
-            foreach (var polygon in polygonA.AllPolygons)
-            {
-                newPolygonStartIndices.Add(id);
-                foreach (var vertex in polygon.Vertices)
-                    vertex.IndexInList = id++;
-                newPolygonStartIndices.Add(id - 1);
-            }
-            // temporarily number the vertices so that each has a unique number. this is important for the Intersection Lookup List
-            foreach (var polygon in polygonB.AllPolygons)
-            {
-                newPolygonStartIndices.Add(id);
-                foreach (var vertex in polygon.Vertices)
-                    vertex.IndexInList = id++;
-                newPolygonStartIndices.Add(id - 1);
-            }
-            var intersectionLookup = MakeIntersectionLookupList(id, intersections);
-            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
-            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
+            var intersectionLookup = MakeIntersectionLookupList(intersections, polygonA, polygonB, out var positivePolygons,
+                out var negativePolygons, isSubtract, isUnion, bothApproachDirections); //store negative in increasing (from -inf to 0) area
             while (GetNextStartingIntersection(intersections, isSubtract, isUnion, bothApproachDirections, out var startingIntersection,
                 out var startEdge))
             {
-                for (int i = newPolygonStartIndices.Count - 1; i > 0; i -= 2)
-                {
-                    if (startingIntersection.EdgeA.IndexInList >= newPolygonStartIndices[i - 1] && startingIntersection.EdgeA.IndexInList <= newPolygonStartIndices[i])
-                    {
-                        newPolygonStartIndices.RemoveAt(i);
-                        newPolygonStartIndices.RemoveAt(i - 1);
-                    }
-                    else if (startingIntersection.EdgeB.IndexInList >= newPolygonStartIndices[i - 1] && startingIntersection.EdgeB.IndexInList <= newPolygonStartIndices[i])
-                    {
-                        newPolygonStartIndices.RemoveAt(i);
-                        newPolygonStartIndices.RemoveAt(i - 1);
-                    }
-                }
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, isSubtract, isUnion).ToList();
                 var area = polyCoordinates.Area();
@@ -462,36 +429,8 @@ namespace TVGL.TwoDimensional
                 else positivePolygons.Add(area, new Polygon(polyCoordinates));
             }
             // for holes that were not participating in any intersection, we need to restore them to the result
-            var startIndex = 0;
-            foreach (var polygon in polygonA.AllPolygons)
-            {
-                if (startIndex >= newPolygonStartIndices.Count) break;
-                if (polygon.Vertices[0].IndexInList == newPolygonStartIndices[startIndex])
-                {
-                    if (polygon.IsPositive)
-                        positivePolygons.Add(polygon.Area, polygon.Copy());
-                    else negativePolygons.Add(polygon.Area, polygon.Copy());
-                    startIndex += 2;
-                }
-            }
-            foreach (var polygon in polygonB.AllPolygons)
-            {
-                if (startIndex >= newPolygonStartIndices.Count) break;
-                if (polygon.Vertices[0].IndexInList == newPolygonStartIndices[startIndex])
-                {
-                    if (polygon.IsPositive)
-                        positivePolygons.Add(polygon.Area, polygon.Copy());
-                    else negativePolygons.Add(polygon.Area, polygon.Copy());
-                    startIndex += 2;
-                }
-            }
-            // reset ids for polygon B
-            id = 0;
-            foreach (var vertex in polygonB.Vertices)
-                vertex.IndexInList = id++;
-
             return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
-                out _);
+                out _, isSubtract, isUnion);
         }
 
         /// <summary>
@@ -726,21 +665,132 @@ namespace TVGL.TwoDimensional
         /// <param name="numLines">The number lines.</param>
         /// <param name="intersections">The intersections.</param>
         /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
-        private static List<int>[] MakeIntersectionLookupList(int numLines, List<IntersectionData> intersections)
+        private static List<int>[] MakeIntersectionLookupList(List<IntersectionData> intersections, Polygon polygonA,
+            Polygon polygonB, out SortedDictionary<double, Polygon> positivePolygons, out SortedDictionary<double, Polygon> negativePolygons,
+            bool isSubtract, bool isUnion, bool doubleApproach)
         {
-            var result = new List<int>[numLines];
+            // first off, number all the vertices with a unique index between 0 and n. These are used in the lookupList to connect the 
+            // edges to the intersections that they participate in.
+            var index = 0;
+            var polygonStartIndices = new List<int>();
+            // in addition, keep track of the vertex index that is the beginning of each polygon. Recall that there could be numerous
+            // hole-polygons that need to be accounted for.
+            var allPolygons = polygonA.AllPolygons.ToList();
+            foreach (var polygon in allPolygons)
+            {
+                polygonStartIndices.Add(index);
+                foreach (var vertex in polygon.Vertices)
+                    vertex.IndexInList = index++;
+            }
+            var startOfBVertices = index; //yeah, also keep track of when the second polygon tree argument starts
+            if (polygonB != null)
+                foreach (var polygon in polygonB.AllPolygons)
+                {
+                    allPolygons.Add(polygon);
+                    polygonStartIndices.Add(index);
+                    foreach (var vertex in polygon.Vertices)
+                        vertex.IndexInList = index++;
+                }
+            polygonStartIndices.Add(index); // add a final exclusive top of the range for the for-loop below (not the next one, the one after)
+
+            // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
+            // this is potentially memory intensive but speeds up the matching in when creating new polygons
+            var lookupList = new List<int>[index];
             for (int i = 0; i < intersections.Count; i++)
             {
                 var intersection = intersections[i];
                 intersection.Visited = false;
-                var index = intersection.EdgeA.IndexInList;
-                result[index] ??= new List<int>();
-                result[index].Add(i);
+                index = intersection.EdgeA.IndexInList;
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
                 index = intersection.EdgeB.IndexInList;
-                result[index] ??= new List<int>();
-                result[index].Add(i);
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
             }
-            return result;
+
+            positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
+            negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
+            // now we want to find the sub-polygons that are not intersecting anything and decide whether to keep them or not
+            index = 0;
+            foreach (var poly in allPolygons)
+            {
+                var isNonIntersecting = true;
+                var isIdentical = true;
+                var identicalPolygonIsInverted = false;
+                for (int j = polygonStartIndices[index]; j < polygonStartIndices[index + 1]; j++)
+                {
+                    if (lookupList[j] == null)
+                        isIdentical = false;
+                    else
+                    {
+                        if (!isIdentical)
+                        {
+                            isNonIntersecting = false;
+                            break;
+                        }
+                        var intersectionIndex = lookupList[j].FindIndex(k => (intersections[k].Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0
+                        && (intersections[k].Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0);
+                        if (intersectionIndex == -1)
+                            isIdentical = false;
+                        else if ((intersections[lookupList[j][intersectionIndex]].Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0)
+                            identicalPolygonIsInverted = true;
+                    }
+                }
+                if (isIdentical)
+                {   // go back through the same indices and remove references to the intersections. Also, set the intersections to "visited"
+                    // which is easier than deleting since the other references would collapse down
+                    for (int j = polygonStartIndices[index]; j < polygonStartIndices[index + 1]; j++)
+                    {
+                        var intersectionIndex = lookupList[j].First(k => (intersections[k].Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0
+                     && (intersections[k].Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0);
+                        lookupList[j].Remove(intersectionIndex);
+                        if (lookupList[j].Count == 0) lookupList[j] = null;
+                        intersections[intersectionIndex].Visited = true;
+                        // note, in the next line - this has to be EdgeB since searching in order the A polygon will detect the duplicate - B will skip over
+                        var otherLookupEntry = lookupList[intersections[intersectionIndex].EdgeB.IndexInList];
+                        otherLookupEntry.Remove(intersectionIndex);
+                        //if (otherLookupEntry.Count == 0) lookupList[intersections[intersectionIndex].EdgeB.IndexInList] = null;
+                    }
+                    if ((!identicalPolygonIsInverted && !isSubtract) ||
+                        (identicalPolygonIsInverted && isSubtract && !isUnion && !doubleApproach))
+                        if (poly.IsPositive)
+                            positivePolygons.Add(poly.Area, poly.Copy());  //add the positive as a positive
+                        else negativePolygons.Add(poly.Area, poly.Copy()); //add the negative as a negative
+                }
+
+                else if (isNonIntersecting)
+                {
+                    var partOfPolygonB = polygonStartIndices[index] >= startOfBVertices;
+                    var otherPolygon = partOfPolygonB ? polygonA : polygonB != null ? polygonB : null;
+                    var insideOther = otherPolygon?.IsNonIntersectingPolygonInside(poly, out _) == true;
+                    if (poly.IsPositive)
+                    {
+                        if (isUnion != insideOther || (isSubtract && (!partOfPolygonB || doubleApproach)))
+                            positivePolygons.Add(poly.Area, poly.Copy());  //add the positive as a positive
+                        else if (insideOther && isSubtract && (partOfPolygonB || doubleApproach))
+                            negativePolygons.Add(-poly.Area, poly.Copy(true)); // add the positive as a negative
+                    }
+                    else if (!insideOther && // then it's a hole, but it is not inside the other
+                    (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
+                        negativePolygons.Add(poly.Area, poly.Copy()); //add the negative as a negative
+                    else // it's a hole in the other polygon 
+                    {
+                        //first need to check if it is inside a hole of the other
+                        var holeIsInsideHole = otherPolygon.Holes.Any(h => h.IsNonIntersectingPolygonInside(poly, out _) == true);
+                        if (holeIsInsideHole && (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
+                            negativePolygons.Add(poly.Area, poly.Copy()); //add the negatie as a negative
+                        else if (!holeIsInsideHole)
+                        {
+                            if (!isUnion && !isSubtract)
+                                negativePolygons.Add(poly.Area, poly.Copy()); //add the negatie as a negative
+                            else if (isSubtract && (!partOfPolygonB || doubleApproach))
+                                positivePolygons.Add(-poly.Area, poly.Copy(true)); //add the negative as a positive
+                        }
+                    }
+                }
+                index++;
+            }
+            return lookupList;
         }
         #endregion
     }

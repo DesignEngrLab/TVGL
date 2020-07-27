@@ -19,7 +19,6 @@ namespace TVGL.TwoDimensional
             var polygons = new List<Polygon>();
             while (faceHash.Any())
                 polygons.AddRange(GetPolygonFromFacesAndDirection(faceHash, direction));
-
             return polygons.Union();
         }
 
@@ -116,6 +115,7 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
+                    //Presenter.ShowAndHang(polyCoordinates);
                     var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var innerNegativePolygons);
                     positivePolygons.AddRange(innerPositivePolygons);
                     negativePolygons.AddRange(innerNegativePolygons);

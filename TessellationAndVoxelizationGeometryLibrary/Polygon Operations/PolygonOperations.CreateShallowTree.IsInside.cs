@@ -182,7 +182,8 @@ namespace TVGL.TwoDimensional
         /// <exception cref="Exception">Intersections still exist between hole and positive polygon.</exception>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
         private static List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> positivePolygons,
-                IEnumerable<Polygon> negativePolygons, out List<Polygon> strayHoles)
+                IEnumerable<Polygon> negativePolygons, out List<Polygon> strayHoles, bool isSubtract,
+                    bool isUnion)
         {
             //first, remove any positive polygons that are nested inside of bigger ones
             int i = 0;

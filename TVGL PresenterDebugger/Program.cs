@@ -63,11 +63,11 @@ namespace TVGLPresenterDebugger
                 //var ts = cs.ConvertToTessellatedExtrusions(true, false);
                 //Presenter.ShowAndHang(ts);
 
-
-
-                for (int i = 0; i < 33; i++)
+                for (int j = 0; j < 33; j++)
                 {
-                    var silhouette = solid.CreateSilhouette(new Vector3(r.NextDouble()-0.5, r.NextDouble() - 0.5, r.NextDouble() - 0.5));
+                    //var direction = new Vector3(0.4878742024072471, -0.5642634200314975, -0.6660221883990427);
+                    var direction = new Vector3(r100,r100,r100);
+                    var silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);
                 }
             }

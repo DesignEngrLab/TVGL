@@ -226,6 +226,15 @@ namespace TVGL.TwoDimensional
             PolygonSegmentRelationship.AEncompassesB) == PolygonSegmentRelationship.AEncompassesB);
             var atLeastOneBEncompassA = intersections.Any(intersection => (intersection.Relationship &
             PolygonSegmentRelationship.BEncompassesA) == PolygonSegmentRelationship.BEncompassesA);
+            //if (!atLeastOneAEncompassB && !atLeastOneBEncompassA && intersections.Count == polygonA.Vertices.Count && intersections.Count == polygonB.Vertices.Count)
+            //{
+            //    if (intersections.All(n => n.Relationship == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines |
+            //        PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.OppositeDirections)))
+            //        return PolygonRelationship.EqualButOpposite;
+            //    if (intersections.All(n => n.Relationship == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines |
+            //        PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint)))
+            //        return PolygonRelationship.Equal;
+            //}
 
             if (atLeastOneAEncompassB && atLeastOneBEncompassA)
                 return PolygonRelationship.Intersection;
