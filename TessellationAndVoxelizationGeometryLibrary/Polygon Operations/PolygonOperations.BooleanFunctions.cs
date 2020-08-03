@@ -96,7 +96,11 @@ namespace TVGL.TwoDimensional
                       || polygonRelationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
                       || polygonRelationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch)
                     {
+                        //if (i == 7 && j == 3)
+                        //    Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], polygonRelationship, intersections);
+                        //if (i == 7 && j == 3)
+                        //    Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -632,13 +636,16 @@ namespace TVGL.TwoDimensional
             {
                 var thisIntersectData = allIntersections[index];
                 if (formerIntersectCoords.Equals(thisIntersectData.IntersectCoordinates)) continue;
+                // if the intersection is a point that both share but the lines are the same (and in same direction)
+                if ((thisIntersectData.Relationship == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines |
+                    PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint))
                 // if the two polygons just "glance" off of one another at this intersection, then don't consider this as a valid place to switch
-                if ((!isUnion && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0)
+                || (!isUnion && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0)
                 // if union and current edge is on the outer polygon, then don't consider this as a valid place to switch
                 || (isUnion && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB)
                     || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)))
                 // if intersect and current edge is on the inner polygon, then don't consider this as a valid place to switch
-                || (!isSubtract && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)
+                || (!isSubtract && !isUnion && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)
                     || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB))))
                 {
                     // well, even though the intersection is a valid place to switch, we need to mark that it is visited so that we don't start here next time

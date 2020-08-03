@@ -63,11 +63,26 @@ namespace TVGLPresenterDebugger
                 //var ts = cs.ConvertToTessellatedExtrusions(true, false);
                 //Presenter.ShowAndHang(ts);
 
+                var direction = new Vector3(0.4878742024072471, -0.5642634200314975, -0.6660221883990427);
+                var silhouette = solid.CreateSilhouette(direction);
+                Presenter.ShowAndHang(silhouette);
+                direction = new Vector3(-56.18410927997162, -22.861805242887613, 14.32601181526016);
+                silhouette = solid.CreateSilhouette(direction);
+                Presenter.ShowAndHang(silhouette);
+                direction = new Vector3(84.27030862507888, 72.49305023462188, -74.07118919029422);
+                silhouette = solid.CreateSilhouette(direction);
+                Presenter.ShowAndHang(silhouette);
+                direction = new Vector3(74.38205758779407, -61.35750848863158, 94.06754653624608);
+                silhouette = solid.CreateSilhouette(direction);
+                Presenter.ShowAndHang(silhouette);
+                direction = new Vector3(10.153487841670156, -2.140804241476957, 65.03817390885118);
+                silhouette = solid.CreateSilhouette(direction);
+                Presenter.ShowAndHang(silhouette);
+
                 for (int j = 0; j < 33; j++)
                 {
-                    //var direction = new Vector3(0.4878742024072471, -0.5642634200314975, -0.6660221883990427);
-                    var direction = new Vector3(r100,r100,r100);
-                    var silhouette = solid.CreateSilhouette(direction);
+                    direction = new Vector3(r100, r100, r100);
+                    silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);
                 }
             }

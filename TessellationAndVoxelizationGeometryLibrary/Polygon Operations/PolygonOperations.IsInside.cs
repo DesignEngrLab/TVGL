@@ -314,6 +314,9 @@ namespace TVGL.TwoDimensional
             var intersectionCoordinates = Vector2.Null;
             PolygonSegmentRelationship relationship = PolygonSegmentRelationship.Unknown;
             var lineACrossLineB = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
+            if (lineACrossLineB.IsNegligible())
+                lineACrossLineB = 0; //this avoid a problem where further inequalities ask is <0 but the value is like -1e-15
+
             var prevA = lineA.FromPoint.EndLine;
             var prevB = lineB.FromPoint.EndLine;
             //first a quick check to see if points are the same
@@ -340,7 +343,7 @@ namespace TVGL.TwoDimensional
             else
             {
                 var fromPointVector = lineB.FromPoint.Coordinates - lineA.FromPoint.Coordinates; // the vector connecting starts
-                if (lineACrossLineB.IsNegligible()) // the two lines are parallel (cross product will be zero)
+                if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
                 {
                     var intersectionFound = false;
                     if (fromPointVector.Cross(lineA.Vector).IsNegligible())
@@ -406,31 +409,31 @@ namespace TVGL.TwoDimensional
                     //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
                     var oneOverdeterminnant = 1 / lineACrossLineB;
                     var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointVector.X - lineB.Vector.X * fromPointVector.Y);
-                    if (t_1 < 0 || t_1 >= 1) return;
+                    if ((!t_1.IsNegligible() && t_1 < 0) || t_1 >= 1) return;
                     var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointVector.X - lineA.Vector.X * fromPointVector.Y);
-                    if (t_2 < 0 || t_2 >= 1) return;
+                    if ((!t_2.IsNegligible() && t_2 < 0) || t_2 >= 1) return;
                     if (t_1.IsNegligible())
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfA;
                         prevB = lineB;
-                        if (t_2.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                        if (t_2.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                     else if (t_2.IsNegligible())
                     {
                         intersectionCoordinates = lineB.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfB;
                         prevA = lineA;
-                        if (t_1.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                        if (t_1.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
                     }
                     else
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
                         relationship = PolygonSegmentRelationship.Overlapping;
-                        if (t_1.IsPracticallySame(1.0, 1e-12) && t_2.IsPracticallySame(1.0, 1e-12))
+                        if (t_1.IsPracticallySame(1.0) && t_2.IsPracticallySame(1.0))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (t_1.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (t_2.IsPracticallySame(1.0, 1e-12)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                        else if (t_1.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                        else if (t_2.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                 }
             }
@@ -445,14 +448,14 @@ namespace TVGL.TwoDimensional
             // it is known that there is an intermediate point (the default case). So, the value of the relationshipByte is already set.
 
             var prevACrossPrevB = prevA.Vector.Cross(prevB.Vector);
-            var lineACrossPrevB = lineA.Vector.Cross(prevB.Vector);
-            var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
+            if (prevACrossPrevB.IsNegligible()) prevACrossPrevB = 0;
 
             //in the calling function (AddIntersectionBetweenLines), we detect if the two lines are Coincident, but not if the previous lines are coincident
             // the prerequisite for this is that the previous lines have the same slope (0 cross product)
-            if (prevACrossPrevB.IsNegligible()
+            if (prevACrossPrevB == 0
                 && (relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != PolygonSegmentRelationship.BothLinesStartAtPoint)
             {
+                prevACrossPrevB = 0;
                 // given that overlapping is handled above, then - at this point - we are AtStartOfA, AtStartOfB. Both is handled in previous
                 // function, then if AtStartOfA then prevB == lineB, vice verse for AtStartOfB
                 relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
@@ -463,6 +466,10 @@ namespace TVGL.TwoDimensional
 
             var aCornerCross = prevA.Vector.Cross(lineA.Vector);
             var bCornerCross = prevB.Vector.Cross(lineB.Vector);
+            var lineACrossPrevB = lineA.Vector.Cross(prevB.Vector);
+            if (lineACrossPrevB.IsNegligible()) lineACrossPrevB = 0;
+            var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
+            if (prevACrossLineB.IsNegligible()) prevACrossLineB = 0;
 
             // In the remainder of this method, we determine what the overlap of regions is at this point
             // when A corner is convex (aCornerCross>=0), then we check if the two cross products made with the
@@ -518,7 +525,6 @@ namespace TVGL.TwoDimensional
             {
 
                 var point = orderedPoints[i];
-                if (point.EndLine == null) ;
                 if (point.EndLine.OtherPoint(point).X > point.X)
                     result[k++] = point.EndLine;
                 else if (point.EndLine.OtherPoint(point).X == point.X &&

@@ -19,6 +19,7 @@ namespace TVGL.TwoDimensional
             var polygons = new List<Polygon>();
             while (faceHash.Any())
                 polygons.AddRange(GetPolygonFromFacesAndDirection(faceHash, direction));
+            //Presenter.ShowAndHang(polygons);
             return polygons.Union();
         }
 

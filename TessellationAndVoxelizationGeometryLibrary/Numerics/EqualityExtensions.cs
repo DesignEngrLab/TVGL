@@ -13,7 +13,7 @@ namespace TVGL.Numerics
         /// </summary>
         /// <value>The equality tolerance.</value>
         public static double EqualityTolerance { get; set; } = DefaultEqualityTolerance;
-        private const double DefaultEqualityTolerance = 1e-13;
+        private const double DefaultEqualityTolerance = 1e-12;
         /// <summary>
         /// Determines whether [is practically same] [the specified x].
         /// the norm is within 1e-15
