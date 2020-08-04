@@ -4,6 +4,14 @@
     <RootNamespace>TVGL_PresenterDX</RootNamespace>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="HelixToolkit.SharpDX.Assimp" Version="2.12.0" />
+    <PackageReference Include="HelixToolkit.SharpDX.Core" Version="2.12.0" />
+    <PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.12.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj" />
+  </ItemGroup>
 
 
 </Project>

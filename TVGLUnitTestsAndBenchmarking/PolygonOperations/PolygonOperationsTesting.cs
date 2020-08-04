@@ -36,16 +36,16 @@ namespace TVGLUnitTestsAndBenchmarking
                 yield return new Vector2(radius * Math.Cos(angle), radius * Math.Sin(angle));
             }
         }
-        internal static IEnumerable<Vector2> MakeOctogonPolygon(double xMin, double yMin, double xMax, double yMax, double horizChop, double vertChop)
+        internal static IEnumerable<Vector2> MakeOctogonPolygon(double xMin, double yMin, double xMax, double yMax, double cornerClip)
         {
-            yield return new Vector2(xMin + horizChop, yMin);
-            yield return new Vector2(xMax - horizChop, yMin);
-            yield return new Vector2(xMax, yMin + vertChop);
-            yield return new Vector2(xMax, yMax - vertChop);
-            yield return new Vector2(xMax - horizChop, yMax);
-            yield return new Vector2(xMin + horizChop, yMax);
-            yield return new Vector2(xMin, yMax - vertChop);
-            yield return new Vector2(xMin, yMin + vertChop);
+            yield return new Vector2(xMin + cornerClip, yMin);
+            yield return new Vector2(xMax - cornerClip, yMin);
+            yield return new Vector2(xMax, yMin + cornerClip);
+            yield return new Vector2(xMax, yMax - cornerClip);
+            yield return new Vector2(xMax - cornerClip, yMax);
+            yield return new Vector2(xMin + cornerClip, yMax);
+            yield return new Vector2(xMin, yMax - cornerClip);
+            yield return new Vector2(xMin, yMin + cornerClip);
         }
 
         internal static IEnumerable<Vector2> MakeStarryCircularPolygon(int numSides, double radius, double delta)
