@@ -3,6 +3,7 @@ using Xunit;
 using TVGL.Numerics;
 using TVGL;
 using System.IO;
+using TVGL.TwoDimensional;
 using TVGL.IOFunctions;
 using Snapshooter.Xunit;
 using Snapshooter;
@@ -12,13 +13,13 @@ using TVGL.Voxelization;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    public class TVGL3Dto2DTests
+    public static class TVGL3Dto2DTests
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
 
-        [Fact]
-        public void BoxSilhouette()
+        //[Fact]
+        public static void TestSilhouette()
         {
             DirectoryInfo dir;
             if (Directory.Exists("../../../../TestFiles"))
@@ -31,8 +32,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            var random = new Random();
-            var fileNames = dir.GetFiles("Pump10*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*butoir*").OrderBy(x => r.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             //var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
@@ -41,34 +42,23 @@ namespace TVGLUnitTestsAndBenchmarking
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                //Presenter.ShowAndHang(solid);
-                //var vs = new VoxelizedSolid(solid, 100);
-                //Presenter.ShowAndHang(vs);
-
-                //vs.Draft(CartesianDirections.XNegative);
-                //Presenter.ShowAndHang(vs);
-                //solid.SliceOnInfiniteFlat(new Flat(solid.Center,
-                //    new Vector3(random.NextDouble(), random.NextDouble(), random.NextDouble()).Normalize()), out var solids, out _);
+                Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)
                 {
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
                     continue;
                 }
                 solid.SolidColor = new Color(100, 200, 100, 50);
-                //Presenter.ShowAndHang(solid);
-                //var cs = CrossSectionSolid.CreateFromTessellatedSolid(solid, CartesianDirections.ZPositive, 100);
-                //Presenter.ShowAndHang(cs);
-                //var ts = cs.ConvertToTessellatedExtrusions(true, false);
-                //Presenter.ShowAndHang(ts);
 
-
-
-
-                var silhouette = TVGL.TwoDimensional.Silhouette.CreateSilhouette(solid, new Vector3(1, 1, 1));
-                Presenter.ShowAndHang(silhouette);
-                Snapshot.Match(silhouette, SnapshotNameExtension.Create(name));
+                for (int j = 0; j < 33; j++)
+                {
+                    //var direction = new Vector3(53.57573896347347, -2.8016050824902976, -84.52266118699808);
+                    var direction = new Vector3(r100, r100, r100);
+                    var silhouette = solid.CreateSilhouette(direction);
+                    Presenter.ShowAndHang(silhouette);
+                }
             }
-        }
 
+        }
     }
 }

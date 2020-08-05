@@ -29,10 +29,16 @@ namespace TVGL.TwoDimensional
         public PolygonSegmentRelationship Relationship { get; }
         /// <summary>
         /// Gets or sets a value indicating whether [the intersection has already been visited before].
-        /// This is used internally in polygon operations.
+        /// starting from EdgeB. This is used internally in polygon operations.
         /// </summary>
         /// <value><c>true</c> if [entered a]; otherwise, <c>false</c>.</value>
-        internal bool Visited { get; set; }
+        internal bool VisitedA { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether [the intersection has already been visited before].
+        /// starting from EdgeB. This is used internally in polygon operations.
+        /// </summary>
+        /// <value><c>true</c> if [entered a]; otherwise, <c>false</c>.</value>
+        internal bool VisitedB { get; set; }
 
 
         /// <summary>
@@ -48,7 +54,8 @@ namespace TVGL.TwoDimensional
             this.EdgeB = edgeB;
             this.IntersectCoordinates = intersectionPoint;
             this.Relationship = relationship;
-            Visited = false;
+            VisitedA = false;
+            VisitedB = false;
         }
 
     }

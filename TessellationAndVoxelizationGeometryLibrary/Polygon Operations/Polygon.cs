@@ -303,6 +303,8 @@ namespace TVGL.TwoDimensional
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
+        
+        
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
             _path = coordinates.ToList();

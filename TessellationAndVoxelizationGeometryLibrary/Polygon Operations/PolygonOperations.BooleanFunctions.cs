@@ -96,11 +96,8 @@ namespace TVGL.TwoDimensional
                       || polygonRelationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
                       || polygonRelationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch)
                     {
-                        //if (i == 7 && j == 3)
-                        //    Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], polygonRelationship, intersections);
-                        //if (i == 7 && j == 3)
-                        //    Presenter.ShowAndHang(newPolygons);
+                        //Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -378,6 +375,7 @@ namespace TVGL.TwoDimensional
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, isSubtract, isUnion).ToList();
+                //Presenter.ShowAndHang(polyCoordinates);
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
                 if (area < 0 && noHoles)
@@ -453,7 +451,8 @@ namespace TVGL.TwoDimensional
             foreach (var intersectionData in intersections)
             {
                 #region first some conditions that tell us to skip this intersection
-                if (intersectionData.Visited) continue;
+                if (bothApproachDirections && intersectionData.VisitedA && intersectionData.VisitedB) continue;
+                if (!bothApproachDirections && (intersectionData.VisitedA || intersectionData.VisitedB)) continue;
                 if ((intersectionData.Relationship & PolygonSegmentRelationship.CoincidentLines) != 0b0)
                 {  // this addresses the special cases where lines are coincident
                     if ((intersectionData.Relationship & (PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.SameLineAfterPoint))
@@ -478,21 +477,22 @@ namespace TVGL.TwoDimensional
                     (intersectionData.Relationship & PolygonSegmentRelationship.CoincidentLines) != 0b0)
                 { //the only time non-overlapping intersections are intereseting is when we are doing union and lines are coincident
                   // otherwise you simply stay on the same polygon you enter with
-                    if (((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
+                    if (!intersectionData.VisitedB && (((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
                          (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0)
                         ||
                         ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
-                          (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0))
+                          (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)))
                     {
                         currentEdge = intersectionData.EdgeB;
                         nextStartingIntersection = intersectionData;
                         return true;
                     }
-                    else if (((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
+                    else if (!intersectionData.VisitedA &&
+                        (((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
                               (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)
                              ||
                              ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
-                              (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0))
+                              (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0)))
                     {
                         currentEdge = intersectionData.EdgeA;
                         nextStartingIntersection = intersectionData;
@@ -505,14 +505,14 @@ namespace TVGL.TwoDimensional
                 {
                     var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
                     var switchSign = (isSubtract || isUnion) ? 1 : -1;
-                    if (switchSign * cross < 0 && (!isSubtract || bothApproachDirections ||
+                    if (switchSign * cross < 0 && !intersectionData.VisitedA && (!isSubtract || bothApproachDirections ||
                         intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList))
                     {
                         currentEdge = intersectionData.EdgeA;
                         nextStartingIntersection = intersectionData;
                         return true;
                     }
-                    if (switchSign * cross > 0 && (!isSubtract || bothApproachDirections ||
+                    if (switchSign * cross > 0 && !intersectionData.VisitedB && (!isSubtract || bothApproachDirections ||
                         intersectionData.EdgeB.IndexInList < intersectionData.EdgeA.IndexInList))
                     {
                         currentEdge = intersectionData.EdgeB;
@@ -522,7 +522,7 @@ namespace TVGL.TwoDimensional
                 }
                 #endregion
                 #region Polygon A encompasses all of polygon B at this intersection 
-                else if (isSubtract && (bothApproachDirections || intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList) &&
+                else if (isSubtract && !intersectionData.VisitedA && (bothApproachDirections || intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList) &&
                     (intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
                 {
                     currentEdge = intersectionData.EdgeA;
@@ -533,7 +533,7 @@ namespace TVGL.TwoDimensional
                 #endregion
                 #region Polygon B encompasses all of polygon A at this intersection
 
-                else if (isSubtract && (bothApproachDirections || intersectionData.EdgeB.IndexInList < intersectionData.EdgeA.IndexInList) &&
+                else if (isSubtract && !intersectionData.VisitedB && (bothApproachDirections || intersectionData.EdgeB.IndexInList < intersectionData.EdgeA.IndexInList) &&
                     (intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
                 {
                     currentEdge = intersectionData.EdgeB;
@@ -569,7 +569,8 @@ namespace TVGL.TwoDimensional
             var currentEdgeIsFromPolygonA = currentEdge == intersectionData.EdgeA;
             do
             {
-                intersectionData.Visited = true;
+                if (currentEdgeIsFromPolygonA) intersectionData.VisitedA = true;
+                else intersectionData.VisitedB = true;
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
                 // current polygon edge
@@ -648,9 +649,10 @@ namespace TVGL.TwoDimensional
                 || (!isSubtract && !isUnion && ((currentEdge == thisIntersectData.EdgeA && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)
                     || (currentEdge == thisIntersectData.EdgeB && (thisIntersectData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB))))
                 {
-                    // well, even though the intersection is a valid place to switch, we need to mark that it is visited so that we don't start here next time
+                    // well, even though the intersection is not a valid place to switch, we need to mark that it is visited so that we don't start here next time
                     // GetNextStartingIntersection gets called
-                    thisIntersectData.Visited = true;
+                    if (currentEdge == thisIntersectData.EdgeA) thisIntersectData.VisitedB = true;
+                    else thisIntersectData.VisitedA = true;
                     continue;
                 }
 
@@ -706,7 +708,8 @@ namespace TVGL.TwoDimensional
             for (int i = 0; i < intersections.Count; i++)
             {
                 var intersection = intersections[i];
-                intersection.Visited = false;
+                intersection.VisitedA = false;
+                intersection.VisitedB = false;
                 index = intersection.EdgeA.IndexInList;
                 lookupList[index] ??= new List<int>();
                 lookupList[index].Add(i);
@@ -752,7 +755,8 @@ namespace TVGL.TwoDimensional
                      && (intersections[k].Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0);
                         lookupList[j].Remove(intersectionIndex);
                         if (lookupList[j].Count == 0) lookupList[j] = null;
-                        intersections[intersectionIndex].Visited = true;
+                        intersections[intersectionIndex].VisitedA = true;
+                        intersections[intersectionIndex].VisitedB = true;
                         // note, in the next line - this has to be EdgeB since searching in order the A polygon will detect the duplicate - B will skip over
                         var otherLookupEntry = lookupList[intersections[intersectionIndex].EdgeB.IndexInList];
                         otherLookupEntry.Remove(intersectionIndex);

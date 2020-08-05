@@ -283,6 +283,7 @@ namespace TVGL.TwoDimensional
                 {
                     if (i == dupeData.index) continue;
                     if (intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB &&
+                        (intersections[i].Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != 0b0 &&
                        duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, Constants.BaseTolerance))
                     {
                         intersections.RemoveAt(dupeData.index);
@@ -417,23 +418,27 @@ namespace TVGL.TwoDimensional
                         intersectionCoordinates = lineA.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfA;
                         prevB = lineB;
-                        if (t_2.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                        if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                     else if (t_2.IsNegligible())
                     {
                         intersectionCoordinates = lineB.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfB;
                         prevA = lineA;
-                        if (t_1.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                        if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
                     }
                     else
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
                         relationship = PolygonSegmentRelationship.Overlapping;
-                        if (t_1.IsPracticallySame(1.0) && t_2.IsPracticallySame(1.0))
+                        if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance) && t_2.IsPracticallySame(1.0, Constants.BaseTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (t_1.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (t_2.IsPracticallySame(1.0)) possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                        else if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                        else if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                 }
             }
@@ -489,7 +494,10 @@ namespace TVGL.TwoDimensional
             // in the remaining conditions there are 16 possible combinations of the four booleans: lineBIsInsideA-prevLineBIsInsideA--lineAIsInsideB-prevLineAIsInsideB
             // first off, if they are all false, then it clearly is a "glance" and no need to do anything
             // second: if there is a positive on both sides then overlapping
-            if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
+            if (lineBIsInsideA && prevLineBIsInsideA && lineAIsInsideB && prevLineAIsInsideB)
+                // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
+                ;
+            else if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
                 // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
                 relationship |= PolygonSegmentRelationship.Overlapping;
             // if only a positive on the A side then A encompasses B
