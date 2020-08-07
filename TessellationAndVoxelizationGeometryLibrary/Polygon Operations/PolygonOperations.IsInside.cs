@@ -282,7 +282,8 @@ namespace TVGL.TwoDimensional
                 for (int i = 0; i < intersections.Count; i++)
                 {
                     if (i == dupeData.index) continue;
-                    if (intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB &&
+                    if (((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
+                        (intersections[i].EdgeA == dupeData.lineB && intersections[i].EdgeB == dupeData.lineA)) &&
                         (intersections[i].Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != 0b0 &&
                        duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, Constants.BaseTolerance))
                     {
@@ -418,7 +419,7 @@ namespace TVGL.TwoDimensional
                         intersectionCoordinates = lineA.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfA;
                         prevB = lineB;
-                        if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                        if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                     else if (t_2.IsNegligible())
@@ -426,7 +427,7 @@ namespace TVGL.TwoDimensional
                         intersectionCoordinates = lineB.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfB;
                         prevA = lineA;
-                        if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                        if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
                     }
                     else
@@ -435,9 +436,9 @@ namespace TVGL.TwoDimensional
                         relationship = PolygonSegmentRelationship.Overlapping;
                         if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance) && t_2.IsPracticallySame(1.0, Constants.BaseTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                        else if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance)) 
+                        else if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                 }
