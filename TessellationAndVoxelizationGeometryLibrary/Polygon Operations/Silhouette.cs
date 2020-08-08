@@ -16,10 +16,12 @@ namespace TVGL.TwoDimensional
         {
             direction = direction.Normalize();
             var faceHash = tessellatedSolid.Faces.ToHashSet();
+            if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
+                tessellatedSolid.CompleteInitiation();
             var polygons = new List<Polygon>();
             while (faceHash.Any())
                 polygons.AddRange(GetPolygonFromFacesAndDirection(faceHash, direction));
-            //Presenter.ShowAndHang(polygons);
+            Presenter.ShowAndHang(polygons);
             return polygons.Union();
         }
 
@@ -116,6 +118,8 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
+                    Console.WriteLine(polyCoordinates.Count);
+                    Presenter.ShowAndHang(polyCoordinates);
                     var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(true, out var innerNegativePolygons);
                     positivePolygons.AddRange(innerPositivePolygons);
                     negativePolygons.AddRange(innerNegativePolygons);

@@ -70,6 +70,7 @@ namespace TVGL.TwoDimensional
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Union(this IEnumerable<Polygon> polygons)
         {
+
             var polygonList = polygons.ToList();
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
@@ -92,15 +93,11 @@ namespace TVGL.TwoDimensional
                         break; // to stop the inner loop
                     }
                     else if (polygonRelationship == PolygonRelationship.SeparatedButEdgesTouch
-                      || polygonRelationship == PolygonRelationship.Intersection
-                      || polygonRelationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
-                      || polygonRelationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch)
+                             || polygonRelationship == PolygonRelationship.Intersection
+                             || polygonRelationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
+                             || polygonRelationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch)
                     {
-                        if (i == 323 && j == 123)
-                            Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], polygonRelationship, intersections);
-                        if (i == 323 && j == 123)
-                            Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -377,7 +374,7 @@ namespace TVGL.TwoDimensional
                 out var startEdge, out var switchPolygon))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, isSubtract, isUnion, switchPolygon).ToList();
+                    startEdge, isSubtract, isUnion, bothApproachDirections, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
                 if (area < 0 && noHoles)
@@ -426,7 +423,7 @@ namespace TVGL.TwoDimensional
                 out var startEdge, out var switchPolygon))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, isSubtract, isUnion, switchPolygon).ToList();
+                    startEdge, isSubtract, isUnion, bothApproachDirections, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
                 if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
@@ -562,7 +559,7 @@ namespace TVGL.TwoDimensional
                         return true;
                     }
                 }
-                else
+                else // then intersection
                 {
                     if ((intersectionData.Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0
                         || ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0
@@ -606,7 +603,7 @@ namespace TVGL.TwoDimensional
         /// <exception cref="NotImplementedException"></exception>
         private static List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup,
             List<IntersectionData> intersections, IntersectionData startingIntersection, PolygonSegment startingEdge, bool isSubtract, bool isUnion,
-            bool switchPolygon)
+            bool bothApproachDirections, bool switchPolygon)
         {
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
@@ -635,7 +632,7 @@ namespace TVGL.TwoDimensional
 
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                        intersectionCoordinates, forward, isSubtract, isUnion, out intersectionData, ref currentEdgeIsFromPolygonA, ref switchPolygon))
+                        intersectionCoordinates, forward, isSubtract, isUnion, bothApproachDirections, out intersectionData, ref currentEdgeIsFromPolygonA, ref switchPolygon))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
@@ -670,7 +667,7 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private static bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<IntersectionData> allIntersections,
-        Vector2 formerIntersectCoords, bool forward, bool isSubtract, bool isUnion, out IntersectionData newIntersection, ref bool currentEdgeIsFromPolygonA,
+        Vector2 formerIntersectCoords, bool forward, bool isSubtract, bool isUnion, bool bothApproachDirections, out IntersectionData newIntersection, ref bool currentEdgeIsFromPolygonA,
         ref bool switchPolygon)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
@@ -696,16 +693,29 @@ namespace TVGL.TwoDimensional
             }
             if (newIntersection != null)
             {
-                currentEdgeIsFromPolygonA = newIntersection?.EdgeA == currentEdge;
-                switchPolygon = !(
+                currentEdgeIsFromPolygonA = newIntersection.EdgeA == currentEdge;
+                switchPolygon =
+                    !(  ///actually, easier to think of cases when we shouldn't switch
                     // if the intersection is a point that both share but the lines are the same (and in same direction)
                     (newIntersection.Relationship == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines |
                         PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint))
                     // if the two polygons just "glance" off of one another at this intersection, then don't consider this as a valid place to switch
                     || (!isUnion && (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0)
+                    // union will switch to the other polygon if abutted, but only if the lines are coincident
+                    || (isUnion && (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0
+                    && (newIntersection.Relationship & PolygonSegmentRelationship.CoincidentLines) == 0b0)
+                    || (isUnion && bothApproachDirections && (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) != PolygonSegmentRelationship.Overlapping)
+
                     // if union and current edge is on the outer polygon, then don't consider this as a valid place to switch
-                    || (!isSubtract && ((newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB ||
-                        (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA)));
+                    || (isUnion && (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB &&
+                    currentEdgeIsFromPolygonA)
+                    || (isUnion && (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA &&
+                    !currentEdgeIsFromPolygonA)
+                    || (!isUnion && !isSubtract && (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.AEncompassesB &&
+                    !currentEdgeIsFromPolygonA)
+                    || (!isUnion && !isSubtract && (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.BEncompassesA &&
+                    currentEdgeIsFromPolygonA));
+                //hmm, feels like there should be some cases where isSubtract is true
                 return newIntersection != null;
             }
             else
@@ -771,27 +781,27 @@ namespace TVGL.TwoDimensional
             index = 0;
             foreach (var poly in allPolygons)
             {
-                var isNonIntersecting = true;
-                var isIdentical = true;
+                var isNonIntersecting = true; //start as true. once a case is found to be intersecting, set it to false
+                var isIdentical = true; //start as true. once a case is found to be different, set it to false
                 var identicalPolygonIsInverted = false;
                 for (int j = polygonStartIndices[index]; j < polygonStartIndices[index + 1]; j++)
                 {
-                    if (lookupList[j] == null)
+                    if (lookupList[j] == null) //no intersection is good to check to skip code in 'else' but also it tells us that they are not identical
                         isIdentical = false;
                     else
                     {
-                        if (!isIdentical)
-                        {
-                            isNonIntersecting = false;
-                            break;
-                        }
-                        var intersectionIndex = lookupList[j].FindIndex(k => (intersections[k].Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0
-                        && (intersections[k].Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0);
+                        isNonIntersecting = false; // now it is known that the two polygons intersect since lookupList[j] is not null
+
+                        var intersectionIndex = lookupList[j].FindIndex(k => (intersections[k].Relationship & (PolygonSegmentRelationship.BothLinesStartAtPoint
+                        | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint))
+                        == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint
+                        | PolygonSegmentRelationship.SameLineBeforePoint));
                         if (intersectionIndex == -1)
                             isIdentical = false;
-                        else if ((intersections[lookupList[j][intersectionIndex]].Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0)
-                            identicalPolygonIsInverted = true;
+                        else identicalPolygonIsInverted =
+                                ((intersections[lookupList[j][intersectionIndex]].Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0);
                     }
+                    if (!isIdentical && !isNonIntersecting) break; //once it is found that it is both not identical and intersecting then no need to keep checking
                 }
                 if (isIdentical)
                 {   // go back through the same indices and remove references to the intersections. Also, set the intersections to "visited"

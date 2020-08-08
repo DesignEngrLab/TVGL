@@ -32,7 +32,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            var fileNames = dir.GetFiles("Castle*");
+            var fileNames = dir.GetFiles("SwingArmTopOp*");
             //var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             //var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
@@ -54,11 +54,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     // holes?
                     // problem for castle
-                    var direction = new Vector3(18.158271311856, 94.8392230993319, 99.9251048080274);
+                    //var direction = new Vector3(18.158271311856, 94.8392230993319, 99.9251048080274);
                     // problem for rook (coincidentally)
                     //var direction = new Vector3(-53.5827086090961, 47.20624328926496, 14.70122305429598);
                     // swingarm topop
-                    //var direction = new Vector3(63.04087599881035, 85.2186498163355, -37.24075888155064);
+                    var direction = new Vector3(63.04087599881035, 85.2186498163355, -37.24075888155064);
                     //var direction = new Vector3(r100, r100, r100);
                     var silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);

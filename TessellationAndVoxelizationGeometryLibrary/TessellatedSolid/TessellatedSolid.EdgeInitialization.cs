@@ -34,7 +34,7 @@ namespace TVGL
     /// </remarks>
     public partial class TessellatedSolid : Solid
     {
-        public void MakeEdges()
+        private void MakeEdges()
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)

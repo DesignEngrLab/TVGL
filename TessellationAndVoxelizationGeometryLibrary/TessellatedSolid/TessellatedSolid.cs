@@ -395,7 +395,7 @@ namespace TVGL
             }
         }
 
-        private void CompleteInitiation()
+        internal void CompleteInitiation()
         {
             MakeEdges();
             CalculateVolume();
