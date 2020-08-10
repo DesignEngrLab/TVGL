@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
             var polygons = new List<Polygon>();
             while (faceHash.Any())
                 polygons.AddRange(GetPolygonFromFacesAndDirection(faceHash, direction));
-            Presenter.ShowAndHang(polygons);
+             Presenter.ShowAndHang(polygons);
             return polygons.Union();
         }
 
@@ -51,7 +51,7 @@ namespace TVGL.TwoDimensional
                         var currentOwnsEdge = edge.OwnedFace == current;
                         outerEdges.Add(edge, currentOwnsEdge);
                         var neighbor = currentOwnsEdge ? edge.OtherFace : edge.OwnedFace;
-                        if (sign * neighbor.Normal.Dot(direction) > 0 && faceHash.Contains(neighbor))
+                        if (neighbor !=null && sign * neighbor.Normal.Dot(direction) > 0 && faceHash.Contains(neighbor))
                         {
                             stack.Push(neighbor);
                             faceHash.Remove(neighbor);
@@ -118,14 +118,11 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
-                    Console.WriteLine(polyCoordinates.Count);
-                    Presenter.ShowAndHang(polyCoordinates);
-                    var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(true, out var innerNegativePolygons);
+                    var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var innerNegativePolygons);
                     positivePolygons.AddRange(innerPositivePolygons);
                     negativePolygons.AddRange(innerNegativePolygons);
                 }
             }
-            //Presenter.ShowAndHang((new[] { positivePolygons, negativePolygons }).SelectMany(p => p));
             var positivePolygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort());
             var negativePolygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
             foreach (var path in positivePolygons) positivePolygonDictionary.Add(path.Area, path);

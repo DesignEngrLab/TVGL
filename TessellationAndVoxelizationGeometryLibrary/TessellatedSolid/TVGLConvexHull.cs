@@ -60,12 +60,12 @@ namespace TVGL
             }
             Faces = convexHullFaceList.ToArray();
             Edges = MakeEdges(Faces, Vertices);
-            TessellatedSolid.CalculateVolumeAndCenter(Faces, out Volume, out Center);
+            TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
         }
 
 
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
-            IList<int> convexHullFaceIndices)
+            IList<int> convexHullFaceIndices, double tolerance)
         {
             Vertices = convexHullPoints.ToArray();
             var numCvxHullFaces = convexHullFaceIndices.Count / 3;
@@ -92,7 +92,7 @@ namespace TVGL
             }
             Edges = MakeEdges(Faces, Vertices);
             SurfaceArea = Faces.Sum(face => face.Area);
-            TessellatedSolid.CalculateVolumeAndCenter(Faces, out Volume, out Center);
+            TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
         }
 
         private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)

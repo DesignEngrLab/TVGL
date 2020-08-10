@@ -260,7 +260,7 @@ namespace TVGL.IOFunctions
         }
         public static Solid Open(Stream s, string filename = "")
         {
-            try
+            //try
             {
                 var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
@@ -301,10 +301,10 @@ namespace TVGL.IOFunctions
                         }
                 }
             }
-            catch (Exception exc)
-            {
-                throw new Exception("Cannot open file. Message: " + exc.Message);
-            }
+            //catch (Exception exc)
+            //{
+            //    throw new Exception("Cannot open file. Message: " + exc.Message);
+            //}
         }
 
         public static void Save(Polygon polygon, string filename)

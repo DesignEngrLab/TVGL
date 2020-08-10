@@ -41,7 +41,7 @@ namespace TVGL.Boolean_Operations
             }
             MakeSolids(contactData, ts.Units, out solids);
             var totalVolume1 = solids.Sum(solid => solid.Volume);
-            var totalVolume2 = contactData.SolidContactData.Sum(solidContactData => solidContactData.Volume());
+            var totalVolume2 = contactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
                 Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
@@ -82,7 +82,7 @@ namespace TVGL.Boolean_Operations
             }
             MakeSolids(newContactData, ts.Units, out solids);
             var totalVolume1 = solids.Sum(solid => solid.Volume);
-            var totalVolume2 = newContactData.SolidContactData.Sum(solidContactData => solidContactData.Volume());
+            var totalVolume2 = newContactData.SolidContactData.Sum(solidContactData => solidContactData.Volume(ts.SameTolerance));
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
                 Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
@@ -144,7 +144,7 @@ namespace TVGL.Boolean_Operations
                 out var negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift, loopsToIgnore, undoPlaneOffset);
             #endregion
 
-            var groupOfLoops = GroupLoops(positiveSideLoops, negativeSideLoops, plane, setIntersectionGroups,
+            var groupOfLoops = GroupLoops(positiveSideLoops, negativeSideLoops, plane, setIntersectionGroups, ts.SameTolerance,
                 out var intersectionLoops);
             var contactDataForEachSolid = MakeContactDataForEachSolid(ts, groupOfLoops);
             contactData = new ContactData(contactDataForEachSolid, intersectionLoops, plane);
@@ -197,7 +197,7 @@ namespace TVGL.Boolean_Operations
         /// The face should be in this list. Otherwise, it should not have been selected with face wrapping
         /// </exception>
         private static ISet<GroupOfLoops> GroupLoops(IList<Loop> posSideLoops, IList<Loop> negSideLoops,
-            Flat plane, bool setIntersectionGroups, out List<IntersectionGroup> intersectionGroups)
+            Flat plane, bool setIntersectionGroups, double tolerance, out List<IntersectionGroup> intersectionGroups)
         {
             //Process the positive and negative side loops to create List<GroupOfLoops>. This requires the 
             //directionallity (hole vs. filled) and pairing of loops into groups, and the triangulation of
@@ -268,7 +268,7 @@ namespace TVGL.Boolean_Operations
                 {
                     var intersection = posGroup.CrossSection2D.Intersect(negGroup.CrossSection2D);
                     if (intersection == null || !intersection.Any() ||
-                        intersection.Sum(p => p.Area).IsNegligible()) continue;
+                        intersection.Sum(p => p.Area).IsNegligible(tolerance)) continue;
                     //Check if this intersection should be paired with an existing intersection group.
                     var intersectionGroupFound = false;
                     foreach (var intersectionGroup in intersectionGroups)
@@ -704,7 +704,7 @@ namespace TVGL.Boolean_Operations
             {
                 //Make one new edge and one new face. Set the ownership of this edge.
                 var newFace =
-                    new PolygonalFace(new [] { st1.OnSideVertex, st1.IntersectVertex, st2.OnSideVertex },
+                    new PolygonalFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.OnSideVertex },
                         sharedFace.Normal, false);
                 newEdges.Last().OtherFace = newFace;
                 if (!lastNewFace)
@@ -753,10 +753,10 @@ namespace TVGL.Boolean_Operations
             {
                 //Create two new faces
                 var newFace1 =
-                    new PolygonalFace(new [] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
+                    new PolygonalFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
                         sharedFace.Normal, false);
                 var newFace2 =
-                    new PolygonalFace(new [] { st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex },
+                    new PolygonalFace(new[] { st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex },
                         sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace1;
@@ -806,7 +806,7 @@ namespace TVGL.Boolean_Operations
             {
                 //Make two new edges and one new face. Set the ownership of the edges.
                 var newFace =
-                    new PolygonalFace(new [] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
+                    new PolygonalFace(new[] { st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex },
                         sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace;

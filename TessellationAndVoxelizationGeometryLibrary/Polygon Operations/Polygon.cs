@@ -47,7 +47,7 @@ namespace TVGL.TwoDimensional
                     _orderedXVertices = AllPolygons.SelectMany(poly => poly.Vertices).OrderBy(p => p.X).ToList();
                 return _orderedXVertices;
 
-            } 
+            }
         }
         List<Vertex2D> _orderedXVertices;
 
@@ -303,8 +303,8 @@ namespace TVGL.TwoDimensional
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
-        
-        
+
+
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
             _path = coordinates.ToList();
@@ -339,10 +339,12 @@ namespace TVGL.TwoDimensional
             Index = index;
         }
 
-        public Polygon Copy()
+        public Polygon Copy(bool copyHoles, bool invert)
         {
             var thisPath = _path == null ? null : new List<Vector2>(_path);
-            var thisInnerPolygons = _holes == null ? null : _holes.Select(p => p.Copy()).ToList();
+            if (invert && thisPath != null) thisPath.Reverse();
+            var thisInnerPolygons = _holes != null && copyHoles ? _holes.Select(p => p.Copy(copyHoles, invert)).ToList() : null;
+
             var copiedPolygon = new Polygon
             {
                 index = this.index,
@@ -358,25 +360,25 @@ namespace TVGL.TwoDimensional
             copiedPolygon.MakeLineSegments();
             return copiedPolygon;
         }
-        public Polygon Copy(bool invert = false)
-        {
-            if (!invert) return Copy();
-            var thisPath = Path;
-            thisPath.Reverse();
-            var copiedPolygon = new Polygon
-            {
-                index = this.index,
-                area = this.area,
-                maxX = this.maxX,
-                maxY = this.maxY,
-                minX = this.minX,
-                minY = this.minY,
-                _path = thisPath,
-            };
-            copiedPolygon.MakeVertices();
-            copiedPolygon.MakeLineSegments();
-            return copiedPolygon;
-        }
+        //public Polygon Copy(bool copyHoles, bool invert)
+        //{
+        //    if (!invert) return Copy();
+        //    var thisPath = Path;
+        //    thisPath.Reverse();
+        //    var copiedPolygon = new Polygon
+        //    {
+        //        index = this.index,
+        //        area = this.area,
+        //        maxX = this.maxX,
+        //        maxY = this.maxY,
+        //        minX = this.minX,
+        //        minY = this.minY,
+        //        _path = thisPath,
+        //    };
+        //    copiedPolygon.MakeVertices();
+        //    copiedPolygon.MakeLineSegments();
+        //    return copiedPolygon;
+        //}
 
         // the following private argument-less constructor is only used in the copy function
         private Polygon()
@@ -385,7 +387,8 @@ namespace TVGL.TwoDimensional
 
         public bool IsConvex()
         {
-            if (!Area.IsGreaterThanNonNegligible()) return false; //It must have an area greater than zero
+            var tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.BaseTolerance;
+            if (!Area.IsGreaterThanNonNegligible(tolerance)) return false; //It must have an area greater than zero
             var firstLine = Lines.Last();
             foreach (var secondLine in Lines)
             {

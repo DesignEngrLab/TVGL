@@ -36,8 +36,23 @@ namespace TVGL.TwoDimensional
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
             var points2D = loops.Select(loop => loop.ProjectTo2DCoordinates(normal, out _).ToArray()).ToArray();
-            points2D.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices);
-            var triangleIndices = Triangulate(points2D, out groupsOfLoops, out isPositive, ignoreNegativeSpace);
+            if (!points2D.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices))
+                throw new ArgumentException("There are intersections in the input paths.", "paths");
+            isPositive = new bool[connectingIndices.Length];
+            var index = 0;
+            foreach (var poly in polygons)
+            {
+                var connectingIndex = connectingIndices.FindIndex(x => x == index);
+                isPositive[connectingIndex] = true;
+                index++;
+                foreach (var hole in poly.Holes)
+                {
+                    connectingIndex = connectingIndices.FindIndex(x => x == index);
+                    isPositive[connectingIndex] = false;
+                    index++;
+                }
+            }
+            var triangleIndices = polygons.Triangulate(out groupsOfLoops, ignoreNegativeSpace);
             var int2VertexDict = new Dictionary<int, Vertex>();
             var vertexID = 0;
             foreach (var loop in loops)
@@ -55,55 +70,6 @@ namespace TVGL.TwoDimensional
             return result;
         }
 
-        /// <summary>
-        /// Triangulates a list of loops into faces in O(n*log(n)) time.
-        /// If ignoring negative space, the function will fill in holes. 
-        /// DO NOT USE "ignoreNegativeSpace" for watertight geometry.
-        /// </summary>
-        /// <param name="points2D">The points2 d.</param>
-        /// <param name="groupsOfLoops">The groups of loops.</param>
-        /// <param name="isPositive">The is positive.</param>
-        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
-        /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        /// <exception cref="System.Exception">
-        /// Inputs into 'TriangulatePolygon' are unbalanced
-        /// or
-        /// Duplicate point found
-        /// or
-        /// Incorrect balance of node types
-        /// or
-        /// Incorrect balance of node types
-        /// or
-        /// Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.
-        /// or
-        /// Trapezoidation failed to complete properly. Check to see that the assumptions are met.
-        /// or
-        /// Incorrect number of triangles created in triangulate function
-        /// or
-        /// </exception>
-        /// <exception cref="Exception"></exception>
-        /// <exception cref="Exception"></exception>
-        public static List<List<int[]>> Triangulate(this IEnumerable<IEnumerable<Vector2>> paths, out List<List<int>> groupsOfLoops,
-            out bool[] isPositive, bool ignoreNegativeSpace = false)
-        {
-            if (!paths.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices))
-                throw new ArgumentException("There are intersections in the input paths.", "paths");
-            isPositive = new bool[connectingIndices.Length];
-            var index = 0;
-            foreach (var poly in polygons)
-            {
-                var connectingIndex = connectingIndices.FindIndex(x => x == index);
-                isPositive[connectingIndex] = true;
-                index++;
-                foreach (var hole in poly.Holes)
-                {
-                    connectingIndex = connectingIndices.FindIndex(x => x == index);
-                    isPositive[connectingIndex] = false;
-                    index++;
-                }
-            }
-            return polygons.Triangulate(out groupsOfLoops, ignoreNegativeSpace);
-        }
 
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
@@ -158,7 +124,7 @@ namespace TVGL.TwoDimensional
                 {
                     for (int j = polygonList.Count - 1; j > i; j--)
                     {
-                        if (polygonList[i].IsPointInsidePolygon(polygonList[j].Vertices[0].Coordinates, out _, out _, out _))
+                        if (polygonList[i].IsNonIntersectingPolygonInside(polygonList[j], out _) == true)
                             polygonList.RemoveAt(j);
                     }
                 }
@@ -198,7 +164,7 @@ namespace TVGL.TwoDimensional
                     var theta = 2 * Math.PI * random.NextDouble();
                     var randRotMatrix = Matrix3x3.CreateRotation(theta);
                     var loopsCount = 0;
-                    /*
+                    /* todo: some portion of this loop needs to be used
                     foreach (var origLoop in polygons)
                     {
                         var nodes = new List<Vertex2D>();

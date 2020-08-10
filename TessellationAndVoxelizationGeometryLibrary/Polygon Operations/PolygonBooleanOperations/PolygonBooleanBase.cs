@@ -13,7 +13,7 @@ namespace TVGL.TwoDimensional
         protected readonly bool isSubtract;
         protected PolygonBooleanBase(bool isSubtract)
         {
-            this.isSubtract= isSubtract;
+            this.isSubtract = isSubtract;
         }
 
         #region Private Functions used by the above public methods
@@ -31,7 +31,7 @@ namespace TVGL.TwoDimensional
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea)
         {
             var intersectionLookup = MakeIntersectionLookupList(intersections, polygonA, polygonB, out var positivePolygons,
-                out var negativePolygons); //store negative in increasing (from -inf to 0) area
+                out var negativePolygons);
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
                 out var startEdge, out var switchPolygon))
             {
@@ -57,7 +57,7 @@ namespace TVGL.TwoDimensional
         /// <param name="currentEdge">The current edge.</param>
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private bool GetNextStartingIntersection(List<IntersectionData> intersections,
+        protected bool GetNextStartingIntersection(List<IntersectionData> intersections,
             out IntersectionData nextStartingIntersection, out PolygonSegment currentEdge, out bool switchPolygon)
         {
             foreach (var intersectionData in intersections)
@@ -93,7 +93,7 @@ namespace TVGL.TwoDimensional
         /// <param name="isSubtract">if set to <c>true</c> [switch directions].</param>
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup,
+        protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup,
             List<IntersectionData> intersections, IntersectionData startingIntersection, PolygonSegment startingEdge, bool switchPolygon)
         {
             var newPath = new List<Vector2>();
@@ -103,8 +103,16 @@ namespace TVGL.TwoDimensional
             var currentEdgeIsFromPolygonA = currentEdge == intersectionData.EdgeA;
             do
             {
-                if (currentEdgeIsFromPolygonA) intersectionData.VisitedA = true;
-                else intersectionData.VisitedB = true;
+                if (currentEdgeIsFromPolygonA)
+                {
+                    if (intersectionData.VisitedA && !isSubtract) break;
+                    intersectionData.VisitedA = true;
+                }
+                else
+                {
+                    if (intersectionData.VisitedB && !isSubtract) break;
+                    intersectionData.VisitedB = true;
+                }
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
                 // current polygon edge
@@ -112,9 +120,11 @@ namespace TVGL.TwoDimensional
                  || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0b0))
                     newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
+                {
                     currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;
+                    if (isSubtract) forward = !forward;
+                }
                 currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
-                if (isSubtract) forward = !forward;
                 if (!forward && ((currentEdgeIsFromPolygonA &&
                                   (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0) ||
                                  (!currentEdgeIsFromPolygonA &&
@@ -168,7 +178,7 @@ namespace TVGL.TwoDimensional
                 switchPolygon = currentEdgeIsFromPolygonA = false;
                 return false;
             }
-                var minDistanceToIntersection = double.PositiveInfinity;
+            var minDistanceToIntersection = double.PositiveInfinity;
             var vector = forward ? currentEdge.Vector : -currentEdge.Vector;
             var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords :
                 forward ? currentEdge.FromPoint.Coordinates : currentEdge.ToPoint.Coordinates;
@@ -176,7 +186,6 @@ namespace TVGL.TwoDimensional
             {
                 var thisIntersectData = allIntersections[index];
                 if (formerIntersectCoords.Equals(thisIntersectData.IntersectCoordinates)) continue;
-
                 var distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
                 if (distance < 0) continue;
                 if (minDistanceToIntersection > distance)
@@ -184,6 +193,8 @@ namespace TVGL.TwoDimensional
                     minDistanceToIntersection = distance;
                     newIntersection = thisIntersectData;
                 }
+                else if (minDistanceToIntersection == distance)
+                    ;
             }
             if (newIntersection != null)
             {
@@ -276,7 +287,7 @@ namespace TVGL.TwoDimensional
                         | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint))
                         == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint
                         | PolygonSegmentRelationship.SameLineBeforePoint));
-                        if (intersectionIndex == -1)
+                        if (intersectionIndex == -1 || intersectionIndex < j)
                             isIdentical = false;
                         else identicalPolygonIsInverted =
                                 ((intersections[lookupList[j][intersectionIndex]].Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0);
@@ -339,7 +350,7 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon[].</returns>
         /// <exception cref="Exception">Intersections still exist between hole and positive polygon.</exception>
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
-        private List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> positivePolygons,
+        protected List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> positivePolygons,
                 IEnumerable<Polygon> negativePolygons, out List<Polygon> strayHoles)
         {
             //first, remove any positive polygons that are nested inside of bigger ones

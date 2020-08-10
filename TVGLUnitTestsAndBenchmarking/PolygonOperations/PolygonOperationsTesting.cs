@@ -96,7 +96,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             }
         }
-        internal static void TestUnionSimple()
+        internal static void OctagonTest()
         {
             //for (int i = 6; i < 200; i++)
             //{
@@ -167,42 +167,38 @@ namespace TVGLUnitTestsAndBenchmarking
 
             Console.ReadKey();
         }
-        internal static void TestEdgeCase1()
+
+        internal static Dictionary<string, (Vector2[][], Vector2[][])> edgeCaseDictionary =
+            new Dictionary<string, (Vector2[][], Vector2[][])>
+            {
+                { "trapInTri", (
+                    new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(0,10) } },
+                    new [] { new [] { new Vector2(0,0), new Vector2(4,0), new Vector2(6,4), new Vector2(3,7) } })},
+                { "innerTouch", (
+                    new [] { new [] { new Vector2(0,0), new Vector2(7,0), new Vector2(4,2.5), new Vector2(3,4),
+                        new Vector2(1,6), new Vector2(3,7), new Vector2(0,10) } },
+                    new [] { new [] { new Vector2(2,7), new Vector2(1,6), new Vector2(2,2), new Vector2(5,1),
+                        new Vector2(3,4), new Vector2(2,5) } })},
+                { "nestedSquares", (
+                    new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(10,10), new Vector2(0,10) },
+                        new [] { new Vector2(2, 2), new Vector2(2, 8), new Vector2(8, 8), new Vector2(8, 2) } },
+                    new [] { new [] { new Vector2(1,1), new Vector2(9,1), new Vector2(9, 9), new Vector2(1, 9) },
+                        new [] { new Vector2(3, 3), new Vector2(3, 7), new Vector2(7, 7), new Vector2(7, 3) } })},
+            };
+
+        internal static void DebugEdgeCase(string name)
         {
-            //for (int i = 6; i < 200; i++)
-            //{
-            //r = new Random(i);
-            //    Console.WriteLine(i);
-            var coords1 = new List<Vector2>
-            {
-                new Vector2(0,0),
-                new Vector2(7,0),
-                new Vector2(4,2.5),
-                new Vector2(3,4),
-                new Vector2(1,6),
-                new Vector2(3,7),
-                new Vector2(0,10),
+            var coords1 = edgeCaseDictionary[name].Item1;
+            var polygon1 = new Polygon(coords1[0]);
+            for (int i = 1; i < coords1.Length; i++)
+                polygon1.AddHole(new Polygon(coords1[i]));
+            var coords2 = edgeCaseDictionary[name].Item2;
+            var polygon2 = new Polygon(coords2[0]);
+            for (int i = 1; i < coords2.Length; i++)
+                polygon2.AddHole(new Polygon(coords2[i]));
 
-            };
-            var coords2 = new List<Vector2>
-            {
-                new Vector2(2,7),
-                new Vector2(1,6),
-                new Vector2(2,2),
-                new Vector2(5,1),
-                new Vector2(3,4),
-                new Vector2(2,5),
-
-            };
-
-
-            var stopWatch = new Stopwatch();
-            stopWatch.Restart();
-            var polygon1 = new Polygon(coords1);
             // polygon1.RemoveSelfIntersections();
-            // polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
             //Presenter.ShowAndHang(polygon1);
-            var polygon2 = new Polygon(coords2);
 
             Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 

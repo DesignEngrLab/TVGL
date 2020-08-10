@@ -32,13 +32,14 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            var fileNames = dir.GetFiles("SwingArmTopOp*");
+            var fileNames = dir.GetFiles("Gift Box.3mf");
             //var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             //var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
+                if (Path.GetExtension(filename) == ".off") continue;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
@@ -54,12 +55,12 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     // holes?
                     // problem for castle
-                    //var direction = new Vector3(18.158271311856, 94.8392230993319, 99.9251048080274);
-                    // problem for rook (coincidentally)
-                    //var direction = new Vector3(-53.5827086090961, 47.20624328926496, 14.70122305429598);
-                    // swingarm topop
-                    var direction = new Vector3(63.04087599881035, 85.2186498163355, -37.24075888155064);
-                    //var direction = new Vector3(r100, r100, r100);
+                    //var direction = new Vector3( -13.620881137261577, 23.309691028348027, -89.34802738453635);
+                    //"KnuckleTopOp.stl"
+                    //var direction = new Vector3(52.040874097515314, -32.66982181587714, -64.49028084263685);
+                    // "Gift Box.3mf" 
+                    var direction = new Vector3(88.92079973077438, 89.22131629158804, 19.697288758911796);
+                    //ar direction = new Vector3(r100, r100, r100);
                     var silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);
                 }

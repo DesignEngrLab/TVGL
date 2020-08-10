@@ -53,6 +53,7 @@ namespace TVGL.TwoDimensional
         {
             var intersections = new List<double[]>();
             var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.X).ToList();
+            var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().X;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
@@ -64,7 +65,7 @@ namespace TVGL.TwoDimensional
                 var needToOffset = false;
                 while (thisPoint.X <= x)
                 {
-                    if (x.IsPracticallySame(thisPoint.X)) needToOffset = true;
+                    if (x.IsPracticallySame(thisPoint.X, tolerance)) needToOffset = true;
                     if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
                     else currentLines.Add(thisPoint.StartLine);
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
@@ -105,6 +106,7 @@ namespace TVGL.TwoDimensional
         {
             var intersections = new List<double[]>();
             var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.Y).ToList();
+            var tolerance = (sortedPoints[^1].Y - sortedPoints[0].Y) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().Y;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
@@ -117,7 +119,7 @@ namespace TVGL.TwoDimensional
                 // this while loop updates the current lines. 
                 while (thisPoint.Y <= y)
                 {
-                    if (y.IsPracticallySame(thisPoint.Y)) needToOffset = true;
+                    if (y.IsPracticallySame(thisPoint.Y, tolerance)) needToOffset = true;
                     if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
                     else currentLines.Add(thisPoint.StartLine);
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
@@ -152,6 +154,9 @@ namespace TVGL.TwoDimensional
             out List<IntersectionData> intersections)
         {
             intersections = new List<IntersectionData>();
+            var tolerance = Math.Min(polygonA.MaxX - polygonA.MinX,
+                Math.Min(polygonA.MaxY - polygonA.MinY,
+                Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY))) * Constants.BaseTolerance;
             var possibleDuplicates = new List<(int, PolygonSegment, PolygonSegment)>();
             //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
             // safely return that the polygons are separated.
@@ -183,14 +188,14 @@ namespace TVGL.TwoDimensional
                     while (localBIndex < bLines.Length && aLine.XMax >= bLines[localBIndex].XMin)
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
-                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates);
+                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates, tolerance);
                 }
                 else
                 {
                     var bLine = bLines[bIndex++];
                     var localAIndex = aIndex;
                     while (localAIndex < aLines.Length && bLine.XMax >= aLines[localAIndex].XMin)
-                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates);
+                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates, tolerance);
                 }
             }
 
@@ -198,30 +203,22 @@ namespace TVGL.TwoDimensional
             {
                 // so, there are no interesections that indicate an overlap - only places where the polygons 
                 // touch or have collinear edges
-                if (polygonA.HasABoundingBoxThatEncompasses(polygonB))
+                var nonIntersectingRelationship = PolygonRelationship.Separated;
+                if (NonIntersectingPolygonRelationshipCheck(polygonA, polygonB, out nonIntersectingRelationship))
+                    return nonIntersectingRelationship;
+                if (NonIntersectingPolygonRelationshipCheck(polygonB, polygonA, out nonIntersectingRelationship))
                 {
-                    foreach (var hole in polygonA.Holes)
+                    if ((nonIntersectingRelationship & PolygonRelationship.BInsideA) != 0b0)
                     {
-                        if (hole.IsNonIntersectingPolygonInside(polygonB, out _) == true)
-                            return PolygonRelationship.BIsInsideHoleOfA;
+                        nonIntersectingRelationship -= PolygonRelationship.BInsideA;
+                        nonIntersectingRelationship -= PolygonRelationship.AInsideB;
                     }
-                    if (polygonA.IsNonIntersectingPolygonInside(polygonB, out _) == true)
-                        return PolygonRelationship.BIsCompletelyInsideA;
-                }
-                else if (polygonB.HasABoundingBoxThatEncompasses(polygonA))
-                {
-                    foreach (var hole in polygonB.Holes)
-                    {
-                        if (hole.IsNonIntersectingPolygonInside(polygonA, out _) == true)
-                            return PolygonRelationship.AIsInsideHoleOfB;
-                    }
-                    if (polygonB.IsNonIntersectingPolygonInside(polygonA, out _) == true)
-                        return PolygonRelationship.AIsCompletelyInsideB;
+                    return nonIntersectingRelationship;
                 }
                 return PolygonRelationship.Separated;
             }
 
-            RemoveDuplicateIntersections(possibleDuplicates, intersections);
+            RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
             var atLeastOneAEncompassB = intersections.Any(intersection => (intersection.Relationship &
             PolygonSegmentRelationship.AEncompassesB) == PolygonSegmentRelationship.AEncompassesB);
             var atLeastOneBEncompassA = intersections.Any(intersection => (intersection.Relationship &
@@ -273,7 +270,49 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<IntersectionData> intersections)
+        private static bool NonIntersectingPolygonRelationshipCheck(Polygon polygonA, Polygon polygonB,
+            out PolygonRelationship polygonRelationship)
+        {
+            if (polygonA.HasABoundingBoxThatEncompasses(polygonB))
+            {
+                foreach (var hole in polygonA.Holes)
+                {
+                    if (hole.IsNonIntersectingPolygonInside(polygonB, out _) == true)
+                    {
+                        polygonRelationship = PolygonRelationship.BIsInsideHoleOfA;
+                        return true;
+                    }
+                }
+                if (polygonA.IsNonIntersectingPolygonInside(polygonB, out _) == true)
+                {
+                    // okay b is inside a but it could but what if it is blocking a hole in A
+                    foreach (var holeA in polygonA.Holes)
+                    {
+                        if (polygonB.IsNonIntersectingPolygonInside(holeA, out _) == true)
+                        {
+                            // then polygonB blocks a hole of polygonA - unless it's in a hole of B!
+                            foreach (var holeB in polygonB.Holes)
+                            {
+                                if (holeB.IsNonIntersectingPolygonInside(holeA, out _) == true)
+                                {
+                                    polygonRelationship = PolygonRelationship.BIsCompletelyInsideA;
+                                    return true;
+                                }
+                            }
+                            polygonRelationship = PolygonRelationship.Intersection;
+                            return true;
+                        }
+                    }
+                    polygonRelationship = PolygonRelationship.BIsCompletelyInsideA;
+                    return true;
+                }
+            }
+            polygonRelationship = PolygonRelationship.Separated;
+            return false;
+        }
+
+        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<IntersectionData> intersections,
+            double tolerance)
         {
             foreach (var dupeData in possibleDuplicates)
             {
@@ -285,7 +324,7 @@ namespace TVGL.TwoDimensional
                     if (((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
                         (intersections[i].EdgeA == dupeData.lineB && intersections[i].EdgeB == dupeData.lineA)) &&
                         (intersections[i].Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != 0b0 &&
-                       duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, Constants.BaseTolerance))
+                       duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, tolerance))
                     {
                         intersections.RemoveAt(dupeData.index);
                         break;
@@ -306,7 +345,7 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonSegmentRelationship.</returns>
         private static void AddIntersectionBetweenLines(PolygonSegment lineA, PolygonSegment lineB,
-            List<IntersectionData> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates)
+            List<IntersectionData> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates, double tolerance)
         {
             // first check if bounding boxes overlap. If they don't then return false here
             if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin
@@ -316,28 +355,28 @@ namespace TVGL.TwoDimensional
             var intersectionCoordinates = Vector2.Null;
             PolygonSegmentRelationship relationship = PolygonSegmentRelationship.Unknown;
             var lineACrossLineB = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
-            if (lineACrossLineB.IsNegligible())
+            if (lineACrossLineB.IsNegligible(tolerance))
                 lineACrossLineB = 0; //this avoid a problem where further inequalities ask is <0 but the value is like -1e-15
 
             var prevA = lineA.FromPoint.EndLine;
             var prevB = lineB.FromPoint.EndLine;
             //first a quick check to see if points are the same
-            if (lineA.FromPoint.Coordinates.IsPracticallySame(lineB.FromPoint.Coordinates))
+            if (lineA.FromPoint.Coordinates.IsPracticallySame(lineB.FromPoint.Coordinates, tolerance))
             {
                 intersectionCoordinates = lineA.FromPoint.Coordinates;
                 relationship = PolygonSegmentRelationship.BothLinesStartAtPoint;
-                if (lineACrossLineB.IsNegligible() && lineA.Vector.Dot(lineB.Vector) > 0)
+                if (lineACrossLineB.IsNegligible(tolerance) && lineA.Vector.Dot(lineB.Vector) > 0)
                     // the two lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
                     relationship |= PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.CoincidentLines;
-                if (prevA.Vector.Cross(prevB.Vector).IsNegligible() && prevA.Vector.Dot(prevB.Vector) > 0)
+                if (prevA.Vector.Cross(prevB.Vector).IsNegligible(tolerance) && prevA.Vector.Dot(prevB.Vector) > 0)
                     // the two previous lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
                     relationship |= PolygonSegmentRelationship.SameLineBeforePoint | PolygonSegmentRelationship.CoincidentLines;
-                if (lineA.Vector.Cross(prevB.Vector).IsNegligible() && lineA.Vector.Dot(prevB.Vector) < 0)
+                if (lineA.Vector.Cross(prevB.Vector).IsNegligible(tolerance) && lineA.Vector.Dot(prevB.Vector) < 0)
                     // the two lines are going in the opposite direction but the line-A coincides with previous line-B
                     relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections
                         | PolygonSegmentRelationship.SameLineAfterPoint;
                 // the two lines are going in the opposite direction but the line-B coincides with previous line-A
-                if (lineB.Vector.Cross(prevA.Vector).IsNegligible() && lineB.Vector.Dot(prevA.Vector) < 0)
+                if (lineB.Vector.Cross(prevA.Vector).IsNegligible(tolerance) && lineB.Vector.Dot(prevA.Vector) < 0)
                     // the two lines are going in the opposite direction but the line-B coincides with previous line-A
                     relationship |= PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.OppositeDirections
                         | PolygonSegmentRelationship.SameLineBeforePoint;
@@ -348,7 +387,7 @@ namespace TVGL.TwoDimensional
                 if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
                 {
                     var intersectionFound = false;
-                    if (fromPointVector.Cross(lineA.Vector).IsNegligible())
+                    if (fromPointVector.Cross(lineA.Vector).IsNegligible(tolerance))
                     {
                         // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
                         // and since bounding boxes do overlap, then the lines are collinear and overlapping
@@ -373,7 +412,7 @@ namespace TVGL.TwoDimensional
                                 intersections.Add(new IntersectionData(lineA, lineB, lineB.FromPoint.Coordinates,
                                     DeterminePolygonSegmentRelationship(lineA, lineB, lineA, lineB.FromPoint.EndLine, lineACrossLineB,
                                         PolygonSegmentRelationship.AtStartOfB | PolygonSegmentRelationship.CoincidentLines |
-                                        PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.OppositeDirections)));
+                                        PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.OppositeDirections, tolerance)));
                             else
                             {
                                 prevA = lineA;
@@ -411,50 +450,50 @@ namespace TVGL.TwoDimensional
                     //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
                     var oneOverdeterminnant = 1 / lineACrossLineB;
                     var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointVector.X - lineB.Vector.X * fromPointVector.Y);
-                    if ((!t_1.IsNegligible() && t_1 < 0) || t_1 >= 1) return;
+                    if ((!t_1.IsNegligible(tolerance) && t_1 < 0) || t_1 >= 1) return;
                     var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointVector.X - lineA.Vector.X * fromPointVector.Y);
-                    if ((!t_2.IsNegligible() && t_2 < 0) || t_2 >= 1) return;
-                    if (t_1.IsNegligible())
+                    if ((!t_2.IsNegligible(tolerance) && t_2 < 0) || t_2 >= 1) return;
+                    if (t_1.IsNegligible(tolerance))
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfA;
                         prevB = lineB;
-                        if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance))
+                        if (t_2.IsPracticallySame(1.0, tolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
-                    else if (t_2.IsNegligible())
+                    else if (t_2.IsNegligible(tolerance))
                     {
                         intersectionCoordinates = lineB.FromPoint.Coordinates;
                         relationship = PolygonSegmentRelationship.AtStartOfB;
                         prevA = lineA;
-                        if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance))
+                        if (t_1.IsPracticallySame(1.0, tolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
                     }
                     else
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
                         relationship = PolygonSegmentRelationship.Overlapping;
-                        if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance) && t_2.IsPracticallySame(1.0, Constants.BaseTolerance))
+                        if (t_1.IsPracticallySame(1.0, tolerance) && t_2.IsPracticallySame(1.0, tolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (t_1.IsPracticallySame(1.0, Constants.BaseTolerance))
+                        else if (t_1.IsPracticallySame(1.0, tolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (t_2.IsPracticallySame(1.0, Constants.BaseTolerance))
+                        else if (t_2.IsPracticallySame(1.0, tolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                 }
             }
             intersections.Add(new IntersectionData(lineA, lineB, intersectionCoordinates,
-                DeterminePolygonSegmentRelationship(lineA, lineB, prevA, prevB, lineACrossLineB, relationship)));
+                DeterminePolygonSegmentRelationship(lineA, lineB, prevA, prevB, lineACrossLineB, relationship, tolerance)));
         }
 
         private static PolygonSegmentRelationship DeterminePolygonSegmentRelationship(PolygonSegment lineA, PolygonSegment lineB,
-            PolygonSegment prevA, PolygonSegment prevB, double lineACrossLineB, PolygonSegmentRelationship relationship)
+            PolygonSegment prevA, PolygonSegment prevB, double lineACrossLineB, PolygonSegmentRelationship relationship, double tolerance)
         {
             if (relationship == PolygonSegmentRelationship.Overlapping) return relationship; //this only happens when line-A and line-B are not parallel and
             // it is known that there is an intermediate point (the default case). So, the value of the relationshipByte is already set.
 
             var prevACrossPrevB = prevA.Vector.Cross(prevB.Vector);
-            if (prevACrossPrevB.IsNegligible()) prevACrossPrevB = 0;
+            if (prevACrossPrevB.IsNegligible(tolerance)) prevACrossPrevB = 0;
 
             //in the calling function (AddIntersectionBetweenLines), we detect if the two lines are Coincident, but not if the previous lines are coincident
             // the prerequisite for this is that the previous lines have the same slope (0 cross product)
@@ -473,9 +512,9 @@ namespace TVGL.TwoDimensional
             var aCornerCross = prevA.Vector.Cross(lineA.Vector);
             var bCornerCross = prevB.Vector.Cross(lineB.Vector);
             var lineACrossPrevB = lineA.Vector.Cross(prevB.Vector);
-            if (lineACrossPrevB.IsNegligible()) lineACrossPrevB = 0;
+            if (lineACrossPrevB.IsNegligible(tolerance)) lineACrossPrevB = 0;
             var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
-            if (prevACrossLineB.IsNegligible()) prevACrossLineB = 0;
+            if (prevACrossLineB.IsNegligible(tolerance)) prevACrossLineB = 0;
 
             // In the remainder of this method, we determine what the overlap of regions is at this point
             // when A corner is convex (aCornerCross>=0), then we check if the two cross products made with the
@@ -559,6 +598,7 @@ namespace TVGL.TwoDimensional
         private static List<IntersectionData> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<IntersectionData>();
+            var tolerance = Math.Min(polygonA.MaxX - polygonA.MinX, polygonA.MaxY - polygonA.MinY) * Constants.BaseTolerance;
             var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
             var numLines = polygonA.Lines.Count;
             var orderedLines = polygonA.Lines.OrderBy(line => line.XMin).ToList();
@@ -570,10 +610,10 @@ namespace TVGL.TwoDimensional
                     var other = orderedLines[j];
                     if (current.XMax < orderedLines[j].XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates);
+                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, tolerance);
                 }
             }
-            RemoveDuplicateIntersections(possibleDuplicates, intersections);
+            RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
             return intersections;
         }
 
@@ -594,12 +634,13 @@ namespace TVGL.TwoDimensional
         internal static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion, out PolygonSegment closestLineAbove,
             out PolygonSegment closestLineBelow, out bool onBoundary, bool onBoundaryIsInside = true)
         {
+            var tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
-                                         //This function has three layers of checks. 
-                                         //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
-                                         //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
-                                         //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
+            //This function has three layers of checks. 
+            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
+            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
+            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
             closestLineAbove = null;
             closestLineBelow = null;
             onBoundary = false;
@@ -608,7 +649,7 @@ namespace TVGL.TwoDimensional
                 qX > polygon.MaxX || qY > polygon.MaxY)
                 return false;
             //2) If the point in question is == a point in points, then it is inside the polygon
-            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion)))
+            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion, tolerance)))
             {
                 onBoundary = true;
                 return onBoundaryIsInside;
@@ -627,6 +668,12 @@ namespace TVGL.TwoDimensional
                 var lineYValue = line.YGivenX(qX, out _); //this out parameter is the same condition
                                                           //as 5 lines earlier, but that check is kept for efficiency
                 var yDistance = lineYValue - qY;
+                if (yDistance.IsNegligible(tolerance)) // the point is on a line in the polygon
+                {
+                    closestLineAbove = closestLineBelow = line;
+                    onBoundary = true;
+                    return onBoundaryIsInside;
+                }
                 if (yDistance > 0)
                 {
                     numberAbove++;
@@ -646,19 +693,15 @@ namespace TVGL.TwoDimensional
                         closestLineBelow = line;
                     }
                 }
-                else //else, the point is on a line in the polygon
-                {
-                    closestLineAbove = closestLineBelow = line;
-                    onBoundary = true;
-                    return true;
-                }
             }
-            if (numberBelow != numberAbove)
+            var insideAbove = numberAbove % 2 != 0;
+            var insideBelow = numberBelow % 2 != 0;
+            if (insideAbove != insideBelow)
             {
-                Trace.WriteLine("In IsPointInsidePolygon, the number of points above is not equal to the number below");
-                numberAbove = numberBelow = Math.Max(numberBelow, numberAbove);
+                throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
+                    " an undetermined number of lines which makes it impossible to determined if inside.");
             }
-            return numberAbove % 2 != 0;
+            return insideAbove;
         }
 
         /// <summary>
@@ -674,14 +717,15 @@ namespace TVGL.TwoDimensional
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
         internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vertex2D> pointsInQuestion,
-            out bool onBoundary, bool onBoundaryIsInside = true, double tolerance = Constants.BaseTolerance)
+            out bool onBoundary, bool onBoundaryIsInside = true)
         {
+            var tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
             var sortedLines = polygon.Lines.OrderBy(line => line.XMin).ToList();
             var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
-            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Count, sortedPoints, out onBoundary, onBoundaryIsInside, tolerance);
+            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Count, sortedPoints, out onBoundary, tolerance, onBoundaryIsInside);
         }
         internal static bool ArePointsInsidePolygonLines(IList<PolygonSegment> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
-            out bool onBoundary, bool onBoundaryIsInside = true, double tolerance = Constants.BaseTolerance)
+            out bool onBoundary, double tolerance, bool onBoundaryIsInside = true)
         {
             var evenNumberOfCrossings = true; // starting at zero. 
             var lineIndex = 0;
@@ -732,18 +776,20 @@ namespace TVGL.TwoDimensional
         /// <param name="pointInQuestion">The point in question.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
+        [Obsolete("Polygon methods should use the Polygon class for improved robustness and speed.")]
         public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
         {
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
                                          //Check if the point is the same as any of the polygon's points
+            var tolerance = Constants.BaseTolerance;
             var polygonIsLeftOfPoint = false;
             var polygonIsRightOfPoint = false;
             var polygonIsAbovePoint = false;
             var polygonIsBelowPoint = false;
             foreach (var point in path)
             {
-                if (point.IsPracticallySame(pointInQuestion))
+                if (point.IsPracticallySame(pointInQuestion, tolerance))
                     return onBoundaryIsInside;
                 if (point.X > qX) polygonIsLeftOfPoint = true;
                 else if (point.X < qX) polygonIsRightOfPoint = true;
@@ -773,7 +819,7 @@ namespace TVGL.TwoDimensional
                 {   // so, the polygon line starts above (higher Y-value) the point and end below it (lower Y-value) 
                     // what is the x coordinate on the line at the point's Y value
                     var xCoordWithSameY = (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X;
-                    if (pointInQuestion.X.IsPracticallySame(xCoordWithSameY))
+                    if (pointInQuestion.X.IsPracticallySame(xCoordWithSameY, tolerance))
                         return onBoundaryIsInside;
                     else if (pointInQuestion.X < xCoordWithSameY)
                         inside = !inside; // it is inside if the number of lines to the right of the point is odd

@@ -13,7 +13,7 @@ namespace TVGL.Numerics
         /// </summary>
         /// <value>The equality tolerance.</value>
         public static double EqualityTolerance { get; set; } = DefaultEqualityTolerance;
-        internal const double DefaultEqualityTolerance = 3e-12;
+        private const double DefaultEqualityTolerance = 1e-12;
         /// <summary>
         /// Determines whether [is practically same] [the specified x].
         /// the norm is within 1e-15
@@ -93,6 +93,7 @@ namespace TVGL.Numerics
         /// <param name="optionalTolerance">The optional tolerance.</param>
         /// <returns><c>true</c> if [is greater than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
         public static bool IsGreaterThanNonNegligible(this double x, double y = 0, double optionalTolerance = DefaultEqualityTolerance)
+        //public static bool IsGreaterThanNonNegligible(this double x, double y , double optionalTolerance )
         {
             return (x > y && !IsPracticallySame(x, y, optionalTolerance));
         }
@@ -105,6 +106,7 @@ namespace TVGL.Numerics
         /// <param name="optionalTolerance">The optional tolerance.</param>
         /// <returns><c>true</c> if [is less than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
         public static bool IsLessThanNonNegligible(this double x, double y = 0, double optionalTolerance = DefaultEqualityTolerance)
+        //public static bool IsLessThanNonNegligible(this double x, double y, double optionalTolerance)
         {
             return (x < y && !IsPracticallySame(x, y, optionalTolerance));
         }

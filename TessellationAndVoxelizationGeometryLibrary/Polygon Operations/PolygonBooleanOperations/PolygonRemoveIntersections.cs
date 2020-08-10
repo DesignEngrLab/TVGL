@@ -11,6 +11,32 @@ namespace TVGL.TwoDimensional
     internal class PolygonRemoveIntersections : PolygonBooleanBase
     {
         internal PolygonRemoveIntersections() : base(false) { }
+
+        internal List<Polygon> Run(Polygon polygon, List<IntersectionData> intersections, bool noHoles, double minAllowableArea, out List<Polygon> strayHoles)
+        {
+            var intersectionLookup = MakeIntersectionLookupList(intersections, polygon, null, out var positivePolygons,
+            out var negativePolygons);
+
+            while (GetNextStartingIntersection(intersections, out var startingIntersection,
+                out var startEdge, out var switchPolygon))
+            {
+                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
+                    startEdge, switchPolygon).ToList();
+                var area = polyCoordinates.Area();
+                if (area.IsNegligible(minAllowableArea)) continue;
+                if (area < 0 && noHoles)
+                {
+                    polyCoordinates.Reverse();
+                    positivePolygons.Add(area, new Polygon(polyCoordinates));
+                }
+                else if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
+                else positivePolygons.Add(area, new Polygon(polyCoordinates));
+            }
+            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
+                out strayHoles);
+        }
+
+
         protected override bool ValidStartingIntersection(IntersectionData intersectionData, out PolygonSegment currentEdge, out bool switchPolygon)
         {
             if (intersectionData.VisitedA && intersectionData.VisitedB)
@@ -105,38 +131,18 @@ namespace TVGL.TwoDimensional
             if (!identicalPolygonIsInverted)
             {
                 if (subPolygonA.IsPositive)
-                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy());  //add the positive as a positive
-                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy()); //add the negative as a negative
+                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false));  //add the positive as a positive
+                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false)); //add the negative as a negative
             }
+            // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result. 
+            // a hole is effectively removed
         }
 
         protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
         {
-            var insideOther = otherPolygon?.IsNonIntersectingPolygonInside(subPolygon, out _) == true;
             if (subPolygon.IsPositive)
-            {
-                if (isUnion != insideOther || (isSubtract && (!partOfPolygonB || doubleApproach)))
-                    positivePolygons.Add(subPolygon.Area, subPolygon.Copy());  //add the positive as a positive
-                else if (insideOther && isSubtract && (partOfPolygonB || doubleApproach))
-                    negativePolygons.Add(-subPolygon.Area, subPolygon.Copy(true)); // add the positive as a negative
-            }
-            else if (!insideOther && // then it's a hole, but it is not inside the other
-            (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
-                negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negative as a negative
-            else // it's a hole in the other polygon 
-            {
-                //first need to check if it is inside a hole of the other
-                var holeIsInsideHole = otherPolygon.Holes.Any(h => h.IsNonIntersectingPolygonInside(subPolygon, out _) == true);
-                if (holeIsInsideHole && (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
-                    negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negatie as a negative
-                else if (!holeIsInsideHole)
-                {
-                    if (!isUnion && !isSubtract)
-                        negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negatie as a negative
-                    else if (isSubtract && (!partOfPolygonB || doubleApproach))
-                        positivePolygons.Add(-subPolygon.Area, subPolygon.Copy(true)); //add the negative as a positive
-                }
-            }
+                positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
+            else negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); // add the negative as a negative
         }
 
 

@@ -12,16 +12,12 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Serialization;
-using MIConvexHull;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
-using TVGL.IOFunctions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -206,7 +202,7 @@ namespace TVGL
                     cvxVertices[i] = Vertices[cvxIndices[i]];
                 jArray = (JArray)serializationData["ConvexHullFaces"];
                 var cvxFaceIndices = jArray.ToObject<int[]>();
-                ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices);
+                ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices, SameTolerance);
             }
             else
             {
@@ -533,7 +529,7 @@ namespace TVGL
                     listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices) { Color = color });
                 else
                 {
-                    var normal = MiscFunctions.DetermineNormalPolygon(faceVertices.Length,faceVertices, out _, Vector3.Null);
+                    var normal = MiscFunctions.DetermineNormalPolygon(faceVertices.Length, faceVertices, out _, Vector3.Null);
                     var triangulatedListofLists = new[] { faceVertices }.Triangulate(normal, out _, out _);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
@@ -1046,15 +1042,15 @@ namespace TVGL
 
         protected override void CalculateCenter()
         {
-            CalculateVolumeAndCenter(Faces, out _volume, out _center);
+            CalculateVolumeAndCenter(Faces, SameTolerance, out _volume, out _center);
         }
 
         protected override void CalculateVolume()
         {
-            CalculateVolumeAndCenter(Faces, out _volume, out _center);
+            CalculateVolumeAndCenter(Faces, SameTolerance, out _volume, out _center);
         }
 
-        public static void CalculateVolumeAndCenter(IEnumerable<PolygonalFace> faces, out double volume, out Vector3 center)
+        public static void CalculateVolumeAndCenter(IEnumerable<PolygonalFace> faces, double tolerance, out double volume, out Vector3 center)
         {
             center = new Vector3();
             volume = 0.0;
@@ -1071,7 +1067,7 @@ namespace TVGL
                 center = Vector3.Zero;
                 foreach (var face in faces)
                 {
-                    if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
+                    if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
                     var tetrahedronVolume = face.Area * face.Normal.Dot(face.Vertices[0].Coordinates - oldCenter1) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
                     // in the dotproduct, "face.Normal.Dot(face.Vertices[0].Position - ORIGIN))", but clearly there is no need to subtract
@@ -1087,7 +1083,7 @@ namespace TVGL
                 if (iterations > 10 || volume < 0) center = 0.5 * (oldCenter1 + oldCenter2);
                 else center = center / volume;
                 iterations++;
-            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);
+            } while (Math.Abs(oldVolume - volume) > tolerance && iterations <= 20);
         }
 
         protected override void CalculateSurfaceArea()

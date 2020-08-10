@@ -25,13 +25,13 @@ namespace TVGL.TwoDimensional
             if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
             {
                 var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
-                if (cross < 0 && !intersectionData.VisitedA)
+                if (cross < 0 && !intersectionData.VisitedA && intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList)
                 {
                     currentEdge = intersectionData.EdgeA;
                     switchPolygon = true;
                     return true;
                 }
-                if (cross > 0 && !intersectionData.VisitedB)
+                if (cross > 0 && !intersectionData.VisitedB && intersectionData.EdgeB.IndexInList < intersectionData.EdgeA.IndexInList)
                 {
                     currentEdge = intersectionData.EdgeB;
                     switchPolygon = true;
@@ -42,7 +42,7 @@ namespace TVGL.TwoDimensional
             else if ((intersectionData.Relationship & PolygonSegmentRelationship.OppositeDirections) == 0b0
               && (intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0)
             {
-                if (!intersectionData.VisitedA &&
+                if (!intersectionData.VisitedA && intersectionData.EdgeA.IndexInList < intersectionData.EdgeB.IndexInList &&
                                 (intersectionData.Relationship & PolygonSegmentRelationship.AEncompassesB) != 0b0)
                 {
                     currentEdge = intersectionData.EdgeA;
@@ -50,7 +50,7 @@ namespace TVGL.TwoDimensional
                     return true;
                 }
                 // Polygon B encompasses all of polygon A at this intersection
-                else if (!intersectionData.VisitedB &&
+                else if (!intersectionData.VisitedB && intersectionData.EdgeB.IndexInList < intersectionData.EdgeA.IndexInList &&
                     (intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
                 {
                     currentEdge = intersectionData.EdgeB;
@@ -84,42 +84,34 @@ namespace TVGL.TwoDimensional
             if (identicalPolygonIsInverted)
             {
                 if (subPolygonA.IsPositive)
-                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy());  //add the positive as a positive
-                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy()); //add the negative as a negative
+                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false));  //add the positive as a positive
+                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false)); //add the negative as a negative
             }
-            //else do not add
-            }
+            //else do not add it.
+            // clearly is both positive then the subtraction should yield zero, but for two negative polygons (i.e. holes)
+            // it is harder to see. The surrounding material will be removed and the hole will be outside of the positive
+        }
 
 
         protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
         {
             var otherPolygon = partOfPolygonB ? polygonA : polygonB != null ? polygonB : null;
             var insideOther = otherPolygon?.IsNonIntersectingPolygonInside(subPolygon, out _) == true;
-            if (subPolygon.IsPositive)
+            if (partOfPolygonB) // part of the subtrahend, the B in A-B
             {
-                if (isUnion != insideOther || (isSubtract && (!partOfPolygonB || doubleApproach)))
-                    positivePolygons.Add(subPolygon.Area, subPolygon.Copy());  //add the positive as a positive
-                else if (insideOther && isSubtract && (partOfPolygonB || doubleApproach))
-                    negativePolygons.Add(-subPolygon.Area, subPolygon.Copy(true)); // add the positive as a negative
-            }
-            else if (!insideOther && // then it's a hole, but it is not inside the other
-            (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
-                negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negative as a negative
-            else // it's a hole in the other polygon 
-            {
-                //first need to check if it is inside a hole of the other
-                var holeIsInsideHole = otherPolygon.Holes.Any(h => h.IsNonIntersectingPolygonInside(subPolygon, out _) == true);
-                if (holeIsInsideHole && (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
-                    negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negatie as a negative
-                else if (!holeIsInsideHole)
+                if (insideOther)
                 {
-                    if (!isUnion && !isSubtract)
-                        negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negatie as a negative
-                    else if (isSubtract && (!partOfPolygonB || doubleApproach))
-                        positivePolygons.Add(-subPolygon.Area, subPolygon.Copy(true)); //add the negative as a positive
+                    if (subPolygon.IsPositive) negativePolygons.Add(-subPolygon.Area, subPolygon.Copy(false, true)); // add the positive as a negative
+                    else positivePolygons.Add(-subPolygon.Area, subPolygon.Copy(false, true)); //add the negative as a positive
                 }
+
+            }
+            else if (!insideOther) // then part of the minuend, the A in A-B
+            // then on the outside of the other, but could be inside a hole
+            {
+                if (subPolygon.IsPositive) positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
+                else negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); //add the negatie as a negative
             }
         }
-
     }
 }

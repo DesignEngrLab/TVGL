@@ -68,7 +68,7 @@ namespace TVGLUnitTestsAndBenchmarking
             c.Simplify();
             c.Simplify(10);
             c.SliceAtLine(Vector2.UnitX, 1.0, out var negativeSidePolys, out var positiveSidePolys);
-            c.Triangulate(out var groupOfLoops, out var isPositive);
+            //c.Triangulate(out var groupOfLoops, out var isPositive);
             //c.Union(b);
             //c.Xor(b);
             #endregion

@@ -23,8 +23,9 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
             return Union(polygonA, polygonB, relationship, intersections, minAllowableArea);
         }
@@ -40,8 +41,9 @@ namespace TVGL.TwoDimensional
         /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonA</exception>
         /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonB</exception>
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, List<IntersectionData> intersections,
-             double minAllowableArea = Constants.BaseTolerance)
+             double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             if (!polygonA.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", "polygonA");
             if (!polygonB.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", "polygonB");
             switch (polygonRelationship)
@@ -52,15 +54,15 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
                 case PolygonRelationship.BIsInsideHoleOfA:
                 case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
-                    return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
+                    return new List<Polygon> { polygonA.Copy(true,false), polygonB.Copy(true, false) };
                 case PolygonRelationship.BIsCompletelyInsideA:
                 case PolygonRelationship.BIsInsideAButEdgesTouch:
                 case PolygonRelationship.BIsInsideAButVerticesTouch:
-                    return new List<Polygon> { polygonA.Copy() };
+                    return new List<Polygon> { polygonA.Copy(true, false) };
                 case PolygonRelationship.AIsCompletelyInsideB:
                 case PolygonRelationship.AIsInsideBButEdgesTouch:
                 case PolygonRelationship.AIsInsideBButVerticesTouch:
-                    return new List<Polygon> { polygonB.Copy() };
+                    return new List<Polygon> { polygonB.Copy(true, false) };
                 default:
                     //case PolygonRelationship.SeparatedButEdgesTouch:
                     //case PolygonRelationship.Intersect:
@@ -75,16 +77,18 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Union(this IEnumerable<Polygon> polygons, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Union(this IEnumerable<Polygon> polygons, double minAllowableArea = double.NaN)
         {
-
             var polygonList = polygons.ToList();
+            if (double.IsNaN(minAllowableArea))
+                minAllowableArea = polygonList.Sum(p => p.Area) * Constants.BaseTolerance / polygonList.Count;
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
                 for (int j = i - 1; j >= 0; j--)
                 {
                     var polygonRelationship = GetPolygonRelationshipAndIntersections(polygonList[i],
                         polygonList[j], out var intersections);
+                    Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                     if (polygonRelationship == PolygonRelationship.BIsCompletelyInsideA
                         || polygonRelationship == PolygonRelationship.BIsInsideAButEdgesTouch
                         || polygonRelationship == PolygonRelationship.BIsInsideAButVerticesTouch)
@@ -104,7 +108,9 @@ namespace TVGL.TwoDimensional
                              || polygonRelationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
                              || polygonRelationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch)
                     {
+                        Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], polygonRelationship, intersections, minAllowableArea);
+                        Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -125,8 +131,9 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
             return Intersect(polygonA, polygonB, relationship, intersections, minAllowableArea);
         }
@@ -141,8 +148,10 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship, List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship,
+            List<IntersectionData> intersections, double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             switch (polygonRelationship)
             {
                 case PolygonRelationship.Separated:
@@ -158,21 +167,21 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.BIsCompletelyInsideA:
                 case PolygonRelationship.BIsInsideAButVerticesTouch:
                 case PolygonRelationship.BIsInsideAButEdgesTouch:
-                    if (polygonB.IsPositive) return new List<Polygon> { polygonB.Copy() };
+                    if (polygonB.IsPositive) return new List<Polygon> { polygonB.Copy(true, false) };
                     else
                     {
-                        var polygonACopy = polygonA.Copy();
-                        polygonACopy.AddHole(polygonB.Copy());
+                        var polygonACopy = polygonA.Copy(true, false);
+                        polygonACopy.AddHole(polygonB.Copy(true, false));
                         return new List<Polygon> { polygonACopy };
                     }
                 case PolygonRelationship.AIsCompletelyInsideB:
                 case PolygonRelationship.AIsInsideBButVerticesTouch:
                 case PolygonRelationship.AIsInsideBButEdgesTouch:
-                    if (polygonA.IsPositive) return new List<Polygon> { polygonA.Copy() };
+                    if (polygonA.IsPositive) return new List<Polygon> { polygonA.Copy(true, false) };
                     else
                     {
-                        var polygonBCopy = polygonB.Copy();
-                        polygonBCopy.AddHole(polygonA.Copy());
+                        var polygonBCopy = polygonB.Copy(true, false);
+                        polygonBCopy.AddHole(polygonA.Copy(true, false));
                         return new List<Polygon> { polygonBCopy };
                     }
                 default:
@@ -187,9 +196,11 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Intersect(this IEnumerable<Polygon> polygons, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Intersect(this IEnumerable<Polygon> polygons, double minAllowableArea = double.NaN)
         {
             var polygonList = polygons.ToList();
+            if (double.IsNaN(minAllowableArea))
+                minAllowableArea = polygonList.Sum(p => p.Area) * Constants.BaseTolerance / polygonList.Count;
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
                 for (int j = i - 1; j >= 0; j--)
@@ -244,8 +255,9 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
             return Subtract(polygonA, polygonB, relationship, intersections, minAllowableArea);
         }
@@ -265,9 +277,9 @@ namespace TVGL.TwoDimensional
         /// <exception cref="ArgumentException">The subtrahend is already negative polygon (i.e. hole).Consider another operation"
         ///                 + " to accopmlish this function, like Intersect. - polygonB</exception>
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB,
-                    PolygonRelationship polygonRelationship, List<IntersectionData> intersections,
-                    double minAllowableArea = Constants.BaseTolerance)
+                    PolygonRelationship polygonRelationship, List<IntersectionData> intersections, double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             if (!polygonA.IsPositive) throw new ArgumentException("The minuend is already a negative polygon (i.e. hole). Consider another operation"
                 + " to accopmlish this function, like Intersect.", "polygonA");
             if (!polygonB.IsPositive) throw new ArgumentException("The subtrahend is already a negative polygon (i.e. hole). Consider another operation"
@@ -283,10 +295,10 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.AIsInsideHoleOfB:
                 case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
                 case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
-                    return new List<Polygon> { polygonA.Copy() };
+                    return new List<Polygon> { polygonA.Copy(true, false) };
                 case PolygonRelationship.BIsCompletelyInsideA:
-                    var polygonACopy = polygonA.Copy();
-                    var polygonBCopy = polygonB.Copy();
+                    var polygonACopy = polygonA.Copy(true, false);
+                    var polygonBCopy = polygonB.Copy(true, false);
                     polygonBCopy.Reverse();
                     polygonACopy.AddHole(polygonBCopy);
                     return new List<Polygon> { polygonACopy };
@@ -314,8 +326,9 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
             return ExclusiveOr(polygonA, polygonB, relationship, intersections, minAllowableArea);
         }
@@ -331,8 +344,9 @@ namespace TVGL.TwoDimensional
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonRelationship polygonRelationship,
-                    List<IntersectionData> intersections, double minAllowableArea = Constants.BaseTolerance)
+                    List<IntersectionData> intersections, double minAllowableArea = double.NaN)
         {
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             switch (polygonRelationship)
             {
                 case PolygonRelationship.Separated:
@@ -344,16 +358,16 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.AIsInsideHoleOfB:
                 case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
                 case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
-                    return new List<Polygon> { polygonA.Copy(), polygonB.Copy() };
+                    return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
                 case PolygonRelationship.BIsCompletelyInsideA:
-                    var polygonACopy1 = polygonA.Copy();
-                    var polygonBCopy1 = polygonB.Copy();
+                    var polygonACopy1 = polygonA.Copy(true, false);
+                    var polygonBCopy1 = polygonB.Copy(true, false);
                     polygonBCopy1.Reverse();
                     polygonACopy1.AddHole(polygonBCopy1);
                     return new List<Polygon> { polygonACopy1 };
                 case PolygonRelationship.AIsCompletelyInsideB:
-                    var polygonBCopy2 = polygonB.Copy();
-                    var polygonACopy2 = polygonA.Copy();
+                    var polygonBCopy2 = polygonB.Copy(true, false);
+                    var polygonACopy2 = polygonA.Copy(true, false);
                     polygonACopy2.Reverse();
                     polygonBCopy2.AddHole(polygonACopy2);
                     return new List<Polygon> { polygonBCopy2 };
@@ -370,33 +384,13 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region RemoveSelfIntersections Public Method
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool noHoles, out List<Polygon> strayHoles,
-            double minAllowableArea = Constants.BaseTolerance)
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool noHoles, out List<Polygon> strayHoles, double minAllowableArea = double.NaN)
         {
-            polygon = polygon.Simplify(Constants.BaseTolerance);
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = polygon.Area * Constants.BaseTolerance;
+            polygon = polygon.Simplify(minAllowableArea);
             var intersections = polygon.GetSelfIntersections();
             if (polygonRemoveIntersections == null) polygonRemoveIntersections = new PolygonRemoveIntersections();
-
-            var intersectionLookup = polygonRemoveIntersections.MakeIntersectionLookupList(intersections, polygon, null, out var positivePolygons,
-                out var negativePolygons, isSubtract, isUnion, bothApproachDirections); //store negative in increasing (from -inf to 0) area
-            while (GetNextStartingIntersection(intersections, isSubtract, isUnion, bothApproachDirections, out var startingIntersection,
-                out var startEdge, out var switchPolygon))
-            {
-                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, isSubtract, isUnion, bothApproachDirections, switchPolygon).ToList();
-                var area = polyCoordinates.Area();
-                if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0 && noHoles)
-                {
-                    polyCoordinates.Reverse();
-                    positivePolygons.Add(area, new Polygon(polyCoordinates));
-                }
-                else if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
-                else positivePolygons.Add(area, new Polygon(polyCoordinates));
-            }
-
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
-                out strayHoles, false, true);
+            return polygonRemoveIntersections.Run(polygon, intersections, noHoles, minAllowableArea, out strayHoles);
         }
         #endregion
 

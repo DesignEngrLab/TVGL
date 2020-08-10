@@ -72,10 +72,7 @@ namespace TVGL.TwoDimensional
                     if (-area > positivePolygon.Area) continue;
                     var polygonRelationship =
                         positivePolygon.GetPolygonRelationshipAndIntersections(negativePolygon, out _);
-                    if (polygonRelationship == PolygonRelationship.Intersection)
-                        return false;
-                    if ((polygonRelationship & (PolygonRelationship.EdgesCross | PolygonRelationship.CoincidentVertices
-                        | PolygonRelationship.CoincidentEdges | PolygonRelationship.AInsideB | PolygonRelationship.InsideHole)) != 0)
+                    if ((polygonRelationship & PolygonRelationship.EdgesCross) != 0)
                         return false;
 
                     if ((polygonRelationship & PolygonRelationship.BInsideA) != 0
@@ -113,6 +110,7 @@ namespace TVGL.TwoDimensional
             var polygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
             polygons = null;
             var index = 0;
+            // start out by building the dictionary of polygons sorted by their area
             foreach (var path in paths)
             {
                 var polygon = new Polygon(path, index++);
@@ -130,24 +128,24 @@ namespace TVGL.TwoDimensional
             polygons = new List<Polygon>();
             foreach (var polygon in polygonDictionary.Values)
             {
+                var detectedAsAHoleInOther = false;
                 for (int i = 0; i < polygons.Count; i++)
                 {
                     var outerPolygon = polygons[i];
                     var polygonRelationship = outerPolygon.GetPolygonRelationshipAndIntersections(polygon, out _);
 
-                    if (polygonRelationship == PolygonRelationship.Intersection)
-                        return false;
-                    if ((polygonRelationship & (PolygonRelationship.EdgesCross | PolygonRelationship.CoincidentVertices
-                        | PolygonRelationship.CoincidentEdges | PolygonRelationship.AInsideB | PolygonRelationship.InsideHole)) != 0)
+                    if ((polygonRelationship & PolygonRelationship.EdgesCross) != 0)
                         return false;
                     if ((polygonRelationship & PolygonRelationship.BInsideA) != 0
                         && (polygonRelationship & PolygonRelationship.InsideHole) == 0)
                     {
                         polygon.Reverse();
                         outerPolygon.AddHole(polygon);
+                        detectedAsAHoleInOther = true;
                         break;
                     }
                 }
+                if (!detectedAsAHoleInOther) polygons.Add(polygon);
             }
 
             //Set the polygon indices

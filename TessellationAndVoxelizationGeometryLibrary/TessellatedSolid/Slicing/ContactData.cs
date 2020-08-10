@@ -98,10 +98,10 @@ namespace TVGL
         /// Gets the vertices belonging to this solid
         /// </summary>
         /// <returns></returns>
-        public double Volume()
+        public double Volume(double tolerance)
         {
             if (_volume > 0) return _volume;
-            TessellatedSolid.CalculateVolumeAndCenter(AllFaces, out _volume, out _);
+            TessellatedSolid.CalculateVolumeAndCenter(AllFaces, tolerance, out _volume, out _);
             return _volume;
         }
 
@@ -265,7 +265,7 @@ namespace TVGL
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
             var positivePath = PositiveLoop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
             if (positivePath.Area() < 0) positivePath.Reverse();
-            CrossSection2D=new Polygon(positivePath);
+            CrossSection2D = new Polygon(positivePath);
             foreach (var loop in NegativeLoops)
             {
                 var negativePath = loop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();

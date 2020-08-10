@@ -81,7 +81,7 @@ namespace TVGL.TwoDimensional
                 }
             }
             currentEdge = null;
-             switchPolygon = false;
+            switchPolygon = false;
             return false;
         }
 
@@ -112,39 +112,28 @@ namespace TVGL.TwoDimensional
             if (!identicalPolygonIsInverted)
             {
                 if (subPolygonA.IsPositive)
-                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy());  //add the positive as a positive
-                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy()); //add the negative as a negative
+                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false));  //add the positive as a positive
+                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false)); //add the negative as a negative
             }
+            // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result. 
+            // a hole is effectively removed
         }
 
         protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
         {
             var otherPolygon = partOfPolygonB ? polygonA : polygonB;
-            var insideOther = otherPolygon.IsNonIntersectingPolygonInside(subPolygon, out _);
-            if (subPolygon.IsPositive)
+            var insideOther = otherPolygon.IsNonIntersectingPolygonInside(subPolygon, out _) == true;
+            if (!insideOther)
             {
-                if (isUnion != insideOther || (isSubtract && (!partOfPolygonB || doubleApproach)))
-                    positivePolygons.Add(subPolygon.Area, subPolygon.Copy());  //add the positive as a positive
-                else if (insideOther && isSubtract && (partOfPolygonB || doubleApproach))
-                    negativePolygons.Add(-subPolygon.Area, subPolygon.Copy(true)); // add the positive as a negative
-            }
-            else if (!insideOther && // then it's a hole, but it is not inside the other
-            (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
-                negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negative as a negative
-            else // it's a hole in the other polygon 
-            {
-                //first need to check if it is inside a hole of the other
-                var holeIsInsideHole = otherPolygon.Holes.Any(h => h.IsNonIntersectingPolygonInside(subPolygon, out _) == true);
-                if (holeIsInsideHole && (isUnion || (isSubtract && (!partOfPolygonB || doubleApproach))))
-                    negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negatie as a negative
-                else if (!holeIsInsideHole)
-                {
-                    if (!isUnion && !isSubtract)
-                        negativePolygons.Add(subPolygon.Area, subPolygon.Copy()); //add the negatie as a negative
-                    else if (isSubtract && (!partOfPolygonB || doubleApproach))
-                        positivePolygons.Add(-subPolygon.Area, subPolygon.Copy(true)); //add the negative as a positive
+                if (subPolygon.IsPositive)
+                    positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
+                else
+                {   // then it's a hole
+                    var holeIsInsideHole = otherPolygon.Holes.Any(h => h.IsNonIntersectingPolygonInside(subPolygon, out _) == true);
+                    negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); //add the negatie as a negative
                 }
             }
+            // otherwise, the polygon has no effect since it is a subset of the other
         }
     }
 }
