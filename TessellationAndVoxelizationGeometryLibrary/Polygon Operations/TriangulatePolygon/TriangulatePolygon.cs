@@ -36,8 +36,7 @@ namespace TVGL.TwoDimensional
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
             var points2D = loops.Select(loop => loop.ProjectTo2DCoordinates(normal, out _).ToArray()).ToArray();
-            if (!points2D.CreateShallowPolygonTrees(false, out var polygons, out var connectingIndices))
-                throw new ArgumentException("There are intersections in the input paths.", "paths");
+            var polygons = points2D.CreateShallowPolygonTrees(false, out var connectingIndices, out _);
             isPositive = new bool[connectingIndices.Length];
             var index = 0;
             foreach (var poly in polygons)
@@ -124,7 +123,7 @@ namespace TVGL.TwoDimensional
                 {
                     for (int j = polygonList.Count - 1; j > i; j--)
                     {
-                        if (polygonList[i].IsNonIntersectingPolygonInside(polygonList[j], out _) == true)
+                        if (polygonList[i].IsNonIntersectingPolygonInside(true, polygonList[j], true, out _) == true)
                             polygonList.RemoveAt(j);
                     }
                 }
@@ -319,7 +318,7 @@ namespace TVGL.TwoDimensional
                                 //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
                                 //Note: If this occurs, any loops inside loop 1 will also be inside loop 2, so no information is lost.
                                 var otherLoopID = positiveLoop2.First().LoopID;
-                                isInside = IsPointInsidePolygon(new Polygon(polygonNodes[otherLoopID], polygonLines[otherLoopID], otherLoopID),
+                                isInside = IsPointInsidePolygon(new Polygon(polygonNodes[otherLoopID], polygonLines[otherLoopID], otherLoopID), true,
                                      positiveLoop1.First().Coordinates, out _, out _, out _);
                                 if (isInside) break;
                             }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -12,77 +11,116 @@ namespace TVGL.TwoDimensional
     {
         #region TVGL Offsetting
 
-        public static List<Polygon> OffsetSquare(this Polygon path, double offset)
+        /// <summary>
+        /// Offset the polygon with square corners.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> OffsetSquare(this Polygon polygon, double offset)
         {
-            return Offset(path, offset, true);
+            return Offset(polygon, offset, true);
         }
 
-        public static List<Polygon> OffsetSquare(this List<Polygon> path, double offset)
+        /// <summary>
+        /// Offset the polygons with square corners. The reultig polygons are joined (unioned) if overlapping.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> OffsetSquare(this List<Polygon> polygons, double offset)
         {
-            return Offset(path, offset, true);
+            return Offset(polygons, offset, true);
         }
 
-        public static List<Polygon> OffsetMiter(this Polygon path, double offset)
+        /// <summary>
+        /// Offset the polygon with miter (sharp) corners.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> OffsetMiter(this Polygon polygon, double offset)
         {
-            return Offset(path, offset, false);
+            return Offset(polygon, offset, false);
         }
-        public static List<Polygon> OffsetMiter(this List<Polygon> path, double offset)
+        /// <summary>
+        /// Offset the polygon with miter (sharp) corners. The reulting polygons are joined (unioned) if overlapping.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="offset">The offset.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> OffsetMiter(this List<Polygon> polygons, double offset)
         {
-            return Offset(path, offset, false);
+            return Offset(polygons, offset, false);
         }
 
 
-        public static List<Polygon> OffsetRound(this Polygon path, double offset, double maxCircleDeviation = double.NaN)
+        /// <summary>
+        /// Offset the polygon with "round" corners (in quotes since really lots of small polygon sides).
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="maxCircleDeviation">The maximum circle deviation.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> OffsetRound(this Polygon polygon, double offset, double maxCircleDeviation = double.NaN)
         {
             var deltaAngle = double.IsNaN(maxCircleDeviation)
                 ? Constants.DefaultRoundOffsetDeltaAngle
                 : 2 * Math.Acos(1 - Math.Abs(maxCircleDeviation / offset));
-            return Offset(path, offset, true, deltaAngle);
+            return Offset(polygon, offset, true, deltaAngle);
         }
-        public static List<Polygon> OffsetRound(this List<Polygon> path, double offset, double maxCircleDeviation = double.NaN)
+        /// <summary>
+        /// Offset the polygon with "round" corners (in quotes since really lots of small polygon sides).
+        /// The reulting polygons are joined(unioned) if overlapping.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="offset">The offset.</param>
+        /// <param name="maxCircleDeviation">The maximum circle deviation.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> OffsetRound(this List<Polygon> polygons, double offset, double maxCircleDeviation = double.NaN)
         {
             var deltaAngle = double.IsNaN(maxCircleDeviation)
                 ? Constants.DefaultRoundOffsetDeltaAngle
                 : 2 * Math.Acos(1 - Math.Abs(maxCircleDeviation / offset));
-            return Offset(path, offset, true, deltaAngle);
+            return Offset(polygons, offset, true, deltaAngle);
         }
 
 
+        private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter, double deltaAngle = double.NaN)
+        {
+            var allPolygons = new List<Polygon>();
+            foreach (var polygon in polygons)
+                allPolygons.AddRange(polygon.Offset(offset, notMiter, deltaAngle));
+            return allPolygons.Union();
+        }
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter,
             double deltaAngle = double.NaN)
         {
-            return Offset(new[] { polygon }, offset, notMiter, deltaAngle);
-        }
-        private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter, double deltaAngle = double.NaN)
-        {
-            var positivePolygons = new List<Polygon>();
-            var negativePolygons = new List<Polygon>();
-            foreach (var polygon in polygons)
-            {
-                if (polygon.MaxX - polygon.MinX < -2 * offset || polygon.MaxY - polygon.MinY < -2 * offset) continue;
-                positivePolygons.AddRange(new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle))
-                    .RemoveSelfIntersections(true,out _));
-                foreach (var hole in polygon.Holes)
-                {
-                    if (hole.MaxX - hole.MinX < 2 * offset || hole.MaxY - hole.MinY < 2 * offset) continue;
-                    var holeCoords = OffsetRoutineBackwards(hole.Lines, -offset, false, deltaAngle);
-                    var newHoles = new Polygon(holeCoords).RemoveSelfIntersections(true, out _);
-                    foreach (var newHole in newHoles)
-                        negativePolygons.Add(newHole);
-                }
-            }
-            for (var i = 0; i < positivePolygons.Count; i++)
-            {
-                foreach (var hole in negativePolygons)
-                {
-                    var result = positivePolygons[i].Subtract(hole);
-                    positivePolygons[i] = result[0];
-                    for (int j = 1; j < result.Count; j++)
-                        positivePolygons.Add(result[i]);
-                }
-            }
+           // var negativePolygons = new List<Polygon>();
+            if (polygon.MaxX - polygon.MinX < -2 * offset || polygon.MaxY - polygon.MinY < -2 * offset)
+                return new List<Polygon>();
+            return new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle))
+                  .RemoveSelfIntersections(false,out _);
+            //foreach (var hole in polygon.Holes)
+            //{
+            //    if (hole.MaxX - hole.MinX < 2 * offset || hole.MaxY - hole.MinY < 2 * offset) continue;
+            //    var holeCoords = OffsetRoutineBackwards(hole.Lines, -offset, false, deltaAngle);
+            //    var newHoles = new Polygon(holeCoords).RemoveSelfIntersections(true, out _);
+            //    foreach (var newHole in newHoles)
+            //        negativePolygons.Add(newHole);
+            //}
 
-            return positivePolygons;
+            //for (var i = 0; i < positivePolygons.Count; i++)
+            //{
+            //    foreach (var hole in negativePolygons)
+            //    {
+            //        var result = positivePolygons[i].Subtract(hole);
+            //        positivePolygons[i] = result[0];
+            //        for (int j = 1; j < result.Count; j++)
+            //            positivePolygons.Add(result[i]);
+            //    }
+            //}
+            //return positivePolygons;
         }
 
         private static List<Vector2> OffsetRoutineForward(List<PolygonSegment> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
@@ -230,85 +268,6 @@ namespace TVGL.TwoDimensional
             }
             return pointsList;
         }
-
-
-        /// <summary>
-        /// Creates the shallow polygon trees following boolean operations. The name follows the public methods,
-        /// this is meant to be used only internally as it requires several assumptions:
-        /// 1. positive polygons are ordered by increasing area (from 0 to +inf)
-        /// 2. negative polygons are ordered by increasing area (from -inf to 0)
-        /// 3. there are not intersections between the solids (this should be the result following the boolean
-        /// operation; however, it is possible that they share a vertex (e.g. in XOR))
-        /// </summary>
-        /// <param name="Polygons">The positive polygons.</param>
-        /// <param name="negativePolygons">The negative polygons.</param>
-        /// <returns>Polygon[].</returns>
-        /// <exception cref="Exception">Intersections still exist between hole and positive polygon.</exception>
-        /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
-        private static List<Polygon> CreateShallowPolygonTreesPostOffsetting(List<Polygon> polygons,
-            IEnumerable<Polygon> negativePolygons)
-        //SortedDictionary<double, Polygon>.ValueCollection negativePolygons)
-        {
-            int i = 0;
-            while (i < polygons.Count)
-            {
-                var foundToBeInsideOfOther = false;
-                int j = i;
-                while (++j < polygons.Count)
-                {
-                    if (polygons[j].IsNonIntersectingPolygonInside(polygons[i], out _) == true)
-                    {
-                        foundToBeInsideOfOther = true;
-                        break;
-                    }
-                }
-                if (foundToBeInsideOfOther)
-                {
-                    foreach (var hole in polygons[i].Holes)
-                        polygons[j].AddHole(hole);
-                    polygons.RemoveAt(i);
-                }
-                else i++;
-            }
-            //  Find the positive polygon that this negative polygon is inside.
-            //The negative polygon belongs to the smallest positive polygon that it fits inside.
-            //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
-            //and the reversed ordering, gaurantee that we get the correct shallow tree.
-            foreach (var negativePolygon in negativePolygons)
-            {
-                //var isInside = false;
-                //Start with the smallest positive polygon           
-                for (var j = 0; j < polygons.Count; j++)
-                {
-                    var positivePolygon = polygons[j];
-                    if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary) == true)
-                    {
-                        if (onBoundary)
-                            polygons[j] = positivePolygon.Union(negativePolygon)[0]; // i don't know if this is a problem, but the
-                                                                                     // new polygon at j may be smaller (now that it has a big hole in it ) than the preceding ones. I don't think
-                                                                                     // we need to maintain ordered by area - since the first loop above will already merge positive loops
-                        else positivePolygon.AddHole(negativePolygon);
-                        //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
-                        //isInside = true;
-                        break;
-                    }
-                }
-                //if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
-            }
-            //Set the polygon indices
-            var index = 0;
-            foreach (var polygon in polygons)
-            {
-                polygon.Index = index++;
-                foreach (var hole in polygon.Holes)
-                {
-                    hole.Index = polygon.Index;
-                }
-            }
-            return polygons;
-        }
-
-
         #endregion
     }
 }

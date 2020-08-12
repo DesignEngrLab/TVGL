@@ -39,15 +39,15 @@ namespace TVGL.TwoDimensional
                 {
                     var triangleCenterLineVertices = new List<Vector2>();
                     var edge1Center = 0.5 * (triangle.Vertices[0] + triangle.Vertices[1]);
-                    if (smaller.IsPointInsidePolygon(edge1Center, out _, out _,out _))
+                    if (smaller.IsPointInsidePolygon(true, edge1Center, out _, out _, out _))
                         triangleCenterLineVertices.Add(edge1Center);
 
                     var edge2Center = 0.5 * (triangle.Vertices[1] + triangle.Vertices[2]);
-                    if (smaller.IsPointInsidePolygon(edge2Center, out _, out _, out _))
+                    if (smaller.IsPointInsidePolygon(true, edge2Center, out _, out _, out _))
                         triangleCenterLineVertices.Add(edge2Center);
 
                     var edge3Center = 0.5 * (triangle.Vertices[2] + triangle.Vertices[0]);
-                    if (smaller.IsPointInsidePolygon(edge3Center, out _, out _, out _))
+                    if (smaller.IsPointInsidePolygon(true,edge3Center,  out _, out _, out _))
                         triangleCenterLineVertices.Add(edge3Center);
 
                     if (triangleCenterLineVertices.Any())

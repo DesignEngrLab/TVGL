@@ -186,7 +186,12 @@ namespace TVGLUnitTestsAndBenchmarking
                         new [] { new Vector2(3, 3), new Vector2(3, 7), new Vector2(7, 7), new Vector2(7, 3) } })},
             };
 
-        internal static void DebugEdgeCase(string name)
+        internal static void DebugEdgeCases()
+        {
+            foreach (var key in edgeCaseDictionary.Keys)
+                DebugEdgeCases(key);
+        }
+        internal static void DebugEdgeCases(string name)
         {
             var coords1 = edgeCaseDictionary[name].Item1;
             var polygon1 = new Polygon(coords1[0]);

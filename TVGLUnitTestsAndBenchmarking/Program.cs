@@ -24,7 +24,8 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            PolygonOperationsTesting.DebugEdgeCase("nestedSquares");
+            PolygonOperationsTesting.DebugEdgeCases();
+            //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
            TVGL3Dto2DTests.TestSilhouette();
           //  PolygonOperationsTesting.TestEdgeCase1();
           //PolygonOperationsTesting.TestUnionSimple();

@@ -78,40 +78,26 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        protected override void HandleIdenticalPolygons(Polygon subPolygonA, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons,
-                    bool identicalPolygonIsInverted)
+        protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
         {
             if (identicalPolygonIsInverted)
-            {
-                if (subPolygonA.IsPositive)
-                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false));  //add the positive as a positive
-                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false)); //add the negative as a negative
-            }
+                newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or negative as a negative
             //else do not add it.
             // clearly is both positive then the subtraction should yield zero, but for two negative polygons (i.e. holes)
             // it is harder to see. The surrounding material will be removed and the hole will be outside of the positive
         }
 
-
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, List<Polygon> newPolygons, bool partOfPolygonB)
         {
-            var otherPolygon = partOfPolygonB ? polygonA : polygonB != null ? polygonB : null;
-            var insideOther = otherPolygon?.IsNonIntersectingPolygonInside(subPolygon, out _) == true;
+            var insideOther = subPolygon.Vertices[0].Type == NodeType.Inside;
             if (partOfPolygonB) // part of the subtrahend, the B in A-B
             {
                 if (insideOther)
-                {
-                    if (subPolygon.IsPositive) negativePolygons.Add(-subPolygon.Area, subPolygon.Copy(false, true)); // add the positive as a negative
-                    else positivePolygons.Add(-subPolygon.Area, subPolygon.Copy(false, true)); //add the negative as a positive
-                }
-
+                    newPolygons.Add(subPolygon.Copy(false, true)); // add the positive as a negative or add the negative as a positive
             }
             else if (!insideOther) // then part of the minuend, the A in A-B
-            // then on the outside of the other, but could be inside a hole
-            {
-                if (subPolygon.IsPositive) positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
-                else negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); //add the negatie as a negative
-            }
+                                   // then on the outside of the other, but could be inside a hole
+                newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negatie as a negative
         }
     }
 }

@@ -54,7 +54,7 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
                 case PolygonRelationship.BIsInsideHoleOfA:
                 case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
-                    return new List<Polygon> { polygonA.Copy(true,false), polygonB.Copy(true, false) };
+                    return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
                 case PolygonRelationship.BIsCompletelyInsideA:
                 case PolygonRelationship.BIsInsideAButEdgesTouch:
                 case PolygonRelationship.BIsInsideAButVerticesTouch:
@@ -86,9 +86,9 @@ namespace TVGL.TwoDimensional
             {
                 for (int j = i - 1; j >= 0; j--)
                 {
+                    Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                     var polygonRelationship = GetPolygonRelationshipAndIntersections(polygonList[i],
                         polygonList[j], out var intersections);
-                    Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                     if (polygonRelationship == PolygonRelationship.BIsCompletelyInsideA
                         || polygonRelationship == PolygonRelationship.BIsInsideAButEdgesTouch
                         || polygonRelationship == PolygonRelationship.BIsInsideAButVerticesTouch)
@@ -389,6 +389,11 @@ namespace TVGL.TwoDimensional
             if (double.IsNaN(minAllowableArea)) minAllowableArea = polygon.Area * Constants.BaseTolerance;
             polygon = polygon.Simplify(minAllowableArea);
             var intersections = polygon.GetSelfIntersections();
+            if (intersections.Count == 0)
+            {
+                strayHoles = null;
+                return new List<Polygon> { polygon.Copy(true, false) };
+            }
             if (polygonRemoveIntersections == null) polygonRemoveIntersections = new PolygonRemoveIntersections();
             return polygonRemoveIntersections.Run(polygon, intersections, noHoles, minAllowableArea, out strayHoles);
         }

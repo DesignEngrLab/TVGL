@@ -50,10 +50,9 @@ namespace TVGL
             // the basePlaneDistance defines the plane closer to the origin. we can get this from the any input coordinate
             var basePlaneDistance = extrudeDirection.Dot(loops.First().First());
             if (midPlane) basePlaneDistance -= extrusionHeight / 2.0;
-            if (paths.CreateShallowPolygonTrees(false, out var polygons, out _))
-                return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
-                 extrudeDirection, basePlaneDistance, extrusionHeight)).ToList();
-            else return null;
+            var polygons = paths.CreateShallowPolygonTrees(false, out _, out _);
+            return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
+             extrudeDirection, basePlaneDistance, extrusionHeight)).ToList();
         }
 
 
@@ -68,10 +67,9 @@ namespace TVGL
         public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
             double basePlaneDistance, double extrusionHeight)
         {
-            if (paths.CreateShallowPolygonTrees(false, out var polygons, out _))
-                return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
-                 basePlaneNormal, basePlaneDistance, extrusionHeight)).ToList();
-            return null;
+            var polygons = paths.CreateShallowPolygonTrees(false, out _, out _);
+            return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
+             basePlaneNormal, basePlaneDistance, extrusionHeight)).ToList();
         }
         /// <summary>
         /// Create the triangular faces of an extruded solid from polygons.
@@ -178,13 +176,13 @@ namespace TVGL
             {
                 var topLoop = topVertices[index];
                 var baseLoop = baseVertices[index];
-                    result.Add(new PolygonalFace(new[] { topLoop[^1], baseLoop[^1], topLoop[0] }));
-                    result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[^1], baseLoop[0] }));
-                    for (int i = 1; i < topLoop.Count; i++)
-                    {
-                        result.Add(new PolygonalFace(new[] { topLoop[i - 1], baseLoop[i - 1], topLoop[i] }));
-                        result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i - 1], baseLoop[i] }));
-                    }
+                result.Add(new PolygonalFace(new[] { topLoop[^1], baseLoop[^1], topLoop[0] }));
+                result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[^1], baseLoop[0] }));
+                for (int i = 1; i < topLoop.Count; i++)
+                {
+                    result.Add(new PolygonalFace(new[] { topLoop[i - 1], baseLoop[i - 1], topLoop[i] }));
+                    result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i - 1], baseLoop[i] }));
+                }
             }
             #endregion
             return result;

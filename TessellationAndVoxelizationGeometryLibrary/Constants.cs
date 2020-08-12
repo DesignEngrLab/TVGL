@@ -695,6 +695,41 @@ namespace TVGL
         ZPositive = 3
     }
 
+
+    /// <summary>
+    ///     Enum NodeType
+    /// </summary>
+    internal enum NodeType
+    {
+        /// <summary>
+        ///     The downward reflex
+        /// </summary>
+        DownwardReflex,
+        UpwardReflex,
+        Peak,
+        Root,
+        Left,
+        Right,
+
+        /// <summary>
+        ///     The duplicate
+        /// </summary>
+        Duplicate,
+
+        OnBorder, 
+        Inside, 
+        Outside
+    }
+
+
+    internal enum VerticalLineReferenceType
+    {
+        Above,
+        On,
+        Below,
+        NotIntersecting
+    }
+
     /// <summary>
     /// Enum PolygonRelationship
     /// </summary>
@@ -733,7 +768,7 @@ namespace TVGL
         // Intersection is inside A
         Intersection = BInsideA | AInsideB,
 
-            //Equal
+        //Equal
         Equal = 64,
         EqualButOpposite = 128
     }

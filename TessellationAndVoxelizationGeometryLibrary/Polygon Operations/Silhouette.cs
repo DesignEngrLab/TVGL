@@ -65,8 +65,8 @@ namespace TVGL.TwoDimensional
 
         private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform)
         {
-            var positivePolygons = new List<Polygon>();
-            var negativePolygons = new List<Polygon>();
+            var polygons = new List<Polygon>();
+           // var negativePolygons = new List<Polygon>();
             while (outerEdges.Any())
             {
                 var polyCoordinates = new List<Vector2>();
@@ -118,19 +118,18 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
-                    var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var innerNegativePolygons);
-                    positivePolygons.AddRange(innerPositivePolygons);
-                    negativePolygons.AddRange(innerNegativePolygons);
+                    polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
+                    //var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons);
+                    //positivePolygons.AddRange(innerPositivePolygons);
+                    //negativePolygons.AddRange(strayNegativePolygons);
                 }
             }
-            var positivePolygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort());
-            var negativePolygonDictionary = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
-            foreach (var path in positivePolygons) positivePolygonDictionary.Add(path.Area, path);
-            foreach (var path in negativePolygons) negativePolygonDictionary.Add(path.Area, path);
-            PolygonOperations.CreateShallowPolygonTreesOrderedVertexLoops(positivePolygonDictionary, negativePolygonDictionary,
-                positivePolygons.Count + negativePolygons.Count, out var resultingPolygons, out _);
-            resultingPolygons = resultingPolygons.Union();
-            return resultingPolygons;
+            //foreach (var path in positivePolygons) positivePolygonDictionary.Add(path.Area, path);
+            //foreach (var path in negativePolygons) negativePolygonDictionary.Add(path.Area, path);
+            //var resultingPolygons = resultingPolygons.CreateShallowPolygonTreesFromPolygons(positivePolygonDictionary, negativePolygonDictionary,
+            //    polygons.Count + negativePolygons.Count, out _, out _);
+            polygons = polygons.Union();
+            return polygons;
         }
 
         private static KeyValuePair<Edge, bool> ChooseBestNextEdge(Edge current, bool edgeSign, List<KeyValuePair<Edge, bool>> viableEdges, Matrix4x4 transform)

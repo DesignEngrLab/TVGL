@@ -52,7 +52,7 @@ namespace TVGL.TwoDimensional
                     return true;
                 }
                 // Polygon B encompasses all of polygon A at this intersection
-                else if (!intersectionData.VisitedB && 
+                else if (!intersectionData.VisitedB &&
                     (intersectionData.Relationship & PolygonSegmentRelationship.BEncompassesA) != 0b0)
                 {
                     currentEdge = intersectionData.EdgeB;
@@ -79,31 +79,21 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        protected override void HandleIdenticalPolygons(Polygon subPolygonA, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons,
-                    bool identicalPolygonIsInverted)
+        protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
         {
             // If guess - given the nature of XOR - it's no surprise that duplicates are not captured. Xor is about capturing the uniqueness of both polygons.
             // I realize that sounds vague but when you go through the combinations, they are all turn out as nil: two positives, two negatives, one positive and one negative
         }
 
-
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, List<Polygon> newPolygons, bool partOfPolygonB)
         {
-            var otherPolygon = partOfPolygonB ? polygonA : polygonB != null ? polygonB : null;
-            var insideOther = otherPolygon?.IsNonIntersectingPolygonInside(subPolygon, out _) == true;
-
+            var insideOther = subPolygon.Vertices[0].Type == NodeType.Inside;
             if (insideOther)
-            {
-                if (subPolygon.IsPositive) negativePolygons.Add(-subPolygon.Area, subPolygon.Copy(false, true)); // add the positive as a negative
-                else positivePolygons.Add(-subPolygon.Area, subPolygon.Copy(false, true)); //add the negative as a positive
-            }
+                newPolygons.Add(subPolygon.Copy(false, true)); // add the positive as a negative or add the negative as a positive
             else
-            // then on the outside of the other, but could be inside a hole
-            {
-                if (subPolygon.IsPositive) positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
-                else negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); //add the negatie as a negative
-            }
+                // then on the outside of the other, but could be inside a hole
+                newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negatie as a negative
         }
-
     }
 }
+

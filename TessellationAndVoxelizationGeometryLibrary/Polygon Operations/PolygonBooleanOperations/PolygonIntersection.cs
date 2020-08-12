@@ -81,29 +81,17 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        protected override void HandleIdenticalPolygons(Polygon subPolygonA, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons,
-                    bool identicalPolygonIsInverted)
+        protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
         {
             if (!identicalPolygonIsInverted)
-            {
-                if (subPolygonA.IsPositive)
-                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false));  //add the positive as a positive
-                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false)); //add the negative as a negative
-            }
+                newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons,
-            SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, List<Polygon> newPolygons, bool partOfPolygonB)
         {
-            var otherPolygon = partOfPolygonB ? polygonA : polygonB != null ? polygonB : null;
-            var insideOther = otherPolygon?.IsNonIntersectingPolygonInside(subPolygon, out _) == true;
+            var insideOther = subPolygon.Vertices[0].Type == NodeType.Inside;
             if (insideOther)
-            {
-                if (subPolygon.IsPositive)
-                    positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
-                else negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); //add the negatie as a negative
-            }
+                newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }
-
     }
 }

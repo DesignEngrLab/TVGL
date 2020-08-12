@@ -30,8 +30,7 @@ namespace TVGL.TwoDimensional
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea)
         {
-            var intersectionLookup = MakeIntersectionLookupList(intersections, polygonA, polygonB, out var positivePolygons,
-                out var negativePolygons);
+            var intersectionLookup = MakeIntersectionLookupList(intersections, polygonA, polygonB, out var newPolygons);
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
                 out var startEdge, out var switchPolygon))
             {
@@ -39,12 +38,10 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
-                else positivePolygons.Add(area, new Polygon(polyCoordinates));
+                newPolygons.Add(new Polygon(polyCoordinates));
             }
             // for holes that were not participating in any intersection, we need to restore them to the result
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
-                out _);
+            return newPolygons.CreateShallowPolygonTrees(true, out _, out _);
         }
 
         /// <summary>
@@ -224,7 +221,7 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
         internal List<int>[] MakeIntersectionLookupList(List<IntersectionData> intersections, Polygon polygonA,
-            Polygon polygonB, out SortedDictionary<double, Polygon> positivePolygons, out SortedDictionary<double, Polygon> negativePolygons)
+            Polygon polygonB, out List<Polygon> polygonList)
         {
             // first off, number all the vertices with a unique index between 0 and n. These are used in the lookupList to connect the 
             // edges to the intersections that they participate in.
@@ -266,8 +263,7 @@ namespace TVGL.TwoDimensional
                 lookupList[index].Add(i);
             }
 
-            positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store positive polygons in increasing area
-            negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort()); //store negative in increasing (from -inf to 0) area
+            polygonList = new List<Polygon>();
             // now we want to find the sub-polygons that are not intersecting anything and decide whether to keep them or not
             index = 0;
             foreach (var poly in allPolygons)
@@ -311,18 +307,18 @@ namespace TVGL.TwoDimensional
                         //if (otherLookupEntry.Count == 0) lookupList[intersections[intersectionIndex].EdgeB.IndexInList] = null;
                         // hmm, I commented the previous line for good reason but I do not recall why. It would seem (for symmetry sake) it should be happen, but no
                     }
-                    HandleIdenticalPolygons(poly, positivePolygons, negativePolygons, identicalPolygonIsInverted);
+                    HandleIdenticalPolygons(poly, polygonList, identicalPolygonIsInverted);
                 }
 
                 else if (isNonIntersecting)
-                    HandleNonIntersectingSubPolygon(poly, polygonA, polygonB, positivePolygons, negativePolygons, polygonStartIndices[index] >= startOfBVertices);
+                    HandleNonIntersectingSubPolygon(poly, polygonA, polygonB, polygonList, polygonStartIndices[index] >= startOfBVertices);
                 index++;
             }
             return lookupList;
         }
 
-        protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double,
-            Polygon> negativePolygons, bool partOfPolygonB);
+        protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB,
+            List<Polygon> newPolygons, bool partOfPolygonB);
 
 
         /// <summary>
@@ -332,7 +328,7 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        protected abstract void HandleIdenticalPolygons(Polygon subPolygonA, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons,
+        protected abstract void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons,
                     bool identicalPolygonIsInverted);
 
 
@@ -360,7 +356,7 @@ namespace TVGL.TwoDimensional
                 var foundToBeInsideOfOther = false;
                 for (int j = i + 1; j < positivePolygons.Count; j++)
                 {
-                    if (positivePolygons[j].IsNonIntersectingPolygonInside(positivePolygons[i], out _) == true)
+                    if (positivePolygons[j].IsNonIntersectingPolygonInside(false, positivePolygons[i], false, out _) == true)
                     {
                         foundToBeInsideOfOther = true;
                         break;
@@ -383,7 +379,7 @@ namespace TVGL.TwoDimensional
                 for (var j = 0; j < positivePolygons.Count; j++)
                 {
                     var positivePolygon = positivePolygons[j];
-                    if (positivePolygon.IsNonIntersectingPolygonInside(negativePolygon, out var onBoundary) == true)
+                    if (positivePolygon.IsNonIntersectingPolygonInside(false, negativePolygon, true, out var onBoundary) == true)
                     {
                         isInside = true;
                         if (onBoundary)

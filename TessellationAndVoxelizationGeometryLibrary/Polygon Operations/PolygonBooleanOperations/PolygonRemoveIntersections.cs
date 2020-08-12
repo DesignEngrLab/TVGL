@@ -14,8 +14,7 @@ namespace TVGL.TwoDimensional
 
         internal List<Polygon> Run(Polygon polygon, List<IntersectionData> intersections, bool noHoles, double minAllowableArea, out List<Polygon> strayHoles)
         {
-            var intersectionLookup = MakeIntersectionLookupList(intersections, polygon, null, out var positivePolygons,
-            out var negativePolygons);
+            var intersectionLookup = MakeIntersectionLookupList(intersections, polygon, null, out var newPolygons);
 
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
                 out var startEdge, out var switchPolygon))
@@ -24,18 +23,11 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (area < 0 && noHoles)
-                {
-                    polyCoordinates.Reverse();
-                    positivePolygons.Add(area, new Polygon(polyCoordinates));
-                }
-                else if (area < 0) negativePolygons.Add(area, new Polygon(polyCoordinates));
-                else positivePolygons.Add(area, new Polygon(polyCoordinates));
+                if (noHoles) polyCoordinates.Reverse();
+                newPolygons.Add(new Polygon(polyCoordinates));
             }
-            return CreateShallowPolygonTreesPostBooleanOperation(positivePolygons.Values.ToList(), negativePolygons.Values,
-                out strayHoles);
+            return newPolygons.CreateShallowPolygonTrees(true, out _, out strayHoles);
         }
-
 
         protected override bool ValidStartingIntersection(IntersectionData intersectionData, out PolygonSegment currentEdge, out bool switchPolygon)
         {
@@ -125,24 +117,19 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        protected override void HandleIdenticalPolygons(Polygon subPolygonA, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons,
-                    bool identicalPolygonIsInverted)
+        /// 
+        protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
         {
             if (!identicalPolygonIsInverted)
-            {
-                if (subPolygonA.IsPositive)
-                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false));  //add the positive as a positive
-                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false)); //add the negative as a negative
-            }
+                newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or add the negative as a negative
             // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result. 
             // a hole is effectively removed
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, List<Polygon> newPolygons, bool partOfPolygonB)
         {
-            if (subPolygon.IsPositive)
-                positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
-            else negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); // add the negative as a negative
+            newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negative as a negative
+
         }
 
 

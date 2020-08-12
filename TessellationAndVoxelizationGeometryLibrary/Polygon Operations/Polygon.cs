@@ -91,26 +91,32 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        internal void RemoveAllInnerPolygion()
+        {
+            _holes = null;
+        }
+
 
         /// <summary>
-        /// Adds the hole to the polygon. This method assumes that there are no intersections between the hole polygon
-        /// and the host polygon. However, it does check and remove holes in the host that are fully inside of the
-        /// new hole.
+        /// Adds the hole to the polygon. 
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         public bool AddHole(Polygon polygon)
         {
             if (polygon is null || (polygon._path is null && polygon._vertices is null)) return false;
-            if (this.IsNonIntersectingPolygonInside(polygon, out _) == false) return false;
-            if (polygon.IsPositive) polygon.Reverse();
+            //if (this.IsNonIntersectingPolygonInside(polygon, false, out _) == false) return false;
+            //if (polygon.IsPositive) polygon.Reverse();
             _holes ??= new List<Polygon>();
-            for (int i = _holes.Count - 1; i >= 0; i--)
-            {
-                if (_holes[i].IsNonIntersectingPolygonInside(polygon, out _) == true)
-                    return false;
-                if (polygon.IsNonIntersectingPolygonInside(_holes[i], out _) == true)
-                    _holes.RemoveAt(i);
-            }
+            //for (int i = _holes.Count - 1; i >= 0; i--)
+            //{
+            //    if (polygon.IsNonIntersectingPolygonInside(_holes[i], true, out _) == true)
+            //        _holes.RemoveAt(i);
+            //}
+            // this text was removed from the method description since this code was commented out above
+            // This method assumes that there are no intersections between the hole polygon and the host polygon. However, 
+            // it does check and remove holes in the host that are fully inside of the  new hole.
+
+
             _holes.Add(polygon);
             return true;
         }
@@ -142,11 +148,11 @@ namespace TVGL.TwoDimensional
                 yield return this;
                 if (_holes is null) yield break;
                 foreach (var polygon in _holes)
-                    yield return polygon;
-                //if we want to allow deep polygon trees, then the commented code below would allow this (but would need to 
-                //comment the previous line ("yield return polygon;").
-                //foreach (var innerPolygon in polygon.AllPolygons)
-                //    yield return innerPolygon;
+                    // yield return polygon;
+                    //if we want to allow deep polygon trees, then the commented code below would allow this (but would need to 
+                    //comment the previous line ("yield return polygon;").
+                    foreach (var innerPolygon in polygon.AllPolygons)
+                        yield return innerPolygon;
             }
         }
 

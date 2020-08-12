@@ -106,34 +106,21 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        protected override void HandleIdenticalPolygons(Polygon subPolygonA, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons,
-                    bool identicalPolygonIsInverted)
+        protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
         {
             if (!identicalPolygonIsInverted)
-            {
-                if (subPolygonA.IsPositive)
-                    positivePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false));  //add the positive as a positive
-                else negativePolygons.Add(subPolygonA.Area, subPolygonA.Copy(false, false)); //add the negative as a negative
-            }
+                newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or add the negative as a negative
             // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result. 
             // a hole is effectively removed
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, SortedDictionary<double, Polygon> positivePolygons, SortedDictionary<double, Polygon> negativePolygons, bool partOfPolygonB)
+
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, List<Polygon> newPolygons, bool partOfPolygonB)
         {
-            var otherPolygon = partOfPolygonB ? polygonA : polygonB;
-            var insideOther = otherPolygon.IsNonIntersectingPolygonInside(subPolygon, out _) == true;
+            var insideOther = subPolygon.Vertices[0].Type == NodeType.Inside;
             if (!insideOther)
-            {
-                if (subPolygon.IsPositive)
-                    positivePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false));  //add the positive as a positive
-                else
-                {   // then it's a hole
-                    var holeIsInsideHole = otherPolygon.Holes.Any(h => h.IsNonIntersectingPolygonInside(subPolygon, out _) == true);
-                    negativePolygons.Add(subPolygon.Area, subPolygon.Copy(false, false)); //add the negatie as a negative
-                }
-            }
-            // otherwise, the polygon has no effect since it is a subset of the other
+                newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negatie as a negative
+                                                                                  // otherwise, the polygon has no effect since it is a subset of the other
         }
     }
 }
