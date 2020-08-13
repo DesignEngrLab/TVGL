@@ -24,11 +24,13 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            PolygonOperationsTesting.DebugEdgeCases();
+           // PolygonOperationsTesting.DebugOctagons();
+                PolygonOperationsTesting.DebugEdgeCases();
             //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
-           TVGL3Dto2DTests.TestSilhouette();
+            TVGL3Dto2DTests.TestSilhouette();
           //  PolygonOperationsTesting.TestEdgeCase1();
           //PolygonOperationsTesting.TestUnionSimple();
+            Console.ReadKey();
         }
     }
 }

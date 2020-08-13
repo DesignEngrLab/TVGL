@@ -181,11 +181,14 @@ namespace TVGL.TwoDimensional
         /// </summary>
         public bool IsPositive
         {
-            get { return Area >= 0; }
+            get { return PathArea > 0; }
             set
             {
-                if (value != (Area >= 0))
+                if (value != (PathArea > 0))
+                {
                     Reverse();
+                    pathArea = double.NaN;
+                }
             }
         }
 
@@ -195,35 +198,53 @@ namespace TVGL.TwoDimensional
         /// </summary>
         public void Reverse()
         {
-            area = -Area;
             Path.Reverse();
             if (_vertices != null)
                 _vertices.Reverse();
             //Only reverse the lines if they have been generated
             _lines = null;
             _vertices = null;
-            if (_holes != null)
-            {
-                foreach (var innerPolygon in _holes)
-                    innerPolygon.Reverse();
-            }
+            //if (_holes != null)
+            //{
+            //    foreach (var innerPolygon in _holes)
+            //        innerPolygon.Reverse();
+            //}
+            pathArea = -pathArea;
+            area = double.NaN;
         }
 
 
         /// <summary>
-        /// Gets the area of the polygon. Negative Area for holes.
+        /// Gets the net area of the polygon - meaning any holes will be subtracted from the total area.
         /// </summary>
         public double Area
         {
             get
             {
                 if (double.IsNaN(area))
-                    area = Path.Area();
-                return area + Holes.Sum(p => p.Area);
+                    area = PathArea + Holes.Sum(p => p.Area);
+                return area ;
             }
         }
-
         private double area = double.NaN;
+
+
+
+        /// <summary>
+        /// Gets the area of the top polygon. This area does not include the effect of inner polygons.
+        /// </summary>
+        public double PathArea
+        {
+            get
+            {
+                if (double.IsNaN(pathArea))
+                    pathArea = Path.Area();
+                return pathArea;
+            }
+        }
+        private double pathArea = double.NaN;
+
+
 
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
