@@ -10,11 +10,10 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonRemoveIntersections : PolygonBooleanBase
     {
-        internal PolygonRemoveIntersections() : base(false) { }
-
-        internal List<Polygon> Run(Polygon polygon, List<IntersectionData> intersections, bool noHoles, double minAllowableArea, out List<Polygon> strayHoles)
+        internal List<Polygon> Run(Polygon polygon, List<PolygonSegmentIntersectionRecord> intersections, bool noHoles, double minAllowableArea, out List<Polygon> strayHoles)
         {
-            var intersectionLookup = MakeIntersectionLookupList(intersections, polygon, null, out var newPolygons);
+            var intersectionLookup = MakeIntersectionLookupList(new PolygonInteractionRecord(PolygonRelationship.Intersection, intersections, null),
+                 polygon, null, out var newPolygons);
 
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
                 out var startEdge, out var switchPolygon))
@@ -29,7 +28,7 @@ namespace TVGL.TwoDimensional
             return newPolygons.CreateShallowPolygonTrees(true, out _, out strayHoles);
         }
 
-        protected override bool ValidStartingIntersection(IntersectionData intersectionData, out PolygonSegment currentEdge, out bool switchPolygon)
+        protected override bool ValidStartingIntersection(PolygonSegmentIntersectionRecord intersectionData, out PolygonSegment currentEdge, out bool switchPolygon)
         {
             if (intersectionData.VisitedA && intersectionData.VisitedB)
             {
@@ -103,7 +102,7 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-        protected override bool SwitchAtThisIntersection(IntersectionData newIntersection, bool currentEdgeIsFromPolygonA)
+        protected override bool SwitchAtThisIntersection(PolygonSegmentIntersectionRecord newIntersection, bool currentEdgeIsFromPolygonA)
         {
             if (!base.SwitchAtThisIntersection(newIntersection, currentEdgeIsFromPolygonA)) return false;
             return (newIntersection.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping;

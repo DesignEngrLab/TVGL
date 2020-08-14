@@ -10,8 +10,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonIntersection : PolygonBooleanBase
     {
-        internal PolygonIntersection() : base(false) { }
-        protected override bool ValidStartingIntersection(IntersectionData intersectionData,
+        protected override bool ValidStartingIntersection(PolygonSegmentIntersectionRecord intersectionData,
             out PolygonSegment currentEdge, out bool switchPolygon)
         {
             if (intersectionData.VisitedA || intersectionData.VisitedB)
@@ -58,7 +57,7 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-        protected override bool SwitchAtThisIntersection(IntersectionData newIntersection, bool currentEdgeIsFromPolygonA)
+        protected override bool SwitchAtThisIntersection(PolygonSegmentIntersectionRecord newIntersection, bool currentEdgeIsFromPolygonA)
         {
             if (!base.SwitchAtThisIntersection(newIntersection, currentEdgeIsFromPolygonA)) return false;
 

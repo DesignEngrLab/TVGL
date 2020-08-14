@@ -1,17 +1,33 @@
-﻿using TVGL.Numerics;
+﻿using System.Collections.Generic;
+using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
     /// <summary>
     /// Class IntersectionData.
     /// </summary>
-    public class IntersectionData
+    public class PolygonInteractionRecord
     {
-        /// <summary>
-        /// Gets Polygon Edge A.
-        /// </summary>
-        /// <value>The edge a.</value>
-        public PolygonSegment EdgeA { get; }
+        internal PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<PolygonSegmentIntersectionRecord> intersections,
+            Dictionary<int, PolygonRelationship> subPolygonRelationsDictionary)
+        {
+            this.Relationship = topLevelRelationship;
+            this.IntersectionData = intersections;
+            this.SubPolygonRelations = subPolygonRelationsDictionary;
+        }
+
+        public PolygonRelationship Relationship { get; }
+        internal List<PolygonSegmentIntersectionRecord> IntersectionData { get; }
+        internal Dictionary<int, PolygonRelationship> SubPolygonRelations { get; }
+
+    }
+        internal class PolygonSegmentIntersectionRecord
+        {
+            /// <summary>
+            /// Gets Polygon Edge A.
+            /// </summary>
+            /// <value>The edge a.</value>
+            public PolygonSegment EdgeA { get; }
         /// <summary>
         /// Gets Polygon Edge B.
         /// </summary>
@@ -42,13 +58,13 @@ namespace TVGL.TwoDimensional
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="IntersectionData"/> class.
+        /// Initializes a new instance of the <see cref="PolygonSegmentIntersectionRecord"/> class.
         /// </summary>
         /// <param name="edgeA">The edge a.</param>
         /// <param name="edgeB">The edge b.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
         /// <param name="relationship">The relationship.</param>
-        internal IntersectionData(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
+        internal PolygonSegmentIntersectionRecord(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
         {
             this.EdgeA = edgeA;
             this.EdgeB = edgeB;

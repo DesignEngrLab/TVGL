@@ -43,8 +43,8 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_orderedXVertices == null || _orderedXVertices.Count == 0)
-                    _orderedXVertices = AllPolygons.SelectMany(poly => poly.Vertices).OrderBy(p => p.X).ToList();
+                if (_orderedXVertices == null || _orderedXVertices.Count != Vertices.Count)
+                    _orderedXVertices = Vertices.OrderBy(p => p.X).ThenBy(p=>p.Y).ToList();
                 return _orderedXVertices;
 
             }

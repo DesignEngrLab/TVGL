@@ -129,21 +129,21 @@ namespace TVGLUnitTestsAndBenchmarking
 
                                 Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
-                                var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
-
-                                var polygon3 = polygon1.Union(polygon2, a, intersections);
+                                PolygonInteractionRecord a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
+                                
+                                var polygon3 = polygon1.Union(polygon2, a);
                                 Presenter.ShowAndHang(polygon3);
 
-                                polygon3 = polygon2.Intersect(polygon1, a, intersections);
+                                polygon3 = polygon2.Intersect(polygon1, a);
                                 Presenter.ShowAndHang(polygon3);
 
-                                polygon3 = polygon1.Subtract(polygon2, a, intersections);
+                                polygon3 = polygon1.Subtract(polygon2, a);
                                 Presenter.ShowAndHang(polygon3);
 
-                                polygon3 = polygon2.Subtract(polygon1, a, intersections);
+                                polygon3 = polygon2.Subtract(polygon1, a);
                                 Presenter.ShowAndHang(polygon3);
 
-                                polygon3 = polygon2.ExclusiveOr(polygon1, a, intersections);
+                                polygon3 = polygon2.ExclusiveOr(polygon1, a);
                                 Presenter.ShowAndHang(polygon3);
                                 //stopWatch.Restart();
                                 //var coords3 = PolygonOperations.Union(coords1, coords2);
@@ -219,21 +219,21 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
-            var a = polygon1.GetPolygonRelationshipAndIntersections(polygon2, out var intersections);
+            var a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
 
-            var polygon3 = polygon1.Union(polygon2, a, intersections);
+            var polygon3 = polygon1.Union(polygon2, a);
+                Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.Subtract(polygon2, a);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon1.Subtract(polygon2, a, intersections);
+            polygon3 = polygon2.Subtract(polygon1, a);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon2.Subtract(polygon1, a, intersections);
+            polygon3 = polygon1.ExclusiveOr(polygon2, a);
             Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon1.ExclusiveOr(polygon2, a, intersections);
-            Presenter.ShowAndHang(polygon3);
-
-            polygon3 = polygon1.Intersect(polygon2, a, intersections);
+            polygon3 = polygon1.Intersect(polygon2, a);
             Presenter.ShowAndHang(polygon3);
         }
 
@@ -253,7 +253,7 @@ namespace TVGLUnitTestsAndBenchmarking
                             {
                                 for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
                                 {
-                                    if (k % 10 == 0)
+                                    if (k % 100000 == 0)
                                     {
                                         DebugEdgeCases(MakeOctogonPolygon(0,0,2*leftCut+leftWidth,2*leftCut+leftHeight,leftCut),
                                             MakeOctogonPolygon(9-(2*rightCut+rightWidth),9-(2*rightCut+rightHeight),9,9,rightCut));

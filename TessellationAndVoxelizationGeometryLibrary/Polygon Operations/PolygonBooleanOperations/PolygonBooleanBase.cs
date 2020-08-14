@@ -10,12 +10,6 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal abstract class PolygonBooleanBase
     {
-        protected readonly bool isSubtract;
-        protected PolygonBooleanBase(bool isSubtract)
-        {
-            this.isSubtract = isSubtract;
-        }
-
         #region Private Functions used by the above public methods
         /// <summary>
         /// All of the previous boolean operations are accomplished by this function. Note that the function RemoveSelfIntersections is also
@@ -28,13 +22,13 @@ namespace TVGL.TwoDimensional
         /// <param name="crossProductSign">The cross product sign.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, List<IntersectionData> intersections, double minAllowableArea)
+        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, double minAllowableArea)
         {
-            var intersectionLookup = MakeIntersectionLookupList(intersections, polygonA, polygonB, out var newPolygons);
-            while (GetNextStartingIntersection(intersections, out var startingIntersection,
+            var intersectionLookup = MakeIntersectionLookupList(interaction, polygonA, polygonB, out var newPolygons);
+            while (GetNextStartingIntersection(interaction.IntersectionData, out var startingIntersection,
                 out var startEdge, out var switchPolygon))
             {
-                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
+                var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
@@ -54,8 +48,8 @@ namespace TVGL.TwoDimensional
         /// <param name="currentEdge">The current edge.</param>
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        protected bool GetNextStartingIntersection(List<IntersectionData> intersections,
-            out IntersectionData nextStartingIntersection, out PolygonSegment currentEdge, out bool switchPolygon)
+        protected bool GetNextStartingIntersection(List<PolygonSegmentIntersectionRecord> intersections,
+            out PolygonSegmentIntersectionRecord nextStartingIntersection, out PolygonSegment currentEdge, out bool switchPolygon)
         {
             foreach (var intersectionData in intersections)
             {
@@ -74,7 +68,7 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-        protected abstract bool ValidStartingIntersection(IntersectionData intersectionData, out PolygonSegment currentEdge, out bool switchPolygon);
+        protected abstract bool ValidStartingIntersection(PolygonSegmentIntersectionRecord intersectionData, out PolygonSegment currentEdge, out bool switchPolygon);
 
 
 
@@ -91,64 +85,47 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup,
-            List<IntersectionData> intersections, IntersectionData startingIntersection, PolygonSegment startingEdge, bool switchPolygon)
+            List<PolygonSegmentIntersectionRecord> intersections, PolygonSegmentIntersectionRecord startingIntersection, PolygonSegment startingEdge, bool switchPolygon)
         {
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
-            var forward = true; // as in following the edges in the forward direction (from...to). If false, then traverse backwards
             var currentEdgeIsFromPolygonA = currentEdge == intersectionData.EdgeA;
             do
             {
                 if (currentEdgeIsFromPolygonA)
                 {
-                    if (intersectionData.VisitedA && !isSubtract) break;
+                    if (intersectionData.VisitedA) break;
                     intersectionData.VisitedA = true;
                 }
                 else
                 {
-                    if (intersectionData.VisitedB && !isSubtract) break;
+                    if (intersectionData.VisitedB) break;
                     intersectionData.VisitedB = true;
                 }
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
                 // current polygon edge
-                if (!forward || (currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0b0)
+                if ((currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0b0)
                  || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0b0))
                     newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
-                {
                     currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;
-                    if (isSubtract) forward = !forward;
-                }
                 currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
-                if (!forward && ((currentEdgeIsFromPolygonA &&
-                                  (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0) ||
-                                 (!currentEdgeIsFromPolygonA &&
-                                  (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)))
-                    currentEdge = currentEdge.FromPoint.EndLine;
 
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                        intersectionCoordinates, forward, out intersectionData, out currentEdgeIsFromPolygonA, out switchPolygon))
+                        intersectionCoordinates, out intersectionData, out currentEdgeIsFromPolygonA, out switchPolygon))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
-                    if (forward)
-                    {
-                        newPath.Add(currentEdge.ToPoint.Coordinates);
-                        currentEdge = currentEdge.ToPoint.StartLine;
-                    }
-                    else
-                    {
-                        newPath.Add(currentEdge.FromPoint.Coordinates);
-                        currentEdge = currentEdge.FromPoint.EndLine;
-                    }
+                    newPath.Add(currentEdge.ToPoint.Coordinates);
+                    currentEdge = currentEdge.ToPoint.StartLine;
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
                                                             // the edge that concern us. We want that function to report the first one for the edge
                 }
-            } while ((currentEdge != startingEdge || !isSubtract) && intersectionData != startingIntersection);
+            } while (currentEdge != startingEdge && intersectionData != startingIntersection);
             return newPath;
         }
 
@@ -164,8 +141,8 @@ namespace TVGL.TwoDimensional
         /// <param name="newIntersection">The index of intersection.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<IntersectionData> allIntersections,
-        Vector2 formerIntersectCoords, bool forward, out IntersectionData newIntersection, out bool currentEdgeIsFromPolygonA,
+        private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<PolygonSegmentIntersectionRecord> allIntersections,
+        Vector2 formerIntersectCoords, out PolygonSegmentIntersectionRecord newIntersection, out bool currentEdgeIsFromPolygonA,
         out bool switchPolygon)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
@@ -176,14 +153,12 @@ namespace TVGL.TwoDimensional
                 return false;
             }
             var minDistanceToIntersection = double.PositiveInfinity;
-            var vector = forward ? currentEdge.Vector : -currentEdge.Vector;
-            var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords :
-                forward ? currentEdge.FromPoint.Coordinates : currentEdge.ToPoint.Coordinates;
+            var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords : currentEdge.FromPoint.Coordinates;
             foreach (var index in intersectionIndices)
             {
                 var thisIntersectData = allIntersections[index];
                 if (formerIntersectCoords.Equals(thisIntersectData.IntersectCoordinates)) continue;
-                var distance = vector.Dot(thisIntersectData.IntersectCoordinates - datum);
+                var distance = currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - datum);
                 if (distance < 0) continue;
                 if (minDistanceToIntersection > distance)
                 {
@@ -206,7 +181,7 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        protected virtual bool SwitchAtThisIntersection(IntersectionData newIntersection, bool currentEdgeIsFromPolygonA)
+        protected virtual bool SwitchAtThisIntersection(PolygonSegmentIntersectionRecord newIntersection, bool currentEdgeIsFromPolygonA)
         {
             // if the intersection is a point that both share but the lines are the same (and in same direction)
             return newIntersection.Relationship != (PolygonSegmentRelationship.BothLinesStartAtPoint
@@ -220,7 +195,7 @@ namespace TVGL.TwoDimensional
         /// <param name="numLines">The number lines.</param>
         /// <param name="intersections">The intersections.</param>
         /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
-        internal List<int>[] MakeIntersectionLookupList(List<IntersectionData> intersections, Polygon polygonA,
+        internal List<int>[] MakeIntersectionLookupList(PolygonInteractionRecord interaction, Polygon polygonA,
             Polygon polygonB, out List<Polygon> polygonList)
         {
             // first off, number all the vertices with a unique index between 0 and n. These are used in the lookupList to connect the 
@@ -250,9 +225,9 @@ namespace TVGL.TwoDimensional
             // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
             // this is potentially memory intensive but speeds up the matching in when creating new polygons
             var lookupList = new List<int>[index];
-            for (int i = 0; i < intersections.Count; i++)
+            for (int i = 0; i < interaction.IntersectionData.Count; i++)
             {
-                var intersection = intersections[i];
+                var intersection = interaction.IntersectionData[i];
                 intersection.VisitedA = false;
                 intersection.VisitedB = false;
                 index = intersection.EdgeA.IndexInList;
@@ -279,14 +254,14 @@ namespace TVGL.TwoDimensional
                     {
                         isNonIntersecting = false; // now it is known that the two polygons intersect since lookupList[j] is not null
 
-                        var intersectionIndex = lookupList[j].FindIndex(k => (intersections[k].Relationship & (PolygonSegmentRelationship.BothLinesStartAtPoint
+                        var intersectionIndex = lookupList[j].FindIndex(k => (interaction.IntersectionData[k].Relationship & (PolygonSegmentRelationship.BothLinesStartAtPoint
                         | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint))
                         == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint
                         | PolygonSegmentRelationship.SameLineBeforePoint));
                         if (intersectionIndex == -1 || intersectionIndex < j)
                             isIdentical = false;
                         else identicalPolygonIsInverted =
-                                ((intersections[lookupList[j][intersectionIndex]].Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0);
+                                ((interaction.IntersectionData[lookupList[j][intersectionIndex]].Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0);
                     }
                     if (!isIdentical && !isNonIntersecting) break; //once it is found that it is both not identical and intersecting then no need to keep checking
                 }
@@ -295,14 +270,14 @@ namespace TVGL.TwoDimensional
                     // which is easier than deleting since the other references would collapse down
                     for (int j = polygonStartIndices[index]; j < polygonStartIndices[index + 1]; j++)
                     {
-                        var intersectionIndex = lookupList[j].First(k => (intersections[k].Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0
-                     && (intersections[k].Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0);
+                        var intersectionIndex = lookupList[j].First(k => (interaction.IntersectionData[k].Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0
+                     && (interaction.IntersectionData[k].Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0);
                         lookupList[j].Remove(intersectionIndex);
                         if (lookupList[j].Count == 0) lookupList[j] = null;
-                        intersections[intersectionIndex].VisitedA = true;
-                        intersections[intersectionIndex].VisitedB = true;
+                        interaction.IntersectionData[intersectionIndex].VisitedA = true;
+                        interaction.IntersectionData[intersectionIndex].VisitedB = true;
                         // note, in the next line - this has to be EdgeB since searching in order the A polygon will detect the duplicate - B will skip over
-                        var otherLookupEntry = lookupList[intersections[intersectionIndex].EdgeB.IndexInList];
+                        var otherLookupEntry = lookupList[interaction.IntersectionData[intersectionIndex].EdgeB.IndexInList];
                         otherLookupEntry.Remove(intersectionIndex);
                         //if (otherLookupEntry.Count == 0) lookupList[intersections[intersectionIndex].EdgeB.IndexInList] = null;
                         // hmm, I commented the previous line for good reason but I do not recall why. It would seem (for symmetry sake) it should be happen, but no
@@ -330,96 +305,6 @@ namespace TVGL.TwoDimensional
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
         protected abstract void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons,
                     bool identicalPolygonIsInverted);
-
-
-
-        /// <summary>
-        /// Creates the shallow polygon trees following boolean operations. The name follows the public methods,
-        /// this is meant to be used only internally as it requires several assumptions:
-        /// 1. positive polygons are ordered by increasing area (from 0 to +inf)
-        /// 2. negative polygons are ordered by increasing area (from -inf to 0)
-        /// 3. there are not intersections between the polygons (this should be the result following the boolean
-        /// operation; however, it is possible that they share a vertex (e.g. in XOR))
-        /// </summary>
-        /// <param name="Polygons">The positive polygons.</param>
-        /// <param name="negativePolygons">The negative polygons.</param>
-        /// <returns>Polygon[].</returns>
-        /// <exception cref="Exception">Intersections still exist between hole and positive polygon.</exception>
-        /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
-        protected List<Polygon> CreateShallowPolygonTreesPostBooleanOperation(List<Polygon> positivePolygons,
-                IEnumerable<Polygon> negativePolygons, out List<Polygon> strayHoles)
-        {
-            //first, remove any positive polygons that are nested inside of bigger ones
-            int i = 0;
-            while (i < positivePolygons.Count)
-            {
-                var foundToBeInsideOfOther = false;
-                for (int j = i + 1; j < positivePolygons.Count; j++)
-                {
-                    if (positivePolygons[j].IsNonIntersectingPolygonInside(false, positivePolygons[i], false, out _) == true)
-                    {
-                        foundToBeInsideOfOther = true;
-                        break;
-                    }
-                }
-
-                if (foundToBeInsideOfOther)
-                    positivePolygons.RemoveAt(i);
-                else i++;
-            }
-            strayHoles = new List<Polygon>();
-            //  Find the positive polygon that this negative polygon is inside.
-            //The negative polygon belongs to the smallest positive polygon that it fits inside.
-            //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
-            //and the reversed ordering, gaurantee that we get the correct shallow tree.
-            foreach (var negativePolygon in negativePolygons)
-            {
-                var isInside = false;
-                //Start with the smallest positive polygon           
-                for (var j = 0; j < positivePolygons.Count; j++)
-                {
-                    var positivePolygon = positivePolygons[j];
-                    if (positivePolygon.IsNonIntersectingPolygonInside(false, negativePolygon, true, out var onBoundary) == true)
-                    {
-                        isInside = true;
-                        if (onBoundary)
-                        {
-                            var newPolys = positivePolygon.Intersect(negativePolygon);
-                            positivePolygons[j] = newPolys[0]; // i don't know if this is a problem, but the
-                            // new polygon at j may be smaller (now that it has a big hole in it ) than the preceding ones. I don't think
-                            // we need to maintain ordered by area - since the first loop above will already merge positive loops
-                            for (int k = 1; k < newPolys.Count; k++)
-                                positivePolygons.Add(newPolys[i]);
-                        }
-                        else positivePolygon.AddHole(negativePolygon);
-
-                        //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
-                        //isInside = true;
-                        break;
-                    }
-                }
-
-                if (!isInside) strayHoles.Add(negativePolygon);
-                //this feels like it should come with a warning. but perhaps the user/developer intends to create 
-                // a negative polygon
-                // actually, in silhouette this function is called and may result in loose holes
-            }
-            //Set the polygon indices
-            var index = 0;
-            foreach (var polygon in positivePolygons)
-            {
-                polygon.Index = index++;
-                foreach (var hole in polygon.Holes)
-                {
-                    hole.Index = polygon.Index;
-                }
-            }
-            return positivePolygons;
-        }
-
-
-
-
         #endregion
     }
 }

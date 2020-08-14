@@ -701,6 +701,7 @@ namespace TVGL
     /// </summary>
     internal enum NodeType
     {
+        Unknown,
         /// <summary>
         ///     The downward reflex
         /// </summary>
@@ -715,10 +716,6 @@ namespace TVGL
         ///     The duplicate
         /// </summary>
         Duplicate,
-
-        OnBorder, 
-        Inside, 
-        Outside
     }
 
 
