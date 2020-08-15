@@ -44,7 +44,7 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (_orderedXVertices == null || _orderedXVertices.Count != Vertices.Count)
-                    _orderedXVertices = Vertices.OrderBy(p => p.X).ThenBy(p=>p.Y).ToList();
+                    _orderedXVertices = Vertices.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
                 return _orderedXVertices;
 
             }
@@ -164,15 +164,15 @@ namespace TVGL.TwoDimensional
             get => index;
             set
             {
-                if (index == value) return;
-                if (value < 0)
-                    throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
+                //if (index == value) return;
+                //if (value < 0)
+                //    throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
                 index = value;
-                if (_vertices != null)
-                    foreach (var v in Vertices)
-                    {
-                        v.LoopID = index;
-                    }
+                //if (_vertices != null)
+                //    foreach (var v in Vertices)
+                //    {
+                //        v.LoopID = index;
+                //    }
             }
         }
 
@@ -223,7 +223,7 @@ namespace TVGL.TwoDimensional
             {
                 if (double.IsNaN(area))
                     area = PathArea + Holes.Sum(p => p.Area);
-                return area ;
+                return area;
             }
         }
         private double area = double.NaN;

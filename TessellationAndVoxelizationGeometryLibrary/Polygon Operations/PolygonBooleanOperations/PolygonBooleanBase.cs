@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -34,6 +35,7 @@ namespace TVGL.TwoDimensional
                 if (area.IsNegligible(minAllowableArea)) continue;
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
+            // todo: add in duplicate or non-intersecting polygons here
             // for holes that were not participating in any intersection, we need to restore them to the result
             return newPolygons.CreateShallowPolygonTrees(true, out _, out _);
         }
@@ -222,8 +224,14 @@ namespace TVGL.TwoDimensional
                 }
             polygonStartIndices.Add(index); // add a final exclusive top of the range for the for-loop below (not the next one, the one after)
 
+            var nonIntersectionPolygonIndices = Enumerable.Range(0, polygonStartIndices.Count);
+
+            for (int i = 0; i < interaction.num; i++)
+            {
+
+            }
             // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
-            // this is potentially memory intensive but speeds up the matching in when creating new polygons
+            // this is potentially memory intensive but speeds up the matching  when creating new polygons
             var lookupList = new List<int>[index];
             for (int i = 0; i < interaction.IntersectionData.Count; i++)
             {
@@ -243,28 +251,6 @@ namespace TVGL.TwoDimensional
             index = 0;
             foreach (var poly in allPolygons)
             {
-                var isNonIntersecting = true; //start as true. once a case is found to be intersecting, set it to false
-                var isIdentical = true; //start as true. once a case is found to be different, set it to false
-                var identicalPolygonIsInverted = false;
-                for (int j = polygonStartIndices[index]; j < polygonStartIndices[index + 1]; j++)
-                {
-                    if (lookupList[j] == null) //no intersection is good to check to skip code in 'else' but also it tells us that they are not identical
-                        isIdentical = false;
-                    else
-                    {
-                        isNonIntersecting = false; // now it is known that the two polygons intersect since lookupList[j] is not null
-
-                        var intersectionIndex = lookupList[j].FindIndex(k => (interaction.IntersectionData[k].Relationship & (PolygonSegmentRelationship.BothLinesStartAtPoint
-                        | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint))
-                        == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint
-                        | PolygonSegmentRelationship.SameLineBeforePoint));
-                        if (intersectionIndex == -1 || intersectionIndex < j)
-                            isIdentical = false;
-                        else identicalPolygonIsInverted =
-                                ((interaction.IntersectionData[lookupList[j][intersectionIndex]].Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0);
-                    }
-                    if (!isIdentical && !isNonIntersecting) break; //once it is found that it is both not identical and intersecting then no need to keep checking
-                }
                 if (isIdentical)
                 {   // go back through the same indices and remove references to the intersections. Also, set the intersections to "visited"
                     // which is easier than deleting since the other references would collapse down

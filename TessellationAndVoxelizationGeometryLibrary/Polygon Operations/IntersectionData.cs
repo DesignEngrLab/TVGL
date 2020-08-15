@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -9,25 +10,84 @@ namespace TVGL.TwoDimensional
     public class PolygonInteractionRecord
     {
         internal PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<PolygonSegmentIntersectionRecord> intersections,
-            Dictionary<int, PolygonRelationship> subPolygonRelationsDictionary)
+             PolygonRelationship[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB)
         {
             this.Relationship = topLevelRelationship;
             this.IntersectionData = intersections;
-            this.SubPolygonRelations = subPolygonRelationsDictionary;
+            this.polygonRelations = polygonRelations;
+            this.subPolygonToInt = subPolygonToInt;
+            this.numPolygonsInA = numPolygonsInA;
+            this.numPolygonsInB = numPolygonsInB;
         }
 
         public PolygonRelationship Relationship { get; }
         internal List<PolygonSegmentIntersectionRecord> IntersectionData { get; }
-        internal Dictionary<int, PolygonRelationship> SubPolygonRelations { get; }
+        internal readonly PolygonRelationship[] polygonRelations;
+        internal readonly Dictionary<Polygon, int> subPolygonToInt;
+        internal readonly int numPolygonsInA;
+        internal readonly int numPolygonsInB;
+
+
+        public PolygonRelationship GetRelationshipBetween(Polygon polygonA, Polygon polygonB)
+        {
+            var indexA = subPolygonToInt[polygonA];
+            var indexB = subPolygonToInt[polygonB];
+            var index = indexA < indexB ? numPolygonsInA * indexB + indexA : numPolygonsInA * indexA + indexB;
+            return polygonRelations[index];
+        }
+
+        /// <summary>
+        /// Makes the intersection lookup table that allows us to quickly find the intersections for a given edge.
+        /// </summary>
+        /// <param name="numLines">The number lines.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
+        internal List<int>[] MakeIntersectionLookupList()
+        {
+            // first off, number all the vertices with a unique index between 0 and n. These are used in the lookupList to connect the 
+            // edges to the intersections that they participate in.
+            var index = 0;
+            var polygonStartIndices = new List<int>();
+            // in addition, keep track of the vertex index that is the beginning of each polygon. Recall that there could be numerous
+            // hole-polygons that need to be accounted for.
+
+            foreach (var polygon in subPolygonToInt.Keys)
+            {
+                polygonStartIndices.Add(index);
+                foreach (var vertex in polygon.Vertices)
+                    vertex.IndexInList = index++;
+            }
+            polygonStartIndices.Add(index); // add a final exclusive top of the range for the for-loop below (not the next one, the one after)
+
+            var same = PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines
+                | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint;
+            // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
+            // this is potentially memory intensive but speeds up the matching  when creating new polygons
+            var lookupList = new List<int>[index];
+            for (int i = 0; i < IntersectionData.Count; i++)
+            {
+                var intersection = IntersectionData[i];
+                if ((intersection.Relationship & same) == same) continue;
+                intersection.VisitedA = false;
+                intersection.VisitedB = false;
+                index = intersection.EdgeA.IndexInList;
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
+                index = intersection.EdgeB.IndexInList;
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
+            }
+            return lookupList;
+        }
 
     }
-        internal class PolygonSegmentIntersectionRecord
-        {
-            /// <summary>
-            /// Gets Polygon Edge A.
-            /// </summary>
-            /// <value>The edge a.</value>
-            public PolygonSegment EdgeA { get; }
+    internal class PolygonSegmentIntersectionRecord
+    {
+        /// <summary>
+        /// Gets Polygon Edge A.
+        /// </summary>
+        /// <value>The edge a.</value>
+        public PolygonSegment EdgeA { get; }
         /// <summary>
         /// Gets Polygon Edge B.
         /// </summary>
