@@ -10,7 +10,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonUnion : PolygonBooleanBase
     {
-        protected override bool ValidStartingIntersection(PolygonSegmentIntersectionRecord intersectionData, out PolygonSegment currentEdge, out bool switchPolygon)
+        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge, out bool switchPolygon)
         {
             if (intersectionData.VisitedA || intersectionData.VisitedB)
             {
@@ -84,7 +84,7 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-        protected override bool SwitchAtThisIntersection(PolygonSegmentIntersectionRecord newIntersection, bool currentEdgeIsFromPolygonA)
+        protected override bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA)
         {
             if (!base.SwitchAtThisIntersection(newIntersection, currentEdgeIsFromPolygonA)) return false;
             // if abutting but the lines are not coincident, then stay on the same
@@ -113,13 +113,29 @@ namespace TVGL.TwoDimensional
             // a hole is effectively removed
         }
 
-
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, Polygon polygonA, Polygon polygonB, List<Polygon> newPolygons, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, IEnumerable<PolygonRelationship> relationships, bool partOfPolygonB)
         {
-            var insideOther = subPolygon.Vertices[0].Type == NodeType.Inside;
-            if (!insideOther)
-                newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negatie as a negative
-                                                                                  // otherwise, the polygon has no effect since it is a subset of the other
+            var enumerator = relationships.GetEnumerator();
+            enumerator.MoveNext();
+            var relWithOuter = enumerator.Current;
+            if (relWithOuter < PolygonRelationship.AInsideB ||
+                (!partOfPolygonB && (relWithOuter & PolygonRelationship.BInsideA) != 0b0) ||
+                (partOfPolygonB && (relWithOuter & PolygonRelationship.AInsideB) != 0b0))
+                // It's separate from the first or outer polygon of the other or it encompasses the other... whether positive or negative - it is included
+                newPolygons.Add(subPolygon.Copy(false, false));
+            else
+            { //failing the above if means that it is included in the outer. So it can only be included in the result if it is inside a hole
+                while (enumerator.MoveNext())
+                {
+                    var relWithInner = enumerator.Current;
+                    if ((!partOfPolygonB && (relWithInner & PolygonRelationship.AInsideB) != 0b0) ||
+                        (partOfPolygonB && (relWithInner & PolygonRelationship.BInsideA) != 0b0))
+                    {
+                        newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negatie as a negative
+                        return;                                                               // otherwise, the polygon has no effect since it is a subset of the other
+                    }
+                }
+            }
         }
     }
 }

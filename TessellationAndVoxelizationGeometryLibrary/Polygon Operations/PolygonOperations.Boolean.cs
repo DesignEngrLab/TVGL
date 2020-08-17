@@ -258,8 +258,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
-            var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonB);
-            return Subtract(polygonA, polygonB, relationship, minAllowableArea);
+            var polygonBInverted = polygonB.Copy(true, true);
+            var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonBInverted);
+            return Intersect(polygonA, polygonBInverted, relationship, minAllowableArea);
         }
 
         /// <summary>
@@ -310,6 +311,7 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.BInsideAButVerticesTouch:
                     //case PolygonRelationship.BInsideAButEdgesTouch:
                     if (polygonDifference == null) polygonDifference = new PolygonDifference();
+                    polygonB.Reverse();
                     return polygonDifference.Run(polygonA, polygonB, interaction, minAllowableArea);
             }
         }
@@ -328,6 +330,8 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
+            var polygonBInverted = polygonB.Copy(true, true);
+
             var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonB);
             return ExclusiveOr(polygonA, polygonB, relationship, minAllowableArea);
         }
@@ -376,6 +380,19 @@ namespace TVGL.TwoDimensional
                     return polygonXOR.Run(polygonA, polygonB, interactionRecord, minAllowableArea);
             }
         }
+
+
+
+        //internal static void InvertPolygonAInRecord(PolygonInteractionRecord interaction, Polygon polygonA, Polygon polygonB)
+        //{
+        //    var polygonBInvert = polygonB.Copy(true, true);
+        //    return new PolygonInteractionRecord();
+        //}
+        //internal static void InvertPolygonBInRecord(PolygonInteractionRecord interaction, Polygon polygonA, Polygon polygonB)
+        //{
+
+        //}
+
         #endregion
 
         #region RemoveSelfIntersections Public Method
@@ -387,7 +404,7 @@ namespace TVGL.TwoDimensional
             if (intersections.Count == 0)
             {
                 strayHoles = null;
-                return new List<Polygon> { polygon.Copy(true, false) };
+                return new List<Polygon> { polygon  };
             }
             if (polygonRemoveIntersections == null) polygonRemoveIntersections = new PolygonRemoveIntersections();
             return polygonRemoveIntersections.Run(polygon, intersections, noHoles, minAllowableArea, out strayHoles);

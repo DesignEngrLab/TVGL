@@ -9,7 +9,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public class PolygonInteractionRecord
     {
-        internal PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<PolygonSegmentIntersectionRecord> intersections,
+        internal PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<SegmentIntersection> intersections,
              PolygonRelationship[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB)
         {
             this.Relationship = topLevelRelationship;
@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
         }
 
         public PolygonRelationship Relationship { get; }
-        internal List<PolygonSegmentIntersectionRecord> IntersectionData { get; }
+        internal List<SegmentIntersection> IntersectionData { get; }
         internal readonly PolygonRelationship[] polygonRelations;
         internal readonly Dictionary<Polygon, int> subPolygonToInt;
         internal readonly int numPolygonsInA;
@@ -32,8 +32,24 @@ namespace TVGL.TwoDimensional
         {
             var indexA = subPolygonToInt[polygonA];
             var indexB = subPolygonToInt[polygonB];
-            var index = indexA < indexB ? numPolygonsInA * indexB + indexA : numPolygonsInA * indexA + indexB;
+            var index = indexA < indexB
+                ? numPolygonsInA * (indexB - numPolygonsInA) + indexA
+                : numPolygonsInA * (indexA - numPolygonsInA) + indexB;
             return polygonRelations[index];
+        }
+        public IEnumerable<PolygonRelationship> GetRelationships(Polygon polygon)
+        {
+            var index = subPolygonToInt[polygon];
+            if (index < numPolygonsInA)
+            {
+                for (int i = 0; i < numPolygonsInB; i++)
+                    yield return polygonRelations[numPolygonsInA * i + index];
+            }
+            else
+            {
+                for (int i = 0; i < numPolygonsInA; i++)
+                    yield return polygonRelations[numPolygonsInA * (index - numPolygonsInA) + i];
+            }
         }
 
         /// <summary>
@@ -81,7 +97,7 @@ namespace TVGL.TwoDimensional
         }
 
     }
-    internal class PolygonSegmentIntersectionRecord
+    internal class SegmentIntersection
     {
         /// <summary>
         /// Gets Polygon Edge A.
@@ -118,13 +134,13 @@ namespace TVGL.TwoDimensional
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PolygonSegmentIntersectionRecord"/> class.
+        /// Initializes a new instance of the <see cref="SegmentIntersection"/> class.
         /// </summary>
         /// <param name="edgeA">The edge a.</param>
         /// <param name="edgeB">The edge b.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
         /// <param name="relationship">The relationship.</param>
-        internal PolygonSegmentIntersectionRecord(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
+        internal SegmentIntersection(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
         {
             this.EdgeA = edgeA;
             this.EdgeB = edgeB;

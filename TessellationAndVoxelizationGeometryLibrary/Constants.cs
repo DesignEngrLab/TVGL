@@ -734,12 +734,11 @@ namespace TVGL
     public enum PolygonRelationship
     {
         // Here are the atomic flags
-        EdgesCross = 1,
-        CoincidentVertices = 2,
-        CoincidentEdges = 4,
-        AInsideB = 8,
-        BInsideA = 16,
-        InsideHole = 32,
+        CoincidentVertices = 1,
+        CoincidentEdges = 2,
+        AInsideB = 4,
+        BInsideA = 8,
+        InsideHole = 16,
         // the following are the valid combinations of flags
         // first when two polygons are separated 
         Separated = 0,
@@ -766,8 +765,8 @@ namespace TVGL
         Intersection = BInsideA | AInsideB,
 
         //Equal
-        Equal = 64,
-        EqualButOpposite = 128
+        Equal = 32,
+        EqualButOpposite = 64
     }
 
     /// <summary>

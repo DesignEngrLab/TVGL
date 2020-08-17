@@ -35,7 +35,7 @@ namespace TVGL.TwoDimensional
             return null; //all points are on boundary, so it is unclear if it is inside
         }
 
-        internal static bool? IsNonIntersectingPolygonInside(this List<PolygonSegment> sortedEdges, List<Vertex2D> sortedVertices, double tolerance)
+        internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonSegment> sortedEdges, List<Vertex2D> sortedVertices, double tolerance)
         {
             var edgeIndex = 0;
             foreach (var vertex in sortedVertices)
@@ -439,7 +439,7 @@ namespace TVGL.TwoDimensional
             var numPolygonsInB = index - numPolygonsInA;
             var subPolygonRelationsDictionary = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
             var topLevelRelationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
-            subPolygonRelationsDictionary[numPolygonsInA * polygonB.Index + polygonA.Index] = topLevelRelationship;
+            subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[polygonB] - numPolygonsInA) + polygonDictionary[polygonA]] = topLevelRelationship;
             var holesInAThatAreInB = new List<Polygon>();
             var holesInBThatAreInA = new List<Polygon>();
             if ((topLevelRelationship & PolygonRelationship.Intersection) != 0b0)
@@ -449,7 +449,7 @@ namespace TVGL.TwoDimensional
                     var relationship = GetPolygonRelationshipAndIntersections(innerA, polygonB, out var localIntersections);
                     intersections.AddRange(localIntersections);
                     topLevelRelationship |= relationship;
-                    subPolygonRelationsDictionary[numPolygonsInA * polygonB.Index + innerA.Index] = relationship;
+                    subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[polygonB] - numPolygonsInA) + polygonDictionary[innerA]] = relationship;
                     if ((relationship & PolygonRelationship.AInsideB) != 0b0) holesInAThatAreInB.Add(innerA);
                 }
                 foreach (var innerB in polygonB.Holes)
@@ -457,7 +457,7 @@ namespace TVGL.TwoDimensional
                     var relationship = GetPolygonRelationshipAndIntersections(polygonA, innerB, out var localIntersections);
                     intersections.AddRange(localIntersections);
                     topLevelRelationship |= relationship;
-                    subPolygonRelationsDictionary[numPolygonsInA * innerB.Index + polygonA.Index] = relationship;
+                    subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[innerB] - numPolygonsInA) + polygonDictionary[polygonA]] = relationship;
                     if ((relationship & PolygonRelationship.BInsideA) != 0b0) holesInBThatAreInA.Add(innerB);
                 }
                 foreach (var innerA in holesInAThatAreInB)
@@ -467,7 +467,8 @@ namespace TVGL.TwoDimensional
                         var relationship = GetPolygonRelationshipAndIntersections(innerA, innerB, out var localIntersections);
                         intersections.AddRange(localIntersections);
                         topLevelRelationship |= relationship;
-                        subPolygonRelationsDictionary[numPolygonsInA * innerB.Index + innerA.Index]= relationship;
+                        subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[innerB] - numPolygonsInA) 
+                            + polygonDictionary[innerA]] = relationship;
                     }
                 }
             }
@@ -488,9 +489,9 @@ namespace TVGL.TwoDimensional
         /// Separated, SeparatedButEdgesTouch, SeparatedButVerticesTouch
         ///  </returns>
         internal static PolygonRelationship GetPolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
-            out List<PolygonSegmentIntersectionRecord> intersections)
+            out List<SegmentIntersection> intersections)
         {
-            intersections = new List<PolygonSegmentIntersectionRecord>();
+            intersections = new List<SegmentIntersection>();
             var tolerance = Math.Min(subPolygonA.MaxX - subPolygonA.MinX,
                 Math.Min(subPolygonA.MaxY - subPolygonA.MinY,
                 Math.Min(subPolygonB.MaxX - subPolygonB.MinX, subPolygonB.MaxY - subPolygonB.MinY))) * Constants.BaseTolerance;
@@ -504,14 +505,11 @@ namespace TVGL.TwoDimensional
             //Else, we need to check for intersections between all lines of the two
             // To avoid an n-squared check (all of A's lines with all of B's), we sort the lines by their XMin
             // value. Instead of directly sorting the Lines, which will have many repeat XMin values (since every
-            // pair of lines meet at the a given point), the points are sorted first. These sorted points are
-            // used in the ArePointsInsidePolygon function as well.
-            var orderedAPoints = subPolygonA.OrderedXVertices;
-            // property has been invoked before the next function (GetOrderedLines), which requires that lines and vertices be properly connected
-            var aLines = GetOrderedLines(orderedAPoints);
+            // pair of elsewhere so one it is done for a polygon, it is a good idea to store it.
+            // the next function (GetOrderedLines),  requires that lines and vertices be properly connected
+            var aLines = GetOrderedLines(subPolygonA.OrderedXVertices);
             //repeat for the lines in B
-            var orderedBPoints = subPolygonB.OrderedXVertices;
-            var bLines = GetOrderedLines(orderedBPoints);
+            var bLines = GetOrderedLines(subPolygonB.OrderedXVertices);
 
             var aIndex = 0;
             var bIndex = 0;
@@ -543,9 +541,9 @@ namespace TVGL.TwoDimensional
                                           // however inner polygons could exhibit difference values than the outer (consider edge case: nested squares). For example,
                                           // A encompasses B but a hole in B is smaller and fits inside hole of A. This should be registered as Intersecting
             {
-                if (subPolygonA.HasABoundingBoxThatEncompasses(subPolygonB) && subPolygonA.IsNonIntersectingPolygonInside(true, subPolygonB, true, out _) == true)
+                if (subPolygonA.HasABoundingBoxThatEncompasses(subPolygonB) && IsNonIntersectingPolygonInside(aLines,subPolygonB.OrderedXVertices, tolerance) == true)
                     return PolygonRelationship.BIsCompletelyInsideA;
-                if (subPolygonB.HasABoundingBoxThatEncompasses(subPolygonA) && subPolygonB.IsNonIntersectingPolygonInside(true, subPolygonA, true, out _) == true)
+                if (subPolygonB.HasABoundingBoxThatEncompasses(subPolygonA) && IsNonIntersectingPolygonInside(bLines, subPolygonA.OrderedXVertices, tolerance) == true)
                     return PolygonRelationship.AIsCompletelyInsideB;
                 return PolygonRelationship.Separated;
             }
@@ -594,7 +592,7 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<PolygonSegmentIntersectionRecord> intersections,
+        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<SegmentIntersection> intersections,
             double tolerance)
         {
             foreach (var dupeData in possibleDuplicates)
@@ -628,7 +626,7 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonSegmentRelationship.</returns>
         private static void AddIntersectionBetweenLines(PolygonSegment lineA, PolygonSegment lineB,
-            List<PolygonSegmentIntersectionRecord> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates, double tolerance)
+            List<SegmentIntersection> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates, double tolerance)
         {
             // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
             // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
@@ -692,7 +690,7 @@ namespace TVGL.TwoDimensional
                         { // now check the other way. Note, since vStart is backwards here, we just make the other vector backwards as well
 
                             if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
-                                intersections.Add(new PolygonSegmentIntersectionRecord(lineA, lineB, lineB.FromPoint.Coordinates,
+                                intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates,
                                     DeterminePolygonSegmentRelationship(lineA, lineB, lineA, lineB.FromPoint.EndLine, lineACrossLineB,
                                         PolygonSegmentRelationship.AtStartOfB | PolygonSegmentRelationship.CoincidentLines |
                                         PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.OppositeDirections, tolerance)));
@@ -767,7 +765,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            intersections.Add(new PolygonSegmentIntersectionRecord(lineA, lineB, intersectionCoordinates,
+            intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates,
                 DeterminePolygonSegmentRelationship(lineA, lineB, prevA, prevB, lineACrossLineB, relationship, tolerance)));
         }
 
@@ -821,7 +819,12 @@ namespace TVGL.TwoDimensional
             // first off, if they are all false, then it clearly is a "glance" and no need to do anything
             // second: if there is a positive on both sides then overlapping
             if (lineBIsInsideA && prevLineBIsInsideA && lineAIsInsideB && prevLineAIsInsideB)
-                // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
+                // if all four are true, then this happens when the two polygons are in opposite directions - 
+                // they but up against one-another. Also, there is enough concavity in one or both of these
+                // that the polygons seem to include parts of one-another. Even though there is overlap - 
+                // it is better in the resulting polygonal opeartions to treat this as "Separate" as opposed
+                // to "Overlapping". Hence, we return nothing new. It is logically simple to include this condition
+                // to allow the remaining else-if's to be not catch this case.
                 ;
             else if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
                 // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
@@ -881,13 +884,13 @@ namespace TVGL.TwoDimensional
             return result;
         }
 
-        private static List<PolygonSegmentIntersectionRecord> GetSelfIntersections(this Polygon polygonA)
+        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
         {
-            var intersections = new List<PolygonSegmentIntersectionRecord>();
+            var intersections = new List<SegmentIntersection>();
             var tolerance = Math.Min(polygonA.MaxX - polygonA.MinX, polygonA.MaxY - polygonA.MinY) * Constants.BaseTolerance;
             var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
             var numLines = polygonA.Lines.Count;
-            var orderedLines = polygonA.Lines.OrderBy(line => line.XMin).ToList();
+            var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
             for (int i = 0; i < numLines - 1; i++)
             {
                 var current = orderedLines[i];
