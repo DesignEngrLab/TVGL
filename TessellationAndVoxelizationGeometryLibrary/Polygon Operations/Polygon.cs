@@ -78,11 +78,10 @@ namespace TVGL.TwoDimensional
                 var numPoints = polygon.Vertices.Count;
                 polygon._lines = new List<PolygonSegment>();
                 for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
+                // note this compact approach to setting i and j. 
                 {
                     var fromNode = polygon.Vertices[j];
-                    var toNode = polygon.Vertices[i]; // note the mod operator and the fact that the for loop 
-                    // goes to and including numPoints. this allows for the last line to connect the last point 
-                    // back to the first. it is intended to avoid rewriting the following four lines of code.
+                    var toNode = polygon.Vertices[i];
                     var polySegment = new PolygonSegment(fromNode, toNode);
                     fromNode.StartLine = polySegment;
                     toNode.EndLine = polySegment;
@@ -369,13 +368,23 @@ namespace TVGL.TwoDimensional
         public Polygon Copy(bool copyHoles, bool invert)
         {
             var thisPath = _path == null ? null : new List<Vector2>(_path);
-            if (invert && thisPath != null) thisPath.Reverse();
+            if (invert && thisPath != null)
+            {
+                thisPath.Reverse();
+                // now the following three lines are to aid with mapping old polygon data to new polygon data.
+                // we are simply moving the first element to the end - the polygon doesn't change but not the 
+                // original first line will be the last flipped line. The second original line will be the second
+                // to last flipped line.
+                var front = thisPath[0];
+                thisPath.RemoveAt(0);
+                thisPath.Add(front);
+            }
             var thisInnerPolygons = _holes != null && copyHoles ? _holes.Select(p => p.Copy(copyHoles, invert)).ToList() : null;
 
             var copiedPolygon = new Polygon
             {
                 index = this.index,
-                area = this.area,
+                area = invert ? -this.area : this.area,
                 maxX = this.maxX,
                 maxY = this.maxY,
                 minX = this.minX,
@@ -387,25 +396,6 @@ namespace TVGL.TwoDimensional
             copiedPolygon.MakeLineSegments();
             return copiedPolygon;
         }
-        //public Polygon Copy(bool copyHoles, bool invert)
-        //{
-        //    if (!invert) return Copy();
-        //    var thisPath = Path;
-        //    thisPath.Reverse();
-        //    var copiedPolygon = new Polygon
-        //    {
-        //        index = this.index,
-        //        area = this.area,
-        //        maxX = this.maxX,
-        //        maxY = this.maxY,
-        //        minX = this.minX,
-        //        minY = this.minY,
-        //        _path = thisPath,
-        //    };
-        //    copiedPolygon.MakeVertices();
-        //    copiedPolygon.MakeLineSegments();
-        //    return copiedPolygon;
-        //}
 
         // the following private argument-less constructor is only used in the copy function
         private Polygon()

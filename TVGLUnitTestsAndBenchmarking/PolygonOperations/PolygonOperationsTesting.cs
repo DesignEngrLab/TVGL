@@ -130,7 +130,7 @@ namespace TVGLUnitTestsAndBenchmarking
                                 Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
                                 PolygonInteractionRecord a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
-                                
+
                                 var polygon3 = polygon1.Union(polygon2, a);
                                 Presenter.ShowAndHang(polygon3);
 
@@ -207,7 +207,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
             DebugEdgeCases(polygon1, polygon2);
 
-             //Console.ReadKey();
+            //Console.ReadKey();
         }
 
         private static void DebugEdgeCases(IEnumerable<Vector2> coordinates1, IEnumerable<Vector2> coordinates2)
@@ -219,22 +219,23 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
-             var a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
+            var a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
+            List<Polygon> polygon3;
 
-            var polygon3 = polygon1.Union(polygon2, a);
-                Presenter.ShowAndHang(polygon3);
+            polygon3 = polygon1.Union(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.Intersect(polygon2, a);
             Presenter.ShowAndHang(polygon3);
 
-            //polygon3 = polygon1.Subtract(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
+            polygon3 = polygon1.Subtract(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
 
-            //polygon3 = polygon2.Subtract(polygon1, a);
-            //Presenter.ShowAndHang(polygon3);
+            polygon3 = polygon2.Subtract(polygon1, a);
+            Presenter.ShowAndHang(polygon3);
 
-            //polygon3 = polygon1.ExclusiveOr(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
+            polygon3 = polygon1.ExclusiveOr(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
 
         }
 
@@ -256,8 +257,8 @@ namespace TVGLUnitTestsAndBenchmarking
                                 {
                                     if (k % 100000 == 0)
                                     {
-                                        DebugEdgeCases(MakeOctogonPolygon(0,0,2*leftCut+leftWidth,2*leftCut+leftHeight,leftCut),
-                                            MakeOctogonPolygon(9-(2*rightCut+rightWidth),9-(2*rightCut+rightHeight),9,9,rightCut));
+                                        DebugEdgeCases(MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut),
+                                            MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut));
                                     }
                                     Console.WriteLine(k++);
                                 }

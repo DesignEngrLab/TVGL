@@ -50,7 +50,7 @@ namespace TVGL
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
-        public const double BaseTolerance = 1E-9;
+        public const double BaseTolerance = 1E-10;
 
         /// <summary>
         ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
@@ -162,9 +162,9 @@ namespace TVGL
         internal static PolygonRelationship SwitchAAndBPolygonRelationship(this PolygonRelationship relationship)
         {
             if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.AInsideB)
-                return PolygonRelationship.BInsideA | ((PolygonRelationship)(~PolygonRelationship.AInsideB));
+                return PolygonRelationship.BInsideA | ~PolygonRelationship.AInsideB;
             if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.BInsideA)
-                return PolygonRelationship.AInsideB | ((PolygonRelationship)(~(byte)PolygonRelationship.BInsideA));
+                return PolygonRelationship.AInsideB | ~PolygonRelationship.BInsideA;
             return relationship;
         }
 
@@ -734,11 +734,12 @@ namespace TVGL
     public enum PolygonRelationship
     {
         // Here are the atomic flags
-        CoincidentVertices = 1,
-        CoincidentEdges = 2,
-        AInsideB = 4,
-        BInsideA = 8,
-        InsideHole = 16,
+        EdgesCross = 1,
+        CoincidentVertices = 2,
+        CoincidentEdges = 4,
+        AInsideB = 8,
+        BInsideA = 16,
+        InsideHole = 32,
         // the following are the valid combinations of flags
         // first when two polygons are separated 
         Separated = 0,
@@ -765,8 +766,8 @@ namespace TVGL
         Intersection = BInsideA | AInsideB,
 
         //Equal
-        Equal = 32,
-        EqualButOpposite = 64
+        Equal = 64,
+        EqualButOpposite = 128
     }
 
     /// <summary>

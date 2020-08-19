@@ -20,6 +20,31 @@ namespace TVGL.TwoDimensional
                 return false;
             }
             // Overlapping. The conventional case where A and B cross into one another
+            if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping &&
+                (intersectionData.Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) == PolygonSegmentRelationship.BothLinesStartAtPoint)
+            {
+                var lineA = intersectionData.EdgeA;
+                var lineB = intersectionData.EdgeB;
+                var lineACrossLineB = lineA.Vector.Cross(lineB.Vector);
+                var prevA = intersectionData.EdgeA.FromPoint.EndLine;
+                var aCornerCross = prevA.Vector.Cross(lineA.Vector);
+                var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
+                var lineBIsInsideA = (aCornerCross >= 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
+                                     (aCornerCross < 0 && !(lineACrossLineB <= 0 && prevACrossLineB <= 0));
+                if (lineBIsInsideA && !intersectionData.VisitedA)
+                {
+                    currentEdge = intersectionData.EdgeA;
+                    switchPolygon = true;
+                    return true;
+                }
+                if (!intersectionData.VisitedB)
+                {
+                    currentEdge = intersectionData.EdgeB;
+                    switchPolygon = true;
+                    return true;
+                }
+            }
+            // Overlapping. The conventional case where A and B cross into one another
             if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
             {
                 var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);
@@ -91,19 +116,15 @@ namespace TVGL.TwoDimensional
             var enumerator = relationships.GetEnumerator();
             enumerator.MoveNext();
             var relWithOuter = enumerator.Current;
-            if (relWithOuter < PolygonRelationship.AInsideB) return;
-            if ((!partOfPolygonB && (relWithOuter & PolygonRelationship.AInsideB) != 0b0) ||
-                (partOfPolygonB && (relWithOuter & PolygonRelationship.BInsideA) != 0b0))
-            { //it is inside the outer of the other, so it should likely be included unless it is in a hole of the other
-                while (enumerator.MoveNext())
-                {
-                    var relWithInner = enumerator.Current;
-                    if ((!partOfPolygonB && (relWithInner & PolygonRelationship.AInsideB) != 0b0) ||
-                        (partOfPolygonB && (relWithInner & PolygonRelationship.BInsideA) != 0b0))
-                        return;
-                }
-                newPolygons.Add(subPolygon.Copy(false, false));
-            }
+            if (relWithOuter < PolygonRelationship.AInsideB) return; // for speed sake, just return is separate from outer of other
+            do //it is inside the outer of the other, so it should likely be included unless it is in a hole of the other
+            {
+                var relWithInner = enumerator.Current;
+                if ((partOfPolygonB && (relWithInner & PolygonRelationship.AInsideB) != 0b0) ||
+                    (!partOfPolygonB && (relWithInner & PolygonRelationship.BInsideA) != 0b0))
+                    return;
+            } while (enumerator.MoveNext());
+            newPolygons.Add(subPolygon.Copy(false, false));
         }
     }
 }

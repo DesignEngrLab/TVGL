@@ -43,6 +43,7 @@ namespace TVGL.TwoDimensional
                 polygonList.Add(p);
             }
             connectingIndices = new int[index];
+            var connectingIndicesList = new List<int>();
             var polygonTree = CreatePolygonTree(polygonList, vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
             polygonList.Clear();
             index = 0;
@@ -50,14 +51,15 @@ namespace TVGL.TwoDimensional
             {
                 if (polygon.IsPositive) polygonList.Add(polygon);
                 if (polygon.Index < 0) continue;
-                connectingIndices[polygon.Index] = index;
+                while (connectingIndicesList.Count <= polygon.Index) connectingIndicesList.Add(-1);
+                connectingIndicesList[polygon.Index] = index;
                 polygon.Index = index++;
             }
             // finally remove references to inner positives with this loop
             foreach (var polygon in polygonList)
                 foreach (var hole in polygon.Holes)
                     hole.RemoveAllInnerPolygion();
-
+            connectingIndices = connectingIndicesList.ToArray();
             return polygonList;
         }
 
@@ -106,10 +108,11 @@ namespace TVGL.TwoDimensional
             while (childQueue.Any())
             {
                 var child = childQueue.Dequeue();
-                if (child.IsPositive == parent.IsPositive) // this is not good. children should have oppositve sign than parent
-                    foreach (var grandChild in child.Holes)
-                        childQueue.Enqueue(grandChild);
-                else
+                //if (child.IsPositive == parent.IsPositive) // this is not good. children should have oppositve sign than parent
+                //    foreach (var grandChild in child.Holes)
+                //        childQueue.Enqueue(grandChild);
+                //else
+                if (child.IsPositive != parent.IsPositive) 
                 {
                     validChildren.Add(child);
                     RecurseDownPolygonTreeCleanUp(child);

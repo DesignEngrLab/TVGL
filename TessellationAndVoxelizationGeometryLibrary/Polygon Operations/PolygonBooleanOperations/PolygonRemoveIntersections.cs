@@ -12,9 +12,10 @@ namespace TVGL.TwoDimensional
     {
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool noHoles, double minAllowableArea, out List<Polygon> strayHoles)
         {
-            var interaction = new PolygonInteractionRecord(PolygonRelationship.Separated, intersections, null,
-                new Dictionary<Polygon, int> { { polygon, 0 } }, 1, 0);
-            var intersectionLookup = interaction.MakeIntersectionLookupList();
+            var interaction = new PolygonInteractionRecord(PolygonRelationship.Separated, intersections, null, null, 0, 0);
+               // new Dictionary<Polygon, int> { { polygon, 0 } }, 1, 0);
+            var delimiters = polygon.NumberVertiesAndGetPolygonVertexDelimiter();
+            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
 
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
@@ -37,6 +38,31 @@ namespace TVGL.TwoDimensional
                 currentEdge = null;
                 switchPolygon = false;
                 return false;
+            }
+            // Overlapping. The conventional case where A and B cross into one another
+            if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping &&
+                (intersectionData.Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) == PolygonSegmentRelationship.BothLinesStartAtPoint)
+            {
+                var lineA = intersectionData.EdgeA;
+                var lineB = intersectionData.EdgeB;
+                var lineACrossLineB = lineA.Vector.Cross(lineB.Vector);
+                var prevA = intersectionData.EdgeA.FromPoint.EndLine;
+                var aCornerCross = prevA.Vector.Cross(lineA.Vector);
+                var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
+                var lineBIsInsideA = (aCornerCross >= 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
+                                     (aCornerCross < 0 && !(lineACrossLineB <= 0 && prevACrossLineB <= 0));
+                if (lineBIsInsideA && !intersectionData.VisitedB)
+                {
+                    currentEdge = intersectionData.EdgeB;
+                    switchPolygon = true;
+                    return true;
+                }
+                if (!intersectionData.VisitedA)
+                {
+                    currentEdge = intersectionData.EdgeA;
+                    switchPolygon = true;
+                    return true;
+                }
             }
             // Overlapping. The conventional case where A and B cross into one another
             if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
@@ -99,6 +125,13 @@ namespace TVGL.TwoDimensional
                     return true;
                 }
             }
+            else if (intersectionData.Relationship == PolygonSegmentRelationship.BothLinesStartAtPoint)
+            {
+                currentEdge =!intersectionData.VisitedA ? intersectionData.EdgeA : intersectionData.EdgeB;
+                switchPolygon = true;
+                return true;
+
+            }
             currentEdge = null;
             switchPolygon = false;
             return false;
@@ -131,7 +164,5 @@ namespace TVGL.TwoDimensional
         {
             newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }
-
-
     }
 }

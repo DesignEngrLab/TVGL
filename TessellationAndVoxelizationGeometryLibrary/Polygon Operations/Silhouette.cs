@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
             var polygons = new List<Polygon>();
             while (faceHash.Any())
                 polygons.AddRange(GetPolygonFromFacesAndDirection(faceHash, direction));
-             Presenter.ShowAndHang(polygons);
+            // Presenter.ShowAndHang(polygons);
             return polygons.Union();
         }
 
@@ -51,7 +51,7 @@ namespace TVGL.TwoDimensional
                         var currentOwnsEdge = edge.OwnedFace == current;
                         outerEdges.Add(edge, currentOwnsEdge);
                         var neighbor = currentOwnsEdge ? edge.OtherFace : edge.OwnedFace;
-                        if (neighbor !=null && sign * neighbor.Normal.Dot(direction) > 0 && faceHash.Contains(neighbor))
+                        if (neighbor != null && sign * neighbor.Normal.Dot(direction) > 0 && faceHash.Contains(neighbor))
                         {
                             stack.Push(neighbor);
                             faceHash.Remove(neighbor);
@@ -66,7 +66,7 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform)
         {
             var polygons = new List<Polygon>();
-           // var negativePolygons = new List<Polygon>();
+            //var negativePolygons = new List<Polygon>();
             while (outerEdges.Any())
             {
                 var polyCoordinates = new List<Vector2>();
@@ -118,16 +118,15 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
-                    polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
-                    //var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons);
-                    //positivePolygons.AddRange(innerPositivePolygons);
-                    //negativePolygons.AddRange(strayNegativePolygons);
+                    //Presenter.ShowAndHang(polyCoordinates);
+                    var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons);
+                    polygons.AddRange(innerPositivePolygons);
+                    if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);
+                    //Presenter.ShowAndHang(polygons);
+                    //polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
                 }
             }
-            //foreach (var path in positivePolygons) positivePolygonDictionary.Add(path.Area, path);
-            //foreach (var path in negativePolygons) negativePolygonDictionary.Add(path.Area, path);
-            //var resultingPolygons = resultingPolygons.CreateShallowPolygonTreesFromPolygons(positivePolygonDictionary, negativePolygonDictionary,
-            //    polygons.Count + negativePolygons.Count, out _, out _);
+            polygons = PolygonOperations.CreateShallowPolygonTrees(polygons, true, out _, out _);
             polygons = polygons.Union();
             return polygons;
         }

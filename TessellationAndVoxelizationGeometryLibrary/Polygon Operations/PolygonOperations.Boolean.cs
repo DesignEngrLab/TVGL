@@ -11,8 +11,6 @@ namespace TVGL.TwoDimensional
     public static partial class PolygonOperations
     {
         static PolygonUnion polygonUnion;
-        static PolygonDifference polygonDifference;
-        static PolygonExclusiveOR polygonXOR;
         static PolygonIntersection polygonIntersection;
         static PolygonRemoveIntersections polygonRemoveIntersections;
 
@@ -58,6 +56,7 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.BIsCompletelyInsideA:
                 case PolygonRelationship.BIsInsideAButEdgesTouch:
                 case PolygonRelationship.BIsInsideAButVerticesTouch:
+                case PolygonRelationship.Equal:
                     return new List<Polygon> { polygonA.Copy(true, false) };
                 case PolygonRelationship.AIsCompletelyInsideB:
                 case PolygonRelationship.AIsInsideBButEdgesTouch:
@@ -86,12 +85,12 @@ namespace TVGL.TwoDimensional
             {
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                     var interaction = GetShallowPolygonTreeRelationshipAndIntersections(polygonList[i],
                         polygonList[j]);
                     if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA
                         || interaction.Relationship == PolygonRelationship.BIsInsideAButEdgesTouch
-                        || interaction.Relationship == PolygonRelationship.BIsInsideAButVerticesTouch)
+                        || interaction.Relationship == PolygonRelationship.BIsInsideAButVerticesTouch
+                        || interaction.Relationship == PolygonRelationship.Equal)
                     {  // remove polygon B
                         polygonList.RemoveAt(j);
                         i--;
@@ -104,13 +103,16 @@ namespace TVGL.TwoDimensional
                         break; // to stop the inner loop
                     }
                     else if (interaction.Relationship == PolygonRelationship.SeparatedButEdgesTouch
-                             || interaction.Relationship == PolygonRelationship.Intersection
                              || interaction.Relationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
-                             || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch)
+                             || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch
+                             || (interaction.Relationship & PolygonRelationship.Intersection) == PolygonRelationship.Intersection)
                     {
-                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                        //if (i == 1 && j == 0)
+                            //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], interaction, minAllowableArea);
-                        //Presenter.ShowAndHang(newPolygons);
+                        //Console.WriteLine("i = {0}, j = {1}", i, j);
+                        //if (i == 2 && j == 0)
+                            //Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -299,7 +301,6 @@ namespace TVGL.TwoDimensional
                     return new List<Polygon> { polygonA.Copy(true, false) };
                 case PolygonRelationship.BIsCompletelyInsideA:
                     var polygonACopy = polygonA.Copy(true, false);
-
                     polygonACopy.AddHole(polygonB.Copy(true, true));
                     return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
@@ -310,9 +311,9 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.Intersect:
                     //case PolygonRelationship.BInsideAButVerticesTouch:
                     //case PolygonRelationship.BInsideAButEdgesTouch:
-                    if (polygonDifference == null) polygonDifference = new PolygonDifference();
-                    polygonB.Reverse();
-                    return polygonDifference.Run(polygonA, polygonB, interaction, minAllowableArea);
+                    if (polygonIntersection == null) polygonIntersection = new PolygonIntersection();
+                    interaction = interaction.InvertPolygonInRecord(ref polygonB, minAllowableArea);
+                    return polygonIntersection.Run(polygonA, polygonB, interaction, minAllowableArea);
             }
         }
 
@@ -330,8 +331,6 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
-            var polygonBInverted = polygonB.Copy(true, true);
-
             var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonB);
             return ExclusiveOr(polygonA, polygonB, relationship, minAllowableArea);
         }
@@ -346,7 +345,7 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord, 
+        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
             double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
@@ -376,22 +375,28 @@ namespace TVGL.TwoDimensional
                 //case PolygonRelationship.BIsInsideAButVerticesTouch:
                 //case PolygonRelationship.BIsInsideAButEdgesTouch:
                 default:
-                    if (polygonXOR == null) polygonXOR = new PolygonExclusiveOR();
-                    return polygonXOR.Run(polygonA, polygonB, interactionRecord, minAllowableArea);
+                    if (polygonIntersection == null) polygonIntersection = new PolygonIntersection();
+                    var result = polygonA.Subtract(polygonB, interactionRecord, minAllowableArea);
+                    result.AddRange(polygonB.Subtract(polygonA, interactionRecord, minAllowableArea));
+                    return result;
             }
         }
 
-
-
-        //internal static void InvertPolygonAInRecord(PolygonInteractionRecord interaction, Polygon polygonA, Polygon polygonB)
-        //{
-        //    var polygonBInvert = polygonB.Copy(true, true);
-        //    return new PolygonInteractionRecord();
-        //}
-        //internal static void InvertPolygonBInRecord(PolygonInteractionRecord interaction, Polygon polygonA, Polygon polygonB)
-        //{
-
-        //}
+        internal static List<int> NumberVertiesAndGetPolygonVertexDelimiter(this Polygon polygon, int startIndex = 0)
+        {
+            var polygonStartIndices = new List<int>();
+            // in addition, keep track of the vertex index that is the beginning of each polygon. Recall that there could be numerous
+            // hole-polygons that need to be accounted for.
+            var index = startIndex;
+            foreach (var poly in polygon.AllPolygons)
+            {
+                polygonStartIndices.Add(index);
+                foreach (var vertex in poly.Vertices)
+                    vertex.IndexInList = index++;
+            }
+            polygonStartIndices.Add(index); // add a final exclusive top of the range for the for-loop below (not the next one, the one after)
+            return polygonStartIndices;
+        }
 
         #endregion
 
@@ -404,7 +409,7 @@ namespace TVGL.TwoDimensional
             if (intersections.Count == 0)
             {
                 strayHoles = null;
-                return new List<Polygon> { polygon  };
+                return new List<Polygon> { polygon };
             }
             if (polygonRemoveIntersections == null) polygonRemoveIntersections = new PolygonRemoveIntersections();
             return polygonRemoveIntersections.Run(polygon, intersections, noHoles, minAllowableArea, out strayHoles);

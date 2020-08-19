@@ -261,10 +261,14 @@ namespace TVGL
             Polygon closestContainingPolygon = null;
             foreach (var negativePoly in negativePolygons)
             {
-                if (!negativePoly.IsPointInsidePolygon(true, centerPoint, out var closestLineAbove,
-                    out _, out var onBoundary)) continue;
+                // note that this condition is true, but within the method, IsPointInsidePolygon, the enclosure
+                // return the value of the "IsPositive 
+                if (negativePoly.IsPointInsidePolygon(true, centerPoint, out var onBoundary)) continue;
                 if (onBoundary) return new BoundingCircle(0.0, centerPoint); //Null solution.
-                var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
+
+                //var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
+                var d = double.NaN; //how to correctly calculate this? the above line is not correct and is no longer a by-product
+                                    // of IsPointInsidePolygon
                 if (d < minDistance)
                 {
                     minDistance = d;
@@ -282,8 +286,7 @@ namespace TVGL
             {
                 foreach (var positivePoly in positivePolygons)
                 {
-                    if (positivePoly.IsPointInsidePolygon(true, centerPoint, out _,
-                        out _, out _)) return new BoundingCircle(0.0, centerPoint);
+                    if (positivePoly.IsPointInsidePolygon(true, centerPoint, out _)) return new BoundingCircle(0.0, centerPoint);
                     polygonsOfInterest.Add(positivePoly);
                 }
             }

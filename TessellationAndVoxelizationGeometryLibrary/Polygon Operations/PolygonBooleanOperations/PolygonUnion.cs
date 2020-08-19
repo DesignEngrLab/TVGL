@@ -19,6 +19,31 @@ namespace TVGL.TwoDimensional
                 return false;
             }
             // Overlapping. The conventional case where A and B cross into one another
+            if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping &&
+                (intersectionData.Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) == PolygonSegmentRelationship.BothLinesStartAtPoint)
+            {
+                var lineA = intersectionData.EdgeA;
+                var lineB = intersectionData.EdgeB;
+                var lineACrossLineB = lineA.Vector.Cross(lineB.Vector);
+                var prevA = intersectionData.EdgeA.FromPoint.EndLine;
+                var aCornerCross = prevA.Vector.Cross(lineA.Vector);
+                var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
+                var lineBIsInsideA = (aCornerCross >= 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
+                                     (aCornerCross < 0 && !(lineACrossLineB <= 0 && prevACrossLineB <= 0));
+                if (lineBIsInsideA && !intersectionData.VisitedB)
+                {
+                    currentEdge = intersectionData.EdgeB;
+                    switchPolygon = true;
+                    return true;
+                }
+                if (!intersectionData.VisitedA)
+                {
+                    currentEdge = intersectionData.EdgeA;
+                    switchPolygon = true;
+                    return true;
+                }
+            }
+            // Overlapping. The conventional case where A and B cross into one another
             if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == PolygonSegmentRelationship.Overlapping)
             {
                 var cross = intersectionData.EdgeA.Vector.Cross(intersectionData.EdgeB.Vector);

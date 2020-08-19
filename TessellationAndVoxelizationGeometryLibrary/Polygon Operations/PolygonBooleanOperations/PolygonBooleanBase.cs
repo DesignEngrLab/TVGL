@@ -25,7 +25,9 @@ namespace TVGL.TwoDimensional
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, double minAllowableArea)
         {
-            var intersectionLookup = interaction.MakeIntersectionLookupList();
+            var delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonA);
+            delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
+            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             while (GetNextStartingIntersection(interaction.IntersectionData, out var startingIntersection,
                 out var startEdge, out var switchPolygon))
@@ -43,14 +45,13 @@ namespace TVGL.TwoDimensional
                 foreach (var polyB in polygonB.AllPolygons)
                 {
                     var rel = interaction.GetRelationshipBetween(polyA, polyB);
-                    if (rel == PolygonRelationship.Separated ||
-                        (rel & (PolygonRelationship.Intersection | PolygonRelationship.CoincidentEdges
+                    if ((rel & (PolygonRelationship.EdgesCross | PolygonRelationship.CoincidentEdges
                         | PolygonRelationship.CoincidentVertices)) != 0b0)
                     {
                         nonIntersectingASubPolygons.Remove(polyA);
                         nonIntersectingBSubPolygons.Remove(polyB);
                     }
-                    if (rel == PolygonRelationship.Equal)
+                    else if (rel == PolygonRelationship.Equal)
                     {
                         nonIntersectingASubPolygons.Remove(polyA);
                         nonIntersectingBSubPolygons.Remove(polyB);
@@ -158,7 +159,8 @@ namespace TVGL.TwoDimensional
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
                                                             // the edge that concern us. We want that function to report the first one for the edge
                 }
-            } while (currentEdge != startingEdge && intersectionData != startingIntersection);
+            } while (intersectionData != startingIntersection);
+            //} while (currentEdge != startingEdge || intersectionData != startingIntersection);
             return newPath;
         }
 

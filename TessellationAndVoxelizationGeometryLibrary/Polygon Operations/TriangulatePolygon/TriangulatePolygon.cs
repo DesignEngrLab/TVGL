@@ -319,7 +319,7 @@ namespace TVGL.TwoDimensional
                                 //Note: If this occurs, any loops inside loop 1 will also be inside loop 2, so no information is lost.
                                 var otherLoopID = positiveLoop2.First().LoopID;
                                 isInside = IsPointInsidePolygon(new Polygon(polygonNodes[otherLoopID], polygonLines[otherLoopID], otherLoopID), true,
-                                     positiveLoop1.First().Coordinates, out _, out _, out _);
+                                     positiveLoop1.First().Coordinates, out _);
                                 if (isInside) break;
                             }
                             //Only keep it if its not inside other loops
