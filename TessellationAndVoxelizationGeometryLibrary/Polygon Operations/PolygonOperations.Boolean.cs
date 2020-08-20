@@ -293,6 +293,8 @@ namespace TVGL.TwoDimensional
                 + " to accopmlish this function, like Intersect.", "polygonA");
             if (polygonB.IsPositive == interactionAlreadyInverted) throw new ArgumentException("The subtrahend is already a negative polygon (i.e. hole). Consider another operation"
                   + " to accopmlish this function, like Intersect.", "polygonB");
+            if (!interactionAlreadyInverted)
+                interaction = interaction.InvertPolygonInRecord(ref polygonB, minAllowableArea);
             switch (interaction.Relationship)
             {
                 case PolygonRelationship.Separated:
@@ -318,8 +320,6 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.BInsideAButVerticesTouch:
                     //case PolygonRelationship.BInsideAButEdgesTouch:
                     if (polygonSubtraction == null) polygonSubtraction = new PolygonSubtraction();
-                    if (!interactionAlreadyInverted)
-                        interaction = interaction.InvertPolygonInRecord(ref polygonB, minAllowableArea);
                     return polygonSubtraction.Run(polygonA, polygonB, interaction, minAllowableArea);
             }
         }

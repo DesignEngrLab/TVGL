@@ -96,77 +96,6 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
             }
         }
-        internal static void OctagonTest()
-        {
-            //for (int i = 6; i < 200; i++)
-            //{
-            //r = new Random(i);
-            //    Console.WriteLine(i);
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    for (int k = 0; k < 4; k++)
-                    {
-                        for (int m = 0; m < 4; m++)
-                        {
-                            for (int n = 0; n < 4; n++)
-                            {
-                                var coords1 = MakeOctogonPolygon(0, 0, i, j, k).ToList();
-                                var coords2 = MakeOctogonPolygon(3, 3, m, m, n).ToList();
-
-                                //var hole1 = MakeStarryCircularPolygon(8, 15, 3).ToList();
-                                //hole1.Reverse();
-                                //var coords2 = MakeWavyCircularPolygon(10000, 30, 10, 5).ToList();
-                                //var coords2 = new[] { new Vector2(5, 40), new Vector2(-5, 40), new Vector2(-5, -40), new Vector2(5, -40) };
-                                var stopWatch = new Stopwatch();
-                                stopWatch.Restart();
-                                var polygon1 = new Polygon(coords1);
-                                // polygon1.RemoveSelfIntersections();
-                                // polygon1 = polygon1.Union(new Polygon(hole1, false))[0];
-                                //Presenter.ShowAndHang(polygon1);
-                                var polygon2 = new Polygon(coords2);
-
-                                Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-
-                                PolygonInteractionRecord a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
-
-                                var polygon3 = polygon1.Union(polygon2, a);
-                                Presenter.ShowAndHang(polygon3);
-
-                                polygon3 = polygon2.Intersect(polygon1, a);
-                                Presenter.ShowAndHang(polygon3);
-
-                                polygon3 = polygon1.Subtract(polygon2, a);
-                                Presenter.ShowAndHang(polygon3);
-
-                                polygon3 = polygon2.Subtract(polygon1, a);
-                                Presenter.ShowAndHang(polygon3);
-
-                                polygon3 = polygon2.ExclusiveOr(polygon1, a);
-                                Presenter.ShowAndHang(polygon3);
-                                //stopWatch.Restart();
-                                //var coords3 = PolygonOperations.Union(coords1, coords2);
-                                //Console.Write(stopWatch.Elapsed);
-                                //Presenter.ShowAndHang(new[] { coords3[0], polygon3[0].Path });
-                                //polygon3 = polygon1.Intersect(polygon3[0]);
-                                //Presenter.ShowAndHang(new[] { coords1, coords2, polygon3[0].Path });
-                                //polygon3 = polygon1.ExclusiveOr(polygon2);
-                                //Presenter.ShowAndHang(polygon3.Select(p => p.Path));
-                                //polygon3 = polygon1.Subtract(polygon2,a, intersections);
-                                //Presenter.ShowAndHang(polygon3.Select(p => p.Path));
-                                //polygon3 = polygon2.Subtract(polygon1,a, intersections);
-                                //Presenter.ShowAndHang(polygon3.Select(p => p.Path));
-                                //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
-                                //}
-                            }
-                        }
-                    }
-                }
-            }
-
-            Console.ReadKey();
-        }
 
         internal static Dictionary<string, (Vector2[][], Vector2[][])> edgeCaseDictionary =
             new Dictionary<string, (Vector2[][], Vector2[][])>
@@ -222,16 +151,16 @@ namespace TVGLUnitTestsAndBenchmarking
             var a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
             List<Polygon> polygon3;
 
-            //polygon3 = polygon1.Union(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
+            polygon3 = polygon1.Union(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
 
-            //polygon3 = polygon1.Intersect(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
+            polygon3 = polygon1.Intersect(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
 
-            //polygon3 = polygon1.Subtract(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
+            polygon3 = polygon1.Subtract(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon2.Subtract(polygon1,a);
+            polygon3 = polygon2.Subtract(polygon1, a);
             Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.ExclusiveOr(polygon2, a);
@@ -255,12 +184,12 @@ namespace TVGLUnitTestsAndBenchmarking
                             {
                                 for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
                                 {
-                                    if (k % 100000 == 0)
+                                    Console.WriteLine(k++);
+                                    if ( k % 11 == 0)
                                     {
                                         DebugEdgeCases(MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut),
                                             MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut));
                                     }
-                                    Console.WriteLine(k++);
                                 }
                             }
                         }

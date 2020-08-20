@@ -95,10 +95,10 @@ namespace TVGL.TwoDimensional
         internal PolygonInteractionRecord InvertPolygonInRecord(ref Polygon polygon, double tolerance)
         {
             bool polygonIsAInInteractions = subPolygonToInt[polygon] < numPolygonsInA;
-            var polygonInverted = polygon.Copy(true, true);
-            var allLines = polygonInverted.AllPolygons.SelectMany(p => p.Lines).ToList();
-            var newIntersections = new List<SegmentIntersection>();
             var delimiters = polygon.NumberVertiesAndGetPolygonVertexDelimiter();
+            polygon = polygon.Copy(true, true);
+            var allLines = polygon.AllPolygons.SelectMany(p => p.Lines).ToList();
+            var newIntersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int, PolygonSegment, PolygonSegment)>();
             for (int i = 0; i < IntersectionData.Count; i++)
             {
@@ -117,11 +117,10 @@ namespace TVGL.TwoDimensional
                     PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, tolerance);
                 else PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, tolerance);
             }
-            polygon = polygonInverted;
             var newSubPolygonToInt = new Dictionary<Polygon, int>();
             if (!polygonIsAInInteractions)
             {
-                var newPolyEnumerator = polygonInverted.AllPolygons.GetEnumerator();
+                var newPolyEnumerator = polygon.AllPolygons.GetEnumerator();
                 foreach (var keyValuePair in subPolygonToInt)
                 {
                     if (keyValuePair.Value < numPolygonsInA)
@@ -148,7 +147,7 @@ namespace TVGL.TwoDimensional
             for (int i = 0; i < numPolygonsInA; i++)
                 for (int j = 0; j < numPolygonsInB; j++)
                     newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
-            return new PolygonInteractionRecord(Relationship, newIntersections, newPolygonRelations, newSubPolygonToInt,
+            return new PolygonInteractionRecord(Constants.SwitchAAndBPolygonRelationship(Relationship), newIntersections, newPolygonRelations, newSubPolygonToInt,
               numPolygonsInB, numPolygonsInA);
         }
 

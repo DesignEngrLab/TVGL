@@ -35,12 +35,14 @@
 // ***********************************************************************
 
 using OxyPlot;
+using OxyPlot.Axes;
 using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -82,6 +84,7 @@ namespace TVGL
                 AddLineSeriesToModel(points.ToList(), closeShape, marker);
             else
                 AddScatterSeriesToModel(points.ToList(), marker);
+            SetAxes(points);
             InitializeComponent();
         }
 
@@ -104,6 +107,7 @@ namespace TVGL
                 else
                     AddScatterSeriesToModel(points, marker);
             }
+            SetAxes(listOfArrayOfPoints.SelectMany(v=>v));
             InitializeComponent();
         }
 
@@ -139,6 +143,9 @@ namespace TVGL
                 else
                     AddScatterSeriesToModel(points, marker2);
             }
+            var allpoints = listOfListOfPoints1.SelectMany(v => v).ToList();
+            allpoints.AddRange(listOfListOfPoints2.SelectMany(v => v));
+            SetAxes(allpoints);
             InitializeComponent();
         }
 
@@ -181,7 +188,7 @@ namespace TVGL
                     }
                 }
             }
-
+            SetAxes(listofListOfListOfPoints.SelectMany(poly => poly.SelectMany(v=>v)));
             InitializeComponent();
         }
 
@@ -200,6 +207,7 @@ namespace TVGL
                 AddLineSeriesToModel(points, closeShape, marker);
             else
                 AddScatterSeriesToModel(points, marker);
+            SetAxes(points.Select(v=>new Vector2(v[0],v[1])));
             InitializeComponent();
         }
 
@@ -276,6 +284,43 @@ namespace TVGL
                 series.Points.Add(new DataPoint(point[0], point[1]));
             Model.Series.Add(series);
         }
+
+
+        private void SetAxes(IEnumerable<Vector2> polygons)
+        {
+            if (!polygons.Any()) return;
+            var minX = polygons.Min(p=>p.X);
+            var maxX = polygons.Max(p => p.X);
+            var minY = polygons.Min(p => p.Y);
+            var maxY = polygons.Max(p => p.Y);
+            if (maxX - minX > maxY - minY)
+            {
+                var center = (minY + maxY) / 2;
+                var halfDim = (maxX - minX) / 2;
+                minY = center - halfDim;
+                maxY = center + halfDim;
+            }
+            else
+            {
+                var center = (minX + maxX) / 2;
+                var halfDim = (maxY - minY) / 2;
+                minX = center - halfDim;
+                maxX = center + halfDim;
+            }
+            var buffer = 0.1 * (maxX - minX);
+            minX -= buffer;
+            maxX += buffer;
+            minY -= buffer;
+            maxY += buffer;
+
+            //Model.Axes.Add(new LinearAxis());
+            //Model.Axes.Add(new LinearAxis());
+            //Model.Axes[0].Minimum = minX;
+            //Model.Axes[0].Maximum = maxX;
+            //Model.Axes[1].Minimum = minY;
+            //Model.Axes[1].Maximum = maxY;
+        }
+
 
         private List<double[]> PointsToDouble(IEnumerable<Vector2> points)
         {
