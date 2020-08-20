@@ -222,16 +222,16 @@ namespace TVGLUnitTestsAndBenchmarking
             var a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
             List<Polygon> polygon3;
 
-            polygon3 = polygon1.Union(polygon2, a);
-            Presenter.ShowAndHang(polygon3);
+            //polygon3 = polygon1.Union(polygon2, a);
+            //Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon1.Intersect(polygon2, a);
-            Presenter.ShowAndHang(polygon3);
+            //polygon3 = polygon1.Intersect(polygon2, a);
+            //Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon1.Subtract(polygon2, a);
-            Presenter.ShowAndHang(polygon3);
+            //polygon3 = polygon1.Subtract(polygon2, a);
+            //Presenter.ShowAndHang(polygon3);
 
-            polygon3 = polygon2.Subtract(polygon1, a);
+            polygon3 = polygon2.Subtract(polygon1,a);
             Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.ExclusiveOr(polygon2, a);

@@ -32,9 +32,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            //var fileNames = dir.GetFiles("*Cuboide*");
-            var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
-            //var fileNames = dir.GetFiles("*");
+            var fileNames = dir.GetFiles("Castle*").ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
@@ -51,13 +50,10 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 }
 
-                for (int j = 0; j < 1; j++)
+                for (int j = 0; j < 2; j++)
                 {
-                    // holes?
-                    //"KnuckleTopOp.stl"
-                    //var direction = new Vector3(52.040874097515314, -32.66982181587714, -64.49028084263685);
-                    var direction = new Vector3(r100, r100, r100);
-
+                    var direction = new Vector3(-26.69179911105512, -8.905440433372476, -10.751895844355175);
+                    //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
                     var silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);

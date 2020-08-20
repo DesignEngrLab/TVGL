@@ -138,23 +138,23 @@ namespace TVGL.TwoDimensional
             // a hole is effectively removed
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, IEnumerable<PolygonRelationship> relationships, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
         {
             var enumerator = relationships.GetEnumerator();
             enumerator.MoveNext();
-            var relWithOuter = enumerator.Current;
-            if (relWithOuter < PolygonRelationship.AInsideB ||
-                (!partOfPolygonB && (relWithOuter & PolygonRelationship.BInsideA) != 0b0) ||
-                (partOfPolygonB && (relWithOuter & PolygonRelationship.AInsideB) != 0b0))
-                // It's separate from the first or outer polygon of the other or it encompasses the other... whether positive or negative - it is included
+            var rel = enumerator.Current.Item1;
+            if (rel < PolygonRelationship.AInsideB ||  //separated
+                (!partOfPolygonB && (rel & PolygonRelationship.BInsideA) != 0b0) || //subPolygon is part of A and it encompasses the B (BInsideA)
+                (partOfPolygonB && (rel & PolygonRelationship.AInsideB) != 0b0)) //subPolygon is part of B and it encompasses the A (AInsideB)
+                //  whether positive or negative - it is included
                 newPolygons.Add(subPolygon.Copy(false, false));
             else
             { //failing the above if means that it is included in the outer. So it can only be included in the result if it is inside a hole
                 while (enumerator.MoveNext())
                 {
-                    var relWithInner = enumerator.Current;
-                    if ((!partOfPolygonB && (relWithInner & PolygonRelationship.AInsideB) != 0b0) ||
-                        (partOfPolygonB && (relWithInner & PolygonRelationship.BInsideA) != 0b0))
+                    rel = enumerator.Current.Item1;
+                    if ((!partOfPolygonB && (rel & PolygonRelationship.AInsideB) != 0b0) ||
+                        (partOfPolygonB && (rel & PolygonRelationship.BInsideA) != 0b0))
                     {
                         newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negatie as a negative
                         return;                                                               // otherwise, the polygon has no effect since it is a subset of the other

@@ -87,8 +87,7 @@ namespace TVGL.TwoDimensional
         {
             foreach (var intersectionData in intersections)
             {
-                if (intersectionData.Relationship == (PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines |
-                    PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint))
+                if ((intersectionData.Relationship & alignedIntersection) == alignedIntersection)
                     continue;
                 if (ValidStartingIntersection(intersectionData, out currentEdge, out switchPolygon))
                 {
@@ -216,17 +215,18 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        internal const PolygonSegmentRelationship alignedIntersection = (PolygonSegmentRelationship.BothLinesStartAtPoint
+                | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint
+                | PolygonSegmentRelationship.SameLineBeforePoint);
         protected virtual bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA)
         {
             // if the intersection is a point that both share but the lines are the same (and in same direction)
-            return newIntersection.Relationship != (PolygonSegmentRelationship.BothLinesStartAtPoint
-                | PolygonSegmentRelationship.CoincidentLines | PolygonSegmentRelationship.SameLineAfterPoint
-                | PolygonSegmentRelationship.SameLineBeforePoint);
+            return newIntersection.Relationship != alignedIntersection;
         }
 
 
         protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
-            IEnumerable<PolygonRelationship> relationships, bool partOfPolygonB);
+            IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB);
 
 
         /// <summary>

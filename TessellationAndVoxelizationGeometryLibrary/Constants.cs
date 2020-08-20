@@ -162,9 +162,15 @@ namespace TVGL
         internal static PolygonRelationship SwitchAAndBPolygonRelationship(this PolygonRelationship relationship)
         {
             if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.AInsideB)
-                return PolygonRelationship.BInsideA | ~PolygonRelationship.AInsideB;
-            if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.BInsideA)
-                return PolygonRelationship.AInsideB | ~PolygonRelationship.BInsideA;
+            {
+                relationship |= PolygonRelationship.BInsideA;
+                relationship &= ~PolygonRelationship.AInsideB;
+            }
+            else if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.BInsideA)
+            {
+                relationship |= PolygonRelationship.AInsideB;
+                relationship &= ~PolygonRelationship.BInsideA ;
+            }
             return relationship;
         }
 

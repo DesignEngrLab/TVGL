@@ -118,7 +118,8 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
-                    //Presenter.ShowAndHang(polyCoordinates);
+                    //if (polyCoordinates.Count==5)
+                    //    Presenter.ShowAndHang(polyCoordinates);
                     var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons);
                     polygons.AddRange(innerPositivePolygons);
                     if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);

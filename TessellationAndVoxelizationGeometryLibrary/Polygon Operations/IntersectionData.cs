@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using TVGL.Numerics;
 
@@ -45,18 +46,20 @@ namespace TVGL.TwoDimensional
                 : numPolygonsInA * (indexA - numPolygonsInA) + indexB;
             return polygonRelations[index];
         }
-        public IEnumerable<PolygonRelationship> GetRelationships(Polygon polygon)
+        public IEnumerable<(PolygonRelationship, bool)> GetRelationships(Polygon polygon)
         {
             var index = subPolygonToInt[polygon];
             if (index < numPolygonsInA)
             {
-                for (int i = 0; i < numPolygonsInB; i++)
-                    yield return polygonRelations[numPolygonsInA * i + index];
+                var i = 0;
+                foreach (var bpolygon in AllPolygons.Skip(numPolygonsInA))
+                    yield return (polygonRelations[numPolygonsInA * i++ + index], bpolygon.IsPositive);
             }
             else
             {
-                for (int i = 0; i < numPolygonsInA; i++)
-                    yield return polygonRelations[numPolygonsInA * (index - numPolygonsInA) + i];
+                var i = 0;
+                foreach (var aPolygon in AllPolygons.Take(numPolygonsInA))
+                    yield return (polygonRelations[numPolygonsInA * (index - numPolygonsInA) + i++], aPolygon.IsPositive);
             }
         }
 
@@ -111,25 +114,42 @@ namespace TVGL.TwoDimensional
                     (!polygonIsAInInteractions && (oldIntersection.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0))
                     newFlippedEdge = newFlippedEdge.ToPoint.StartLine;
                 if (polygonIsAInInteractions)
-                    edgeA = newFlippedEdge;
-                else edgeB = newFlippedEdge;
-                PolygonOperations.AddIntersectionBetweenLines(edgeA, edgeB, newIntersections, possibleDuplicates, tolerance);
-            }
-            var newSubPolygonToInt = new Dictionary<Polygon, int>();
-            var newPolyEnumerator = polygonInverted.AllPolygons.GetEnumerator();
-            foreach (var keyValuePair in subPolygonToInt)
-            {
-                if ((polygonIsAInInteractions && keyValuePair.Value < numPolygonsInA) ||
-                    (!polygonIsAInInteractions && keyValuePair.Value >= numPolygonsInA))
-                {
-                    newPolyEnumerator.MoveNext();
-                    newSubPolygonToInt.Add(newPolyEnumerator.Current, keyValuePair.Value);
-                }
-                else newSubPolygonToInt.Add(keyValuePair.Key, keyValuePair.Value);
+                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, tolerance);
+                else PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, tolerance);
             }
             polygon = polygonInverted;
-            return new PolygonInteractionRecord(Relationship, newIntersections, (PolygonRelationship[])polygonRelations.Clone(), newSubPolygonToInt,
-                numPolygonsInA, numPolygonsInB);
+            var newSubPolygonToInt = new Dictionary<Polygon, int>();
+            if (!polygonIsAInInteractions)
+            {
+                var newPolyEnumerator = polygonInverted.AllPolygons.GetEnumerator();
+                foreach (var keyValuePair in subPolygonToInt)
+                {
+                    if (keyValuePair.Value < numPolygonsInA)
+                        newSubPolygonToInt.Add(keyValuePair.Key, keyValuePair.Value);
+                    else
+                    {
+                        newPolyEnumerator.MoveNext();
+                        newSubPolygonToInt.Add(newPolyEnumerator.Current, keyValuePair.Value);
+                    }
+                }
+                return new PolygonInteractionRecord(Relationship, newIntersections, (PolygonRelationship[])polygonRelations.Clone(), newSubPolygonToInt,
+                    numPolygonsInA, numPolygonsInB);
+            }
+            var index = 0;
+            foreach (var keyValuePair in subPolygonToInt)
+            {
+                if (keyValuePair.Value >= numPolygonsInA)
+                    newSubPolygonToInt.Add(keyValuePair.Key, index++);
+            }
+            foreach (var newpoly in polygon.AllPolygons)
+                newSubPolygonToInt.Add(newpoly, index++);
+
+            var newPolygonRelations = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
+            for (int i = 0; i < numPolygonsInA; i++)
+                for (int j = 0; j < numPolygonsInB; j++)
+                    newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
+            return new PolygonInteractionRecord(Relationship, newIntersections, newPolygonRelations, newSubPolygonToInt,
+              numPolygonsInB, numPolygonsInA);
         }
 
 
