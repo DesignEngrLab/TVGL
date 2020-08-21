@@ -32,8 +32,12 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            // var fileNames = dir.GetFiles("*TopologyOpt*").ToArray();
-            var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
+//            brace.stl - holes showing up?
+// radiobox - missing holes - weird skip in outline
+// KnuckleTopOp flecks
+// mendel_extruder - one show up blank
+            //var fileNames = dir.GetFiles("*Prob200*").ToArray();
+           var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
@@ -52,6 +56,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 for (int j = 0; j < 3; j++)
                 {
                     var direction = Vector3.UnitVector((CartesianDirections)j);
+                    direction += new Vector3(0.005);
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
                     var silhouette = solid.CreateSilhouette(direction);

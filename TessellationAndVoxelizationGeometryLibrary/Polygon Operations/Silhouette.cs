@@ -20,9 +20,13 @@ namespace TVGL.TwoDimensional
                 tessellatedSolid.CompleteInitiation();
             var negativePolygons = new List<Polygon>();
             var positivePolygons = new List<Polygon>();
+            //var dimensions = tessellatedSolid.Bounds[1] - tessellatedSolid.Bounds[0];
+            //var smallestXSection = dimensions.X * dimensions.Y * dimensions.Z / Math.Max(dimensions.X, Math.Max(dimensions.Y, dimensions.Z));
+            //var tolerance = 0.0001 * smallestXSection;
             while (faceHash.Any())
-                GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, negativePolygons);
-
+                GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, negativePolygons, tessellatedSolid.SameTolerance);
+            //Presenter.ShowAndHang(positivePolygons);
+            //Presenter.ShowAndHang(negativePolygons);
             foreach (var hole in negativePolygons)
             {
                 Polygon enclosingPolygon = null;
@@ -42,7 +46,7 @@ namespace TVGL.TwoDimensional
         }
 
         private static void GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, List<Polygon> positivePolygons,
-            List<Polygon> negativePolygons)
+            List<Polygon> negativePolygons, double tolerance)
         {
             var transform = MiscFunctions.TransformToXYPlane(direction, out _);
             var visitedFaces = new List<PolygonalFace>();
@@ -51,7 +55,7 @@ namespace TVGL.TwoDimensional
             {
                 startingFace = faceHash.First();
                 faceHash.Remove(startingFace);
-            } while ((startingFace.Area * startingFace.Normal.Dot(direction)).IsNegligible(Constants.BaseTolerance));
+            } while ((startingFace.Area * startingFace.Normal.Dot(direction)).IsNegligible(tolerance));
             visitedFaces.Add(startingFace);
             var sign = startingFace.Normal.Dot(direction) > 0 ? 1 : -1;
             var stack = new Stack<PolygonalFace>();
@@ -68,7 +72,8 @@ namespace TVGL.TwoDimensional
                         var currentOwnsEdge = edge.OwnedFace == current;
                         outerEdges.Add(edge, currentOwnsEdge);
                         var neighbor = currentOwnsEdge ? edge.OtherFace : edge.OwnedFace;
-                        if (neighbor != null && sign * neighbor.Normal.Dot(direction) > 0 && faceHash.Contains(neighbor))
+                        if (neighbor != null && (sign * neighbor.Normal.Dot(direction)).IsGreaterThanNonNegligible(0, tolerance)
+                            && faceHash.Contains(neighbor))
                         {
                             stack.Push(neighbor);
                             faceHash.Remove(neighbor);
@@ -77,11 +82,11 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, negativePolygons);
+            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, negativePolygons, tolerance);
         }
 
         private static void ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform, List<Polygon> positivePolygons,
-            List<Polygon> negativePolygons)
+            List<Polygon> negativePolygons, double tolerance)
         {
             var polygons = new List<Polygon>();
             //var negativePolygons = new List<Polygon>();
@@ -134,7 +139,7 @@ namespace TVGL.TwoDimensional
                     }
                     current = viableEdges.Count == 1 ? viableEdges[0] : ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
                 }
-                if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
+                if (polyCoordinates.Count > 2 && !polyCoordinates.Area().IsNegligible(tolerance))
                 {
                     polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
                     if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);
@@ -143,6 +148,7 @@ namespace TVGL.TwoDimensional
             //Presenter.ShowAndHang(polygons);
             foreach (var inner in polygons)
             {
+                if (inner.Area.IsNegligible(tolerance)) continue;
                 if (inner.IsPositive) positivePolygons.Add(inner);
                 else negativePolygons.Add(inner);
             }

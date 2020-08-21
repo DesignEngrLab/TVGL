@@ -73,12 +73,12 @@ namespace TVGL.TwoDimensional
             var basePoint = enumerator.Current;
             enumerator.MoveNext();
             var prevPoint = enumerator.Current;
-            foreach (var currentPt in polygon)
+            foreach (var currentPt in polygon.Skip(2))
             {
                 area += (prevPoint - basePoint).Cross(currentPt - basePoint);
                 prevPoint = currentPt;
             }
-            return area / 2;
+            return 0.5 * area;
         }
 
         /// <summary>
