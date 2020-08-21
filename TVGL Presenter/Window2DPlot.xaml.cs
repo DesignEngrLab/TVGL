@@ -102,12 +102,13 @@ namespace TVGL
         {
             foreach (var points in listOfArrayOfPoints)
             {
+                if (!points.Any()) continue;
                 if (plot2DType == Plot2DType.Line)
                     AddLineSeriesToModel(points, closeShape, marker);
                 else
                     AddScatterSeriesToModel(points, marker);
             }
-            SetAxes(listOfArrayOfPoints.SelectMany(v=>v));
+            SetAxes(listOfArrayOfPoints.SelectMany(v => v));
             InitializeComponent();
         }
 
@@ -188,7 +189,7 @@ namespace TVGL
                     }
                 }
             }
-            SetAxes(listofListOfListOfPoints.SelectMany(poly => poly.SelectMany(v=>v)));
+            SetAxes(listofListOfListOfPoints.SelectMany(poly => poly.SelectMany(v => v)));
             InitializeComponent();
         }
 
@@ -207,7 +208,7 @@ namespace TVGL
                 AddLineSeriesToModel(points, closeShape, marker);
             else
                 AddScatterSeriesToModel(points, marker);
-            SetAxes(points.Select(v=>new Vector2(v[0],v[1])));
+            SetAxes(points.Select(v => new Vector2(v[0], v[1])));
             InitializeComponent();
         }
 
@@ -289,7 +290,7 @@ namespace TVGL
         private void SetAxes(IEnumerable<Vector2> polygons)
         {
             if (!polygons.Any()) return;
-            var minX = polygons.Min(p=>p.X);
+            var minX = polygons.Min(p => p.X);
             var maxX = polygons.Max(p => p.X);
             var minY = polygons.Min(p => p.Y);
             var maxY = polygons.Max(p => p.Y);

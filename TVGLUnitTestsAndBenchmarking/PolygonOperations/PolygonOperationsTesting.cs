@@ -125,11 +125,11 @@ namespace TVGLUnitTestsAndBenchmarking
             var coords1 = edgeCaseDictionary[name].Item1;
             var polygon1 = new Polygon(coords1[0]);
             for (int i = 1; i < coords1.Length; i++)
-                polygon1.AddHole(new Polygon(coords1[i]));
+                polygon1.AddInnerPolygon(new Polygon(coords1[i]));
             var coords2 = edgeCaseDictionary[name].Item2;
             var polygon2 = new Polygon(coords2[0]);
             for (int i = 1; i < coords2.Length; i++)
-                polygon2.AddHole(new Polygon(coords2[i]));
+                polygon2.AddInnerPolygon(new Polygon(coords2[i]));
 
             // polygon1.RemoveSelfIntersections();
             //Presenter.ShowAndHang(polygon1);

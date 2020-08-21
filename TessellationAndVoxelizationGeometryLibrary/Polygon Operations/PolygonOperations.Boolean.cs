@@ -108,12 +108,12 @@ namespace TVGL.TwoDimensional
                              || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch
                              || (interaction.Relationship & PolygonRelationship.Intersection) == PolygonRelationship.Intersection)
                     {
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                        if (i == 22 && j == 18)
+                            Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], interaction, minAllowableArea);
-                        //Console.WriteLine("i = {0}, j = {1}", i, j);
-                        //if (i == 2 && j == 0)
-                        //Presenter.ShowAndHang(newPolygons);
+                        Console.WriteLine("i = {0}, j = {1}", i, j);
+                        //if (i == 239 && j == 238)
+                                Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -174,7 +174,7 @@ namespace TVGL.TwoDimensional
                     else
                     {
                         var polygonACopy = polygonA.Copy(true, false);
-                        polygonACopy.AddHole(polygonB.Copy(true, false));
+                        polygonACopy.AddInnerPolygon(polygonB.Copy(true, false));
                         return new List<Polygon> { polygonACopy };
                     }
                 case PolygonRelationship.AIsCompletelyInsideB:
@@ -184,7 +184,7 @@ namespace TVGL.TwoDimensional
                     else
                     {
                         var polygonBCopy = polygonB.Copy(true, false);
-                        polygonBCopy.AddHole(polygonA.Copy(true, false));
+                        polygonBCopy.AddInnerPolygon(polygonA.Copy(true, false));
                         return new List<Polygon> { polygonBCopy };
                     }
                 default:
@@ -309,7 +309,7 @@ namespace TVGL.TwoDimensional
                     return new List<Polygon> { polygonA.Copy(true, false) };
                 case PolygonRelationship.BIsCompletelyInsideA:
                     var polygonACopy = polygonA.Copy(true, false);
-                    polygonACopy.AddHole(polygonB.Copy(true, true));
+                    polygonACopy.AddInnerPolygon(polygonB.Copy(true, true));
                     return new List<Polygon> { polygonACopy };
                 case PolygonRelationship.AIsCompletelyInsideB:
                 case PolygonRelationship.AIsInsideBButVerticesTouch:
@@ -370,11 +370,11 @@ namespace TVGL.TwoDimensional
                     return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
                 case PolygonRelationship.BIsCompletelyInsideA:
                     var polygonACopy1 = polygonA.Copy(true, false);
-                    polygonACopy1.AddHole(polygonB.Copy(true, true));
+                    polygonACopy1.AddInnerPolygon(polygonB.Copy(true, true));
                     return new List<Polygon> { polygonACopy1 };
                 case PolygonRelationship.AIsCompletelyInsideB:
                     var polygonBCopy2 = polygonB.Copy(true, false);
-                    polygonBCopy2.AddHole(polygonA.Copy(true, true));
+                    polygonBCopy2.AddInnerPolygon(polygonA.Copy(true, true));
                     return new List<Polygon> { polygonBCopy2 };
                 //case PolygonRelationship.Intersect:
                 //case PolygonRelationship.AIsInsideBButVerticesTouch:

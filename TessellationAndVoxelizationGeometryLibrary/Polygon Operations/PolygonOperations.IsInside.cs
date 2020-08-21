@@ -429,11 +429,11 @@ namespace TVGL.TwoDimensional
             var index = 0;
             var polygonDictionary = new Dictionary<Polygon, int>();
             polygonDictionary.Add(polygonA, index++);
-            foreach (var innerA in polygonA.Holes)
+            foreach (var innerA in polygonA.InnerPolygons)
                 polygonDictionary.Add(innerA, index++);
             var numPolygonsInA = index;
             polygonDictionary.Add(polygonB, index++);
-            foreach (var innerB in polygonB.Holes)
+            foreach (var innerB in polygonB.InnerPolygons)
                 polygonDictionary.Add(innerB, index++);
             var numPolygonsInB = index - numPolygonsInA;
             var subPolygonRelationsDictionary = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
@@ -443,7 +443,7 @@ namespace TVGL.TwoDimensional
             var holesInBThatAreInA = new List<Polygon>();
             if ((topLevelRelationship & (PolygonRelationship.Intersection | PolygonRelationship.Equal | PolygonRelationship.EqualButOpposite)) != 0b0)
             {
-                foreach (var innerA in polygonA.Holes)
+                foreach (var innerA in polygonA.InnerPolygons)
                 {
                     var relationship = GetPolygonRelationshipAndIntersections(innerA, polygonB, out var localIntersections);
                     intersections.AddRange(localIntersections);
@@ -451,7 +451,7 @@ namespace TVGL.TwoDimensional
                     subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[polygonB] - numPolygonsInA) + polygonDictionary[innerA]] = relationship;
                     if ((relationship & PolygonRelationship.AInsideB) != 0b0) holesInAThatAreInB.Add(innerA);
                 }
-                foreach (var innerB in polygonB.Holes)
+                foreach (var innerB in polygonB.InnerPolygons)
                 {
                     var relationship = GetPolygonRelationshipAndIntersections(polygonA, innerB, out var localIntersections);
                     intersections.AddRange(localIntersections);

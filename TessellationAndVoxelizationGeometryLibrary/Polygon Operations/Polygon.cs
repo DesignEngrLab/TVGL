@@ -92,7 +92,7 @@ namespace TVGL.TwoDimensional
 
         internal void RemoveAllInnerPolygion()
         {
-            _holes = null;
+            _innerPolygons = null;
         }
 
 
@@ -100,12 +100,12 @@ namespace TVGL.TwoDimensional
         /// Adds the hole to the polygon. 
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        public bool AddHole(Polygon polygon)
+        public bool AddInnerPolygon(Polygon polygon)
         {
             if (polygon is null || (polygon._path is null && polygon._vertices is null)) return false;
             //if (this.IsNonIntersectingPolygonInside(polygon, false, out _) == false) return false;
             //if (polygon.IsPositive) polygon.Reverse();
-            _holes ??= new List<Polygon>();
+            _innerPolygons ??= new List<Polygon>();
             //for (int i = _holes.Count - 1; i >= 0; i--)
             //{
             //    if (polygon.IsNonIntersectingPolygonInside(_holes[i], true, out _) == true)
@@ -116,7 +116,7 @@ namespace TVGL.TwoDimensional
             // it does check and remove holes in the host that are fully inside of the  new hole.
 
 
-            _holes.Add(polygon);
+            _innerPolygons.Add(polygon);
             return true;
         }
 
@@ -126,27 +126,27 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         public void RemoveHole(Polygon polygon)
         {
-            _holes.Remove(polygon);
+            _innerPolygons.Remove(polygon);
         }
-        public IEnumerable<Polygon> Holes
+        public IEnumerable<Polygon> InnerPolygons
         {
             get
             {
-                if (_holes is null) yield break;
-                foreach (var hole in _holes)
+                if (_innerPolygons is null) yield break;
+                foreach (var hole in _innerPolygons)
                     yield return hole;
             }
         }
 
-        List<Polygon> _holes;
+        List<Polygon> _innerPolygons;
 
         public IEnumerable<Polygon> AllPolygons
         {
             get
             {
                 yield return this;
-                if (_holes is null) yield break;
-                foreach (var polygon in _holes)
+                if (_innerPolygons is null) yield break;
+                foreach (var polygon in _innerPolygons)
                     // yield return polygon;
                     //if we want to allow deep polygon trees, then the commented code below would allow this (but would need to 
                     //comment the previous line ("yield return polygon;").
@@ -221,7 +221,7 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (double.IsNaN(area))
-                    area = PathArea + Holes.Sum(p => p.Area);
+                    area = PathArea + InnerPolygons.Sum(p => p.Area);
                 return area;
             }
         }
@@ -254,7 +254,7 @@ namespace TVGL.TwoDimensional
             {
                 if (double.IsNaN(perimeter))
                     perimeter = Path.Perimeter();
-                return perimeter + Holes.Sum(p => p.Perimeter);
+                return perimeter + InnerPolygons.Sum(p => p.Perimeter);
             }
         }
 
@@ -379,7 +379,7 @@ namespace TVGL.TwoDimensional
                 thisPath.RemoveAt(0);
                 thisPath.Add(front);
             }
-            var thisInnerPolygons = _holes != null && copyHoles ? _holes.Select(p => p.Copy(copyHoles, invert)).ToList() : null;
+            var thisInnerPolygons = _innerPolygons != null && copyHoles ? _innerPolygons.Select(p => p.Copy(copyHoles, invert)).ToList() : null;
 
             var copiedPolygon = new Polygon
             {
@@ -390,7 +390,7 @@ namespace TVGL.TwoDimensional
                 minX = this.minX,
                 minY = this.minY,
                 _path = thisPath,
-                _holes = thisInnerPolygons
+                _innerPolygons = thisInnerPolygons
             };
             copiedPolygon.MakeVertices();
             copiedPolygon.MakeLineSegments();

@@ -139,8 +139,9 @@ namespace TVGL.TwoDimensional
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
                 // current polygon edge
-                if (true || (currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0b0)
-                 || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0b0))
+                if (newPath.Count==0 || (currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0b0)
+                 || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0b0)
+                 || !newPath[^1].IsPracticallySame(intersectionCoordinates))
                     newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
                     currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;

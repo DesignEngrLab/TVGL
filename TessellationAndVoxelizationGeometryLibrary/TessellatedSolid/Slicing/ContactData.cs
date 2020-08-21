@@ -270,7 +270,7 @@ namespace TVGL
             {
                 var negativePath = loop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
                 if (negativePath.Area() > 0) negativePath.Reverse();
-                CrossSection2D.AddHole(new Polygon(negativePath));
+                CrossSection2D.AddInnerPolygon(new Polygon(negativePath));
             }
         }
 

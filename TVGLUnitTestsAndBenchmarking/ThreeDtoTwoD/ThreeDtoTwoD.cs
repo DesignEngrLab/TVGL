@@ -32,7 +32,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            var fileNames = dir.GetFiles("Castle*").ToArray();
+            var fileNames = dir.GetFiles("CNCMultiTopOp*").ToArray();
             //var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
@@ -52,7 +52,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
                 for (int j = 0; j < 2; j++)
                 {
-                    var direction = new Vector3(-26.69179911105512, -8.905440433372476, -10.751895844355175);
+                    var direction = new Vector3(-45.1494834130395, -60.8439967785235, -29.8381295659757);
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
                     var silhouette = solid.CreateSilhouette(direction);

@@ -80,24 +80,15 @@ namespace TVGL.TwoDimensional
             else if ((intersectionData.Relationship & PolygonSegmentRelationship.Overlapping) == 0b0 &&
                  (intersectionData.Relationship & PolygonSegmentRelationship.OppositeDirections) != 0b0 &&
                  (intersectionData.Relationship & PolygonSegmentRelationship.CoincidentLines) != 0b0)
-            { //the only time non-overlapping intersections are intereseting is when we are doing union and lines are coincident
-              // otherwise you simply stay on the same polygon you enter with
-                if (!intersectionData.VisitedB && (((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
-                     (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0)
-                    ||
-                    ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
-                      (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)))
+            { 
+                if (!intersectionData.VisitedB && (intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0)
                 {
                     currentEdge = intersectionData.EdgeB;
                     switchPolygon = true;
                     return true;
                 }
                 else if (!intersectionData.VisitedA &&
-                    (((intersectionData.Relationship & PolygonSegmentRelationship.SameLineBeforePoint) != 0b0 &&
-                          (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0b0)
-                         ||
-                         ((intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0 &&
-                          (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0b0)))
+                    (intersectionData.Relationship & PolygonSegmentRelationship.SameLineAfterPoint) != 0b0)
                 {
                     currentEdge = intersectionData.EdgeA;
                     switchPolygon = true;

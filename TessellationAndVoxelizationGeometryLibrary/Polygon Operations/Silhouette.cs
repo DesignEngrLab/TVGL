@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
             var polygons = new List<Polygon>();
             while (faceHash.Any())
                 polygons.AddRange(GetPolygonFromFacesAndDirection(faceHash, direction));
-            // Presenter.ShowAndHang(polygons);
+             Presenter.ShowAndHang(polygons);
             return polygons.Union();
         }
 
@@ -118,17 +118,30 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
-                    //if (polyCoordinates.Count==5)
-                    //    Presenter.ShowAndHang(polyCoordinates);
-                    var innerPositivePolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons);
-                    polygons.AddRange(innerPositivePolygons);
-                    if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);
+                    var innerPolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons);
+                    // if (strayNegativePolygons != null) innerPolygons.AddRange(strayNegativePolygons);
+                    //var positivePolygons = new List<Polygon>();
+                    //var negativePolygons = new List<Polygon>();
+                    //foreach (var inner in innerPolygons)
+                    //{
+                    //    if (inner.IsPositive) positivePolygons.Add(inner);
+                    //    else negativePolygons.Add(inner);
+                    //}
+                    //foreach (var hole in negativePolygons)
+                    //{
+
+                    //}
+                    //var innerPositivePolygons = innerPolygons.Select(p=>p.IsPositive))
+                    polygons.AddRange(innerPolygons);
                     //Presenter.ShowAndHang(polygons);
                     //polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
                 }
             }
-            polygons = PolygonOperations.CreateShallowPolygonTrees(polygons, true, out _, out _);
-            polygons = polygons.Union();
+            //Presenter.ShowAndHang(polygons);
+            //polygons = PolygonOperations.CreateShallowPolygonTrees(polygons, true, out _, out _);
+            //Presenter.ShowAndHang(polygons);
+            polygons = polygons.Where(p=>p.IsPositive).Union();
+            //Presenter.ShowAndHang(polygons);
             return polygons;
         }
 
