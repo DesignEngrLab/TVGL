@@ -25,7 +25,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
-            var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonB);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Union(polygonA, polygonB, relationship, minAllowableArea);
         }
         /// <summary>
@@ -86,7 +86,7 @@ namespace TVGL.TwoDimensional
             {
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    var interaction = GetShallowPolygonTreeRelationshipAndIntersections(polygonList[i],
+                    var interaction = GetPolygonInteraction(polygonList[i],
                         polygonList[j]);
                     if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA
                         || interaction.Relationship == PolygonRelationship.BIsInsideAButEdgesTouch
@@ -108,12 +108,12 @@ namespace TVGL.TwoDimensional
                              || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch
                              || (interaction.Relationship & PolygonRelationship.Intersection) == PolygonRelationship.Intersection)
                     {
-                        if (i == 22 && j == 18)
-                            Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                        //if (i == 22 && j == 18)
+                         // Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], interaction, minAllowableArea);
-                        Console.WriteLine("i = {0}, j = {1}", i, j);
+                        //Console.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 239 && j == 238)
-                                Presenter.ShowAndHang(newPolygons);
+                        //Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -137,7 +137,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
-            var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonB);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Intersect(polygonA, polygonB, relationship, minAllowableArea);
         }
 
@@ -208,7 +208,7 @@ namespace TVGL.TwoDimensional
             {
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    var interaction = GetShallowPolygonTreeRelationshipAndIntersections(polygonList[i],
+                    var interaction = GetPolygonInteraction(polygonList[i],
                         polygonList[j]);
                     if (interaction.Relationship == PolygonRelationship.Separated
                         || interaction.Relationship == PolygonRelationship.SeparatedButVerticesTouch
@@ -262,7 +262,7 @@ namespace TVGL.TwoDimensional
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var polygonBInverted = polygonB.Copy(true, true);
-            var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonBInverted);
+            var relationship = GetPolygonInteraction(polygonA, polygonBInverted);
             return Subtract(polygonA, polygonBInverted, relationship, minAllowableArea, true);
         }
 
@@ -338,7 +338,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
-            var relationship = GetShallowPolygonTreeRelationshipAndIntersections(polygonA, polygonB);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
             return ExclusiveOr(polygonA, polygonB, relationship, minAllowableArea);
         }
 

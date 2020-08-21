@@ -32,14 +32,13 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-            var fileNames = dir.GetFiles("CNCMultiTopOp*").ToArray();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
+            // var fileNames = dir.GetFiles("*TopologyOpt*").ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
-                if (Path.GetExtension(filename) == ".off") continue;
-                if (Path.GetExtension(filename) == ".ply") continue;
+                if (Path.GetExtension(filename) != ".stl") continue;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
@@ -50,9 +49,9 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 }
 
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < 3; j++)
                 {
-                    var direction = new Vector3(-45.1494834130395, -60.8439967785235, -29.8381295659757);
+                    var direction = Vector3.UnitVector((CartesianDirections)j);
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
                     var silhouette = solid.CreateSilhouette(direction);

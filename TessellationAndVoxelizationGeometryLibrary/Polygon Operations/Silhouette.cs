@@ -18,14 +18,31 @@ namespace TVGL.TwoDimensional
             var faceHash = tessellatedSolid.Faces.ToHashSet();
             if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
                 tessellatedSolid.CompleteInitiation();
-            var polygons = new List<Polygon>();
+            var negativePolygons = new List<Polygon>();
+            var positivePolygons = new List<Polygon>();
             while (faceHash.Any())
-                polygons.AddRange(GetPolygonFromFacesAndDirection(faceHash, direction));
-             Presenter.ShowAndHang(polygons);
-            return polygons.Union();
+                GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, negativePolygons);
+
+            foreach (var hole in negativePolygons)
+            {
+                Polygon enclosingPolygon = null;
+                foreach (var poly in positivePolygons)
+                {
+                    var interaction = poly.GetPolygonInteraction(hole);
+                    if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA)
+                    {
+                        enclosingPolygon = poly;
+                        break;
+                    }
+                }
+                if (enclosingPolygon != null)
+                    enclosingPolygon.AddInnerPolygon(hole);
+            }
+            return positivePolygons.Union();
         }
 
-        private static List<Polygon> GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction)
+        private static void GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, List<Polygon> positivePolygons,
+            List<Polygon> negativePolygons)
         {
             var transform = MiscFunctions.TransformToXYPlane(direction, out _);
             var visitedFaces = new List<PolygonalFace>();
@@ -60,10 +77,11 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            return ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform);
+            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, negativePolygons);
         }
 
-        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform)
+        private static void ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform, List<Polygon> positivePolygons,
+            List<Polygon> negativePolygons)
         {
             var polygons = new List<Polygon>();
             //var negativePolygons = new List<Polygon>();
@@ -118,31 +136,16 @@ namespace TVGL.TwoDimensional
                 }
                 if (polyCoordinates.Count > 2 && Math.Abs(polyCoordinates.Area()) > 0)
                 {
-                    var innerPolygons = new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons);
-                    // if (strayNegativePolygons != null) innerPolygons.AddRange(strayNegativePolygons);
-                    //var positivePolygons = new List<Polygon>();
-                    //var negativePolygons = new List<Polygon>();
-                    //foreach (var inner in innerPolygons)
-                    //{
-                    //    if (inner.IsPositive) positivePolygons.Add(inner);
-                    //    else negativePolygons.Add(inner);
-                    //}
-                    //foreach (var hole in negativePolygons)
-                    //{
-
-                    //}
-                    //var innerPositivePolygons = innerPolygons.Select(p=>p.IsPositive))
-                    polygons.AddRange(innerPolygons);
-                    //Presenter.ShowAndHang(polygons);
-                    //polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
+                    polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
+                    if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);
                 }
             }
             //Presenter.ShowAndHang(polygons);
-            //polygons = PolygonOperations.CreateShallowPolygonTrees(polygons, true, out _, out _);
-            //Presenter.ShowAndHang(polygons);
-            polygons = polygons.Where(p=>p.IsPositive).Union();
-            //Presenter.ShowAndHang(polygons);
-            return polygons;
+            foreach (var inner in polygons)
+            {
+                if (inner.IsPositive) positivePolygons.Add(inner);
+                else negativePolygons.Add(inner);
+            }
         }
 
         private static KeyValuePair<Edge, bool> ChooseBestNextEdge(Edge current, bool edgeSign, List<KeyValuePair<Edge, bool>> viableEdges, Matrix4x4 transform)

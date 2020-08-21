@@ -148,7 +148,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
-            var a = polygon1.GetShallowPolygonTreeRelationshipAndIntersections(polygon2);
+            var a = polygon1.GetPolygonInteraction(polygon2);
             List<Polygon> polygon3;
 
             polygon3 = polygon1.Union(polygon2, a);
@@ -185,7 +185,7 @@ namespace TVGLUnitTestsAndBenchmarking
                                 for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
                                 {
                                     Console.WriteLine(k++);
-                                    if ( k % 11 == 0)
+                                    if ( k % 1111 == 0)
                                     {
                                         DebugEdgeCases(MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut),
                                             MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut));

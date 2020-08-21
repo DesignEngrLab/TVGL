@@ -153,8 +153,10 @@ namespace TVGL.TwoDimensional
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
-                    newPath.Add(currentEdge.ToPoint.Coordinates);
                     currentEdge = currentEdge.ToPoint.StartLine;
+                    if ((currentEdge != startingIntersection.EdgeA || (startingIntersection.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0) &&
+                        (currentEdge != startingIntersection.EdgeB || (startingIntersection.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0)) 
+                        newPath.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
                                                             // the edge that concern us. We want that function to report the first one for the edge

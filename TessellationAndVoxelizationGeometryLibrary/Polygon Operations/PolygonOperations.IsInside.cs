@@ -424,7 +424,7 @@ namespace TVGL.TwoDimensional
         /// <param name="subPolygonB">The polygon b.</param>
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonRelationship.</returns>
-        public static PolygonInteractionRecord GetShallowPolygonTreeRelationshipAndIntersections(this Polygon polygonA, Polygon polygonB)
+        public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB)
         {
             var index = 0;
             var polygonDictionary = new Dictionary<Polygon, int>();
@@ -437,7 +437,7 @@ namespace TVGL.TwoDimensional
                 polygonDictionary.Add(innerB, index++);
             var numPolygonsInB = index - numPolygonsInA;
             var subPolygonRelationsDictionary = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
-            var topLevelRelationship = GetPolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
+            var topLevelRelationship = GetSinglePolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
             subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[polygonB] - numPolygonsInA) + polygonDictionary[polygonA]] = topLevelRelationship;
             var holesInAThatAreInB = new List<Polygon>();
             var holesInBThatAreInA = new List<Polygon>();
@@ -445,7 +445,7 @@ namespace TVGL.TwoDimensional
             {
                 foreach (var innerA in polygonA.InnerPolygons)
                 {
-                    var relationship = GetPolygonRelationshipAndIntersections(innerA, polygonB, out var localIntersections);
+                    var relationship = GetSinglePolygonRelationshipAndIntersections(innerA, polygonB, out var localIntersections);
                     intersections.AddRange(localIntersections);
                     topLevelRelationship |= relationship;
                     subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[polygonB] - numPolygonsInA) + polygonDictionary[innerA]] = relationship;
@@ -453,7 +453,7 @@ namespace TVGL.TwoDimensional
                 }
                 foreach (var innerB in polygonB.InnerPolygons)
                 {
-                    var relationship = GetPolygonRelationshipAndIntersections(polygonA, innerB, out var localIntersections);
+                    var relationship = GetSinglePolygonRelationshipAndIntersections(polygonA, innerB, out var localIntersections);
                     intersections.AddRange(localIntersections);
                     topLevelRelationship |= relationship;
                     subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[innerB] - numPolygonsInA) + polygonDictionary[polygonA]] = relationship;
@@ -463,7 +463,7 @@ namespace TVGL.TwoDimensional
                 {
                     foreach (var innerB in holesInBThatAreInA)
                     {
-                        var relationship = GetPolygonRelationshipAndIntersections(innerA, innerB, out var localIntersections);
+                        var relationship = GetSinglePolygonRelationshipAndIntersections(innerA, innerB, out var localIntersections);
                         intersections.AddRange(localIntersections);
                         topLevelRelationship |= relationship;
                         subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[innerB] - numPolygonsInA)
@@ -487,7 +487,7 @@ namespace TVGL.TwoDimensional
         /// AIsCompletelyInsideB,  AIsInsideBButEdgesTouch, AIsInsideBButVerticesTouch,
         /// Separated, SeparatedButEdgesTouch, SeparatedButVerticesTouch
         ///  </returns>
-        internal static PolygonRelationship GetPolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
+        internal static PolygonRelationship GetSinglePolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
             out List<SegmentIntersection> intersections)
         {
             intersections = new List<SegmentIntersection>();
@@ -577,10 +577,10 @@ namespace TVGL.TwoDimensional
             var atLeastOneCoincident = intersections.Any(intersection => (intersection.Relationship &
             PolygonSegmentRelationship.CoincidentLines) == PolygonSegmentRelationship.CoincidentLines);
 
-            if (atLeastOneAEncompassB)
+            if (atLeastOneAEncompassB && subPolygonA.IsPositive)
                 return atLeastOneCoincident ? PolygonRelationship.BIsInsideAButEdgesTouch
                                    : PolygonRelationship.BIsInsideAButVerticesTouch;
-            if (atLeastOneBEncompassA)
+            if (atLeastOneBEncompassA && subPolygonB.IsPositive)
                 return atLeastOneCoincident ? PolygonRelationship.AIsInsideBButEdgesTouch
                                    : PolygonRelationship.AIsInsideBButVerticesTouch;
             else // they are separated but there are intersections (since not caught by intersections.Count == 0 condition)
