@@ -29,7 +29,7 @@ namespace TVGL.TwoDimensional
             //Presenter.ShowAndHang(negativePolygons);
             //foreach (var hole in negativePolygons)
             //    AddHoleToLargerPostivePolygon(positivePolygons, hole);
-            Presenter.ShowAndHang(positivePolygons);
+            //Presenter.ShowAndHang(positivePolygons);
             return positivePolygons.Union();
         }
 

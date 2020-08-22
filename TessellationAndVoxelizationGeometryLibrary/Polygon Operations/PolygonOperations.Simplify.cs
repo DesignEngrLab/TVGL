@@ -40,7 +40,7 @@ namespace TVGL.TwoDimensional
         {
             var polygon = path.ToList();
             var numPoints = polygon.Count;
-            var origArea = Math.Abs(polygon.Area()); //take absolute value s.t. it works on holes as well
+            var origArea = polygon.Area(); //todo it should work on holes as well. does it?
             #region build initial list of cross products
             // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points. I'm very tempted
             // to call it vertex, which is a better name but I don't want to confuse with the Vertex class in TessellatedSolid). 
