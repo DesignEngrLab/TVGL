@@ -10,7 +10,8 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonRemoveIntersections : PolygonBooleanBase
     {
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool noHoles, double minAllowableArea, out List<Polygon> strayHoles)
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool noHoles, double minAllowableArea, 
+            out List<Polygon> strayHoles)
         {
             var interaction = new PolygonInteractionRecord(PolygonRelationship.Separated, intersections, null, null, 0, 0);
                // new Dictionary<Polygon, int> { { polygon, 0 } }, 1, 0);

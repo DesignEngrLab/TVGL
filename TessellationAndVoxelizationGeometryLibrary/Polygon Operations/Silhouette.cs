@@ -24,29 +24,17 @@ namespace TVGL.TwoDimensional
             //var smallestXSection = dimensions.X * dimensions.Y * dimensions.Z / Math.Max(dimensions.X, Math.Max(dimensions.Y, dimensions.Z));
             //var tolerance = 0.0001 * smallestXSection;
             while (faceHash.Any())
-                GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, negativePolygons, tessellatedSolid.SameTolerance);
+                GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, tessellatedSolid.SameTolerance);
             //Presenter.ShowAndHang(positivePolygons);
             //Presenter.ShowAndHang(negativePolygons);
-            foreach (var hole in negativePolygons)
-            {
-                Polygon enclosingPolygon = null;
-                foreach (var poly in positivePolygons)
-                {
-                    var interaction = poly.GetPolygonInteraction(hole);
-                    if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA)
-                    {
-                        enclosingPolygon = poly;
-                        break;
-                    }
-                }
-                if (enclosingPolygon != null)
-                    enclosingPolygon.AddInnerPolygon(hole);
-            }
+            //foreach (var hole in negativePolygons)
+            //    AddHoleToLargerPostivePolygon(positivePolygons, hole);
+            Presenter.ShowAndHang(positivePolygons);
             return positivePolygons.Union();
         }
 
         private static void GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, List<Polygon> positivePolygons,
-            List<Polygon> negativePolygons, double tolerance)
+             double tolerance)
         {
             var transform = MiscFunctions.TransformToXYPlane(direction, out _);
             var visitedFaces = new List<PolygonalFace>();
@@ -82,14 +70,14 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, negativePolygons, tolerance);
+            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, tolerance);
         }
 
         private static void ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform, List<Polygon> positivePolygons,
-            List<Polygon> negativePolygons, double tolerance)
+             double tolerance)
         {
             var polygons = new List<Polygon>();
-            //var negativePolygons = new List<Polygon>();
+            var negativePolygons = new List<Polygon>();
             while (outerEdges.Any())
             {
                 var polyCoordinates = new List<Vector2>();
@@ -152,6 +140,27 @@ namespace TVGL.TwoDimensional
                 if (inner.IsPositive) positivePolygons.Add(inner);
                 else negativePolygons.Add(inner);
             }
+            foreach (var hole in negativePolygons)
+                AddHoleToLargerPostivePolygon(positivePolygons, hole);
+        }
+
+
+        private static void AddHoleToLargerPostivePolygon(List<Polygon> positivePolygons, Polygon hole)
+        {
+            Polygon enclosingPolygon = null;
+            foreach (var poly in positivePolygons)
+            {
+                if (!poly.HasABoundingBoxThatEncompasses(hole)) continue;
+                var interaction = poly.GetPolygonInteraction(hole);
+                if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA &&
+                    interaction.GetRelationships(hole).Skip(1).All(r => r.Item1 == PolygonRelationship.Separated))
+                {
+                    enclosingPolygon = poly;
+                    break;
+                }
+            }
+            if (enclosingPolygon != null)
+                enclosingPolygon.AddInnerPolygon(hole);
         }
 
         private static KeyValuePair<Edge, bool> ChooseBestNextEdge(Edge current, bool edgeSign, List<KeyValuePair<Edge, bool>> viableEdges, Matrix4x4 transform)

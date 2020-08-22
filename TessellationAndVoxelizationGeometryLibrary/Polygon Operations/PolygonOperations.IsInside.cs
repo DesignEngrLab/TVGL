@@ -840,7 +840,7 @@ namespace TVGL.TwoDimensional
             return relationship;
         }
 
-        private static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
+        internal static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
         {
             return (polygonA.MaxX >= polygonB.MaxX
                 && polygonA.MaxY >= polygonB.MaxY

@@ -90,7 +90,7 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        internal void RemoveAllInnerPolygion()
+        internal void RemoveAllInnerPolygon()
         {
             _innerPolygons = null;
         }
@@ -137,6 +137,7 @@ namespace TVGL.TwoDimensional
                     yield return hole;
             }
         }
+        public int NumberOfInnerPolygons => (_innerPolygons?.Count) ?? 0;
 
         List<Polygon> _innerPolygons;
 

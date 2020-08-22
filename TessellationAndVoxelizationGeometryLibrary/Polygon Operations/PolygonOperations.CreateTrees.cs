@@ -37,6 +37,7 @@ namespace TVGL.TwoDimensional
         {
             var index = 0;
             var polygonList = new List<Polygon>();
+            strayHoles = new List<Polygon>();
             foreach (var p in polygons)
             {
                 p.Index = index++;
@@ -46,7 +47,6 @@ namespace TVGL.TwoDimensional
             if (polygonList.Count == 0)
             {
                 connectingIndices = null;
-                strayHoles = null;
                 return polygonList;
             }
             connectingIndices = new int[index];
@@ -56,6 +56,13 @@ namespace TVGL.TwoDimensional
             //Presenter.ShowAndHang(polygonTree.AllPolygons);
             polygonList.Clear();
             index = 0;
+            foreach (var strayHole in strayHoles)
+            {
+                if (strayHole.Index < 0) continue;
+                while (connectingIndicesList.Count <= strayHole.Index) connectingIndicesList.Add(-1);
+                connectingIndicesList[strayHole.Index] = index;
+                strayHole.Index = index++;
+            }
             foreach (var polygon in polygonTree.AllPolygons)
             {
                 if (polygon.IsPositive) polygonList.Add(polygon);
@@ -67,23 +74,21 @@ namespace TVGL.TwoDimensional
             // finally remove references to inner positives with this loop
             foreach (var polygon in polygonList)
                 foreach (var hole in polygon.InnerPolygons)
-                    hole.RemoveAllInnerPolygion();
+                    hole.RemoveAllInnerPolygon();
             connectingIndices = connectingIndicesList.ToArray();
             return polygonList;
         }
 
 
-        public static Polygon CreatePolygonTree(this IEnumerable<IEnumerable<Vector2>> paths, bool vertexNegPosOrderIsGuaranteedCorrect,
-            out List<Polygon> strayHoles)
+        public static Polygon CreatePolygonTree(this IEnumerable<IEnumerable<Vector2>> paths, bool vertexNegPosOrderIsGuaranteedCorrect)
         {
-            return CreatePolygonTree(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
+            return CreatePolygonTree(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect, out List<Polygon> strayHoles);
         }
 
-        public static Polygon CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect,
-            out List<Polygon> strayHoles)
+        public static Polygon CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, out List<Polygon> strayHoles)
         {
-            strayHoles = null;
             var branches = new List<Polygon>();
+            strayHoles = new List<Polygon>();
             foreach (var polygon in polygons.OrderBy(p => Math.Abs(p.Area)))
             {
                 for (int i = branches.Count - 1; i >= 0; i--)
@@ -97,24 +102,26 @@ namespace TVGL.TwoDimensional
                 branches.Add(polygon);
             }
             var polygonTree = new Polygon(Array.Empty<Vector2>());
-            if (branches.Count == 1) polygonTree = branches[0];
-            else
+            polygonTree.IsPositive = false;
+            int j = branches.Count;
+            while (j-- > 0)
             {
-                polygonTree.IsPositive = !branches[0].IsPositive;
-                foreach (var branch in branches)
-                    if (polygonSignIsCorrect && !branch.IsPositive && !polygonTree.IsPositive)
-                    {
-                        if (strayHoles == null)
-                            strayHoles = new List<Polygon>();
-                        strayHoles.Add(branch);
-                    }
-                    else polygonTree.AddInnerPolygon(branch);
+                var current = branches[j];
+                if (!current.IsPositive)
+                {
+                    strayHoles.Add(current);
+                    branches.RemoveAt(j);
+                    foreach (var inner in current.InnerPolygons)
+                        branches.Insert(j++, inner);
+                    current.RemoveAllInnerPolygon();
+                    continue;
+                }
+                if (polygonSignIsCorrect)
+                    RecurseDownPolygonTreeCleanUp(current);
+                else RecurseDownPolygonTreeAndFlipSigns(current);
+                polygonTree.AddInnerPolygon(current);
             }
-            // all the polgons left in branches should be positive if sign is correct
-            // we will need to recurse down the tree and either remove smaller positivies from positives (and negatives from negatives)
-            // if sign is correct; OR switch signs is sign is not correct
-            if (polygonSignIsCorrect) RecurseDownPolygonTreeCleanUp(polygonTree);
-            else RecurseDownPolygonTreeAndFlipSigns(polygonTree);
+            if (polygonTree.NumberOfInnerPolygons == 1) return polygonTree.InnerPolygons.First();
             return polygonTree;
         }
 
@@ -135,7 +142,7 @@ namespace TVGL.TwoDimensional
                     RecurseDownPolygonTreeCleanUp(child);
                 }
             }
-            parent.RemoveAllInnerPolygion();
+            parent.RemoveAllInnerPolygon();
             foreach (var c in validChildren)
                 parent.AddInnerPolygon(c);
         }
