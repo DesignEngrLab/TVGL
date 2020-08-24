@@ -169,7 +169,7 @@ namespace TVGL
             else if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.BInsideA)
             {
                 relationship |= PolygonRelationship.AInsideB;
-                relationship &= ~PolygonRelationship.BInsideA ;
+                relationship &= ~PolygonRelationship.BInsideA;
             }
             return relationship;
         }
@@ -780,35 +780,24 @@ namespace TVGL
     /// Enum PolygonRelationship
     /// </summary>
     [Flags]
-    public enum PolygonSegmentRelationship
+    public enum PolygonSegmentRelationship : byte
     {
-        Unknown = 0,
-        AtStartOfA = 1, // byte 0(1): the intersection is at the from point for line A (T joint)
-        AtStartOfB = 2, // byte 1(2) the intersection is at the from  point for line B (T joint)
-        // therefore the value is zero when at an intermediate point 
-        // for both line segments (this is like 99% of the time). 
+        // how the two polygons overlap
+        NoOverlap = 0, // may happen only when AtStartOfA or AtStartoB is true. The polygons abut one another or glance off of one another. 
+        DoubleOverlap = 1, // may happen only when AtStartOfA or AtStartoB is true. Both polygons overlap one another. 
+        Enclose = 2, // may happen only when AtStartOfA or AtStartoB is true. One polygon is completely encompassed by the other at this point
+        Crossover = 3, // the conventional case where two lines cross one another creating four regions: A, B, both, and none
+        Interfaces = NoOverlap | DoubleOverlap | Enclose | Crossover,
 
-        BothLinesStartAtPoint = AtStartOfA | AtStartOfB, // 0b11: at the from points for both lineA and lineB 
+        AMovesInside = 4, // the A polygon moves inside the polygons and B is on the surface. Follow A for intersection and B for union.
+        // this has meaningful value when the previous is set to Crossover, or Encompass and NoOverlap. But, for NoOverlap it is only meaningful if 
+        // one of the same line booleans is true below
 
-        AEncompassesB = 4, //if polygonA encompasses polygonB at this intersection
-        BEncompassesA = 8, // if polygonB encompasses polygonA at this intersection
-        Overlapping = AEncompassesB | BEncompassesA, // normally there is some encompasses of the other for both
-        CoincidentLines = 16, // the lines before and/or after the point are on top of each other - this may make it 
-        // is impossible to tell if one encompasses the other. 
-        // some details in the combinations:
-        // 0b100,yy: the interaction is unknown 
-        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00; and bytes 3 & 4
-        //           should both be 0
-        // 0b000,yy: "glance": it is known that the insides of A & B do not overlap at this intersection.
-        //                    Instead, they glance off of one another
-        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        //         Technically, you can have CoincidentLines and still have it glance
-        // 0bx01,yy: "AEncompassB": it is known that the insides of A fully encompass B at this intersection.
-        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0bx10,yy: "BEncompassA": it is known that the insides of B fully encompass A at this intersection.
-        //           For this to be the case, bytes 0 & 1 can be 11, 10, or 01 but not 00
-        // 0bx11,yy: "Overlap" (proper intersection): it is known that A encloses part of B and B encloses are of A
-        //           For this case, bytes 0 & 1 can have all four values
+        AtStartOfA = 8, // byte 0(1): the intersection is at the from point for line A (T joint)
+        AtStartOfB = 16, // byte 1(2) the intersection is at the from  point for line B (T joint)
+        // therefore the value of both of therese is faulse when at an intermediate point for both line segments (this is like 99% of the time). 
+        // they are both true when polygons share a point
+        BothLinesStartAtPoint = AtStartOfA | AtStartOfB, // 0b11000: at the from points for both lineA and lineB 
 
         // these final three are rare. They indicate more detail is CoincidentLines is true. Otherwise they 
         // should be left as zero (and ignored)

@@ -71,15 +71,13 @@ namespace TVGL.TwoDimensional
         /// <returns>System.Collections.Generic.List&lt;System.Int32&gt;[].</returns>
         internal List<int>[] MakeIntersectionLookupList(int numVertices)
         {
-            var same = PolygonSegmentRelationship.BothLinesStartAtPoint | PolygonSegmentRelationship.CoincidentLines
-                | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint;
             // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
             // this is potentially memory intensive but speeds up the matching  when creating new polygons
             var lookupList = new List<int>[numVertices];
             for (int i = 0; i < IntersectionData.Count; i++)
             {
                 var intersection = IntersectionData[i];
-                if ((intersection.Relationship & same) == same) continue;
+                if ((intersection.Relationship & PolygonOperations.alignedIntersection) == PolygonOperations.alignedIntersection) continue;
                 intersection.VisitedA = false;
                 intersection.VisitedB = false;
                 numVertices = intersection.EdgeA.IndexInList;
