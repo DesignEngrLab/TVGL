@@ -87,8 +87,6 @@ namespace TVGL.TwoDimensional
         {
             foreach (var intersectionData in intersections)
             {
-                if ((intersectionData.Relationship & PolygonOperations.alignedIntersection) == PolygonOperations.alignedIntersection)
-                    continue;
                 if (ValidStartingIntersection(intersectionData, out currentEdge, out switchPolygon))
                 {
                     nextStartingIntersection = intersectionData;
@@ -139,8 +137,10 @@ namespace TVGL.TwoDimensional
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 // only add the point to the path if it wasn't added below in the while loop. i.e. it is an intermediate point to the 
                 // current polygon edge
-                if (newPath.Count == 0 || (currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0b0)
-                 || (!currentEdgeIsFromPolygonA && (intersectionData.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0b0)
+                if (newPath.Count == 0 || (currentEdgeIsFromPolygonA && (intersectionData.WhereIntersection == WhereIsIntersection.Intermediate ||
+                    intersectionData.WhereIntersection == WhereIsIntersection.AtStartOfB))
+                 || (!currentEdgeIsFromPolygonA && (intersectionData.WhereIntersection == WhereIsIntersection.AtStartOfA ||
+                 intersectionData.WhereIntersection == WhereIsIntersection.Intermediate))
                  || !newPath[^1].IsPracticallySame(intersectionCoordinates))
                     newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
@@ -154,8 +154,10 @@ namespace TVGL.TwoDimensional
                 // out of the loop. The intersection is identified here, but processed above
                 {
                     currentEdge = currentEdge.ToPoint.StartLine;
-                    if ((currentEdge != startingIntersection.EdgeA || (startingIntersection.Relationship & PolygonSegmentRelationship.AtStartOfA) == 0) &&
-                        (currentEdge != startingIntersection.EdgeB || (startingIntersection.Relationship & PolygonSegmentRelationship.AtStartOfB) == 0))
+                    if ((currentEdge != startingIntersection.EdgeA || startingIntersection.WhereIntersection == WhereIsIntersection.AtStartOfB ||
+                        intersectionData.WhereIntersection == WhereIsIntersection.Intermediate) &&
+                        (currentEdge != startingIntersection.EdgeB || startingIntersection.WhereIntersection == WhereIsIntersection.AtStartOfA ||
+                        intersectionData.WhereIntersection == WhereIsIntersection.Intermediate))
                         newPath.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
@@ -218,13 +220,7 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        protected virtual bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA)
-        {
-            // if the intersection is a point that both share but the lines are the same (and in same direction)
-            return newIntersection.Relationship != PolygonOperations.alignedIntersection &&
-                newIntersection.Relationship
-                != (PolygonOperations.alignedIntersection | PolygonSegmentRelationship.OppositeDirections);
-        }
+        protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA);
 
 
         protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,

@@ -416,10 +416,6 @@ namespace TVGL.TwoDimensional
         }
         #endregion
 
-
-        internal const PolygonSegmentRelationship alignedIntersection = (PolygonSegmentRelationship.BothLinesStartAtPoint
-                | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint);
-
         /// <summary>
         /// Gets the polygon relationship of PolygonA to PolygonB and the intersections between them.
         /// </summary>
@@ -556,9 +552,11 @@ namespace TVGL.TwoDimensional
                 var isOpposite = true;
                 foreach (var intersect in intersections)
                 {
-                    if ((intersect.Relationship & PolygonSegmentRelationship.OppositeDirections) == 0b0)
+                    if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.WhereIntersection != WhereIsIntersection.BothStarts ||
+                        intersect.CollinearityType != CollinearityTypes.BothOppositeDirection)
                         isOpposite = false;
-                    if ((intersect.Relationship & alignedIntersection) != alignedIntersection)
+                    if (intersect.Relationship != SegmentRelationship.DoubleOverlap || intersect.WhereIntersection != WhereIsIntersection.BothStarts ||
+                        intersect.CollinearityType != CollinearityTypes.BothSameDirection)
                     {
                         isEqual = false;
                         break;
@@ -568,18 +566,17 @@ namespace TVGL.TwoDimensional
                     return isOpposite ? PolygonRelationship.EqualButOpposite : PolygonRelationship.Equal;
             }
 
-            // based on the first four values of the enumerator, it will be clear if edges cross if any intersections
-            // are DoubleOverlap (1) or Crossover (3). Or, rather, if all the intersections are NoOverlap (0) or Encompass(2)
-            // then it is not clear that the two shows actually overlap
-            if (intersections.Any(intersection => (byte)intersection.Relationship % 2 == 1))
+            if (intersections.Any(intersection => intersection.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
+            intersection.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
+            (intersection.Relationship == SegmentRelationship.DoubleOverlap && (subPolygonA.IsPositive || subPolygonB.IsPositive))))
                 return PolygonRelationship.Intersection | PolygonRelationship.EdgesCross;
-            // given the previous comment, we can only reach this point if ALL intersections are of type NoOverlap or Encompass
 
-            var atLeastOneCoincidentEdge = intersections.Any(intersection => (intersection.Relationship &
-            (PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint)) != 0b0);
+            // given the previous comment, we can only reach this point if ALL intersections are of type NoOverlap or Enclose
 
-            if (intersections.All(intersection => (byte)intersection.Relationship % 4 == 0))
-            {   // all intersections of over type, NoOverlap
+            var atLeastOneCoincidentEdge = intersections.Any(intersection => intersection.CollinearityType != CollinearityTypes.None);
+
+            if (intersections.All(intersection => intersection.Relationship == SegmentRelationship.NoOverlap))
+            {   // all intersections of  type, NoOverlap
                 if (subPolygonA.IsPositive == subPolygonB.IsPositive)
                     return atLeastOneCoincidentEdge ? PolygonRelationship.SeparatedButEdgesTouch
                    : PolygonRelationship.SeparatedButVerticesTouch;
@@ -592,14 +589,10 @@ namespace TVGL.TwoDimensional
                                        : PolygonRelationship.BIsInsideAButVerticesTouch;
             }
 
-            // given the previous conditions, we can only reach this point if ALL intersections are of type NoOverlap or Encompass
-            // and there must be at least one Encompass
-            var atLeastOneAEncloseB = intersections.Any(intersection =>
-                (intersection.Relationship & (PolygonSegmentRelationship.AMovesInside | PolygonSegmentRelationship.Interfaces)) ==
-                PolygonSegmentRelationship.Enclose);
-            var atLeastOneBEncloseA = intersections.Any(intersection =>
-                (intersection.Relationship & (PolygonSegmentRelationship.AMovesInside | PolygonSegmentRelationship.Interfaces)) ==
-                (PolygonSegmentRelationship.AMovesInside | PolygonSegmentRelationship.Enclose));
+            // given the previous conditions, we can only reach this point if ALL intersections are of type NoOverlap or Enclose
+            // and there must be at least one Enclose
+            var atLeastOneAEncloseB = intersections.Any(intersection => intersection.Relationship == SegmentRelationship.AEnclosesB);
+            var atLeastOneBEncloseA = intersections.Any(intersection => intersection.Relationship == SegmentRelationship.BEnclosesA);
 
             if (atLeastOneAEncloseB && atLeastOneBEncloseA)
                 return PolygonRelationship.Intersection | PolygonRelationship.EdgesCross;
@@ -608,375 +601,375 @@ namespace TVGL.TwoDimensional
                 return atLeastOneCoincidentEdge ? PolygonRelationship.SeparatedButEdgesTouch
                : PolygonRelationship.SeparatedButVerticesTouch;
 
-
             if (subPolygonA.IsPositive == atLeastOneAEncloseB)
                 return atLeastOneCoincidentEdge ? PolygonRelationship.BIsInsideAButEdgesTouch
                                    : PolygonRelationship.BIsInsideAButVerticesTouch;
 
             //if (atLeastOneBEncloseA && subPolygonB.IsPositive)
             return atLeastOneCoincidentEdge ? PolygonRelationship.AIsInsideBButEdgesTouch
-                               : PolygonRelationship.AIsInsideBButVerticesTouch;
+                               : PolygonRelationship.AIsInsideBButVerticesTouch;        
+
             //else throw new Exception("debug? no default polygon relationship found.")
         }
 
 
-        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<SegmentIntersection> intersections,
-            double tolerance)
+    private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<SegmentIntersection> intersections,
+        double tolerance)
+    {
+        foreach (var dupeData in possibleDuplicates)
         {
-            foreach (var dupeData in possibleDuplicates)
-            {
-                var duplicateIntersection = intersections[dupeData.index];
+            var duplicateIntersection = intersections[dupeData.index];
 
-                for (int i = 0; i < intersections.Count; i++)
+            for (int i = 0; i < intersections.Count; i++)
+            {
+                if (i == dupeData.index) continue;
+                if (((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
+                    (intersections[i].EdgeA == dupeData.lineB && intersections[i].EdgeB == dupeData.lineA)) &&
+                    intersections[i].WhereIntersection != WhereIsIntersection.Intermediate &&
+                   duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, tolerance))
                 {
-                    if (i == dupeData.index) continue;
-                    if (((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
-                        (intersections[i].EdgeA == dupeData.lineB && intersections[i].EdgeB == dupeData.lineA)) &&
-                        (intersections[i].Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != 0b0 &&
-                       duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, tolerance))
-                    {
-                        intersections.RemoveAt(dupeData.index);
-                        break;
-                    }
+                    intersections.RemoveAt(dupeData.index);
+                    break;
                 }
             }
         }
+    }
 
-        /// <summary>
-        /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
-        /// fromPoint Inclusive, and the toPoint exclusive. Thus, if lines touch at their endpoints, it is only recorded
-        /// if both points are from points. Also no "close" operations are used (e.g. IsPracticallySame). Because the method is
-        /// intended to be invoked for all lines on the polygon, this prevents an intersection from being caught by multiple lines,
-        /// and makes the methods simpler (easier to debug and edit) and quicker.
-        /// </summary>
-        /// <param name="lineA">The line a.</param>
-        /// <param name="lineB">The line b.</param>
-        /// <param name="intersections">The intersections.</param>
-        /// <returns>PolygonSegmentRelationship.</returns>
-        internal static bool AddIntersectionBetweenLines(PolygonSegment lineA, PolygonSegment lineB,
-            List<SegmentIntersection> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates, double tolerance)
+    /// <summary>
+    /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
+    /// fromPoint Inclusive, and the toPoint exclusive. Thus, if lines touch at their endpoints, it is only recorded
+    /// if both points are from points. Also no "close" operations are used (e.g. IsPracticallySame). Because the method is
+    /// intended to be invoked for all lines on the polygon, this prevents an intersection from being caught by multiple lines,
+    /// and makes the methods simpler (easier to debug and edit) and quicker.
+    /// </summary>
+    /// <param name="lineA">The line a.</param>
+    /// <param name="lineB">The line b.</param>
+    /// <param name="intersections">The intersections.</param>
+    /// <returns>PolygonSegmentRelationship.</returns>
+    internal static bool AddIntersectionBetweenLines(PolygonSegment lineA, PolygonSegment lineB,
+        List<SegmentIntersection> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates, double tolerance)
+    {
+        // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
+        // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
+        if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin) // the two lines do not touch since their bounding boxes do not overlap
+            return false;
+        // okay, so bounding boxes DO overlap
+        var intersectionCoordinates = Vector2.Null;
+        var where = WhereIsIntersection.Intermediate;
+        var relationship = SegmentRelationship.NoOverlap;
+
+        var lineACrossLineB = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
+        if (lineACrossLineB.IsNegligible(tolerance))
+            lineACrossLineB = 0; //this avoid a problem where further inequalities ask is <0 but the value is like -1e-15
+
+        //var prevA = lineA.FromPoint.EndLine;
+        //var prevB = lineB.FromPoint.EndLine;
+        //first a quick check to see if points are the same
+        if (lineA.FromPoint.Coordinates.IsPracticallySame(lineB.FromPoint.Coordinates, tolerance))
         {
-            // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
-            // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
-            if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin) // the two lines do not touch since their bounding boxes do not overlap
-                return false;
-            // okay, so bounding boxes DO overlap
-            var intersectionCoordinates = Vector2.Null;
-            var where = WhereIsIntersection.Intermediate;
-            var relationship = SegmentRelationship.NoOverlap;
-
-            var lineACrossLineB = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
-            if (lineACrossLineB.IsNegligible(tolerance))
-                lineACrossLineB = 0; //this avoid a problem where further inequalities ask is <0 but the value is like -1e-15
-
-            //var prevA = lineA.FromPoint.EndLine;
-            //var prevB = lineB.FromPoint.EndLine;
-            //first a quick check to see if points are the same
-            if (lineA.FromPoint.Coordinates.IsPracticallySame(lineB.FromPoint.Coordinates, tolerance))
+            intersectionCoordinates = lineA.FromPoint.Coordinates;
+            where = WhereIsIntersection.BothStarts;
+        }
+        else
+        {
+            var fromPointVector = lineB.FromPoint.Coordinates - lineA.FromPoint.Coordinates; // the vector connecting starts
+            if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
             {
-                intersectionCoordinates = lineA.FromPoint.Coordinates;
-                where = WhereIsIntersection.BothStarts;
+                var intersectionFound = false;
+                if (fromPointVector.Cross(lineA.Vector).IsNegligible(tolerance))
+                {
+                    // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
+                    // and since bounding boxes do overlap, then the lines are collinear and overlapping
+                    // While there are technically infinite points that are intersecting, we only record when the start of the line
+                    // is common. It is possible that the starts (FromPoints) are not overlapping at all - in which case nothing is added.
+                    // It is also possible that both FromPoints are on the other line - if so, then we add both. This is the one other place 
+                    // where a second IntersectionData is added
+                    if ((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(fromPointVector) < 0)
+                    {   // since fromPointVector goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
+                        // opposite then lineA.FromPoint is on lineB
+                        intersectionCoordinates = lineA.FromPoint.Coordinates;
+                        where = WhereIsIntersection.AtStartOfA;
+                        intersectionFound = true;
+                    }
+                    if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointVector) < 0)
+                    { // now check the other way. Note, since fromPointVector is backwards here, we just make the other vector backwards as well
+
+                        if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
+                        {
+                            CollinearityTypes collinearB;
+                            SegmentRelationship relationshipB;
+                            (relationshipB, collinearB) = DeterminePolygonSegmentRelationshipNEW(lineA, lineB, WhereIsIntersection.AtStartOfB,
+                                lineACrossLineB, tolerance);
+
+                            intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates, relationshipB,
+                                WhereIsIntersection.AtStartOfB, collinearB));
+                        }
+                        else
+                        {
+                            where = WhereIsIntersection.AtStartOfB;
+                            intersectionCoordinates = lineB.FromPoint.Coordinates;
+                            intersectionFound = true;
+                        }
+                    }
+                    //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
+                    // either from Point, then we do not record it. It will be recorded when the next segment is checked
+                }
+                if (!intersectionFound) return false; // otherwise the lines are parallel but not at same distance/intercept. Or, they are
+                                                      //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
+                                                      //Instead those will be solved in the next/adjacent polygon segment
             }
             else
             {
-                var fromPointVector = lineB.FromPoint.Coordinates - lineA.FromPoint.Coordinates; // the vector connecting starts
-                if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
+                // now check the intersection by detecting where non-parallel lines cross
+                // solve for the t scalar values for the two lines.
+                // the line is define as all values of t from 0 to 1 in the equations
+                // line1(t_1) = (1 - t_1)*line1.From + t_1*line1.To
+                // line2(t_2) = (1 - t_2)*line2.From + t_2*line2.To
+                // ...solving for the x-value at the intersection...
+                // xIntersect =  (1 - t_1)*line1.From.X + t_1*line1.To.X = (1 - t_2)*line2.From.X + t_2*line2.To.X (Eq.1)
+                // yIntersect =  (1 - t_1)*line1.From.Y + t_1*line1.To.Y = (1 - t_2)*line2.From.Y + t_2*line2.To.Y (Eq.2)
+                //rewriting Eq.1 as...
+                // t_1*(line1.To.X - line1.From.X) + t_2*(line2.From.X - line2.To.X) = line2.From.X - line1.From.X 
+                // which can be simplified to...
+                // t_1*(line1.Vector.X) - t_2*(line2.Vector.X) = vStart.X
+                // similiarly for Y
+                // t_1*(line1.Vector.Y) - t_2*(line2.Vector.Y) = vStart.Y
+                // solve as a system of two equations
+                //   |   line1.Vector.X      -line2.Vector.X   | |  t_1  |    | vStart.X  |
+                //   |                                         |*|       | =  |           |
+                //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
+                var oneOverdeterminnant = 1 / lineACrossLineB;
+                var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointVector.X - lineB.Vector.X * fromPointVector.Y);
+                if ((!t_1.IsNegligible(tolerance) && t_1 < 0) || t_1 >= 1)
+                    return false;
+                var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointVector.X - lineA.Vector.X * fromPointVector.Y);
+                if ((!t_2.IsNegligible(tolerance) && t_2 < 0) || t_2 >= 1)
+                    return false;
+                if (t_1.IsNegligible(tolerance))
                 {
-                    var intersectionFound = false;
-                    if (fromPointVector.Cross(lineA.Vector).IsNegligible(tolerance))
-                    {
-                        // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
-                        // and since bounding boxes do overlap, then the lines are collinear and overlapping
-                        // While there are technically infinite points that are intersecting, we only record when the start of the line
-                        // is common. It is possible that the starts (FromPoints) are not overlapping at all - in which case nothing is added.
-                        // It is also possible that both FromPoints are on the other line - if so, then we add both. This is the one other place 
-                        // where a second IntersectionData is added
-                        if ((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(fromPointVector) < 0)
-                        {   // since fromPointVector goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
-                            // opposite then lineA.FromPoint is on lineB
-                            intersectionCoordinates = lineA.FromPoint.Coordinates;
-                            where = WhereIsIntersection.AtStartOfA;
-                            intersectionFound = true;
-                        }
-                        if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointVector) < 0)
-                        { // now check the other way. Note, since fromPointVector is backwards here, we just make the other vector backwards as well
-
-                            if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
-                            {
-                                CollinearityTypes collinearB;
-                                SegmentRelationship relationshipB;
-                                (relationshipB, collinearB) = DeterminePolygonSegmentRelationshipNEW(lineA, lineB, WhereIsIntersection.AtStartOfB,
-                                    lineACrossLineB, tolerance);
-
-                                intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates, relationshipB,
-                                    WhereIsIntersection.AtStartOfB, collinearB));
-                            }
-                            else
-                            {
-                                where = WhereIsIntersection.AtStartOfB;
-                                intersectionCoordinates = lineB.FromPoint.Coordinates;
-                                intersectionFound = true;
-                            }
-                        }
-                        //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
-                        // either from Point, then we do not record it. It will be recorded when the next segment is checked
-                    }
-                    if (!intersectionFound) return false; // otherwise the lines are parallel but not at same distance/intercept. Or, they are
-                                                          //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
-                                                          //Instead those will be solved in the next/adjacent polygon segment
+                    intersectionCoordinates = lineA.FromPoint.Coordinates;
+                    where = WhereIsIntersection.AtStartOfA;
+                    if (t_2.IsPracticallySame(1.0, tolerance))
+                        possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                }
+                else if (t_2.IsNegligible(tolerance))
+                {
+                    intersectionCoordinates = lineB.FromPoint.Coordinates;
+                    where = WhereIsIntersection.AtStartOfB;
+                    if (t_1.IsPracticallySame(1.0, tolerance))
+                        possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
                 }
                 else
                 {
-                    // now check the intersection by detecting where non-parallel lines cross
-                    // solve for the t scalar values for the two lines.
-                    // the line is define as all values of t from 0 to 1 in the equations
-                    // line1(t_1) = (1 - t_1)*line1.From + t_1*line1.To
-                    // line2(t_2) = (1 - t_2)*line2.From + t_2*line2.To
-                    // ...solving for the x-value at the intersection...
-                    // xIntersect =  (1 - t_1)*line1.From.X + t_1*line1.To.X = (1 - t_2)*line2.From.X + t_2*line2.To.X (Eq.1)
-                    // yIntersect =  (1 - t_1)*line1.From.Y + t_1*line1.To.Y = (1 - t_2)*line2.From.Y + t_2*line2.To.Y (Eq.2)
-                    //rewriting Eq.1 as...
-                    // t_1*(line1.To.X - line1.From.X) + t_2*(line2.From.X - line2.To.X) = line2.From.X - line1.From.X 
-                    // which can be simplified to...
-                    // t_1*(line1.Vector.X) - t_2*(line2.Vector.X) = vStart.X
-                    // similiarly for Y
-                    // t_1*(line1.Vector.Y) - t_2*(line2.Vector.Y) = vStart.Y
-                    // solve as a system of two equations
-                    //   |   line1.Vector.X      -line2.Vector.X   | |  t_1  |    | vStart.X  |
-                    //   |                                         |*|       | =  |           |
-                    //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
-                    var oneOverdeterminnant = 1 / lineACrossLineB;
-                    var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointVector.X - lineB.Vector.X * fromPointVector.Y);
-                    if ((!t_1.IsNegligible(tolerance) && t_1 < 0) || t_1 >= 1)
-                        return false;
-                    var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointVector.X - lineA.Vector.X * fromPointVector.Y);
-                    if ((!t_2.IsNegligible(tolerance) && t_2 < 0) || t_2 >= 1)
-                        return false;
-                    if (t_1.IsNegligible(tolerance))
-                    {
-                        intersectionCoordinates = lineA.FromPoint.Coordinates;
-                        where = WhereIsIntersection.AtStartOfA;
-                        if (t_2.IsPracticallySame(1.0, tolerance))
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
-                    }
-                    else if (t_2.IsNegligible(tolerance))
-                    {
-                        intersectionCoordinates = lineB.FromPoint.Coordinates;
-                        where = WhereIsIntersection.AtStartOfB;
-                        if (t_1.IsPracticallySame(1.0, tolerance))
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                    }
-                    else
-                    {
-                        intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
-                        where = WhereIsIntersection.Intermediate;
-                        if (t_1.IsPracticallySame(1.0, tolerance) && t_2.IsPracticallySame(1.0, tolerance))
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (t_1.IsPracticallySame(1.0, tolerance))
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (t_2.IsPracticallySame(1.0, tolerance))
-                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
-                    }
+                    intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
+                    where = WhereIsIntersection.Intermediate;
+                    if (t_1.IsPracticallySame(1.0, tolerance) && t_2.IsPracticallySame(1.0, tolerance))
+                        possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
+                    else if (t_1.IsPracticallySame(1.0, tolerance))
+                        possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                    else if (t_2.IsPracticallySame(1.0, tolerance))
+                        possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                 }
             }
-            CollinearityTypes collinear;
-            (relationship, collinear) = DeterminePolygonSegmentRelationshipNEW(lineA, lineB, where, lineACrossLineB, tolerance);
-            intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates, relationship, where, collinear));
-            return true;
         }
-
-
-        internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationshipNEW(in PolygonSegment lineA,
-            in PolygonSegment lineB, in WhereIsIntersection where, in double lineACrossLineB, in double tolerance)
-        {
-            // first off - handle the intermediate case right away. since it's simple and happens often
-            if (where == WhereIsIntersection.Intermediate)
-                return (lineACrossLineB < 0 ? SegmentRelationship.CrossOver_BOutsideAfter : SegmentRelationship.CrossOver_AOutsideAfter, CollinearityTypes.None);
-            // set up other useful vectors and cross products
-            double prevACrossPrevB, lineACrossPrevB, prevACrossLineB;
-            Vector2 prevA, prevB;
-            // based on where the intersection happens, we can quicken the calculation of these
-            if (where == WhereIsIntersection.AtStartOfA)
-            { //then lineB and prevB are the same
-                prevA = lineA.FromPoint.EndLine.Vector;
-                prevB = lineB.Vector;
-                lineACrossPrevB = lineACrossLineB;
-                prevACrossLineB = prevACrossPrevB = prevA.Cross(prevB);
-            }
-            else if (where == WhereIsIntersection.AtStartOfB)
-            { //then lineA and prevA are the same
-                prevA = lineA.Vector;
-                prevB = lineB.FromPoint.EndLine.Vector;
-                prevACrossLineB = lineACrossLineB;
-                lineACrossPrevB = prevACrossPrevB = prevA.Cross(prevB);
-            }
-            else // then where == BothLinesStart
-            {
-                prevA = lineA.FromPoint.EndLine.Vector;
-                prevB = lineB.FromPoint.EndLine.Vector;
-                prevACrossLineB = prevA.Cross(lineB.Vector);
-                lineACrossPrevB = lineA.Vector.Cross(prevB);
-                prevACrossPrevB = prevA.Cross(prevB);
-            }
-            if (prevACrossPrevB.IsNegligible(tolerance)) prevACrossPrevB = 0;
-            if (lineACrossPrevB.IsNegligible(tolerance)) lineACrossPrevB = 0;
-            if (prevACrossLineB.IsNegligible(tolerance)) prevACrossLineB = 0;
-
-            // most restrictive is when both lines are parallel
-            if (lineACrossLineB == 0 && prevACrossPrevB == 0)
-            {
-                var lineADotLineB = lineA.Vector.Dot(lineB.Vector);
-                var prevADotPrevB = prevA.Dot(prevB);
-                if (lineADotLineB > 0 && prevADotPrevB > 0)
-                    //case 16
-                    return (SegmentRelationship.DoubleOverlap, CollinearityTypes.BothSameDirection);
-                if (lineADotLineB < 0 && prevADotPrevB < 0)
-                    // a rare version of case 15 where the lines are all parallel
-                    return (SegmentRelationship.NoOverlap, CollinearityTypes.BothOppositeDirection);
-                if (prevADotPrevB < 0) // and lineADotLineB would be positive, then polygons were heading
-                    // right to each other on parallel lines before joining. this is a rare case 7 or 8
-                    return (prevA.Cross(lineA.Vector) > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
-                        CollinearityTypes.After);
-                if (lineADotLineB < 0) // then prevADotPrevB would be positive. the polygon diverges in 
-                                       // opposite parallel directions. this is a rare case 9 or 10
-                    return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
-                             CollinearityTypes.Before);
-            }
-            if (lineACrossPrevB == 0 && prevACrossLineB == 0)
-            {  // case 15
-                var lineADotPrevB = lineA.Vector.Dot(prevB);
-                var prevADotLineB = prevA.Dot(lineB.Vector);
-                if (lineADotPrevB < 0 && prevADotLineB < 0)
-                    return (SegmentRelationship.NoOverlap, CollinearityTypes.BothOppositeDirection);
-                if (lineADotPrevB > 0) // then prevADotLineB would be negative. 
-                    // calculate if polygon A's corner is convex or concave. if convex then case 11 (no overlap) if concave then double (case 12)
-                    return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
-                        CollinearityTypes.ABeforeBAfter);
-                if (prevADotLineB > 0) // then lineADotPrevB would be negative, 
-                    return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
-                             CollinearityTypes.AAfterBBefore);
-            }
-            if (lineACrossLineB == 0 && lineA.Vector.Dot(lineB.Vector) > 0) //if this hasn't been captures by the aboe then prevACrossPrevB !=0
-                                                                            // if the dot product is less than zero than it'll be pulled in to conditions below like no overlap. So this is Case 7 & 8
-                return (prevACrossPrevB > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB, CollinearityTypes.After);
-
-            if (prevACrossPrevB == 0 && prevA.Dot(prevB) > 0) //like the previous condition if this hasn't been captured by the aboe then lineACrossLineB !=0
-                                                              //  So this is Case 9 & 10
-                return (lineACrossLineB > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, CollinearityTypes.Before);
-            if (prevACrossLineB == 0 && prevA.Dot(lineB.Vector) < 0) //like the previous condition if this hasn't been captured by the above then lineACrossPrevB !=0
-                                                                     //  So this is Case 11 & 12
-                return (lineACrossPrevB > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap, CollinearityTypes.ABeforeBAfter);
-            if (lineACrossPrevB == 0 && lineA.Vector.Dot(lineB.Vector) < 0) //like the previous condition if this hasn't been captured by the above then prevACrossLineB !=0
-                                                                            //  So this is Case 13 & 14
-                return (prevACrossLineB > 0 ? SegmentRelationship.DoubleOverlap : SegmentRelationship.NoOverlap, CollinearityTypes.AAfterBBefore);
-
-            // that's it for the collinear cases - now the tricky ones Cases 1 to 6
-            var aCornerCross = prevA.Cross(lineA.Vector);
-            var bCornerCross = prevB.Cross(lineB.Vector);
-
-            // In the remainder of this method, we determine what the overlap of regions is at this point
-            // when A corner is convex (aCornerCross>=0), then we check if the two cross products made with the
-            // a given b line are BOTH positive - meaning that the b line is between the A lines.
-            // When A's corner is concave, we check for the opposite convex angle of A - to see if the B line is between those
-            // that's the easy part! getting the changes in sign correct makes it more complicated.
-            var lineBIsInsideA = (aCornerCross > 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
-                                 (aCornerCross <= 0 && !(lineACrossLineB < 0 && prevACrossLineB < 0));
-            // this expression is the same, but the previous B vector is into the corner and thus, we need to negate it (or rather just check for negative)
-            var prevLineBIsInsideA = (aCornerCross > 0 && lineACrossPrevB < 0 && prevACrossPrevB < 0) ||
-                                     (aCornerCross <= 0 && !(lineACrossPrevB > 0 && prevACrossPrevB > 0));
-            // we actually have to do the same with lineB - it's not enough to know if A is inside B
-            var lineAIsInsideB = (bCornerCross > 0 && lineACrossLineB < 0 && lineACrossPrevB < 0) ||
-                                 (bCornerCross <= 0 && !(lineACrossLineB > 0 && lineACrossPrevB > 0));
-            var prevLineAIsInsideB = (bCornerCross > 0 && prevACrossLineB > 0 && prevACrossPrevB > 0) ||
-                                     (bCornerCross <= 0 && !(prevACrossLineB < 0 && prevACrossPrevB < 0));
-            // in the remaining conditions there are 16 possible combinations of the four booleans: lineBIsInsideA-prevLineBIsInsideA--lineAIsInsideB-prevLineAIsInsideB
-            // first off, if they are all true, then it clearly is a "double overlap"
-            if (lineBIsInsideA && prevLineBIsInsideA && lineAIsInsideB && prevLineAIsInsideB)
-                // this is case 5
-                return (SegmentRelationship.DoubleOverlap, CollinearityTypes.None);
-            // second: if there is a positive on both sides then overlapping
-
-            else if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
-                // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
-                // case 1 and 2
-                return (lineACrossLineB > 0 ? SegmentRelationship.CrossOver_AOutsideAfter : SegmentRelationship.CrossOver_BOutsideAfter, CollinearityTypes.None);
-            // if only a positive on the A side then A encompasses B
-            else if (lineBIsInsideA || prevLineBIsInsideA)
-                // TF-FF, FT-FF, TT-FF (although, I don't think TF-FF or FT-FF can occur)
-                // case 4
-                return (SegmentRelationship.AEnclosesB, CollinearityTypes.None);
-            // now check if A lines are inside b region
-            else if (lineAIsInsideB || prevLineAIsInsideB)
-                // FF-TF, FF-FT, FF-TT (although, I don't think FF-TF or FF-FT can occur)
-                // case 3
-                return (SegmentRelationship.BEnclosesA, CollinearityTypes.None);
-            // else Case 6
-            else return (SegmentRelationship.NoOverlap, CollinearityTypes.None);
-        }
-
-        internal static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
-        {
-            return (polygonA.MaxX >= polygonB.MaxX
-                && polygonA.MaxY >= polygonB.MaxY
-                && polygonA.MinX <= polygonB.MinX
-                && polygonA.MinY <= polygonB.MinY);
-        }
-
-
-        private static PolygonSegment[] GetOrderedLines(List<Vertex2D> orderedPoints)
-        {
-            var length = orderedPoints.Count;
-            var result = new PolygonSegment[length];
-            var smallHashOfLinesOfEqualX = new HashSet<PolygonSegment>();
-            var k = 0;
-            for (int i = 0; i < length; i++)
-            {
-
-                var point = orderedPoints[i];
-                if (point.EndLine.OtherPoint(point).X > point.X)
-                    result[k++] = point.EndLine;
-                else if (point.EndLine.OtherPoint(point).X == point.X &&
-                         !smallHashOfLinesOfEqualX.Contains(point.EndLine))
-                {
-                    result[k++] = point.EndLine;
-                    smallHashOfLinesOfEqualX.Add(point.EndLine);
-                }
-                if (point.StartLine.OtherPoint(point).X > point.X)
-                    result[k++] = point.StartLine;
-                else if (point.StartLine.OtherPoint(point).X == point.X &&
-                         !smallHashOfLinesOfEqualX.Contains(point.StartLine))
-                {
-                    result[k++] = point.StartLine;
-                    smallHashOfLinesOfEqualX.Add(point.StartLine);
-                }
-
-                if (k >= length) break;
-            }
-            return result;
-        }
-
-        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
-        {
-            var intersections = new List<SegmentIntersection>();
-            var tolerance = Math.Min(polygonA.MaxX - polygonA.MinX, polygonA.MaxY - polygonA.MinY) * Constants.BaseTolerance;
-            var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
-            var numLines = polygonA.Lines.Count;
-            var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
-            for (int i = 0; i < numLines - 1; i++)
-            {
-                var current = orderedLines[i];
-                for (int j = i + 1; j < numLines; j++)
-                {
-                    var other = orderedLines[j];
-                    if (current.XMax < orderedLines[j].XMin) break;
-                    if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, tolerance);
-                }
-            }
-            RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
-            return intersections;
-        }
-
-
+        CollinearityTypes collinear;
+        (relationship, collinear) = DeterminePolygonSegmentRelationshipNEW(lineA, lineB, where, lineACrossLineB, tolerance);
+        intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates, relationship, where, collinear));
+        return true;
     }
+
+
+    internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationshipNEW(in PolygonSegment lineA,
+        in PolygonSegment lineB, in WhereIsIntersection where, in double lineACrossLineB, in double tolerance)
+    {
+        // first off - handle the intermediate case right away. since it's simple and happens often
+        if (where == WhereIsIntersection.Intermediate)
+            return (lineACrossLineB < 0 ? SegmentRelationship.CrossOver_BOutsideAfter : SegmentRelationship.CrossOver_AOutsideAfter, CollinearityTypes.None);
+        // set up other useful vectors and cross products
+        double prevACrossPrevB, lineACrossPrevB, prevACrossLineB;
+        Vector2 prevA, prevB;
+        // based on where the intersection happens, we can quicken the calculation of these
+        if (where == WhereIsIntersection.AtStartOfA)
+        { //then lineB and prevB are the same
+            prevA = lineA.FromPoint.EndLine.Vector;
+            prevB = lineB.Vector;
+            lineACrossPrevB = lineACrossLineB;
+            prevACrossLineB = prevACrossPrevB = prevA.Cross(prevB);
+        }
+        else if (where == WhereIsIntersection.AtStartOfB)
+        { //then lineA and prevA are the same
+            prevA = lineA.Vector;
+            prevB = lineB.FromPoint.EndLine.Vector;
+            prevACrossLineB = lineACrossLineB;
+            lineACrossPrevB = prevACrossPrevB = prevA.Cross(prevB);
+        }
+        else // then where == BothLinesStart
+        {
+            prevA = lineA.FromPoint.EndLine.Vector;
+            prevB = lineB.FromPoint.EndLine.Vector;
+            prevACrossLineB = prevA.Cross(lineB.Vector);
+            lineACrossPrevB = lineA.Vector.Cross(prevB);
+            prevACrossPrevB = prevA.Cross(prevB);
+        }
+        if (prevACrossPrevB.IsNegligible(tolerance)) prevACrossPrevB = 0;
+        if (lineACrossPrevB.IsNegligible(tolerance)) lineACrossPrevB = 0;
+        if (prevACrossLineB.IsNegligible(tolerance)) prevACrossLineB = 0;
+
+        // most restrictive is when both lines are parallel
+        if (lineACrossLineB == 0 && prevACrossPrevB == 0)
+        {
+            var lineADotLineB = lineA.Vector.Dot(lineB.Vector);
+            var prevADotPrevB = prevA.Dot(prevB);
+            if (lineADotLineB > 0 && prevADotPrevB > 0)
+                //case 16
+                return (SegmentRelationship.DoubleOverlap, CollinearityTypes.BothSameDirection);
+            if (lineADotLineB < 0 && prevADotPrevB < 0)
+                // a rare version of case 15 where the lines are all parallel
+                return (SegmentRelationship.NoOverlap, CollinearityTypes.BothOppositeDirection);
+            if (prevADotPrevB < 0) // and lineADotLineB would be positive, then polygons were heading
+                                   // right to each other on parallel lines before joining. this is a rare case 7 or 8
+                return (prevA.Cross(lineA.Vector) > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
+                    CollinearityTypes.After);
+            if (lineADotLineB < 0) // then prevADotPrevB would be positive. the polygon diverges in 
+                                   // opposite parallel directions. this is a rare case 9 or 10
+                return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
+                         CollinearityTypes.Before);
+        }
+        if (lineACrossPrevB == 0 && prevACrossLineB == 0)
+        {  // case 15
+            var lineADotPrevB = lineA.Vector.Dot(prevB);
+            var prevADotLineB = prevA.Dot(lineB.Vector);
+            if (lineADotPrevB < 0 && prevADotLineB < 0)
+                return (SegmentRelationship.NoOverlap, CollinearityTypes.BothOppositeDirection);
+            if (lineADotPrevB > 0) // then prevADotLineB would be negative. 
+                                   // calculate if polygon A's corner is convex or concave. if convex then case 11 (no overlap) if concave then double (case 12)
+                return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
+                    CollinearityTypes.ABeforeBAfter);
+            if (prevADotLineB > 0) // then lineADotPrevB would be negative, 
+                return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
+                         CollinearityTypes.AAfterBBefore);
+        }
+        if (lineACrossLineB == 0 && lineA.Vector.Dot(lineB.Vector) > 0) //if this hasn't been captures by the aboe then prevACrossPrevB !=0
+                                                                        // if the dot product is less than zero than it'll be pulled in to conditions below like no overlap. So this is Case 7 & 8
+            return (prevACrossPrevB > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB, CollinearityTypes.After);
+
+        if (prevACrossPrevB == 0 && prevA.Dot(prevB) > 0) //like the previous condition if this hasn't been captured by the aboe then lineACrossLineB !=0
+                                                          //  So this is Case 9 & 10
+            return (lineACrossLineB > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, CollinearityTypes.Before);
+        if (prevACrossLineB == 0 && prevA.Dot(lineB.Vector) < 0) //like the previous condition if this hasn't been captured by the above then lineACrossPrevB !=0
+                                                                 //  So this is Case 11 & 12
+            return (lineACrossPrevB > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap, CollinearityTypes.ABeforeBAfter);
+        if (lineACrossPrevB == 0 && lineA.Vector.Dot(lineB.Vector) < 0) //like the previous condition if this hasn't been captured by the above then prevACrossLineB !=0
+                                                                        //  So this is Case 13 & 14
+            return (prevACrossLineB > 0 ? SegmentRelationship.DoubleOverlap : SegmentRelationship.NoOverlap, CollinearityTypes.AAfterBBefore);
+
+        // that's it for the collinear cases - now the tricky ones Cases 1 to 6
+        var aCornerCross = prevA.Cross(lineA.Vector);
+        var bCornerCross = prevB.Cross(lineB.Vector);
+
+        // In the remainder of this method, we determine what the overlap of regions is at this point
+        // when A corner is convex (aCornerCross>=0), then we check if the two cross products made with the
+        // a given b line are BOTH positive - meaning that the b line is between the A lines.
+        // When A's corner is concave, we check for the opposite convex angle of A - to see if the B line is between those
+        // that's the easy part! getting the changes in sign correct makes it more complicated.
+        var lineBIsInsideA = (aCornerCross > 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
+                             (aCornerCross <= 0 && !(lineACrossLineB < 0 && prevACrossLineB < 0));
+        // this expression is the same, but the previous B vector is into the corner and thus, we need to negate it (or rather just check for negative)
+        var prevLineBIsInsideA = (aCornerCross > 0 && lineACrossPrevB < 0 && prevACrossPrevB < 0) ||
+                                 (aCornerCross <= 0 && !(lineACrossPrevB > 0 && prevACrossPrevB > 0));
+        // we actually have to do the same with lineB - it's not enough to know if A is inside B
+        var lineAIsInsideB = (bCornerCross > 0 && lineACrossLineB < 0 && lineACrossPrevB < 0) ||
+                             (bCornerCross <= 0 && !(lineACrossLineB > 0 && lineACrossPrevB > 0));
+        var prevLineAIsInsideB = (bCornerCross > 0 && prevACrossLineB > 0 && prevACrossPrevB > 0) ||
+                                 (bCornerCross <= 0 && !(prevACrossLineB < 0 && prevACrossPrevB < 0));
+        // in the remaining conditions there are 16 possible combinations of the four booleans: lineBIsInsideA-prevLineBIsInsideA--lineAIsInsideB-prevLineAIsInsideB
+        // first off, if they are all true, then it clearly is a "double overlap"
+        if (lineBIsInsideA && prevLineBIsInsideA && lineAIsInsideB && prevLineAIsInsideB)
+            // this is case 5
+            return (SegmentRelationship.DoubleOverlap, CollinearityTypes.None);
+        // second: if there is a positive on both sides then overlapping
+
+        else if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
+            // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
+            // case 1 and 2
+            return (lineACrossLineB > 0 ? SegmentRelationship.CrossOver_AOutsideAfter : SegmentRelationship.CrossOver_BOutsideAfter, CollinearityTypes.None);
+        // if only a positive on the A side then A encompasses B
+        else if (lineBIsInsideA || prevLineBIsInsideA)
+            // TF-FF, FT-FF, TT-FF (although, I don't think TF-FF or FT-FF can occur)
+            // case 4
+            return (SegmentRelationship.AEnclosesB, CollinearityTypes.None);
+        // now check if A lines are inside b region
+        else if (lineAIsInsideB || prevLineAIsInsideB)
+            // FF-TF, FF-FT, FF-TT (although, I don't think FF-TF or FF-FT can occur)
+            // case 3
+            return (SegmentRelationship.BEnclosesA, CollinearityTypes.None);
+        // else Case 6
+        else return (SegmentRelationship.NoOverlap, CollinearityTypes.None);
+    }
+
+    internal static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
+    {
+        return (polygonA.MaxX >= polygonB.MaxX
+            && polygonA.MaxY >= polygonB.MaxY
+            && polygonA.MinX <= polygonB.MinX
+            && polygonA.MinY <= polygonB.MinY);
+    }
+
+
+    private static PolygonSegment[] GetOrderedLines(List<Vertex2D> orderedPoints)
+    {
+        var length = orderedPoints.Count;
+        var result = new PolygonSegment[length];
+        var smallHashOfLinesOfEqualX = new HashSet<PolygonSegment>();
+        var k = 0;
+        for (int i = 0; i < length; i++)
+        {
+
+            var point = orderedPoints[i];
+            if (point.EndLine.OtherPoint(point).X > point.X)
+                result[k++] = point.EndLine;
+            else if (point.EndLine.OtherPoint(point).X == point.X &&
+                     !smallHashOfLinesOfEqualX.Contains(point.EndLine))
+            {
+                result[k++] = point.EndLine;
+                smallHashOfLinesOfEqualX.Add(point.EndLine);
+            }
+            if (point.StartLine.OtherPoint(point).X > point.X)
+                result[k++] = point.StartLine;
+            else if (point.StartLine.OtherPoint(point).X == point.X &&
+                     !smallHashOfLinesOfEqualX.Contains(point.StartLine))
+            {
+                result[k++] = point.StartLine;
+                smallHashOfLinesOfEqualX.Add(point.StartLine);
+            }
+
+            if (k >= length) break;
+        }
+        return result;
+    }
+
+    private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
+    {
+        var intersections = new List<SegmentIntersection>();
+        var tolerance = Math.Min(polygonA.MaxX - polygonA.MinX, polygonA.MaxY - polygonA.MinY) * Constants.BaseTolerance;
+        var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
+        var numLines = polygonA.Lines.Count;
+        var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
+        for (int i = 0; i < numLines - 1; i++)
+        {
+            var current = orderedLines[i];
+            for (int j = i + 1; j < numLines; j++)
+            {
+                var other = orderedLines[j];
+                if (current.XMax < orderedLines[j].XMin) break;
+                if (current.IsAdjacentTo(other)) continue;
+                AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, tolerance);
+            }
+        }
+        RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
+        return intersections;
+    }
+
+
+}
 }
