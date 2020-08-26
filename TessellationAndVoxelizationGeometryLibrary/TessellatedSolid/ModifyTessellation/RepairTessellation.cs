@@ -15,7 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -106,8 +106,8 @@ namespace TVGL
             if (ts.Errors.OverusedEdges != null)
             {
                 Message.output("==> " + ts.Errors.OverusedEdges.Count + " overused edges.");
-                Message.output("    The number of faces per overused edge: " +
-                               ts.Errors.OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
+                Message.output("    The number of faces per overused edge: " + string.Join(',',
+                               ts.Errors.OverusedEdges.Select(p => p.Item2.Count)));
             }
             if (ts.Errors.SingledSidedEdges != null) Message.output("==> " + ts.Errors.SingledSidedEdges.Count + " single-sided edges.");
             if (ts.Errors.DegenerateFaces != null) Message.output("==> " + ts.Errors.DegenerateFaces.Count + " degenerate faces in file.");
@@ -400,7 +400,7 @@ namespace TVGL
             Message.output("Some errors found. Attempting to Repair...", 2);
             var completelyRepaired = true;
             if (ts.Errors.ModelIsInsideOut)
-                completelyRepaired = TurnModelInsideOut(ts);
+                completelyRepaired = ts.TurnModelInsideOut();
             if (ts.Errors.EdgesWithBadAngle != null)
                 completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
             //Note that negligible faces are not truly errors, so they are not repaired
@@ -413,33 +413,6 @@ namespace TVGL
             return completelyRepaired;
         }
 
-
-        private static bool TurnModelInsideOut(TessellatedSolid ts)
-        {
-            ts.Volume = -1 * ts.Volume;
-            ts._inertiaTensor = null;
-            foreach (var face in ts.Faces)
-            {
-                face.Normal = face.Normal.multiply(-1);
-                //var firstVertex = face.Vertices[0];
-                //face.Vertices.RemoveAt(0);
-                //face.Vertices.Insert(1, firstVertex);
-                face.Vertices.Reverse();
-                var firstEdge = face.Edges[0];
-                face.Edges.RemoveAt(0);
-                face.Edges.Insert(1, firstEdge);
-                face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
-            }
-            foreach (var edge in ts.Edges)
-            {
-                edge.Curvature = (CurvatureType)(-1 * (int)edge.Curvature);
-                edge.InternalAngle = Constants.TwoPi - edge.InternalAngle;
-                var tempFace = edge.OwnedFace;
-                edge.OwnedFace = edge.OtherFace;
-                edge.OtherFace = tempFace;
-            }
-            return true;
-        }
 
         /// <summary>
         ///     Flips the faces based on bad angles.
@@ -464,9 +437,7 @@ namespace TVGL
                     else break;
                 }
                 if (edgesToUpdate.Count < face.Edges.Count) continue;
-                face.Normal = face.Normal.multiply(-1);
-                face.Edges.Reverse();
-                face.Vertices.Reverse();
+                face.Invert();
                 foreach (var edge in edgesToUpdate)
                     if (!allEdgesToUpdate.Contains(edge)) allEdgesToUpdate.Add(edge);
             }

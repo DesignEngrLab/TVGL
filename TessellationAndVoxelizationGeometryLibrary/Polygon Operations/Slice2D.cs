@@ -2,424 +2,198 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using StarMathLib;
+using TVGL.Numerics;
 
-namespace TVGL._2D
+
+namespace TVGL.TwoDimensional
 {
-    public static class Slice2D
+    public static partial class PolygonOperations
     {
         /// <summary>
-        /// This function gets cuts shape [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false, 
+        /// This function slices the [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false, 
         /// it will return the partial shape before the cutting line, otherwise those beyond the cutting line.
         /// The returned partial shape is properly closed and ordered CCW+, CW-.
         /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the 
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static List<PolygonLight> OnLine(List<PolygonLight> shape, double[] direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, out List<Point> intersectionPoints,
-            double offsetAtLine = 0.0, List<(Point, double)> sortedPoints = null)
+        public static Vector2[] SliceAtLine(this IEnumerable<IEnumerable<Vector2>> shape, Vector2 lineNormalDirection, double distanceAlongDirection,
+            out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
+            double offsetAtLineForPositiveSide = 0.0)
         {
-            var partialShape = new List<PolygonLight>();
-            intersectionPoints = new List<Point>();
-            var shallowPolygonsTrees = PolygonOperations.GetShallowPolygonTrees(shape);
-            var dirX = direction2D[0];
-            var dirY = direction2D[1];
-            foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
-            {
-                //Set the lines in all the polygons. These are needed for Slice.OnLine()
-                foreach (var polygon in shallowPolygonTree.AllPolygons)
-                {
-                    polygon.SetPathLines();
-                }
-
-                //Get the sorted points
-                var allPoints = new List<Point>();
-                foreach (var path in shallowPolygonTree.AllPaths)
-                {
-                    allPoints.AddRange(path);
-                }
-
-                if (sortedPoints == null)
-                {
-                    MiscFunctions.SortAlongDirection(dirX, dirY, allPoints, out sortedPoints);
-                }
-
-                //Get the paths for each partial shape and add them together. The paths should not overlap, given
-                //that they are from non-overlapping shallow polygon trees.
-                var localSortedIntersectionOffsetPoints = new List<Point>();
-                var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
-                    out localSortedIntersectionOffsetPoints, offsetAtLine);
-                partialShape.AddRange(paths);
-                intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
-            }
-
-            return partialShape;
+            var polyTrees = CreateShallowPolygonTrees(shape, false, out _, out _);
+            return SliceAtLine(polyTrees, lineNormalDirection, distanceAlongDirection, out negativeSidePolygons, out positiveSidePolygons,
+                   offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
         }
 
-        /// <summary>
-        /// This function gets cuts shape [List(List(Point))] with a give direction and distance. If returnFurtherThanSlice = false, 
-        /// it will return the partial shape before the cutting line, otherwise those beyond the cutting line.
-        /// The returned partial shape is properly closed and ordered CCW+, CW-.
-        /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the 
-        /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
-        /// intersection points before the line).
-        /// </summary>
-        public static List<List<PointLight>> OnLine(List<List<Point>> shape, double[] direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, out List<Point> intersectionPoints,
-            double offsetAtLine = 0.0, List<(Point, double)> sortedPoints = null)
+        public static Vector2[] SliceAtLine(this IEnumerable<Polygon> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
+            out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
+            double offsetAtLineForPositiveSide = 0.0)
         {
-            var partialShape = new List<List<PointLight>>();
-            intersectionPoints = new List<Point>();
-            var shallowPolygonsTrees = ShallowPolygonTree.GetShallowPolygonTrees(shape);
-            var dirX = direction2D[0];
-            var dirY = direction2D[1];
-            foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
+            negativeSidePolygons = new List<List<Vector2>>();
+            positiveSidePolygons = new List<List<Vector2>>();
+            var intersections = new List<Vector2>();
+            foreach (var shallowPolygonTree in polyTrees)
             {
-                //Set the lines in all the polygons. These are needed for Slice.OnLine()
-                foreach (var polygon in shallowPolygonTree.AllPolygons)
-                {
-                    polygon.SetPathLines();
-                }
-
-                //Get the sorted points
-                var allPoints = new List<Point>();
-                foreach (var path in shallowPolygonTree.AllPaths)
-                {
-                    allPoints.AddRange(path);
-                }
-
-                if (sortedPoints == null)
-                {
-                    MiscFunctions.SortAlongDirection(dirX, dirY, allPoints, out sortedPoints);
-                }
-
-                //Get the paths for each partial shape and add them together. The paths should not overlap, given
-                //that they are from non-overlapping shallow polygon trees.
-                var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
-                    out var localSortedIntersectionOffsetPoints, offsetAtLine).Select(p => p.Path).ToList();
-                partialShape.AddRange(paths);
-                intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
+                intersections.AddRange(SliceAtLine(shallowPolygonTree, lineNormalDirection, distanceAlongDirection, out var thisNegativeSidePolys,
+                    out var thisPositiveSidePolys, offsetAtLineForNegativeSide, offsetAtLineForPositiveSide));
+                negativeSidePolygons.AddRange(thisNegativeSidePolys);
+                positiveSidePolygons.AddRange(thisPositiveSidePolys);
             }
 
-            return partialShape;
+            var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
+            return intersections.OrderBy(v => lineDir.Dot(v)).ToArray();
         }
 
-        /// <summary>
-        /// This function gets cuts ShallowPoygonTree with a give direction and distance. If returnFurtherThanSlice = false, 
-        /// it will return the partial shape [List(List(Point))] before the cutting line, otherwise those beyond the cutting line.
-        /// The returned partial shape is properly closed and ordered CCW+, CW-.
-        /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the 
-        /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the intersection 
-        /// intersection points before the line). 
-        /// </summary>
-        /// <param name="polyTree"></param>
-        /// <param name="direction2D"></param>
-        /// <param name="distanceAlongDirection"></param>
-        /// <param name="returnFurtherThanSlice"></param>
-        /// <param name="sortedPoints"></param>
-        /// <param name="sortedIntersectionPoints"></param>
-        /// <param name="offsetAtLine"></param>
-        /// <returns></returns>
-        public static List<PolygonLight> OnLine(ShallowPolygonTree polyTree, double[] direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, IEnumerable<(Point, double)> sortedPoints, out List<Point> sortedIntersectionPoints,
-            double offsetAtLine = 0.0)
+        public static Vector2[] SliceAtLine(this Polygon shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection,
+            out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
+            double offsetAtLineForPositiveSide = 0.0)
         {
-            if (direction2D.Length != 2) throw new Exception("2D direction must have exactly 2 dimensions");
-
+            // like 3D slicing, it is too complicated to try and manage collinear points or line segments. it is better to just change the slice
+            // distance by some small amount. This is checked and handled in the ShiftLineToAvoidCollinearPoints
+            distanceAlongDirection = ShiftLineToAvoidCollinearPoints(shallowPolygonTree, lineNormalDirection, distanceAlongDirection);
+            negativeSidePolygons = new List<List<Vector2>>();
+            positiveSidePolygons = new List<List<Vector2>>();
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
-                 Second (2), the intersection point for each of the intersection points is found.
+                 Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
                  Fourth (4), a smart slicing algorithm is used to cut the full shape into a partial shape, using 
                  the intersection points and lines.*/
 
             //(1) Find the intersection lines and the lines to the left of the current distance      
-            var intersectionLines = new HashSet<Line>();
-            var linesToLeft = new HashSet<Line>();
-            foreach (var pair in sortedPoints)
-            {
-                var distanceAlong = pair.Item2;
-                var point = pair.Item1;
-                //If the search direction is forward, then the partial shape is defined with any lines
-                //prior to the given distance. If reverse, then it is with lines further than the current distance.
-                var furtherThanSlice = distanceAlong > distanceAlongDirection;
-                if (returnFurtherThanSlice == furtherThanSlice)
+            var intersectionLines = new HashSet<PolygonSegment>();
+            var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
+            var anchorpoint = distanceAlongDirection * lineNormalDirection;
+            var sortedPoints = new SortedList<double, (Vector2, PolygonSegment)>();
+            foreach (var polygons in shallowPolygonTree.AllPolygons)
+                foreach (var line in polygons.Lines)
                 {
-                    foreach (var line in point.Lines)
-                    {
-                        if (intersectionLines.Contains(line))
-                        {
-                            intersectionLines.Remove(line);
-                            linesToLeft.Add(line);
-                        }
-                        else intersectionLines.Add(line);
-                    }
-                }
-                //else break;
-            }
-            if (!linesToLeft.Any()) throw new Exception("There must be some lines to the left");
-
-            //(2-3) Create and sort the intersection points
-            sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines, direction2D, distanceAlongDirection,
-                out var intersectionLinesByRef, out var intersectionPointsByRef);
-
-            //(4) Build the partial 2D shape
-            var partialShape = new List<PolygonLight>();
-            while (linesToLeft.Any())
-            {
-                //Note the line index is the same as the line.FromPoint.IndexInPath
-                var endLine = linesToLeft.First();
-                linesToLeft.Remove(endLine);
-
-                //Get the corresponding polygon
-                //Use copies of points, since creating a polygon will erase the 
-                //point's line references
-                var endPoint = endLine.FromPoint;
-                var currentPolygon = polyTree.AllPolygons[endPoint.PolygonIndex];
-                var endPolygonIndex = currentPolygon.Index;
-                var endLineIndex = endLine.IndexInPath;
-                var path = new List<PointLight> { endPoint.Light };
-
-                var nextLineIndex = currentPolygon.NextLineIndex(endLineIndex);
-                //Since the line index can be duplicated between polygons, we also need to check the polygon index
-                //It is the same line if its index and polygon index are the same. Then we stop.
-                while (nextLineIndex != endLineIndex || currentPolygon.Index != endPolygonIndex)
-                {
-                    var currentLineIndex = nextLineIndex;
-                    var currentLine = currentPolygon.PathLines[currentLineIndex];
-                    path.Add(currentLine.FromPoint.Light);
-                    if (intersectionLines.Contains(currentLine))
-                    {
-                        //Add the paired intersection points.
-                        //Starting from the nextLine's intersection point, then
-                        //going to its pair. From there, we may have switched polygons.
-                        var intersectionPoint = intersectionPointsByRef[currentLine.ReferenceIndex];
-                        var intersectionPointIndexInVerticalSort = intersectionPoint.IndexInPath;
-
-                        var pairedIntersectionPoint = intersectionPointIndexInVerticalSort % 2 != 0
-                            ? sortedIntersectionPoints[intersectionPointIndexInVerticalSort - 1]
-                            : sortedIntersectionPoints[intersectionPointIndexInVerticalSort + 1];
-
-                        //Add four points to the path, both intersection points and their offsets
-                        //(1) the current intersection point. 
-                        path.Add(intersectionPoint.Light);
-
-                        //(2) the offset point of the current intersection point
-                        //Each intersection point corresponds to an intersection offset point. This point
-                        //is equal to the current point + the offsetAtLine added along the search direction.
-                        var position = returnFurtherThanSlice
-                            ? intersectionPoint - (direction2D.multiply(offsetAtLine))
-                            : intersectionPoint + (direction2D.multiply(offsetAtLine));
-
-                        var intersectionOffsetPoint = new Point(position[0], position[1]);
-                        path.Add(intersectionOffsetPoint.Light);
-                        sortedIntersectionPoints.Add(intersectionOffsetPoint);
-
-                        //(3) the offset point of the next intersection point
-                        position = returnFurtherThanSlice
-                            ? pairedIntersectionPoint - (direction2D.multiply(offsetAtLine))
-                            : pairedIntersectionPoint + (direction2D.multiply(offsetAtLine));
-                        var pairedIntersectionOffsetPoint = new Point(position[0], position[1]);
-                        path.Add(pairedIntersectionOffsetPoint.Light);
-                        sortedIntersectionPoints.Add(pairedIntersectionOffsetPoint);
-
-                        //(4) the next intersection point. 
-                        path.Add(pairedIntersectionPoint.Light);
-
-                        //Update the current polygons, since it may have changed, and then update the next line index
-                        var nextLine = intersectionLinesByRef[pairedIntersectionPoint.ReferenceIndex];
-                        currentPolygon = polyTree.AllPolygons[nextLine.FromPoint.PolygonIndex];
-                        nextLineIndex = currentPolygon.NextLineIndex(nextLine.IndexInPath);
-                    }
-                    else
-                    {
-                        linesToLeft.Remove(currentLine);
-                        nextLineIndex = currentPolygon.NextLineIndex(nextLineIndex);
-                    }
-                }
-
-                //Because of the intelligent slicing operation, the paths should be ordered correctly CCW+ or CW-
-                //A negative hole could be an entire path, as long as all its lines where to the left of the sweep.
-                partialShape.Add(new PolygonLight(path));
-            }
-            return partialShape;
-        }
-
-        private static List<Point> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, double[] direction2D,
-            double distance, out Dictionary<int, Line> intersectionLinesByRef, out Dictionary<int, Point> intersectionPointsByRef)
-        {
-            intersectionLinesByRef = new Dictionary<int, Line>(intersectionLines.Count);
-            intersectionPointsByRef = new Dictionary<int, Point>(intersectionLines.Count);
-            //Any line that is left in line hash, must be an intersection line.
-            var refIndex = 0;
-            foreach (var line in intersectionLines)
-            {
-                var intersectionPoint = MiscFunctions.PointOnPlaneFromIntersectingLine(direction2D, distance, line);
-                line.ReferenceIndex = refIndex;
-                intersectionPoint.ReferenceIndex = refIndex;
-                intersectionLinesByRef.Add(refIndex, line);
-                intersectionPointsByRef.Add(refIndex, intersectionPoint);
-                refIndex++;
-            }
-            if (intersectionLines.Count == 0 || intersectionLines.Count % 2 != 0)
-            {
-                throw new Exception("There must be a non-zero, even number of intersection lines");
-            }
-            //var searchDirectionPerpendicular = new[] {-direction2D[1], direction2D[0]};
-            MiscFunctions.SortAlongDirection(-direction2D[1], direction2D[0], intersectionPointsByRef.Values.ToList(),
-                    out List<Point> sortedIntersectionPoints);
-            if (sortedIntersectionPoints.Count % 2 != 0)
-            {
-                throw new Exception("There must be an even number of intersection points");
-            }
-            //Set each points position in this sorted list
-            //The points are paired together, such that sortedIntersectionPoints[0] has a line to 
-            //sortedIntersectionPoints[1], [2]<=>[3], [4]<=>[5], and so on.
-            for (var i = 0; i < sortedIntersectionPoints.Count; i++)
-            {
-                sortedIntersectionPoints[i].IndexInPath = i;
-            }
-            return sortedIntersectionPoints;
-        }
-
-        public static Dictionary<double, List<double>> IntersectionPointsAtUniformDistancesAlongX(
-            IEnumerable<PolygonLight> shape, double lowerBound, double distanceBetweenLines, int numLines)
-        {
-            //var shapeForDebugging = new List<List<PointLight>>();
-            //foreach (var polygon in shape)
-            //{
-            //    shapeForDebugging.Add(polygon.Path);//PolygonOperations.SimplifyFuzzy(
-            //}
-
-
-            //Set the lines in all the polygons. These are needed for Slice.OnLine()
-            //Also, get the sorted points
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
-            var allPoints = polygons.SelectMany(poly => poly.Path);
-            var sortedPoints = allPoints.OrderBy(p => p.X).ToList();
-
-            var i = 0;
-            var distanceAlongDirection =
-                (Math.Ceiling((sortedPoints[0].X - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
-                lowerBound;
-            var numIntersectionLines = 0;
-            var intersectionLines = new HashSet<Line>();
-            var intersectionPoints = new Dictionary<double, List<double>>(numLines);
-            foreach (var point in sortedPoints)
-            {
-                var pointDistance = point.X;
-
-                while (pointDistance > distanceAlongDirection)
-                {
-                    if (numIntersectionLines > 0)
-                    {
-                        intersectionPoints.Add(distanceAlongDirection,
-                            GetYIntersectionsSortedAlongY(intersectionLines, distanceAlongDirection).ToList());
-                        //Presenter.ShowAndHang(shapeForDebugging);
-                    }
-
-                    //Update the distance along
-                    i++;
-                    distanceAlongDirection += distanceBetweenLines;
-                }
-
-                //Update the intersection lines
-                foreach (var line in point.Lines)
-                {
-                    if (intersectionLines.Contains(line))
-                    {
-                        intersectionLines.Remove(line);
-                        numIntersectionLines--;
-                    }
-                    else
+                    if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
+                         anchorpoint, lineDir, out var intersectionPoint))
                     {
                         intersectionLines.Add(line);
-                        numIntersectionLines++;
+                        var distanceAlong = lineDir.Dot(intersectionPoint);
+                        sortedPoints.Add(distanceAlong, (intersectionPoint, line));
+                        //!line.ToPoint.Coordinates.Dot(lineNormalDirection).IsLessThanNonNegligible(distanceAlongDirection));
                     }
                 }
-            }
+            // we don't really need the distances, so  convert the values to an array
+            var pointsOnLineTuples = sortedPoints.Values.ToArray();
+            // this is what is returned. although now sure if this is useful in any case
 
-            //Presenter.ShowAndHang(intersectionPoints);
-            return intersectionPoints;
+            #region patching up negative side polygons
+            for (int i = 0; i < pointsOnLineTuples.Length; i++)
+            {
+                // the first segment in the list should be passing from negative side to positive side (item3 should be true)
+                var newSegmentTupleA = pointsOnLineTuples[i];
+                i++;
+                //  the second segment in the list should be passing from the positive to the negative side (item should be false)
+                var newSegmentTupleB = pointsOnLineTuples[i];
+                // throw an error if that's not the case
+                //if (!newSegmentTupleA.Item3 || newSegmentTupleB.Item3)
+                //    throw new Exception("the first should always be positive and the second should be negative.");
+
+                // get the coordinates of the points on the line. note that the user may want these shifted
+                var negSideFrom = newSegmentTupleA.Item1;
+                var negSideTo = newSegmentTupleB.Item1;
+                if (offsetAtLineForNegativeSide != 0)
+                {
+                    negSideFrom += offsetAtLineForNegativeSide * lineNormalDirection;
+                    negSideTo += offsetAtLineForNegativeSide * lineNormalDirection;
+                }
+                // see if there is an existing polygon that ends where this one start
+                var existingNegSidePolygon = negativeSidePolygons.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
+                if (existingNegSidePolygon == null)
+                {
+                    existingNegSidePolygon = new List<Vector2>();
+                    negativeSidePolygons.Add(existingNegSidePolygon);
+                }
+                existingNegSidePolygon.Add(negSideFrom);
+                existingNegSidePolygon.Add(negSideTo);
+                var polySegment = newSegmentTupleB.Item2;
+                do
+                {
+                    if (existingNegSidePolygon[0].Equals(polySegment.ToPoint.Coordinates)) break;
+                    existingNegSidePolygon.Add(polySegment.ToPoint.Coordinates);
+                    polySegment = polySegment.ToPoint.StartLine;
+                }
+                while (!intersectionLines.Contains(polySegment));
+
+            }
+            #endregion
+            #region patching up positive side polygons
+            for (int i = sortedPoints.Count - 1; i >= 0; i--)
+            {
+                var newSegmentTupleA = pointsOnLineTuples[i];
+                i--;
+                var newSegmentTupleB = pointsOnLineTuples[i];
+
+                var posSideFrom = newSegmentTupleA.Item1;
+                var posSideTo = newSegmentTupleB.Item1;
+                if (offsetAtLineForPositiveSide != 0)
+                {
+                    posSideFrom -= offsetAtLineForPositiveSide * lineNormalDirection;
+                    posSideTo -= offsetAtLineForPositiveSide * lineNormalDirection;
+                }
+                var existingPosSidePolygon = positiveSidePolygons.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
+                if (existingPosSidePolygon == null)
+                {
+                    existingPosSidePolygon = new List<Vector2>();
+                    positiveSidePolygons.Add(existingPosSidePolygon);
+                }
+                existingPosSidePolygon.Add(posSideFrom);
+                existingPosSidePolygon.Add(posSideTo);
+                var polySegment = newSegmentTupleB.Item2;
+                do
+                {
+                    if (existingPosSidePolygon[0].Equals(polySegment.ToPoint.Coordinates)) break;
+                    existingPosSidePolygon.Add(polySegment.ToPoint.Coordinates);
+                    polySegment = polySegment.ToPoint.StartLine;
+                }
+                while (!intersectionLines.Contains(polySegment));
+
+            }
+            #endregion
+            return pointsOnLineTuples.Select(p => p.Item1).ToArray();
         }
 
-        public static Dictionary<double, List<double>> IntersectionPointsAtUniformDistancesAlongY(
-            IEnumerable<PolygonLight> shape, double lowerBound, double distanceBetweenLines, int numLines)
+        private static double ShiftLineToAvoidCollinearPoints(Polygon shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection)
         {
-            //Set the lines in all the polygons. These are needed for Slice.OnLine()
-            //Also, get the sorted points
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
-            var allPoints = polygons.SelectMany(poly => poly.Path);
-            var sortedPoints = allPoints.OrderBy(p => p.Y).ToList();
-
-            var i = 0;
-            var distanceAlongDirection =
-                (Math.Ceiling((sortedPoints[1].Y - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
-                lowerBound;
-            var numIntersectionLines = 0;
-            var intersectionLines = new HashSet<Line>();
-            var intersectionPoints = new Dictionary<double, List<double>>(numLines);
-            foreach (var point in sortedPoints)
-            {
-                var pointDistance = point.Y;
-
-                while (pointDistance > distanceAlongDirection)
+            // for simplicity set the tolerance and nextStep, which is the delta so that IsPracticallySame won't return true. 
+            var tolerance = Constants.BaseTolerance;
+            var nextStep = 1.1 * tolerance;
+            var collinearPointFound = false;
+            var closestPointAbove = double.PositiveInfinity;
+            var closestPointBelow = double.NegativeInfinity;
+            // search through all points to see if any are collinear. If not, keep track of the closest points
+            foreach (var polygons in shallowPolygonTree.AllPolygons)
+                foreach (var vertex in polygons.Vertices)
                 {
-                    if (numIntersectionLines > 0)
-                    {
-                        intersectionPoints.Add(distanceAlongDirection,
-                            GetXIntersectionsSortedAlongX(intersectionLines, distanceAlongDirection).ToList());
-                        //Presenter.ShowAndHang(shapeForDebugging);
-                    }
-
-                    //Update the distance along
-                    i++;
-                    distanceAlongDirection += distanceBetweenLines;
-                }
-
-                //Update the intersection lines
-                foreach (var line in point.Lines)
-                {
-                    if (intersectionLines.Contains(line))
-                    {
-                        intersectionLines.Remove(line);
-                        numIntersectionLines--;
-                    }
+                    var vDistance = vertex.Coordinates.Dot(lineNormalDirection);
+                    if (vDistance.IsPracticallySame(distanceAlongDirection, tolerance)) collinearPointFound = true;
                     else
                     {
-                        intersectionLines.Add(line);
-                        numIntersectionLines++;
+                        vDistance -= distanceAlongDirection;
+                        if (vDistance > 0)
+                        { if (closestPointAbove > vDistance) closestPointAbove = vDistance; }
+                        else if (closestPointBelow < vDistance) closestPointBelow = vDistance;
                     }
                 }
-            }
-            //Presenter.ShowAndHang(intersectionPoints);
-            return intersectionPoints;
-        }
-
-        private static double[] GetYIntersectionsSortedAlongY(HashSet<Line> intersectionLines, double x)
-        {
-            var n = intersectionLines.Count;
-            var intersectionPoints = new List<double>(n);
-            var refIndex = 0;
-            foreach (var line in intersectionLines)
-            {
-                intersectionPoints.Add(line.YGivenX(x));
-                refIndex++;
-            }
-            return intersectionPoints.OrderBy(p => p).ToArray();
-        }
-
-        private static double[] GetXIntersectionsSortedAlongX(HashSet<Line> intersectionLines, double y)
-        {
-            var n = intersectionLines.Count;
-            var intersectionPoints = new List<double>(n);
-            var refIndex = 0;
-            foreach (var line in intersectionLines)
-            {
-                intersectionPoints.Add(line.XGivenY(y));
-                refIndex++;
-            }
-            return intersectionPoints.OrderBy(p => p).ToArray();
+            // nothing is collinear (or within tolerance), so return original value
+            if (!collinearPointFound) return distanceAlongDirection;
+            // if there are collinear points, but next non collinear is greater than 2 nextSteps (s.t. collinear won't be detected there)
+            // then return the original distance plus 110% of the tolerance (i.e. nextStep)
+            if (closestPointAbove >= 2 * nextStep) return distanceAlongDirection + nextStep;
+            // same for the reverse
+            if (-closestPointBelow >= 2 * nextStep) return distanceAlongDirection - nextStep;
+            // otherwise, there are points that are going to be collinear with this new value, so we recurse in both directions. moving to the
+            // closestPointAbove and the closestPointBelow means that there will be overlap on the inner side, but hopefully not on the outer side.
+            // thus calling one of the previous two conditions. At any rate, this "can" recurse to arbitrary depth, which provideds robustness. 
+            // But it is unlikely to do so. So, it is still quite robust.
+            var nextPositiveStep = ShiftLineToAvoidCollinearPoints(shallowPolygonTree, lineNormalDirection, distanceAlongDirection + closestPointAbove);
+            var nextNegativeStep = ShiftLineToAvoidCollinearPoints(shallowPolygonTree, lineNormalDirection, distanceAlongDirection + closestPointBelow);
+            if (nextPositiveStep - distanceAlongDirection < distanceAlongDirection - nextNegativeStep) return nextPositiveStep;
+            else return nextNegativeStep;
         }
     }
 }

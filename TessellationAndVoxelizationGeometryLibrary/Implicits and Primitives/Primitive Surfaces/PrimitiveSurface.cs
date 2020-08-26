@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -184,7 +185,7 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public abstract void Transform(double[,] transformMatrix);
+        public abstract void Transform(Matrix4x4 transformMatrix);
 
         /// <summary>
         ///     Checks if face should be a member of this surface

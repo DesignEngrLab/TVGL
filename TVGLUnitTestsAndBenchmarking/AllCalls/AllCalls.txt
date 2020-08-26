@@ -1,0 +1,508 @@
+
+    public class CrossSectionSolid 
+        public Dictionary<int, List<List<Vertex>>> Layer3D;
+        public Dictionary<int, List<List<Vector2>>> Layer2D;
+        //public List<List<Vertex>>[] Layer3D { get; set; }
+        //public List<List<Vector2>>[] Layer2D { get; }
+        public Dictionary<int, double> StepDistances { get; }
+        //public Vector2 StepDistances { get; }
+        public Vector3 Direction { get;  }
+        public Matrix4x4 TransformMatrix { get; set; } = Matrix4x4.Identity;
+        public int NumLayers { get; set; }
+        public CrossSectionSolid(Dictionary<int, double> stepDistances)
+        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
+        public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Dictionary<int, List<List<Vector2>>> Layer2D, Vector3[] bounds = null,
+        public static CrossSectionSolid CreateFromTessellatedSolid(TessellatedSolid ts, CartesianDirections direction, int numberOfLayers)
+        public void Add(List<Vertex> feature3D, List<Vector2> feature2D, int layer)
+        public void SetAllVertices()
+        public void SetVerticesByLayer(int i)
+        public void SetVolume(bool extrudeBack = true)
+        //public void SetVolume()
+        public IReadOnlyCollection<PolygonalFace> ConvertToTessellatedExtrusions(bool extrudeBack = true)
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(double gridSize)
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int approximateNumberOfTriangles = -1)
+        public override Solid Copy()
+        public override void Transform(Matrix4x4 transformMatrix)
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
+    public static class Extrude
+        public static TessellatedSolid ExtrusionSolidFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static List<PolygonalFace> ExtrusionFacesFrom3DLoops(this IEnumerable<IEnumerable<Vector3>> loops, Vector3 extrudeDirection,
+        public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
+    public class Cylinder 
+        public override bool IsNewMemberOf(PolygonalFace face)
+        public override void UpdateWith(PolygonalFace face)
+        public bool BuildIfCylinderIsHole(bool isPositive)
+        public override void Transform(Matrix4x4 transformMatrix)
+        public bool IsPositive { get; private set; }
+        public bool IsValid { get; private set; }
+        public Vector3 Anchor { get; private set; }
+        public Vector3 Axis { get; set; }
+        public double Radius { get; private set; }
+        public double MaxDistanceAlongAxis { get; set; }
+        public double MinDistanceAlongAxis { get; set; }
+        public double Height { get; private set; }
+        public double Volume { get; }
+        public HashSet<Vertex> Loop1 { get; set; }
+        public HashSet<Vertex> Loop2 { get; set; }
+        public List<Edge> EdgeLoop1 { get; set; }
+        public List<Edge> EdgeLoop2 { get; set; }
+        public HashSet<Flat> SmallFlats { get; set; }
+        public List<Vector2> Loop2D { get; set; }
+        public Cylinder(IEnumerable<PolygonalFace> faces, bool buildOnlyIfHole, bool isPositive,
+        public Cylinder(IEnumerable<PolygonalFace> facesAll, Vector3 axis)
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double dxOfBottomPlane,
+        //public TessellatedSolid AsTessellatedSolid()
+    public static class MiscFunctions
+        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vertex> vertices,
+        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vector3> vertices,
+        public static void SortAlongDirection(Vector2 direction, IList<Vector2> points,
+        public static void SortAlongDirection(Vector2 direction, IList<Vector2> points,
+        public static double Perimeter(IList<Vertex> polygon3D)
+        public static List<PolygonalFace> FacesWithDistinctNormals(IEnumerable<PolygonalFace> faces,
+        public static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+        public static double AreaOf3DPolygon(IEnumerable<Vertex> loop, Vector3 normal)
+        public static double AreaOf3DPolygon(IEnumerable<Vector3> loop, Vector3 normal)
+        public static List<TessellatedSolid> GetMultipleSolids(TessellatedSolid ts)
+        public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
+        public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Matrix4x4 transform,
+        public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Vector3 direction,
+        public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Matrix4x4 transform,
+        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Vector3 direction, out Matrix4x4 backTransform)
+        public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Matrix4x4 matrix)
+        public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Vector3 normalDirection,
+        public static Vector3 ConvertTo3DLocation(this in Vector2 coordinates2D, in Matrix4x4 transform)
+        public static Matrix4x4 TransformToXYPlane(Vector3 direction, out Matrix4x4 backTransform)
+        public static Vector3 GetPerpendicularDirection(this Vector3 direction)
+        public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
+        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
+        public static double ExteriorAngleBetweenEdgesInCCWList(Vector2 v0, Vector2 v1)
+        public static double InteriorAngleBetweenEdgesInCCWList(Vector2 v0, Vector2 v1)
+        public static bool SegmentSegment2DIntersection(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2,
+        public static bool SegmentLine2DIntersection(Vector2 p1, Vector2 p2, Vector2 qAnchor, Vector2 qDirection,
+        public static Vector3 PointCommonToThreePlanes(Vector3 n1, double d1, Vector3 n2, double d2, Vector3 n3,
+        public static Flat GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)
+        public static void LineIntersectingTwoPlanes(Vector3 n1, double d1, Vector3 n2, double d2,
+        public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector)
+        public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector,
+        public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector,
+        public static double DistancePointToPoint(Vertex v1, Vertex v2)
+        public static double DistancePointToPlane(Vector3 point, Vector3 normalOfPlane, Vector3 positionOnPlane)
+        public static double DistancePointToPlane(Vector3 point, Vector3 normalOfPlane, double signedDistanceToPlane)
+        public static Vector3 PointOnFaceFromIntersectingLine(this PolygonalFace face, Vector3 point1, Vector3 point2)
+        public static Vector3 PointOnFaceFromIntersectingLine(List<Vector3> vertices, Vector3 normal, Vector3 point1,
+        public static Vertex PointOnPlaneFromIntersectingLineSegment(Vector3 normalOfPlane, double distOfPlane, Vertex point1,
+        public static Vector3 PointOnPlaneFromIntersectingLineSegment(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
+        public static Vector2 Vector2OnZPlaneFromIntersectingLine(double distOfPlane, Vertex point1,
+        public static Vector3 PointOnPlaneFromIntersectingLine(Vector3 normalOfPlane, double distOfPlane, Vector3 point1,
+        public static void Vector2OnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane,
+        public static Vector3 PointOnPlaneFromRay(Vector3 normalOfPlane, double distOfPlane, Vector3 rayPosition,
+        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vertex vertex, Vector3 direction,
+        public static Vector3 PointOnTriangleFromLine(PolygonalFace face, Vector3 point3D, Vector3 direction,
+        public static Vector3 PointOnTriangleFromLine(this PolygonalFace face, Vector3 point3D, CartesianDirections direction,
+        public static List<Vector2> CreateCirclePath(Vector2 center, double radius, double radianIncrement = Math.PI / 50.0)
+        public static List<Vector2> CreateCirclePath(BoundingCircle circle, double radianIncrement = Math.PI / 50.0)
+        public static bool IsVertexInsideTriangle(IList<Vertex> triangle, Vector3 vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vector3> triangle, Vector3 pointInQuestion,
+        public static bool IsVertexInsideSolid(TessellatedSolid ts, Vertex vertexInQuestion,
+    public double X;
+    public double Y;
+    public DoublePoint(double x = 0, double y = 0)
+    public DoublePoint(DoublePoint dp)
+    public DoublePoint(IntPoint ip)
+      public void Clear() 
+      public PolyNode GetFirst()
+      public int Total
+      public int ChildCount
+      public Path Contour
+      public PolyNode GetNext()
+      public List<PolyNode> Childs
+      public PolyNode Parent
+      public bool IsHole
+      public bool IsOpen { get; set; }
+    public Int128(Int64 _lo)
+    public Int128(Int64 _hi, UInt64 _lo)
+    public Int128(Int128 val)
+    public bool IsNegative()
+    public static bool operator ==(Int128 val1, Int128 val2)
+    public static bool operator !=(Int128 val1, Int128 val2)
+    public override bool Equals(System.Object obj)
+    public override int GetHashCode()
+    public static bool operator >(Int128 val1, Int128 val2)
+    public static bool operator <(Int128 val1, Int128 val2)
+    public static Int128 operator +(Int128 lhs, Int128 rhs)
+    public static Int128 operator -(Int128 lhs, Int128 rhs)
+    public static Int128 operator -(Int128 val)
+    public static explicit operator double(Int128 val)
+    public static Int128 Int128Mul(Int64 lhs, Int64 rhs)
+    public cInt X;
+    public cInt Y;
+    public cInt Z;
+    public IntPoint(cInt x, cInt y, cInt z = 0)
+    public IntPoint(double x, double y, double z = 0)
+    public IntPoint(DoublePoint dp)
+    public IntPoint(IntPoint pt)
+    public IntPoint(cInt X, cInt Y)
+    public IntPoint(double x, double y)
+    public IntPoint(IntPoint pt)
+    public static bool operator ==(IntPoint a, IntPoint b)
+    public static bool operator !=(IntPoint a, IntPoint b)
+    public override bool Equals(object obj)
+    public override int GetHashCode()
+    public cInt left;
+    public cInt top;
+    public cInt right;
+    public cInt bottom;
+    public IntRect(cInt l, cInt t, cInt r, cInt b)
+    public IntRect(IntRect ir)
+    public int Compare(IntersectNode node1, IntersectNode node2)
+    public const cInt loRange = 0x7FFF;
+    public const cInt hiRange = 0x7FFF;
+    public const cInt loRange = 0x3FFFFFFF;
+    public const cInt hiRange = 0x3FFFFFFFFFFFFFFFL; 
+    public bool PreserveCollinear
+    public void Swap(ref cInt val1, ref cInt val2)
+    public virtual void Clear()
+    public bool AddPath(Path pg, PolyType polyType, bool Closed)
+    public bool AddPaths(Paths ppg, PolyType polyType, bool closed)
+    public static IntRect GetBounds(Paths paths)
+      public const int ioReverseSolution = 1;
+      public const int ioStrictlySimple = 2;
+      public const int ioPreserveCollinear = 4;
+      public delegate void ZFillCallback(IntPoint bot1, IntPoint top1, 
+      public ZFillCallback ZFillFunction { get; set; }
+      public Clipper(int InitOptions = 0)
+      public bool ReverseSolution
+      public bool StrictlySimple
+      public bool Execute(ClipType clipType, Paths solution, 
+      public bool Execute(ClipType clipType, PolyTree polytree,
+      public bool Execute(ClipType clipType, Paths solution,
+      public bool Execute(ClipType clipType, PolyTree polytree,
+      public static void ReversePaths(Paths polys)
+      public static bool Orientation(Path poly)
+      public static int PointInPolygon(IntPoint pt, Path path)
+      public static double Area(Path poly)
+      public static Paths SimplifyPolygon(Path poly, 
+      public static Paths SimplifyPolygons(Paths polys,
+      public static Path CleanPolygon(Path path, double distance = 1.415)
+      public static Paths CleanPolygons(Paths polys,
+      public static Paths MinkowskiSum(Path pattern, Path path, bool pathIsClosed)
+      public static Paths MinkowskiSum(Path pattern, Paths paths, bool pathIsClosed)
+      public static Paths MinkowskiDiff(Path poly1, Path poly2)
+      public static Paths PolyTreeToPaths(PolyTree polytree)
+      public static Paths OpenPathsFromPolyTree(PolyTree polytree)
+      public static Paths ClosedPathsFromPolyTree(PolyTree polytree)
+    public double ArcTolerance { get; set; }
+    public double MiterLimit { get; set; }
+    public ClipperOffset(
+    public void Clear()
+    public void AddPath(Path path, JoinType joinType, EndType endType)
+    public void AddPaths(Paths paths, JoinType joinType, EndType endType)
+    public void Execute(Paths solution, double delta)
+    public void Execute(PolyTree solution, double delta)
+      public ClipperException(string description) 
+    public enum MonotonicityChange { X, Y, Both, Neither }
+    public struct MonotoneBox
+        public int LowIndex { get; }
+        public int HiIndex { get; }
+        public double Left { get; }
+        public double Right { get; }
+        public double Bottom { get; }
+        public double Top { get; }
+        public MonotonicityChange LowChange { get; }
+        public MonotonicityChange HiChange { get; }
+        public bool XInPositiveMonotonicity { get; }
+        public bool YInPositiveMonotonicity { get; }
+        public MonotoneBox(IList<Vector2> p, int lowIndex, int hiIndex, MonotonicityChange lowMonoChange,
+        public double Area()
+    public static class PolygonOperations
+        public static List<MonotoneBox> PartitionIntoMonotoneBoxes(IEnumerable<Vector2> polygon)
+    public class Polygon
+        public List<Vector2> Path
+        public List<Vertex2D> Vertices
+        public List<PolygonSegment> Lines
+        public List<Polygon> InnerPolygons
+        public int Index { get; set; }
+        public bool IsPositive
+        public void Reverse()
+        public double Area
+        public double MaxX
+        public double MinX
+        public double MaxY
+        public double MinY
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
+        public Polygon(List<Vertex2D> points, List<PolygonSegment> lines, int index = -1)
+        public bool IsConvex()
+    public static class PolygonOperations
+        public static double Perimeter(this IEnumerable<IEnumerable<Vector2>> paths)
+        public static double Perimeter(this IEnumerable<Vector2> polygon)
+        public static double Area(this IEnumerable<IEnumerable<Vector2>> paths)
+        public static double Area(this IEnumerable<Vector2> polygon)
+        public static bool IsPositive(this IEnumerable<Vector2> polygon)
+        public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vector2> coordinates)
+        public static IEnumerable<Vector2> ConvertToVector2s(this IEnumerable<double> coordinates)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths)
+        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
+        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+        public static bool IsRectangular(this IEnumerable<Vector2> polygon, out Vector2 dimensions, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(this Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(this IEnumerable<Vector2> polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
+        public static bool IsPolygonIntersectingPolygon(this Polygon subject, Polygon clip)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
+        public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
+        public static List<List<Vector2>> Simplify(this IEnumerable<Vector2> path, int targetNumberOfPoints)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
+            public int Compare(double x, double y)
+            public int Compare(double x, double y)
+            public int Compare(double x, double y)
+        public static List<List<Vector2>> OffsetRound(this IEnumerable<Vector2> path, double offset,
+        public static List<List<Vector2>> OffsetRound(this IEnumerable<IEnumerable<Vector2>> paths, double offset,
+        public static List<List<Vector2>> OffsetMiter(this IEnumerable<Vector2> path, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetMiter(this IEnumerable<IEnumerable<Vector2>> paths, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetSquare(this IEnumerable<Vector2> path, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetSquare(this IEnumerable<IEnumerable<Vector2>> paths, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, bool simplifyPriorToUnion = true,
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
+        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clip,
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip,
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToXor = true,
+            public int Count => _sweepEvents.Count;
+            public SweepEvent Next(int i)
+            public SweepEvent Previous(int i)
+            public SweepEvent PreviousOther(int i)
+            public SweepEvent PreviousInResult(int i)
+            public void RemoveAt(int i)
+            public int Insert(SweepEvent se1)
+            public int Find(SweepEvent se)
+            public SweepEvent Item(int i)
+            public int IndexInList { get; set; }
+            public Vector2 Point { get; } //the point for this sweep event
+            public bool Left { get; } //The left endpoint of the line
+            public bool From { get; } //The point comes first in the path.
+            public SweepEvent OtherEvent { get; set; } //The event of the other endpoint of this line
+            public PolygonType PolygonType { get; } //Whether this line was part of the Subject or Clip
+            public bool LeftToRight { get; }
+            public bool OtherInOut { get; set; }
+            public bool InResult { get; set; }
+            public SweepEvent PrevInResult { get; set; }
+            public int PositionInResult { get; set; }
+            //public bool ResultInsideOut { get; set; } //The field ResultInsideOut is set to true if the right endpoint sweep event precedes the left endpoint sweepevent in the path.
+            public int PathID { get; set; }
+            public int ParentPathID { get; set; }
+            public bool Processed { get; set; } //If this sweep event has already been processed in the sweep
+            public int Depth { get; set; }
+            public SweepEvent DuplicateEvent { get; set; }
+            public SweepEvent(Vector2 point, bool isLeft, bool isFrom, PolygonType polyType)
+            public double Slope => _slope.Value;
+            public OrderedSweepEventList(IEnumerable<SweepEvent> sweepEvents)
+            public void Insert(SweepEvent se1)
+            public bool Any()
+            public SweepEvent First()
+            public void RemoveAt(int i)
+        public static List<List<Vector2>> Mirror(List<List<Vector2>> shape, Vector2 direction2D)
+    public class ShallowPolygonTree
+        public IList<Polygon> InnerPolygons;
+        public readonly Polygon OuterPolygon;
+        public IList<Polygon> AllPolygons => new List<Polygon>(InnerPolygons) {OuterPolygon};
+        public IList<List<Vector2>> AllPaths => AllPolygons.Select(polygon => polygon.Path).ToList();
+        public double Area => AllPolygons.Sum(p => p.Area);
+    public class StatisticCollection 
+        public int Count => list.Count;
+        public bool IsReadOnly => false;
+        public double NthOrderStatistic(int n, Random rnd = null)
+        public double Maximum
+        public double Minimum
+        public double Median
+        public double Mean
+        public double VarianceFromMean
+        public double VarianceFromMedian
+        public void Add(double item)
+        public void Clear()
+        public bool Contains(double item)
+        public void CopyTo(double[] array, int arrayIndex)
+        public bool Remove(double item)
+        public IEnumerator<double> GetEnumerator()
+        public double NormalizedRootMeanSquareError(double targetValue)
+    public class BoundingBox
+        public BoundingBox(double[] dimensions, Vector3[] directions, IVertex3D minPointOnDirection0,
+        public BoundingBox(double[] dimensions, Vector3[] directions, Vector3 translationFromOrigin)
+        public BoundingBox(double[] dimensions, Matrix4x4 transform)
+        public BoundingBox(double[] dimensions, Vector3[] directions, IList<IEnumerable<IVertex3D>> pointsOnFaces)
+        public double[] Dimensions { get; }
+        public Matrix4x4 Transform { get; private set; }
+        public IVertex3D[][] PointsOnFaces { get; private set; }
+        public Vector3[] Directions
+        public Vector3 TranslationFromOrigin
+        public Vector3[] Corners
+        public Vector3 Center
+        public double Volume => Dimensions[0] * Dimensions[1] * Dimensions[2];
+        public TessellatedSolid AsTessellatedSolid
+        public IList<int> SortedDirectionIndicesByLength
+        public IList<Vector3> SortedDirectionsByLength
+        public double[] SortedDimensions
+        public BoundingBox Copy()
+        public BoundingBox MoveFaceOutwardToNewSolid(Vector3 direction, double distance)
+        public void MoveFaceOutward(Vector3 direction, double distance)
+        public BoundingBox MoveFaceOutwardToNewSolid(CartesianDirections face, double distance)
+        public void MoveFaceOutward(CartesianDirections face, double distance)
+    public struct BoundingRectangle
+        public double Area;
+        public Vector2[] CornerPoints;
+        public List<Vector2>[] PointsOnSides;
+        public Vector2 LengthDirection;
+        public Vector2 WidthDirection;
+        public double Length;
+        public double Width;
+        public Vector2 CenterPosition;
+        public void SetCornerPoints()
+    public struct BoundingCircle
+        public Vector2 Center;
+        public double Radius;
+        public double Area;
+        public double Circumference;
+        public BoundingCircle(double radius, Vector2 center)
+    public static class MinimumEnclosure
+        public static BoundingCircle MinimumCircle(this IEnumerable<Vector2> points)
+        public static BoundingCircle MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
+        public static BoundingCircle MaximumInnerCircle(this List<Polygon> polygons, Vector2 centerPoint)
+        public static Cylinder MinimumBoundingCylinder(this IEnumerable<Vertex> convexHullVertices)
+    public static class MinimumEnclosure
+        public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> polygon, bool pointsAreConvexHull = false,
+        public static BoundingBox OrientedBoundingBox(this TessellatedSolid ts)
+        public static BoundingBox OrientedBoundingBox(this IList<IVertex3D> convexHullVertices)
+        public static double GetLengthAndExtremeVertices(this IEnumerable<IVertex3D> vertices, Vector3 direction,
+        public static double GetLengthAndExtremeVertices(this IEnumerable<Vector3> vertices, Vector3 direction,
+        public static double GetLengthAndExtremeVertex(this IEnumerable<IVertex3D> vertices, Vector3 direction,
+        public static double GetLengthAndExtremePoints(this IEnumerable<Vector2> points, Vector2 direction2D,
+        public static BoundingBox FindOBBAlongDirection(this IEnumerable<IVertex3D> vertices, Vector3 direction)
+    public static class ModifyTessellation
+        public static void SimplifyFlatPatches(this TessellatedSolid ts)
+        public static void Simplify(this TessellatedSolid ts)
+        public static void Simplify(this TessellatedSolid ts, int numberOfFacesToRemove)
+        public static void Simplify(this TessellatedSolid ts, double minLength)
+        public static void Simplify(TessellatedSolid ts, int numberOfFaces, double minLength)
+    public class ContactData
+        public readonly IEnumerable<IntersectionGroup> IntersectionGroups;
+        public readonly IEnumerable<SolidContactData> SolidContactData;
+        public IEnumerable<SolidContactData> PositiveSideContactData => SolidContactData.Where(s => s.OnPositiveSide);
+        public IEnumerable<SolidContactData> NegativeSideContactData => SolidContactData.Where(s => s.OnNegativeSide);
+        public readonly Flat Plane;
+    public class SolidContactData
+        public List<GroupOfLoops> GroupsOfLoops;
+        public bool OnPositiveSide { get; }
+        public bool OnNegativeSide { get; }
+        public double Volume()
+        public readonly IEnumerable<Loop> PositiveLoops;  
+        public readonly IEnumerable<Loop> NegativeLoops;
+        public List<Loop> AllLoops
+        public readonly double Area;
+        public readonly IEnumerable<PolygonalFace> OnSideFaces;
+        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+        public readonly IEnumerable<PolygonalFace> OnPlaneFaces;
+        public List<PolygonalFace> AllFaces
+    public class IntersectionGroup
+        public readonly List<List<Vector2>> Intersection2D;
+        public readonly HashSet<GroupOfLoops> GroupOfLoops;
+        public List<int> GetLoopIndices()
+        public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops, 
+        public int Index { get; }
+    public class GroupOfLoops
+        public readonly Loop PositiveLoop;
+        public readonly IEnumerable<Loop> NegativeLoops;
+        public List<Loop> AllLoops
+        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+        public readonly IEnumerable<int> AdjOnsideFaceIndices;
+        public readonly IEnumerable<int> StraddleFaceIndices;
+        public readonly IEnumerable<PolygonalFace> OnPlaneFaces;
+        public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
+        public List<List<Vector2>> CrossSection2D;
+        public void SetCrossSection2D(Flat plane)
+        public class Loop
+        public Vertex[] VertexLoop;
+        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+        public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
+        public bool IsPositive
+        public readonly double Perimeter;
+        public double Area;
+        public readonly bool IsClosed;
+        public readonly IEnumerable<int> AdjOnsideFaceIndices;
+        public readonly IEnumerable<int> StraddleFaceIndices;
+        public readonly int Index;
+        public readonly bool PositiveSide;
+    public static class Slice
+        public static void SliceOnInfiniteFlat(this TessellatedSolid ts, Flat plane,
+        public static void SliceOnFiniteFlatByIngoringIntersections(this TessellatedSolid ts, Flat plane,
+        public static void SliceOnFlatAsSingleSolids(this TessellatedSolid ts, Flat plane,
+        public static bool GetSliceContactData(this TessellatedSolid ts, Flat plane, out ContactData contactData, bool setIntersectionGroups,
+        public static void MakeSolids(this ContactData contactData, UnitType unitType, out List<TessellatedSolid> solids)
+        public static void MakeSingleSolidOnEachSideOfInfitePlane(this ContactData contactData, UnitType unitType, out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
+            public Vertex IntersectVertex;
+            public Vertex OffSideVertex;
+            public Vertex OriginalOffSideVertex;
+            public Vertex OnSideVertex;
+            public Edge Edge;
+            public PolygonalFace OwnedFace;
+            public PolygonalFace OtherFace;
+            public PolygonalFace NextFace(PolygonalFace face)
+    public class TessellatedSolid 
+        public PolygonalFace[] Faces { get; private set; }
+        public Edge[] Edges { get; private set; }
+        public Edge[] BorderEdges { get; private set; }
+        public Vertex[] Vertices { get; private set; }
+        public int NumberOfFaces { get; private set; }
+        public int NumberOfVertices { get; private set; }
+        public int NumberOfEdges { get; private set; }
+        public override Matrix3x3 InertiaTensor
+        public TessellationError Errors { get; internal set; }
+        public TessellatedSolid() { }
+        public TessellatedSolid(IList<List<Vector3>> vertsPerFace, IList<Color> colors,
+        public TessellatedSolid(IList<Vector3> vertices, IList<int[]> faceToVertexIndices,
+        public TessellatedSolid(IEnumerable<PolygonalFace> faces, IEnumerable<Vertex> vertices = null, bool copyElements = true,
+        public void AddPrimitive(PrimitiveSurface p)
+        public override Solid Copy()
+        public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)
+        public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
+        public override void Transform(Matrix4x4 transformMatrix)
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
+    public class VoxelizedSolid 
+        public long Count { get; private set; }
+        public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
+        public int[][] VoxelBounds { get; }
+        public double VoxelSideLength { get; private set; }
+        public Vector3 TessToVoxSpace { get; }
+        public Vector3 Dimensions { get; private set; }
+        public Vector3 Offset => Bounds[0];
+        public int numVoxelsX { get; private set; }
+        public int numVoxelsY { get; private set; }
+        public int numVoxelsZ { get; private set; }
+        public double FractionDense { get; private set; }
+        public VoxelizedSolid(VoxelizedSolid vs) 
+        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<Vector3> bounds = null) 
+        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<Vector3> bounds = null) 
+        public static VoxelizedSolid CreateFullBlock(VoxelizedSolid vs)
+        public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<Vector3> bounds)
+        public void UpdateToAllDense()
+        public void UpdateToAllSparse()
+        public TessellatedSolid ConvertToTessellatedSolidRectilinear()
+        public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)
+        public override Solid Copy()
+        public override void Transform(Matrix4x4 transformMatrix)
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
+        public IEnumerator<int[]> GetEnumerator()
+        public override Matrix3x3 InertiaTensor { get => base.InertiaTensor; set => base.InertiaTensor = value; }
+

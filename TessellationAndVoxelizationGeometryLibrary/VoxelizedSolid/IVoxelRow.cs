@@ -81,6 +81,6 @@
         /// Averages the positions of the on voxels. This is used in finding center of mass.
         /// </summary>
         /// <returns></returns>
-        double AverageXPosition();
+        int TotalXPosition();
     }
 }

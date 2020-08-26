@@ -1,0 +1,937 @@
+﻿using Priority_Queue;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using TVGL.Enclosure_Operations;
+using TVGL.Numerics;
+
+namespace TVGL.TwoDimensional
+{
+    /// <summary>
+    /// A set of general operation for points and paths
+    /// </summary>
+    public static partial class PolygonOperations
+    {
+        #region IsPointInSidePolygon methods 
+        internal static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
+            bool onlyTopInnerPolygon, out bool onBoundary)
+        {
+            onBoundary = false;
+            foreach (var subPolygon in inner.AllPolygons)
+            {
+                foreach (var vector2 in subPolygon.Path)
+                {
+                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, true))
+                        // negative has a point outside of positive. no point in checking other points
+                        return false;
+                    if (thisPointOnBoundary) onBoundary = true;
+                    else if (onlyTopInnerPolygon)
+                        return true;
+                }
+                if (onlyTopInnerPolygon) break;
+            }
+            return null; //all points are on boundary, so it is unclear if it is inside
+        }
+
+        internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonSegment> sortedEdges, List<Vertex2D> sortedVertices, double tolerance)
+        {
+            var edgeIndex = 0;
+            foreach (var vertex in sortedVertices)
+            {
+                var onBoundary = false;
+                var numberAbove = 0;
+                var numberBelow = 0;
+                for (var i = edgeIndex; i < sortedEdges.Count; i++)
+                {
+                    if (sortedEdges[i].XMax.IsLessThanNonNegligible(vertex.X, tolerance))
+                    {
+                        edgeIndex = i;
+                        continue;
+                    }
+                    if (sortedEdges[i].XMin.IsGreaterThanNonNegligible(vertex.X, tolerance))
+                        break;
+                    switch (DetermineLineToPointVerticalReferenceType(vertex.Coordinates, sortedEdges[i], tolerance))
+                    {
+                        case VerticalLineReferenceType.On:
+                            onBoundary = true;
+                            break;
+                        case VerticalLineReferenceType.Above:
+                            numberAbove++;
+                            break;
+                        case VerticalLineReferenceType.Below:
+                            numberBelow++;
+                            break;
+                        default:
+                            break;
+                    }
+                    if (onBoundary) break;
+                }
+                if (onBoundary) continue;
+                var insideAbove = numberAbove % 2 != 0;
+                var insideBelow = numberBelow % 2 != 0;
+                if (insideAbove != insideBelow)
+                {
+                    throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
+                        " an undetermined number of lines which makes it impossible to determined if inside.");
+                }
+                return insideAbove;
+                //if (insideAbove) return polygon.IsPositive;
+                //else return !polygon.IsPositive;
+            }
+            return null; //all points are on boundary, so it is unclear if it is inside
+        }
+
+
+        /// <summary>
+        /// Determines if a point is inside a polygon. The polygon can be positive or negative. In either case,
+        /// the result is true is the polygon encloses the point. Additionally output parameters can be used to
+        /// locate the closest line above or below the point.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="closestLineAbove">The closest line above.</param>
+        /// <param name="closestLineBelow">The closest line below.</param>
+        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
+        internal static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
+            out bool onBoundary, bool onBoundaryIsInside = true)
+        {
+            var tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
+            //This function has three layers of checks. 
+            //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
+            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
+            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
+            onBoundary = false;
+            //1) Check if center point is within bounding box of each polygon
+            if (qX < polygon.MinX || qY < polygon.MinY ||
+                qX > polygon.MaxX || qY > polygon.MaxY)
+                return false;
+            //2) If the point in question is == a point in points, then it is inside the polygon
+            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion, tolerance)))
+            {
+                onBoundary = true;
+                return onBoundaryIsInside;
+            }
+            var numberAbove = 0;
+            var numberBelow = 0;
+            foreach (var subPolygon in polygon.AllPolygons)
+            {
+                foreach (var line in subPolygon.Lines)
+                {
+                    switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, tolerance))
+                    {
+                        case VerticalLineReferenceType.On:
+                            onBoundary = true;
+                            return onBoundaryIsInside;
+                        case VerticalLineReferenceType.Above:
+                            numberAbove++;
+                            break;
+                        case VerticalLineReferenceType.Below:
+                            numberBelow++;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if (onlyTopPolygon) break;
+            }
+            var insideAbove = numberAbove % 2 != 0;
+            var insideBelow = numberBelow % 2 != 0;
+            if (insideAbove != insideBelow)
+            {
+                throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
+                    " an undetermined number of lines which makes it impossible to determined if inside.");
+            }
+            return insideAbove;
+        }
+
+
+        private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2 point, PolygonSegment line, double tolerance)
+        {
+            // this is basically the function PolygonSegment.YGivenX, but it is a little different here since check if line is horizontal cusp
+            if (point.IsPracticallySame(line.FromPoint.Coordinates, tolerance) &&
+                point.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
+            {   // this means the line is vertical and lines up with the point. Other adjacent line segments will be found
+                return VerticalLineReferenceType.NotIntersecting;
+            }
+            if (point.IsPracticallySame(line.FromPoint.Coordinates, tolerance))
+            {
+                var signOfOverallDirection = line.Vector.X * line.FromPoint.EndLine.Vector.X;
+                // this is a cusp - where the polygon line turns around at this point
+                if (signOfOverallDirection < 0) return VerticalLineReferenceType.NotIntersecting;
+            }
+            //if (point.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
+            // this is commented (and left for instruction) since it will be captured by the line segment after this one         
+            if ((line.FromPoint.X < point.X) == (line.ToPoint.X < point.X)) return VerticalLineReferenceType.NotIntersecting;
+            // if both true or both false then endpoints are on same side of point
+            var intersectionYValue = line.VerticalSlope * (point.X - line.FromPoint.X) + line.FromPoint.Y;
+            if (intersectionYValue.IsPracticallySame(point.Y, tolerance))
+                return VerticalLineReferenceType.On;
+            if (intersectionYValue > point.Y)
+                return VerticalLineReferenceType.Above;
+            return VerticalLineReferenceType.Below;
+        }
+
+        /// <summary>
+        /// Determines if a point is inside a polygon. The polygon can be positive or negative. In either case,
+        /// the result is true is the polygon encloses the point. Additionally output parameters can be used to
+        /// locate the closest line above or below the point.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="closestLineAbove">The closest line above.</param>
+        /// <param name="closestLineBelow">The closest line below.</param>
+        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
+        internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vertex2D> pointsInQuestion,
+            out bool onBoundary, bool onBoundaryIsInside = true)
+        {
+            var tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
+            var sortedLines = polygon.Lines.OrderBy(line => line.XMin).ToList();
+            var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
+            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Count, sortedPoints, out onBoundary, tolerance, onBoundaryIsInside);
+        }
+        internal static bool ArePointsInsidePolygonLines(IList<PolygonSegment> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
+            out bool onBoundary, double tolerance, bool onBoundaryIsInside = true)
+        {
+            var evenNumberOfCrossings = true; // starting at zero. 
+            var lineIndex = 0;
+            onBoundary = false;
+            foreach (var p in sortedPoints)
+            {
+                while (p.X > sortedLines[lineIndex].XMax)
+                {
+                    lineIndex++;
+                    if (lineIndex == numSortedLines) return false;
+                }
+                for (int i = lineIndex; i < numSortedLines; i++)
+                {
+                    var line = sortedLines[lineIndex];
+                    if (line.XMin > p.X) break;
+                    if (p.Coordinates.IsPracticallySame(line.FromPoint.Coordinates, tolerance) ||
+                     p.Coordinates.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
+                    {
+                        onBoundary = true;
+                        if (!onBoundaryIsInside) return false;
+                    }
+                    var lineYValue = line.YGivenX(p.X, out var isBetweenEndPoints);
+                    if (!isBetweenEndPoints) continue;
+                    var yDistance = lineYValue - p.Y;
+                    if (yDistance.IsNegligible(tolerance))
+                    {
+                        onBoundary = true;
+                        if (!onBoundaryIsInside) return false;
+                    }
+                    else if (yDistance > 0)
+                    {
+                        evenNumberOfCrossings = !evenNumberOfCrossings;
+                    }
+                }
+                if (evenNumberOfCrossings)
+                    //then the number of lines above this are even (0, 2, 4), which means it's outside
+                    return false;
+            }
+            return true;
+        }
+
+
+        /// <summary>
+        /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        /// The polygon must not be self-intersecting but the direction of the polygon does not matter.
+        /// Updated by Brandon Massoni: 8.11.2017
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
+        [Obsolete("Polygon methods should use the Polygon class for improved robustness and speed.")]
+        public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
+        {
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
+                                         //Check if the point is the same as any of the polygon's points
+            var tolerance = Constants.BaseTolerance;
+            var polygonIsLeftOfPoint = false;
+            var polygonIsRightOfPoint = false;
+            var polygonIsAbovePoint = false;
+            var polygonIsBelowPoint = false;
+            foreach (var point in path)
+            {
+                if (point.IsPracticallySame(pointInQuestion, tolerance))
+                    return onBoundaryIsInside;
+                if (point.X > qX) polygonIsLeftOfPoint = true;
+                else if (point.X < qX) polygonIsRightOfPoint = true;
+                if (point.Y > qY) polygonIsAbovePoint = true;
+                else if (point.Y < qY) polygonIsBelowPoint = true;
+            }
+            if (!(polygonIsAbovePoint && polygonIsBelowPoint && polygonIsLeftOfPoint && polygonIsRightOfPoint))
+                // this is like the AABB check. 
+                return false;
+
+            //2) Next, see how many lines are to the right of the point. This is inspired by the compact 7 lines of 
+            //   code is from W. Randolph Franklin https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html . However,
+            //   extra conditions are added for boundary at little to no computational expense.
+            var inside = false;
+            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            // this novel for-loop implementation of i and j is brilliant (compact and efficient). use this in other places!!
+            {
+                if (path[i].Y == path[j].Y) // line is horizontal
+                {
+                    // see if point has same Y value
+                    if (path[i].Y == pointInQuestion.Y && (path[i].X >= pointInQuestion.X) != (path[j].X >= pointInQuestion.X))
+                        return onBoundaryIsInside;
+                    else return false;
+                }
+                else if ((path[i].Y > pointInQuestion.Y) != (path[j].Y > pointInQuestion.Y))
+                // we can use strict inequalities here since we check the endpoints in loop above
+                {   // so, the polygon line starts above (higher Y-value) the point and end below it (lower Y-value) 
+                    // what is the x coordinate on the line at the point's Y value
+                    var xCoordWithSameY = (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X;
+                    if (pointInQuestion.X.IsPracticallySame(xCoordWithSameY, tolerance))
+                        return onBoundaryIsInside;
+                    else if (pointInQuestion.X < xCoordWithSameY)
+                        inside = !inside; // it is inside if the number of lines to the right of the point is odd
+                }
+            }
+            return inside;
+        }
+
+        #endregion
+        #region Line Intersections with Polygon
+
+        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p)), lineReference,
+                lineDirection, numSteps, stepSize, out firstIntersectingIndex);
+        }
+        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            throw new NotImplementedException();
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p)), startingXValue,
+                numSteps, stepSize, out firstIntersectingIndex);
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
+              int numSteps, double stepSize, out int firstIntersectingIndex)
+        {
+            var intersections = new List<double[]>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.X).ToList();
+            var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
+            var currentLines = new HashSet<PolygonSegment>();
+            var nextDistance = sortedPoints.First().X;
+            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
+            var pointIndex = 0;
+            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            {
+                var x = startingXValue + i * stepSize;
+                var thisPoint = sortedPoints[pointIndex];
+                var needToOffset = false;
+                while (thisPoint.X <= x)
+                {
+                    if (x.IsPracticallySame(thisPoint.X, tolerance)) needToOffset = true;
+                    if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
+                    else currentLines.Add(thisPoint.StartLine);
+                    if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
+                    else currentLines.Add(thisPoint.EndLine);
+                    pointIndex++;
+                    if (pointIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pointIndex];
+                }
+                if (needToOffset)
+                    x += Math.Min(stepSize, sortedPoints[pointIndex + 1].X) / 10.0;
+                var numIntersects = currentLines.Count;
+                var intersects = new double[numIntersects];
+                var index = 0;
+                foreach (var line in currentLines)
+                    intersects[index++] = line.YGivenX(x, out _);
+                intersections.Add(intersects.OrderBy(y => y).ToArray());
+            }
+            return intersections;
+        }
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
+              out int firstIntersectingIndex)
+        {
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p)), startingYValue,
+                numSteps, stepSize, out firstIntersectingIndex);
+        }
+        /// <summary>
+        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are determined by the input.
+        /// y = startingYValue + (i+firstIntersectingIndex)*stepSize
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="startingYValue">The starting y value.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+                out int firstIntersectingIndex)
+        {
+            var intersections = new List<double[]>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.Y).ToList();
+            var tolerance = (sortedPoints[^1].Y - sortedPoints[0].Y) * Constants.BaseTolerance;
+            var currentLines = new HashSet<PolygonSegment>();
+            var nextDistance = sortedPoints.First().Y;
+            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
+            var pointIndex = 0;
+            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            {
+                var y = startingYValue + i * stepSize;
+                var thisPoint = sortedPoints[pointIndex];
+                var needToOffset = false;
+                // this while loop updates the current lines. 
+                while (thisPoint.Y <= y)
+                {
+                    if (y.IsPracticallySame(thisPoint.Y, tolerance)) needToOffset = true;
+                    if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
+                    else currentLines.Add(thisPoint.StartLine);
+                    if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
+                    else currentLines.Add(thisPoint.EndLine);
+                    pointIndex++;
+                    if (pointIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pointIndex];
+                }
+                if (needToOffset)
+                    y += Math.Min(stepSize, sortedPoints[pointIndex].Y) / 10.0;
+
+                var numIntersects = currentLines.Count;
+                var intersects = new double[numIntersects];
+                var index = 0;
+                foreach (var line in currentLines)
+                    intersects[index++] = line.XGivenY(y, out _);
+                intersections.Add(intersects.OrderBy(x => x).ToArray());
+            }
+            return intersections;
+        }
+        #endregion
+
+
+        internal const PolygonSegmentRelationship alignedIntersection = (PolygonSegmentRelationship.BothLinesStartAtPoint
+                | PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint);
+
+        /// <summary>
+        /// Gets the polygon relationship of PolygonA to PolygonB and the intersections between them.
+        /// </summary>
+        /// <param name="subPolygonA">The polygon a.</param>
+        /// <param name="subPolygonB">The polygon b.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <returns>PolygonRelationship.</returns>
+        public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB)
+        {
+            var index = 0;
+            var polygonDictionary = new Dictionary<Polygon, int>();
+            polygonDictionary.Add(polygonA, index++);
+            foreach (var innerA in polygonA.InnerPolygons)
+                polygonDictionary.Add(innerA, index++);
+            var numPolygonsInA = index;
+            polygonDictionary.Add(polygonB, index++);
+            foreach (var innerB in polygonB.InnerPolygons)
+                polygonDictionary.Add(innerB, index++);
+            var numPolygonsInB = index - numPolygonsInA;
+            var subPolygonRelationsDictionary = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
+            var topLevelRelationship = GetSinglePolygonRelationshipAndIntersections(polygonA, polygonB, out var intersections);
+            subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[polygonB] - numPolygonsInA) + polygonDictionary[polygonA]] = topLevelRelationship;
+            var holesInAThatAreInB = new List<Polygon>();
+            var holesInBThatAreInA = new List<Polygon>();
+            if ((topLevelRelationship & (PolygonRelationship.Intersection | PolygonRelationship.Equal | PolygonRelationship.EqualButOpposite)) != 0b0)
+            {
+                foreach (var innerA in polygonA.InnerPolygons)
+                {
+                    var relationship = GetSinglePolygonRelationshipAndIntersections(innerA, polygonB, out var localIntersections);
+                    intersections.AddRange(localIntersections);
+                    topLevelRelationship |= relationship;
+                    subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[polygonB] - numPolygonsInA) + polygonDictionary[innerA]] = relationship;
+                    if ((relationship & PolygonRelationship.AInsideB) != 0b0) holesInAThatAreInB.Add(innerA);
+                }
+                foreach (var innerB in polygonB.InnerPolygons)
+                {
+                    var relationship = GetSinglePolygonRelationshipAndIntersections(polygonA, innerB, out var localIntersections);
+                    intersections.AddRange(localIntersections);
+                    topLevelRelationship |= relationship;
+                    subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[innerB] - numPolygonsInA) + polygonDictionary[polygonA]] = relationship;
+                    if ((relationship & PolygonRelationship.BInsideA) != 0b0) holesInBThatAreInA.Add(innerB);
+                }
+                foreach (var innerA in holesInAThatAreInB)
+                {
+                    foreach (var innerB in holesInBThatAreInA)
+                    {
+                        var relationship = GetSinglePolygonRelationshipAndIntersections(innerA, innerB, out var localIntersections);
+                        intersections.AddRange(localIntersections);
+                        topLevelRelationship |= relationship;
+                        subPolygonRelationsDictionary[numPolygonsInA * (polygonDictionary[innerB] - numPolygonsInA)
+                            + polygonDictionary[innerA]] = relationship;
+                    }
+                }
+            }
+            return new PolygonInteractionRecord(topLevelRelationship, intersections, subPolygonRelationsDictionary,
+                polygonDictionary, numPolygonsInA, numPolygonsInB);
+        }
+
+
+        /// <summary>
+        /// Gets the polygon relationship of PolygonA to PolygonB and the intersections between them.
+        /// </summary>
+        /// <param name="subPolygonA">The polygon a.</param>
+        /// <param name="subPolygonB">The polygon b.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <returns>PolygonRelationship: but not all possibilities can be returned from here. It returns: Intersection,
+        /// BIsCompletelyInsideA, BIsInsideAButEdgesTouch, BIsInsideAButVerticesTouch,  
+        /// AIsCompletelyInsideB,  AIsInsideBButEdgesTouch, AIsInsideBButVerticesTouch,
+        /// Separated, SeparatedButEdgesTouch, SeparatedButVerticesTouch
+        ///  </returns>
+        internal static PolygonRelationship GetSinglePolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
+            out List<SegmentIntersection> intersections)
+        {
+            intersections = new List<SegmentIntersection>();
+            var tolerance = Math.Min(subPolygonA.MaxX - subPolygonA.MinX,
+                Math.Min(subPolygonA.MaxY - subPolygonA.MinY,
+                Math.Min(subPolygonB.MaxX - subPolygonB.MinX, subPolygonB.MaxY - subPolygonB.MinY))) * Constants.BaseTolerance;
+            var possibleDuplicates = new List<(int, PolygonSegment, PolygonSegment)>();
+            //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
+            // safely return that the polygons are separated.
+            if (subPolygonA.MinX > subPolygonB.MaxX ||
+                subPolygonA.MaxX < subPolygonB.MinX ||
+                subPolygonA.MinY > subPolygonB.MaxY ||
+                subPolygonA.MaxY < subPolygonB.MinY) return PolygonRelationship.Separated;
+            //Else, we need to check for intersections between all lines of the two
+            // To avoid an n-squared check (all of A's lines with all of B's), we sort the lines by their XMin
+            // value. Instead of directly sorting the Lines, which will have many repeat XMin values (since every
+            // pair of elsewhere so one it is done for a polygon, it is a good idea to store it.
+            // the next function (GetOrderedLines),  requires that lines and vertices be properly connected
+            var aLines = GetOrderedLines(subPolygonA.OrderedXVertices);
+            //repeat for the lines in B
+            var bLines = GetOrderedLines(subPolygonB.OrderedXVertices);
+
+            var aIndex = 0;
+            var bIndex = 0;
+            while (aIndex < aLines.Length && bIndex < bLines.Length) // this while loop increments both B lines and A lines
+            {
+                if (aLines[aIndex].XMin < bLines[bIndex].XMin) // if the next A-line is lower compare it to all B-lines
+                {
+                    var aLine = aLines[aIndex++];
+                    var localBIndex = bIndex; //the localBIndex is incremented in the following loop, but we
+                                              //need to come back to the main bIndex above
+                    while (localBIndex < bLines.Length && aLine.XMax >= bLines[localBIndex].XMin)
+                        // the real savings comes from the second condition in the while loop. We do not need to check bLines
+                        // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
+                        AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates, tolerance);
+                }
+                else
+                {
+                    var bLine = bLines[bIndex++];
+                    var localAIndex = aIndex;
+                    while (localAIndex < aLines.Length && bLine.XMax >= aLines[localAIndex].XMin)
+                        AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates, tolerance);
+                }
+            }
+
+            if (intersections.Count == 0) // since there are no intersections all the nodeTypes of a vertices of a polygon should be the same
+                                          // and they are either Inside or Outside. There can be any OnBorder as these would have registered as intersections as well
+                                          // however inner polygons could exhibit difference values than the outer (consider edge case: nested squares). For example,
+                                          // A encompasses B but a hole in B is smaller and fits inside hole of A. This should be registered as Intersecting
+            {
+                if (subPolygonA.HasABoundingBoxThatEncompasses(subPolygonB) && IsNonIntersectingPolygonInside(aLines, subPolygonB.OrderedXVertices, tolerance) == true)
+                    return PolygonRelationship.BIsCompletelyInsideA;
+                if (subPolygonB.HasABoundingBoxThatEncompasses(subPolygonA) && IsNonIntersectingPolygonInside(bLines, subPolygonA.OrderedXVertices, tolerance) == true)
+                    return PolygonRelationship.AIsCompletelyInsideB;
+                return PolygonRelationship.Separated;
+            }
+
+            RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
+
+            if (intersections.Count == subPolygonA.Vertices.Count && intersections.Count == subPolygonB.Vertices.Count)
+            {
+                var isEqual = true;
+                var isOpposite = true;
+                foreach (var intersect in intersections)
+                {
+                    if ((intersect.Relationship & PolygonSegmentRelationship.OppositeDirections) == 0b0)
+                        isOpposite = false;
+                    if ((intersect.Relationship & alignedIntersection) != alignedIntersection)
+                    {
+                        isEqual = false;
+                        break;
+                    }
+                }
+                if (isEqual)
+                    return isOpposite ? PolygonRelationship.EqualButOpposite : PolygonRelationship.Equal;
+            }
+
+            // based on the first four values of the enumerator, it will be clear if edges cross if any intersections
+            // are DoubleOverlap (1) or Crossover (3). Or, rather, if all the intersections are NoOverlap (0) or Encompass(2)
+            // then it is not clear that the two shows actually overlap
+            if (intersections.Any(intersection => (byte)intersection.Relationship % 2 == 1))
+                return PolygonRelationship.Intersection | PolygonRelationship.EdgesCross;
+            // given the previous comment, we can only reach this point if ALL intersections are of type NoOverlap or Encompass
+
+            var atLeastOneCoincidentEdge = intersections.Any(intersection => (intersection.Relationship &
+            (PolygonSegmentRelationship.SameLineAfterPoint | PolygonSegmentRelationship.SameLineBeforePoint)) != 0b0);
+
+            if (intersections.All(intersection => (byte)intersection.Relationship % 4 == 0))
+            {   // all intersections of over type, NoOverlap
+                if (subPolygonA.IsPositive == subPolygonB.IsPositive)
+                    return atLeastOneCoincidentEdge ? PolygonRelationship.SeparatedButEdgesTouch
+                   : PolygonRelationship.SeparatedButVerticesTouch;
+                // then one is positive and the other is negative
+                if (subPolygonA.IsPositive) // therefore subPolygonB is a hole
+                    return atLeastOneCoincidentEdge ? PolygonRelationship.AIsInsideBButEdgesTouch
+                                       : PolygonRelationship.AIsInsideBButVerticesTouch;
+                else // then B is positive and A is a negative polygon/hole
+                    return atLeastOneCoincidentEdge ? PolygonRelationship.BIsInsideAButEdgesTouch
+                                       : PolygonRelationship.BIsInsideAButVerticesTouch;
+            }
+
+            // given the previous conditions, we can only reach this point if ALL intersections are of type NoOverlap or Encompass
+            // and there must be at least one Encompass
+            var atLeastOneAEncloseB = intersections.Any(intersection =>
+                (intersection.Relationship & (PolygonSegmentRelationship.AMovesInside | PolygonSegmentRelationship.Interfaces)) ==
+                PolygonSegmentRelationship.Enclose);
+            var atLeastOneBEncloseA = intersections.Any(intersection =>
+                (intersection.Relationship & (PolygonSegmentRelationship.AMovesInside | PolygonSegmentRelationship.Interfaces)) ==
+                (PolygonSegmentRelationship.AMovesInside | PolygonSegmentRelationship.Enclose));
+
+            if (atLeastOneAEncloseB && atLeastOneBEncloseA)
+                return PolygonRelationship.Intersection | PolygonRelationship.EdgesCross;
+
+            if (subPolygonA.IsPositive != subPolygonB.IsPositive)
+                return atLeastOneCoincidentEdge ? PolygonRelationship.SeparatedButEdgesTouch
+               : PolygonRelationship.SeparatedButVerticesTouch;
+
+
+            if (subPolygonA.IsPositive == atLeastOneAEncloseB)
+                return atLeastOneCoincidentEdge ? PolygonRelationship.BIsInsideAButEdgesTouch
+                                   : PolygonRelationship.BIsInsideAButVerticesTouch;
+
+            //if (atLeastOneBEncloseA && subPolygonB.IsPositive)
+            return atLeastOneCoincidentEdge ? PolygonRelationship.AIsInsideBButEdgesTouch
+                               : PolygonRelationship.AIsInsideBButVerticesTouch;
+            //else throw new Exception("debug? no default polygon relationship found.")
+        }
+
+
+        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<SegmentIntersection> intersections,
+            double tolerance)
+        {
+            foreach (var dupeData in possibleDuplicates)
+            {
+                var duplicateIntersection = intersections[dupeData.index];
+
+                for (int i = 0; i < intersections.Count; i++)
+                {
+                    if (i == dupeData.index) continue;
+                    if (((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
+                        (intersections[i].EdgeA == dupeData.lineB && intersections[i].EdgeB == dupeData.lineA)) &&
+                        (intersections[i].Relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != 0b0 &&
+                       duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, tolerance))
+                    {
+                        intersections.RemoveAt(dupeData.index);
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
+        /// fromPoint Inclusive, and the toPoint exclusive. Thus, if lines touch at their endpoints, it is only recorded
+        /// if both points are from points. Also no "close" operations are used (e.g. IsPracticallySame). Because the method is
+        /// intended to be invoked for all lines on the polygon, this prevents an intersection from being caught by multiple lines,
+        /// and makes the methods simpler (easier to debug and edit) and quicker.
+        /// </summary>
+        /// <param name="lineA">The line a.</param>
+        /// <param name="lineB">The line b.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <returns>PolygonSegmentRelationship.</returns>
+        internal static void AddIntersectionBetweenLines(PolygonSegment lineA, PolygonSegment lineB,
+            List<SegmentIntersection> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates, double tolerance)
+        {
+            // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
+            // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
+            if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin) // the two lines do not touch since their bounding boxes do not overlap
+                return;
+            // okay, so bounding boxes DO overlap
+            var intersectionCoordinates = Vector2.Null;
+            PolygonSegmentRelationship relationship = PolygonSegmentRelationship.NoOverlap;
+            var lineACrossLineB = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
+            if (lineACrossLineB.IsNegligible(tolerance))
+                lineACrossLineB = 0; //this avoid a problem where further inequalities ask is <0 but the value is like -1e-15
+
+            var prevA = lineA.FromPoint.EndLine;
+            var prevB = lineB.FromPoint.EndLine;
+            //first a quick check to see if points are the same
+            if (lineA.FromPoint.Coordinates.IsPracticallySame(lineB.FromPoint.Coordinates, tolerance))
+            {
+                intersectionCoordinates = lineA.FromPoint.Coordinates;
+                relationship = PolygonSegmentRelationship.BothLinesStartAtPoint;
+                if (lineACrossLineB == 0 && lineA.Vector.Dot(lineB.Vector) > 0)
+                    // the two lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
+                    relationship |= PolygonSegmentRelationship.SameLineAfterPoint;
+                if (prevA.Vector.Cross(prevB.Vector).IsNegligible(tolerance) && prevA.Vector.Dot(prevB.Vector) > 0)
+                    // the two previous lines are parallel (cross product will be zero) and in the same dir (dot product is positive)
+                    relationship |= PolygonSegmentRelationship.SameLineBeforePoint;
+                if (lineA.Vector.Cross(prevB.Vector).IsNegligible(tolerance) && lineA.Vector.Dot(prevB.Vector) < 0)
+                    // the two lines are going in the opposite direction but the line-A coincides with previous line-B
+                    relationship |= PolygonSegmentRelationship.OppositeDirections
+                        | PolygonSegmentRelationship.SameLineAfterPoint;
+                // the two lines are going in the opposite direction but the line-B coincides with previous line-A
+                if (lineB.Vector.Cross(prevA.Vector).IsNegligible(tolerance) && lineB.Vector.Dot(prevA.Vector) < 0)
+                    // the two lines are going in the opposite direction but the line-B coincides with previous line-A
+                    relationship |= PolygonSegmentRelationship.OppositeDirections | PolygonSegmentRelationship.SameLineBeforePoint;
+            }
+            else
+            {
+                var fromPointVector = lineB.FromPoint.Coordinates - lineA.FromPoint.Coordinates; // the vector connecting starts
+                if (lineACrossLineB == 0) // the two lines are parallel (cross product will be zero)
+                {
+                    var intersectionFound = false;
+                    if (fromPointVector.Cross(lineA.Vector).IsNegligible(tolerance))
+                    {
+                        // if fromPointCross is also parallel with the line vector (either lineA or lineB since they are parallel to each other)
+                        // and since bounding boxes do overlap, then the lines are collinear and overlapping
+                        // While there are technically infinite points that are intersecting, we only record when the start of the line
+                        // is common. It is possible that the starts (FromPoints) are not overlapping at all - in which case nothing is added.
+                        // It is also possible that both FromPoints are on the other line - if so, then we add both. This is the one other place 
+                        // where a second IntersectionData is added
+                        if (lineA.Vector.Dot(lineB.Vector) < 0) relationship |= PolygonSegmentRelationship.OppositeDirections;
+                        if ((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(fromPointVector) < 0)
+                        {   // since fromPointVector goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
+                            // opposite then lineA.FromPoint is on lineB
+                            intersectionCoordinates = lineA.FromPoint.Coordinates;
+                            relationship |= PolygonSegmentRelationship.AtStartOfA | PolygonSegmentRelationship.SameLineAfterPoint;
+                            intersectionFound = true;
+                            prevB = lineB;
+                        }
+                        if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointVector) < 0)
+                        { // now check the other way. Note, since fromPointVector is backwards here, we just make the other vector backwards as well
+
+                            if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here
+                                intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates,
+                                    DeterminePolygonSegmentRelationship(lineA, lineB, lineA, lineB.FromPoint.EndLine, lineACrossLineB,
+                                        PolygonSegmentRelationship.AtStartOfB | PolygonSegmentRelationship.SameLineAfterPoint |
+                                        PolygonSegmentRelationship.OppositeDirections, tolerance)));
+                            else
+                            {
+                                prevA = lineA;
+                                relationship |= PolygonSegmentRelationship.AtStartOfB | PolygonSegmentRelationship.SameLineAfterPoint;
+                                intersectionCoordinates = lineB.FromPoint.Coordinates;
+                                intersectionFound = true;
+                            }
+                        }
+                        //technically the lines overlap even if the previous two condition are not met, but since the overlap doesn't include
+                        // either from Point, then we do not record it. It will be recorded when the next segment is checked
+                    }
+                    if (!intersectionFound) return; // otherwise the lines are parallel but not at same distance/intercept. Or, they are
+                                                    //inline but the from's other both segments are outside of the intersection - we consider this not an intersection. 
+                                                    //Instead those will be solved in the next/adjacent polygon segment
+                }
+                else
+                {
+                    // now check the intersection by detecting where non-parallel lines cross
+                    // solve for the t scalar values for the two lines.
+                    // the line is define as all values of t from 0 to 1 in the equations
+                    // line1(t_1) = (1 - t_1)*line1.From + t_1*line1.To
+                    // line2(t_2) = (1 - t_2)*line2.From + t_2*line2.To
+                    // ...solving for the x-value at the intersection...
+                    // xIntersect =  (1 - t_1)*line1.From.X + t_1*line1.To.X = (1 - t_2)*line2.From.X + t_2*line2.To.X (Eq.1)
+                    // yIntersect =  (1 - t_1)*line1.From.Y + t_1*line1.To.Y = (1 - t_2)*line2.From.Y + t_2*line2.To.Y (Eq.2)
+                    //rewriting Eq.1 as...
+                    // t_1*(line1.To.X - line1.From.X) + t_2*(line2.From.X - line2.To.X) = line2.From.X - line1.From.X 
+                    // which can be simplified to...
+                    // t_1*(line1.Vector.X) - t_2*(line2.Vector.X) = vStart.X
+                    // similiarly for Y
+                    // t_1*(line1.Vector.Y) - t_2*(line2.Vector.Y) = vStart.Y
+                    // solve as a system of two equations
+                    //   |   line1.Vector.X      -line2.Vector.X   | |  t_1  |    | vStart.X  |
+                    //   |                                         |*|       | =  |           |
+                    //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
+                    var oneOverdeterminnant = 1 / lineACrossLineB;
+                    var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointVector.X - lineB.Vector.X * fromPointVector.Y);
+                    if ((!t_1.IsNegligible(tolerance) && t_1 < 0) || t_1 >= 1)
+                        return;
+                    var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointVector.X - lineA.Vector.X * fromPointVector.Y);
+                    if ((!t_2.IsNegligible(tolerance) && t_2 < 0) || t_2 >= 1)
+                        return;
+                    if (t_1.IsNegligible(tolerance))
+                    {
+                        intersectionCoordinates = lineA.FromPoint.Coordinates;
+                        relationship = PolygonSegmentRelationship.AtStartOfA;
+                        prevB = lineB;
+                        if (t_2.IsPracticallySame(1.0, tolerance))
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                    }
+                    else if (t_2.IsNegligible(tolerance))
+                    {
+                        intersectionCoordinates = lineB.FromPoint.Coordinates;
+                        relationship = PolygonSegmentRelationship.AtStartOfB;
+                        prevA = lineA;
+                        if (t_1.IsPracticallySame(1.0, tolerance))
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                    }
+                    else
+                    {
+                        intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
+                        relationship = PolygonSegmentRelationship.Crossover;
+                        if (t_1.IsPracticallySame(1.0, tolerance) && t_2.IsPracticallySame(1.0, tolerance))
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
+                        else if (t_1.IsPracticallySame(1.0, tolerance))
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
+                        else if (t_2.IsPracticallySame(1.0, tolerance))
+                            possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
+                    }
+                }
+            }
+            intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates,
+                DeterminePolygonSegmentRelationship(lineA, lineB, prevA, prevB, lineACrossLineB, relationship, tolerance)));
+        }
+
+
+        internal static PolygonSegmentRelationship DeterminePolygonSegmentRelationship(PolygonSegment lineA, PolygonSegment lineB,
+            PolygonSegment prevA, PolygonSegment prevB, double lineACrossLineB, PolygonSegmentRelationship relationship, double tolerance)
+        {
+            if (lineACrossLineB < 0) relationship |= PolygonSegmentRelationship.AMovesInside;
+            if (relationship == PolygonSegmentRelationship.Crossover) //this only happens when line-A and line-B are not parallel and
+                                                                      // it is known that there is an intermediate point (the default case).
+            {
+                return relationship;
+            }
+            var prevACrossPrevB = prevA.Vector.Cross(prevB.Vector);
+            if (prevACrossPrevB.IsNegligible(tolerance)) prevACrossPrevB = 0;
+            if (lineACrossLineB == 0 && prevACrossPrevB < 0) relationship |= PolygonSegmentRelationship.AMovesInside;
+
+            //in the calling function (AddIntersectionBetweenLines), we detect if the two lines are SameAfterPoint, but not if the previous lines are coincident
+            // the prerequisite for this is that the previous lines have the same slope (0 cross product)
+            if (prevACrossPrevB == 0
+                && (relationship & PolygonSegmentRelationship.BothLinesStartAtPoint) != PolygonSegmentRelationship.BothLinesStartAtPoint)
+            {
+                // given that overlapping is handled above, then - at this point - we are AtStartOfA, AtStartOfB. Both is handled in previous
+                // function, then if AtStartOfA then prevB == lineB, vice verse for AtStartOfB
+                relationship |= PolygonSegmentRelationship.SameLineBeforePoint;
+                // then opposite directions but could be parallel lines
+                if (prevA.Vector.Dot(prevB.Vector) < 0)
+                    relationship |= PolygonSegmentRelationship.OppositeDirections;
+            }
+
+            var aCornerCross = prevA.Vector.Cross(lineA.Vector);
+            var bCornerCross = prevB.Vector.Cross(lineB.Vector);
+            var lineACrossPrevB = lineA.Vector.Cross(prevB.Vector);
+            if (lineACrossPrevB.IsNegligible(tolerance)) lineACrossPrevB = 0;
+            var prevACrossLineB = prevA.Vector.Cross(lineB.Vector);
+            if (prevACrossLineB.IsNegligible(tolerance)) prevACrossLineB = 0;
+
+            // In the remainder of this method, we determine what the overlap of regions is at this point
+            // when A corner is convex (aCornerCross>=0), then we check if the two cross products made with the
+            // a given b line are BOTH positive - meaning that the b line is between the A lines.
+            // When A's corner is concave, we check for the opposite convex angle of A - to see if the B line is between those
+            // that's the easy part! getting the changes in sign correct makes it more complicated.
+            var lineBIsInsideA = (aCornerCross > 0 && lineACrossLineB > 0 && prevACrossLineB > 0) ||
+                                 (aCornerCross <= 0 && !(lineACrossLineB < 0 && prevACrossLineB < 0));
+            // this expression is the same, but the previous B vector is into the corner and thus, we need to negate it (or rather just check for negative)
+            var prevLineBIsInsideA = (aCornerCross > 0 && lineACrossPrevB < 0 && prevACrossPrevB < 0) ||
+                                     (aCornerCross <= 0 && !(lineACrossPrevB > 0 && prevACrossPrevB > 0));
+            // we actually have to do the same with lineB - it's not enough to know if A is inside B
+            var lineAIsInsideB = (bCornerCross > 0 && lineACrossLineB < 0 && lineACrossPrevB < 0) ||
+                                 (bCornerCross <= 0 && !(lineACrossLineB > 0 && lineACrossPrevB > 0));
+            var prevLineAIsInsideB = (bCornerCross > 0 && prevACrossLineB > 0 && prevACrossPrevB > 0) ||
+                                     (bCornerCross <= 0 && !(prevACrossLineB < 0 && prevACrossPrevB < 0));
+            // in the remaining conditions there are 16 possible combinations of the four booleans: lineBIsInsideA-prevLineBIsInsideA--lineAIsInsideB-prevLineAIsInsideB
+            // first off, if they are all false, then it clearly is a "glance" and no need to do anything
+            // second: if there is a positive on both sides then overlapping
+            if (lineBIsInsideA && prevLineBIsInsideA && lineAIsInsideB && prevLineAIsInsideB)
+                // if all four are true, then this happens when the two polygons are in opposite directions - 
+                // they but up against one-another. Also, there is enough concavity in one or both of these
+                // that the polygons seem to include parts of one-another. 
+                relationship |= PolygonSegmentRelationship.DoubleOverlap;
+            else if ((lineBIsInsideA || prevLineBIsInsideA) && (lineAIsInsideB || prevLineAIsInsideB))
+                // TT-TT, TT-FT, TT-TF, TF-TT, TF-TF, TF-FT, FT-FT, FT-TF, FT-TT
+                relationship |= PolygonSegmentRelationship.Crossover;
+            // if only a positive on the A side then A encompasses B
+            else if (lineBIsInsideA || prevLineBIsInsideA)
+                // TF-FF, FT-FF, TT-FF (although, I don't think TF-FF or FT-FF can occur)
+                relationship |= PolygonSegmentRelationship.Enclose; //A moves to the outside
+            // finally check in a lines are inside b region
+            else if (lineAIsInsideB || prevLineAIsInsideB)
+                // FF-TF, FF-FT, FF-TT (although, I don't think FF-TF or FF-FT can occur)
+                relationship |= PolygonSegmentRelationship.Enclose | PolygonSegmentRelationship.AMovesInside;
+            /*else*/ // both lineACrossLineB is Negligible and prevCross is negligible, which mean all the lines are parallel
+                     // which means unknown, which means  add 0b000000 to the relationByte, which mean do nothing!
+                     //}
+            return relationship;
+        }
+
+        internal static bool HasABoundingBoxThatEncompasses(this Polygon polygonA, Polygon polygonB)
+        {
+            return (polygonA.MaxX >= polygonB.MaxX
+                && polygonA.MaxY >= polygonB.MaxY
+                && polygonA.MinX <= polygonB.MinX
+                && polygonA.MinY <= polygonB.MinY);
+        }
+
+
+        private static PolygonSegment[] GetOrderedLines(List<Vertex2D> orderedPoints)
+        {
+            var length = orderedPoints.Count;
+            var result = new PolygonSegment[length];
+            var smallHashOfLinesOfEqualX = new HashSet<PolygonSegment>();
+            var k = 0;
+            for (int i = 0; i < length; i++)
+            {
+
+                var point = orderedPoints[i];
+                if (point.EndLine.OtherPoint(point).X > point.X)
+                    result[k++] = point.EndLine;
+                else if (point.EndLine.OtherPoint(point).X == point.X &&
+                         !smallHashOfLinesOfEqualX.Contains(point.EndLine))
+                {
+                    result[k++] = point.EndLine;
+                    smallHashOfLinesOfEqualX.Add(point.EndLine);
+                }
+                if (point.StartLine.OtherPoint(point).X > point.X)
+                    result[k++] = point.StartLine;
+                else if (point.StartLine.OtherPoint(point).X == point.X &&
+                         !smallHashOfLinesOfEqualX.Contains(point.StartLine))
+                {
+                    result[k++] = point.StartLine;
+                    smallHashOfLinesOfEqualX.Add(point.StartLine);
+                }
+
+                if (k >= length) break;
+            }
+            return result;
+        }
+
+        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
+        {
+            var intersections = new List<SegmentIntersection>();
+            var tolerance = Math.Min(polygonA.MaxX - polygonA.MinX, polygonA.MaxY - polygonA.MinY) * Constants.BaseTolerance;
+            var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
+            var numLines = polygonA.Lines.Count;
+            var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
+            for (int i = 0; i < numLines - 1; i++)
+            {
+                var current = orderedLines[i];
+                for (int j = i + 1; j < numLines; j++)
+                {
+                    var other = orderedLines[j];
+                    if (current.XMax < orderedLines[j].XMin) break;
+                    if (current.IsAdjacentTo(other)) continue;
+                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, tolerance);
+                }
+            }
+            RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
+            return intersections;
+        }
+
+
+    }
+}

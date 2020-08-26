@@ -7,6 +7,7 @@
 
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions.amfclasses
 {
@@ -338,9 +339,9 @@ namespace TVGL.IOFunctions.amfclasses
         ///     Gets as array.
         /// </summary>
         /// <value>As array.</value>
-        public double[] AsArray
+        public Vector3 AsVector3
         {
-            get { return new[] {x, y, z}; }
+            get { return new Vector3(x, y, z); }
         }
     }
 

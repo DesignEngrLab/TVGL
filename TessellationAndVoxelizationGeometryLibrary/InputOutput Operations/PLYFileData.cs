@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -53,7 +54,7 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<double[]> vertices;
+        private List<Vector3> vertices;
 
         /// <summary>
         ///     Gets the face to vertex indices.
@@ -118,7 +119,7 @@ namespace TVGL.IOFunctions
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
-            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,
+            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, true, plyData.faceColors,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
 
@@ -536,7 +537,7 @@ namespace TVGL.IOFunctions
         private bool ReadVertices(StreamReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
-            vertices = new List<double[]>();
+            vertices = new List<Vector3>();
             var numD = vertexTypes.Count;
             for (var i = 0; i < numVertices; i++)
             {
@@ -574,7 +575,7 @@ namespace TVGL.IOFunctions
                     }
                 }
                 if (point.Any(double.IsNaN)) return false;
-                vertices.Add(point);
+                vertices.Add(new Vector3(point));
             }
             return true;
         }
@@ -664,7 +665,7 @@ namespace TVGL.IOFunctions
         private bool ReadVertices(BinaryReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
-            vertices = new List<double[]>();
+            vertices = new List<Vector3>();
             var numD = vertexTypes.Count;
             for (var i = 0; i < numVertices; i++)
             {
@@ -701,7 +702,7 @@ namespace TVGL.IOFunctions
                     else vertexColors.Add(null);
                 }
                 if (point.Any(double.IsNaN)) return false;
-                vertices.Add(point);
+                vertices.Add(new Vector3(point));
             }
             return true;
         }

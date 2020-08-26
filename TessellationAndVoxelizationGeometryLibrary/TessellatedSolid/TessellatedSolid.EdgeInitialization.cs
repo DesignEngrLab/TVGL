@@ -15,8 +15,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
 using TVGL.IOFunctions;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -33,11 +34,20 @@ namespace TVGL
     /// </remarks>
     public partial class TessellatedSolid : Solid
     {
-        private void MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices)
+        private void MakeEdges()
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
             var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
+
+            while (singleSidedEdges.Count > edgeList.Count) // this is real bad. the number of single side edges is more than
+                                                            // the number that were successfully matched up. This means we need to try hard to merged vertices
+            {
+                RestartVerticesToAvoidSingleSidedEdges();
+                edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
+                if (singleSidedEdges.Count > edgeList.Count) SameTolerance *= 2;
+            }
+
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
             // moreSingleSidedEdges
@@ -50,7 +60,7 @@ namespace TVGL
             // then we spit back the remainingEdges.
             var loops = OrganizeIntoLoops(singleSidedEdges, out var remainingEdges);
             // well, even if they were in loops - sometimes we can't triangulate - yet moreRemainingEdges
-            edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out newFaces, out var moreRemainingEdges));
+            edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out var newFaces, out var moreRemainingEdges));
             remainingEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
             // well, the edgelist is definitely going to work out so, we are going to need to make
             // sure that they are known to their vertices for the next few steps - so here we take 
@@ -60,11 +70,17 @@ namespace TVGL
             // finally, the remainingEdges may be close enough that they should have been matched together
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out removedVertices));
-            BorderEdges = borderEdges.ToArray();
+            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out var removedVertices));
+            if (borderEdges.Count > 0)
+            {
+                if (Errors == null) Errors = new TessellationError();
+                if (Errors.SingledSidedEdges == null)
+                    Errors.SingledSidedEdges = new List<Edge>(borderEdges);
+                else Errors.SingledSidedEdges.AddRange(borderEdges);
+            }
             // now, we have list, we can do some finally cleanup and stitching
             NumberOfEdges = edgeList.Count;
-            Edges = new Edge[NumberOfEdges];
+            _edges = new Edge[NumberOfEdges];
             for (var i = 0; i < NumberOfEdges; i++)
             {
                 //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
@@ -76,13 +92,67 @@ namespace TVGL
                 SetAndGetEdgeChecksum(edge);
                 // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
                 // face has no area (collapsed to a line).
-                if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (double[])ownedFace.Normal.Clone();
-                if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (double[])otherFace.Normal.Clone();
+                if (otherFace.Normal.IsNull()) otherFace.AdoptNeighborsNormal(ownedFace);
+                if (ownedFace.Normal.IsNull()) ownedFace.AdoptNeighborsNormal(otherFace);
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;
             }
+            AddFaces(newFaces);
+            RemoveVertices(removedVertices);
         }
+
+
+
+
+
+        /// <summary>
+        ///     Makes the vertices.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        private void RestartVerticesToAvoidSingleSidedEdges()
+        {
+            var faceIndices = Faces.Select(f => f.Vertices.Select(v => v.IndexInList).ToArray()).ToArray();
+            var colors = Faces.Select(f => f.Color).ToArray();
+            var numDecimalPoints = 0;
+            //Gets the number of decimal places. this is the crucial part where we consolidate vertices...
+            while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            var coords = new List<Vector3>();
+            var simpleCompareDict = new Dictionary<Vector3, int>();
+            //in order to reduce compare times we use a string comparer and dictionary
+            foreach (var faceToVertexIndex in faceIndices)
+            {
+                for (var i = 0; i < faceToVertexIndex.Length; i++)
+                {
+                    //Get vertex from list of vertices
+                    var vertex = Vertices[faceToVertexIndex[i]];
+                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
+                     * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
+                    //First, round the vertices. This will catch bidirectional tolerancing (+/-)
+                    var position = new Vector3(Math.Round(vertex.X, numDecimalPoints),
+                          Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
+
+                    if (simpleCompareDict.ContainsKey(position))
+                    {
+                        // if it's in the dictionary, update the faceToVertexIndex
+                        faceToVertexIndex[i] = simpleCompareDict[position];
+                    }
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                        * the position in the locationIndices. */
+                        var newIndex = coords.Count;
+                        coords.Add(position);
+                        simpleCompareDict.Add(position, newIndex);
+                        faceToVertexIndex[i] = newIndex;
+                    }
+                }
+            }
+            MakeVertices(coords);
+            MakeFaces(faceIndices, colors);
+        }
+
         /// <summary>
         ///     The first pass to making edges. It returns the good ones, and two lists of bad ones. The first, overDefinedEdges,
         ///     are those which appear to have more than two faces interfacing with the edge. This happens when CAD tools
@@ -170,24 +240,24 @@ namespace TVGL
                 // should be paired together. 
                 while (candidateFaces.Count > 1 && numFailedTries < candidateFaces.Count)
                 {
-                    var highestDotProduct = -2.0;
+                    var highestDot = -2.0;
                     PolygonalFace bestMatch = null;
                     var refFace = candidateFaces[0];
                     candidateFaces.RemoveAt(0);
                     var refOwnsEdge = FaceShouldBeOwnedFace(edge, refFace);
                     foreach (var candidateMatchingFace in candidateFaces)
                     {
-                        var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
+                        var DotScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
                             ? -2 //edge cannot be owned by both faces, thus this is not a good candidate for this.
-                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal, 3);
+                            : refFace.Normal.Dot(candidateMatchingFace.Normal);
                         //  To take it "out of the running", we simply give it a value of -2
-                        if (dotProductScore > highestDotProduct)
+                        if (DotScore > highestDot)
                         {
-                            highestDotProduct = dotProductScore;
+                            highestDot = DotScore;
                             bestMatch = candidateMatchingFace;
                         }
                     }
-                    if (highestDotProduct > -1)
+                    if (highestDot > -1)
                     // -1 is a valid dot-product but it is not practical to match faces with completely opposite
                     // faces
                     {
@@ -228,9 +298,9 @@ namespace TVGL
 
         private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
         {
-            var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Position.subtract(edge.To.Position, 3);
-            var isThisNormal = edge.Vector.crossProduct(otherEdgeVector);
-            return face.Normal.dotProduct(isThisNormal, 3) > 0;
+            var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Coordinates.Subtract(edge.To.Coordinates);
+            var isThisNormal = edge.Vector.Cross(otherEdgeVector);
+            return face.Normal.Dot(isThisNormal) > 0;
         }
 
 
@@ -318,7 +388,7 @@ namespace TVGL
                 else if (edge.To == removedVertex) edge.To = keepVertex;
                 keepVertex.Edges.Add(edge);
             }
-            keepVertex.Position = ModifyTessellation.DetermineIntermediateVertexPosition(keepVertex, removedVertex);
+            keepVertex.Coordinates = ModifyTessellation.DetermineIntermediateVertexPosition(keepVertex, removedVertex);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)
@@ -326,10 +396,10 @@ namespace TVGL
         }
 
 
-        internal static List<(List<Edge>, double[])> OrganizeIntoLoops(List<Edge> singleSidedEdges,
+        internal static List<(List<Edge>, Vector3)> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
-            var listOfLoops = new List<(List<Edge>, double[])>();
+            var listOfLoops = new List<(List<Edge>, Vector3)>();
             remainingEdges = new List<Edge>(singleSidedEdges);
             if (!singleSidedEdges.Any()) return listOfLoops;
             var attempts = 0;
@@ -351,13 +421,13 @@ namespace TVGL
                         var bestNext = pickBestEdge(possibleNextEdges, loop.Last().Vector, normal);
                         if (bestNext == null) break;
                         loop.Add(bestNext);
-                        var n1 = loop[loop.Count - 1].Vector.crossProduct(loop[loop.Count - 2].Vector).normalize(3);
-                        if (!n1.Contains(double.NaN))
+                        var n1 = loop[loop.Count - 1].Vector.Cross(loop[loop.Count - 2].Vector).Normalize();
+                        if (!n1.IsNull())
                         {
-                            n1 = n1.dotProduct(normal, 3) < 0 ? n1.multiply(-1) : n1;
+                            n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
                             normal = loop.Count == 2
                                 ? n1
-                                : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
+                                : ((normal * loop.Count) + n1).Divide(loop.Count + 1).Normalize();
                         }
                         removedEdges.Add(bestNext);
                         remainingEdges.Remove(bestNext);
@@ -367,17 +437,17 @@ namespace TVGL
                         possibleNextEdges = remainingEdges.Where(e => e.From == loop[0].To);
                         if (possibleNextEdges.Any())
                         {
-                            var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector.multiply(-1),
+                            var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector * -1,
                                 normal);
                             if (bestPrev == null) break;
                             loop.Insert(0, bestPrev);
-                            var n1 = loop[1].Vector.crossProduct(loop[0].Vector).normalize(3);
-                            if (!n1.Contains(double.NaN))
+                            var n1 = loop[1].Vector.Cross(loop[0].Vector).Normalize();
+                            if (!n1.IsNull())
                             {
-                                n1 = n1.dotProduct(normal, 3) < 0 ? n1.multiply(-1) : n1;
+                                n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
                                 normal = loop.Count == 2
                                     ? n1
-                                    : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
+                                    : ((normal * loop.Count) + n1).Divide(loop.Count + 1).Normalize();
                             }
                             removedEdges.Add(bestPrev);
                             remainingEdges.Remove(bestPrev);
@@ -401,7 +471,7 @@ namespace TVGL
         }
 
         private static IEnumerable<(Edge, List<PolygonalFace>)> CreateMissingEdgesAndFaces(
-                    List<(List<Edge>, double[])> loops,
+                    List<(List<Edge>, Vector3)> loops,
                     out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
         {
             var completedEdges = new List<(Edge, List<PolygonalFace>)>();
@@ -434,8 +504,7 @@ namespace TVGL
                     List<List<Vertex[]>> triangleFaceList = null;
                     try
                     {
-                        triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>>
-                            {edges.Select(e => e.To).ToList()}, normal);
+                        triangleFaceList = (new[] { edges.Select(e => e.To).ToArray() }).Triangulate(normal, out _, out _);
                     }
                     catch
                     {
@@ -448,7 +517,7 @@ namespace TVGL
                         foreach (var triangle in triangles)
                         {
                             var newFace = new PolygonalFace(triangle, normal);
-                            if (newFace.Area.IsNegligible() && newFace.Normal.Any(double.IsNaN)) continue;
+                            if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;
                             newFaces.Add(newFace);
                             for (var j = 0; j < 3; j++)
                             {
@@ -473,16 +542,16 @@ namespace TVGL
             return completedEdges;
         }
 
-        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, double[] refEdge, double[] normal)
+        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal)
         {
-            var unitRefEdge = refEdge.normalize(3);
+            var unitRefEdge = refEdge.Normalize();
             var max = -2.0;
             Edge bestEdge = null;
             foreach (var candEdge in possibleNextEdges)
             {
-                var unitCandEdge = candEdge.Vector.normalize(3);
-                var cross = unitRefEdge.crossProduct(unitCandEdge);
-                var temp = cross.dotProduct(normal, 3);
+                var unitCandEdge = candEdge.Vector.Normalize();
+                var cross = unitRefEdge.Cross(unitCandEdge);
+                var temp = cross.Dot(normal);
                 if (max < temp)
                 {
                     max = temp;
@@ -496,11 +565,11 @@ namespace TVGL
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {
             var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
-            score += 1 - Math.Abs(e1.Vector.normalize(3).dotProduct(e2.Vector.normalize(3), 3));
-            score += Math.Min(e2.From.Position.subtract(e1.To.Position, 3).norm2()
-                              + e2.To.Position.subtract(e1.From.Position, 3).norm2(),
-                e2.From.Position.subtract(e1.From.Position, 3).norm2()
-                + e2.To.Position.subtract(e1.To.Position, 3).norm2())
+            score += 1 - Math.Abs(e1.Vector.Normalize().Dot(e2.Vector.Normalize()));
+            score += Math.Min(e2.From.Coordinates.Distance(e1.To.Coordinates)
+                              + e2.To.Coordinates.Distance(e1.From.Coordinates),
+                e2.From.Coordinates.Distance(e1.From.Coordinates)
+                + e2.To.Coordinates.Distance(e1.To.Coordinates))
                      / e1.Length;
             return score;
         }

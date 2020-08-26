@@ -15,7 +15,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -50,15 +51,15 @@ namespace TVGL
                 innerVertices.UnionWith(flat.InnerEdges.Select(e => e.From));
                 innerVertices.RemoveWhere(v => outerEdgeHashSet.Overlaps(v.Edges));
                 verticesToRemove.AddRange(innerVertices);
-                var vertexLoops = OrganizeIntoLoop(flat.OuterEdges, flat.Normal);
-                List<List<Vertex[]>> triangulatedListofLists = TriangulatePolygon.Run(new[] { vertexLoops }, flat.Normal);
+                var vertexLoops = OrganizeIntoLoop(flat.OuterEdges, flat.Normal).ToArray();
+                var triangulatedListofLists = new[] { vertexLoops }.Triangulate(flat.Normal, out _, out _);
                 var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                 var oldEdgeDictionary = flat.OuterEdges.ToDictionary(TessellatedSolid.SetAndGetEdgeChecksum);
                 Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();
                 foreach (var triangle in triangulatedList)
                 {
                     var newFace = new PolygonalFace(triangle, flat.Normal);
-                    if (newFace.Area.IsNegligible() && newFace.Normal.Any(double.IsNaN)) continue;
+                    if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;
                     newFaces.Add(newFace);
                     for (var j = 0; j < 3; j++)
                     {
@@ -97,13 +98,13 @@ namespace TVGL
         }
 
 
-        internal static List<Vertex> OrganizeIntoLoop(HashSet<Edge> singleSidedEdges, double[] normal)
+        internal static List<Vertex> OrganizeIntoLoop(IEnumerable<Edge> singleSidedEdges, Vector3 normal)
         {
             var edgesHashSet = new HashSet<Edge>(singleSidedEdges);
             var loop = new List<Vertex>();
             var currentEdge = edgesHashSet.First();
             Vertex startVertex, currentVertex;
-            if (normal.dotProduct(currentEdge.OwnedFace.Normal,3).IsPracticallySame(1))
+            if (normal.Dot(currentEdge.OwnedFace.Normal).IsPracticallySame(1))
             {
                 startVertex = currentEdge.From;
                 currentVertex = currentEdge.To;
@@ -132,16 +133,16 @@ namespace TVGL
         }
 
 
-        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, double[] refEdge, double[] normal)
+        private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal)
         {
-            var unitRefEdge = refEdge.normalize(3);
+            var unitRefEdge = refEdge.Normalize();
             var min = 2.0;
             Edge bestEdge = null;
             foreach (var candEdge in possibleNextEdges)
             {
-                var unitCandEdge = candEdge.Vector.normalize(3);
-                var cross = unitRefEdge.crossProduct(unitCandEdge);
-                var temp = cross.dotProduct(normal, 3);
+                var unitCandEdge = candEdge.Vector.Normalize();
+                var cross = unitRefEdge.Cross(unitCandEdge);
+                var temp = cross.Dot(normal);
                 if (min > temp)
                 {
                     min = temp;
@@ -229,7 +230,7 @@ namespace TVGL
                 {
                     iterations--; //now that we passed that test, we can be assured that the reduction will go through
                                   // move the keepVertex
-                    keepVertex.Position = DetermineIntermediateVertexPosition(removedVertex, keepVertex);
+                    keepVertex.Coordinates = DetermineIntermediateVertexPosition(removedVertex, keepVertex);
                     // add and remove to the lists at the top of this method
                     removedEdges.Add(edge);
                     removedEdges.Add(leftRemoveEdge);
@@ -412,7 +413,7 @@ namespace TVGL
             }
             if (keepEdge2 != null && keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
             else if (keepEdge2 != null) keepEdge2.OtherFace = fromFace;
-            keepVertex.Position = DetermineIntermediateVertexPosition(keepVertex, removedVertex);
+            keepVertex.Coordinates = DetermineIntermediateVertexPosition(keepVertex, removedVertex);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)

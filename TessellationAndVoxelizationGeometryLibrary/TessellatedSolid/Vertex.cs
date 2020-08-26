@@ -18,6 +18,7 @@ using System.Linq;
 using MIConvexHull;
 using Newtonsoft.Json;
 using TVGL.Voxelization;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -25,7 +26,7 @@ namespace TVGL
     ///     The 3D vertex can connect to any number of faces and edges. It inherits from the
     ///     MIConvexhull IVertex interface.
     /// </summary>
-    public class Vertex : TessellationBaseClass, IVertex
+    public sealed class Vertex : TessellationBaseClass, IVertex3D, IVertex
     {
         /// <summary>
         ///     Prevents a default instance of the <see cref="Vertex" /> class from being created.
@@ -42,29 +43,13 @@ namespace TVGL
         {
             return new Vertex
             {
-                Curvature = Curvature,
+                _curvature = Curvature,
                 PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
                 Faces = new List<PolygonalFace>(),
-                Position = (double[])Position.Clone(),
+                Coordinates = new Vector3(Coordinates.X, Coordinates.Y, Coordinates.Z),
                 IndexInList = IndexInList
             };
-        }
-
-        /// <summary>
-        ///     Defines vertex curvature
-        /// </summary>
-        public void DefineCurvature()
-        {
-            if (Edges.Any(e => e.Curvature == CurvatureType.Undefined))
-                Curvature = CurvatureType.Undefined;
-            else if (Edges.All(e => e.Curvature == CurvatureType.SaddleOrFlat))
-                Curvature = CurvatureType.SaddleOrFlat;
-            else if (Edges.Any(e => e.Curvature != CurvatureType.Convex))
-                Curvature = CurvatureType.Concave;
-            else if (Edges.Any(e => e.Curvature != CurvatureType.Concave))
-                Curvature = CurvatureType.Convex;
-            else Curvature = CurvatureType.SaddleOrFlat;
         }
 
         #region Constructor
@@ -74,7 +59,7 @@ namespace TVGL
         /// </summary>
         /// <param name="position">The position.</param>
         /// <param name="indexInListOfVertices">The index in list of vertices.</param>
-        public Vertex(double[] position, int indexInListOfVertices)
+        public Vertex(Vector3 position, int indexInListOfVertices)
             : this(position)
         {
             IndexInList = indexInListOfVertices;
@@ -84,13 +69,9 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Vertex" /> class.
         /// </summary>
         /// <param name="position">The position.</param>
-        public Vertex(double[] position)
+        public Vertex(Vector3 position)
         {
-            if (position.Length == 3) Position = position;
-            else if (position.Length > 3) Position = position.Take(3).ToArray();
-            else
-                throw new ArgumentException(
-                    "Vertex constructor given a position array with fewer than 3 values (all vertices must be 3D).");
+            Coordinates = position;
             Edges = new List<Edge>();
             Faces = new List<PolygonalFace>();
             IndexInList = -1;
@@ -104,7 +85,7 @@ namespace TVGL
         ///     Gets the position.
         /// </summary>
         /// <value>The position.</value>
-        public double[] Position { get; set; }
+        public Vector3 Coordinates { get; set; }
 
         /// <summary>
         ///     Gets the x.
@@ -113,7 +94,7 @@ namespace TVGL
         [JsonIgnore]
         public double X
         {
-            get { return Position[0]; }
+            get { return Coordinates.X; }
         }
 
         /// <summary>
@@ -123,7 +104,7 @@ namespace TVGL
         [JsonIgnore]
         public double Y
         {
-            get { return Position[1]; }
+            get { return Coordinates.Y; }
         }
 
         /// <summary>
@@ -133,7 +114,7 @@ namespace TVGL
         [JsonIgnore]
         public double Z
         {
-            get { return Position[2]; }
+            get { return Coordinates.Z; }
         }
 
         /// <summary>
@@ -150,6 +131,62 @@ namespace TVGL
         [JsonIgnore]
         public List<PolygonalFace> Faces { get; private set; }
 
+        double[] IVertex.Position => Coordinates.Position;
+
+
+        /// <summary>
+        /// Gets the normal.
+        /// </summary>
+        /// <value>The normal.</value>
+        public override Vector3 Normal
+        {
+            get
+            {
+                if (_normal.IsNull()) DetermineNormal();
+                return _normal;
+            }
+        }
+
+
+        Vector3 _normal = Vector3.Null;
+        private void DetermineNormal()
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+
+        /// <summary>
+        /// Gets the curvature.
+        /// </summary>
+        /// <value>The curvature.</value>
+        public override CurvatureType Curvature
+        {
+            get
+            {
+                if (_curvature == CurvatureType.Undefined) DefineCurvature();
+                return _curvature;
+            }
+        }
+        CurvatureType _curvature = CurvatureType.Undefined;
+
+
+        /// <summary>
+        ///     Defines vertex curvature
+        /// </summary>
+        private void DefineCurvature()
+        {
+            if (Edges.Any(e => e.Curvature == CurvatureType.Undefined))
+                _curvature = CurvatureType.Undefined;
+            else if (Edges.All(e => e.Curvature == CurvatureType.SaddleOrFlat))
+                _curvature = CurvatureType.SaddleOrFlat;
+            else if (Edges.Any(e => e.Curvature != CurvatureType.Convex))
+                _curvature = CurvatureType.Concave;
+            else if (Edges.Any(e => e.Curvature != CurvatureType.Concave))
+                _curvature = CurvatureType.Convex;
+            else _curvature = CurvatureType.SaddleOrFlat;
+        }
         #endregion
     }
 }

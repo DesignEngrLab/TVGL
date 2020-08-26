@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -23,13 +24,13 @@ namespace TVGL
         ///     Gets the curvature.
         /// </summary>
         /// <value>The curvature.</value>
-        public CurvatureType Curvature { get; internal set; }
+        public abstract CurvatureType Curvature { get; } 
 
         /// <summary>
         ///     Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        public double[] Normal { get; internal set; }
+        public abstract Vector3 Normal { get; }
 
     }
 }

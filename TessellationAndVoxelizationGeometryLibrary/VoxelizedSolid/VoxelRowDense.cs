@@ -321,7 +321,7 @@ namespace TVGL.Voxelization
                 values[i] = 0b0;
         }
 
-        public double AverageXPosition()
+        public int TotalXPosition()
         {
             var xTotal = 0;
             var byteOffset = 0;
@@ -338,7 +338,7 @@ namespace TVGL.Voxelization
                 if (b > 127) xTotal += byteOffset;
                 byteOffset += 8;
             }
-            return xTotal / (double)Count;
+            return xTotal;
         }
     }
 }

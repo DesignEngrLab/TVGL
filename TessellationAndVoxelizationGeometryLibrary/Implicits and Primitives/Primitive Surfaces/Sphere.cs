@@ -15,7 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -32,11 +32,11 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.dotProduct(face.Center.subtract(Center, 3)) - 1) >
+            if (Math.Abs(face.Normal.Dot(face.Center -Center) - 1) >
                 Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
-                if (Math.Abs(MiscFunctions.DistancePointToPoint(v.Position, Center) - Radius) >
+                if (Math.Abs(v.Coordinates.Distance(Center) - Radius) >
                     Constants.ErrorForFaceInSurface*Radius)
                     return false;
             return true;
@@ -48,19 +48,18 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
-            double[] pointOnLine;
+            Vector3 pointOnLine;
             var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
             var fractionToMove = 1/Faces.Count;
-            var moveVector = pointOnLine.subtract(Center, 3);
+            var moveVector = pointOnLine.Subtract(Center);
             Center =
-                Center.add(new[]
-                {
-                    moveVector[0]*fractionToMove*distance, moveVector[1]*fractionToMove*distance,
-                    moveVector[2]*fractionToMove*distance
-                }, 3);
+                Center + new Vector3(
+                    moveVector.X*fractionToMove*distance, moveVector.Y*fractionToMove*distance,
+                    moveVector.Z*fractionToMove*distance
+                );
 
 
-            var totalOfRadii = Vertices.Sum(v => MiscFunctions.DistancePointToPoint(Center, v.Position));
+            var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Coordinates));
             Radius = totalOfRadii/Vertices.Count;
             base.UpdateWith(face);
         }
@@ -70,10 +69,12 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }
+
+
 
         #region Constructor
 
@@ -87,13 +88,13 @@ namespace TVGL
             Type = PrimitiveSurfaceType.Sphere;
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
-            var centers = new List<double[]>();
-            double[] center;
+            var centers = new List<Vector3>();
+            Vector3 center;
             double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
                 faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
-            if (!center.Any(double.IsNaN) || center.IsNegligible())
+            if (!center.IsNull())
             {
                 centers.Add(center);
                 signedDistances.Add(t1);
@@ -103,23 +104,23 @@ namespace TVGL
             {
                 MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
                     faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
-                if (!center.Any(double.IsNaN) || center.IsNegligible())
+                if (!center.IsNull())
                 {
                     centers.Add(center);
                     signedDistances.Add(t1);
                     signedDistances.Add(t2);
                 }
             }
-            center = new double[3];
-            center = centers.Aggregate(center, (current, c) => current.add(c, 3));
-            center = center.divide(centers.Count);
+            center = Vector3.Zero;
+            center = centers.Aggregate(center, (current, c) => current + c);
+            center = center.Divide(centers.Count);
             /* determine is positive or negative */
             var numNeg = signedDistances.Count(d => d < 0);
             var numPos = signedDistances.Count(d => d > 0);
             var isPositive = numNeg > numPos;
             var radii = new List<double>();
             foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToPoint(v.Position, center)));
+                radii.AddRange(face.Vertices.Select(v => v.Coordinates.Distance(center)));
             var averageRadius = radii.Average();
 
             Center = center;
@@ -154,7 +155,7 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get;  set; }
+        public Vector3 Center { get;  set; }
 
         /// <summary>
         ///     Gets the radius.
