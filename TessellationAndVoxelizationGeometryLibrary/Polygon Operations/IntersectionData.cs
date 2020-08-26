@@ -77,7 +77,6 @@ namespace TVGL.TwoDimensional
             for (int i = 0; i < IntersectionData.Count; i++)
             {
                 var intersection = IntersectionData[i];
-                if ((intersection.Relationship & PolygonOperations.alignedIntersection) == PolygonOperations.alignedIntersection) continue;
                 intersection.VisitedA = false;
                 intersection.VisitedB = false;
                 numVertices = intersection.EdgeA.IndexInList;
@@ -93,6 +92,7 @@ namespace TVGL.TwoDimensional
         internal PolygonInteractionRecord InvertPolygonInRecord(ref Polygon polygon, double tolerance)
         {
             bool polygonIsAInInteractions = subPolygonToInt[polygon] < numPolygonsInA;
+            var visitedIntersectionPairs = new HashSet<(PolygonSegment, PolygonSegment)>();
             var delimiters = polygon.NumberVertiesAndGetPolygonVertexDelimiter();
             polygon = polygon.Copy(true, true);
             var allLines = polygon.AllPolygons.SelectMany(p => p.Lines).ToList();
@@ -108,12 +108,21 @@ namespace TVGL.TwoDimensional
                 while (delimiters[k] <= indexOfEdge) k++;
                 indexOfEdge = delimiters[k - 1] + (delimiters[k] - indexOfEdge) - 1;
                 var newFlippedEdge = allLines[indexOfEdge];
-                if ((polygonIsAInInteractions && (oldIntersection.Relationship & PolygonSegmentRelationship.AtStartOfA) != 0) ||
-                    (!polygonIsAInInteractions && (oldIntersection.Relationship & PolygonSegmentRelationship.AtStartOfB) != 0))
+                if ((polygonIsAInInteractions && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfA) ||
+                    (!polygonIsAInInteractions && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfB))
                     newFlippedEdge = newFlippedEdge.ToPoint.StartLine;
                 if (polygonIsAInInteractions)
+                {
+                    if (visitedIntersectionPairs.Contains((newFlippedEdge, edgeB))) continue;
+                    visitedIntersectionPairs.Add((newFlippedEdge, edgeB));
                     PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, tolerance);
-                else PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, tolerance);
+                }
+                else
+                {
+                    if (visitedIntersectionPairs.Contains((edgeA, newFlippedEdge))) continue;
+                    visitedIntersectionPairs.Add((edgeA, newFlippedEdge));
+                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, tolerance);
+                }
             }
             var newSubPolygonToInt = new Dictionary<Polygon, int>();
             if (!polygonIsAInInteractions)
@@ -172,7 +181,9 @@ namespace TVGL.TwoDimensional
         /// Gets the relationship.
         /// </summary>
         /// <value>The relationship.</value>
-        public PolygonSegmentRelationship Relationship { get; }
+        public SegmentRelationship Relationship { get; }
+        public WhereIsIntersection WhereIntersection { get; }
+        public CollinearityTypes CollinearityType { get; }
         /// <summary>
         /// Gets or sets a value indicating whether [the intersection has already been visited before].
         /// starting from EdgeB. This is used internally in polygon operations.
@@ -194,12 +205,15 @@ namespace TVGL.TwoDimensional
         /// <param name="edgeB">The edge b.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
         /// <param name="relationship">The relationship.</param>
-        internal SegmentIntersection(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, PolygonSegmentRelationship relationship)
+        internal SegmentIntersection(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, SegmentRelationship relationship,
+            WhereIsIntersection whereIsIntersection, CollinearityTypes collinearity)
         {
             this.EdgeA = edgeA;
             this.EdgeB = edgeB;
             this.IntersectCoordinates = intersectionPoint;
             this.Relationship = relationship;
+            this.WhereIntersection = whereIsIntersection;
+            this.CollinearityType = collinearity;
             VisitedA = false;
             VisitedB = false;
         }

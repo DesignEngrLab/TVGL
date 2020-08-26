@@ -152,13 +152,13 @@ namespace TVGLUnitTestsAndBenchmarking
             List<Polygon> polygon3;
 
             polygon3 = polygon1.Union(polygon2, a);
-            Presenter.ShowAndHang(polygon3);
+            //Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.Intersect(polygon2, a);
-            Presenter.ShowAndHang(polygon3);
+            //Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.Subtract(polygon2, a);
-            Presenter.ShowAndHang(polygon3);
+            //Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon2.Subtract(polygon1, a);
             Presenter.ShowAndHang(polygon3);
@@ -185,7 +185,7 @@ namespace TVGLUnitTestsAndBenchmarking
                                 for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
                                 {
                                     Console.WriteLine(k++);
-                                    if ( k % 1111 == 0)
+                                    if ( k % 4 == 0)
                                     {
                                         DebugEdgeCases(MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut),
                                             MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut));

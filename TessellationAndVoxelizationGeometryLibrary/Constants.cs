@@ -776,37 +776,31 @@ namespace TVGL
         EqualButOpposite = 128
     }
 
-    /// <summary>
-    /// Enum PolygonRelationship
-    /// </summary>
-    [Flags]
-    public enum PolygonSegmentRelationship : byte
+    public enum SegmentRelationship
     {
-        // how the two polygons overlap
-        NoOverlap = 0, // may happen only when AtStartOfA or AtStartoB is true. The polygons abut one another or glance off of one another. 
-        DoubleOverlap = 1, // may happen only when AtStartOfA or AtStartoB is true. Both polygons overlap one another. 
-        Enclose = 2, // may happen only when AtStartOfA or AtStartoB is true. One polygon is completely encompassed by the other at this point
-        Crossover = 3, // the conventional case where two lines cross one another creating four regions: A, B, both, and none
-        Interfaces = NoOverlap | DoubleOverlap | Enclose | Crossover,
-
-        AMovesInside = 4, // the A polygon moves inside the polygons and B is on the surface. Follow A for intersection and B for union.
-        // this has meaningful value when the previous is set to Crossover, or Encompass and NoOverlap. But, for NoOverlap it is only meaningful if 
-        // one of the same line booleans is true below
-
-        AtStartOfA = 8, // byte 0(1): the intersection is at the from point for line A (T joint)
-        AtStartOfB = 16, // byte 1(2) the intersection is at the from  point for line B (T joint)
-        // therefore the value of both of therese is faulse when at an intermediate point for both line segments (this is like 99% of the time). 
-        // they are both true when polygons share a point
-        BothLinesStartAtPoint = AtStartOfA | AtStartOfB, // 0b11000: at the from points for both lineA and lineB 
-
-        // these final three are rare. They indicate more detail is CoincidentLines is true. Otherwise they 
-        // should be left as zero (and ignored)
-        // the lines merge into the same line after the point (for the A direction).
-        SameLineAfterPoint = 32,
-        // the lines are the same before the point (for the A direction)
-        SameLineBeforePoint = 64,
-        // if the lines are moving in opposite directions, set the last bit to true
-        OppositeDirections = 128,
+        NoOverlap, 
+        DoubleOverlap,
+        BEnclosesA, 
+        AEnclosesB,
+        CrossOver_BOutsideAfter,
+        CrossOver_AOutsideAfter, 
+    }
+    public enum CollinearityTypes
+    {
+        None,
+        BothSameDirection,
+        BothOppositeDirection,
+        After,
+        Before,
+        AAfterBBefore, // case 14
+        ABeforeBAfter
+    }
+    public enum WhereIsIntersection
+    {
+        Intermediate,
+        AtStartOfA,
+        AtStartOfB,
+        BothStarts
     }
 
     /// <summary>
