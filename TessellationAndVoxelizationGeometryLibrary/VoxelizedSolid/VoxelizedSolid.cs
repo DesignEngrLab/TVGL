@@ -126,6 +126,48 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="voxelsOnLongSide">The voxels on long side.</param>
+        /// <param name="bounds">The bounds.</param>
+        public VoxelizedSolid(Polygon p, int voxelsOnLongSide, IReadOnlyList<Vector3> bounds) : this()
+        {
+            Bounds = new[] { bounds[0], bounds[1] };
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
+            VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
+            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
+            numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
+            numVoxelsZ = (int)Math.Ceiling(Dimensions.Z / VoxelSideLength);
+            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
+                voxels[i] = new VoxelRowSparse(numVoxelsX);
+
+            var yBegin = Bounds[0][1] + VoxelSideLength / 2;
+            var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
+
+            var loops = new List<Polygon> { p };
+            var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongY(loops, yBegin, numVoxelsY,
+                            VoxelSideLength, out var yStartIndex);
+            var numYlines = intersections.Count;
+            for (int j = 0; j < numYlines; j++)
+            {
+                var intersectionPoints = intersections[j];
+                var numXRangesOnThisLine = intersectionPoints.Length;
+                for (var m = 0; m < numXRangesOnThisLine; m += 2)
+                {
+                    var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                    var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                    if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(sp);
+                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(ep);
+                }
+            }
+            FractionDense = 0;
+            UpdateProperties();
+        }
+
         #region Fill In From Tessellation Functions
         private void FillInFromTessellation(TessellatedSolid ts)
         {

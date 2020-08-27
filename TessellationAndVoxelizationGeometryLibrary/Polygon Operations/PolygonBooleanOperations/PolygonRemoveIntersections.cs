@@ -31,28 +31,81 @@ namespace TVGL.TwoDimensional
             }
             return newPolygons.CreateShallowPolygonTrees(true, out _, out strayHoles);
         }
-
-        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge, out bool switchPolygon)
+        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge)
         {
-            if (intersectionData.VisitedA || intersectionData.VisitedB ||
-                (intersectionData.Relationship & PolygonSegmentRelationship.Interfaces) != PolygonSegmentRelationship.Crossover)
+            if (intersectionData.Relationship == SegmentRelationship.AEnclosesB && !intersectionData.VisitedA)
             {
-                currentEdge = null;
-                switchPolygon = false;
-                return false;
+                currentEdge = intersectionData.EdgeA;
+                return true;
             }
-            switchPolygon = true;
-            var AMovesInside = (intersectionData.Relationship & PolygonSegmentRelationship.AMovesInside) != 0b0;
-            currentEdge = AMovesInside ? intersectionData.EdgeB : intersectionData.EdgeA;
-            return true;
+            if (intersectionData.Relationship == SegmentRelationship.BEnclosesA && !intersectionData.VisitedB)
+            {
+                currentEdge = intersectionData.EdgeB;
+                return true;
+            }
+
+            if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter && !intersectionData.VisitedB)
+            {
+                currentEdge = intersectionData.EdgeB;
+                return true;
+            }
+            if (intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter && !intersectionData.VisitedA)
+            {
+                currentEdge = intersectionData.EdgeA;
+                return true;
+            }
+
+            if (intersectionData.Relationship == SegmentRelationship.NoOverlap ||
+                intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
+            {
+                if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter && !intersectionData.VisitedB)
+                {
+                    currentEdge = intersectionData.EdgeB;
+                    return true;
+                }
+                if (intersectionData.CollinearityType == CollinearityTypes.AAfterBBefore && !intersectionData.VisitedA)
+                {
+                    currentEdge = intersectionData.EdgeA;
+                    return true;
+                }
+                if (intersectionData.CollinearityType == CollinearityTypes.None)
+                {
+                    if (!intersectionData.VisitedA)
+                    {
+                        currentEdge = intersectionData.EdgeA;
+                        return true;
+                    }
+                    if (!intersectionData.VisitedB)
+                    {
+                        currentEdge = intersectionData.EdgeB;
+                        return true;
+                    }
+                }
+            }
+            currentEdge = null;
+            return false;
         }
 
-        protected override bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA)
+
+        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
+            PolygonSegment currentEdge, PolygonSegment startingEdge)
         {
-            if (!base.SwitchAtThisIntersection(newIntersection, currentEdgeIsFromPolygonA)) return false;
-            PolygonSegmentRelationship whichInterface = newIntersection.Relationship & PolygonSegmentRelationship.Interfaces;
-            return whichInterface == PolygonSegmentRelationship.Crossover;
+            return startingIntersection == currentIntersection && currentEdge == startingEdge;
         }
+
+        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
+        {
+            if (intersectionData.Relationship == SegmentRelationship.NoOverlap) return true;
+            if (currentEdgeIsFromPolygonA)
+            {
+                return
+                    intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
+                    intersectionData.Relationship == SegmentRelationship.BEnclosesA;
+            }
+            return intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
+                intersectionData.Relationship == SegmentRelationship.AEnclosesB;
+        }
+
 
         /// <summary>
         /// Handles identical polygons. In this case subPolygon is always on polygonA and the duplicated is in polygonB

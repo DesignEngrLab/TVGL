@@ -335,6 +335,15 @@ namespace TVGL.TwoDimensional
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
             _path = coordinates.ToList();
+            //_path = new List<Vector2>();
+            //Vector2 lastCoordinate = Vector2.Null;
+            //foreach (var p in coordinates)
+            //{
+            //    if (p == lastCoordinate) continue;
+            //    lastCoordinate = p;
+            //    _path.Add(p);
+            //}
+            //if (_path[0] == _path[^1]) _path.RemoveAt(_path.Count - 1);
             Index = index;
             MakeVertices();
             MakeLineSegments();

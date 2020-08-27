@@ -9,6 +9,7 @@ using BenchmarkDotNet.Attributes;
 using TVGL.TwoDimensional;
 using System.Linq;
 using TVGL;
+using TVGL.Voxelization;
 //using OldTVGL;
 
 namespace TVGLUnitTestsAndBenchmarking
@@ -152,23 +153,47 @@ namespace TVGLUnitTestsAndBenchmarking
             List<Polygon> polygon3;
 
             polygon3 = polygon1.Union(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
+            Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.Intersect(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
-
-            polygon3 = polygon1.Subtract(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
-
-            polygon3 = polygon2.Subtract(polygon1, a);
             Presenter.ShowAndHang(polygon3);
+
+            //polygon3 = polygon1.Subtract(polygon2, a);
+            //Presenter.ShowAndHang(polygon3);
+
+            //polygon3 = polygon2.Subtract(polygon1, a);
+            //Presenter.ShowAndHang(polygon3);
 
             polygon3 = polygon1.ExclusiveOr(polygon2, a);
             Presenter.ShowAndHang(polygon3);
 
         }
 
+        internal static void VoxelPolygons(Polygon polygon1, Polygon polygon2)
+        {
+            Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
+            var vp1 = new VoxelizedSolid(polygon1);
+
+            var a = polygon1.GetPolygonInteraction(polygon2);
+            List<Polygon> polygon3;
+
+            polygon3 = polygon1.Union(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.Intersect(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
+
+            //polygon3 = polygon1.Subtract(polygon2, a);
+            //Presenter.ShowAndHang(polygon3);
+
+            //polygon3 = polygon2.Subtract(polygon1, a);
+            //Presenter.ShowAndHang(polygon3);
+
+            polygon3 = polygon1.ExclusiveOr(polygon2, a);
+            Presenter.ShowAndHang(polygon3);
+
+        }
         internal static void DebugOctagons()
         {
             int k = 0;
@@ -185,7 +210,7 @@ namespace TVGLUnitTestsAndBenchmarking
                                 for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
                                 {
                                     Console.WriteLine(k++);
-                                    if ( k % 4 == 0)
+                                    if (k>.43 && k % 4 == 0)
                                     {
                                         DebugEdgeCases(MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut),
                                             MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut));
