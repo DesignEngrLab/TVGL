@@ -294,7 +294,7 @@ namespace OldTVGL._2D
 
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
             //Also, get the sorted points
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
+            var polygons = shape.Select(p => new PolygonClass(p.Path.Select(point => new Point(point)), true));
             var allPoints = polygons.SelectMany(poly => poly.Path);
             var sortedPoints = allPoints.OrderBy(p => p.X).ToList();
 
@@ -348,7 +348,7 @@ namespace OldTVGL._2D
         {
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
             //Also, get the sorted points
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true));
+            var polygons = shape.Select(p => new PolygonClass(p.Path.Select(point => new Point(point)), true));
             var allPoints = polygons.SelectMany(poly => poly.Path);
             var sortedPoints = allPoints.OrderBy(p => p.Y).ToList();
 

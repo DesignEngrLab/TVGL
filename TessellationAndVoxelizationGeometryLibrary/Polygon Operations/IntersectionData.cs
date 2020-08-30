@@ -108,7 +108,8 @@ namespace TVGL.TwoDimensional
                 while (delimiters[k] <= indexOfEdge) k++;
                 indexOfEdge = delimiters[k - 1] + (delimiters[k] - indexOfEdge) - 1;
                 var newFlippedEdge = allLines[indexOfEdge];
-                if ((polygonIsAInInteractions && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfA) ||
+                if (oldIntersection.WhereIntersection == WhereIsIntersection.BothStarts ||
+                        (polygonIsAInInteractions && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfA) ||
                     (!polygonIsAInInteractions && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfB))
                     newFlippedEdge = newFlippedEdge.ToPoint.StartLine;
                 if (polygonIsAInInteractions)

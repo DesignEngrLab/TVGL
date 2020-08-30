@@ -117,6 +117,9 @@ namespace TVGL.TwoDimensional
 
 
             _innerPolygons.Add(polygon);
+            perimeter = double.NaN;
+            area = double.NaN;
+
             return true;
         }
 

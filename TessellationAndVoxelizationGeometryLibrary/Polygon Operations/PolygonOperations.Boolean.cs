@@ -410,7 +410,7 @@ namespace TVGL.TwoDimensional
         #region RemoveSelfIntersections Public Method
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool noHoles, out List<Polygon> strayHoles, double minAllowableArea = double.NaN)
         {
-            if (double.IsNaN(minAllowableArea)) minAllowableArea = polygon.Area * Constants.BaseTolerance;
+            if (double.IsNaN(minAllowableArea)) minAllowableArea = Math.Abs(polygon.Area * Constants.BaseTolerance);
             polygon = polygon.Simplify(minAllowableArea);
             var intersections = polygon.GetSelfIntersections();
             if (intersections.Count == 0)

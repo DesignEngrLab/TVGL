@@ -730,7 +730,7 @@ namespace OldTVGL
 
             if (bestRectangle.Area.IsNegligible())
             {
-                var polygon = new Polygon(cvxPoints.Select(p => new Point(p)));
+                var polygon = new PolygonClass(cvxPoints.Select(p => new Point(p)));
                 var allPoints = new List<PointLight>(points);
                 if (!polygon.IsConvex())
                 {
@@ -747,7 +747,7 @@ namespace OldTVGL
 
                         //Check if it is still invalid
                         var newConvexHull = ConvexHull2D(allPoints).ToList();
-                        polygon = new Polygon(newConvexHull.Select(p => new Point(p)));
+                        polygon = new PolygonClass(newConvexHull.Select(p => new Point(p)));
                         if (polygon.IsConvex())
                         {
                             //Don't remove the point

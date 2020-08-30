@@ -10,7 +10,7 @@ namespace OldTVGL
     using PathAsLight = List<PointLight>;
     using Paths = List<List<Point>>;
     using PathsAsLight = List<List<PointLight>>;
-    using Polygons = List<Polygon>;
+    using Polygons = List<PolygonClass>;
     using PolygonsAsLight = List<PolygonLight>;
 
     internal enum BooleanOperationType
@@ -37,10 +37,10 @@ namespace OldTVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<PolygonLight> polygons, double[] lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, true)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new PolygonClass(p, true)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, double[] lineReference, double lineDirection,
+        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<PolygonClass> polygons, double[] lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             throw new NotImplementedException();
@@ -48,10 +48,10 @@ namespace OldTVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonLight> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, true)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new PolygonClass(p, true)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonClass> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
@@ -91,10 +91,10 @@ namespace OldTVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, true)), startingYValue,
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new PolygonClass(p, true)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonClass> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
@@ -172,15 +172,15 @@ namespace OldTVGL
 
         public static bool IsCircular(PolygonLight polygon, double confidencePercentage = Constants.HighConfidence)
         {
-            return IsCircular(new Polygon(polygon), out var _, confidencePercentage);
+            return IsCircular(new PolygonClass(polygon), out var _, confidencePercentage);
         }
 
-        public static bool IsCircular(Polygon polygon, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(PolygonClass polygon, double confidencePercentage = Constants.HighConfidence)
         {
             return IsCircular(polygon, out var _, confidencePercentage);
         }
 
-        public static bool IsCircular(Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(PolygonClass polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
             minCircle = MinimumEnclosure.MinimumCircle(polygon.Path);
@@ -239,7 +239,7 @@ namespace OldTVGL
         }
         public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<PolygonLight> paths)
         {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths.Select(p => new Polygon(p)).ToList());
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths.Select(p => new PolygonClass(p)).ToList());
         }
 
         #region Clockwise / CounterClockwise Ordering

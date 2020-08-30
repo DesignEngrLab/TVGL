@@ -234,7 +234,7 @@ namespace OldTVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingCircle MaximumInnerCircle(IList<List<PointLight>> paths, PointLight centerPoint)
         {
-            var polygons = paths.Select(path => new Polygon(path.Select(p => new Point(p)))).ToList();
+            var polygons = paths.Select(path => new PolygonClass(path.Select(p => new Point(p)))).ToList();
             return MaximumInnerCircle(polygons, new Point(centerPoint));
         }
 
@@ -245,7 +245,7 @@ namespace OldTVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, PointLight centerPoint)
         {
-            var polygons = paths.Select(path => new Polygon(path)).ToList();
+            var polygons = paths.Select(path => new PolygonClass(path)).ToList();
             return MaximumInnerCircle(polygons, new Point(centerPoint));
         }
 
@@ -256,7 +256,7 @@ namespace OldTVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingCircle MaximumInnerCircle(IList<List<Point>> paths, Point centerPoint)
         {
-            var polygons = paths.Select(path => new Polygon(path)).ToList();
+            var polygons = paths.Select(path => new PolygonClass(path)).ToList();
             return MaximumInnerCircle(polygons, centerPoint);
         }
 
@@ -266,10 +266,10 @@ namespace OldTVGL
         ///     Else it returns a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(List<Polygon> polygons, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(List<PolygonClass> polygons, Point centerPoint)
         {
-            var negativePolygons = new List<Polygon>();
-            var positivePolygons = new List<Polygon>();
+            var negativePolygons = new List<PolygonClass>();
+            var positivePolygons = new List<PolygonClass>();
             foreach (var polygon in polygons)
             {
                 if(polygon.PathLines == null) polygon.SetPathLines();
@@ -280,11 +280,11 @@ namespace OldTVGL
             //Note: this function could possible be improved by determining which polygon is closest, 
             //but that did not seem to be a faster method. Also, a inner circle does not necessarily
             //need to be contained in a bounding box for positive solids (e.g. a C shape).
-            var polygonsOfInterest = new List<Polygon>();
+            var polygonsOfInterest = new List<PolygonClass>();
 
             //First, check if the point is inside any negative polygon.
             var minDistance = double.MaxValue;
-            Polygon closestContainingPolygon = null;
+            PolygonClass closestContainingPolygon = null;
             foreach (var negativePoly in negativePolygons)
             {
                 if (!MiscFunctions.IsPointInsidePolygon(negativePoly, centerPoint, out var closestLineAbove,
@@ -330,7 +330,7 @@ namespace OldTVGL
             return smallestBoundingCircle;
         }
 
-        private static BoundingCircle MaximumInnerCircleInHole(Polygon polygon, Point centerPoint)
+        private static BoundingCircle MaximumInnerCircleInHole(PolygonClass polygon, Point centerPoint)
         {
             var shortestDistance = double.MaxValue;
             //1. For every line on the path, get the closest point on the edge to the center point. 

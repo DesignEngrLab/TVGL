@@ -86,6 +86,7 @@ namespace TVGL
                 AddScatterSeriesToModel(points.ToList(), marker);
             SetAxes(points);
             InitializeComponent();
+            Title = title;
         }
 
 
@@ -110,6 +111,7 @@ namespace TVGL
             }
             SetAxes(listOfArrayOfPoints.SelectMany(v => v));
             InitializeComponent();
+            Title = title;
         }
 
 
@@ -148,6 +150,7 @@ namespace TVGL
             allpoints.AddRange(listOfListOfPoints2.SelectMany(v => v));
             SetAxes(allpoints);
             InitializeComponent();
+            Title = title;
         }
 
         public Window2DPlot(IEnumerable<IEnumerable<IEnumerable<Vector2>>> listofListOfListOfPoints,
@@ -191,6 +194,7 @@ namespace TVGL
             }
             SetAxes(listofListOfListOfPoints.SelectMany(poly => poly.SelectMany(v => v)));
             InitializeComponent();
+            Title = title;
         }
 
         /// <summary>
@@ -210,6 +214,7 @@ namespace TVGL
                 AddScatterSeriesToModel(points, marker);
             SetAxes(points.Select(v => new Vector2(v[0], v[1])));
             InitializeComponent();
+            Title = title;
         }
 
         /// <summary>

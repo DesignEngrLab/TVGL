@@ -100,7 +100,7 @@ namespace TVGL
         public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(new[] {polygon}, title, plot2DType, closeShape, marker);
+            ShowAndHang(new[] { polygon }, title, plot2DType, closeShape, marker);
         }
 
 
@@ -569,7 +569,29 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        public static void ShowAndHang(VoxelizedSolid solid, List<Polygon> polygons)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            Visual3D model = MakeModelVisual3D(solid);
+            models.Add(model);
+            window.view1.Children.Add(model);
 
+            foreach (var polygon in polygons.SelectMany(poly => poly.AllPolygons))
+            {
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                foreach (var line in polygon.Lines)
+                {
+                    lineCollection.Add(new Point3D(line.FromPoint.X, line.FromPoint.Y, 0));
+                    lineCollection.Add(new Point3D(line.ToPoint.X, line.ToPoint.Y, 0));
+                }
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Thickness=5,Color=Colors.Red  };
+                window.view1.Children.Add(lines);
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
         public static void ShowAndHang(IEnumerable<Solid> solids)
         {
             var window = new Window3DPlot();

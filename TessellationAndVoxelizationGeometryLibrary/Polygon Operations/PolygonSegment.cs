@@ -119,10 +119,10 @@ namespace TVGL.TwoDimensional
         }
         double _horizontalSlope = double.NaN;
 
-        public double XMax => (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
-        public double XMin => (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
-        public double YMax => (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
-        public double YMin => (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+        public double XMax { get; }
+        public double XMin { get; }
+        public double YMax { get; }
+        public double YMin { get; }
 
 
         /// <summary>
@@ -142,19 +142,23 @@ namespace TVGL.TwoDimensional
         {
             FromPoint = fromNode;
             ToPoint = toNode;
+            XMax = (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
+            XMin = (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
+            YMax = (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+            YMin = (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
         }
         #endregion
         /// <summary>
         ///     Gets the Vertex2D which the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
-        internal Vertex2D ToPoint { get; }
+        public Vertex2D ToPoint { get; }
 
         /// <summary>
         ///     Gets the Vertex2D which the line is pointing away from. Set is through the constructor.
         /// </summary>
         /// <value>From node.</value>
-        internal Vertex2D FromPoint { get; }
+        public Vertex2D FromPoint { get; }
 
 
 

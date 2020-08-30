@@ -26,84 +26,46 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (noHoles) polyCoordinates.Reverse();
+                if (noHoles && area < 0) polyCoordinates.Reverse();
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             return newPolygons.CreateShallowPolygonTrees(true, out _, out strayHoles);
         }
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge)
         {
-            if (intersectionData.Relationship == SegmentRelationship.AEnclosesB && !intersectionData.VisitedA)
+            if (intersectionData.VisitedB && intersectionData.VisitedA)
             {
-                currentEdge = intersectionData.EdgeA;
-                return true;
+                currentEdge = null;
+                return false;
             }
-            if (intersectionData.Relationship == SegmentRelationship.BEnclosesA && !intersectionData.VisitedB)
-            {
-                currentEdge = intersectionData.EdgeB;
-                return true;
-            }
-
-            if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter && !intersectionData.VisitedB)
-            {
-                currentEdge = intersectionData.EdgeB;
-                return true;
-            }
-            if (intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter && !intersectionData.VisitedA)
-            {
-                currentEdge = intersectionData.EdgeA;
-                return true;
-            }
-
             if (intersectionData.Relationship == SegmentRelationship.NoOverlap ||
-                intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
+                intersectionData.Relationship == SegmentRelationship.NoOverlap)
             {
-                if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter && !intersectionData.VisitedB)
-                {
-                    currentEdge = intersectionData.EdgeB;
-                    return true;
-                }
-                if (intersectionData.CollinearityType == CollinearityTypes.AAfterBBefore && !intersectionData.VisitedA)
-                {
-                    currentEdge = intersectionData.EdgeA;
-                    return true;
-                }
-                if (intersectionData.CollinearityType == CollinearityTypes.None)
-                {
-                    if (!intersectionData.VisitedA)
-                    {
-                        currentEdge = intersectionData.EdgeA;
-                        return true;
-                    }
-                    if (!intersectionData.VisitedB)
-                    {
-                        currentEdge = intersectionData.EdgeB;
-                        return true;
-                    }
-                }
+                currentEdge = null;
+                return false;
             }
-            currentEdge = null;
-            return false;
+            currentEdge = intersectionData.VisitedA ? intersectionData.EdgeB : intersectionData.EdgeA;
+            return true;
         }
-
 
         protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
             PolygonSegment currentEdge, PolygonSegment startingEdge)
         {
             return startingIntersection == currentIntersection && currentEdge == startingEdge;
         }
-
+        
+        //private bool lastSwitch = false;
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
-            if (intersectionData.Relationship == SegmentRelationship.NoOverlap) return true;
-            if (currentEdgeIsFromPolygonA)
-            {
-                return
-                    intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
-                    intersectionData.Relationship == SegmentRelationship.BEnclosesA;
-            }
-            return intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
-                intersectionData.Relationship == SegmentRelationship.AEnclosesB;
+            if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
+                intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
+                intersectionData.Relationship == SegmentRelationship.DoubleOverlap ||
+                intersectionData.Relationship == SegmentRelationship.AEnclosesB)
+                return true;
+            return false;
+            //if (intersectionData.Relationship == SegmentRelationship.NoOverlap) return false;
+            //lastSwitch = !lastSwitch;
+            //return lastSwitch;
         }
 
 

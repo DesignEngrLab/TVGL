@@ -136,8 +136,8 @@ namespace TVGL.TwoDimensional
                     intersectionData.VisitedB = true;
                 }
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
-                if(!newPath[^1].IsPracticallySame(intersectionCoordinates))
-                newPath.Add(intersectionCoordinates);
+                if (newPath.Count==0 || !newPath[^1].IsPracticallySame(intersectionCoordinates))
+                    newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
                     currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;
                 currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
@@ -149,14 +149,14 @@ namespace TVGL.TwoDimensional
                 // out of the loop. The intersection is identified here, but processed above
                 {
                     currentEdge = currentEdge.ToPoint.StartLine;
-                    if (!newPath[^1].IsPracticallySame(intersectionCoordinates))
+                    if (!newPath[^1].IsPracticallySame(currentEdge.FromPoint.Coordinates))
                         newPath.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
                                                             // the edge that concern us. We want that function to report the first one for the edge
                 }
-            } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge))
-            if (!newPath[^1].IsPracticallySame(newPath[0])) newPath.RemoveAt(newPath.Count - 1);
+            } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge));
+            if (newPath[^1].IsPracticallySame(newPath[0])) newPath.RemoveAt(newPath.Count - 1);
             return newPath;
         }
 

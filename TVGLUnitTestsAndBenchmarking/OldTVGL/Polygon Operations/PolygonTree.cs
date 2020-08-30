@@ -14,17 +14,17 @@ namespace OldTVGL
         /// The list of all the negative polygons inside the positive=outer polygon.
         /// There can be NO positive polygons inside this class, since this is a SHALLOW Polygon Tree
         /// </summary>
-        public IList<Polygon> InnerPolygons;
+        public IList<PolygonClass> InnerPolygons;
 
         /// <summary>
         /// The outer most polygon, which is always positive. THe negative polygons are inside it.
         /// </summary>
-        public readonly Polygon OuterPolygon;
+        public readonly PolygonClass OuterPolygon;
 
         /// <summary>
         /// A list of all the polygons in this tree.
         /// </summary>
-        public IList<Polygon> AllPolygons => new List<Polygon>(InnerPolygons) {OuterPolygon};
+        public IList<PolygonClass> AllPolygons => new List<PolygonClass>(InnerPolygons) {OuterPolygon};
 
         /// <summary>
         /// A list of all the polygons in this tree.
@@ -50,17 +50,17 @@ namespace OldTVGL
         /// <summary>
         /// Create an ShallowPolygonTree with just a positive polygon
         /// </summary>
-        public ShallowPolygonTree(Polygon positivePolygon)
+        public ShallowPolygonTree(PolygonClass positivePolygon)
         {
             if (!positivePolygon.IsPositive) throw new Exception("The outer polygon must be positive");
-            InnerPolygons = new List<Polygon>();
+            InnerPolygons = new List<PolygonClass>();
             OuterPolygon = positivePolygon;
         }
 
         /// <summary>
         /// Create an ShallowPolygonTree with the positive (outer) polygon and negative (inner) polygons
         /// </summary>
-        public ShallowPolygonTree(Polygon positivePolygon, ICollection<Polygon> negativePolygons)
+        public ShallowPolygonTree(PolygonClass positivePolygon, ICollection<PolygonClass> negativePolygons)
         {
             if (!positivePolygon.IsPositive) throw new Exception("The outer polygon must be positive");
             OuterPolygon = positivePolygon;
@@ -73,7 +73,7 @@ namespace OldTVGL
                 negativePolygon.Parent = OuterPolygon;
                 OuterPolygon.Childern.Add(negativePolygon);
             }
-            InnerPolygons = new List<Polygon>(negativePolygons);
+            InnerPolygons = new List<PolygonClass>(negativePolygons);
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace OldTVGL
         /// </summary>
         /// <param name="polygons"></param>
         /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<Polygon> polygons)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<PolygonClass> polygons)
         {
             //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
             //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
@@ -154,7 +154,7 @@ namespace OldTVGL
         /// <returns></returns>
         public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths)
         {
-            return GetShallowPolygonTrees(paths.Select(path => new Polygon(path)).ToList());
+            return GetShallowPolygonTrees(paths.Select(path => new PolygonClass(path)).ToList());
         }
     }
 }
