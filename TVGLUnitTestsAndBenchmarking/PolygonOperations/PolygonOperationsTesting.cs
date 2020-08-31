@@ -125,12 +125,12 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal static void TestRemoveSelfIntersect()
         {
-            for (int i = 0; i < 200; i++)
+            for (int i = 0; i < 20; i++)
             {
                 r = new Random(i);
                 Console.WriteLine(i);
-                var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
-                //var coords = MakeRandomComplexPolygon(10, 30).ToList();
+                //var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
+                var coords = MakeRandomComplexPolygon(100, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords);
                 var polygons = polygon.RemoveSelfIntersections(true, out _);
@@ -420,10 +420,10 @@ namespace TVGLUnitTestsAndBenchmarking
             var peri = coords3.Perimeter();
             var numPolygons = polygon3.Sum(poly => poly.AllPolygons.Count());
             var numPolyVerts = polygon3.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
-            if (//numPolygons == coords3.Count
-                //&& numPolyVerts == coords3.Sum(loop => loop.Count) &&
+            if (numPolygons == coords3.Count
+                && //numPolyVerts == coords3.Sum(loop => loop.Count) &&
                  area.IsPracticallySame(polygon3.Sum(p => p.Area), 1e-3)
-                //&& peri.IsPracticallySame(polygon3.Sum(p => p.Perimeter), 1e-3)
+                && peri.IsPracticallySame(polygon3.Sum(p => p.Perimeter), 1e-3)
                 )
             {
                 Console.WriteLine("*****{0}: {1} matches", trial, name);

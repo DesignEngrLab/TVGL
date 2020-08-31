@@ -35,9 +35,9 @@ namespace TVGL.Voxelization
         internal IVoxelRow[] voxels { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the dense encoding is current.
+        /// Gets the count.
         /// </summary>
-        /// <value><c>true</c> if [dense encoding is current]; otherwise, <c>false</c>.</value>
+        /// <value>The count.</value>
         public long Count { get; private set; }
         public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         public int[][] VoxelBounds { get; }

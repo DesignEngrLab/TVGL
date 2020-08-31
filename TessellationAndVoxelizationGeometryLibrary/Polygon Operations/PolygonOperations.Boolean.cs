@@ -24,6 +24,7 @@ namespace TVGL.TwoDimensional
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
         {
+            Presenter.ShowAndHang(new[] { polygonA, polygonA.InnerPolygons.First(), polygonB, polygonB.InnerPolygons.First() });
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Union(polygonA, polygonB, relationship, minAllowableArea);
