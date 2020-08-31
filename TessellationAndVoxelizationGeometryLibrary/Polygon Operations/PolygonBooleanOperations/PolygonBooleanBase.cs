@@ -123,10 +123,9 @@ namespace TVGL.TwoDimensional
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
-            var currentEdgeIsFromPolygonA = currentEdge == intersectionData.EdgeA;
             do
             {
-                if (currentEdgeIsFromPolygonA)
+                if (currentEdge == intersectionData.EdgeA)
                 {
                     if (intersectionData.VisitedA) break;
                     intersectionData.VisitedA = true;
@@ -140,12 +139,11 @@ namespace TVGL.TwoDimensional
                 if (newPath.Count == 0 || !newPath[^1].IsPracticallySame(intersectionCoordinates))
                     newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
-                    currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;
-                currentEdge = currentEdgeIsFromPolygonA ? intersectionData.EdgeA : intersectionData.EdgeB;
+                    currentEdge = (currentEdge == intersectionData.EdgeB) ? intersectionData.EdgeA : intersectionData.EdgeB;
 
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                        intersectionCoordinates, out intersectionData, ref currentEdgeIsFromPolygonA, out switchPolygon))
+                        intersectionCoordinates, out intersectionData, out switchPolygon))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
@@ -174,8 +172,7 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<SegmentIntersection> allIntersections,
-        Vector2 formerIntersectCoords, out SegmentIntersection newIntersection, ref bool currentEdgeIsFromPolygonA,
-        out bool switchPolygon)
+        Vector2 formerIntersectCoords, out SegmentIntersection newIntersection, out bool switchPolygon)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
             newIntersection = null;
@@ -189,6 +186,7 @@ namespace TVGL.TwoDimensional
             foreach (var index in intersectionIndices)
             {
                 var thisIntersectData = allIntersections[index];
+                var currentEdgeIsFromPolygonA = thisIntersectData.EdgeA == currentEdge;
                 if (formerIntersectCoords.Equals(thisIntersectData.IntersectCoordinates)) continue;
                 var distance = 0.0;
                 if (!(formerIntersectCoords.IsNull() && (thisIntersectData.WhereIntersection == WhereIsIntersection.BothStarts ||
@@ -206,8 +204,7 @@ namespace TVGL.TwoDimensional
             }
             if (newIntersection != null)
             {
-                //currentEdgeIsFromPolygonA = newIntersection.EdgeA == currentEdge;
-                switchPolygon = SwitchAtThisIntersection(newIntersection, currentEdgeIsFromPolygonA);
+                switchPolygon = SwitchAtThisIntersection(newIntersection, newIntersection.EdgeA == currentEdge);
                 return true;
             }
             else

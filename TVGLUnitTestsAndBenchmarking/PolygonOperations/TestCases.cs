@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
     public static class TestCases
     {
 
-        static Random r = new Random(2);
+        static Random r = new Random(1);
 
 
         internal static Polygon C2Poly(IEnumerable<IEnumerable<Vector2>> coordinates)
@@ -35,23 +35,26 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-        internal static IEnumerable<Vector2[][]> GetAllSingleArgumentErsatzCases()
+        internal static IEnumerable<KeyValuePair<string, (Vector2[][], Vector2[][])>> GetAllSingleArgumentErsatzCases()
         {
             foreach (var kvp in Ersatz)
                 if (kvp.Value.Item2 == null)
-                    yield return kvp.Value.Item1;
+                    yield return kvp;
         }
-        internal static IEnumerable<(Vector2[][], Vector2[][])> GetAllTwoArgumentErsatzCases()
+        internal static IEnumerable<KeyValuePair<string, (Vector2[][], Vector2[][])>> GetAllTwoArgumentErsatzCases()
         {
             foreach (var kvp in Ersatz)
                 if (kvp.Value.Item2 != null)
-                    yield return kvp.Value;
+                    yield return kvp;
         }
 
         internal static Dictionary<string, (Vector2[][], Vector2[][])> Ersatz =
             new Dictionary<string, (Vector2[][], Vector2[][])>
             {
-                { "trapInTri", (
+                { "skyline", (
+                    new [] { new [] { new Vector2(0,4), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7, 4), new Vector2(7, 2), new Vector2(6,2), new Vector2(4,2), new Vector2(4,3), new Vector2(1,3), new Vector2(1,4) } },
+                    new [] { new [] { new Vector2(0,3), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7,4), new Vector2(7, 3), new Vector2(6, 3), new Vector2(2, 3), new Vector2(2, 4), new Vector2(1,4), new Vector2(1, 3) } })},
+                 { "trapInTri", (
                     new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(0,10) } },
                     new [] { new [] { new Vector2(0,0), new Vector2(4,0), new Vector2(6,4), new Vector2(3,7) } })},
                 { "innerTouch", (
@@ -64,7 +67,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         new [] { new Vector2(2, 2), new Vector2(2, 8), new Vector2(8, 8), new Vector2(8, 2) } },
                     new [] { new [] { new Vector2(1,1), new Vector2(9,1), new Vector2(9, 9), new Vector2(1, 9) },
                         new [] { new Vector2(3, 3), new Vector2(3, 7), new Vector2(7, 7), new Vector2(7, 3) } })},
-                {"boundingRectTest1",(
+               {"boundingRectTest1",(
                     new[] { new[] {
                         new Vector2(2.26970768, 4.28080463), new Vector2(5.84034252, 0), new Vector2(12.22331619, 2.24806976),
                         new Vector2(23.56225014, 21.88767815), new Vector2(19.9916172, 26.16848373), new Vector2(13.60864258, 23.92041588) } }, null) },
@@ -172,6 +175,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     thisSide += along;
                 }
             }
+            //return new Polygon(result);
             var polygons = new Polygon(result).RemoveSelfIntersections(true, out _, 1e-9);
             var maxArea = polygons.Max(p => p.Area);
             return polygons.First(polygons => polygons.Area == maxArea);
