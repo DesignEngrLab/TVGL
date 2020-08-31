@@ -12,12 +12,9 @@
 // <summary></summary>
 // ***********************************************************************
 
-using MIConvexHull;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -35,6 +32,23 @@ namespace TVGL
         private const int MaxRotationsForOBB = 24;
 
         /// <summary>
+        /// Finds the minimum bounding rectangle given a set of points. Either send any set of points
+        /// OR the convex hull 2D.
+        /// Optional booleans for what information should be set in the Bounding Rectangle.
+        /// Example: If you really just need the area, you don't need the corner points or
+        /// points on side.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointsAreConvexHull">if set to <c>true</c> [points are convex hull].</param>
+        /// <param name="setCornerPoints">if set to <c>true</c> [set corner points].</param>
+        /// <param name="setPointsOnSide">if set to <c>true</c> [set points on side].</param>
+        /// <returns>BoundingRectangle.</returns>
+        public static BoundingRectangle BoundingRectangle(this Polygon polygon, bool pointsAreConvexHull = false,
+            bool setCornerPoints = true, bool setPointsOnSide = true)
+        {
+            return BoundingRectangle(polygon.Path, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
+        }
+        /// <summary>
         ///     Finds the minimum bounding rectangle given a set of points. Either send any set of points
         ///     OR the convex hull 2D.
         ///     Optional booleans for what information should be set in the Bounding Rectangle.
@@ -46,10 +60,11 @@ namespace TVGL
         /// <param name="setCornerPoints"></param>
         /// <param name="setPointsOnSide"></param>
         /// <returns>BoundingRectangle.</returns>
-        public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> polygon, bool pointsAreConvexHull = false,
+        /// 
+        public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> points, bool pointsAreConvexHull = false,
             bool setCornerPoints = true, bool setPointsOnSide = true)
         {
-            return RotatingCalipers2DMethod(polygon, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
+            return RotatingCalipers2DMethod(points, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
         }
 
         /// <summary>

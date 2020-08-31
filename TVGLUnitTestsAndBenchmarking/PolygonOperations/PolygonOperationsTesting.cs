@@ -10,7 +10,6 @@ using TVGL.TwoDimensional;
 using System.Linq;
 using TVGL;
 using TVGL.Voxelization;
-using OldTVGL;
 using System.Runtime.CompilerServices;
 using System.Windows;
 
@@ -18,119 +17,14 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public class PolygonOperationsTesting
     {
-        static Random r = new Random(1);
-
-        static double rand(double radius)
-        {
-            return 2.0 * radius * r.NextDouble() - radius;
-        }
-        static int rand(int radius)
-        {
-            return (int)r.Next(radius);
-        }
-
-        internal static IEnumerable<Vector2> MakeCircularPolygon(int numSides, double radius)
-        {
-            var angleIncrement = 2 * Math.PI / numSides;
-
-            for (int i = 0; i < numSides; i++)
-            {
-                var angle = i * angleIncrement;
-                yield return new Vector2(radius * Math.Cos(angle), radius * Math.Sin(angle));
-            }
-        }
-        internal static IEnumerable<Vector2> MakeOctogonPolygon(double xMin, double yMin, double xMax, double yMax, double cornerClip)
-        {
-            yield return new Vector2(xMin + cornerClip, yMin);
-            yield return new Vector2(xMax - cornerClip, yMin);
-            yield return new Vector2(xMax, yMin + cornerClip);
-            yield return new Vector2(xMax, yMax - cornerClip);
-            yield return new Vector2(xMax - cornerClip, yMax);
-            yield return new Vector2(xMin + cornerClip, yMax);
-            yield return new Vector2(xMin, yMax - cornerClip);
-            yield return new Vector2(xMin, yMin + cornerClip);
-        }
-
-        internal static IEnumerable<Vector2> MakeStarryCircularPolygon(int numSides, double radius, double delta)
-        {
-            var angleIncrement = 2 * Math.PI / numSides;
-
-            for (int i = 0; i < numSides; i++)
-            {
-                var angle = i * angleIncrement;
-                var thisRadius = radius + 2 * delta * r.NextDouble() - delta;
-                yield return new Vector2(thisRadius * Math.Cos(angle), thisRadius * Math.Sin(angle));
-            }
-        }
-
-        internal static IEnumerable<Vector2> MakeRandomComplexPolygon(int numSides, double boxRadius)
-        {
-            for (int i = 0; i < numSides; i++)
-            {
-                yield return new Vector2(2 * boxRadius * r.NextDouble() - boxRadius, 2 * boxRadius * r.NextDouble() - boxRadius);
-            }
-        }
-
-        internal static IEnumerable<Vector2> MakeWavyCircularPolygon(int numSides, double radius, double delta, double frequency)
-        {
-            var angleIncrement = 2 * Math.PI / numSides;
-            //if (radius<delta)
-            //{
-            //    var temp = radius;
-            //    radius = delta;
-            //    delta = temp;
-            //}
-
-            for (int i = 0; i < numSides; i++)
-            {
-                var angle = i * angleIncrement;
-                yield return new Vector2(radius * Math.Cos(angle) + delta * Math.Cos(frequency * angle),
-                    radius * Math.Sin(angle) + delta * Math.Sin(frequency * angle));
-            }
-        }
-
-        internal static Polygon MakeChunkySquarePolygon(int sideLength, int bufferThickness)
-        {
-            var result = new List<Vector2>();
-            //var prevPoint = new Vector2(-sideLength / 2, -sideLength / 2);
-            var dirs = new[] { new Vector2(1, 0), new Vector2(0, 1), new Vector2(-1, 0), new Vector2(0, -1) };
-            var sign = 1;
-            foreach (var dir in dirs)
-            {
-                var cross = new Vector2(dir.Y, -dir.X);
-                var point = -(sideLength / 2) * dir + (bufferThickness + sideLength / 2) * cross;
-                result.Add(point);
-                var thisSide = 0;
-                var i = bufferThickness;
-                var along = 3;
-                while (thisSide < sideLength)
-                {
-                    if (i-- == 0)
-                    {
-                        i = bufferThickness;
-                        sign *= -1;
-                    }
-                    point += along * dir;
-                    result.Add(point);
-                    point += sign * cross;
-                    result.Add(point);
-                    along = r.Next(3);
-                    thisSide += along;
-                }
-            }
-            var polygons = new Polygon(result).RemoveSelfIntersections(true, out _, 1e-9);
-            var maxArea = polygons.Max(p => p.Area);
-            return polygons.First(polygons => polygons.Area == maxArea);
-        }
-
         internal static void TestRemoveSelfIntersect()
         {
+            var r = new Random();
             for (int i = 0; i < 20; i++)
             {
-                r = new Random(i);
                 Console.WriteLine(i);
                 //var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
-                var coords = MakeRandomComplexPolygon(100, 30).ToList();
+                var coords = TestCases.MakeRandomComplexPolygon(100, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords);
                 var polygons = polygon.RemoveSelfIntersections(true, out _);
@@ -140,36 +34,15 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
 
-        internal static Dictionary<string, (Vector2[][], Vector2[][])> edgeCaseDictionary =
-            new Dictionary<string, (Vector2[][], Vector2[][])>
-            {
-                { "trapInTri", (
-                    new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(0,10) } },
-                    new [] { new [] { new Vector2(0,0), new Vector2(4,0), new Vector2(6,4), new Vector2(3,7) } })},
-                { "innerTouch", (
-                    new [] { new [] { new Vector2(0,0), new Vector2(7,0), new Vector2(4,2.5), new Vector2(3,4),
-                        new Vector2(1,6), new Vector2(3,7), new Vector2(0,10) } },
-                    new [] { new [] { new Vector2(2,7), new Vector2(1,6), new Vector2(2,2), new Vector2(5,1),
-                        new Vector2(3,4), new Vector2(2,5) } })},
-                { "nestedSquares", (
-                    new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(10,10), new Vector2(0,10) },
-                        new [] { new Vector2(2, 2), new Vector2(2, 8), new Vector2(8, 8), new Vector2(8, 2) } },
-                    new [] { new [] { new Vector2(1,1), new Vector2(9,1), new Vector2(9, 9), new Vector2(1, 9) },
-                        new [] { new Vector2(3, 3), new Vector2(3, 7), new Vector2(7, 7), new Vector2(7, 3) } })},
-            };
 
-        internal static void DebugEdgeCases()
-        {
-            foreach (var key in edgeCaseDictionary.Keys)
-                DebugEdgeCases(key);
-        }
+
         internal static void DebugEdgeCases(string name)
         {
-            var coords1 = edgeCaseDictionary[name].Item1;
+            var coords1 = TestCases.Ersatz[name].Item1;
             var polygon1 = new Polygon(coords1[0]);
             for (int i = 1; i < coords1.Length; i++)
                 polygon1.AddInnerPolygon(new Polygon(coords1[i]));
-            var coords2 = edgeCaseDictionary[name].Item2;
+            var coords2 = TestCases.Ersatz[name].Item2;
             var polygon2 = new Polygon(coords2[0]);
             for (int i = 1; i < coords2.Length; i++)
                 polygon2.AddInnerPolygon(new Polygon(coords2[i]));
@@ -210,297 +83,24 @@ namespace TVGLUnitTestsAndBenchmarking
             Presenter.ShowAndHang(polygon3);
 
         }
-
-        internal static void VoxelPolygons(IEnumerable<Vector2> coords1, IEnumerable<Vector2> coords2)
+        internal static void DebugBoolean()
         {
-            var polygon1 = new Polygon(coords1);
-            var polygon2 = new Polygon(coords2);
-            var a = polygon1.GetPolygonInteraction(polygon2);
-            //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+            Vector2[][] coords1, coords2;
+            (coords1, coords2) = TestCases.MakeBumpyRings(12, 25, 0);
+            var result = TestCases.C2Poly(coords1).Union(TestCases.C2Poly(coords2));
 
-            var min = new Vector2(Math.Min(polygon1.MinX, polygon2.MinX),
-                Math.Min(polygon1.MinY, polygon2.MinY));
-            var max = new Vector2(Math.Max(polygon1.MaxX, polygon2.MaxX),
-                Math.Max(polygon1.MaxY, polygon2.MaxY));
-            var vp1 = new VoxelizedSolid(new[] { polygon1 }, 500, new[] { min, max });
-            var vp2 = new VoxelizedSolid(new[] { polygon2 }, 500, new[] { min, max });
-            List<Polygon> polygon3;
-            //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-
-            /***** Union *******/
-            polygon3 = polygon1.Union(polygon2, a);
-            //Presenter.ShowAndHang(polygon3);
-            var vp3 = vp1.UnionToNewSolid(vp2);
-            var polyVP3 = new VoxelizedSolid(polygon3, 500, new[] { min, max });
-            polyVP3.Subtract(vp3);
-            if (polyVP3.Volume > 0)
-            {
-                Console.WriteLine("Discrepancy in Union");
-                //Presenter.ShowAndHang(polygon3);
-                Presenter.ShowAndHang(vp3, polygon3);
-            }
-
-            var clipperPoly1 = coords1.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList();
-            var clipperPoly2 = coords2.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList();
-            var coords3 = OldTVGL.PolygonOperations.Union(clipperPoly1, clipperPoly2);
-
-            /***** Intersect *******/
-            //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-            polygon3 = polygon1.Intersect(polygon2, a);
-            vp3 = vp1.IntersectToNewSolid(vp2);
-            polyVP3 = new VoxelizedSolid(polygon3, 500, new[] { min, max });
-            polyVP3.Subtract(vp3);
-            if (polyVP3.Volume > 0)
-            {
-                Console.WriteLine("Discrepancy in Intersect");
-                //Presenter.ShowAndHang(polygon3);
-                //Presenter.ShowAndHang(vp3);
-                Presenter.ShowAndHang(vp3, polygon3);
-            }
-
-            /***** Subtract a - b  *******/
-            polygon3 = polygon1.Subtract(polygon2, a);
-            vp3 = vp1.SubtractToNewSolid(vp2);
-            polyVP3 = new VoxelizedSolid(polygon3, 500, new[] { min, max });
-            polyVP3.Subtract(vp3);
-            if (polyVP3.Volume > 0)
-            {
-                Console.WriteLine("Discrepancy in a-b");
-                //Presenter.ShowAndHang(polygon3);
-                //Presenter.ShowAndHang(vp3);
-                Presenter.ShowAndHang(vp3, polygon3);
-            }
-
-            /***** Subtract b - a  *******/
-            polygon3 = polygon2.Subtract(polygon1, a);
-            vp3 = vp2.SubtractToNewSolid(vp1);
-            polyVP3 = new VoxelizedSolid(polygon3, 500, new[] { min, max });
-            polyVP3.Subtract(vp3);
-            if (polyVP3.Volume > 0)
-            {
-                Console.WriteLine("Discrepancy in b-a");
-                //Presenter.ShowAndHang(polygon3);
-                //Presenter.ShowAndHang(vp3);
-                Presenter.ShowAndHang(vp3, polygon3);
-            }
-
-            /***** ExclusiveOR  ******
-
-            polygon3 = polygon1.ExclusiveOr(polygon2, a);
-
-            vp3 = vp1.UnionToNewSolid(vp2);
-            polyVP3 = new VoxelizedSolid(polygon3, 500, new[] { min, max });
-            polyVP3.Subtract(vp3);
-            if (polyVP3.Volume > 0)
-            {
-                Presenter.ShowAndHang(polygon3);
-                Presenter.ShowAndHang(polyVP3);
-            }
-            */
-        }
-        internal static void DebugOctagons()
-        {
-            int k = 0;
-            for (int leftCut = 1; leftCut <= 4; leftCut++)
-            {
-                for (int leftWidth = 5 - leftCut; leftWidth < 11 - 2 * leftCut; leftWidth++)
-                {
-                    for (int leftHeight = 5 - leftCut; leftHeight < 11 - 2 * leftCut; leftHeight++)
-                    {
-                        for (int rightCut = 1; rightCut <= 4; rightCut++)
-                        {
-                            for (int rightWidth = 5 - rightCut; rightWidth < 11 - 2 * rightCut; rightWidth++)
-                            {
-                                for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
-                                {
-                                    Console.WriteLine(k++);
-                                    if (k > -1)
-                                    {
-                                        //DebugEdgeCases(MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut),
-                                        //    MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut));
-                                        VoxelPolygons(MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut),
-                                                 MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut));
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
-        internal static void TestBooleanCompare()
-        {
-            var stopwatch = new Stopwatch();
-            var width = 0;
-            for (int i = 12; i < 800000; i *= 2)
-            {
-                width += 2;
-                for (int j = 0; j < 8; j++)
-                {
-                    Console.WriteLine(i + " sides");
-                    var polygon1 = MakeChunkySquarePolygon(i, width);
-                    //Presenter.ShowAndHang(polygon1);
-                    //Presenter.ShowAndHang(polygon1);
-                    //var coords1 = MakeStarryCircularPolygon(i, 30, 1).ToList();
-                    var hole1 = new List<Vector2>(); // MakeStarryCircularPolygon(i, 21, 1).Reverse().ToList();
-                    var polygon2 = MakeChunkySquarePolygon(i, width);
-
-                    //var coords2 = MakeStarryCircularPolygon(i, 30, 1).ToList();
-                    //for (int j = 0; j < coords2.Count; j++)
-                    //    coords2[j] += new Vector2(15, 10);
-                    //var hole2 = MakeStarryCircularPolygon(i, 21, 1).Reverse().ToList();
-                    //for (int j = 0; j < hole2.Count; j++)
-                    //    hole2[j] += new Vector2(15, 11);
-                    //polygon1 = new Polygon(coords1, true);
-                    //polygon2 = new Polygon(coords2, true);
-
-                    //polygon1 = new Polygon(coords1);
-                    //polygon1.AddInnerPolygon(new Polygon(hole1));
-                    //var polygon2 = new Polygon(coords2);
-                    //polygon2.AddInnerPolygon(new Polygon(hole2));
-                    //polygon2.Transform(Matrix3x3.CreateTranslation(15, 15));
-                    var clipperPoly1 = new[] {
-                    polygon1.Path.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList(),
-                    //hole1.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList()
-                };
-                    var clipperPoly2 = new[] {
-                    polygon2.Path.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList(),
-                   // hole2.Select(v=>new OldTVGL.PointLight(v.X, v.Y)).ToList()
-                };
-                    stopwatch.Restart();
-
-                    var polygon3 = polygon1.Union(polygon2);
-                    Console.WriteLine("union mine: {0}", stopwatch.Elapsed);
-                    stopwatch.Restart();
-                    var coords3 = OldTVGL.PolygonOperations.Union(clipperPoly1, clipperPoly2);
-                    Console.WriteLine("union clipper: {0}", stopwatch.Elapsed);
-                    if (!ShowComparison(i, "union", polygon3, coords3))
-                        Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-
-                    stopwatch.Restart();
-                    polygon3 = polygon1.Intersect(polygon2);
-                    Console.WriteLine("interset mine: {0}", stopwatch.Elapsed);
-                    stopwatch.Restart();
-                    coords3 = OldTVGL.PolygonOperations.Intersection(clipperPoly1, clipperPoly2);
-                    Console.WriteLine("intersect clipper: {0}", stopwatch.Elapsed);
-                    if (!ShowComparison(i, "intersect", polygon3, coords3))
-                        Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-
-                    //polygon3 = polygon1.ExclusiveOr(polygon2);
-                    //coords3 = clipperPoly1.Xor(clipperPoly2);
-                    //ShowComparison(i, "exclusive or", polygon3, coords3);
-                    stopwatch.Restart();
-                    polygon3 = polygon1.Subtract(polygon2);
-                    Console.WriteLine("subtract mine: {0}", stopwatch.Elapsed);
-                    stopwatch.Restart();
-                    coords3 = OldTVGL.PolygonOperations.Difference(clipperPoly1, clipperPoly2);
-                    Console.WriteLine("subtract clipper: {0}", stopwatch.Elapsed);
-                    if (!ShowComparison(i, "1subtract2", polygon3, coords3))
-                        Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-                    stopwatch.Restart();
-                    polygon3 = polygon2.Subtract(polygon1);
-                    Console.WriteLine("subtract mine: {0}", stopwatch.Elapsed);
-                    stopwatch.Restart();
-                    coords3 = OldTVGL.PolygonOperations.Difference(clipperPoly2, clipperPoly1);
-                    Console.WriteLine("subtract clipper: {0}", stopwatch.Elapsed);
-                    if (!ShowComparison(i, "2subtract1", polygon3, coords3))
-                        Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-                }
-            }
-        }
-
-        private static bool ShowComparison(int trial, string name, List<Polygon> polygon3, List<List<OldTVGL.PointLight>> pointLights)
-        {
-            var coords3 = new List<List<Vector2>>(pointLights.Select(listOfPoints
-                => listOfPoints.Select(v => new Vector2(v.X, v.Y)).ToList()));
-            var area = coords3.Sum(poly => poly.Area());
-            var peri = coords3.Perimeter();
-            var numPolygons = polygon3.Sum(poly => poly.AllPolygons.Count());
-            var numPolyVerts = polygon3.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
-            if (numPolygons == coords3.Count
-                && //numPolyVerts == coords3.Sum(loop => loop.Count) &&
-                 area.IsPracticallySame(polygon3.Sum(p => p.Area), 1e-3)
-                && peri.IsPracticallySame(polygon3.Sum(p => p.Perimeter), 1e-3)
-                )
-            {
-                Console.WriteLine("*****{0}: {1} matches", trial, name);
-                return true;
-            }
-            else
-            {
-                Console.WriteLine("{0}: {1} does not match", trial, name);
-                Console.WriteLine("number: {0}  : {1} ", numPolygons, coords3.Count);
-                Console.WriteLine("verts: {0}  : {1} ", numPolyVerts, coords3.Sum(loop => loop.Count));
-                Console.WriteLine("area: {0}  : {1} ", polygon3.Sum(p => p.Area), area);
-                Console.WriteLine("perimeter: {0}  : {1} ", polygon3.Sum(p => p.Perimeter), peri);
-
-                Presenter.ShowAndHang(polygon3, "TVGLPro");
-                Presenter.ShowAndHang(coords3, "Clipper");
-                //var polyAsCoords = polygon3.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
-                //polyAsCoords.AddRange(coords3);
-                //Presenter.ShowAndHang(polyAsCoords);
-                Console.WriteLine();
-                Console.WriteLine();
-                return false;
-            }
-        }
-
-        [Params(10, 30, 100, 300, 1000, 3000, 5000)]
-        public int N;
-
-        private List<Vector2> coords1;
-        private List<Vector2> coords2;
-        private List<List<Vector2>> coords3;
-        private Polygon polygon1;
-        private Polygon polygon2;
-
-        [GlobalSetup]
-        public void Setup()
-        {
-            coords1 = MakeStarryCircularPolygon(N, 30, 15).ToList();
-            coords2 = MakeWavyCircularPolygon(60, 25, 3, 8).Select(p => p + new Vector2(15, 10)).ToList();
-            //coords1 = coords1.Xor(coords2)[0];
-            polygon1 = new Polygon(coords1);
-            //polygon1 = new Polygon(coords1, true);
-            //polygon2 = new Polygon(coords2, true);
-        }
-
-
-        // [Benchmark(Description = "my functions")]
-        public void BenchmarkMyBooleanSimple()
-        {
-            var polygon3 = polygon1.OffsetRound(5.0, 0.005);
-            //polygon1 = new Polygon(coords1, true);
-            //polygon2 = new Polygon(coords2, true);
-            //var polygon3 = polygon1.Union(polygon2);
-            //polygon3 = polygon1.Intersect(polygon2);
-            //polygon3 = polygon1.ExclusiveOr(polygon2);
-            //polygon3 = polygon1.Subtract(polygon2);
-        }
-
-
-        //[Benchmark(Description = "clipper")]
-        public void BenchmarkClipperSimple()
-        {
-            //var coords4 = coords1.OffsetRound(5.0, 0.005);
-            //var coords3 = PolygonOperations.Union(coords1, coords2);
-            //coords3 = PolygonOperations.Intersection(coords1, coords2);
-            //coords3 = coords1.Difference(coords2);
-            //coords3 = coords1.Xor(coords2);
+            Presenter.ShowAndHang(result);
         }
 
         internal static void TestSimplify()
         {
-            IEnumerable<Vector2> polygon = MakeStarryCircularPolygon(150000, 30, 1);
+            IEnumerable<Vector2> polygon = TestCases.MakeStarryCircularPolygon(150000, 30, 1);
             //Presenter.ShowAndHang(polygon);
             polygon = polygon.Simplify(20)[0];
             Presenter.ShowAndHang(polygon);
         }
 
-        /*
+
         [Benchmark(Description = "from Ienumerable")]
         [Arguments(10, 4)]
         [Arguments(20, 4)]
@@ -515,7 +115,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var perimeter = 2 * radius * numSides * Math.Sin(Math.PI / numSides);
 
-            var polygon = MakeCircularPolygon(numSides, radius);
+            var polygon = TestCases.MakeCircularPolygon(numSides, radius);
             Assert.Equal(perimeter, polygon.Perimeter(), 10);
         }
 
@@ -535,79 +135,32 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             var area = 0.5 * radius * radius * numSides * Math.Sin(2 * Math.PI / numSides);
 
-            var polygon = MakeCircularPolygon(numSides, radius);
+            var polygon = TestCases.MakeCircularPolygon(numSides, radius);
             Assert.Equal(area, polygon.Area(), 10);
         }
-        */
+
         public static void TestBoundingRectangle()
         {
-            //var points = new[] {
-            //    new Vector2(2.26970768, 4.28080463),
-            //    new Vector2(5.84034252, 0),
-            //    new Vector2(12.22331619, 2.24806976),
-            //    new Vector2(23.56225014, 21.88767815),
-            //    new Vector2(19.9916172, 26.16848373),
-            //    new Vector2(13.60864258, 23.92041588)
-            //};
-            //var points = new[] {
-            //    new Vector2(6,1),
-            //    new Vector2(5,2),
-            //    new Vector2(-1,6),
-            //    new Vector2(-2,5),
-            //    new Vector2(-6,-1),
-            //    new Vector2(-5,-2),
-            //    new Vector2(1,-6),
-            //    new Vector2(2,-5),
-            //};
-            var points = new[]{new Vector2(-101.5999985, -34.5535698), new
-            TVGL.Numerics.Vector2(-88.9000015, -101.5999985), new            TVGL.Numerics.Vector2(-38.1000023, -158.5185089), new
-            TVGL.Numerics.Vector2(38.1000023, -158.5185089), new            TVGL.Numerics.Vector2(88.9000015, -101.5999985), new
-            TVGL.Numerics.Vector2(101.5999985, -34.5535698), new            TVGL.Numerics.Vector2(101.5999985, 34.6359444), new
-            TVGL.Numerics.Vector2(88.9000015, 203.1999969), new            TVGL.Numerics.Vector2(-88.9000015, 203.1999969), new
-            TVGL.Numerics.Vector2(-101.5999985, 34.6359444) };
-
-
-            // var points = MakeWavyCircularPolygon(10000, 10, 1, 4.65432);
-            var br = points.BoundingRectangle();
-            Presenter.ShowAndHang(new[] { points, br.CornerPoints });
+            var polygon = TestCases.Ersatz["boundingRectTest3"].Item1;
+            //var polygon = TestCases.Ersatz["boundingRectTest3"].Item1;
+            //var polygon = TestCases.Ersatz["boundingRectTest3"].Item1;
+            var br = polygon[0].BoundingRectangle();
+            Presenter.ShowAndHang(new[] { polygon[0], br.CornerPoints });
         }
         public static void TestSlice2D()
         {
-            //var points = new[] {
-            //    new Vector2(2.26970768, 4.28080463),
-            //    new Vector2(5.84034252, 0),
-            //    new Vector2(12.22331619, 2.24806976),
-            //    new Vector2(23.56225014, 21.88767815),
-            //    new Vector2(19.9916172, 26.16848373),
-            //    new Vector2(13.60864258, 23.92041588)
-            //        };
-            var poly1 = new[] {
-                new Vector2(6,1),
-                new Vector2(5,2),
-                new Vector2(-1,6),
-                new Vector2(-2,5),
-                new Vector2(-6,-1),
-                new Vector2(-5,-2),
-                new Vector2(1,-6),
-                new Vector2(2,-5),
-            };
-            var hole1 = new[] {
-                new Vector2(1,1),
-                new Vector2(1,-1),
-                new Vector2(-1,1),
-                new Vector2(-2,2),
-            };
-            var polyTree = new[] { poly1, hole1 };
-            Presenter.ShowAndHang(polyTree);
-            polyTree.SliceAtLine(new Vector2(1, -0.1).Normalize(), 0, out var negPolys, out var posPolys, -0.3, -0.3);
+            //var polygon = PolygonTestCases.edgeCaseDictionary["sliceSimpleCase"].Item1;
+            var polygon = TestCases.Ersatz["sliceWithHole"].Item1;
+            Presenter.ShowAndHang(polygon);
+            polygon.SliceAtLine(new Vector2(1, -0.1).Normalize(), 0, out var negPolys, out var posPolys, -0.3, -0.3);
 
             Presenter.ShowAndHang(new[] { negPolys, posPolys });
         }
 
         public static void TestOffsetting()
         {
-            var coords1 = MakeStarryCircularPolygon(50, 28, 8).ToList();
-            var hole1 = MakeStarryCircularPolygon(80, 14, 5).ToList();
+            var coords1 = TestCases.MakeStarryCircularPolygon(50, 28, 8).ToList();
+            var hole1 = TestCases.MakeStarryCircularPolygon(80, 14, 5).ToList();
             hole1.Reverse();
             var polygon1 = new Polygon(coords1);
             polygon1 = polygon1.Intersect(new Polygon(hole1))[0];

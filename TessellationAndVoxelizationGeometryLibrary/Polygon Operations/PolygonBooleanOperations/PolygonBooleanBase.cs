@@ -21,9 +21,9 @@ namespace TVGL.TwoDimensional
         /// <param name="intersections">The intersections.</param>
         /// <param name="isSubtract">The switch direction.</param>
         /// <param name="crossProductSign">The cross product sign.</param>
-        /// <param name="minAllowableArea">The minimum allowable area.</param>
+        /// <param name="tolerance">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, double minAllowableArea)
+        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, double tolerance)
         {
             var delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonA);
             delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
@@ -35,7 +35,7 @@ namespace TVGL.TwoDimensional
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(minAllowableArea)) continue;
+                if (area.IsNegligible(tolerance)) continue;
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             // to handle the non-intersecting subpolygons
@@ -116,8 +116,9 @@ namespace TVGL.TwoDimensional
         /// <param name="isSubtract">if set to <c>true</c> [switch directions].</param>
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup,
-            List<SegmentIntersection> intersections, SegmentIntersection startingIntersection, PolygonSegment startingEdge, bool switchPolygon)
+        protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
+            SegmentIntersection startingIntersection, PolygonSegment startingEdge, bool switchPolygon)
+
         {
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
@@ -136,7 +137,7 @@ namespace TVGL.TwoDimensional
                     intersectionData.VisitedB = true;
                 }
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
-                if (newPath.Count==0 || !newPath[^1].IsPracticallySame(intersectionCoordinates))
+                if (newPath.Count == 0 || !newPath[^1].IsPracticallySame(intersectionCoordinates))
                     newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
                     currentEdgeIsFromPolygonA = !currentEdgeIsFromPolygonA;
@@ -144,7 +145,7 @@ namespace TVGL.TwoDimensional
 
                 // the following while loop add all the points along the subpath until the next intersection is encountered
                 while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
-                        intersectionCoordinates, out intersectionData, out currentEdgeIsFromPolygonA, out switchPolygon))
+                        intersectionCoordinates, out intersectionData, ref currentEdgeIsFromPolygonA, out switchPolygon))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
@@ -173,14 +174,14 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<SegmentIntersection> allIntersections,
-        Vector2 formerIntersectCoords, out SegmentIntersection newIntersection, out bool currentEdgeIsFromPolygonA,
+        Vector2 formerIntersectCoords, out SegmentIntersection newIntersection, ref bool currentEdgeIsFromPolygonA,
         out bool switchPolygon)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
             newIntersection = null;
             if (intersectionIndices == null)
             {
-                switchPolygon = currentEdgeIsFromPolygonA = false;
+                switchPolygon = false;
                 return false;
             }
             var minDistanceToIntersection = double.PositiveInfinity;
@@ -189,7 +190,11 @@ namespace TVGL.TwoDimensional
             {
                 var thisIntersectData = allIntersections[index];
                 if (formerIntersectCoords.Equals(thisIntersectData.IntersectCoordinates)) continue;
-                var distance = currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - datum);
+                var distance = 0.0;
+                if (!(formerIntersectCoords.IsNull() && (thisIntersectData.WhereIntersection == WhereIsIntersection.BothStarts ||
+                    (thisIntersectData.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
+                    (thisIntersectData.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
+                    distance = currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - datum);
                 if (distance < 0) continue;
                 if (minDistanceToIntersection > distance)
                 {
@@ -201,13 +206,13 @@ namespace TVGL.TwoDimensional
             }
             if (newIntersection != null)
             {
-                currentEdgeIsFromPolygonA = newIntersection.EdgeA == currentEdge;
+                //currentEdgeIsFromPolygonA = newIntersection.EdgeA == currentEdge;
                 switchPolygon = SwitchAtThisIntersection(newIntersection, currentEdgeIsFromPolygonA);
                 return true;
             }
             else
             {
-                switchPolygon = currentEdgeIsFromPolygonA = false;
+                switchPolygon = false;
                 return false;
             }
         }

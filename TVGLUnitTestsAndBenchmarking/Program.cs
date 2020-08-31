@@ -10,10 +10,12 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+
             var pbt = new PolygonBooleanTester();
             pbt.FullComparison();
-   
-            var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
+
+            //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
+            //PolygonOperationsTesting.DebugBoolean();
             //PolygonOperationsTesting.TestBooleanCompare();
             //PolygonOperationsTesting.TestRemoveSelfIntersect();
             //PolygonOperationsTesting.DebugEdgeCases();

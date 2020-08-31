@@ -12,12 +12,12 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Run()
         {
             #region Polygon Functions
-            var poly1 = new Polygon(PolygonOperationsTesting.MakeCircularPolygon(4, 4));
+            var poly1 = new Polygon(TestCases.MakeCircularPolygon(4, 4));
             double area = poly1.Area;
             bool isItTrueThat = poly1.IsCircular(out var minCircle);
             isItTrueThat = poly1.IsConvex();
             isItTrueThat = poly1.IsPositive;
-            var poly2 = new Polygon(PolygonOperationsTesting.MakeCircularPolygon(5, 5));
+            var poly2 = new Polygon(TestCases.MakeCircularPolygon(5, 5));
             var intersections=poly1.GetPolygonInteraction(poly2);
             List<PolygonSegment> lines = poly1.Lines;
             var extrema = poly1.MaxX;
@@ -35,7 +35,7 @@ namespace TVGLUnitTestsAndBenchmarking
             a.BoundingRectangle();
             a.ConvertTo3DLocations(Vector3.UnitX, 1.0);
             a.ConvexHull2D();
-            var b = PolygonOperationsTesting.MakeCircularPolygon(5, 5);
+            var b = TestCases.MakeCircularPolygon(5, 5);
             //a.Difference(b);
             var length = a.GetLengthAndExtremePoints(new Vector2(1, 1), out List<Vector2> bottomPoints,
                 out List<Vector2> topPoints);
@@ -53,8 +53,8 @@ namespace TVGLUnitTestsAndBenchmarking
             #endregion
 
             #region IEnumerable<IEnumerable<Vector2>>
-            var c = (IEnumerable<IEnumerable<Vector2>>)(new[] { PolygonOperationsTesting.MakeCircularPolygon(4, 4) });
-            var d = (IEnumerable<IEnumerable<Vector2>>)(new[] { PolygonOperationsTesting.MakeCircularPolygon(5, 5) });
+            var c = (IEnumerable<IEnumerable<Vector2>>)(new[] { TestCases.MakeCircularPolygon(4, 4) });
+            var d = (IEnumerable<IEnumerable<Vector2>>)(new[] { TestCases.MakeCircularPolygon(5, 5) });
             c.Area();
             c.Create2DMedialAxis();
             //c.Difference(d);

@@ -51,183 +51,87 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public IEnumerable<object[]> Data()
         {
-            //Console.WriteLine("trapezoidInTri");
+            for (int numVerts = 13; numVerts < 10000; numVerts++) // numVerts = (int)(1.5 * numVerts))
+            {
+                for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
+                {
+                    var poly1 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
+                    var poly2 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
+                    Console.WriteLine("Chunky Square: numVerts = {0}, thick={1}", numVerts, delta);
+                    yield return new object[] { poly1, poly2, TestCases.Poly2PLs(poly1), TestCases.Poly2PLs(poly2) };
+                }
+            }
+
+            Console.WriteLine("trapezoidInTri");
             var coords1 = new[] { new[] { new Vector2(0, 0), new Vector2(10, 0), new Vector2(0, 10) } };
             var coords2 = new[] { new[] { new Vector2(0, 0), new Vector2(4, 0), new Vector2(6, 4), new Vector2(3, 7) } };
-            //yield return new object[] { C2Poly(coords1), C2Poly(coords2), C2PLs(coords1), C2PLs(coords2) };
-            //Console.WriteLine("innerTouch");
-            //coords1 = new[] { new [] { new Vector2(0,0), new Vector2(7,0), new Vector2(4,2.5), new Vector2(3,4),
-            //            new Vector2(1,6), new Vector2(3,7), new Vector2(0,10) } };
-            //coords2 = new[] { new [] { new Vector2(2,7), new Vector2(1,6), new Vector2(2,2), new Vector2(5,1),
-            //            new Vector2(3,4), new Vector2(2,5) } };
-            //yield return new object[] { C2Poly(coords1), C2Poly(coords2), C2PLs(coords1), C2PLs(coords2) };
-            //Console.WriteLine("nestedSquares");
-            //coords1 = new[] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(10,10), new Vector2(0,10) },
-            //            new [] { new Vector2(2, 2), new Vector2(2, 8), new Vector2(8, 8), new Vector2(8, 2) } };
-            //coords2 = new[] { new [] { new Vector2(1,1), new Vector2(9,1), new Vector2(9, 9), new Vector2(1, 9) },
-            //            new [] { new Vector2(3, 3), new Vector2(3, 7), new Vector2(7, 7), new Vector2(7, 3) } };
-            //yield return new object[] { C2Poly(coords1), C2Poly(coords2), C2PLs(coords1), C2PLs(coords2) };
-
-            //Console.WriteLine("Octogons");
-            //int k = 0;
-            //for (int leftCut = 1; leftCut <= 4; leftCut++)
-            //{
-            //    for (int leftWidth = 5 - leftCut; leftWidth < 11 - 2 * leftCut; leftWidth++)
-            //    {
-            //        for (int leftHeight = 5 - leftCut; leftHeight < 11 - 2 * leftCut; leftHeight++)
-            //        {
-            //            for (int rightCut = 1; rightCut <= 4; rightCut++)
-            //            {
-            //                for (int rightWidth = 5 - rightCut; rightWidth < 11 - 2 * rightCut; rightWidth++)
-            //                {
-            //                    for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
-            //                    {
-            //                        Console.WriteLine(k++);
-            //                        if (k++ % 1234 == 0)
-            //                        {
-            //                            coords1 = new[] { MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut).ToArray() };
-            //                            coords2 = new[] { MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut).ToArray() };
-            //                            yield return new object[] { C2Poly(coords1), C2Poly(coords2), C2PLs(coords1), C2PLs(coords2) };
-            //                        }
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
+            yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
+            Console.WriteLine("innerTouch");
+            coords1 = new[] { new [] { new Vector2(0,0), new Vector2(7,0), new Vector2(4,2.5), new Vector2(3,4),
+                        new Vector2(1,6), new Vector2(3,7), new Vector2(0,10) } };
+            coords2 = new[] { new [] { new Vector2(2,7), new Vector2(1,6), new Vector2(2,2), new Vector2(5,1),
+                        new Vector2(3,4), new Vector2(2,5) } };
+            yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
+            Console.WriteLine("nestedSquares");
+            coords1 = new[] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(10,10), new Vector2(0,10) },
+                        new [] { new Vector2(2, 2), new Vector2(2, 8), new Vector2(8, 8), new Vector2(8, 2) } };
+            coords2 = new[] { new [] { new Vector2(1,1), new Vector2(9,1), new Vector2(9, 9), new Vector2(1, 9) },
+                        new [] { new Vector2(3, 3), new Vector2(3, 7), new Vector2(7, 7), new Vector2(7, 3) } };
+            yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
 
 
-            var radius = 25;
-            for (int i = 12; i < 97; i *= 2)
+
+            int k = 0;
+            for (int leftCut = 1; leftCut <= 4; leftCut++)
             {
-                for (int delta = 0; delta < 20; delta = 1 + (2 * delta))
+                for (int leftWidth = 5 - leftCut; leftWidth < 11 - 2 * leftCut; leftWidth++)
                 {
-                    (coords1, coords2) = MakeBumpyRings(i, radius, delta);
-                    yield return new object[] { C2Poly(coords1), C2Poly(coords2), C2PLs(coords1), C2PLs(coords2) };
-                }
-
-            }
-        }
-        Polygon C2Poly(IEnumerable<IEnumerable<Vector2>> coordinates)
-        {
-            var result = new Polygon(coordinates.First());
-            foreach (var inner in coordinates.Skip(1))
-                result.AddInnerPolygon(new Polygon(inner));
-            return result;
-        }
-        List<List<PointLight>> C2PLs(IEnumerable<IEnumerable<Vector2>> coordinates)
-        {
-            return coordinates.Select(innerPoly => innerPoly.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList()).ToList();
-        }
-
-
-        static Random r = new Random(1);
-
-        static double rand(double radius)
-        {
-            return 2.0 * radius * r.NextDouble() - radius;
-        }
-        static int rand(int radius)
-        {
-            return (int)r.Next(radius);
-        }
-
-        internal static IEnumerable<Vector2> MakeCircularPolygon(int numSides, double radius)
-        {
-            var angleIncrement = 2 * Math.PI / numSides;
-
-            for (int i = 0; i < numSides; i++)
-            {
-                var angle = i * angleIncrement;
-                yield return new Vector2(radius * Math.Cos(angle), radius * Math.Sin(angle));
-            }
-        }
-        internal static IEnumerable<Vector2> MakeOctogonPolygon(double xMin, double yMin, double xMax, double yMax, double cornerClip)
-        {
-            yield return new Vector2(xMin + cornerClip, yMin);
-            yield return new Vector2(xMax - cornerClip, yMin);
-            yield return new Vector2(xMax, yMin + cornerClip);
-            yield return new Vector2(xMax, yMax - cornerClip);
-            yield return new Vector2(xMax - cornerClip, yMax);
-            yield return new Vector2(xMin + cornerClip, yMax);
-            yield return new Vector2(xMin, yMax - cornerClip);
-            yield return new Vector2(xMin, yMin + cornerClip);
-        }
-
-        internal static IEnumerable<Vector2> MakeStarryCircularPolygon(int numSides, double radius, double delta)
-        {
-            var angleIncrement = 2 * Math.PI / numSides;
-
-            for (int i = 0; i < numSides; i++)
-            {
-                var angle = i * angleIncrement;
-                var thisRadius = radius + 2 * delta * r.NextDouble() - delta;
-                yield return new Vector2(thisRadius * Math.Cos(angle), thisRadius * Math.Sin(angle));
-            }
-        }
-
-        internal static IEnumerable<Vector2> MakeRandomComplexPolygon(int numSides, double boxRadius)
-        {
-            for (int i = 0; i < numSides; i++)
-            {
-                yield return new Vector2(2 * boxRadius * r.NextDouble() - boxRadius, 2 * boxRadius * r.NextDouble() - boxRadius);
-            }
-        }
-
-        internal static IEnumerable<Vector2> MakeWavyCircularPolygon(int numSides, double radius, double delta, double frequency)
-        {
-            var angleIncrement = 2 * Math.PI / numSides;
-
-            for (int i = 0; i < numSides; i++)
-            {
-                var angle = i * angleIncrement;
-                yield return new Vector2(radius * Math.Cos(angle) + delta * Math.Cos(frequency * angle),
-                    radius * Math.Sin(angle) + delta * Math.Sin(frequency * angle));
-            }
-        }
-
-        internal static Polygon MakeChunkySquarePolygon(int sideLength, int bufferThickness)
-        {
-            var result = new List<Vector2>();
-            //var prevPoint = new Vector2(-sideLength / 2, -sideLength / 2);
-            var dirs = new[] { new Vector2(1, 0), new Vector2(0, 1), new Vector2(-1, 0), new Vector2(0, -1) };
-            var sign = 1;
-            foreach (var dir in dirs)
-            {
-                var cross = new Vector2(dir.Y, -dir.X);
-                var point = -(sideLength / 2) * dir + (bufferThickness + sideLength / 2) * cross;
-                result.Add(point);
-                var thisSide = 0;
-                var i = bufferThickness;
-                var along = 3;
-                while (thisSide < sideLength)
-                {
-                    if (i-- == 0)
+                    for (int leftHeight = 5 - leftCut; leftHeight < 11 - 2 * leftCut; leftHeight++)
                     {
-                        i = bufferThickness;
-                        sign *= -1;
+                        for (int rightCut = 1; rightCut <= 4; rightCut++)
+                        {
+                            for (int rightWidth = 5 - rightCut; rightWidth < 11 - 2 * rightCut; rightWidth++)
+                            {
+                                for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
+                                {
+                                    if (k % 1 == 0)
+                                    {
+                                        Console.WriteLine("Octogon Case: " + k);
+                                        coords1 = new[] { TestCases.MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut).ToArray() };
+                                        coords2 = new[] { TestCases.MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut).ToArray() };
+                                        yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
+                                        k++;
+                                    }
+                                }
+                            }
+                        }
                     }
-                    point += along * dir;
-                    result.Add(point);
-                    point += sign * cross;
-                    result.Add(point);
-                    along = r.Next(3);
-                    thisSide += along;
                 }
             }
-            var polygons = new Polygon(result).RemoveSelfIntersections(true, out _, 1e-9);
-            var maxArea = polygons.Max(p => p.Area);
-            return polygons.First(polygons => polygons.Area == maxArea);
+
+
+            var radius = 100;
+            for (int numSides = 12; numSides < 3000; numSides *= 2)
+            {
+                for (int delta = 0; delta < radius / 4; delta = 1 + (2 * delta))
+                {
+                    (coords1, coords2) = TestCases.MakeBumpyRings(numSides, radius, delta);
+                    Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numSides, radius, delta);
+                    yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
+                }
+            }
+
+
+
         }
 
         internal static void TestRemoveSelfIntersect()
         {
             for (int i = 0; i < 20; i++)
             {
-                r = new Random(i);
                 Console.WriteLine(i);
                 //var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
-                var coords = MakeRandomComplexPolygon(100, 30).ToList();
+                var coords = TestCases.MakeRandomComplexPolygon(100, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords);
                 var polygons = polygon.RemoveSelfIntersections(true, out _);
@@ -267,19 +171,21 @@ namespace TVGLUnitTestsAndBenchmarking
                    CreateShallowPolygonTrees(clipperResult.Select(c => new Polygon(c.Select(v => new Vector2(v.X, v.Y)))), true, out _, out _);
             var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, 500, new[] { min, max });
             var showResult = false;
+            var tvglError = false;
+            var clipperError = false;
             if (tvglVResult.SubtractToNewSolid(correctVoxels).Count == 0 && correctVoxels.SubtractToNewSolid(tvglVResult).Count == 0)
                 Console.WriteLine("TVGL result is correct.");
             else
             {
                 Console.WriteLine("         ////////////   TVGL result is wrong.");
-                showResult = true;
+                showResult = tvglError = true;
             }
             if (clipperVResult.SubtractToNewSolid(correctVoxels).Count == 0 && correctVoxels.SubtractToNewSolid(clipperVResult).Count == 0)
                 Console.WriteLine("Clipper result is correct.");
             else
             {
-                Console.WriteLine(@"             \\\\\\\\\\\\ Clipper result is wrong.");
-                showResult = true;
+                Console.WriteLine(@"          \\\\\\\\\\\\ Clipper result is wrong.");
+                showResult = clipperError = true;
             }
 
 
@@ -287,10 +193,14 @@ namespace TVGLUnitTestsAndBenchmarking
             var numPolygonsClipper = clipperShallowPolyTree.Sum(poly => poly.AllPolygons.Count());
             var numPolyVertsTVGL = tvglResult.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
             var numPolyVertsClipper = clipperShallowPolyTree.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
+            var polyAreaTVGL = tvglResult.Sum(p => p.Area);
+            var polyAreaClipper = clipperShallowPolyTree.Sum(p => p.Area);
+            var polyPerimeterTVGL = tvglResult.Sum(p => p.Perimeter);
+            var polyPerimeterClipper = clipperShallowPolyTree.Sum(p => p.Perimeter);
             if (numPolygonsTVGL == numPolygonsClipper
                 && numPolyVertsTVGL == numPolyVertsClipper &&
-                 tvglResult.Sum(p => p.Area).IsPracticallySame(clipperShallowPolyTree.Sum(p => p.Area), 1e-3) &&
-                 tvglResult.Sum(p => p.Perimeter).IsPracticallySame(clipperShallowPolyTree.Sum(p => p.Perimeter), 1e-3)
+                 polyAreaTVGL.IsPracticallySame(polyAreaClipper, (polyAreaTVGL + polyAreaClipper) * 1e-4) &&
+                 polyPerimeterTVGL.IsPracticallySame(polyPerimeterClipper, (polyPerimeterTVGL + polyPerimeterClipper) * 1e-4)
                 )
             {
                 Console.WriteLine("*****{0} matches", operationString);
@@ -327,30 +237,23 @@ namespace TVGLUnitTestsAndBenchmarking
                     Presenter.ShowAndHang(input, "Arguments");
                     Presenter.ShowAndHang(tvglResult, "TVGLPro");
                     Presenter.ShowAndHang(clipperShallowPolyTree, "Clipper");
+                    if (tvglError)
+                    {
+                        Console.WriteLine("showing tvgl error...");
+                        Presenter.ShowAndHang(correctVoxels, tvglResult);
+                    }
+                    if (clipperError)
+                    {
+                        Console.WriteLine("showing clipper error...");
+                        Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);
+                    }
                 }
+
                 Console.WriteLine();
             }
         }
 
 
-        internal (Vector2[][], Vector2[][]) MakeBumpyRings(int i, double radius, double delta)
-        {
-            var holeRadius = 0.67 * radius - 3 * delta;
-            var coords1 = new[] {
-                MakeStarryCircularPolygon(i, radius, delta).ToArray(),
-                MakeStarryCircularPolygon(i, holeRadius, delta).Reverse().ToArray()
-            };
-
-            var coords2 = MakeStarryCircularPolygon(i, radius, delta).ToArray();
-            for (int j = 0; j < coords2.Length; j++)
-                coords2[j] += new Vector2(radius, 0.67 * radius);
-            var hole2 = MakeStarryCircularPolygon(i, holeRadius, delta).Reverse().ToArray();
-            for (int j = 0; j < hole2.Length; j++)
-                hole2[j] += new Vector2(radius, 0.67 * radius);
-
-            var outer = new[] { coords2, hole2 };
-            return (coords1, outer);
-        }
 
 
     }
