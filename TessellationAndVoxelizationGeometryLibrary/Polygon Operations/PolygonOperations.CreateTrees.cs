@@ -52,7 +52,7 @@ namespace TVGL.TwoDimensional
             connectingIndices = new int[index];
             //Presenter.ShowAndHang(polygons);
             var connectingIndicesList = new List<int>();
-            var polygonTree = CreatePolygonTree(polygonList, vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
+            var polygonTrees = CreatePolygonTree(polygonList, vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
             //Presenter.ShowAndHang(polygonTree.AllPolygons);
             polygonList.Clear();
             index = 0;
@@ -63,7 +63,7 @@ namespace TVGL.TwoDimensional
                 connectingIndicesList[strayHole.Index] = index;
                 strayHole.Index = index++;
             }
-            foreach (var polygon in polygonTree.AllPolygons)
+            foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
             {
                 if (polygon.IsPositive) polygonList.Add(polygon);
                 if (polygon.Index < 0) continue;
@@ -80,12 +80,12 @@ namespace TVGL.TwoDimensional
         }
 
 
-        public static Polygon CreatePolygonTree(this IEnumerable<IEnumerable<Vector2>> paths, bool vertexNegPosOrderIsGuaranteedCorrect)
+        public static List<Polygon> CreatePolygonTree(this IEnumerable<IEnumerable<Vector2>> paths, bool vertexNegPosOrderIsGuaranteedCorrect)
         {
             return CreatePolygonTree(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect, out List<Polygon> strayHoles);
         }
 
-        public static Polygon CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, out List<Polygon> strayHoles)
+        public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, out List<Polygon> strayHoles)
         {
             var branches = new List<Polygon>();
             strayHoles = new List<Polygon>();
@@ -93,7 +93,8 @@ namespace TVGL.TwoDimensional
             {
                 for (int i = branches.Count - 1; i >= 0; i--)
                 {
-                    if (polygon.IsNonIntersectingPolygonInside(true, branches[i], true, out _) == true)
+                    if (polygon.HasABoundingBoxThatEncompasses(branches[i]) &&  // for speed, check the bb first
+                        polygon.IsNonIntersectingPolygonInside(true, branches[i], true, out _) == true)
                     {
                         polygon.AddInnerPolygon(branches[i]);
                         branches.RemoveAt(i);
@@ -101,8 +102,7 @@ namespace TVGL.TwoDimensional
                 }
                 branches.Add(polygon);
             }
-            var polygonTree = new Polygon(Array.Empty<Vector2>());
-            polygonTree.IsPositive = false;
+            var polygonTrees = new List<Polygon>();
             int j = branches.Count;
             while (j-- > 0)
             {
@@ -119,10 +119,9 @@ namespace TVGL.TwoDimensional
                 if (polygonSignIsCorrect)
                     RecurseDownPolygonTreeCleanUp(current);
                 else RecurseDownPolygonTreeAndFlipSigns(current);
-                polygonTree.AddInnerPolygon(current);
+                polygonTrees.Add(current);
             }
-            if (polygonTree.NumberOfInnerPolygons == 1) return polygonTree.InnerPolygons.First();
-            return polygonTree;
+            return polygonTrees;
         }
 
         private static void RecurseDownPolygonTreeCleanUp(Polygon parent)

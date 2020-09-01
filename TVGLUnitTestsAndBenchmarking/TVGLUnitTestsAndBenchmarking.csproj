@@ -13,6 +13,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="PolygonOperations\BenchClassic.cs" />
+    <Compile Remove="PolygonOperations\BenchGrid.cs" />
+    <Compile Remove="PolygonOperations\BenchKnown.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="Snapshooter.Xunit" Version="0.5.5" />

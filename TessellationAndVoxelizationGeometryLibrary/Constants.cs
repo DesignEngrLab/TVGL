@@ -539,6 +539,13 @@ namespace TVGL
         Undefined
     }
 
+    public enum PolygonCollection
+    {
+        SeparateLoops,
+        PolygonWithHoles,
+        PolygonTrees
+    }
+
     /// <summary>
     ///     Enum FileType
     /// </summary>

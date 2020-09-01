@@ -21,12 +21,15 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
+        public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+            double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonInteraction(polygonA, polygonB);
-            return Union(polygonA, polygonB, relationship, minAllowableArea);
+            return Union(polygonA, polygonB, relationship, outputAsCollectionType, minAllowableArea);
         }
         /// <summary>
         /// Returns the list of polygons that exist in either A OR B.By providing the intersections
@@ -35,12 +38,13 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="polygonInteraction">The polygon relationship.</param>
-        /// <param name="intersections">The intersections.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonA</exception>
         /// <exception cref="ArgumentException">A negative polygon (i.e. hole) is provided to Union which results in infinite shape. - polygonB</exception>
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord polygonInteraction,
-             double minAllowableArea = double.NaN)
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             if (!polygonA.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", "polygonA");
@@ -69,15 +73,18 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
                     //case PolygonRelationship.BIsInsideHoleOfABButEdgesTouch:
                     if (polygonUnion == null) polygonUnion = new PolygonUnion();
-                    return polygonUnion.Run(polygonA, polygonB, polygonInteraction, minAllowableArea);
+                    return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, minAllowableArea);
             }
         }
         /// <summary>
         /// Returns the list of polygons that are the subshapes of ANY of the provided polygons.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Union(this IEnumerable<Polygon> polygons, double minAllowableArea = double.NaN)
+        public static List<Polygon> Union(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+            double minAllowableArea = double.NaN)
         {
             var polygonList = polygons.ToList();
             if (double.IsNaN(minAllowableArea))
@@ -110,7 +117,7 @@ namespace TVGL.TwoDimensional
                     {
                         //if (i == 22 && j == 18)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
-                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, minAllowableArea);
+                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType, minAllowableArea);
                         //Console.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 239 && j == 238)
                         //Presenter.ShowAndHang(newPolygons);
@@ -128,17 +135,19 @@ namespace TVGL.TwoDimensional
 
         #region Intersect Public Methods
         /// <summary>
-        /// Returns the list of polygons that result from the subshapes common to both A and B. 
+        /// Returns the list of polygons that result from the subshapes common to both A and B.
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
+        public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+            double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonInteraction(polygonA, polygonB);
-            return Intersect(polygonA, polygonB, relationship, minAllowableArea);
+            return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, minAllowableArea);
         }
 
         /// <summary>
@@ -147,12 +156,12 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
-        /// <param name="polygonRelationship">The polygon relationship.</param>
-        /// <param name="intersections">The intersections.</param>
+        /// <param name="interaction">The interaction.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction,
-             double minAllowableArea = double.NaN)
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             switch (interaction.Relationship)
@@ -190,7 +199,7 @@ namespace TVGL.TwoDimensional
                 default:
                     //case PolygonRelationship.Intersect:
                     if (polygonIntersection == null) polygonIntersection = new PolygonIntersection();
-                    return polygonIntersection.Run(polygonA, polygonB, interaction, minAllowableArea);
+                    return polygonIntersection.Run(polygonA, polygonB, interaction, outputAsCollectionType, minAllowableArea);
             }
         }
 
@@ -199,7 +208,8 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Intersect(this IEnumerable<Polygon> polygons, double minAllowableArea = double.NaN)
+        public static List<Polygon> Intersect(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+            double minAllowableArea = double.NaN)
         {
             var polygonList = polygons.ToList();
             if (double.IsNaN(minAllowableArea))
@@ -236,7 +246,7 @@ namespace TVGL.TwoDimensional
                     }
                     else
                     {
-                        var newPolygons = Intersect(polygonList[i], polygonList[j], interaction, minAllowableArea);
+                        var newPolygons = Intersect(polygonList[i], polygonList[j], interaction, outputAsCollectionType, minAllowableArea);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -256,14 +266,16 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
+        public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB,
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var polygonBInverted = polygonB.Copy(true, true);
             var relationship = GetPolygonInteraction(polygonA, polygonBInverted);
-            return Subtract(polygonA, polygonBInverted, relationship, minAllowableArea, true);
+            return Subtract(polygonA, polygonBInverted, relationship, outputAsCollectionType, minAllowableArea, true);
         }
 
         /// <summary>
@@ -273,20 +285,21 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
         /// <param name="interaction">The polygon relationship.</param>
-        /// <param name="intersections">The intersections.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         /// <exception cref="ArgumentException">The minuend is already a negative polygon (i.e. hole). Consider another operation"
-        ///                 +" to accopmlish this function, like Intersect. - polygonA</exception>
+        /// +" to accopmlish this function, like Intersect. - polygonA</exception>
         /// <exception cref="ArgumentException">The subtrahend is already negative polygon (i.e. hole).Consider another operation"
-        ///                 + " to accopmlish this function, like Intersect. - polygonB</exception>
+        /// + " to accopmlish this function, like Intersect. - polygonB</exception>
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB,
-                    PolygonInteractionRecord interaction, double minAllowableArea = double.NaN)
+                    PolygonInteractionRecord interaction, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+                    double minAllowableArea = double.NaN)
         {
-            return Subtract(polygonA, polygonB, interaction, minAllowableArea, false);
+            return Subtract(polygonA, polygonB, interaction, outputAsCollectionType, minAllowableArea, false);
         }
         private static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB,
-           PolygonInteractionRecord interaction, double minAllowableArea, bool interactionAlreadyInverted)
+           PolygonInteractionRecord interaction, PolygonCollection outputAsCollectionType, double minAllowableArea, bool interactionAlreadyInverted)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             if (!polygonA.IsPositive) throw new ArgumentException("The minuend is already a negative polygon (i.e. hole). Consider another operation"
@@ -320,7 +333,7 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.BInsideAButVerticesTouch:
                     //case PolygonRelationship.BInsideAButEdgesTouch:
                     if (polygonSubtraction == null) polygonSubtraction = new PolygonSubtraction();
-                    return polygonSubtraction.Run(polygonA, polygonB, interaction, minAllowableArea);
+                    return polygonSubtraction.Run(polygonA, polygonB, interaction, outputAsCollectionType, minAllowableArea);
             }
         }
 
@@ -333,13 +346,15 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, double minAllowableArea = double.NaN)
+        public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+            double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             var relationship = GetPolygonInteraction(polygonA, polygonB);
-            return ExclusiveOr(polygonA, polygonB, relationship, minAllowableArea);
+            return ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType, minAllowableArea);
         }
 
         /// <summary>
@@ -348,12 +363,12 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygonA">The polygon a.</param>
         /// <param name="polygonB">The polygon b.</param>
-        /// <param name="polygonRelationship">The polygon relationship.</param>
-        /// <param name="intersections">The intersections.</param>
+        /// <param name="interactionRecord">The interaction record.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="minAllowableArea">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
-            double minAllowableArea = double.NaN)
+           PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double minAllowableArea = double.NaN)
         {
             if (double.IsNaN(minAllowableArea)) minAllowableArea = 0.5 * (polygonA.Area + polygonB.Area) * Constants.BaseTolerance;
             switch (interactionRecord.Relationship)
@@ -383,8 +398,8 @@ namespace TVGL.TwoDimensional
                 //case PolygonRelationship.BIsInsideAButEdgesTouch:
                 default:
                     if (polygonSubtraction == null) polygonSubtraction = new PolygonSubtraction();
-                    var result = polygonA.Subtract(polygonB, interactionRecord, minAllowableArea, false);
-                    result.AddRange(polygonB.Subtract(polygonA, interactionRecord, minAllowableArea, false));
+                    var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, minAllowableArea, false);
+                    result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, minAllowableArea, false));
                     return result;
             }
         }

@@ -23,7 +23,7 @@ namespace TVGL.TwoDimensional
         /// <param name="crossProductSign">The cross product sign.</param>
         /// <param name="tolerance">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, double tolerance)
+        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection, double tolerance)
         {
             var delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonA);
             delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
@@ -69,7 +69,16 @@ namespace TVGL.TwoDimensional
             foreach (var poly in nonIntersectingBSubPolygons)
                 HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), true);
 
-            return newPolygons.CreateShallowPolygonTrees(true, out _, out _);
+            switch (polygonCollection)
+            {
+                case PolygonCollection.SeparateLoops:
+                    return newPolygons;
+                case PolygonCollection.PolygonWithHoles:
+                    return newPolygons.CreateShallowPolygonTrees(true, out _, out _);
+                default:
+                    return newPolygons.CreatePolygonTree(true, out _);
+            }
+
         }
 
         /// <summary>

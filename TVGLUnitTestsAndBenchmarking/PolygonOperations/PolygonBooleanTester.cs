@@ -16,7 +16,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
         public List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
-            => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2);
+            => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2,PolygonCollection.SeparateLoops);
 
 
         [Benchmark]
@@ -27,7 +27,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
         public List<Polygon> TVGLIntersect(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
-            => TVGL.TwoDimensional.PolygonOperations.Intersect(polygon1, polygon2);
+            => TVGL.TwoDimensional.PolygonOperations.Intersect(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
@@ -37,7 +37,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
         public List<Polygon> TVGLASubtractB(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
-            => TVGL.TwoDimensional.PolygonOperations.Subtract(polygon1, polygon2);
+            => TVGL.TwoDimensional.PolygonOperations.Subtract(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
@@ -47,7 +47,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
         public List<Polygon> TVGLBSubtractA(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
-            => TVGL.TwoDimensional.PolygonOperations.Subtract(polygon2, polygon1);
+            => TVGL.TwoDimensional.PolygonOperations.Subtract(polygon2, polygon1, PolygonCollection.SeparateLoops);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
@@ -71,12 +71,12 @@ namespace TVGLUnitTestsAndBenchmarking
             {
 
                 /********** Union *********/
-                //opertionString = "Union";
-                //stopWatch.Restart();
-                //for (int i = 0; i < numIters; i++)
-                //    tvglResult = TVGLUnion((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
-                //stopWatch.Stop();
-                //elapsedTVGL = stopWatch.ElapsedTicks / numIters;
+                opertionString = "Union";
+                stopWatch.Restart();
+                for (int i = 0; i < numIters; i++)
+                    tvglResult = TVGLUnion((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                stopWatch.Stop();
+                elapsedTVGL = stopWatch.ElapsedTicks / numIters;
 
                 //stopWatch.Restart();
                 //for (int i = 0; i < numIters; i++)
@@ -87,23 +87,22 @@ namespace TVGLUnitTestsAndBenchmarking
                 //Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 //stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
                 /********** Intersection *********/
-                //opertionString = "Intersect";
-
+                opertionString = "Intersect";
                 //stopWatch.Restart();
                 //for (int i = 0; i < numIters; i++)
                 //    clipperResult = ClipperIntersect((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
                 //stopWatch.Stop();
                 //elapsedClipper = stopWatch.ElapsedTicks / numIters;
-                //stopWatch.Restart();
-                //for (int i = 0; i < numIters; i++)
-                //    tvglResult = TVGLIntersect((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
-                //stopWatch.Stop();
-                //elapsedTVGL = stopWatch.ElapsedTicks / numIters;
+
+                stopWatch.Restart();
+                for (int i = 0; i < numIters; i++)
+                    tvglResult = TVGLIntersect((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                stopWatch.Stop();
+                elapsedTVGL = stopWatch.ElapsedTicks / numIters;
 
                 //Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
                 //Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 //stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
-
 
                 /********** SubtractAB *********/
                 stopWatch.Restart();
@@ -113,39 +112,40 @@ namespace TVGLUnitTestsAndBenchmarking
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks / numIters;
 
-                stopWatch.Restart();
-                for (int i = 0; i < numIters; i++)
-                    clipperResult = ClipperASubtractB((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
-                stopWatch.Stop();
-                elapsedClipper = stopWatch.ElapsedTicks / numIters;
-                Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
-                Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
-                stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
+                //stopWatch.Restart();
+                //for (int i = 0; i < numIters; i++)
+                //    clipperResult = ClipperASubtractB((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                //stopWatch.Stop();
+                //elapsedClipper = stopWatch.ElapsedTicks / numIters;
+                //Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
+                //Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                //stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
 
                 /********** SubtractBA *********/
-                stopWatch.Restart();
                 opertionString = "SubtractBA";
-                for (int i = 0; i < numIters; i++)
-                    clipperResult = ClipperBSubtractA((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
-                stopWatch.Stop();
-                elapsedClipper = stopWatch.ElapsedTicks / numIters;
+                //stopWatch.Restart();
+                //for (int i = 0; i < numIters; i++)
+                //    clipperResult = ClipperBSubtractA((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                //stopWatch.Stop();
+                //elapsedClipper = stopWatch.ElapsedTicks / numIters;
+
                 stopWatch.Restart();
                 for (int i = 0; i < numIters; i++)
                     tvglResult = TVGLBSubtractA((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks / numIters;
 
-                Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
-                Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
-                stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
+                //Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
+                //Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                //stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
 
             }
-            System.IO.StreamWriter SaveFile = new System.IO.StreamWriter("stats.csv");
-            foreach (var item in stats)
-            {
-                SaveFile.WriteLine(item.Item1 + ", " + item.Item2 + ", " + item.Item3 + ", " + item.Item4);
-            }
-            SaveFile.Close();
+            //System.IO.StreamWriter SaveFile = new System.IO.StreamWriter("stats.csv");
+            //foreach (var item in stats)
+            //{
+            //    SaveFile.WriteLine(item.Item1 + ", " + item.Item2 + ", " + item.Item3 + ", " + item.Item4);
+            //}
+            //SaveFile.Close();
         }
 
 
@@ -154,7 +154,7 @@ namespace TVGLUnitTestsAndBenchmarking
             Vector2[][] coords1, coords2;
 
             /*
-            foreach (var testcase in TestCases.GetAllTwoArgumentErsatzCases())
+             foreach (var testcase in TestCases.GetAllTwoArgumentErsatzCases())
             {
                 Console.WriteLine(testcase.Key);
                 coords1 = testcase.Value.Item1;
@@ -192,7 +192,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
   */
             var radius = 100;
-            for (int numVerts = 200; numVerts < 10000; numVerts = (int)(1.5 * numVerts))
+            for (int numVerts = 10; numVerts < 20000; numVerts = (int)(1.5 * numVerts))
             {
                 for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
                 {
@@ -204,7 +204,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-            for (int numVerts = 10; numVerts < 10000; numVerts = (int)(3 * numVerts))
+            for (int numVerts = 10; numVerts < 30000; numVerts = (int)(3 * numVerts))
             {
                 for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
                 {
