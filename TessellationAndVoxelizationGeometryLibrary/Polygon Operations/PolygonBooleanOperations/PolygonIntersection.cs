@@ -11,9 +11,11 @@ namespace TVGL.TwoDimensional
     internal class PolygonIntersection : PolygonBooleanBase
     {
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData,
-            out PolygonSegment currentEdge)
+            out PolygonSegment currentEdge,
+            out bool startAgain)
         {
-           if (intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
+                startAgain = false;
+            if (intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
             {
                 if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter && !intersectionData.VisitedA && !intersectionData.VisitedB)
                 {
@@ -27,6 +29,7 @@ namespace TVGL.TwoDimensional
                 }
                 if (intersectionData.CollinearityType == CollinearityTypes.None)
                 {
+                    startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA);
                     if (!intersectionData.VisitedA)
                     {
                         currentEdge = intersectionData.EdgeA;
@@ -64,7 +67,7 @@ namespace TVGL.TwoDimensional
             {
                 currentEdge = intersectionData.EdgeB;
                 return true;
-            }           
+            }
             currentEdge = null;
             return false;
         }

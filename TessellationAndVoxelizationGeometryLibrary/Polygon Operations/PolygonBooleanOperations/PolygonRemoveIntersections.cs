@@ -18,9 +18,9 @@ namespace TVGL.TwoDimensional
             var delimiters = polygon.NumberVertiesAndGetPolygonVertexDelimiter();
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
-
+            var indexIntersectionStart = 0;
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
-                out var startEdge, out var switchPolygon))
+                out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, switchPolygon).ToList();
@@ -31,19 +31,21 @@ namespace TVGL.TwoDimensional
             }
             return newPolygons.CreateShallowPolygonTrees(true, out _, out strayHoles);
         }
-        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge)
+
+        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge, out bool startAgain)
         {
+            startAgain = false;
             if (intersectionData.VisitedB && intersectionData.VisitedA)
             {
                 currentEdge = null;
                 return false;
             }
-            if (intersectionData.Relationship == SegmentRelationship.NoOverlap ||
-                intersectionData.Relationship == SegmentRelationship.NoOverlap)
+            if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
             {
                 currentEdge = null;
                 return false;
             }
+            startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA);
             currentEdge = intersectionData.VisitedA ? intersectionData.EdgeB : intersectionData.EdgeA;
             return true;
         }

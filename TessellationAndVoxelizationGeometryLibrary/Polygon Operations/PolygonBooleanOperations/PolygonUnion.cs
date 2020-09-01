@@ -10,8 +10,10 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonUnion : PolygonBooleanBase
     {
-        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge)
+        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge,
+            out bool startAgain)
         {
+            startAgain = false;
             if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
             {
                 if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter && !intersectionData.VisitedA && !intersectionData.VisitedB)
@@ -26,6 +28,7 @@ namespace TVGL.TwoDimensional
                 }
                 if (intersectionData.CollinearityType == CollinearityTypes.None)
                 {
+                    startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA);
                     if (!intersectionData.VisitedA)
                     {
                         currentEdge = intersectionData.EdgeA;

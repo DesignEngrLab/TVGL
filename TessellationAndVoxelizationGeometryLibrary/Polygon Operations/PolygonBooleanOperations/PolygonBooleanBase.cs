@@ -29,8 +29,9 @@ namespace TVGL.TwoDimensional
             delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
+            var indexIntersectionStart = 0;
             while (GetNextStartingIntersection(interaction.IntersectionData, out var startingIntersection,
-                out var startEdge, out var switchPolygon))
+                out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
                     startEdge, switchPolygon).ToList();
@@ -92,12 +93,16 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected bool GetNextStartingIntersection(List<SegmentIntersection> intersections,
-            out SegmentIntersection nextStartingIntersection, out PolygonSegment currentEdge, out bool switchPolygon)
+            out SegmentIntersection nextStartingIntersection, out PolygonSegment currentEdge, out bool switchPolygon,
+            ref int indexIntersectionStart)
         {
-            foreach (var intersectionData in intersections)
+            for (int i = indexIntersectionStart; i < intersections.Count; i++)
             {
-                if (ValidStartingIntersection(intersectionData, out currentEdge))
+                SegmentIntersection intersectionData = intersections[i];
+                if (ValidStartingIntersection(intersectionData, out currentEdge, out bool startAgain))
                 {
+                    if (startAgain) indexIntersectionStart = i;
+                    else indexIntersectionStart = i + 1;
                     switchPolygon = SwitchAtThisIntersection(intersectionData, currentEdge == intersectionData.EdgeA);
                     nextStartingIntersection = intersectionData;
                     return true;
@@ -109,7 +114,8 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-        protected abstract bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge);
+        protected abstract bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge,
+            out bool startAgain);
 
 
 
