@@ -178,7 +178,9 @@ namespace TVGLUnitTestsAndBenchmarking
             //return new Polygon(result);
             var polygons = new Polygon(result).RemoveSelfIntersections(true, out _, 1e-9);
             var maxArea = polygons.Max(p => p.Area);
-            return polygons.First(polygons => polygons.Area == maxArea);
+            var polygon= polygons.First(polygons => polygons.Area == maxArea);
+            polygon.Transform(Matrix3x3.CreateRotation(1));
+            return polygon;
         }
 
         internal static (Vector2[][], Vector2[][]) MakeBumpyRings(int i, double radius, double delta)

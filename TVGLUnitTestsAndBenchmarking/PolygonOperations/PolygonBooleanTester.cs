@@ -2,6 +2,7 @@ using BenchmarkDotNet.Attributes;
 using OldTVGL;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using TVGL;
 using TVGL.Numerics;
@@ -57,27 +58,102 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal void FullComparison()
         {
+            var stopWatch = new Stopwatch();
+            var stats = new List<(string, int, long, long)>();
+            List<Polygon> tvglResult = null;
+            List<List<PointLight>> clipperResult = null;
+            long elapsedTVGL;
+            long elapsedClipper;
+            var numIters = 1;
+            var opertionString = "";
+
             foreach (var args in Data())
             {
-                Compare(TVGLUnion((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    ClipperUnion((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    (Polygon)args[0], (Polygon)args[1], "Union");
-                Compare(TVGLIntersect((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    ClipperIntersect((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    (Polygon)args[0], (Polygon)args[1], "Intersect");
-                Compare(TVGLASubtractB((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    ClipperASubtractB((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    (Polygon)args[0], (Polygon)args[1], "SubtractAB");
-                Compare(TVGLBSubtractA((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    ClipperBSubtractA((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]),
-                    (Polygon)args[0], (Polygon)args[1], "SubtractBA");
+
+                /********** Union *********/
+                //opertionString = "Union";
+                //stopWatch.Restart();
+                //for (int i = 0; i < numIters; i++)
+                //    tvglResult = TVGLUnion((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                //stopWatch.Stop();
+                //elapsedTVGL = stopWatch.ElapsedTicks / numIters;
+
+                //stopWatch.Restart();
+                //for (int i = 0; i < numIters; i++)
+                //    clipperResult = ClipperUnion((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                //stopWatch.Stop();
+                //elapsedClipper = stopWatch.ElapsedTicks / numIters;
+                //Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
+                //Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                //stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
+                /********** Intersection *********/
+                //opertionString = "Intersect";
+
+                //stopWatch.Restart();
+                //for (int i = 0; i < numIters; i++)
+                //    clipperResult = ClipperIntersect((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                //stopWatch.Stop();
+                //elapsedClipper = stopWatch.ElapsedTicks / numIters;
+                //stopWatch.Restart();
+                //for (int i = 0; i < numIters; i++)
+                //    tvglResult = TVGLIntersect((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                //stopWatch.Stop();
+                //elapsedTVGL = stopWatch.ElapsedTicks / numIters;
+
+                //Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
+                //Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                //stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
+
+
+                /********** SubtractAB *********/
+                stopWatch.Restart();
+                opertionString = "SubtractAB";
+                for (int i = 0; i < numIters; i++)
+                    tvglResult = TVGLASubtractB((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                stopWatch.Stop();
+                elapsedTVGL = stopWatch.ElapsedTicks / numIters;
+
+                stopWatch.Restart();
+                for (int i = 0; i < numIters; i++)
+                    clipperResult = ClipperASubtractB((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                stopWatch.Stop();
+                elapsedClipper = stopWatch.ElapsedTicks / numIters;
+                Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
+                Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
+
+                /********** SubtractBA *********/
+                stopWatch.Restart();
+                opertionString = "SubtractBA";
+                for (int i = 0; i < numIters; i++)
+                    clipperResult = ClipperBSubtractA((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                stopWatch.Stop();
+                elapsedClipper = stopWatch.ElapsedTicks / numIters;
+                stopWatch.Restart();
+                for (int i = 0; i < numIters; i++)
+                    tvglResult = TVGLBSubtractA((Polygon)args[0], (Polygon)args[1], (List<List<PointLight>>)args[2], (List<List<PointLight>>)args[3]);
+                stopWatch.Stop();
+                elapsedTVGL = stopWatch.ElapsedTicks / numIters;
+
+                Compare(tvglResult, clipperResult, (Polygon)args[0], (Polygon)args[1], opertionString);
+                Console.WriteLine("Average Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
+
             }
+            System.IO.StreamWriter SaveFile = new System.IO.StreamWriter("stats.csv");
+            foreach (var item in stats)
+            {
+                SaveFile.WriteLine(item.Item1 + ", " + item.Item2 + ", " + item.Item3 + ", " + item.Item4);
+            }
+            SaveFile.Close();
         }
 
 
         public IEnumerable<object[]> Data()
         {
             Vector2[][] coords1, coords2;
+
+            /*
             foreach (var testcase in TestCases.GetAllTwoArgumentErsatzCases())
             {
                 Console.WriteLine(testcase.Key);
@@ -86,37 +162,49 @@ namespace TVGLUnitTestsAndBenchmarking
                 yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
             }
 
-            /*
-            int k = 0;
-            for (int leftCut = 1; leftCut <= 4; leftCut++)
+                       int k = 0;
+                       for (int leftCut = 1; leftCut <= 4; leftCut++)
+                       {
+                           for (int leftWidth = 5 - leftCut; leftWidth < 11 - 2 * leftCut; leftWidth++)
+                           {
+                               for (int leftHeight = 5 - leftCut; leftHeight < 11 - 2 * leftCut; leftHeight++)
+                               {
+                                   for (int rightCut = 1; rightCut <= 4; rightCut++)
+                                   {
+                                       for (int rightWidth = 5 - rightCut; rightWidth < 11 - 2 * rightCut; rightWidth++)
+                                       {
+                                           for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
+                                           {
+                                               if (k % 1 == 0)
+                                               {
+                                                   Console.WriteLine("Octogon Case: " + k);
+                                                   coords1 = new[] { TestCases.MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut).ToArray() };
+                                                   coords2 = new[] { TestCases.MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut).ToArray() };
+                                                   yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
+                                                   k++;
+                                               }
+                                           }
+                                       }
+                                   }
+                               }
+                           }
+                       }
+
+  */
+            var radius = 100;
+            for (int numVerts = 200; numVerts < 10000; numVerts = (int)(1.5 * numVerts))
             {
-                for (int leftWidth = 5 - leftCut; leftWidth < 11 - 2 * leftCut; leftWidth++)
+                for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
                 {
-                    for (int leftHeight = 5 - leftCut; leftHeight < 11 - 2 * leftCut; leftHeight++)
-                    {
-                        for (int rightCut = 1; rightCut <= 4; rightCut++)
-                        {
-                            for (int rightWidth = 5 - rightCut; rightWidth < 11 - 2 * rightCut; rightWidth++)
-                            {
-                                for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
-                                {
-                                    if (k % 1 == 0)
-                                    {
-                                        Console.WriteLine("Octogon Case: " + k);
-                                        coords1 = new[] { TestCases.MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut).ToArray() };
-                                        coords2 = new[] { TestCases.MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut).ToArray() };
-                                        yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
-                                        k++;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    (coords1, coords2) = TestCases.MakeBumpyRings(numVerts, radius, delta);
+                    Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numVerts, radius, delta);
+                    yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
                 }
             }
-            */
 
-            for (int numVerts = 13; numVerts < 10000; numVerts = (int)(1.5 * numVerts))
+
+
+            for (int numVerts = 10; numVerts < 10000; numVerts = (int)(3 * numVerts))
             {
                 for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
                 {
@@ -127,35 +215,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
             }
 
-            var radius = 100;
-            for (int numSides = 12; numSides < 3000; numSides *= 2)
-            {
-                for (int delta = 0; delta < radius / 4; delta = 1 + (2 * delta))
-                {
-                    (coords1, coords2) = TestCases.MakeBumpyRings(numSides, radius, delta);
-                    Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numSides, radius, delta);
-                    yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
-                }
-            }
 
 
 
-        }
 
-        internal static void TestRemoveSelfIntersect()
-        {
-            for (int i = 0; i < 20; i++)
-            {
-                Console.WriteLine(i);
-                //var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
-                var coords = TestCases.MakeRandomComplexPolygon(100, 30).ToList();
-                Presenter.ShowAndHang(coords);
-                var polygon = new Polygon(coords);
-                var polygons = polygon.RemoveSelfIntersections(true, out _);
-                Presenter.ShowAndHang(polygons);
-                //Presenter.ShowAndHang(polygons.Path);
-                //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
-            }
         }
 
 
@@ -250,7 +313,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         Console.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
                     //else showResult = true;
                 }
-                if (showResult)
+                if (showResult && false)
                 {
                     var input = polygon1.AllPolygons.ToList();
                     input.AddRange(polygon2.AllPolygons);

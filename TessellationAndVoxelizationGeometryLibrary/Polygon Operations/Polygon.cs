@@ -76,7 +76,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in AllPolygons)
             {
                 var numPoints = polygon.Vertices.Count;
-                polygon._lines = new List<PolygonSegment>();
+                var linesArray = new PolygonSegment[numPoints];
                 for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
                 // note this compact approach to setting i and j. 
                 {
@@ -85,8 +85,9 @@ namespace TVGL.TwoDimensional
                     var polySegment = new PolygonSegment(fromNode, toNode);
                     fromNode.StartLine = polySegment;
                     toNode.EndLine = polySegment;
-                    polygon._lines.Add(polySegment);
+                    linesArray[i] = polySegment;
                 }
+                polygon._lines = linesArray.ToList();
             }
         }
 
@@ -487,6 +488,10 @@ namespace TVGL.TwoDimensional
 
             MakeVertices();
             MakeLineSegments();
+            _orderedXVertices = null;
+            area = double.NaN;
+            pathArea = double.NaN;
+            perimeter = double.NaN;
         }
     }
 }

@@ -17,23 +17,6 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public class PolygonOperationsTesting
     {
-        internal static void TestRemoveSelfIntersect()
-        {
-            var r = new Random();
-            for (int i = 0; i < 20; i++)
-            {
-                Console.WriteLine(i);
-                //var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
-                var coords = TestCases.MakeRandomComplexPolygon(100, 30).ToList();
-                Presenter.ShowAndHang(coords);
-                var polygon = new Polygon(coords);
-                var polygons = polygon.RemoveSelfIntersections(true, out _);
-                Presenter.ShowAndHang(polygons);
-                //Presenter.ShowAndHang(polygons.Path);
-                //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
-            }
-        }
-
 
 
         internal static void DebugEdgeCases(string name)
@@ -92,6 +75,23 @@ namespace TVGLUnitTestsAndBenchmarking
             Presenter.ShowAndHang(result);
         }
 
+        internal static void TestRemoveSelfIntersect()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                Console.WriteLine(i);
+                //var coords = MakeWavyCircularPolygon(rand(500), rand(30), rand(300), rand(15.0)).ToList();
+                var coords = TestCases.MakeRandomComplexPolygon(100, 30).ToList();
+                Presenter.ShowAndHang(coords);
+                var polygon = new Polygon(coords);
+                var polygons = polygon.RemoveSelfIntersections(true, out _);
+                Presenter.ShowAndHang(polygons);
+                //Presenter.ShowAndHang(polygons.Path);
+                //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
+            }
+        }
+
+
         internal static void TestSimplify()
         {
             IEnumerable<Vector2> polygon = TestCases.MakeStarryCircularPolygon(150000, 30, 1);
@@ -101,16 +101,16 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
 
-        [Benchmark(Description = "from Ienumerable")]
-        [Arguments(10, 4)]
-        [Arguments(20, 4)]
-        [Arguments(10, 4000)]
-        [Arguments(20, 10000)]
-        [Theory]
-        [InlineData(10, 4)]
-        [InlineData(20, 4)]
-        [InlineData(10, 4000)]
-        [InlineData(2, 10000)]
+        //[Benchmark(Description = "from Ienumerable")]
+        //[Arguments(10, 4)]
+        //[Arguments(20, 4)]
+        //[Arguments(10, 4000)]
+        //[Arguments(20, 10000)]
+        //[Theory]
+        //[InlineData(10, 4)]
+        //[InlineData(20, 4)]
+        //[InlineData(10, 4000)]
+        //[InlineData(2, 10000)]
         public void Perimeter(double radius, int numSides)
         {
             var perimeter = 2 * radius * numSides * Math.Sin(Math.PI / numSides);
@@ -121,16 +121,16 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-        [Benchmark(Description = "from Ienumerable")]
-        [Arguments(10, 4)]
-        [Arguments(20, 4)]
-        [Arguments(10, 4000)]
-        [Arguments(20, 10000)]
-        [Theory]
-        [InlineData(10, 4)]
-        [InlineData(20, 4)]
-        [InlineData(10, 4000)]
-        [InlineData(2, 10000)]
+        //[Benchmark(Description = "from Ienumerable")]
+        //[Arguments(10, 4)]
+        //[Arguments(20, 4)]
+        //[Arguments(10, 4000)]
+        //[Arguments(20, 10000)]
+        //[Theory]
+        //[InlineData(10, 4)]
+        //[InlineData(20, 4)]
+        //[InlineData(10, 4000)]
+        //[InlineData(2, 10000)]
         public void Area(double radius, int numSides)
         {
             var area = 0.5 * radius * radius * numSides * Math.Sin(2 * Math.PI / numSides);

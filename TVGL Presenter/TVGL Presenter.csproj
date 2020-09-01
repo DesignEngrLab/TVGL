@@ -4,6 +4,9 @@
     <RootNamespace>TVGL_Presenter</RootNamespace>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.12.0" />
