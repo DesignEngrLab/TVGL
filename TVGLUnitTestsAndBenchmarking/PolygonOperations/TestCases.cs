@@ -1,5 +1,7 @@
 using BenchmarkDotNet.Attributes;
+#if !PRESENT
 using OldTVGL;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +25,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 result.AddInnerPolygon(new Polygon(inner));
             return result;
         }
+#if !PRESENT
+
         internal static List<List<PointLight>> C2PLs(IEnumerable<IEnumerable<Vector2>> coordinates)
         {
             return coordinates.Select(innerPoly => innerPoly.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList()).ToList();
@@ -32,6 +36,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             return p.AllPolygons.Select(innerPoly => innerPoly.Path.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList()).ToList();
         }
+#endif
 
 
 

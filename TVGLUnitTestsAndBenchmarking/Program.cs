@@ -1,6 +1,7 @@
 using BenchmarkDotNet.Running;
 using System;
 using System.Diagnostics;
+using TVGL.TwoDimensional;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -10,7 +11,6 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-
             var pbt = new PolygonBooleanTester();
             pbt.FullComparison();
 

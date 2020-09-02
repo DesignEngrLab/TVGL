@@ -5,6 +5,9 @@
     <UseWPF>true</UseWPF>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\**" />

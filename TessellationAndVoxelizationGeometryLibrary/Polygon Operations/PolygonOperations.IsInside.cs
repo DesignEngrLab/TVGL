@@ -519,7 +519,7 @@ namespace TVGL.TwoDimensional
                     var aLine = aLines[aIndex++];
                     var localBIndex = bIndex; //the localBIndex is incremented in the following loop, but we
                                               //need to come back to the main bIndex above
-                    while (localBIndex < bLines.Length && aLine.XMax >= bLines[localBIndex].XMin)
+                    while (localBIndex < bLines.Length && !aLine.XMax.IsLessThanNonNegligible(bLines[localBIndex].XMin, tolerance))
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
                         AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates, tolerance);
@@ -528,7 +528,7 @@ namespace TVGL.TwoDimensional
                 {
                     var bLine = bLines[bIndex++];
                     var localAIndex = aIndex;
-                    while (localAIndex < aLines.Length && bLine.XMax >= aLines[localAIndex].XMin)
+                    while (localAIndex < aLines.Length && !bLine.XMax.IsLessThanNonNegligible(aLines[localAIndex].XMin, tolerance))
                         AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates, tolerance);
                 }
             }
@@ -652,7 +652,8 @@ namespace TVGL.TwoDimensional
         {
             // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
             // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
-            if (lineA.YMax < lineB.YMin || lineB.YMax < lineA.YMin) // the two lines do not touch since their bounding boxes do not overlap
+            if (lineA.YMax.IsLessThanNonNegligible(lineB.YMin, tolerance) || lineB.YMax.IsLessThanNonNegligible(lineA.YMin, tolerance))
+                // the two lines do not touch since their bounding boxes do not overlap
                 return false;
             // okay, so bounding boxes DO overlap
             var intersectionCoordinates = Vector2.Null;

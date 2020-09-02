@@ -16,7 +16,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
         public List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
-            => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2,PolygonCollection.SeparateLoops);
+            => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
 
         [Benchmark]
@@ -64,11 +64,11 @@ namespace TVGLUnitTestsAndBenchmarking
             List<List<PointLight>> clipperResult = null;
             long elapsedTVGL;
             long elapsedClipper;
-            var numIters = 10;
+            var numIters = 1;
             var opertionString = "";
 
             foreach (var args in Data())
-            {
+            {                //Presenter.ShowAndHang(new[] { (Polygon)args[0], (Polygon)args[1] });
 
                 /********** Union *********/
                 opertionString = "Union";
@@ -105,6 +105,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 stats.Add((opertionString, ((Polygon)args[0]).AllPolygons.Sum(p => p.Vertices.Count), elapsedTVGL, elapsedClipper));
 
                 /********** SubtractAB *********/
+
                 stopWatch.Restart();
                 opertionString = "SubtractAB";
                 for (int i = 0; i < numIters; i++)
@@ -147,7 +148,6 @@ namespace TVGLUnitTestsAndBenchmarking
             }
             SaveFile.Close();
         }
-
 
         public IEnumerable<object[]> Data()
         {
@@ -198,12 +198,13 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     (coords1, coords2) = TestCases.MakeBumpyRings(numVerts, radius, delta);
                     Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numVerts, radius, delta);
-                    yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
+                    yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2),
+                        TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
                 }
             }
 
 
-
+            /*
             for (int numVerts = 10; numVerts < 30000; numVerts = (int)(3 * numVerts))
             {
                 for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
@@ -214,13 +215,12 @@ namespace TVGLUnitTestsAndBenchmarking
                     yield return new object[] { poly1, poly2, TestCases.Poly2PLs(poly1), TestCases.Poly2PLs(poly2) };
                 }
             }
-
+            */
 
 
 
 
         }
-
 
 
 
@@ -320,18 +320,17 @@ namespace TVGLUnitTestsAndBenchmarking
                     Presenter.ShowAndHang(input, "Arguments");
                     Presenter.ShowAndHang(tvglResult, "TVGLPro");
                     Presenter.ShowAndHang(clipperShallowPolyTree, "Clipper");
-                    if (tvglError)
-                    {
-                        Console.WriteLine("showing tvgl error...");
-                        Presenter.ShowAndHang(correctVoxels, tvglResult);
-                    }
-                    if (clipperError)
-                    {
-                        Console.WriteLine("showing clipper error...");
-                        Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);
-                    }
                 }
-
+                if (tvglError)
+                {
+                    Console.WriteLine("showing tvgl error...");
+                    Presenter.ShowAndHang(correctVoxels, tvglResult);
+                }
+                if (clipperError)
+                {
+                    Console.WriteLine("showing clipper error...");
+                    Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);
+                }
                 Console.WriteLine();
             }
         }
