@@ -14,7 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="PolygonOperations\BenchClassic.cs" />
     <Compile Remove="PolygonOperations\BenchGrid.cs" />
     <Compile Remove="PolygonOperations\BenchKnown.cs" />
   </ItemGroup>

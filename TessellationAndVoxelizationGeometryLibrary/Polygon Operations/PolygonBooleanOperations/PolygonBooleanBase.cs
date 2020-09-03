@@ -183,14 +183,14 @@ namespace TVGL.TwoDimensional
         /// <param name="allIntersections">All intersections.</param>
         /// <param name="formerIntersectCoords">The former intersect coords.</param>
         /// <param name="forward">if set to <c>true</c> [forward].</param>
-        /// <param name="newIntersection">The index of intersection.</param>
+        /// <param name="bestIntersection">The index of intersection.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<SegmentIntersection> allIntersections,
-        Vector2 formerIntersectCoords, out SegmentIntersection newIntersection, out bool switchPolygon)
+        Vector2 formerIntersectCoords, out SegmentIntersection bestIntersection, out bool switchPolygon)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
-            newIntersection = null;
+            bestIntersection = null;
             if (intersectionIndices == null)
             {
                 switchPolygon = false;
@@ -200,26 +200,47 @@ namespace TVGL.TwoDimensional
             var datum = !formerIntersectCoords.IsNull() ? formerIntersectCoords : currentEdge.FromPoint.Coordinates;
             foreach (var index in intersectionIndices)
             {
-                var thisIntersectData = allIntersections[index];
-                var currentEdgeIsFromPolygonA = thisIntersectData.EdgeA == currentEdge;
-                if (formerIntersectCoords.Equals(thisIntersectData.IntersectCoordinates)) continue;
+                var candidateIntersect = allIntersections[index];
+                var currentEdgeIsFromPolygonA = candidateIntersect.EdgeA == currentEdge;
+                if (formerIntersectCoords.Equals(candidateIntersect.IntersectCoordinates)) continue;
                 var distance = 0.0;
-                if (!(formerIntersectCoords.IsNull() && (thisIntersectData.WhereIntersection == WhereIsIntersection.BothStarts ||
-                    (thisIntersectData.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
-                    (thisIntersectData.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
-                    distance = currentEdge.Vector.Dot(thisIntersectData.IntersectCoordinates - datum);
+                if (!(formerIntersectCoords.IsNull() && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
+                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
+                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
+                    distance = currentEdge.Vector.Dot(candidateIntersect.IntersectCoordinates - datum);
                 if (distance < 0) continue;
                 if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;
-                    newIntersection = thisIntersectData;
+                    bestIntersection = candidateIntersect;
                 }
                 else if (minDistanceToIntersection == distance)
-                    ;
+                {   // this is super rare and likely only to happen in RemoveSelfIntersections
+                    // basically we are going to choose the line that makes the sharpest (smallest) left turn (convex turn)
+                    // into the polygon
+                    var bestEdge = bestIntersection.EdgeA == currentEdge ? bestIntersection.EdgeB : bestIntersection.EdgeA;
+                    var newCandidateEdge = candidateIntersect.EdgeA == currentEdge ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
+                    var bestVector = bestEdge.Vector.Normalize();
+                    var newCandidateVector = newCandidateEdge.Vector.Normalize();
+                    var bestCross = currentEdge.Vector.Cross(bestVector);
+                    var newCandidateCross = currentEdge.Vector.Cross(newCandidateVector);
+                    var bestDot = currentEdge.Vector.Dot(bestVector);
+                    var newCandidateDot = currentEdge.Vector.Dot(newCandidateVector);
+                    var bestAngle = Math.Atan2(bestCross, bestDot);
+                    var newCandidateAngle = Math.Atan2(newCandidateCross, newCandidateDot);
+                    if (newCandidateAngle > bestAngle) bestIntersection = candidateIntersect;
+                    if (newCandidateAngle == bestAngle)
+                    {   // really?! if you are here than not only are there two segments that pass through currentEdge at the same
+                        // point, but the do so at the same angle! So, we are going to choose the one that is shorter
+                        var bestRemainingLength = (bestEdge.ToPoint.Coordinates - bestIntersection.IntersectCoordinates).LengthSquared();
+                        var newCandRemainingLength = (newCandidateEdge.ToPoint.Coordinates - candidateIntersect.IntersectCoordinates).LengthSquared();
+                        if (newCandRemainingLength < bestRemainingLength) bestIntersection = candidateIntersect;
+                    }
+                }
             }
-            if (newIntersection != null)
+            if (bestIntersection != null)
             {
-                switchPolygon = SwitchAtThisIntersection(newIntersection, newIntersection.EdgeA == currentEdge);
+                switchPolygon = SwitchAtThisIntersection(bestIntersection, bestIntersection.EdgeA == currentEdge);
                 return true;
             }
             else

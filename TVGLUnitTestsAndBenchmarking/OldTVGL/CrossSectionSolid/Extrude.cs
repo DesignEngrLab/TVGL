@@ -107,7 +107,7 @@ namespace OldTVGL
                 //Do some polygon functions to clean up issues and try again
                 //This is important because the Get2DProjections may produce invalid paths and because
                 //triangulate will try 3 times before throwing the exception to go to the catch.
-                paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                paths = PolygonOperations.Union(paths, out _, true, PolygonFillType.EvenOdd);
 
                 //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                 //This also means we need to recreate cleanLoops
@@ -155,10 +155,10 @@ namespace OldTVGL
                     triangles = new List<Vertex[]>();
 
                     //Do some polygon functions to clean up issues and try again
-                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                    paths = PolygonOperations.Union(paths, out _, true, PolygonFillType.EvenOdd);
                     paths = PolygonOperations.OffsetRound(paths, distance / 1000);
                     paths = PolygonOperations.OffsetRound(paths, -distance / 1000);
-                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+                    paths = PolygonOperations.Union(paths, out _, true, PolygonFillType.EvenOdd);
 
                     //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                     //This also means we need to recreate cleanLoops

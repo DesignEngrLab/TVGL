@@ -267,7 +267,7 @@ namespace OldTVGL.Boolean_Operations
                 foreach (var negGroup in negSideGroups)
                 {
                     var intersection =
-                        PolygonOperations.Intersection(posGroup.CrossSection2D, negGroup.CrossSection2D);
+                        PolygonOperations.Intersection(posGroup.CrossSection2D, negGroup.CrossSection2D,out _);
                     if (intersection == null || !intersection.Any() ||
                         intersection.Sum(p => p.Area).IsNegligible()) continue;
                     //Check if this intersection should be paired with an existing intersection group.

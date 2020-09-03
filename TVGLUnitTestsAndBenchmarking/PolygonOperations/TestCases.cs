@@ -1,9 +1,11 @@
 using BenchmarkDotNet.Attributes;
+using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsTCPIP;
 #if !PRESENT
 using OldTVGL;
 #endif
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using TVGL;
 using TVGL.Numerics;
@@ -18,11 +20,11 @@ namespace TVGLUnitTestsAndBenchmarking
         static Random r = new Random(1);
 
 
-        internal static Polygon C2Poly(IEnumerable<IEnumerable<Vector2>> coordinates)
+        internal static List<Polygon> C2Poly(IEnumerable<IEnumerable<Vector2>> coordinates)
         {
-            var result = new Polygon(coordinates.First());
-            foreach (var inner in coordinates.Skip(1))
-                result.AddInnerPolygon(new Polygon(inner));
+            var result = new List<Polygon>();
+            foreach (var poly in coordinates)
+                result.Add(new Polygon(poly));
             return result;
         }
 #if !PRESENT
@@ -183,7 +185,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //return new Polygon(result);
             var polygons = new Polygon(result).RemoveSelfIntersections(true, out _, 1e-9);
             var maxArea = polygons.Max(p => p.Area);
-            var polygon= polygons.First(polygons => polygons.Area == maxArea);
+            var polygon = polygons.First(polygons => polygons.Area == maxArea);
             polygon.Transform(Matrix3x3.CreateRotation(1));
             return polygon;
         }
@@ -207,6 +209,166 @@ namespace TVGLUnitTestsAndBenchmarking
             return (coords1, outer);
         }
 
+
+
+        internal static (Vector2[][], Vector2[][]) LoadWlrPolygonSet()
+        {
+            var polys = new Vector2[2][][];
+            var fileNames = new[] { "s.wlr", "c.wlr" };
+            for (int k = 0; k < 2; k++)
+            {
+
+                var reader = new StreamReader(Path.Combine("../../../../TestFiles", fileNames[k]));
+                string line = reader.ReadLine();
+
+                line = reader.ReadLine();
+                int polygonCount = int.Parse(line);
+                var polygonSet = new Vector2[polygonCount][];
+                for (int i = 0; i < polygonCount; i++)
+                {
+                    line = reader.ReadLine();
+                    int verticesCount = int.Parse(line);
+                    var polygon = new Vector2[verticesCount];
+                    for (int j = 0; j < verticesCount; j++)
+                    {
+                        line = reader.ReadLine();
+                        string[] parts = line.Split(",");
+                        var vertex = new Vector2(double.Parse(parts[0]), double.Parse(parts[1]));
+                        polygon[j] = vertex;
+                    }
+
+                    if (i == 0)
+                    {
+                        if (polygon.Area() < 0)
+                            polygon.Reverse();
+                    }
+                    else if (polygon.Area() < 0)
+                        polygon.Reverse();
+
+                    polygonSet[i] = polygon;
+                }
+
+                polys[k] = polygonSet;
+            }
+
+            return (polys[0], polys[1]);
+        }
+
+        internal static (Vector2[][], Vector2[][]) BenchKnown(int intersections, int loops, double angleOffset)
+        {
+            int intersections4 = intersections / 4;
+            int rays = (int)Math.Floor(Math.Sqrt(intersections4));
+            int cilinders = rays;
+            if (intersections4 - rays * cilinders > rays)
+                rays++;
+
+            int longerRays = intersections4 - (rays * cilinders);
+            if (longerRays == rays)
+            {
+                rays++;
+                longerRays = 0;
+            }
+
+            const double radiusStep = 2.6;
+            int internalRadius = (int)(radiusStep * rays * Math.PI * 2);
+            double raysRadius = internalRadius + (cilinders * radiusStep) + radiusStep;
+            double longerRaysRadius = raysRadius + (radiusStep * 2);
+
+            var psA = GetTestClockwiseGearPolygon(rays, longerRays, raysRadius, longerRaysRadius, internalRadius);
+
+            var psB = new List<Vector2[]>();
+            if (longerRays > 0)
+                cilinders++;
+
+            for (int counter = 1; counter <= cilinders; counter++)
+            {
+                psB.Add(GetTestClockwisePolygon(rays * 2, internalRadius + (counter * radiusStep) + (radiusStep / 2), 0));
+                var hole = GetTestClockwisePolygon(rays * 2, internalRadius + counter * radiusStep, 0);
+                hole.Reverse();
+                psB.Add(hole);
+            }
+            return (new[] { psA }, psB.ToArray());
+        }
+
+        internal static Vector2[] GetTestClockwiseGearPolygon(int rays, int longerRays, double raysRadius, double longerRaysRadius, double internalRadius, double angleOffset = 0)
+        {
+            var p = new List<Vector2>();
+            double rotationStep = -Math.PI / rays;
+            for (int rayIndex = 0; rayIndex < rays; rayIndex++)
+            {
+                double angle = (rotationStep * 2 * rayIndex) + angleOffset;
+                double x = internalRadius * Math.Cos(angle);
+                double y = internalRadius * Math.Sin(angle);
+                p.Add(new Vector2(x, y));
+                double externalRadius = raysRadius;
+                if (longerRays > 0)
+                {
+                    externalRadius = longerRaysRadius;
+                    longerRays -= 1;
+                }
+
+                x = (externalRadius * Math.Cos(angle));
+                y = (externalRadius * Math.Sin(angle));
+                p.Add(new Vector2(x, y));
+
+                angle += rotationStep;
+                x = (externalRadius * Math.Cos(angle));
+                y = (externalRadius * Math.Sin(angle));
+                p.Add(new Vector2(x, y));
+
+                x = (internalRadius * Math.Cos(angle));
+                y = (internalRadius * Math.Sin(angle));
+                p.Add(new Vector2(x, y));
+
+            }
+            return p.ToArray();
+        }
+
+
+        internal static Vector2[] GetTestClockwisePolygon(int externalSidesCount, double externalRadius, double internalRadius, 
+            double angleOffset = 0, double xOffset = 0, double yOffset = 0)
+        {
+            var p = new List<Vector2>();
+            bool addExternalFirst = false;
+            bool isGear = internalRadius != 0;
+            double rotationStep = -Math.PI * 2 / externalSidesCount;
+            for (int sideIndex = 0; sideIndex <= externalSidesCount; sideIndex++)
+            {
+                double angle = (rotationStep * sideIndex) + angleOffset;
+                double xExternal = externalRadius * Math.Cos(angle) + xOffset;
+                double yExternal = externalRadius * Math.Sin(angle) + yOffset;
+                if (isGear)
+                {
+                    if ((sideIndex == externalSidesCount && addExternalFirst)  || sideIndex == 0)
+                    {
+                        p.Add(new Vector2(xExternal, yExternal));
+                    }
+                    else
+                    {
+                        double xInternal = internalRadius * Math.Cos(angle) + xOffset;
+                        double yInternal = internalRadius * Math.Sin(angle) + yOffset;
+                        if (addExternalFirst)
+                        {
+                            p.Add(new Vector2(xExternal, yExternal));
+                            p.Add(new Vector2(xInternal, yInternal));
+                        }
+                        else
+                        {
+                            p.Add(new Vector2(xInternal, yInternal));
+                            p.Add(new Vector2(xExternal, yExternal));
+                        }
+
+                    }
+
+                    addExternalFirst = !addExternalFirst;
+                }
+                else
+                {
+                    p.Add(new Vector2(xExternal, yExternal));
+                }
+            }
+            return p.ToArray();
+        }
 
     }
 }
