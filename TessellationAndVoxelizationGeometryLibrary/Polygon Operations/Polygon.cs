@@ -200,19 +200,16 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
         /// </summary>
-        public void Reverse()
+        public void Reverse(bool reverseInnerPolygons = false)
         {
             Path.Reverse();
-            if (_vertices != null)
-                _vertices.Reverse();
-            //Only reverse the lines if they have been generated
-            _lines = null;
-            _vertices = null;
-            //if (_holes != null)
-            //{
-            //    foreach (var innerPolygon in _holes)
-            //        innerPolygon.Reverse();
-            //}
+            MakeVertices();
+            MakeLineSegments();
+            if (_innerPolygons != null && reverseInnerPolygons)
+            {
+                foreach (var innerPolygon in _innerPolygons)
+                    innerPolygon.Reverse(true);
+            }
             pathArea = -pathArea;
             area = double.NaN;
         }
@@ -338,16 +335,16 @@ namespace TVGL.TwoDimensional
 
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
-            _path = coordinates.ToList();
-            //_path = new List<Vector2>();
-            //Vector2 lastCoordinate = Vector2.Null;
-            //foreach (var p in coordinates)
-            //{
-            //    if (p == lastCoordinate) continue;
-            //    lastCoordinate = p;
-            //    _path.Add(p);
-            //}
-            //if (_path[0] == _path[^1]) _path.RemoveAt(_path.Count - 1);
+            //_path = coordinates.ToList();
+            _path = new List<Vector2>();
+            Vector2 lastCoordinate = Vector2.Null;
+            foreach (var p in coordinates)
+            {
+                if (p.IsPracticallySame(lastCoordinate)) continue;
+                lastCoordinate = p;
+                _path.Add(p);
+            }
+            if (_path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
             Index = index;
             MakeVertices();
             MakeLineSegments();
@@ -379,7 +376,13 @@ namespace TVGL.TwoDimensional
             Index = index;
         }
 
-        public Polygon Copy(bool copyHoles, bool invert)
+        /// <summary>
+        /// Copies the specified copy inner polygons.
+        /// </summary>
+        /// <param name="copyInnerPolygons">The copy inner polygons.</param>
+        /// <param name="invert">The invert.</param>
+        /// <returns>TVGL.TwoDimensional.Polygon.</returns>
+        public Polygon Copy(bool copyInnerPolygons, bool invert)
         {
             var thisPath = _path == null ? null : new List<Vector2>(_path);
             if (invert && thisPath != null)
@@ -393,7 +396,7 @@ namespace TVGL.TwoDimensional
                 thisPath.RemoveAt(0);
                 thisPath.Add(front);
             }
-            var thisInnerPolygons = _innerPolygons != null && copyHoles ? _innerPolygons.Select(p => p.Copy(copyHoles, invert)).ToList() : null;
+            var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ? _innerPolygons.Select(p => p.Copy(copyInnerPolygons, invert)).ToList() : null;
 
             var copiedPolygon = new Polygon
             {

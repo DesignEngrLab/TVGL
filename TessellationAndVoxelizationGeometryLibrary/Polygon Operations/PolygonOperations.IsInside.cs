@@ -685,14 +685,14 @@ namespace TVGL.TwoDimensional
                         // is common. It is possible that the starts (FromPoints) are not overlapping at all - in which case nothing is added.
                         // It is also possible that both FromPoints are on the other line - if so, then we add both. This is the one other place 
                         // where a second IntersectionData is added
-                        if ((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(fromPointVector) < 0)
+                        if (((lineB.ToPoint.Coordinates - lineA.FromPoint.Coordinates).Dot(fromPointVector)).IsLessThanNonNegligible(0,tolerance))
                         {   // since fromPointVector goes from lineA.FromPoint to lineB.FromPoint - if going from line.FromPoint to lineB.ToPoint is
                             // opposite then lineA.FromPoint is on lineB
                             intersectionCoordinates = lineA.FromPoint.Coordinates;
                             where = WhereIsIntersection.AtStartOfA;
                             intersectionFound = true;
                         }
-                        if ((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointVector) < 0)
+                        if (((lineB.FromPoint.Coordinates - lineA.ToPoint.Coordinates).Dot(fromPointVector)).IsLessThanNonNegligible(0, tolerance))
                         { // now check the other way. Note, since fromPointVector is backwards here, we just make the other vector backwards as well
 
                             if (intersectionFound) // okay, well, you need to add TWO points. Going to go ahead and finish off the lineB point here

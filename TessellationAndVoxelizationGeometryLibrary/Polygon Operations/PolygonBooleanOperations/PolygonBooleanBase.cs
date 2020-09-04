@@ -151,8 +151,11 @@ namespace TVGL.TwoDimensional
                     intersectionData.VisitedB = true;
                 }
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
-                if (newPath.Count == 0 || !newPath[^1].IsPracticallySame(intersectionCoordinates))
-                    newPath.Add(intersectionCoordinates);
+                // there used to be some complex conditions here (at 12 lines down before the other newPath.Add(...)
+                // to ensure that the added point wasn't the same as the last. However, for speed, we allow it
+                // and add the check in the Polygon constructor. This also reduces code since sometimes the Vector2's
+                // sent to that constructor would have duplicate points.
+                newPath.Add(intersectionCoordinates);
                 if (switchPolygon)
                     currentEdge = (currentEdge == intersectionData.EdgeB) ? intersectionData.EdgeA : intersectionData.EdgeB;
 
@@ -163,8 +166,7 @@ namespace TVGL.TwoDimensional
                 // out of the loop. The intersection is identified here, but processed above
                 {
                     currentEdge = currentEdge.ToPoint.StartLine;
-                    if (!newPath[^1].IsPracticallySame(currentEdge.FromPoint.Coordinates))
-                        newPath.Add(currentEdge.FromPoint.Coordinates);
+                    newPath.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
                                                             // the edge that concern us. We want that function to report the first one for the edge

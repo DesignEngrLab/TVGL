@@ -20,18 +20,33 @@ namespace TVGLUnitTestsAndBenchmarking
         static Random r = new Random(1);
 
 
-        internal static List<Polygon> C2Poly(IEnumerable<IEnumerable<Vector2>> coordinates)
+        internal static Polygon C2Poly(IEnumerable<IEnumerable<Vector2>> coordinates)
         {
-            var result = new List<Polygon>();
-            foreach (var poly in coordinates)
-                result.Add(new Polygon(poly));
+            var result = new Polygon(coordinates.First());
+            if (!result.IsPositive) result.Reverse();
+            foreach (var inner in coordinates.Skip(1))
+            {
+                //inner.Reverse();
+                result.AddInnerPolygon(new Polygon(inner));
+            }
             return result;
         }
 #if !PRESENT
 
         internal static List<List<PointLight>> C2PLs(IEnumerable<IEnumerable<Vector2>> coordinates)
         {
-            return coordinates.Select(innerPoly => innerPoly.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList()).ToList();
+            var outerCoords = coordinates.First();
+            var outer = outerCoords.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList();
+
+            if (outerCoords.Area() < 0) outer.Reverse();
+            var result = new List<List<PointLight>>();
+            result.Add(outer);
+            foreach (var inner in coordinates.Skip(1))
+            {
+                //inner.Reverse();
+                result.Add(inner.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList());
+            }
+            return result;
         }
 
         internal static List<List<PointLight>> Poly2PLs(Polygon p)
@@ -239,11 +254,10 @@ namespace TVGLUnitTestsAndBenchmarking
 
                     if (i == 0)
                     {
-                        if (polygon.Area() < 0)
-                            polygon.Reverse();
+                        if (polygon.Area() < 0) polygon = polygon.Reverse().ToArray();
                     }
-                    else if (polygon.Area() < 0)
-                        polygon.Reverse();
+                    else if (polygon.Area() < 0) polygon = polygon.Reverse().ToArray();
+
 
                     polygonSet[i] = polygon;
                 }
@@ -254,121 +268,89 @@ namespace TVGLUnitTestsAndBenchmarking
             return (polys[0], polys[1]);
         }
 
-        internal static (Vector2[][], Vector2[][]) BenchKnown(int intersections, int loops, double angleOffset)
+        internal static (Vector2[][], Vector2[][]) BenchKnown(int intersections)
         {
-            int intersections4 = intersections / 4;
-            int rays = (int)Math.Floor(Math.Sqrt(intersections4));
-            int cilinders = rays;
-            if (intersections4 - rays * cilinders > rays)
+            int rays = (int)Math.Floor(Math.Sqrt(intersections / 2.0));
+            int rings = rays;
+            if ((intersections/2) - rays * rings > rays)
                 rays++;
 
-            int longerRays = intersections4 - (rays * cilinders);
-            if (longerRays == rays)
-            {
-                rays++;
-                longerRays = 0;
-            }
+            double internalRadius = 10;
+            double raysRadius = 1000;
 
-            const double radiusStep = 2.6;
-            int internalRadius = (int)(radiusStep * rays * Math.PI * 2);
-            double raysRadius = internalRadius + (cilinders * radiusStep) + radiusStep;
-            double longerRaysRadius = raysRadius + (radiusStep * 2);
-
-            var psA = GetTestClockwiseGearPolygon(rays, longerRays, raysRadius, longerRaysRadius, internalRadius);
+            var psA = GetTestClockwiseGearPolygon(rays, raysRadius, internalRadius);
 
             var psB = new List<Vector2[]>();
-            if (longerRays > 0)
-                cilinders++;
-
-            for (int counter = 1; counter <= cilinders; counter++)
+            var distBetweenRings = (raysRadius - internalRadius) / rings;
+            var ringRadius = raysRadius - (distBetweenRings / 2);
+            for (int i = 0; i < rings; i++)
             {
-                psB.Add(GetTestClockwisePolygon(rays * 2, internalRadius + (counter * radiusStep) + (radiusStep / 2), 0));
-                var hole = GetTestClockwisePolygon(rays * 2, internalRadius + counter * radiusStep, 0);
-                hole.Reverse();
-                psB.Add(hole);
+                var poly = GetTestClockwisePolygon(rays * 2, ringRadius);
+                if (i % 2 == 1)
+                    poly = poly.Reverse().ToArray();
+                psB.Add(poly);
+                ringRadius -= distBetweenRings;
             }
             return (new[] { psA }, psB.ToArray());
         }
 
-        internal static Vector2[] GetTestClockwiseGearPolygon(int rays, int longerRays, double raysRadius, double longerRaysRadius, double internalRadius, double angleOffset = 0)
+        internal static Vector2[] GetTestClockwiseGearPolygon(int rays, double raysRadius, double internalRadius, double angleOffset = 0)
         {
-            var p = new List<Vector2>();
-            double rotationStep = -Math.PI / rays;
+            var p = new Vector2[4 * rays];
+            double rotationStep = Math.PI / rays;
+            var angle = angleOffset;
             for (int rayIndex = 0; rayIndex < rays; rayIndex++)
             {
-                double angle = (rotationStep * 2 * rayIndex) + angleOffset;
                 double x = internalRadius * Math.Cos(angle);
                 double y = internalRadius * Math.Sin(angle);
-                p.Add(new Vector2(x, y));
-                double externalRadius = raysRadius;
-                if (longerRays > 0)
-                {
-                    externalRadius = longerRaysRadius;
-                    longerRays -= 1;
-                }
+                p[4*rayIndex] = new Vector2(x, y);
 
-                x = (externalRadius * Math.Cos(angle));
-                y = (externalRadius * Math.Sin(angle));
-                p.Add(new Vector2(x, y));
+                x = raysRadius * Math.Cos(angle);
+                y = raysRadius * Math.Sin(angle);
+                p[4*rayIndex + 1] = new Vector2(x, y);
 
                 angle += rotationStep;
-                x = (externalRadius * Math.Cos(angle));
-                y = (externalRadius * Math.Sin(angle));
-                p.Add(new Vector2(x, y));
+                x = raysRadius * Math.Cos(angle);
+                y = raysRadius * Math.Sin(angle);
+                p[4*rayIndex + 2] = new Vector2(x, y);
 
-                x = (internalRadius * Math.Cos(angle));
-                y = (internalRadius * Math.Sin(angle));
-                p.Add(new Vector2(x, y));
-
+                x = internalRadius * Math.Cos(angle);
+                y = internalRadius * Math.Sin(angle);
+                p[4*rayIndex+3] = new Vector2(x, y);
+                angle += rotationStep;
             }
-            return p.ToArray();
+            return p;
         }
 
-
-        internal static Vector2[] GetTestClockwisePolygon(int externalSidesCount, double externalRadius, double internalRadius, 
-            double angleOffset = 0, double xOffset = 0, double yOffset = 0)
+        private static Vector2[] GetTestClockwisePolygon(int rays, double ringRadius)
         {
-            var p = new List<Vector2>();
-            bool addExternalFirst = false;
-            bool isGear = internalRadius != 0;
-            double rotationStep = -Math.PI * 2 / externalSidesCount;
-            for (int sideIndex = 0; sideIndex <= externalSidesCount; sideIndex++)
+            var p = new Vector2[rays];
+            double rotationStep = 2 * Math.PI / rays;
+            var angle = 0.0;
+            for (int i = 0; i < rays; i++)
             {
-                double angle = (rotationStep * sideIndex) + angleOffset;
-                double xExternal = externalRadius * Math.Cos(angle) + xOffset;
-                double yExternal = externalRadius * Math.Sin(angle) + yOffset;
-                if (isGear)
-                {
-                    if ((sideIndex == externalSidesCount && addExternalFirst)  || sideIndex == 0)
-                    {
-                        p.Add(new Vector2(xExternal, yExternal));
-                    }
-                    else
-                    {
-                        double xInternal = internalRadius * Math.Cos(angle) + xOffset;
-                        double yInternal = internalRadius * Math.Sin(angle) + yOffset;
-                        if (addExternalFirst)
-                        {
-                            p.Add(new Vector2(xExternal, yExternal));
-                            p.Add(new Vector2(xInternal, yInternal));
-                        }
-                        else
-                        {
-                            p.Add(new Vector2(xInternal, yInternal));
-                            p.Add(new Vector2(xExternal, yExternal));
-                        }
-
-                    }
-
-                    addExternalFirst = !addExternalFirst;
-                }
-                else
-                {
-                    p.Add(new Vector2(xExternal, yExternal));
-                }
+                double x = ringRadius * Math.Cos(angle);
+                double y = ringRadius * Math.Sin(angle);
+                p[i] = new Vector2(x, y);
+                angle += rotationStep;
             }
-            return p.ToArray();
+            return p;
         }
 
+
+        private static Vector2[] GetRandomPolygon(double maxWidth, double maxHeight, double deltaX, double deltaY)
+        {
+            Polygon shape;
+            if (_UseRectangles)
+            {
+                shape = GetRandomRectangle(_MaxRandomPolygonSideLenght, _MaxRandomPolygonSideLenght, deltaX, deltaY);
+            }
+            else
+            {
+                shape = GetRandomTriangle(_MaxRandomPolygonSideLenght, _MaxRandomPolygonSideLenght, deltaX, deltaY);
+            }
+
+            return shape;
+        }
     }
 }
