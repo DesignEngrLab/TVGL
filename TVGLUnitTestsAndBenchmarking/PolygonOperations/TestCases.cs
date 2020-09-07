@@ -76,7 +76,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 { "skyline", (
                     new [] { new [] { new Vector2(0,4), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7, 4), new Vector2(7, 2), new Vector2(6,2), new Vector2(4,2), new Vector2(4,3), new Vector2(1,3), new Vector2(1,4) } },
                     new [] { new [] { new Vector2(0,3), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7,4), new Vector2(7, 3), new Vector2(6, 3), new Vector2(2, 3), new Vector2(2, 4), new Vector2(1,4), new Vector2(1, 3) } })},
-                 { "trapInTri", (
+                 { "cutout", (
+                    new [] { new [] { new Vector2(0,0), new Vector2(10, 0), new Vector2(10, 10), new Vector2(8, 8), new Vector2(8, 3), new Vector2(3, 3) } },
+                    new [] { new [] { new Vector2(3,3), new Vector2(8,3), new Vector2(8,8) } })},
+                { "trapInTri", (
                     new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(0,10) } },
                     new [] { new [] { new Vector2(0,0), new Vector2(4,0), new Vector2(6,4), new Vector2(3,7) } })},
                 { "innerTouch", (
@@ -272,7 +275,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             int rays = (int)Math.Floor(Math.Sqrt(intersections / 2.0));
             int rings = rays;
-            if ((intersections/2) - rays * rings > rays)
+            if ((intersections / 2) - rays * rings > rays)
                 rays++;
 
             double internalRadius = 10;
@@ -303,20 +306,20 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 double x = internalRadius * Math.Cos(angle);
                 double y = internalRadius * Math.Sin(angle);
-                p[4*rayIndex] = new Vector2(x, y);
+                p[4 * rayIndex] = new Vector2(x, y);
 
                 x = raysRadius * Math.Cos(angle);
                 y = raysRadius * Math.Sin(angle);
-                p[4*rayIndex + 1] = new Vector2(x, y);
+                p[4 * rayIndex + 1] = new Vector2(x, y);
 
                 angle += rotationStep;
                 x = raysRadius * Math.Cos(angle);
                 y = raysRadius * Math.Sin(angle);
-                p[4*rayIndex + 2] = new Vector2(x, y);
+                p[4 * rayIndex + 2] = new Vector2(x, y);
 
                 x = internalRadius * Math.Cos(angle);
                 y = internalRadius * Math.Sin(angle);
-                p[4*rayIndex+3] = new Vector2(x, y);
+                p[4 * rayIndex + 3] = new Vector2(x, y);
                 angle += rotationStep;
             }
             return p;
@@ -338,19 +341,5 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
 
-        private static Vector2[] GetRandomPolygon(double maxWidth, double maxHeight, double deltaX, double deltaY)
-        {
-            Polygon shape;
-            if (_UseRectangles)
-            {
-                shape = GetRandomRectangle(_MaxRandomPolygonSideLenght, _MaxRandomPolygonSideLenght, deltaX, deltaY);
-            }
-            else
-            {
-                shape = GetRandomTriangle(_MaxRandomPolygonSideLenght, _MaxRandomPolygonSideLenght, deltaX, deltaY);
-            }
-
-            return shape;
-        }
     }
 }

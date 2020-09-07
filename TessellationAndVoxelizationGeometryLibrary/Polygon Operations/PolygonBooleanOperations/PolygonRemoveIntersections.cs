@@ -13,8 +13,8 @@ namespace TVGL.TwoDimensional
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool noHoles, double minAllowableArea,
             out List<Polygon> strayHoles)
         {
-            var interaction = new PolygonInteractionRecord(PolygonRelationship.Separated, intersections, null, null, 0, 0);
-            // new Dictionary<Polygon, int> { { polygon, 0 } }, 1, 0);
+            var interaction = new PolygonInteractionRecord(polygon, null);
+            interaction.IntersectionData.AddRange(intersections);
             var delimiters = polygon.NumberVertiesAndGetPolygonVertexDelimiter();
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();

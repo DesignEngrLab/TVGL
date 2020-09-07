@@ -23,8 +23,11 @@ namespace TVGL.TwoDimensional
         /// <param name="crossProductSign">The cross product sign.</param>
         /// <param name="tolerance">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection, double tolerance)
+        internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection)
         {
+            var minDimension = Math.Min(polygonA.MaxX - polygonA.MinX, Math.Min(polygonA.MaxY - polygonA.MinY,
+                Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY)));
+            var minAllowableArea = 1000* Constants.BaseTolerance * minDimension * minDimension;
             var delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonA);
             delimiters = PolygonOperations.NumberVertiesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
@@ -36,7 +39,7 @@ namespace TVGL.TwoDimensional
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(tolerance)) continue;
+                if (area.IsNegligible(minAllowableArea)) continue;
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             // to handle the non-intersecting subpolygons

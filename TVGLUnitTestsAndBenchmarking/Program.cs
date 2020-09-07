@@ -13,12 +13,15 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            TVGL3Dto2DTests.TestSilhouette();
+
 #if PRESENT
-            var polys = TestCases.BenchKnown(16);
+            //var polys = TestCases.BenchKnown(16);
+            var polys = TestCases.Ersatz["cutout"];
             var p1 = TestCases.C2Poly(polys.Item1);
             var p2 = TestCases.C2Poly(polys.Item2);
             Presenter.ShowAndHang(new[] { p1, p2 });
-            p1.Union(p2, TVGL.PolygonCollection.SeparateLoops);
+            Presenter.ShowAndHang(p1.Union(p2, TVGL.PolygonCollection.SeparateLoops));
 
 #else
             var stats = new List<(string, int, long, long)>();
@@ -35,7 +38,6 @@ namespace TVGLUnitTestsAndBenchmarking
             //PolygonOperationsTesting.DebugEdgeCases();
             //PolygonOperationsTesting.DebugOctagons();
             //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
-            //TVGL3Dto2DTests.TestSilhouette();
             //PolygonOperationsTesting.TestUnionSimple();
         }
     }

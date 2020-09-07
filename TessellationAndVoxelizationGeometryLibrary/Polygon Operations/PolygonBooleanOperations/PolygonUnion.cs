@@ -108,7 +108,8 @@ namespace TVGL.TwoDimensional
             // a hole is effectively removed
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, 
+            IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
         {
             var enumerator = relationships.GetEnumerator();
             enumerator.MoveNext();

@@ -153,7 +153,7 @@ namespace TVGL.TwoDimensional
                 if (_innerPolygons is null) yield break;
                 foreach (var polygon in _innerPolygons)
                     // yield return polygon;
-                    //if we want to allow deep polygon trees, then the commented code below would allow this (but would need to 
+                    //if we want to allow deep polygon trees, then the  code below would allow this (but would need to 
                     //comment the previous line ("yield return polygon;").
                     foreach (var innerPolygon in polygon.AllPolygons)
                         yield return innerPolygon;

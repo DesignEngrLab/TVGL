@@ -73,7 +73,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
                 {
                     polys = TestCases.MakeBumpyRings(numVerts, radius, delta);
-                    Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numVerts, radius, delta);
+                    //Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numVerts, radius, delta);
                     SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
                 }
             }
@@ -84,7 +84,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     var poly1 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
                     var poly2 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
-                    Console.WriteLine("Chunky Square: numVerts = {0}, thick={1}", numVerts, delta);
+                    //Console.WriteLine("Chunky Square: numVerts = {0}, thick={1}", numVerts, delta);
                     SingleCompare(stats, poly1, poly2, TestCases.Poly2PLs(poly1), TestCases.Poly2PLs(poly2));
                 }
             }
@@ -101,6 +101,8 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal void SingleCompare(List<(string, int, long, long)> stats, Polygon p1, Polygon p2, List<List<PointLight>> v1, List<List<PointLight>> v2)
         {
+            Console.WriteLine(p1.GetPolygonInteraction(p2).IntersectionData.Count);
+            return;
             var stopWatch = new Stopwatch();
             var numIters = 10;
             var operationString = "";

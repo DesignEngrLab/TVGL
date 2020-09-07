@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public class PolygonInteractionRecord
     {
-        internal PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<SegmentIntersection> intersections,
+        private PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<SegmentIntersection> intersections,
              PolygonRelationship[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB)
         {
             this.Relationship = topLevelRelationship;
@@ -21,13 +22,29 @@ namespace TVGL.TwoDimensional
             this.numPolygonsInA = numPolygonsInA;
             this.numPolygonsInB = numPolygonsInB;
         }
+        internal PolygonInteractionRecord(Polygon polygonA, Polygon polygonB)
+        {
+            var index = 0;
+            this.subPolygonToInt = new Dictionary<Polygon, int>();
+            foreach (var polyA in polygonA.AllPolygons)
+                subPolygonToInt.Add(polyA, index++);
+            this.numPolygonsInA = index;
+            if (polygonB != null)
+            {
+                foreach (var polyB in polygonB.AllPolygons)
+                    subPolygonToInt.Add(polyB, index++);
+                this.numPolygonsInB = index - numPolygonsInA;
+            }
+            this.polygonRelations = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
+            this.IntersectionData = new List<SegmentIntersection>();
+        }
 
-        public PolygonRelationship Relationship { get; }
+        public PolygonRelationship Relationship { get; internal set; }
         public List<SegmentIntersection> IntersectionData { get; }
         private readonly PolygonRelationship[] polygonRelations;
         private readonly Dictionary<Polygon, int> subPolygonToInt;
-        private readonly int numPolygonsInA;
-        private readonly int numPolygonsInB;
+        internal readonly int numPolygonsInA;
+        internal readonly int numPolygonsInB;
 
         public IEnumerable<Polygon> AllPolygons
         {
@@ -39,12 +56,21 @@ namespace TVGL.TwoDimensional
         }
         public PolygonRelationship GetRelationshipBetween(Polygon polygonA, Polygon polygonB)
         {
+            var index = findLookupIndex(polygonA, polygonB);
+            return polygonRelations[index];
+        }
+        internal void SetRelationshipBetween(int index, PolygonRelationship polygonRelationship)
+        {
+            //var index = findLookupIndex(polygonA, polygonB);
+            polygonRelations[index] = polygonRelationship;
+        }
+        internal int findLookupIndex(Polygon polygonA, Polygon polygonB)
+        {
             var indexA = subPolygonToInt[polygonA];
             var indexB = subPolygonToInt[polygonB];
-            var index = indexA < indexB
+            return indexA < indexB
                 ? numPolygonsInA * (indexB - numPolygonsInA) + indexA
                 : numPolygonsInA * (indexA - numPolygonsInA) + indexB;
-            return polygonRelations[index];
         }
         public IEnumerable<(PolygonRelationship, bool)> GetRelationships(Polygon polygon)
         {
@@ -89,8 +115,9 @@ namespace TVGL.TwoDimensional
             return lookupList;
         }
 
-        internal PolygonInteractionRecord InvertPolygonInRecord(ref Polygon polygon, double tolerance)
+        internal PolygonInteractionRecord InvertPolygonInRecord(ref Polygon polygon)
         {
+            var tolerance = Constants.BaseTolerance * Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY);
             bool polygonIsAInInteractions = subPolygonToInt[polygon] < numPolygonsInA;
             var visitedIntersectionPairs = new HashSet<(PolygonSegment, PolygonSegment)>();
             var delimiters = polygon.NumberVertiesAndGetPolygonVertexDelimiter();

@@ -562,7 +562,7 @@ namespace TVGL
         {
             var numDecimalPoints = 0;
             //Gets the number of decimal places
-            while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            while (Math.Round(SameTolerance, numDecimalPoints) == 0.0) numDecimalPoints++;
             /* vertexMatchingIndices will be used to speed up the linking of faces and edges to vertices
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
              * you can find each vertex in the new array of vertices. This is essentially what is built in 

@@ -32,12 +32,12 @@ namespace TVGLUnitTestsAndBenchmarking
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
             }
-//            brace.stl - holes showing up?
-// radiobox - missing holes - weird skip in outline
-// KnuckleTopOp flecks
-// mendel_extruder - one show up blank
-           //var fileNames = dir.GetFiles("Z665*").ToArray();
-             var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
+            //            brace.stl - holes showing up?
+            // radiobox - missing holes - weird skip in outline
+            // KnuckleTopOp flecks
+            // mendel_extruder - one show up blank
+            //var fileNames = dir.GetFiles("mendel_*").ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
