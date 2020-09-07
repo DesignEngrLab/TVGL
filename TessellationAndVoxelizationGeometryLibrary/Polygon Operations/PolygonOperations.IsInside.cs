@@ -43,13 +43,15 @@ namespace TVGL.TwoDimensional
                 var onBoundary = false;
                 var numberAbove = 0;
                 var numberBelow = 0;
+                var canRemoveEarlierEdge = true;
                 for (var i = edgeIndex; i < sortedEdges.Count; i++)
                 {
                     if (sortedEdges[i].XMax.IsLessThanNonNegligible(vertex.X, tolerance))
                     {
-                        edgeIndex = i;
+                        if (canRemoveEarlierEdge) edgeIndex = i;
                         continue;
                     }
+                    canRemoveEarlierEdge = false;
                     if (sortedEdges[i].XMin.IsGreaterThanNonNegligible(vertex.X, tolerance))
                         break;
                     switch (DetermineLineToPointVerticalReferenceType(vertex.Coordinates, sortedEdges[i], tolerance))
@@ -73,8 +75,9 @@ namespace TVGL.TwoDimensional
                 var insideBelow = numberBelow % 2 != 0;
                 if (insideAbove != insideBelow)
                 {
-                    throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
-                        " an undetermined number of lines which makes it impossible to determined if inside.");
+                    continue;
+                    //throw new ArgumentException("In IsPointInsidePolygon, the point in question is surrounded by" +
+                    //" an undetermined number of lines which makes it impossible to determined if inside.");
                 }
                 return insideAbove;
                 //if (insideAbove) return polygon.IsPositive;

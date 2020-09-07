@@ -111,11 +111,11 @@ namespace TVGL.TwoDimensional
                              || (int)interaction.Relationship >= 64)
                     {
                         //if (i == 1 && j == 0)
-                            Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                          //  Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
-                        Console.WriteLine("i = {0}, j = {1}", i, j);
+                        //Console.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
-                            Presenter.ShowAndHang(newPolygons);
+                          //  Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);

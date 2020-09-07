@@ -36,8 +36,8 @@ namespace TVGLUnitTestsAndBenchmarking
             // radiobox - missing holes - weird skip in outline
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
-            //var fileNames = dir.GetFiles("mendel_*").ToArray();
-            var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
+            var fileNames = dir.GetFiles("myCasting*").ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => r.Next()).ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
