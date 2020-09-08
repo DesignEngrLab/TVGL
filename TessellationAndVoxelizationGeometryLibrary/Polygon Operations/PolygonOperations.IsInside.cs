@@ -427,11 +427,17 @@ namespace TVGL.TwoDimensional
         /// <param name="subPolygonB">The polygon b.</param>
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonRelationship.</returns>
-        public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB)
+        public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB, double tolerance = double.NaN)
         {
+            if (double.IsNaN(tolerance))
+            {
+                tolerance = Math.Min(polygonA.MaxX - polygonA.MinX,
+                   Math.Min(polygonA.MaxY - polygonA.MinY,
+                   Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY))) * Constants.BaseTolerance;
+            }
             var interactionRecord = new PolygonInteractionRecord(polygonA, polygonB);
             var visited = new bool[interactionRecord.numPolygonsInA * interactionRecord.numPolygonsInB];
-            var topRelation = RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited);
+            var topRelation = RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, tolerance);
             foreach (var rel in interactionRecord.GetRelationships(polygonA))
                 topRelation |= rel.Item1;
             foreach (var rel in interactionRecord.GetRelationships(polygonB))
@@ -439,11 +445,12 @@ namespace TVGL.TwoDimensional
             interactionRecord.Relationship = topRelation;
             return interactionRecord;
         }
-        private static PolygonRelationship RecursePolygonInteractions(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord, bool[] visited)
+        private static PolygonRelationship RecursePolygonInteractions(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
+            bool[] visited, double tolerance)
         {
             var index = interactionRecord.findLookupIndex(polygonA, polygonB);
             if (visited[index]) return interactionRecord.GetRelationshipBetween(polygonA, polygonB);
-            var relationship = GetSinglePolygonRelationshipAndIntersections(polygonA, polygonB, out var localIntersections);
+            var relationship = GetSinglePolygonRelationshipAndIntersections(polygonA, polygonB, out var localIntersections, tolerance);
             interactionRecord.IntersectionData.AddRange(localIntersections);
             visited[index] = true;
             if (relationship != PolygonRelationship.Separated &&
@@ -459,7 +466,7 @@ namespace TVGL.TwoDimensional
                 {
                     foreach (var innerPolyA in polygonA.InnerPolygons)
                     {
-                        var rel = RecursePolygonInteractions(innerPolyA, polygonB, interactionRecord, visited);
+                        var rel = RecursePolygonInteractions(innerPolyA, polygonB, interactionRecord, visited, tolerance);
                         if ((rel & PolygonRelationship.BIsInsideHoleOfA) == PolygonRelationship.BIsInsideHoleOfA)
                             relationship |= PolygonRelationship.InsideHole;
                     }
@@ -473,7 +480,7 @@ namespace TVGL.TwoDimensional
                 {
                     foreach (var innerPolyB in polygonB.InnerPolygons)
                     {
-                        var rel = RecursePolygonInteractions(polygonA, innerPolyB, interactionRecord, visited);
+                        var rel = RecursePolygonInteractions(polygonA, innerPolyB, interactionRecord, visited, tolerance);
                         if ((rel & PolygonRelationship.AIsInsideHoleOfB) == PolygonRelationship.AIsInsideHoleOfB)
                             relationship |= PolygonRelationship.InsideHole;
                     }
@@ -495,13 +502,10 @@ namespace TVGL.TwoDimensional
         /// AIsCompletelyInsideB,  AIsInsideBButEdgesTouch, AIsInsideBButVerticesTouch,
         /// Separated, SeparatedButEdgesTouch, SeparatedButVerticesTouch
         ///  </returns>
-        internal static PolygonRelationship GetSinglePolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
-            out List<SegmentIntersection> intersections)
+        private static PolygonRelationship GetSinglePolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
+            out List<SegmentIntersection> intersections, double tolerance)
         {
             intersections = new List<SegmentIntersection>();
-            var tolerance = Math.Min(subPolygonA.MaxX - subPolygonA.MinX,
-                Math.Min(subPolygonA.MaxY - subPolygonA.MinY,
-                Math.Min(subPolygonB.MaxX - subPolygonB.MinX, subPolygonB.MaxY - subPolygonB.MinY))) * Constants.BaseTolerance;
             var possibleDuplicates = new List<(int, PolygonSegment, PolygonSegment)>();
             //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
             // safely return that the polygons are separated.
@@ -986,10 +990,9 @@ namespace TVGL.TwoDimensional
             return result;
         }
 
-        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
+        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA, double tolerance)
         {
             var intersections = new List<SegmentIntersection>();
-            var tolerance = Math.Min(polygonA.MaxX - polygonA.MinX, polygonA.MaxY - polygonA.MinY) * Constants.BaseTolerance;
             var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
             var numLines = polygonA.Lines.Count;
             var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);

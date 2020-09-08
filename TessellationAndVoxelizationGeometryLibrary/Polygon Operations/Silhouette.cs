@@ -18,33 +18,47 @@ namespace TVGL.TwoDimensional
             var faceHash = tessellatedSolid.Faces.ToHashSet();
             if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
                 tessellatedSolid.CompleteInitiation();
-            var negativePolygons = new List<Polygon>();
             var positivePolygons = new List<Polygon>();
-            //var dimensions = tessellatedSolid.Bounds[1] - tessellatedSolid.Bounds[0];
-            //var smallestXSection = dimensions.X * dimensions.Y * dimensions.Z / Math.Max(dimensions.X, Math.Max(dimensions.Y, dimensions.Z));
-            //var tolerance = 0.0001 * smallestXSection;
-            while (faceHash.Any())
-                GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, tessellatedSolid.SameTolerance);
-            //Presenter.ShowAndHang(positivePolygons);
-            //Presenter.ShowAndHang(negativePolygons);
-            //foreach (var hole in negativePolygons)
-            //    AddHoleToLargerPostivePolygon(positivePolygons, hole);
-            //Presenter.ShowAndHang(positivePolygons);
-            return positivePolygons.Union();
-        }
-
-        private static void GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, List<Polygon> positivePolygons,
-             double tolerance)
-        {
-            var transform = MiscFunctions.TransformToXYPlane(direction, out _);
-            var visitedFaces = new List<PolygonalFace>();
-            PolygonalFace startingFace;
+            var silhouetteLinearTolerance = tessellatedSolid.SameTolerance;
+            var silhouetteAreaTolerance = 1000.00 * silhouetteLinearTolerance * silhouetteLinearTolerance / Constants.BaseTolerance;
+            int numOldUnvisitedFaces;
+            var numNewUnvisitedFaces = faceHash.Count;
             do
             {
-                startingFace = faceHash.First();
-                faceHash.Remove(startingFace);
-            } while ((startingFace.Area * startingFace.Normal.Dot(direction)).IsNegligible(tolerance));
-            visitedFaces.Add(startingFace);
+                numOldUnvisitedFaces = numNewUnvisitedFaces;
+                numNewUnvisitedFaces = GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, silhouetteLinearTolerance, silhouetteAreaTolerance);
+            }
+            while (faceHash.Any() && numOldUnvisitedFaces != numNewUnvisitedFaces);
+            //positivePolygons = positivePolygons.Simplify().ToList();
+            //Presenter.ShowAndHang(positivePolygons);
+            var result = positivePolygons.Union(PolygonCollection.PolygonWithHoles, silhouetteLinearTolerance);
+            var totalArea = result.Sum(p => Math.Abs(p.Area));
+            silhouetteAreaTolerance = 5e-3 * totalArea;
+            for (int i = result.Count - 1; i >= 0; i--)
+            {
+                var poly = result[i];
+                foreach (var hole in poly.InnerPolygons.ToList())
+                    if (Math.Abs(hole.Area) < silhouetteAreaTolerance) poly.RemoveHole(hole);
+                if (poly.Area < silhouetteAreaTolerance) result.RemoveAt(i);
+            }
+            return result.Simplify().ToList();
+        }
+
+        private static int GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, List<Polygon> positivePolygons,
+             double linearTolerance, double areaTolerance)
+        {
+            var transform = MiscFunctions.TransformToXYPlane(direction, out _);
+            PolygonalFace startingFace = null;
+            foreach (var face in faceHash)
+            {
+                if (!face.Normal.Dot(direction).IsNegligible(0.05) && !face.Area.IsNegligible(areaTolerance))
+                {
+                    startingFace = face;
+                    break;
+                }
+            }
+            if (startingFace == null) return faceHash.Count;
+            faceHash.Remove(startingFace);
             var sign = startingFace.Normal.Dot(direction) > 0 ? 1 : -1;
             var stack = new Stack<PolygonalFace>();
             stack.Push(startingFace);
@@ -60,21 +74,20 @@ namespace TVGL.TwoDimensional
                         var currentOwnsEdge = edge.OwnedFace == current;
                         outerEdges.Add(edge, currentOwnsEdge);
                         var neighbor = currentOwnsEdge ? edge.OtherFace : edge.OwnedFace;
-                        if (neighbor != null && (sign * neighbor.Normal.Dot(direction)).IsGreaterThanNonNegligible(0, tolerance)
-                            && faceHash.Contains(neighbor))
+                        if (neighbor != null && sign * neighbor.Normal.Dot(direction) >= 0 && faceHash.Contains(neighbor))
                         {
                             stack.Push(neighbor);
                             faceHash.Remove(neighbor);
-                            visitedFaces.Add(neighbor);
                         }
                     }
                 }
             }
-            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, tolerance);
+            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, linearTolerance, areaTolerance);
+            return faceHash.Count;
         }
 
         private static void ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform, List<Polygon> positivePolygons,
-             double tolerance)
+             double linearTolerance, double areaTolerance)
         {
             var polygons = new List<Polygon>();
             var negativePolygons = new List<Polygon>();
@@ -127,31 +140,32 @@ namespace TVGL.TwoDimensional
                     }
                     current = viableEdges.Count == 1 ? viableEdges[0] : ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
                 }
-                if (polyCoordinates.Count > 2 && !polyCoordinates.Area().IsNegligible(tolerance))
+                if (polyCoordinates.Count > 2 && !polyCoordinates.Area().IsNegligible(areaTolerance))
                 {
-                    polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons));
+                    Presenter.ShowAndHang(polyCoordinates);
+                    polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons, linearTolerance));
                     if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);
                 }
             }
-            //Presenter.ShowAndHang(polygons);
+            Presenter.ShowAndHang(polygons);
             foreach (var inner in polygons)
             {
-                if (inner.Area.IsNegligible(tolerance)) continue;
+                if (inner.Area.IsNegligible(areaTolerance)) continue;
                 if (inner.IsPositive) positivePolygons.Add(inner);
                 else negativePolygons.Add(inner);
             }
             foreach (var hole in negativePolygons)
-                AddHoleToLargerPostivePolygon(positivePolygons, hole);
+                AddHoleToLargerPostivePolygon(positivePolygons, hole, linearTolerance);
         }
 
 
-        private static void AddHoleToLargerPostivePolygon(List<Polygon> positivePolygons, Polygon hole)
+        private static void AddHoleToLargerPostivePolygon(List<Polygon> positivePolygons, Polygon hole, double tolerance)
         {
             Polygon enclosingPolygon = null;
             foreach (var poly in positivePolygons)
             {
                 if (!poly.HasABoundingBoxThatEncompasses(hole)) continue;
-                var interaction = poly.GetPolygonInteraction(hole);
+                var interaction = poly.GetPolygonInteraction(hole, tolerance);
                 if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA &&
                     interaction.GetRelationships(hole).Skip(1).All(r => r.Item1 == PolygonRelationship.Separated))
                 {

@@ -10,12 +10,13 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonRemoveIntersections : PolygonBooleanBase
     {
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool noHoles, double minAllowableArea,
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool noHoles, double tolerance,
             out List<Polygon> strayHoles)
         {
+            var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
-            var delimiters = polygon.NumberVertiesAndGetPolygonVertexDelimiter();
+            var delimiters = polygon.NumberVerticesAndGetPolygonVertexDelimiter();
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
@@ -46,6 +47,16 @@ namespace TVGL.TwoDimensional
                 return false;
             }
             startAgain = !(intersectionData.VisitedB || intersectionData.VisitedA);
+            if (intersectionData.Relationship == SegmentRelationship.AEnclosesB && !intersectionData.VisitedA)
+            {
+                currentEdge = intersectionData.EdgeA;
+                return true;
+            }
+            if (intersectionData.Relationship == SegmentRelationship.BEnclosesA && !intersectionData.VisitedB)
+            {
+                currentEdge = intersectionData.EdgeB;
+                return true;
+            }
             currentEdge = intersectionData.VisitedA ? intersectionData.EdgeB : intersectionData.EdgeA;
             return true;
         }
@@ -61,13 +72,15 @@ namespace TVGL.TwoDimensional
         {
             if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
                 intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
-                intersectionData.Relationship == SegmentRelationship.DoubleOverlap ||
-                intersectionData.Relationship == SegmentRelationship.AEnclosesB)
+                intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
                 return true;
-            return false;
-            //if (intersectionData.Relationship == SegmentRelationship.NoOverlap) return false;
-            //lastSwitch = !lastSwitch;
-            //return lastSwitch;
+            //if (intersectionData.Relationship == SegmentRelationship.AEnclosesB)
+            //    return !currentEdgeIsFromPolygonA;
+            //if (intersectionData.Relationship == SegmentRelationship.BEnclosesA)
+            //    return currentEdgeIsFromPolygonA;
+            //if (intersectionData.Relationship == SegmentRelationship.NoOverlap) 
+                return false;
+
         }
 
 

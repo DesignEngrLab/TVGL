@@ -79,6 +79,9 @@ namespace TVGLUnitTestsAndBenchmarking
                  { "cutout", (
                     new [] { new [] { new Vector2(0,0), new Vector2(10, 0), new Vector2(10, 10), new Vector2(8, 8), new Vector2(8, 3), new Vector2(3, 3) } },
                     new [] { new [] { new Vector2(3,3), new Vector2(8,3), new Vector2(8,8) } })},
+                { "pinch", (
+                    new [] { new [] { new Vector2(-3,-3), new Vector2(10, 0), new Vector2(0, 0), new Vector2(0, 10) } },
+                    new [] { new [] { new Vector2(0,10), new Vector2(0,5), new Vector2(10,0) } })},
                 { "trapInTri", (
                     new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(0,10) } },
                     new [] { new [] { new Vector2(0,0), new Vector2(4,0), new Vector2(6,4), new Vector2(3,7) } })},

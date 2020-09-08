@@ -272,7 +272,7 @@ namespace TVGL
             get
             {
                 if (double.IsNaN(_area))
-                    DetermineArea();
+                    _area = DetermineArea();
                 return _area;
             }
         }

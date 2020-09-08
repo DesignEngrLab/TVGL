@@ -17,11 +17,11 @@ namespace TVGLUnitTestsAndBenchmarking
 
 #if PRESENT
             //var polys = TestCases.BenchKnown(16);
-            var polys = TestCases.Ersatz["cutout"];
+            var polys = TestCases.Ersatz["pinch"];
             var p1 = TestCases.C2Poly(polys.Item1);
             var p2 = TestCases.C2Poly(polys.Item2);
             Presenter.ShowAndHang(new[] { p1, p2 });
-            Presenter.ShowAndHang(p1.Union(p2, TVGL.PolygonCollection.SeparateLoops));
+            Presenter.ShowAndHang(p1.Union(p2));
 
 #else
             var stats = new List<(string, int, long, long)>();
