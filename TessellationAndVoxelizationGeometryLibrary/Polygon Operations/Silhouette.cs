@@ -92,54 +92,67 @@ namespace TVGL.TwoDimensional
             var polygons = new List<Polygon>();
             var negativePolygons = new List<Polygon>();
             while (outerEdges.Any())
-            {
+            {   // outer while loop begins a new polygon with the outerEdges. There may easily be multiple polygons in the outer edges as it can represent
+                // holes within the polygon
                 var polyCoordinates = new List<Vector2>();
                 KeyValuePair<Edge, bool> start = outerEdges.First();
                 var current = start;
                 var startVertex = current.Value == sign ? current.Key.From : current.Key.To;
-                while (outerEdges.Any())
-                {
+                var successfulLoop = false;
+                while (current.Key != null)
+                {   // inner loop adds to the current polygon
                     outerEdges.Remove(current.Key);
                     if (current.Value == sign)
                         polyCoordinates.Add(current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
                     else polyCoordinates.Add(current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
                     var nextVertex = current.Value == sign ? current.Key.To : current.Key.From;
-                    if (nextVertex == startVertex) break;
-                    var viableEdges = new List<KeyValuePair<Edge, bool>>();
-                    foreach (var edge in nextVertex.Edges)
+                    if (nextVertex == startVertex)
                     {
-                        if (edge == current.Key) continue;
-                        if (outerEdges.ContainsKey(edge))
-                            viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
-                    }
-                    if (viableEdges.Count == 0)
-                    {
-                        current = start;
-                        while (outerEdges.Any())
-                        {
-                            var nextVertexBackwards = current.Value == sign ? current.Key.From : current.Key.To;
-                            var viableEdgesInner = new List<KeyValuePair<Edge, bool>>();
-                            if (outerEdges.Any())
-                            {
-                                foreach (var edge in nextVertexBackwards.Edges)
-                                {
-                                    if (edge == current.Key) continue;
-                                    if (outerEdges.ContainsKey(edge))
-                                        viableEdgesInner.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
-                                }
-                                if (viableEdgesInner.Count == 0)
-                                    break;
-                                current = viableEdgesInner.Count == 1 ? viableEdgesInner[0] : ChooseBestNextEdge(current.Key, current.Value, viableEdgesInner, transform);
-                                outerEdges.Remove(current.Key);
-                            }
-                            if (current.Value == sign)
-                                polyCoordinates.Insert(0, current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
-                            else polyCoordinates.Insert(0, current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
-                        }
+                        successfulLoop = true;
                         break;
                     }
-                    current = viableEdges.Count == 1 ? viableEdges[0] : ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
+                    var viableEdges = new List<KeyValuePair<Edge, bool>>();
+                    if (outerEdges.Any())
+                    {
+                        foreach (var edge in nextVertex.Edges)
+                        {
+                            if (edge == current.Key) continue;
+                            if (outerEdges.ContainsKey(edge))
+                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
+                        }
+                    }
+                    if (viableEdges.Count == 0) current = new KeyValuePair<Edge, bool>(null, false);
+                    else if (viableEdges.Count == 1) current = viableEdges[0];
+                    else current = ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
                 }
+                if (!successfulLoop)
+                {
+                    current = start;
+                    while (outerEdges.Any())
+                    {
+                        var nextVertexBackwards = current.Value == sign ? current.Key.From : current.Key.To;
+                        var viableEdges = new List<KeyValuePair<Edge, bool>>();
+                        if (outerEdges.Any())
+                        {
+                            foreach (var edge in nextVertexBackwards.Edges)
+                            {
+                                if (edge == current.Key) continue;
+                                if (outerEdges.ContainsKey(edge))
+                                    viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
+                            }
+                            if (viableEdges.Count == 0)
+                                break;
+                            current = viableEdges.Count == 1 ? viableEdges[0] : ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
+                            outerEdges.Remove(current.Key);
+                        }
+                        if (current.Value == sign)
+                            polyCoordinates.Insert(0, current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
+                        else polyCoordinates.Insert(0, current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
+                    }
+                    break;
+                }
+
+
                 if (polyCoordinates.Count > 2 && !polyCoordinates.Area().IsNegligible(areaTolerance))
                 {
                     Presenter.ShowAndHang(polyCoordinates);

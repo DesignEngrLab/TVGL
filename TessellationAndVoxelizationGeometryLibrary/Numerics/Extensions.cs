@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TVGL.Numerics
+﻿namespace TVGL.Numerics
 {
     public static class Extensions
     {
