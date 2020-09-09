@@ -147,7 +147,8 @@ namespace TVGL
         /// Gets the normalized root mean square error.
         /// </summary>
         /// <param name="numbers">The numbers.</param>
-        /// <param name="targetValue">The target value. If not provided, then mean of the numbers is used.</param>
+        /// <param name="targetValue">The target value from which to take the difference for the error.
+        /// If not provided, then mean of the numbers is used for the targetValue.</param>
         /// <returns>System.Double.</returns>
         public static double NormalizedRootMeanSquareError(this IEnumerable<double> numbers, double targetValue=double.NaN)
         {

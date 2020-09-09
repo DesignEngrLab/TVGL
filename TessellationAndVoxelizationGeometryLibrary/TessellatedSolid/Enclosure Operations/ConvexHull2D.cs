@@ -19,15 +19,30 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using MIConvexHull;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
     public static partial class MinimumEnclosure
     {
-        public static List<Vector2> ConvexHull2D(this IEnumerable<Vector2> points) 
+        /// <summary>
+        /// Creates the coordiantes of the corresponding convex hull polygon.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>List&lt;Vector2&gt;.</returns>
+        public static List<Vector2> ConvexHull2D(this IEnumerable<Vector2> points)
         {
             var pointList = (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList();
             return (List<Vector2>)MIConvexHull.ConvexHull.Create2D(pointList).Result;
+        }
+        /// <summary>
+        /// Creates the convex hull polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon ConvexHull2D(this Polygon polygon)
+        {
+            return new Polygon((List<Vector2>)MIConvexHull.ConvexHull.Create2D(polygon.Path).Result);
         }
     }
 }

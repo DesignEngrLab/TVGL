@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TVGL;
 using TVGL.Numerics;
 
@@ -25,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking
             isItTrueThat = v3_1.IsNegligible();
             isItTrueThat = x.IsGreaterThanNonNegligible(y);
             isItTrueThat = x.IsLessThanNonNegligible(y);
-           
+
             #endregion
 
             #region All Vector2 Methods
@@ -298,6 +299,16 @@ namespace TVGLUnitTestsAndBenchmarking
             dot = plane.DotNormal(v3_1);
             isItTrueThat = plane == planeOther;
             isItTrueThat = plane != planeOther;
+            #endregion
+
+            #region IEnumerable<double> Statistics
+            IEnumerable<double> numbers = new[] { 1.1, 2.2, 3.3 };
+            var mean = numbers.Mean();
+            var median = numbers.Median();
+            var nrmse = numbers.NormalizedRootMeanSquareError();
+            var nthMedian = numbers.NthOrderStatistic(3);
+            var varMean = numbers.VarianceFromMean(mean);
+            var varMedian = numbers.VarianceFromMedian(median);
             #endregion
         }
     }

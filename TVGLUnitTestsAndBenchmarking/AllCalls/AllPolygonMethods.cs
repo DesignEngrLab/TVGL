@@ -14,6 +14,15 @@ namespace TVGLUnitTestsAndBenchmarking
             #region Polygon Functions
             var poly1 = new Polygon(TestCases.MakeCircularPolygon(4, 4));
             double area = poly1.Area;
+            var poly2 = new Polygon(TestCases.MakeCircularPolygon(3, 3));
+            poly1.AddInnerPolygon(new Polygon(TestCases.MakeCircularPolygon(3, 3)));
+            poly1.BoundingRectangle();
+            poly1.ConvertTo3DLocations(Vector3.UnitX, 1.0);
+            poly1.ConvexHull2D();
+            poly1.ConvertTo3DLocations(Vector3.UnitX, 1.0);
+            var tessFaces = poly1.ExtrusionFacesFrom2DPolygons(Vector3.UnitX, 1.0, 4.3);
+            poly1.GetPolygonInteraction(poly2);
+
             bool isItTrueThat = poly1.IsCircular(out var minCircle);
             isItTrueThat = poly1.IsConvex();
             isItTrueThat = poly1.IsPositive;

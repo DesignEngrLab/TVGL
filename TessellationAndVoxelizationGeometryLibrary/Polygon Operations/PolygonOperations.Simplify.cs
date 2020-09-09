@@ -40,7 +40,7 @@ namespace TVGL.TwoDimensional
         {
             var polygon = path.ToList();
             var numPoints = polygon.Count;
-            var origArea = polygon.Area(); //todo it should work on holes as well. does it?
+            var origArea = Math.Abs(polygon.Area()); //todo it should work on holes as well. does it?
             #region build initial list of cross products
             // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points. I'm very tempted
             // to call it vertex, which is a better name but I don't want to confuse with the Vertex class in TessellatedSolid). 
@@ -65,7 +65,7 @@ namespace TVGL.TwoDimensional
 
             // after much thought, the idea to split up into positive and negative sorted lists is so that we don't over remove vertices
             // by bouncing back and forth between convex and concave while staying with the target deltaArea. So, we do as many convex corners
-            // before reaching a reducation of deltaArea - followed by a reduction of concave edges so that no omre than deltaArea is re-added
+            // before reaching a reduction of deltaArea - followed by a reduction of concave edges so that no more than deltaArea is re-added
             for (int sign = 1; sign >= -1; sign -= 2)
             {
                 var deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2

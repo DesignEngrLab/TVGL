@@ -31,17 +31,17 @@ namespace TVGL.TwoDimensional
             while (faceHash.Any() && numOldUnvisitedFaces != numNewUnvisitedFaces);
             //positivePolygons = positivePolygons.Simplify().ToList();
             //Presenter.ShowAndHang(positivePolygons);
-            var result = positivePolygons.Union(PolygonCollection.PolygonWithHoles, silhouetteLinearTolerance);
+            var result = positivePolygons.Simplify(silhouetteAreaTolerance).Union(PolygonCollection.PolygonWithHoles, silhouetteLinearTolerance);
             var totalArea = result.Sum(p => Math.Abs(p.Area));
-            silhouetteAreaTolerance = 5e-3 * totalArea;
-            for (int i = result.Count - 1; i >= 0; i--)
-            {
-                var poly = result[i];
-                foreach (var hole in poly.InnerPolygons.ToList())
-                    if (Math.Abs(hole.Area) < silhouetteAreaTolerance) poly.RemoveHole(hole);
-                if (poly.Area < silhouetteAreaTolerance) result.RemoveAt(i);
-            }
-            return result.Simplify().ToList();
+            //silhouetteAreaTolerance = 5e-3 * totalArea;
+            //for (int i = result.Count - 1; i >= 0; i--)
+            //{
+            //    var poly = result[i];
+            //    foreach (var hole in poly.InnerPolygons.ToList())
+            //        if (Math.Abs(hole.Area) < silhouetteAreaTolerance) poly.RemoveHole(hole);
+            //    if (poly.Area < silhouetteAreaTolerance) result.RemoveAt(i);
+            //}
+            return result;
         }
 
         private static int GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, List<Polygon> positivePolygons,
@@ -155,12 +155,12 @@ namespace TVGL.TwoDimensional
 
                 if (polyCoordinates.Count > 2 && !polyCoordinates.Area().IsNegligible(areaTolerance))
                 {
-                    Presenter.ShowAndHang(polyCoordinates);
+                    //Presenter.ShowAndHang(polyCoordinates);
                     polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons, linearTolerance));
                     if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);
                 }
             }
-            Presenter.ShowAndHang(polygons);
+            //Presenter.ShowAndHang(polygons);
             foreach (var inner in polygons)
             {
                 if (inner.Area.IsNegligible(areaTolerance)) continue;
