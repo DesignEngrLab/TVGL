@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Windows.Themes;
+using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,81 +13,110 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static class Silhouette
     {
-        public static List<Polygon> CreateSilhouette(this TessellatedSolid tessellatedSolid, Vector3 direction)
+        /// <summary>
+        /// Creates the silhouette of the solid in the direction provided. 
+        /// </summary>
+        /// <param name="tessellatedSolid">The tessellated solid.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon CreateSilhouette(this TessellatedSolid tessellatedSolid, Vector3 direction)
         {
             direction = direction.Normalize();
-            var faceHash = tessellatedSolid.Faces.ToHashSet();
+            var unvisitedFaces = tessellatedSolid.Faces.ToHashSet();
             if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
                 tessellatedSolid.CompleteInitiation();
-            var positivePolygons = new List<Polygon>();
-            var silhouetteLinearTolerance = tessellatedSolid.SameTolerance;
-            var silhouetteAreaTolerance = 1000.00 * silhouetteLinearTolerance * silhouetteLinearTolerance / Constants.BaseTolerance;
-            int numOldUnvisitedFaces;
-            var numNewUnvisitedFaces = faceHash.Count;
-            do
+            var linearTolerance = tessellatedSolid.SameTolerance;
+            var areaTolerance = linearTolerance * linearTolerance / Constants.BaseTolerance;
+            var dotTolerance = (areaTolerance > 0.002) ? 0.002 : areaTolerance; 
+            // areaTolerance is used for the dot-product angle because dot is in units of length-squared
+            // but in rare cases the number may be quite large. so we set the max to 0.002 or 89.9 degrees - nearly orthogonal
+            var transform = MiscFunctions.TransformToXYPlane(direction, out _);
+            var polygons = new List<Polygon>();
+
+            while (true)
             {
-                numOldUnvisitedFaces = numNewUnvisitedFaces;
-                numNewUnvisitedFaces = GetPolygonFromFacesAndDirection(faceHash, direction, positivePolygons, silhouetteLinearTolerance, silhouetteAreaTolerance);
+                PolygonalFace startingFace = null;
+                var dot = 0.0;
+                foreach (var face in unvisitedFaces)
+                {
+                    // get a face that does not have a dot product orthogonal to the direction
+                    // notice that IsNegligible is used with the dotTolerance specified above
+                    dot = face.Normal.Dot(direction);
+                    if (!dot.IsNegligible(dotTolerance))  // && !face.Area.IsNegligible(areaTolerance))
+                    {
+                        startingFace = face;
+                        break;
+                    }
+                }
+                if (startingFace == null) break;  // the only way to exit the loop is here in the midst of the loop, hence
+                // the use of the while (true) above
+                unvisitedFaces.Remove(startingFace); //remove this from unvisitedFaces
+                var outerEdges = GetOuterEdgesOfContiguousPatch(unvisitedFaces, direction, Math.Sign(dot), startingFace);
+                // first we get the list of outerEdges of the patch of faces ("GetOuterEdgesOfContiguousPatch") in the same sense as the
+                // startingFace with the direction (that's the easy part), then we arrange those outerEdges into polygons in the 
+                // function in "ArrangeOuterEdgesIntoPolygon".
+                polygons.AddRange(ArrangeOuterEdgesIntoPolygon(outerEdges, dot > 0, transform, linearTolerance, areaTolerance));
             }
-            while (faceHash.Any() && numOldUnvisitedFaces != numNewUnvisitedFaces);
-            //positivePolygons = positivePolygons.Simplify().ToList();
-            //Presenter.ShowAndHang(positivePolygons);
-            var result = positivePolygons.Simplify(silhouetteAreaTolerance).Union(PolygonCollection.PolygonWithHoles, silhouetteLinearTolerance);
-            var totalArea = result.Sum(p => Math.Abs(p.Area));
-            //silhouetteAreaTolerance = 5e-3 * totalArea;
-            //for (int i = result.Count - 1; i >= 0; i--)
-            //{
-            //    var poly = result[i];
-            //    foreach (var hole in poly.InnerPolygons.ToList())
-            //        if (Math.Abs(hole.Area) < silhouetteAreaTolerance) poly.RemoveHole(hole);
-            //    if (poly.Area < silhouetteAreaTolerance) result.RemoveAt(i);
-            //}
-            return result;
+            //Presenter.ShowAndHang(polygons);
+            return polygons.Union(PolygonCollection.PolygonWithHoles, linearTolerance)
+                .Aggregate((poly1, poly2) => poly1.Area > poly2.Area ? poly1 : poly2);
+                // the preceding use of "Aggregate" is a cryptic but quick trick to get the max using Linq. See: 
+                //https://stackoverflow.com/questions/3188693/how-can-i-get-linq-to-return-the-object-which-has-the-max-value-for-a-given-prop
+                // Union returns a collection of polygons, but we know that it should be one polygon with holes - since the tessellated solid
+                // was one body. Getting the max one makes sense since there may be smaller artifacts returned from the operation.
         }
 
-        private static int GetPolygonFromFacesAndDirection(HashSet<PolygonalFace> faceHash, Vector3 direction, List<Polygon> positivePolygons,
-             double linearTolerance, double areaTolerance)
+        /// <summary>
+        /// Gets the outer edges of contiguous patch.
+        /// </summary>
+        /// <param name="visitedFaces">The face hash.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="sign">The sign.</param>
+        /// <param name="startingFace">The starting face.</param>
+        /// <returns>Dictionary&lt;Edge, System.Boolean&gt;.</returns>
+        private static Dictionary<Edge, bool> GetOuterEdgesOfContiguousPatch(HashSet<PolygonalFace> visitedFaces, Vector3 direction, double sign, PolygonalFace startingFace)
         {
-            var transform = MiscFunctions.TransformToXYPlane(direction, out _);
-            PolygonalFace startingFace = null;
-            foreach (var face in faceHash)
-            {
-                if (!face.Normal.Dot(direction).IsNegligible(0.05) && !face.Area.IsNegligible(areaTolerance))
-                {
-                    startingFace = face;
-                    break;
-                }
-            }
-            if (startingFace == null) return faceHash.Count;
-            faceHash.Remove(startingFace);
-            var sign = startingFace.Normal.Dot(direction) > 0 ? 1 : -1;
+            // the returned dictionary includes the Edges and a boolean telling us if the included face of the patch is the owner of the edge (true)
+            // or the "other face". this is used in providing the proper direction for the edge in the next function
+            var outerEdges = new Dictionary<Edge, bool>();
+            // this function essentially performs a depth-first search from the provided starting faces
             var stack = new Stack<PolygonalFace>();
             stack.Push(startingFace);
-            var outerEdges = new Dictionary<Edge, bool>();
             while (stack.Any())
             {
                 var current = stack.Pop();
                 foreach (var edge in current.Edges)
                 {
+                    // this is confusing and subtle. If the outerEdges already includes this edge, then the opposing face is in the patch,
+                    // we want to be sure not to continue the tree in this direction, but we also need to remove the edge from outer since 
+                    // it is now interior to the patch
                     if (outerEdges.ContainsKey(edge)) outerEdges.Remove(edge);
                     else
                     {
-                        var currentOwnsEdge = edge.OwnedFace == current;
+                        var currentOwnsEdge = edge.OwnedFace == current; //the value of the dictionary is this boolean
                         outerEdges.Add(edge, currentOwnsEdge);
-                        var neighbor = currentOwnsEdge ? edge.OtherFace : edge.OwnedFace;
-                        if (neighbor != null && sign * neighbor.Normal.Dot(direction) >= 0 && faceHash.Contains(neighbor))
-                        {
+                        var neighbor = currentOwnsEdge ? edge.OtherFace : edge.OwnedFace; // get the opposing face
+                        if (neighbor != null && sign * neighbor.Normal.Dot(direction) >= 0 && visitedFaces.Contains(neighbor))
+                        {  // push the opposing face onto the stack if it has the proper normal direction and it has not be visited yet
                             stack.Push(neighbor);
-                            faceHash.Remove(neighbor);
+                            visitedFaces.Remove(neighbor);
                         }
                     }
                 }
             }
-            ArrangeOuterEdgesIntoPolygon(outerEdges, sign == 1, transform, positivePolygons, linearTolerance, areaTolerance);
-            return faceHash.Count;
+            return outerEdges;
         }
 
-        private static void ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool sign, Matrix4x4 transform, List<Polygon> positivePolygons,
+        /// <summary>
+        /// Arranges the outer edges into polygons.
+        /// </summary>
+        /// <param name="outerEdges">The outer edges.</param>
+        /// <param name="positive">if set to <c>true</c> [positive].</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="linearTolerance">The linear tolerance.</param>
+        /// <param name="areaTolerance">The area tolerance.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool positive, Matrix4x4 transform,
              double linearTolerance, double areaTolerance)
         {
             var polygons = new List<Polygon>();
@@ -95,18 +125,18 @@ namespace TVGL.TwoDimensional
             {   // outer while loop begins a new polygon with the outerEdges. There may easily be multiple polygons in the outer edges as it can represent
                 // holes within the polygon
                 var polyCoordinates = new List<Vector2>();
-                KeyValuePair<Edge, bool> start = outerEdges.First();
+                var start = outerEdges.First();
                 var current = start;
-                var startVertex = current.Value == sign ? current.Key.From : current.Key.To;
+                var startVertex = current.Value == positive ? current.Key.From : current.Key.To;
                 var successfulLoop = false;
-                while (current.Key != null)
+                while (outerEdges.Any())
                 {   // inner loop adds to the current polygon
                     outerEdges.Remove(current.Key);
-                    if (current.Value == sign)
+                    if (current.Value == positive)
                         polyCoordinates.Add(current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
                     else polyCoordinates.Add(current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
-                    var nextVertex = current.Value == sign ? current.Key.To : current.Key.From;
-                    if (nextVertex == startVertex)
+                    var nextVertex = current.Value == positive ? current.Key.To : current.Key.From;
+                    if (nextVertex == startVertex || nextVertex.ConvertTo2DCoordinates(transform).IsPracticallySame(polyCoordinates[0]))
                     {
                         successfulLoop = true;
                         break;
@@ -121,54 +151,81 @@ namespace TVGL.TwoDimensional
                                 viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
                         }
                     }
-                    if (viableEdges.Count == 0) current = new KeyValuePair<Edge, bool>(null, false);
-                    else if (viableEdges.Count == 1) current = viableEdges[0];
-                    else current = ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
+                    if (viableEdges.Count == 1) current = viableEdges[0];
+                    else break;//if (viableEdges.Count == 0) 
+                               //current = new KeyValuePair<Edge, bool>(null, false);
+                               //else current = ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
                 }
                 if (!successfulLoop)
                 {
+                    startVertex = current.Value == positive ? current.Key.From : current.Key.To;
                     current = start;
+                    var nextVertex = current.Value == positive ? current.Key.From : current.Key.To;
                     while (outerEdges.Any())
                     {
-                        var nextVertexBackwards = current.Value == sign ? current.Key.From : current.Key.To;
                         var viableEdges = new List<KeyValuePair<Edge, bool>>();
-                        if (outerEdges.Any())
+                        foreach (var edge in nextVertex.Edges)
                         {
-                            foreach (var edge in nextVertexBackwards.Edges)
-                            {
-                                if (edge == current.Key) continue;
-                                if (outerEdges.ContainsKey(edge))
-                                    viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
-                            }
-                            if (viableEdges.Count == 0)
-                                break;
-                            current = viableEdges.Count == 1 ? viableEdges[0] : ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
-                            outerEdges.Remove(current.Key);
+                            if (edge == current.Key) continue;
+                            if (outerEdges.ContainsKey(edge))
+                                viableEdges.Add(new KeyValuePair<Edge, bool>(edge, outerEdges[edge]));
                         }
-                        if (current.Value == sign)
-                            polyCoordinates.Insert(0, current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
-                        else polyCoordinates.Insert(0, current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
+                        if (viableEdges.Count == 1) current = viableEdges[0];
+                        else if (viableEdges.Count > 1)
+                            current = ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
+                        else break;
+
+                        outerEdges.Remove(current.Key);
+                        if (current.Value != positive)
+                            polyCoordinates.Insert(0, current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
+                        else polyCoordinates.Insert(0, current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
+                        nextVertex = current.Value == positive ? current.Key.From : current.Key.To;
+
+                        if (nextVertex == startVertex || nextVertex.ConvertTo2DCoordinates(transform).IsPracticallySame(polyCoordinates[^1]))
+                        {
+                            successfulLoop = true;
+                            break;
+                        }
                     }
-                    break;
+                }
+                if (!successfulLoop)
+                {
+                    var center = polyCoordinates.Aggregate((result, coord) => result + coord) / polyCoordinates.Count;
+                    var area = 0.0;
+                    for (int i = 1; i < polyCoordinates.Count; i++)
+                        area += (polyCoordinates[i - 1] - center).Cross(polyCoordinates[i] - center);
+                    // if closing the polygon is a substantial part of the area then don't include it
+                    var closingArea = (polyCoordinates[^1] - center).Cross(polyCoordinates[0] - center);
+                    if (Math.Abs(closingArea / area) > 0.25)
+                    {
+                        //Presenter.ShowAndHang(polyCoordinates);
+                        polyCoordinates.Clear();
+                    }
                 }
 
 
                 if (polyCoordinates.Count > 2 && !polyCoordinates.Area().IsNegligible(areaTolerance))
                 {
                     //Presenter.ShowAndHang(polyCoordinates);
-                    polygons.AddRange(new Polygon(polyCoordinates).RemoveSelfIntersections(false, out var strayNegativePolygons, linearTolerance));
-                    if (strayNegativePolygons != null) polygons.AddRange(strayNegativePolygons);
+                    polygons.AddRange(new Polygon(polyCoordinates.Simplify(areaTolerance)).RemoveSelfIntersections(false, out var strayNegativePolygons, linearTolerance));
+                    if (strayNegativePolygons != null) negativePolygons.AddRange(strayNegativePolygons);
                 }
             }
-            //Presenter.ShowAndHang(polygons);
-            foreach (var inner in polygons)
+            for (int i = polygons.Count - 1; i >= 0; i--)
             {
-                if (inner.Area.IsNegligible(areaTolerance)) continue;
-                if (inner.IsPositive) positivePolygons.Add(inner);
-                else negativePolygons.Add(inner);
+                var polygon = polygons[i];
+                if (polygon.Area.IsNegligible(areaTolerance)) polygons.RemoveAt(i);
+                //polygon = polygon.Simplify(areaTolerance);
+                if (!polygon.IsPositive)
+                {
+                    polygons.RemoveAt(i);
+                    negativePolygons.Add(polygon);
+                }
             }
             foreach (var hole in negativePolygons)
-                AddHoleToLargerPostivePolygon(positivePolygons, hole, linearTolerance);
+                AddHoleToLargerPostivePolygon(polygons, hole, linearTolerance);
+            polygons = polygons.Union(PolygonCollection.PolygonWithHoles, areaTolerance);
+            return polygons;
         }
 
 

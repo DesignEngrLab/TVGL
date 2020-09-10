@@ -128,52 +128,52 @@ namespace TVGLUnitTestsAndBenchmarking
             }
             Compare(tvglResult, clipperResult, p1, p2, operationString);
             /********** Intersection *********/
-            //operationString = "Intersect";
-            //Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
-            //for (int i = 0; i < numIters; i++)
-            //{
-            //    Console.WriteLine("    test  " + i);
-            //    stopWatch.Restart();
-            //    tvglResult = TVGLIntersect(p1, p2, v1, v2);
-            //    stopWatch.Stop();
-            //    elapsedTVGL = stopWatch.ElapsedTicks;
-            //    clipperResult = ClipperIntersect(p1, p2, v1, v2, out elapsedClipper);
-            //    Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
-            //    stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
-            //}
-            //Compare(tvglResult, clipperResult, p1, p2, operationString);
+            operationString = "Intersect";
+            Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
+            for (int i = 0; i < numIters; i++)
+            {
+                Console.WriteLine("    test  " + i);
+                stopWatch.Restart();
+                tvglResult = TVGLIntersect(p1, p2, v1, v2);
+                stopWatch.Stop();
+                elapsedTVGL = stopWatch.ElapsedTicks;
+                clipperResult = ClipperIntersect(p1, p2, v1, v2, out elapsedClipper);
+                Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
+            }
+            Compare(tvglResult, clipperResult, p1, p2, operationString);
             ///********** SubtractAB *********/
 
-            //operationString = "SubtractAB";
-            //Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
-            //for (int i = 0; i < numIters; i++)
-            //{
-            //    Console.WriteLine("    test  " + i);
-            //    stopWatch.Restart();
-            //    tvglResult = TVGLASubtractB(p1, p2, v1, v2);
-            //    stopWatch.Stop();
-            //    elapsedTVGL = stopWatch.ElapsedTicks;
-            //    clipperResult = ClipperASubtractB(p1, p2, v1, v2, out elapsedClipper);
-            //    Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
-            //    stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
-            //}
-            //Compare(tvglResult, clipperResult, p1, p2, operationString);
+            operationString = "SubtractAB";
+            Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
+            for (int i = 0; i < numIters; i++)
+            {
+                Console.WriteLine("    test  " + i);
+                stopWatch.Restart();
+                tvglResult = TVGLASubtractB(p1, p2, v1, v2);
+                stopWatch.Stop();
+                elapsedTVGL = stopWatch.ElapsedTicks;
+                clipperResult = ClipperASubtractB(p1, p2, v1, v2, out elapsedClipper);
+                Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
+            }
+            Compare(tvglResult, clipperResult, p1, p2, operationString);
 
             ///********** SubtractBA *********/
-            //operationString = "SubtractBA";
-            //Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
-            //for (int i = 0; i < numIters; i++)
-            //{
-            //    Console.WriteLine("    test  " + i);
-            //    stopWatch.Restart();
-            //    tvglResult = TVGLBSubtractA(p1, p2, v1, v2);
-            //    stopWatch.Stop();
-            //    elapsedTVGL = stopWatch.ElapsedTicks;
-            //    clipperResult = ClipperBSubtractA(p1, p2, v1, v2, out elapsedClipper);
-            //    Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
-            //    stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
-            //}
-            //Compare(tvglResult, clipperResult, p1, p2, operationString);
+            operationString = "SubtractBA";
+            Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
+            for (int i = 0; i < numIters; i++)
+            {
+                Console.WriteLine("    test  " + i);
+                stopWatch.Restart();
+                tvglResult = TVGLBSubtractA(p1, p2, v1, v2);
+                stopWatch.Stop();
+                elapsedTVGL = stopWatch.ElapsedTicks;
+                clipperResult = ClipperBSubtractA(p1, p2, v1, v2, out elapsedClipper);
+                Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
+                stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
+            }
+            Compare(tvglResult, clipperResult, p1, p2, operationString);
         }
 
         public IEnumerable<object[]> Data()

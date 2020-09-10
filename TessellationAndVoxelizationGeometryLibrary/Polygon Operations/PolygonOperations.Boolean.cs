@@ -432,7 +432,6 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool noHoles, out List<Polygon> strayHoles, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance)) tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
-            polygon = polygon.Simplify(tolerance);
             var intersections = polygon.GetSelfIntersections(tolerance);
             if (intersections.Count == 0)
             {

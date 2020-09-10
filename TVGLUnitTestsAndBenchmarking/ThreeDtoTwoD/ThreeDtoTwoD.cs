@@ -37,7 +37,7 @@ namespace TVGLUnitTestsAndBenchmarking
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("*").ToArray();
+            var fileNames = dir.GetFiles("*").Reverse().ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
@@ -52,12 +52,15 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
                     continue;
                 }
+                if (name.Contains("yCastin")) continue;
 
                 for (int j = 0; j < 3; j++)
                 {
                     var direction = Vector3.UnitVector((CartesianDirections)j);
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
+                    //var silhouette = solid.CreateSilhouetteSimple(direction);
+                    //Presenter.ShowAndHang(silhouette);
                     var silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);
                 }

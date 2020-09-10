@@ -26,13 +26,15 @@ namespace TVGL.TwoDimensional
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection,
             double tolerance = double.NaN)
         {
+            var areaTolerance = double.NaN;
             if (double.IsNaN(tolerance))
             {
                 var minDimension = Math.Min(polygonA.MaxX - polygonA.MinX, Math.Min(polygonA.MaxY - polygonA.MinY,
                     Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY)));
-                tolerance = Constants.BaseTolerance * minDimension * minDimension;
+                tolerance = Constants.BaseTolerance * minDimension;
+                areaTolerance = tolerance * minDimension;
             }
-            else tolerance *= (tolerance / Constants.BaseTolerance);   // why change the input tolerance? here, we are using it as a 
+            else areaTolerance = tolerance * tolerance / Constants.BaseTolerance;   // why change the input tolerance? here, we are using it as a 
             // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
             // we need to find the characteristic length that was multiplied by the basetolerance to obtain the linear tolerance.
             var delimiters = PolygonOperations.NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
@@ -46,7 +48,10 @@ namespace TVGL.TwoDimensional
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(tolerance)) continue;
+                if (area.IsNegligible(areaTolerance)) continue;
+                while (polyCoordinates[^1].IsPracticallySame(polyCoordinates[0], tolerance)) polyCoordinates.RemoveAt(0);
+                for (int i = polyCoordinates.Count - 1, j = i - 1; j >= 0; i = j--)
+                    if (polyCoordinates[i].IsPracticallySame(polyCoordinates[j], tolerance)) polyCoordinates.RemoveAt(i);
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             // to handle the non-intersecting subpolygons
