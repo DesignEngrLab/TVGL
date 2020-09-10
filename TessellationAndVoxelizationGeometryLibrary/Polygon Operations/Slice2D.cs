@@ -9,14 +9,18 @@ namespace TVGL.TwoDimensional
 {
     public static partial class PolygonOperations
     {
+        [Obsolete("Use Polygons as this functions constructs them anyway.")]
         /// <summary>
-        /// This function slices the [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false, 
-        /// it will return the partial shape before the cutting line, otherwise those beyond the cutting line.
-        /// The returned partial shape is properly closed and ordered CCW+, CW-.
-        /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the 
-        /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
-        /// intersection points before the line).
+        /// Slices at line.
         /// </summary>
+        /// <param name="shape">The shape.</param>
+        /// <param name="lineNormalDirection">The line normal direction.</param>
+        /// <param name="distanceAlongDirection">The distance along direction.</param>
+        /// <param name="negativeSidePolygons">The negative side polygons.</param>
+        /// <param name="positiveSidePolygons">The positive side polygons.</param>
+        /// <param name="offsetAtLineForNegativeSide">The offset at line for negative side.</param>
+        /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
+        /// <returns>Vector2[].</returns>
         public static Vector2[] SliceAtLine(this IEnumerable<IEnumerable<Vector2>> shape, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
@@ -26,6 +30,17 @@ namespace TVGL.TwoDimensional
                    offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
         }
 
+        /// <summary>
+        /// Slices the polygons at the provided line.
+        /// </summary>
+        /// <param name="polyTrees">The poly trees.</param>
+        /// <param name="lineNormalDirection">The line normal direction.</param>
+        /// <param name="distanceAlongDirection">The distance along direction.</param>
+        /// <param name="negativeSidePolygons">The negative side polygons.</param>
+        /// <param name="positiveSidePolygons">The positive side polygons.</param>
+        /// <param name="offsetAtLineForNegativeSide">The offset at line for negative side.</param>
+        /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
+        /// <returns>Vector2[].</returns>
         public static Vector2[] SliceAtLine(this IEnumerable<Polygon> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
@@ -45,6 +60,25 @@ namespace TVGL.TwoDimensional
             return intersections.OrderBy(v => lineDir.Dot(v)).ToArray();
         }
 
+        /// <summary>
+        /// Slices the polygon at the provided line.
+        /// </summary>
+        /// <param name="shallowPolygonTree">The shallow polygon tree.</param>
+        /// <param name="lineNormalDirection">The line normal direction.</param>
+        /// <param name="distanceAlongDirection">The distance along direction.</param>
+        /// <param name="negativeSidePolygons">The negative side polygons.</param>
+        /// <param name="positiveSidePolygons">The positive side polygons.</param>
+        /// <param name="offsetAtLineForNegativeSide">The offset at line for negative side.</param>
+        /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
+        /// <returns>Vector2[].</returns>
+        /// <remarks>
+        /// This function slices the [List(Polygon)] with a give direction and distance. If returnFurtherThanSlice = false,
+        /// it will return the partial shape before the cutting line, otherwise those beyond the cutting line.
+        /// The returned partial shape is properly closed and ordered CCW+, CW-.
+        /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the
+        /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the
+        /// intersection points before the line).
+        /// </remarks>
         public static Vector2[] SliceAtLine(this Polygon shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection,
             out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)

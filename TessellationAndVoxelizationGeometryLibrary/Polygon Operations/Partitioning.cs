@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+using System.Securit
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -43,7 +42,7 @@ namespace TVGL.TwoDimensional
     }
     public static partial class PolygonOperations
     {
-        public static List<MonotoneBox> PartitionIntoMonotoneBoxes(IEnumerable<Vector2> polygon)
+        public static List<MonotoneBox> PartitionIntoMonotoneBoxes(this IEnumerable<Vector2> polygon)
         {
             var p = (polygon is IList<Vector2>) ? (IList<Vector2>)polygon : polygon.ToList();
             if (p.Count < 3) return new List<MonotoneBox>() {new MonotoneBox(p,0,1,MonotonicityChange.Both,

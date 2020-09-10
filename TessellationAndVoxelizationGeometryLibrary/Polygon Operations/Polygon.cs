@@ -1,4 +1,17 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : campmatt
+// Created          : 08-25-2020
+//
+// Last Modified By : campmatt
+// Last Modified On : 09-09-2020
+// ***********************************************************************
+// <copyright file="Polygon.cs" company="Design Engineering Lab">
+//     2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,11 +24,15 @@ using TVGL.IOFunctions;
 namespace TVGL.TwoDimensional
 {
 
+    /// <summary>
+    /// Class Polygon.
+    /// </summary>
     public class Polygon
     {
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
+        /// <value>The path.</value>
         public List<Vector2> Path
         {
             get
@@ -33,12 +50,26 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// The path
+        /// </summary>
         List<Vector2> _path;
 
 
+        /// <summary>
+        /// Gets the vertices.
+        /// </summary>
+        /// <value>The vertices.</value>
         public List<Vertex2D> Vertices => _vertices;
+        /// <summary>
+        /// The vertices
+        /// </summary>
         List<Vertex2D> _vertices;
 
+        /// <summary>
+        /// Gets the ordered x vertices.
+        /// </summary>
+        /// <value>The ordered x vertices.</value>
         internal List<Vertex2D> OrderedXVertices
         {
             get
@@ -49,6 +80,9 @@ namespace TVGL.TwoDimensional
 
             }
         }
+        /// <summary>
+        /// The ordered x vertices
+        /// </summary>
         List<Vertex2D> _orderedXVertices;
 
         /// <summary>
@@ -57,8 +91,14 @@ namespace TVGL.TwoDimensional
         /// <value>The lines.</value>
         public List<PolygonSegment> Lines => _lines;
 
+        /// <summary>
+        /// The lines
+        /// </summary>
         private List<PolygonSegment> _lines;
 
+        /// <summary>
+        /// Makes the vertices.
+        /// </summary>
         private void MakeVertices()
         {
             foreach (var polygon in AllPolygons)
@@ -71,6 +111,9 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// Makes the line segments.
+        /// </summary>
         private void MakeLineSegments()
         {
             foreach (var polygon in AllPolygons)
@@ -91,6 +134,9 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// Removes all inner polygon.
+        /// </summary>
         internal void RemoveAllInnerPolygon()
         {
             _innerPolygons = null;
@@ -98,9 +144,10 @@ namespace TVGL.TwoDimensional
 
 
         /// <summary>
-        /// Adds the hole to the polygon. 
+        /// Adds the hole to the polygon.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool AddInnerPolygon(Polygon polygon)
         {
             if (polygon is null || (polygon._path is null && polygon._vertices is null)) return false;
@@ -132,6 +179,10 @@ namespace TVGL.TwoDimensional
         {
             _innerPolygons.Remove(polygon);
         }
+        /// <summary>
+        /// Gets the inner polygons.
+        /// </summary>
+        /// <value>The inner polygons.</value>
         public IEnumerable<Polygon> InnerPolygons
         {
             get
@@ -141,10 +192,21 @@ namespace TVGL.TwoDimensional
                     yield return hole;
             }
         }
+        /// <summary>
+        /// Gets the number of inner polygons.
+        /// </summary>
+        /// <value>The number of inner polygons.</value>
         public int NumberOfInnerPolygons => (_innerPolygons?.Count) ?? 0;
 
+        /// <summary>
+        /// The inner polygons
+        /// </summary>
         List<Polygon> _innerPolygons;
 
+        /// <summary>
+        /// Gets all polygons.
+        /// </summary>
+        /// <value>All polygons.</value>
         public IEnumerable<Polygon> AllPolygons
         {
             get
@@ -163,6 +225,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// The index of this child in its parent's child list.
         /// </summary>
+        /// <value>The index.</value>
         public int Index
         {
             get => index;
@@ -183,6 +246,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.
         /// </summary>
+        /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
         public bool IsPositive
         {
             get { return PathArea > 0; }
@@ -200,6 +264,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
         /// </summary>
+        /// <param name="reverseInnerPolygons">if set to <c>true</c> [reverse inner polygons].</param>
         public void Reverse(bool reverseInnerPolygons = false)
         {
             Path.Reverse();
@@ -218,6 +283,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Gets the net area of the polygon - meaning any holes will be subtracted from the total area.
         /// </summary>
+        /// <value>The area.</value>
         public double Area
         {
             get
@@ -227,6 +293,9 @@ namespace TVGL.TwoDimensional
                 return area;
             }
         }
+        /// <summary>
+        /// The area
+        /// </summary>
         private double area = double.NaN;
 
 
@@ -234,6 +303,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Gets the area of the top polygon. This area does not include the effect of inner polygons.
         /// </summary>
+        /// <value>The path area.</value>
         public double PathArea
         {
             get
@@ -243,6 +313,9 @@ namespace TVGL.TwoDimensional
                 return pathArea;
             }
         }
+        /// <summary>
+        /// The path area
+        /// </summary>
         private double pathArea = double.NaN;
 
 
@@ -250,6 +323,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
+        /// <value>The perimeter.</value>
         public double Perimeter
         {
             get
@@ -260,11 +334,15 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// The perimeter
+        /// </summary>
         private double perimeter = double.NaN;
 
         /// <summary>
         /// Maxiumum X value
         /// </summary>
+        /// <value>The maximum x.</value>
         public double MaxX
         {
             get
@@ -275,11 +353,15 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// The maximum x
+        /// </summary>
         private double maxX = double.NegativeInfinity;
 
         /// <summary>
         /// Miniumum X value
         /// </summary>
+        /// <value>The minimum x.</value>
         public double MinX
         {
             get
@@ -290,11 +372,15 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// The minimum x
+        /// </summary>
         private double minX = double.PositiveInfinity;
 
         /// <summary>
         /// Maxiumum Y value
         /// </summary>
+        /// <value>The maximum y.</value>
         public double MaxY
         {
             get
@@ -305,6 +391,9 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// The maximum y
+        /// </summary>
         private double maxY = double.NegativeInfinity;
 
         /// <summary>
@@ -312,8 +401,15 @@ namespace TVGL.TwoDimensional
         /// </summary>
         private double minY = double.PositiveInfinity;
 
+        /// <summary>
+        /// The index
+        /// </summary>
         private int index = -1;
 
+        /// <summary>
+        /// Gets the minimum y.
+        /// </summary>
+        /// <value>The minimum y.</value>
         public double MinY
         {
             get
@@ -325,11 +421,10 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Polygon"/> class.
+        /// Initializes a new instance of the <see cref="Polygon" /> class.
         /// Assumes path is closed and not self-intersecting.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
-        /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
 
 
@@ -362,10 +457,9 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Polygon"/> class.
+        /// Initializes a new instance of the <see cref="Polygon" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="createLines">if set to <c>true</c> [create lines].</param>
         /// <param name="index">The index.</param>
         public Polygon(List<Vertex2D> vertices, int index = -1)
         {
@@ -375,7 +469,7 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Polygon"/> class.
+        /// Initializes a new instance of the <see cref="Polygon" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="lines">The lines.</param>
@@ -426,10 +520,17 @@ namespace TVGL.TwoDimensional
         }
 
         // the following private argument-less constructor is only used in the copy function
+        /// <summary>
+        /// Prevents a default instance of the <see cref="Polygon"/> class from being created.
+        /// </summary>
         private Polygon()
         {
         }
 
+        /// <summary>
+        /// Determines whether this instance is convex.
+        /// </summary>
+        /// <returns><c>true</c> if this instance is convex; otherwise, <c>false</c>.</returns>
         public bool IsConvex()
         {
             var tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.BaseTolerance;
@@ -450,6 +551,9 @@ namespace TVGL.TwoDimensional
             return true;
         }
 
+        /// <summary>
+        /// Sets the bounds.
+        /// </summary>
         private void SetBounds()
         {
             if (_path != null)

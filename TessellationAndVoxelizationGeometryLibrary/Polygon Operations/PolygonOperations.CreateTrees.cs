@@ -24,7 +24,14 @@ namespace TVGL.TwoDimensional
         /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
        */
 
-
+        /// <summary>
+        /// Creates the shallow polygon trees from a collection of a collection of coordinates.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <param name="vertexNegPosOrderIsGuaranteedCorrect">if set to <c>true</c> [vertex neg position order is guaranteed correct].</param>
+        /// <param name="connectingIndices">The connecting indices.</param>
+        /// <param name="strayHoles">The stray holes.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
             bool vertexNegPosOrderIsGuaranteedCorrect, out int[] connectingIndices, out List<Polygon> strayHoles)
         {
@@ -32,6 +39,14 @@ namespace TVGL.TwoDimensional
                 out connectingIndices, out strayHoles);
         }
 
+        /// <summary>
+        /// Creates the shallow polygon trees from a collection of flat (i.e. no inner polygons) polygons.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="vertexNegPosOrderIsGuaranteedCorrect">if set to <c>true</c> [vertex neg position order is guaranteed correct].</param>
+        /// <param name="connectingIndices">The connecting indices.</param>
+        /// <param name="strayHoles">The stray holes.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons,
             bool vertexNegPosOrderIsGuaranteedCorrect, out int[] connectingIndices, out List<Polygon> strayHoles)
         {
@@ -80,11 +95,24 @@ namespace TVGL.TwoDimensional
         }
 
 
+        /// <summary>
+        /// Creates the polygon tree  from a collection of a collection of coordinates.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <param name="vertexNegPosOrderIsGuaranteedCorrect">if set to <c>true</c> [vertex neg position order is guaranteed correct].</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreatePolygonTree(this IEnumerable<IEnumerable<Vector2>> paths, bool vertexNegPosOrderIsGuaranteedCorrect)
         {
             return CreatePolygonTree(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect, out List<Polygon> strayHoles);
         }
 
+        /// <summary>
+        /// Creates the polygon tree from a collection of flat (i.e. no inner polygons) polygons.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="polygonSignIsCorrect">if set to <c>true</c> [polygon sign is correct].</param>
+        /// <param name="strayHoles">The stray holes.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, out List<Polygon> strayHoles)
         {
             var branches = new List<Polygon>();

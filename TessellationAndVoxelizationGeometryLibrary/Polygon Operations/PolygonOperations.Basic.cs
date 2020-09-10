@@ -13,7 +13,7 @@ namespace TVGL.TwoDimensional
     public static partial class PolygonOperations
     {
         /// <summary>
-        /// Gets the perimeter for a 2D set of points.
+        /// Gets the perimeter for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>System.Double.</returns>
@@ -22,7 +22,7 @@ namespace TVGL.TwoDimensional
             return paths.Sum(path => path.Perimeter());
         }
         /// <summary>
-        /// Gets the perimeter for a 2D set of points.
+        /// Gets the perimeter for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>System.Double.</returns>
@@ -52,7 +52,7 @@ namespace TVGL.TwoDimensional
 
 
         /// <summary>
-        ///     Calculate the area of any non-intersecting polygon.
+        ///     Calculate the area for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
         public static double Area(this IEnumerable<IEnumerable<Vector2>> paths)
         {
@@ -61,7 +61,7 @@ namespace TVGL.TwoDimensional
 
 
         /// <summary>
-        /// Gets the area for a 2D set of points defining a polygon.
+        /// Gets the area for a 2D set of points defining a polygon. Consider using Polygon class when possible.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>System.Double.</returns>
@@ -81,18 +81,9 @@ namespace TVGL.TwoDimensional
             return 0.5 * area;
         }
 
-        /// <summary>
-        /// Gets the area for a 2D set of points defining a polygon.
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <returns>System.Double.</returns>
-        public static bool IsPositive(this IEnumerable<Vector2> polygon)
-        {
-            return polygon.Area() > 0;
-        }
 
         /// <summary>
-        /// Converts the to a 1D collection of doubles.
+        /// Converts the 2D coordaintes into a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... }
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
         /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
@@ -105,6 +96,13 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        /// <summary>
+        /// Converts a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... } into a collection of 2D coordiantes.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <returns>IEnumerable&lt;Vector2&gt;.</returns>
+        /// <exception cref="ArgumentException">An odd number of coordinates have been provided to " +
+        ///                    "convert the 1D array of double to an array of vectors.</exception>
         public static IEnumerable<Vector2> ConvertToVector2s(this IEnumerable<double> coordinates)
         {
             var enumerator = coordinates.GetEnumerator();

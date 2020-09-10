@@ -148,7 +148,7 @@ namespace TVGL.Voxelization
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
             if (loops.Any())
             {
-                var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongY(loops, yBegin, numVoxelsY,
+                var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, numVoxelsY,
                                 VoxelSideLength, out var yStartIndex);
                 var numYlines = intersections.Count;
                 for (int j = 0; j < numYlines; j++)
@@ -183,7 +183,7 @@ namespace TVGL.Voxelization
                 var loops = decomp[k];
                 if (loops.Any())
                 {
-                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongY(loops, yBegin, numVoxelsY,
+                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, numVoxelsY,
                         VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
                     for (int j = 0; j < numYlines; j++)

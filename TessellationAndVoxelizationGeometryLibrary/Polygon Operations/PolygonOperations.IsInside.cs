@@ -15,6 +15,16 @@ namespace TVGL.TwoDimensional
     public static partial class PolygonOperations
     {
         #region IsPointInSidePolygon methods 
+        /// <summary>
+        /// Determines whether the inner polygon is inside the specified outer polygon. This is a simpler and faster check
+        /// when it is already known that the two polygons are non-intersecting polygon.
+        /// </summary>
+        /// <param name="outer">The outer polygon.</param>
+        /// <param name="onlyTopOuterPolygon">if set to <c>true</c> only top outer polygon is checked and none of the innner polygons.</param>
+        /// <param name="inner">The inner.</param>
+        /// <param name="onlyTopInnerPolygon">if set to <c>true</c> [only top inner polygon].</param>
+        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
+        /// <returns><c>true</c> if [is non intersecting polygon inside] [the specified only top outer polygon]; otherwise, <c>false</c>.</returns>
         internal static bool? IsNonIntersectingPolygonInside(this Polygon outer, bool onlyTopOuterPolygon, Polygon inner,
             bool onlyTopInnerPolygon, out bool onBoundary)
         {
@@ -29,12 +39,21 @@ namespace TVGL.TwoDimensional
                     if (thisPointOnBoundary) onBoundary = true;
                     else if (onlyTopInnerPolygon)
                         return true;
+                    else break;
                 }
                 if (onlyTopInnerPolygon) break;
             }
             return null; //all points are on boundary, so it is unclear if it is inside
         }
 
+        /// <summary>
+        /// Determines whether all the sortedVertices are inside the sortedEdges. This is used internal when the lists are already
+        /// available instead of working with the polygons
+        /// </summary>
+        /// <param name="sortedEdges">The sorted edges.</param>
+        /// <param name="sortedVertices">The sorted vertices.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns><c>true</c> if [is non intersecting polygon inside] [the specified sorted vertices]; otherwise, <c>false</c>.</returns>
         internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonSegment> sortedEdges, List<Vertex2D> sortedVertices, double tolerance)
         {
             var edgeIndex = 0;
@@ -308,24 +327,35 @@ namespace TVGL.TwoDimensional
         #endregion
         #region Line Intersections with Polygon
 
-        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
-              int numSteps, double stepSize, out int firstIntersectingIndex)
-        {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p)), lineReference,
-                lineDirection, numSteps, stepSize, out firstIntersectingIndex);
-        }
+        /// <summary>
+        /// All the polygon intersection points along line.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="lineReference">The line reference.</param>
+        /// <param name="lineDirection">The line direction.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;Vector2&gt;.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             throw new NotImplementedException();
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
-              int numSteps, double stepSize, out int firstIntersectingIndex)
-        {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p)), startingXValue,
-                numSteps, stepSize, out firstIntersectingIndex);
-        }
-        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
+
+        /// <summary>
+        /// Find all the polygon intersection points along vertical lines.
+        /// Returns a list of double arrays. the double array values correspond to only the y-coordinates. the x-coordinates are determined
+        /// by the input. x = startingXValue + (i+firstIntersectingIndex)*stepSize
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="startingXValue">The starting x value.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
+        public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(IEnumerable<Polygon> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
@@ -362,15 +392,11 @@ namespace TVGL.TwoDimensional
             }
             return intersections;
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
-              out int firstIntersectingIndex)
-        {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p)), startingYValue,
-                numSteps, stepSize, out firstIntersectingIndex);
-        }
+
         /// <summary>
-        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are determined by the input.
-        /// y = startingYValue + (i+firstIntersectingIndex)*stepSize
+        /// Find all the polygon intersection points along horizontal lines.
+        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are 
+        /// determined by the input. y = startingYValue + (i+firstIntersectingIndex)*stepSize
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="startingYValue">The starting y value.</param>
@@ -378,7 +404,7 @@ namespace TVGL.TwoDimensional
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
@@ -445,6 +471,15 @@ namespace TVGL.TwoDimensional
             interactionRecord.Relationship = topRelation;
             return interactionRecord;
         }
+        /// <summary>
+        /// Recurse down the polygon trees to find the interactions.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
+        /// <param name="interactionRecord">The interaction record.</param>
+        /// <param name="visited">The visited.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>PolygonRelationship.</returns>
         private static PolygonRelationship RecursePolygonInteractions(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
             bool[] visited, double tolerance)
         {
@@ -716,7 +751,7 @@ namespace TVGL.TwoDimensional
                             {
                                 CollinearityTypes collinearB;
                                 SegmentRelationship relationshipB;
-                                (relationshipB, collinearB) = DeterminePolygonSegmentRelationshipNEW(lineA, lineB, WhereIsIntersection.AtStartOfB,
+                                (relationshipB, collinearB) = DeterminePolygonSegmentRelationship(lineA, lineB, WhereIsIntersection.AtStartOfB,
                                     lineACrossLineB, tolerance);
 
                                 intersections.Add(new SegmentIntersection(lineA, lineB, lineB.FromPoint.Coordinates, relationshipB,
@@ -792,13 +827,13 @@ namespace TVGL.TwoDimensional
             }
             CollinearityTypes collinear;
             SegmentRelationship relationship;
-            (relationship, collinear) = DeterminePolygonSegmentRelationshipNEW(lineA, lineB, where, lineACrossLineB, tolerance);
+            (relationship, collinear) = DeterminePolygonSegmentRelationship(lineA, lineB, where, lineACrossLineB, tolerance);
             intersections.Add(new SegmentIntersection(lineA, lineB, intersectionCoordinates, relationship, where, collinear));
             return true;
         }
 
 
-        internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationshipNEW(in PolygonSegment lineA,
+        internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationship(in PolygonSegment lineA,
             in PolygonSegment lineB, in WhereIsIntersection where, in double lineACrossLineB, in double tolerance)
         {
             // first off - handle the intermediate case right away. since it's simple and happens often

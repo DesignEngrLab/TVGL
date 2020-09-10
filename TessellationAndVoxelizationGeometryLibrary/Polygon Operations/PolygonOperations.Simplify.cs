@@ -13,10 +13,22 @@ namespace TVGL.TwoDimensional
     public static partial class PolygonOperations
     {
         #region Simplify
+        /// <summary>
+        /// Simplifies the specified polygons no more than the allowable change in area fraction.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> Simplify(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
             return polygons.Select(poly => poly.Simplify(allowableChangeInAreaFraction));
         }
+        /// <summary>
+        /// Simplifies the specified polygon no more than theallowable change in area fraction.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>Polygon.</returns>
         public static Polygon Simplify(this Polygon polygon, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
             var simplifiedPositivePolygon = new Polygon(polygon.Path.Simplify(allowableChangeInAreaFraction));
@@ -26,13 +38,19 @@ namespace TVGL.TwoDimensional
         }
 
 
+        /// <summary>
+        /// Simplifies the specified polygons no more than theallowable change in area fraction.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
             return paths.Select(p => Simplify(p, allowableChangeInAreaFraction)).ToList();
         }
 
         /// <summary>
-        /// Simplifies the lines on a polygon to use fewer points when possible.
+        /// Simplifies the specified polygons no more than theallowable change in area fraction.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -115,12 +133,24 @@ namespace TVGL.TwoDimensional
         }
 
 
+        /// <summary>
+        /// Simplifies the specified polygon to the target number of points.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>Polygon.</returns>
         public static Polygon Simplify(this Polygon polygon, int targetNumberOfPoints)
         {
             var simplifiedPaths = polygon.AllPolygons.Select(poly => poly.Path).Simplify(targetNumberOfPoints);
             return CreateShallowPolygonTreesOrderedListsAndVertices(simplifiedPaths).First();
         }
 
+        /// <summary>
+        /// Simplifies the specified polygons to the target number of points.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> Simplify(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
             var simplifiedPaths = polygons.SelectMany(poly => poly.AllPolygons.Select(poly => poly.Path)).Simplify(targetNumberOfPoints);
@@ -128,15 +158,16 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Simplifies the lines on a polygon to use fewer points when possible.
+        /// Simplifies the specified polygons to the target number of points.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path">The path.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         public static List<List<Vector2>> Simplify(this IEnumerable<Vector2> path, int targetNumberOfPoints)
         { return Simplify(new[] { path }, targetNumberOfPoints); }
 
         /// <summary>
-        /// Simplifies the lines on a polygon to be at the target amount.
+        /// Simplifies the specified polygon to the target number of points.
         /// </summary>
         /// <param name="path">The path.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
