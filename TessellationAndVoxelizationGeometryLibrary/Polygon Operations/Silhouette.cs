@@ -1,6 +1,4 @@
-﻿using Microsoft.Windows.Themes;
-using System;
-using System.CodeDom.Compiler;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
@@ -242,14 +240,23 @@ namespace TVGL.TwoDimensional
                     negativePolygons.Add(polygon);
                 }
             }
-            //polygons.CreateShallowPolygonTrees(true, out _, )
+            // This seems to be the biggest problem. Holes may be through or blind and can still be occluded by other material. We don't want to union them away. But if 
+            // each hole is properly nested in a positive polygon - even if it is not from that same polygon, then we can move to union the set of them. The small function
+            // "AddHoleToLargerPostivePolygon" places negatives in a positive
             foreach (var hole in negativePolygons)
                 AddHoleToLargerPostivePolygon(polygons, hole, linearTolerance);
+            //now union this result before returning to the main loop - to, again, union with the other polygons
             polygons = polygons.Union(PolygonCollection.PolygonWithHoles, areaTolerance);
             return polygons;
         }
 
 
+        /// <summary>
+        /// Adds the hole to larger postive polygon as described in the comment immediately above.
+        /// </summary>
+        /// <param name="positivePolygons">The positive polygons.</param>
+        /// <param name="hole">The hole.</param>
+        /// <param name="tolerance">The tolerance.</param>
         private static void AddHoleToLargerPostivePolygon(List<Polygon> positivePolygons, Polygon hole, double tolerance)
         {
             Polygon enclosingPolygon = null;
@@ -268,6 +275,14 @@ namespace TVGL.TwoDimensional
                 enclosingPolygon.AddInnerPolygon(hole);
         }
 
+        /// <summary>
+        /// Chooses the best next edge when there are multiple viable edges. The key idea is to choose the edge that is most inline with the current direction.
+        /// </summary>
+        /// <param name="current">The current.</param>
+        /// <param name="edgeSign">if set to <c>true</c> [edge sign].</param>
+        /// <param name="viableEdges">The viable edges.</param>
+        /// <param name="transform">The transform.</param>
+        /// <returns>KeyValuePair&lt;Edge, System.Boolean&gt;.</returns>
         private static KeyValuePair<Edge, bool> ChooseBestNextEdge(Edge current, bool edgeSign, List<KeyValuePair<Edge, bool>> viableEdges, Matrix4x4 transform)
         {
             var edgesScores = new double[viableEdges.Count];

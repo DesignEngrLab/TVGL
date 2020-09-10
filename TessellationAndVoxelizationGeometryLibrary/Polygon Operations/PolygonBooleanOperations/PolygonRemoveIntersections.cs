@@ -16,7 +16,7 @@ namespace TVGL.TwoDimensional
             var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
-            var delimiters = polygon.NumberVerticesAndGetPolygonVertexDelimiter();
+            var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;

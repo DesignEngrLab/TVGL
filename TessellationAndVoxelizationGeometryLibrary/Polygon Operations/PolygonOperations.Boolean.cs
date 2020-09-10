@@ -10,6 +10,10 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
+        // while the main executing methods are provided in this file (all of which can be invoked as Extensions), the code that perform the new polygon creation
+        // is provided in the following four non-Static classes. These are non-static because they all inherit from the BooleanBase class. Each of these only needs
+        // to be instantiated once as no data is stored in the class objects. So, this is a sort of singleton model but it's too bad we can have static classes inherit from 
+        // other static classes.
         static PolygonUnion polygonUnion;
         static PolygonIntersection polygonIntersection;
         static PolygonSubtraction polygonSubtraction;
@@ -408,22 +412,6 @@ namespace TVGL.TwoDimensional
                     result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, false, tolerance));
                     return result;
             }
-        }
-
-        internal static List<int> NumberVerticesAndGetPolygonVertexDelimiter(this Polygon polygon, int startIndex = 0)
-        {
-            var polygonStartIndices = new List<int>();
-            // in addition, keep track of the vertex index that is the beginning of each polygon. Recall that there could be numerous
-            // hole-polygons that need to be accounted for.
-            var index = startIndex;
-            foreach (var poly in polygon.AllPolygons)
-            {
-                polygonStartIndices.Add(index);
-                foreach (var vertex in poly.Vertices)
-                    vertex.IndexInList = index++;
-            }
-            polygonStartIndices.Add(index); // add a final exclusive top of the range for the for-loop below (not the next one, the one after)
-            return polygonStartIndices;
         }
 
         #endregion

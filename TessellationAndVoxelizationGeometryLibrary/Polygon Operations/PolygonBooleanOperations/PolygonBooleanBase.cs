@@ -37,8 +37,8 @@ namespace TVGL.TwoDimensional
             else areaTolerance = tolerance * tolerance / Constants.BaseTolerance;   // why change the input tolerance? here, we are using it as a 
             // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
             // we need to find the characteristic length that was multiplied by the basetolerance to obtain the linear tolerance.
-            var delimiters = PolygonOperations.NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
-            delimiters = PolygonOperations.NumberVerticesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
+            var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
+            delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
@@ -128,6 +128,26 @@ namespace TVGL.TwoDimensional
             nextStartingIntersection = null;
             return false;
         }
+
+
+
+        internal static List<int> NumberVerticesAndGetPolygonVertexDelimiter(Polygon polygon, int startIndex = 0)
+        {
+            var polygonStartIndices = new List<int>();
+            // in addition, keep track of the vertex index that is the beginning of each polygon. Recall that there could be numerous
+            // hole-polygons that need to be accounted for.
+            var index = startIndex;
+            foreach (var poly in polygon.AllPolygons)
+            {
+                polygonStartIndices.Add(index);
+                foreach (var vertex in poly.Vertices)
+                    vertex.IndexInList = index++;
+            }
+            polygonStartIndices.Add(index); // add a final exclusive top of the range for the for-loop below (not the next one, the one after)
+            return polygonStartIndices;
+        }
+
+
 
         protected abstract bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge,
             out bool startAgain);
