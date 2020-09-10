@@ -316,7 +316,7 @@ namespace TVGL
 
         public List<Edge> EdgeLoop2 { get; set; }
 
-        public HashSet<Flat> SmallFlats { get; set; }
+        public HashSet<Plane> SmallFlats { get; set; }
 
         public List<Vector2> Loop2D { get; set; }
 
@@ -330,7 +330,7 @@ namespace TVGL
         /// <param name="faces">The faces all.</param>
         /// <param name="axis">The axis.</param>
         public Cylinder(IEnumerable<PolygonalFace> faces, bool buildOnlyIfHole, bool isPositive,
-            HashSet<Flat> featureFlats = null) : base(faces)
+            HashSet<Plane> featureFlats = null) : base(faces)
         {
             if (!buildOnlyIfHole) throw new Exception("This Cylinder constructor only works when you want to find holes.");
             Type = PrimitiveSurfaceType.Cylinder;

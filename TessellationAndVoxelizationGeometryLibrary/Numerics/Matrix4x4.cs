@@ -925,7 +925,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double a = -p.Normal.X;
             double b = -p.Normal.Y;
             double c = -p.Normal.Z;
-            double d = -p.D;
+            double d = -p.DistanceToOrigin;
 
             return new Matrix4x4(
                 // first row
@@ -959,7 +959,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 fa * a + 1.0, fb * a, fc * a, //0.0,
                 fa * b, fb * b + 1.0, fc * b, //0.0,
                 fa * c, fb * c, fc * c + 1.0, //0.0,
-                fa * value.D, fb * value.D, fc * value.D //,1.0
+                fa * value.DistanceToOrigin, fb * value.DistanceToOrigin, fc * value.DistanceToOrigin //,1.0
                 );
         }
 

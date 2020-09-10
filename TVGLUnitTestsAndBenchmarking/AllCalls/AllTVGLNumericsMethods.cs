@@ -290,7 +290,7 @@ namespace TVGLUnitTestsAndBenchmarking
             plane = new Plane(v3_1, d);
             var planeOther = new Plane(x, y, z, d);
             v3_1 = plane.Normal;
-            d = plane.D;
+            d = plane.DistanceToOrigin;
             plane = Plane.CreateFromVertices(v3_1, unitVector3X, v3_2);
             plane = plane.Normalize();
             plane = plane.Transform(m4x4);

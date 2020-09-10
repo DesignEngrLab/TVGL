@@ -88,7 +88,7 @@ namespace TVGL
                             newEdgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, newFace, null, false, checksum));
                     }
                 }
-                ts.Primitives.Add(new Flat(newFaces));
+                ts.Primitives.Add(new Plane(newFaces));
             }
             ts.RemoveVertices(verticesToRemove);  //todo: check if the order of these five commands 
             ts.RemoveFaces(facesToRemove);        // matters. There may be an ordering that is more efficient

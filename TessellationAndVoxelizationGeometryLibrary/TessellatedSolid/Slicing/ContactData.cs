@@ -12,7 +12,7 @@ namespace TVGL
     /// </summary>
     public class ContactData
     {
-        internal ContactData(IEnumerable<SolidContactData> solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Flat plane)
+        internal ContactData(IEnumerable<SolidContactData> solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Plane plane)
         {
             SolidContactData = new List<SolidContactData>(solidContactData);
             IntersectionGroups = new List<IntersectionGroup>(intersectionGroups);
@@ -46,7 +46,7 @@ namespace TVGL
         /// Gets the plane for this contact data 
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly Flat Plane;
+        public readonly Plane Plane;
     }
 
     /// <summary>
@@ -260,7 +260,7 @@ namespace TVGL
 
         public Polygon CrossSection2D;
 
-        public void SetCrossSection2D(Flat plane)
+        public void SetCrossSection2D(Plane plane)
         {
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
             var positivePath = PositiveLoop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();

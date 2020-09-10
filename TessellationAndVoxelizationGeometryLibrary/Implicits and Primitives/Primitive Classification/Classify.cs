@@ -151,7 +151,7 @@ namespace TVGL
                 }
                 if (c) i--;
             }
-            var flats = primitives.Where(p => p is Flat).Cast<Flat>().ToList();
+            var flats = primitives.Where(p => p is Plane).Cast<Plane>().ToList();
             var cylinders = primitives.Where(p => p is Cylinder).Cast<Cylinder>().ToList();
             foreach (var cy in cylinders)
             {
@@ -802,7 +802,7 @@ namespace TVGL
                         completeSurfaces.Add(new Sphere(topPlannedSurface.Faces.Select(f => f.Face)));
                         continue;
                     }
-                    completeSurfaces.Add(new Flat(topPlannedSurface.Faces.Select(f => f.Face)));
+                    completeSurfaces.Add(new Plane(topPlannedSurface.Faces.Select(f => f.Face)));
                     continue;
                 }
                 var topPrimitiveSurface = CreatePrimitiveSurface(topPlannedSurface);
@@ -829,13 +829,13 @@ namespace TVGL
             switch (surfaceType)
             {
                 case PrimitiveSurfaceType.Flat:
-                    return new Flat(faces);
+                    return new Plane(faces);
                 case PrimitiveSurfaceType.Cylinder:
                     Vector3 axis;
                     double coneAngle;
                     if (IsReallyACone(faces, out axis, out coneAngle))
                         return new Cone(faces, axis, coneAngle);
-                    if (IsReallyAFlat(faces)) return new Flat(faces);
+                    if (IsReallyAFlat(faces)) return new Plane(faces);
                     return new Cylinder(faces, axis);
                 case PrimitiveSurfaceType.Sphere:
                     if (IsReallyATorus(faces))
@@ -971,7 +971,7 @@ namespace TVGL
                 else if (primitiveSurface is Sphere)
                     foreach (var f in primitiveSurface.Faces)
                         f.Color = new Color(KnownColors.Blue);
-                else if (primitiveSurface is Flat)
+                else if (primitiveSurface is Plane)
                     foreach (var f in primitiveSurface.Faces)
                         f.Color = new Color(KnownColors.Green);
                 else if (primitiveSurface is DenseRegion)
@@ -984,7 +984,7 @@ namespace TVGL
             Debug.WriteLine("**************** RESULTS *******************");
             Debug.WriteLine("Number of Primitives = " + primitives.Count);
             Debug.WriteLine("Number of Primitives Before Filtering= " + primitivesBeforeFiltering);
-            Debug.WriteLine("Number of Flats = " + primitives.Count(p => p is Flat));
+            Debug.WriteLine("Number of Flats = " + primitives.Count(p => p is Plane));
             Debug.WriteLine("Number of Cones = " + primitives.Count(p => p is Cone));
             Debug.WriteLine("Number of Cylinders = " + primitives.Count(p => p is Cylinder));
             Debug.WriteLine("Number of Spheres = " + primitives.Count(p => p is Sphere));

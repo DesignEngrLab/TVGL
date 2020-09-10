@@ -29,7 +29,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="solids">The resulting solids </param>
         /// <param name="setIntersectionGroups">Determines whether to output the intersections (2D cross sections and other info)</param>
         /// <param name="undoPlaneOffset">Determines whether to construct new faces exactly on the cutting plane</param>
-        public static void SliceOnInfiniteFlat(this TessellatedSolid ts, Flat plane,
+        public static void SliceOnInfiniteFlat(this TessellatedSolid ts, Plane plane,
             out List<TessellatedSolid> solids, out ContactData contactData, bool setIntersectionGroups = false,
             bool undoPlaneOffset = false)
         {
@@ -65,7 +65,7 @@ namespace TVGL.Boolean_Operations
         /// This is because Slice was written to re-triangulate exposed surfaces from the intersection loops.
         /// This cannot currently be done for partial intersection loops. 
         /// </summary>
-        public static void SliceOnFiniteFlatByIngoringIntersections(this TessellatedSolid ts, Flat plane,
+        public static void SliceOnFiniteFlatByIngoringIntersections(this TessellatedSolid ts, Plane plane,
             out List<TessellatedSolid> solids, ICollection<IntersectionGroup> intersectionsToIgnore, out ContactData newContactData)
         {
             var loopsToIgnore = new List<int>();
@@ -101,7 +101,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="positiveSideSolid">The solid that is on the positive side of the plane
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolid">The solid on the negative side of the plane.</param>
-        public static void SliceOnFlatAsSingleSolids(this TessellatedSolid ts, Flat plane,
+        public static void SliceOnFlatAsSingleSolids(this TessellatedSolid ts, Plane plane,
             out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
         {
             if (!GetSliceContactData(ts, plane, out var contactData, false))
@@ -123,7 +123,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="setIntersectionGroups"></param>
         /// <param name="loopsToIgnore"></param>
         /// <param name="undoPlaneOffset"></param>
-        public static bool GetSliceContactData(this TessellatedSolid ts, Flat plane, out ContactData contactData, bool setIntersectionGroups,
+        public static bool GetSliceContactData(this TessellatedSolid ts, Plane plane, out ContactData contactData, bool setIntersectionGroups,
             ICollection<int> loopsToIgnore = null, bool undoPlaneOffset = false)
         {
             #region Get the loops
@@ -138,9 +138,9 @@ namespace TVGL.Boolean_Operations
                 contactData = null;
                 return false; //This plane does not slice through the solid, or an error occured from the plane shift
             }
-            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal),
+            DivideUpFaces(ts, new Plane(plane.DistanceToOrigin + posPlaneShift, plane.Normal),
                 out var positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift, loopsToIgnore, undoPlaneOffset);
-            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal),
+            DivideUpFaces(ts, new Plane(plane.DistanceToOrigin + negPlaneShift, plane.Normal),
                 out var negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift, loopsToIgnore, undoPlaneOffset);
             #endregion
 
@@ -197,7 +197,7 @@ namespace TVGL.Boolean_Operations
         /// The face should be in this list. Otherwise, it should not have been selected with face wrapping
         /// </exception>
         private static ISet<GroupOfLoops> GroupLoops(IList<Loop> posSideLoops, IList<Loop> negSideLoops,
-            Flat plane, bool setIntersectionGroups, double tolerance, out List<IntersectionGroup> intersectionGroups)
+            Plane plane, bool setIntersectionGroups, double tolerance, out List<IntersectionGroup> intersectionGroups)
         {
             //Process the positive and negative side loops to create List<GroupOfLoops>. This requires the 
             //directionallity (hole vs. filled) and pairing of loops into groups, and the triangulation of
@@ -382,7 +382,7 @@ namespace TVGL.Boolean_Operations
             return contactDataForEachSolid;
         }
 
-        private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Flat plane, out List<double> distancesToPlane, out double posPlaneShift,
+        private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Plane plane, out List<double> distancesToPlane, out double posPlaneShift,
             out double negPlaneShift)
         {
             //Set the distance of every vertex in the solid to the plane
@@ -457,7 +457,7 @@ namespace TVGL.Boolean_Operations
 
         ///Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the 
         /// halves of the straddle faces that are on this side.
-        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<Loop> loops, int isPositiveSide,
+        private static void DivideUpFaces(TessellatedSolid ts, Plane plane, out List<Loop> loops, int isPositiveSide,
             IList<double> distancesToPlane, double planeOffset = double.NaN, ICollection<int> loopsToIgnore = null,
             bool undoPlaneOffset = false)
         {
@@ -859,7 +859,7 @@ namespace TVGL.Boolean_Operations
             /// </summary>
             public PolygonalFace OtherFace;
 
-            internal StraddleEdge(Edge edge, Flat plane, Vertex offSideVertex, double planeOffset = 0D)
+            internal StraddleEdge(Edge edge, Plane plane, Vertex offSideVertex, double planeOffset = 0D)
             {
                 OwnedFace = edge.OwnedFace;
                 OtherFace = edge.OtherFace;

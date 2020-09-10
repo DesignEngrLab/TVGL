@@ -296,13 +296,13 @@ namespace TVGL
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        public static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+        public static List<Plane> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
                int minNumberOfFacesPerFlat = 2)
         {
             //Note: This function has been optimized to run very fast for large amount of faces
             //Used hashset for "Contains" function calls 
             var usedFaces = new HashSet<PolygonalFace>();
-            var listFlats = new List<Flat>();
+            var listFlats = new List<Plane>();
 
             //Use an IEnumerable class (List) for iterating through each part, and then the 
             //"Contains" function to see if it was already used. This is actually much faster
@@ -314,7 +314,7 @@ namespace TVGL
                 //Get all the faces that should be used on this flat
                 //Use a hashset so we can use the ".Contains" function
                 var flatHashSet = new HashSet<PolygonalFace> { startFace };
-                var flat = new Flat(flatHashSet) { Tolerance = tolerance };
+                var flat = new Plane(flatHashSet) { Tolerance = tolerance };
                 //Stacks are fast for "Push" and "Pop".
                 //Add all the adjecent faces from the first face to the stack for 
                 //consideration in the while locations below.
@@ -336,14 +336,14 @@ namespace TVGL
                             flatHashSet.Add(newFace);
                             if (flatHashSet.Count >= reDefineFlat)
                             {
-                                flat = new Flat(flatHashSet);
+                                flat = new Plane(flatHashSet);
                                 reDefineFlat *= 3;
                             }
                             stack.Push(adjacentFace);
                         }
                     }
                 }
-                flat = new Flat(flatHashSet);
+                flat = new Plane(flatHashSet);
                 //Criteria of whether it should be a flat should be inserted here.
                 if (flat.Faces.Count >= minNumberOfFacesPerFlat)
                     listFlats.Add(flat);
@@ -1189,7 +1189,7 @@ namespace TVGL
             return distances.Multiply(mInv);
         }
 
-        public static Flat GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)
+        public static Plane GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)
         {
             var a1 = p2.X - p1.X;
             var b1 = p2.Y - p1.Y;
@@ -1201,7 +1201,7 @@ namespace TVGL
             var b = a2 * c1 - a1 * c2;
             var c = a1 * b2 - b1 * a2;
             var normal = new Vector3(a, b, c).Normalize();
-            var flat2 = new Flat(p1, normal);
+            var flat2 = new Plane(p1, normal);
             return flat2;
         }
 
@@ -1531,7 +1531,7 @@ namespace TVGL
         /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one, 
         /// then intersection is on the other side of point2.</param>
         /// <returns>IntersectionPoint.</returns>
-        public static Vector3 PointOnPlaneFromIntersectingLine(Flat plane, Vector3 point1, Vector3 point2, out double relativeDistance)
+        public static Vector3 PointOnPlaneFromIntersectingLine(Plane plane, Vector3 point1, Vector3 point2, out double relativeDistance)
         {
             return PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, point1, point2, out relativeDistance);
         }
@@ -1567,7 +1567,7 @@ namespace TVGL
         /// <param name="rayDirection">The ray direction.</param>
         /// <param name="signedDistance">The signed distance.</param>
         /// <returns>Vertex.</returns>
-        public static Vector3 PointOnPlaneFromRay(Flat plane, Vector3 rayPosition,
+        public static Vector3 PointOnPlaneFromRay(Plane plane, Vector3 rayPosition,
             Vector3 rayDirection, out double signedDistance)
         {
             return PointOnPlaneFromRay(plane.Normal, plane.DistanceToOrigin, rayPosition, rayDirection, out signedDistance);

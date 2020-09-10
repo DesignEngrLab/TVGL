@@ -3,17 +3,24 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using TVGL.Numerics;
 
-namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating a 3D Plane
     /// </summary>
-    public struct Plane : IEquatable<Plane>
+    public class Plane : PrimitiveSurface, IEquatable<Plane>
     {
-        private const double NormalizeEpsilon = 1.192092896e-07; // smallest such that 1.0+NormalizeEpsilon != 1.0
+        /// <summary>
+        /// Tolerance used to determine whether faces should be part of this flat
+        /// </summary>
+        /// <value>The tolerance.</value>
+        public double Tolerance { get; set; }
 
         /// <summary>
         /// The normal vector of the Plane.
@@ -22,7 +29,126 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// The distance of the Plane along its normal from the origin.
         /// </summary>
-        public double D;
+        public double DistanceToOrigin;
+
+        /// <summary>
+        /// Gets the closest point on the plane to the origin.
+        /// </summary>
+        /// <value>The closest point to origin.</value>
+        public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
+
+        /// <summary>
+        /// Determines whether [is new member of] [the specified face].
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
+        public override bool IsNewMemberOf(PolygonalFace face)
+        {
+            if (Tolerance.IsPracticallySame(0.0)) Tolerance = Constants.ErrorForFaceInSurface;
+            if (Faces.Contains(face)) return false;
+            if (!face.Normal.Dot(Normal).IsPracticallySame(1.0, Tolerance)) return false;
+            //Return true if all the vertices are within the tolerance 
+            //Note that the Dot term and distance to origin, must have the same sign, 
+            //so there is no additional need moth absolute value methods.
+            return face.Vertices.All(v => Normal.Dot(v.Coordinates).IsPracticallySame(DistanceToOrigin, Tolerance));
+        }
+
+        /// <summary>
+        /// Updates the with.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        public override void UpdateWith(PolygonalFace face)
+        {
+            Normal = (Faces.Count * Normal) + face.Normal;
+            Normal = Vector3.Normalize(Normal);
+            var newVerts = new List<Vertex>();
+            var newDistanceToPlane = 0.0;
+            foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
+            {
+                newVerts.Add(v);
+                newDistanceToPlane += v.Coordinates.Dot(Normal);
+            }
+            DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + newVerts.Count);
+            base.UpdateWith(face);
+        }
+
+        #region Constructors
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        public Plane(IEnumerable<PolygonalFace> faces)
+            : base(faces)
+        {
+            Type = PrimitiveSurfaceType.Flat;
+
+            //Set the normal by weighting each face's normal with its area
+            //This makes small faces have less effect at shifting the normal
+            var normalSumX = 0.0;
+            var normalSumY = 0.0;
+            var normalSumZ = 0.0;
+            foreach (var face in faces)
+            {
+                var weightedNormal = face.Normal * face.Area;
+                normalSumX += weightedNormal.X;
+                normalSumY += weightedNormal.Y;
+                normalSumZ += weightedNormal.Z;
+            }
+            Normal = new Vector3(normalSumX, normalSumY, normalSumZ).Normalize();
+
+            DistanceToOrigin = Faces.Average(f => Normal.Dot(f.Vertices[0].Coordinates));
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// </summary>
+        public Plane()
+        {
+            Type = PrimitiveSurfaceType.Flat;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// </summary>
+        /// <param name="distanceToOrigin">The distance to origin.</param>
+        /// <param name="normal">The normal.</param>
+        public Plane(double distanceToOrigin, Vector3 normal)
+        {
+            Type = PrimitiveSurfaceType.Flat;
+            Normal = normal.Normalize();
+            DistanceToOrigin = distanceToOrigin;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plane" /> class.
+        /// </summary>
+        /// <param name="pointOnPlane">a point on plane.</param>
+        /// <param name="normal">The normal.</param>
+        public Plane(Vector3 pointOnPlane, Vector3 normal)
+        {
+            Type = PrimitiveSurfaceType.Flat;
+            Normal = normal.Normalize();
+            DistanceToOrigin = Normal.Dot(pointOnPlane);
+        }
+
+        public HashSet<Plane> GetAdjacentFlats(List<Plane> allFlats)
+        {
+            var adjacentFlats = new HashSet<Plane>(); //use a hash to avoid duplicates
+            var adjacentFaces = GetAdjacentFaces();
+            foreach (var flat in allFlats)
+            {
+                foreach (var face in adjacentFaces)
+                {
+                    if (flat.Faces.Contains(face))
+                    {
+                        adjacentFlats.Add(flat);
+                        break;
+                    }
+                }
+            }
+            return adjacentFlats;
+        }
+
 
         /// <summary>
         /// Constructs a Plane from the X, Y, and Z components of its normal, and its distance from the origin on that normal.
@@ -34,7 +160,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public Plane(double x, double y, double z, double d)
         {
             Normal = new Vector3(x, y, z);
-            this.D = d;
+            this.DistanceToOrigin = d;
         }
 
         /// <summary>
@@ -45,7 +171,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public Plane(Vector3 normal, double d)
         {
             this.Normal = normal;
-            this.D = d;
+            this.DistanceToOrigin = d;
         }
 
         /// <summary>
@@ -58,7 +184,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         //    Normal = new Vector3(value.X, value.Y, value.Z);
         //    D = value.W;
         //}
-
+        #endregion
         /// <summary>
         /// Creates a Plane that contains the three given points.
         /// </summary>
@@ -119,38 +245,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value">The source Plane.</param>
         /// <returns>The normalized Plane.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Plane Normalize(Plane value)
+        public void Normalize()
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                double normalLengthSquared = value.Normal.LengthSquared();
-                if (Math.Abs(normalLengthSquared - 1.0) < NormalizeEpsilon)
-                {
-                    // It already normalized, so we don't need to farther process.
-                    return value;
-                }
-                double normalLength = Math.Sqrt(normalLengthSquared);
-                return new Plane(
-                    value.Normal / normalLength,
-                    value.D / normalLength);
-            }
-            else
-            {
-                double f = value.Normal.X * value.Normal.X + value.Normal.Y * value.Normal.Y + value.Normal.Z * value.Normal.Z;
-
-                if (Math.Abs(f - 1.0) < NormalizeEpsilon)
-                {
-                    return value; // It already normalized, so we don't need to further process.
-                }
-
-                double fInv = 1.0 / Math.Sqrt(f);
-
-                return new Plane(
-                    value.Normal.X * fInv,
-                    value.Normal.Y * fInv,
-                    value.Normal.Z * fInv,
-                    value.D * fInv);
-            }
+            double ls = Normal.LengthSquared();
+            if (ls.IsPracticallySame(1.0)) return ;
+            double lengthfactor = 1 / Math.Sqrt(ls);
+            Normal *= lengthfactor;
+            DistanceToOrigin *= lengthfactor;
         }
 
         /// <summary>
@@ -161,19 +262,18 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The transformation matrix to apply to the Plane.</param>
         /// <returns>The transformed Plane.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Plane Transform(Plane plane, Matrix4x4 matrix)
+        public override void Transform(Matrix4x4 matrix)
         {
-            Matrix4x4 m;
-            Matrix4x4.Invert(matrix, out m);
+            Matrix4x4.Invert(matrix, out var invMatrix);
 
-            double x = plane.Normal.X, y = plane.Normal.Y, z = plane.Normal.Z, w = plane.D;
+            Normal = new Vector3(
+                Normal.X * invMatrix.M11 + Normal.Y * invMatrix.M12 + Normal.Z * invMatrix.M13 + DistanceToOrigin * invMatrix.M14,
+                Normal.X * invMatrix.M21 + Normal.Y * invMatrix.M22 + Normal.Z * invMatrix.M23 + DistanceToOrigin * invMatrix.M24,
+                Normal.X * invMatrix.M31 + Normal.Y * invMatrix.M32 + Normal.Z * invMatrix.M33 + DistanceToOrigin * invMatrix.M34);
 
-            return new Plane(
-                x * m.M11 + y * m.M12 + z * m.M13 + w * m.M14,
-                x * m.M21 + y * m.M22 + z * m.M23 + w * m.M24,
-                x * m.M31 + y * m.M32 + z * m.M33 + w * m.M34,
-                x * m.M41 + y * m.M42 + z * m.M43 + w * m.M44);
+            this.DistanceToOrigin = Normal.X * invMatrix.M41 + Normal.Y * invMatrix.M42 + Normal.Z * invMatrix.M43 + DistanceToOrigin * invMatrix.M44;
         }
+
 
         /// <summary>
         ///  Transforms a normalized Plane by a Quaternion rotation.
@@ -183,7 +283,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="rotation">The Quaternion rotation to apply to the Plane.</param>
         /// <returns>A new Plane that results from applying the rotation.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Plane Transform(Plane plane, Quaternion rotation)
+        public void Transform(Quaternion rotation)
         {
             // Compute rotation matrix.
             double x2 = rotation.X + rotation.X;
@@ -212,13 +312,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             double m23 = yz2 + wx2;
             double m33 = 1.0 - xx2 - yy2;
 
-            double x = plane.Normal.X, y = plane.Normal.Y, z = plane.Normal.Z;
 
-            return new Plane(
-                x * m11 + y * m21 + z * m31,
-                x * m12 + y * m22 + z * m32,
-                x * m13 + y * m23 + z * m33,
-                plane.D);
+            Normal = new Vector3(
+                Normal.X * m11 + Normal.Y * m21 + Normal.Z * m31,
+                Normal.X * m12 + Normal.Y * m22 + Normal.Z * m32,
+                Normal.X * m13 + Normal.Y * m23 + Normal.Z * m33);
         }
 
         /// <summary>
@@ -247,14 +345,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
-                return Vector3.Dot(plane.Normal, value) + plane.D;
+                return Vector3.Dot(plane.Normal, value) + plane.DistanceToOrigin;
             }
             else
             {
                 return plane.Normal.X * value.X +
                        plane.Normal.Y * value.Y +
                        plane.Normal.Z * value.Z +
-                       plane.D;
+                       plane.DistanceToOrigin;
             }
         }
 
@@ -291,7 +389,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             return (value1.Normal.X == value2.Normal.X &&
                     value1.Normal.Y == value2.Normal.Y &&
                     value1.Normal.Z == value2.Normal.Z &&
-                    value1.D == value2.D);
+                    value1.DistanceToOrigin == value2.DistanceToOrigin);
         }
 
         /// <summary>
@@ -306,7 +404,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             return (value1.Normal.X != value2.Normal.X ||
                     value1.Normal.Y != value2.Normal.Y ||
                     value1.Normal.Z != value2.Normal.Z ||
-                    value1.D != value2.D);
+                    value1.DistanceToOrigin != value2.DistanceToOrigin);
         }
 
         /// <summary>
@@ -319,14 +417,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
-                return this.Normal.Equals(other.Normal) && this.D == other.D;
+                return this.Normal.Equals(other.Normal) && this.DistanceToOrigin == other.DistanceToOrigin;
             }
             else
             {
                 return (Normal.X == other.Normal.X &&
                         Normal.Y == other.Normal.Y &&
                         Normal.Z == other.Normal.Z &&
-                        D == other.D);
+                        DistanceToOrigin == other.DistanceToOrigin);
             }
         }
 
@@ -354,7 +452,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             CultureInfo ci = CultureInfo.CurrentCulture;
 
-            return string.Format(ci, "{{Normal:{0} D:{1}}}", Normal.ToString(), D.ToString(ci));
+            return string.Format(ci, "{{Normal:{0} D:{1}}}", Normal.ToString(), DistanceToOrigin.ToString(ci));
         }
 
         /// <summary>
@@ -363,7 +461,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The hash code.</returns>
         public override int GetHashCode()
         {
-            return Normal.GetHashCode() + D.GetHashCode();
+            return Normal.GetHashCode() + DistanceToOrigin.GetHashCode();
         }
+
     }
 }

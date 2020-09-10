@@ -284,7 +284,7 @@ namespace TVGL.Voxelization
 
         // Solid on positive side of flat is in position one of return tuple
         // Voxels exactly on the plane are assigned to the positive side
-        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(Flat plane)
+        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(Plane plane)
         {
             var vs1 = (VoxelizedSolid)Copy();
             var vs2 = (VoxelizedSolid)Copy();
