@@ -38,7 +38,7 @@ namespace TVGLUnitTestsAndBenchmarking
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
             var fileNames = dir.GetFiles("*").Reverse().ToArray();
-            for (var i = 0; i < fileNames.Length - 0; i++)
+            for (var i = 10; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;

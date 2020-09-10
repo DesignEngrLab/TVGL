@@ -111,12 +111,12 @@ namespace TVGL.TwoDimensional
         /// Arranges the outer edges into polygons.
         /// </summary>
         /// <param name="outerEdges">The outer edges.</param>
-        /// <param name="positive">if set to <c>true</c> [positive].</param>
+        /// <param name="isPositive">if set to <c>true</c> [positive].</param>
         /// <param name="transform">The transform.</param>
         /// <param name="linearTolerance">The linear tolerance.</param>
         /// <param name="areaTolerance">The area tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool positive, Matrix4x4 transform,
+        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool isPositive, Matrix4x4 transform,
              double linearTolerance, double areaTolerance)
         {
             var polygons = new List<Polygon>();
@@ -125,22 +125,27 @@ namespace TVGL.TwoDimensional
             {   // outer while loop begins a new polygon with the outerEdges. There may easily be multiple polygons in the outer edges as it can represent
                 // holes within the polygon
                 var polyCoordinates = new List<Vector2>();
-                var start = outerEdges.First();
+                #region build the loop forwards
+                var start = outerEdges.First(); // the separate "start" variable is only in case we need to work backwards. see 
                 var current = start;
-                var startVertex = current.Value == positive ? current.Key.From : current.Key.To;
+                var startVertex = current.Value == isPositive ? current.Key.From : current.Key.To; //used to define the end of the loop - when you get back to the startVertex
                 var successfulLoop = false;
                 while (outerEdges.Any())
                 {   // inner loop adds to the current polygon
                     outerEdges.Remove(current.Key);
-                    if (current.Value == positive)
+                    if (current.Value == isPositive) //if ownedEdge and positive, then edge is in the right direction. OR if not-owned and negative, then also in the proper
+                        // direction.
                         polyCoordinates.Add(current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
                     else polyCoordinates.Add(current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
-                    var nextVertex = current.Value == positive ? current.Key.To : current.Key.From;
+                    // set the nextVertex and check if it is the same as the startVertex
+                    var nextVertex = current.Value == isPositive ? current.Key.To : current.Key.From;
                     if (nextVertex == startVertex || nextVertex.ConvertTo2DCoordinates(transform).IsPracticallySame(polyCoordinates[0]))
                     {
                         successfulLoop = true;
                         break;
                     }
+                    // the viable edges should hopefully be only one, but to be robust - let us find all the edges that emanate from the 
+                    // nextVertex and are in the collection of outerEdges
                     var viableEdges = new List<KeyValuePair<Edge, bool>>();
                     if (outerEdges.Any())
                     {
@@ -154,15 +159,23 @@ namespace TVGL.TwoDimensional
                     if (viableEdges.Count == 1) current = viableEdges[0];
                     else break;//if (viableEdges.Count == 0) 
                                //current = new KeyValuePair<Edge, bool>(null, false);
+                               // when there are more than one, we can try "ChooseBestNextEdge", but it has been found
+                               // that it works better to just move to the backwards direction
                                //else current = ChooseBestNextEdge(current.Key, current.Value, viableEdges, transform);
                 }
+                #endregion
+                #region if you get stuch, then work backwards
+                // if the loop was unsuccessful in the forward direction, work backwards. This code is similar to the above loop. Note that instead
+                // of "polyCoordinates.Add", we use "polyCoordinates.Insert(0,"
                 if (!successfulLoop)
                 {
-                    startVertex = current.Value == positive ? current.Key.From : current.Key.To;
-                    current = start;
-                    var nextVertex = current.Value == positive ? current.Key.From : current.Key.To;
+                    startVertex = current.Value == isPositive ? current.Key.From : current.Key.To; //assign startVertex to the last one added above
+                    current = start; //assign current back to the start
+                    var nextVertex = current.Value == isPositive ? current.Key.From : current.Key.To; // notice that the condition for traversing the edges
+                    // is switched in this loop
                     while (outerEdges.Any())
-                    {
+                    {   // this loop is similar to the above but the code has been staggered so that viable edges are checked first - since
+                        // the last edge has been added already
                         var viableEdges = new List<KeyValuePair<Edge, bool>>();
                         foreach (var edge in nextVertex.Edges)
                         {
@@ -176,10 +189,10 @@ namespace TVGL.TwoDimensional
                         else break;
 
                         outerEdges.Remove(current.Key);
-                        if (current.Value != positive)
+                        if (current.Value != isPositive)
                             polyCoordinates.Insert(0, current.Key.From.Coordinates.ConvertTo2DCoordinates(transform));
                         else polyCoordinates.Insert(0, current.Key.To.Coordinates.ConvertTo2DCoordinates(transform));
-                        nextVertex = current.Value == positive ? current.Key.From : current.Key.To;
+                        nextVertex = current.Value == isPositive ? current.Key.From : current.Key.To;
 
                         if (nextVertex == startVertex || nextVertex.ConvertTo2DCoordinates(transform).IsPracticallySame(polyCoordinates[^1]))
                         {
@@ -188,40 +201,48 @@ namespace TVGL.TwoDimensional
                         }
                     }
                 }
+                #endregion
+                #region handle unsuccessful loops
+                // if the loop is still not successfully closed - what should we do? I'm open to suggestions, but what I ended
+                // up with is to make the decision to keep or discard based on how far apart the first and last vertices are.
+                // this is done by find the area enclosed by the current edges. If the additional edge to close the polygon 
+                // represents a 25% change in area (or whatever the const "closeTheLoopAreaFraction" is set to), then just discard
+                // it.
+                const double closeTheLoopAreaFraction = 0.25;
                 if (!successfulLoop)
-                {
+                {  
                     var center = polyCoordinates.Aggregate((result, coord) => result + coord) / polyCoordinates.Count;
                     var area = 0.0;
                     for (int i = 1; i < polyCoordinates.Count; i++)
                         area += (polyCoordinates[i - 1] - center).Cross(polyCoordinates[i] - center);
                     // if closing the polygon is a substantial part of the area then don't include it
                     var closingArea = (polyCoordinates[^1] - center).Cross(polyCoordinates[0] - center);
-                    if (Math.Abs(closingArea / area) > 0.25)
+                    if (Math.Abs(closingArea / area) > closeTheLoopAreaFraction)
                     {
                         //Presenter.ShowAndHang(polyCoordinates);
                         polyCoordinates.Clear();
                     }
                 }
-
-
-                if (polyCoordinates.Count > 2 && !polyCoordinates.Area().IsNegligible(areaTolerance))
+                #endregion
+                if (polyCoordinates.Count > 2) 
                 {
-                    //Presenter.ShowAndHang(polyCoordinates);
+                    // make the coordinates into polygons. Simplify and remove self intersections. 
                     polygons.AddRange(new Polygon(polyCoordinates.Simplify(areaTolerance)).RemoveSelfIntersections(false, out var strayNegativePolygons, linearTolerance));
                     if (strayNegativePolygons != null) negativePolygons.AddRange(strayNegativePolygons);
                 }
             }
             for (int i = polygons.Count - 1; i >= 0; i--)
-            {
+            {   // before we return, we cycle over the generated polygons and remove any that are too small as well as separate
+                // out other negative polygons
                 var polygon = polygons[i];
                 if (polygon.Area.IsNegligible(areaTolerance)) polygons.RemoveAt(i);
-                //polygon = polygon.Simplify(areaTolerance);
-                if (!polygon.IsPositive)
+                else if (!polygon.IsPositive)
                 {
                     polygons.RemoveAt(i);
                     negativePolygons.Add(polygon);
                 }
             }
+            //polygons.CreateShallowPolygonTrees(true, out _, )
             foreach (var hole in negativePolygons)
                 AddHoleToLargerPostivePolygon(polygons, hole, linearTolerance);
             polygons = polygons.Union(PolygonCollection.PolygonWithHoles, areaTolerance);
