@@ -6,32 +6,32 @@ using TVGL.Numerics;
 namespace TVGL.TwoDimensional
 {
     public enum MonotonicityChange { X, Y, Both, Neither }
-    public struct MonotoneBox
+    public readonly struct MonotoneBox
     {
-        public int LowIndex { get; }
-        public int HiIndex { get; }
-        public double Left { get; }
-        public double Right { get; }
-        public double Bottom { get; }
-        public double Top { get; }
-        public MonotonicityChange LowChange { get; }
-        public MonotonicityChange HiChange { get; }
-        public bool XInPositiveMonotonicity { get; }
-        public bool YInPositiveMonotonicity { get; }
+        public readonly Vertex2D vertex1;
+        public readonly Vertex2D vertex2;
+        public readonly double Left;
+        public readonly double Right;
+        public readonly double Bottom;
+        public readonly double Top;
+        public readonly MonotonicityChange LowChange;
+        public readonly MonotonicityChange HiChange;
+        public readonly bool XInPositiveMonotonicity;
+        public readonly bool YInPositiveMonotonicity;
 
-        public MonotoneBox(IList<Vector2> p, int lowIndex, int hiIndex, MonotonicityChange lowMonoChange,
-            MonotonicityChange hiMonoChange, int xDirection, int yDirection) : this()
+        public MonotoneBox(Vertex2D vertex1, Vertex2D vertex2, MonotonicityChange lowMonoChange,
+            MonotonicityChange hiMonoChange, bool xInPositiveMonotonicity, bool yInPositiveMonotonicity) : this()
         {
-            this.LowIndex = lowIndex;
-            this.HiIndex = hiIndex;
+            this.vertex1 = vertex1;
+            this.vertex2 = vertex2;
             this.LowChange = lowMonoChange;
             this.HiChange = hiMonoChange;
-            XInPositiveMonotonicity = xDirection > 0;
-            YInPositiveMonotonicity = yDirection > 0;
-            Left = Math.Min(p[lowIndex].X, p[hiIndex].X);
-            Right = Math.Max(p[lowIndex].X, p[hiIndex].X);
-            Bottom = Math.Min(p[lowIndex].Y, p[hiIndex].Y);
-            Top = Math.Max(p[lowIndex].Y, p[hiIndex].Y);
+            XInPositiveMonotonicity = xInPositiveMonotonicity;
+            YInPositiveMonotonicity = yInPositiveMonotonicity;
+            Left = Math.Min(vertex1.X, vertex2.X);
+            Right = Math.Max(vertex1.X, vertex2.X);
+            Bottom = Math.Min(vertex1.Y, vertex2.Y);
+            Top = Math.Max(vertex1.Y, vertex2.Y);
         }
 
         public double Area()
@@ -41,90 +41,97 @@ namespace TVGL.TwoDimensional
     }
     public static partial class PolygonOperations
     {
-        public static List<MonotoneBox> PartitionIntoMonotoneBoxes(this IEnumerable<Vector2> polygon)
+        public static IEnumerable<MonotoneBox> PartitionIntoMonotoneBoxes(this Polygon polygon)
         {
-            var p = (polygon is IList<Vector2>) ? (IList<Vector2>)polygon : polygon.ToList();
-            if (p.Count < 3) return new List<MonotoneBox>() {new MonotoneBox(p,0,1,MonotonicityChange.Both,
-                MonotonicityChange.Both,1,1)};
-            // assume X and Y monotonicities are both positive, let GetMonotonicityChange tell us the 
-            // correct direction
-            var lowChange = GetMonotonicityChange(p, 0, 1, 1);
-            var xDirection = (lowChange == MonotonicityChange.X || lowChange == MonotonicityChange.Both) ? -1 : 1;
-            var yDirection = (lowChange == MonotonicityChange.Y || lowChange == MonotonicityChange.Both) ? -1 : 1;
-            // getting the first box means working backwards into the end of the list, which also helps us
-            // establish maxIndex
-            var lowIndex = p.Count;
-            do
-            {
-                lowIndex--;
-                lowChange = GetMonotonicityChange(p, lowIndex, xDirection, yDirection);
-            } while (lowChange == MonotonicityChange.Neither);
-            var maxIndex = lowIndex = (lowIndex + 1) % p.Count;
-            // maxIndex should simply be the end of the list. however, if the low worked its way into the end 
-            // of the list, we will set it to lowIndex;
-            var boxes = new List<MonotoneBox>();
-            var hiIndex = 0;
-            var hiChange = MonotonicityChange.Neither;
-            while (hiIndex < maxIndex)
-            {
-                do
-                {
-                    hiIndex++;
-                    hiChange = GetMonotonicityChange(p, hiIndex, xDirection, yDirection);
-                } while (hiChange == MonotonicityChange.Neither && hiIndex < maxIndex);
+            var numPoints = polygon.Vertices.Count;
+            if (numPoints <= 1)
+                yield break; ;
+            if (numPoints <= 2)
+                yield return
+                    new MonotoneBox(polygon.Vertices[0], polygon.Vertices[1], MonotonicityChange.Both,
+                        MonotonicityChange.Both, true, true);
 
-                boxes.Add(new MonotoneBox(p, lowIndex, hiIndex, lowChange, hiChange, xDirection, yDirection));
-                lowIndex = hiIndex;
-                lowChange = hiChange;
-                if (hiChange == MonotonicityChange.X || hiChange == MonotonicityChange.Both) xDirection *= -1;
-                if (hiChange == MonotonicityChange.Y || hiChange == MonotonicityChange.Both) yDirection *= -1;
+
+            var initBoxIndex = -1;
+            var initBoxMonoChange = MonotonicityChange.Neither;
+            Vertex2D beginBoxVertex = null;
+            var beginBoxMonoChange = MonotonicityChange.Neither;
+
+            var i = 0;
+            while (i % numPoints != initBoxIndex)
+            {
+                var vertex = polygon.Vertices[i];
+                var monoChange = GetMonotonicityChange(vertex);
+                if (monoChange != MonotonicityChange.Neither)
+                {
+                    if (initBoxIndex < 0)
+                    {
+                        initBoxIndex = i;
+                        beginBoxVertex = vertex;
+                        initBoxMonoChange = beginBoxMonoChange = monoChange;
+                    }
+                    if (beginBoxVertex == null)
+                    {
+                        beginBoxVertex = vertex;
+                        beginBoxMonoChange = monoChange;
+                    }
+                    else
+                    {
+                        yield return new MonotoneBox(beginBoxVertex, vertex, beginBoxMonoChange, monoChange,
+                            vertex.X - beginBoxVertex.X >= 0,
+                            vertex.Y - beginBoxVertex.Y >= 0);
+                        beginBoxVertex = null;
+                    }
+                }
+                i++;
             }
-            return boxes;
+            var lastVertex = polygon.Vertices[initBoxIndex];
+            yield return new MonotoneBox(beginBoxVertex, lastVertex,
+                beginBoxMonoChange, initBoxMonoChange,
+                lastVertex.X - beginBoxVertex.X >= 0,
+                lastVertex.Y - beginBoxVertex.Y >= 0);
         }
 
-        static MonotonicityChange GetMonotonicityChange(IList<Vector2> p, int index, int xDirection, int yDirection)
+  
+        static MonotonicityChange GetMonotonicityChange(Vertex2D vertex)
         {
-            var numPoints = p.Count;
-            var nextIndex = index + 1;
-            if (nextIndex == numPoints) nextIndex = 0;
-            var x = p[index].X;
-            var y = p[index].Y;
-            if (xDirection * p[nextIndex].X < xDirection * x
-                && yDirection * p[nextIndex].Y < yDirection * y)
-                // there are cases below where we may also return Both if one of the coords is the same
-                return MonotonicityChange.Both;
-            if (xDirection * p[nextIndex].X >= xDirection * x
-                && yDirection * p[nextIndex].Y >= yDirection * y)
-                // this captures all "neither" cases, so in the remainder you have to return X, Y, or both
+            var prevVector = vertex.EndLine.Vector;
+            var nextVector = vertex.StartLine.Vector;
+            if ((prevVector.X == 0 && prevVector.Y == 0) || (nextVector.X == 0 && nextVector.Y == 0))
                 return MonotonicityChange.Neither;
-            if (xDirection * p[nextIndex].X < xDirection * x)
-            { //then either X or Both
-                if (y == p[nextIndex].Y)
-                {  // Y's are the same...need to look ahead to see which way Y goes
-                    var aheadIndex = (nextIndex + 1) % numPoints;
-                    while (p[aheadIndex].Y == y)
-                        if (++aheadIndex == numPoints)
-                            aheadIndex = 0;
-                    // now at a point where the y's differ
-                    if (yDirection * p[aheadIndex].Y < yDirection * y) return MonotonicityChange.Both;
-                }
-                //Y must be in the same sense as previous since code didn't exit at first condition
-                return MonotonicityChange.X;
+            var xChange = (prevVector.X < 0 && nextVector.X > 0) || (prevVector.X > 0 && nextVector.X < 0);
+            var yChange = (prevVector.Y < 0 && nextVector.Y > 0) || (prevVector.Y > 0 && nextVector.Y < 0);
+            if (xChange && yChange) return MonotonicityChange.Both;
+            var xSame = (prevVector.X < 0 && nextVector.X < 0) || (prevVector.X > 0 && nextVector.X > 0);
+            if (yChange && xSame) return MonotonicityChange.Y;
+            var ySame = (prevVector.Y < 0 && nextVector.Y < 0) || (prevVector.Y > 0 && nextVector.Y > 0);
+            if (xChange && ySame) return MonotonicityChange.X;
+            if (xSame && ySame) return MonotonicityChange.Neither;
+            // if at this point then one or more values in the vectors is zero since the above booleans were defined with
+            // strict inequality
+            if (prevVector.X == 0)
+                return yChange ? MonotonicityChange.Y : MonotonicityChange.Neither;
+            if (prevVector.Y == 0)
+                return xChange ? MonotonicityChange.X : MonotonicityChange.Neither;
+            if (nextVector.X == 0)
+            {
+                var aheadLine = vertex.StartLine.ToPoint.StartLine;
+                while (aheadLine.Vector.X == 0)
+                    aheadLine = aheadLine.ToPoint.StartLine;
+                if ((aheadLine.Vector.X > 0 && prevVector.X < 0) || (aheadLine.Vector.X < 0 && prevVector.X > 0))
+                    return yChange ? MonotonicityChange.Both : MonotonicityChange.X;
+                return yChange ? MonotonicityChange.Y : MonotonicityChange.Neither;
             }
-            // finally Y must change monotoniticity (otherwise exited above), so the following condition is redundant
-            //if (yDirection * y < yDirection * p[prevIndex].Y)
-            // but like the X case it is possible that it is still Both...that's only if X is the same
-            if (x == p[nextIndex].X)
-            {  // X's are the same...need to look ahead to see which way X goes
-                var aheadIndex = (nextIndex + 1) % numPoints;
-                while (p[aheadIndex].X == x)
-                    if (++aheadIndex == numPoints)
-                        aheadIndex = 0;
-                // now at a point where the y's differ
-                if (xDirection * p[aheadIndex].X < xDirection * x) return MonotonicityChange.Both;
+            //if (nextVector.Y == 0)  //this must be true given the above conditions. So for simplicity of code and
+            // speed, we simply comment it out
+            {
+                var aheadLine = vertex.StartLine.ToPoint.StartLine;
+                while (aheadLine.Vector.Y == 0)
+                    aheadLine = aheadLine.ToPoint.StartLine;
+                if ((aheadLine.Vector.Y > 0 && prevVector.Y < 0) || (aheadLine.Vector.Y < 0 && prevVector.Y > 0))
+                    return xChange ? MonotonicityChange.Both : MonotonicityChange.Y;
+                return xChange ? MonotonicityChange.X : MonotonicityChange.Neither;
             }
-            //Y must be in the same sense as previous since code didn't exit at first condition
-            return MonotonicityChange.Y;
         }
     }
 }

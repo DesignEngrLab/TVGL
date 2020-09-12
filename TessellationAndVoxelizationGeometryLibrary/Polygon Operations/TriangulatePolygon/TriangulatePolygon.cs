@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
-using System.Diagnostics;
 
 namespace TVGL.TwoDimensional
 {
@@ -26,7 +25,7 @@ namespace TVGL.TwoDimensional
         {
             var vertexList = vertexLoop as List<Vertex> ?? vertexLoop.ToList();
             var transform = normal.TransformToXYPlane(out _);
-            var polygon = new Polygon(vertexLoop.Select(v => new Vertex2D(v.ConvertTo2DCoordinates(transform), v.IndexInList, -1)).ToList());
+            var polygon = new Polygon(vertexList.Select(v => new Vertex2D(v.ConvertTo2DCoordinates(transform), v.IndexInList, -1)).ToList());
             foreach (var triangleIndices in polygon.Triangulate())
                 yield return new[] { vertexList[triangleIndices[0]], vertexList[triangleIndices[1]], vertexList[triangleIndices[2]] };
         }
@@ -36,10 +35,6 @@ namespace TVGL.TwoDimensional
         /// If ignoring negative space, the function will fill in holes. 
         /// DO NOT USE "ignoreNegativeSpace" for watertight geometry.
         /// </summary>
-        /// <param name="points2D">The points2 d.</param>
-        /// <param name="groupsOfLoops">The groups of loops.</param>
-        /// <param name="isPositive">The is positive.</param>
-        /// <param name="onlyOuterPolygons">if set to <c>true</c> [ignore negative space].</param>
         /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
         /// <exception cref="System.Exception">
         /// Inputs into 'TriangulatePolygon' are unbalanced
@@ -73,21 +68,32 @@ namespace TVGL.TwoDimensional
         // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
         // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
         // 5: If isPositive == null, then 
-        public static List<int[]> Triangulate(this Polygon polygon)
+        public static List<int[]> Triangulate(this Polygon polygon, bool reIndexPolygons = true)
         {
-            var successful = false;
-            var attempts = 0;
+            const int maxNumberOfAttempts = 3;
             var random = new Random(1);
-            //Create return variables. These intializations are unnecessary but C# won't compile unless it's sure that we set these
-            //before exiting. 
-            var triangleFaceList = new List<int[]>();
-            do
+            var randomAngles = new double[maxNumberOfAttempts];
+            for (int i = 1; i < maxNumberOfAttempts; i++)
+                randomAngles[i] = 2 * Math.PI * random.NextDouble();
+            var successful = false;
+
+            if (reIndexPolygons)
             {
-                try
+                var index = 0;
+                foreach (var subPolygon in polygon.AllPolygons)
+                    foreach (var vertex in subPolygon.Vertices)
+                        vertex.IndexInList = index++;
+            }
+
+
+            foreach (var randomAngle in randomAngles)
+            {
+            var triangleFaceList = new List<int[]>(); // this is the returned list of triangles. Well, not actually triangles but three integers each - corresponding
+            // to the 3 indices of the input polygon's Vertex2D
+try
                 {
-                    attempts++;
-                    //Reset return variables
-                    triangleFaceList.Clear();
+                    if (randomAngle!=0)
+                        polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
 
                     #region Setup up polygon nodes and segments
                     // 1) For each loop in points2D
