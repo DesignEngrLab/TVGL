@@ -102,7 +102,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Initializes a new instance of the <see cref="Plane" /> class.
         /// </summary>
-        public Plane()
+        public Plane() : base()
         {
             Type = PrimitiveSurfaceType.Flat;
         }
@@ -112,9 +112,8 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="distanceToOrigin">The distance to origin.</param>
         /// <param name="normal">The normal.</param>
-        public Plane(double distanceToOrigin, Vector3 normal)
+        public Plane(double distanceToOrigin, Vector3 normal) : this()
         {
-            Type = PrimitiveSurfaceType.Flat;
             Normal = normal.Normalize();
             DistanceToOrigin = distanceToOrigin;
         }
@@ -124,9 +123,8 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="pointOnPlane">a point on plane.</param>
         /// <param name="normal">The normal.</param>
-        public Plane(Vector3 pointOnPlane, Vector3 normal)
+        public Plane(Vector3 pointOnPlane, Vector3 normal) : this()
         {
-            Type = PrimitiveSurfaceType.Flat;
             Normal = normal.Normalize();
             DistanceToOrigin = Normal.Dot(pointOnPlane);
         }
@@ -150,40 +148,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         }
 
 
-        /// <summary>
-        /// Constructs a Plane from the X, Y, and Z components of its normal, and its distance from the origin on that normal.
-        /// </summary>
-        /// <param name="x">The X-component of the normal.</param>
-        /// <param name="y">The Y-component of the normal.</param>
-        /// <param name="z">The Z-component of the normal.</param>
-        /// <param name="d">The distance of the Plane along its normal from the origin.</param>
-        public Plane(double x, double y, double z, double d)
-        {
-            Normal = new Vector3(x, y, z);
-            this.DistanceToOrigin = d;
-        }
-
-        /// <summary>
-        /// Constructs a Plane from the given normal and distance along the normal from the origin.
-        /// </summary>
-        /// <param name="normal">The Plane's normal vector.</param>
-        /// <param name="d">The Plane's distance from the origin along its normal vector.</param>
-        public Plane(Vector3 normal, double d)
-        {
-            this.Normal = normal;
-            this.DistanceToOrigin = d;
-        }
-
-        /// <summary>
-        /// Constructs a Plane from the given Vector4.
-        /// </summary>
-        /// <param name="value">A vector whose first 3 elements describe the normal vector,
-        /// and whose W component defines the distance along that normal from the origin.</param>
-        //public Plane(Vector4 value)
-        //{
-        //    Normal = new Vector3(value.X, value.Y, value.Z);
-        //    D = value.W;
-        //}
         #endregion
         /// <summary>
         /// Creates a Plane that contains the three given points.
@@ -207,7 +171,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
                 // D = - Dot(N, point1)
                 double d = -Vector3.Dot(normal, point1);
 
-                return new Plane(normal, d);
+                return new Plane(d, normal);
             }
             else
             {
@@ -234,8 +198,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
                     nz * invNorm);
 
                 return new Plane(
-                    normal,
-                    -(normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z));
+                    -(normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z), normal);
             }
         }
 
@@ -248,12 +211,24 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         public void Normalize()
         {
             double ls = Normal.LengthSquared();
-            if (ls.IsPracticallySame(1.0)) return ;
+            if (ls.IsPracticallySame(1.0)) return;
             double lengthfactor = 1 / Math.Sqrt(ls);
             Normal *= lengthfactor;
             DistanceToOrigin *= lengthfactor;
         }
 
+
+        /// <summary>
+        /// Transforms to new plane.
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>Plane.</returns>
+        public Plane TransformToNewPlane(Matrix4x4 matrix)
+        {
+            var copy = this.Copy(true);
+            copy.Transform(matrix);
+            return copy;
+        }
         /// <summary>
         /// Transforms a normalized Plane by a Matrix.
         /// </summary>
@@ -274,6 +249,18 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             this.DistanceToOrigin = Normal.X * invMatrix.M41 + Normal.Y * invMatrix.M42 + Normal.Z * invMatrix.M43 + DistanceToOrigin * invMatrix.M44;
         }
 
+
+        /// <summary>
+        /// Transforms to new plane.
+        /// </summary>
+        /// <param name="rotation">The rotation.</param>
+        /// <returns>Plane.</returns>
+        public Plane TransformToNewPlane(Quaternion rotation)
+        {
+            var copy = this.Copy(true);
+            copy.Transform(rotation);
+            return copy;
+        }
 
         /// <summary>
         ///  Transforms a normalized Plane by a Quaternion rotation.
@@ -464,5 +451,34 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             return Normal.GetHashCode() + DistanceToOrigin.GetHashCode();
         }
 
+        /// <summary>
+        /// Copies the specified copy members.
+        /// </summary>
+        /// <param name="copyMembers">The copy members.</param>
+        /// <returns>TVGL.Plane.</returns>
+        public Plane Copy(bool copyMembers = false)
+        {
+            var copy = new Plane();
+            copy.Area = Area;
+            copy.BoundsHaveBeenSet = BoundsHaveBeenSet;
+            copy.DistanceToOrigin = DistanceToOrigin;
+            copy.MaxX = MaxX;
+            copy.MaxY = MaxY;
+            copy.MaxZ = MaxZ;
+            copy.MinX = MinX;
+            copy.MinY = MinY;
+            copy.MinZ = MinZ;
+            copy.Normal = Normal;
+            copy.Type = Type;
+            copy.Tolerance = Tolerance;
+            if (copyMembers)
+            {
+                copy.Vertices = new HashSet<Vertex>(Vertices);
+                copy.Faces = new HashSet<PolygonalFace>(Faces);
+                copy.InnerEdges = new HashSet<Edge>(InnerEdges);
+                copy.OuterEdges = new HashSet<Edge>(OuterEdges);
+            }
+            return copy;
+        }
     }
 }

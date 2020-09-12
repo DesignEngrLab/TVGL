@@ -90,7 +90,7 @@ namespace TVGL.TwoDimensional
                 case PolygonCollection.SeparateLoops:
                     return newPolygons;
                 case PolygonCollection.PolygonWithHoles:
-                    return newPolygons.CreateShallowPolygonTrees(true, out _, out _);
+                    return newPolygons.CreateShallowPolygonTrees(true, out _);
                 default:
                     return newPolygons.CreatePolygonTree(true, out _);
             }

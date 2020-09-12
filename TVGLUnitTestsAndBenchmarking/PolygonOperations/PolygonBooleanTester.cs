@@ -277,7 +277,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
             var tvglVResult = new VoxelizedSolid(tvglResult, 500, new[] { min, max });
             var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.
-                   CreateShallowPolygonTrees(clipperResult.Select(c => new Polygon(c.Select(v => new Vector2(v.X, v.Y)))), true, out _, out _);
+                   CreateShallowPolygonTrees(clipperResult.Select(c => new Polygon(c.Select(v => new Vector2(v.X, v.Y)))), true, out _);
             var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, 500, new[] { min, max });
             var showResult = false;
             var tvglError = false;
@@ -352,7 +352,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 if (tvglError && false)
                 {
                     Console.WriteLine("showing tvgl error...");
-                    var shallowTree = tvglResult.CreateShallowPolygonTrees(true, out _, out _);
+                    var shallowTree = tvglResult.CreateShallowPolygonTrees(true, out _);
                     Presenter.ShowAndHang(shallowTree[0].ExclusiveOr(clipperShallowPolyTree[0]));
                 }
                 if (clipperError && false)

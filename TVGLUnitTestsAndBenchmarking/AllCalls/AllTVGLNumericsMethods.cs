@@ -231,8 +231,8 @@ namespace TVGLUnitTestsAndBenchmarking
             m4x4 = Matrix4x4.CreateWorld(v3_1, v3_1, v3_2);
             m4x4 = Matrix4x4.CreateFromYawPitchRoll(1.0, 2.0, 3.0);
             m4x4 = Matrix4x4.CreateFromQuaternion(new Quaternion());
-            m4x4 = Matrix4x4.CreateShadow(v3_1, new Plane(v3_2, d));
-            m4x4 = Matrix4x4.CreateReflection(new Plane(v3_2, d));
+            m4x4 = Matrix4x4.CreateShadow(v3_1, new Plane(d, v3_2));
+            m4x4 = Matrix4x4.CreateReflection(new Plane(d, v3_2));
 
             m4x4 = m4x4.Transpose();
             isItTrueThat = Matrix4x4.Invert(m4x4, out Matrix4x4 invm4x4);
@@ -287,14 +287,14 @@ namespace TVGLUnitTestsAndBenchmarking
 
             #region All Plane Methods
             var plane = new Plane();
-            plane = new Plane(v3_1, d);
-            var planeOther = new Plane(x, y, z, d);
+            plane = new Plane(d, v3_1);
+            var planeOther = new Plane(d, new Vector3(x, y, z));
             v3_1 = plane.Normal;
             d = plane.DistanceToOrigin;
             plane = Plane.CreateFromVertices(v3_1, unitVector3X, v3_2);
-            plane = plane.Normalize();
-            plane = plane.Transform(m4x4);
-            plane = plane.Transform(quat);
+             plane.Normalize();
+            plane.Transform(m4x4);
+            plane.Transform(quat);
             dot = plane.DotCoordinate(v3_1);
             dot = plane.DotNormal(v3_1);
             isItTrueThat = plane == planeOther;

@@ -26,7 +26,7 @@ namespace TVGLUnitTestsAndBenchmarking
             bool isItTrueThat = poly1.IsCircular(out var minCircle);
             isItTrueThat = poly1.IsConvex();
             isItTrueThat = poly1.IsPositive;
-            var poly2 = new Polygon(TestCases.MakeCircularPolygon(5, 5));
+            var poly3 = new Polygon(TestCases.MakeCircularPolygon(5, 5));
             var intersections=poly1.GetPolygonInteraction(poly2);
             List<PolygonSegment> lines = poly1.Lines;
             var extrema = poly1.MaxX;
@@ -67,7 +67,6 @@ namespace TVGLUnitTestsAndBenchmarking
             c.Area();
             c.Create2DMedialAxis();
             //c.Difference(d);
-            c.CreateShallowPolygonTrees(false, out var polygons, out _);
             //c.Intersection(d);
             //c.OffsetMiter(5.0);
             //c.OffsetRound(5.0);

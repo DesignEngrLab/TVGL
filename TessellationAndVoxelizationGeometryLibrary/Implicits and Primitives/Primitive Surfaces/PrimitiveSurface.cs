@@ -79,7 +79,6 @@ namespace TVGL
                     return Faces.Select(f => f.IndexInList).ToArray();
                 return Array.Empty<int>();
             }
-            set { _faceIndices = value; }
         }
 
 
@@ -114,6 +113,7 @@ namespace TVGL
                 if (_innerEdges == null) DefineInnerOuterEdges();
                 return _innerEdges;
             }
+            protected set { _innerEdges = value; }
         }
 
 
@@ -125,7 +125,6 @@ namespace TVGL
                     return InnerEdges.Select(e => e.IndexInList).ToArray();
                 return Array.Empty<int>();
             }
-            set { _innerEdgeIndices = value; }
         }
 
         /// <summary>
@@ -140,6 +139,7 @@ namespace TVGL
                 if (_outerEdges == null) DefineInnerOuterEdges();
                 return _outerEdges;
             }
+            protected set { _outerEdges = value; }
         }
 
         public int[] OuterEdgeIndices
@@ -150,7 +150,6 @@ namespace TVGL
                     return OuterEdges.Select(e => e.IndexInList).ToArray();
                 return Array.Empty<int>();
             }
-            set { _outerEdgeIndices = value; }
         }
         private HashSet<Edge> _innerEdges;
         private HashSet<Edge> _outerEdges;
@@ -163,20 +162,20 @@ namespace TVGL
         {
             var outerEdgeHash = new HashSet<Edge>();
             var innerEdgeHash = new HashSet<Edge>();
-            if (Faces!=null)
-            foreach (var face in Faces)
-            {
-                foreach (var edge in face.Edges)
+            if (Faces != null)
+                foreach (var face in Faces)
                 {
-                    if (innerEdgeHash.Contains(edge)) continue;
-                    if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
-                    else
+                    foreach (var edge in face.Edges)
                     {
-                        innerEdgeHash.Add(edge);
-                        outerEdgeHash.Remove(edge);
+                        if (innerEdgeHash.Contains(edge)) continue;
+                        if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
+                        else
+                        {
+                            innerEdgeHash.Add(edge);
+                            outerEdgeHash.Remove(edge);
+                        }
                     }
                 }
-            }
             _outerEdges = outerEdgeHash;
             _innerEdges = innerEdgeHash;
         }
@@ -217,7 +216,7 @@ namespace TVGL
 
         public void CompletePostSerialization(TessellatedSolid ts)
         {
-            Faces = new HashSet<PolygonalFace>();         
+            Faces = new HashSet<PolygonalFace>();
             foreach (var i in _faceIndices)
             {
                 var face = ts.Faces[i];

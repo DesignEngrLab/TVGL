@@ -919,13 +919,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>A new Matrix that can be used to flatten geometry onto the specified plane from the specified direction.</returns>
         public static Matrix4x4 CreateShadow(Vector3 lightDirection, Plane plane)
         {
-            Plane p = Plane.Normalize(plane);
+            plane.Normalize();
 
-            double dot = p.Normal.X * lightDirection.X + p.Normal.Y * lightDirection.Y + p.Normal.Z * lightDirection.Z;
-            double a = -p.Normal.X;
-            double b = -p.Normal.Y;
-            double c = -p.Normal.Z;
-            double d = -p.DistanceToOrigin;
+            double dot = plane.Normal.X * lightDirection.X + plane.Normal.Y * lightDirection.Y + plane.Normal.Z * lightDirection.Z;
+            double a = -plane.Normal.X;
+            double b = -plane.Normal.Y;
+            double c = -plane.Normal.Z;
+            double d = -plane.DistanceToOrigin;
 
             return new Matrix4x4(
                 // first row
@@ -945,7 +945,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>A new matrix expressing the reflection.</returns>
         public static Matrix4x4 CreateReflection(Plane value)
         {
-            value = Plane.Normalize(value);
+            value.Normalize();
 
             double a = value.Normal.X;
             double b = value.Normal.Y;

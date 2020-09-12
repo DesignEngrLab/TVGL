@@ -804,7 +804,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
         /// <returns>System.Vector2.</returns>
-        public static Matrix4x4 TransformToXYPlane(Vector3 direction, out Matrix4x4 backTransform)
+        public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform)
         {
             if (direction.X.IsNegligible() && direction.Y.IsNegligible())
             {

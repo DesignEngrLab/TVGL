@@ -207,45 +207,32 @@ namespace TVGL.Boolean_Operations
             var groupsOfLoops = new HashSet<GroupOfLoops>();
             var posSideGroups = new List<GroupOfLoops>();
             var negSideGroups = new List<GroupOfLoops>();
-            for (var k = -1; k < 2; k += 2) //-1 for positive side and 1 for negative side.
+            for (var k = -1; k <= 1; k += 2) //-1 for positive side and 1 for negative side.
             {
                 var direction = plane.Normal * k;
+                var transform = direction.TransformToXYPlane(out _);
                 var loops = k == -1 ? posSideLoops : negSideLoops;
-                var vertexLoops = loops.Select(loop => loop.VertexLoop).ToArray();
-
-                //Order the loops into groups, determine positive or negative for each loop, and create vertex[]s to use for new faces.
-                //Each group consists of one positive loop, but may include zero to many negative loops.
-                //No negative loop will be inside of two positive loops. No positive loop will be inside another positive loop. 
-                //(NOTE: although they technically can be 'inside' other loops, there is no need for such a complicated tree of groupings)
-                //Triangulating the polygon reverses loops (internally) if necessary and groups them together.
-                //The isPositive output is used to determine whether each loop should be positive or negative.
-                //The groupsOfLoopsIndices is a list of groups that was used to triangulate each surface.
-                var groupsOfTriangles = vertexLoops.Triangulate(direction, out var groupsOfLoopsIndices, out var isPositive, false);
-                //Reverse loops if necessary to match the isPositive list from the triangulation.
-                for (var i = 0; i < isPositive.Length; i++) loops[i].IsPositive = isPositive[i];
-
-                //Put the groups of loops into a GroupOfLoops class.
-                for (var i = 0; i < groupsOfLoopsIndices.Count; i++)
+                var allPolygons = new List<Polygon>();
+                var j = 0;
+                var allVertices = new List<Vertex>();
+                for (int i = 0; i < loops.Count; i++)
                 {
-                    List<int> groupOfLoopIndices = groupsOfLoopsIndices[i];
-                    var groupOfTriangles = groupsOfTriangles[i];
-                    var positiveLoop = loops[groupOfLoopIndices.First()];
-                    var negativeLoops = new List<Loop>();
-                    if (!positiveLoop.IsPositive)
-                        throw new Exception(
-                            "This loop should always be positive. Check to may sure the group was created correctly in 'OrderLoops' ");
-                    //Skip the first loop, since that is the positive loop
-                    for (var j = 1; j < groupOfLoopIndices.Count; j++)
-                    {
-                        var negativeLoop = loops[groupOfLoopIndices[j]];
-                        if (negativeLoop.IsPositive)
-                            throw new Exception(
-                                "This loop should always be negative. Check to may sure the group was created correctly in 'OrderLoops' ");
-                        negativeLoops.Add(negativeLoop);
-                    }
+                    allVertices.AddRange(loops[i].VertexLoop);
+                    var vertices = new List<Vertex2D>();
+                    foreach (var vertex in loops[i].VertexLoop)
+                        vertices.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), j++, i));
+                    allPolygons.Add(new Polygon(vertices, i));
+                }
+                var polygonsWithHoles = allPolygons.CreateShallowPolygonTrees(false, out _);
 
-                    var groupOfOnPlaneFaces =
-                        groupOfTriangles.Select(triangle => new PolygonalFace(triangle, direction, false));
+                foreach (var polygon in polygonsWithHoles)
+                {
+                    var indicesOfTriangles = polygon.Triangulate();
+                    var positiveLoop = loops[polygon.Index];
+                    var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
+                    var planeFaces = new List<PolygonalFace>();
+                    var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new PolygonalFace(
+                        triIndices.Select(vertIndex => allVertices[vertIndex]), direction, false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
                     if (k == -1) posSideGroups.Add(groupOfLoops);

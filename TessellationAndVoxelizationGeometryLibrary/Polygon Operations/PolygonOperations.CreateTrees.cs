@@ -33,10 +33,10 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool vertexNegPosOrderIsGuaranteedCorrect, out int[] connectingIndices, out List<Polygon> strayHoles)
+            bool vertexNegPosOrderIsGuaranteedCorrect, out List<Polygon> strayHoles)
         {
             return CreateShallowPolygonTrees(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect,
-                out connectingIndices, out strayHoles);
+                out strayHoles);
         }
 
         /// <summary>
@@ -47,64 +47,20 @@ namespace TVGL.TwoDimensional
         /// <param name="connectingIndices">The connecting indices.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons,
-            bool vertexNegPosOrderIsGuaranteedCorrect, out int[] connectingIndices, out List<Polygon> strayHoles)
+        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect, 
+            out List<Polygon> strayHoles)
         {
-            var index = 0;
+            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
             var polygonList = new List<Polygon>();
-            strayHoles = new List<Polygon>();
-            foreach (var p in polygons)
-            {
-                p.Index = index++;
-                polygonList.Add(p);
-            }
-
-            if (polygonList.Count == 0)
-            {
-                connectingIndices = null;
-                return polygonList;
-            }
-            connectingIndices = new int[index];
-            //Presenter.ShowAndHang(polygons);
-            var connectingIndicesList = new List<int>();
-            var polygonTrees = CreatePolygonTree(polygonList, vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
-            //Presenter.ShowAndHang(polygonTree.AllPolygons);
-            polygonList.Clear();
-            index = 0;
-            foreach (var strayHole in strayHoles)
-            {
-                if (strayHole.Index < 0) continue;
-                while (connectingIndicesList.Count <= strayHole.Index) connectingIndicesList.Add(-1);
-                connectingIndicesList[strayHole.Index] = index;
-                strayHole.Index = index++;
-            }
             foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
-            {
                 if (polygon.IsPositive) polygonList.Add(polygon);
-                if (polygon.Index < 0) continue;
-                while (connectingIndicesList.Count <= polygon.Index) connectingIndicesList.Add(-1);
-                connectingIndicesList[polygon.Index] = index;
-                polygon.Index = index++;
-            }
-            // finally remove references to inner positives with this loop
+            
             foreach (var polygon in polygonList)
                 foreach (var hole in polygon.InnerPolygons)
                     hole.RemoveAllInnerPolygon();
-            connectingIndices = connectingIndicesList.ToArray();
             return polygonList;
         }
 
-
-        /// <summary>
-        /// Creates the polygon tree  from a collection of a collection of coordinates.
-        /// </summary>
-        /// <param name="paths">The paths.</param>
-        /// <param name="vertexNegPosOrderIsGuaranteedCorrect">if set to <c>true</c> [vertex neg position order is guaranteed correct].</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreatePolygonTree(this IEnumerable<IEnumerable<Vector2>> paths, bool vertexNegPosOrderIsGuaranteedCorrect)
-        {
-            return CreatePolygonTree(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect, out List<Polygon> strayHoles);
-        }
 
         /// <summary>
         /// Creates the polygon tree from a collection of flat (i.e. no inner polygons) polygons.

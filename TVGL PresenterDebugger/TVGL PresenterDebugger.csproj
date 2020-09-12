@@ -35,10 +35,10 @@
     <Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs">
       <Link>Window3DPlot.xaml.cs</Link>
     </Compile>
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonOperationsTesting.cs" Link="PolygonOperationsTesting.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\TestCases.cs" Link="TestCases.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\Program.cs" Link="Program.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.cs" Link="ThreeDtoTwoD.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonOperationsTesting.cs" Link="_Testing_And_Benchmarking_\PolygonOperationsTesting.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\TestCases.cs" Link="_Testing_And_Benchmarking_\TestCases.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\Program.cs" Link="_Testing_And_Benchmarking_\Program.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.cs" Link="_Testing_And_Benchmarking_\ThreeDtoTwoD.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,5 +65,8 @@
     <Page Include="..\TVGL Presenter\Window3DPlot.xaml" Link="Window3DPlot.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="_Testing_And_Benchmarking_\" />
   </ItemGroup>
 </Project>

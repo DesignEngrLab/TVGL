@@ -530,8 +530,7 @@ namespace TVGL
                 else
                 {
                     var normal = MiscFunctions.DetermineNormalPolygon(faceVertices.Length, faceVertices, out _, Vector3.Null);
-                    var triangulatedListofLists = new[] { faceVertices }.Triangulate(normal, out _, out _);
-                    var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
+                    var triangulatedList = faceVertices.Triangulate(normal);
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
@@ -544,7 +543,7 @@ namespace TVGL
                         listOfFlatFaces.Add(face);
                     }
                     if (Primitives == null) Primitives = new List<PrimitiveSurface>();
-                    Primitives.Add(new Flat(listOfFlatFaces));
+                    Primitives.Add(new Plane(listOfFlatFaces));
                 }
             }
             Faces = listOfFaces.ToArray();

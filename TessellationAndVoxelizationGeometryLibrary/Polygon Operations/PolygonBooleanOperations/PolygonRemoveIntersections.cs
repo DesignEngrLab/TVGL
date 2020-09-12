@@ -30,7 +30,7 @@ namespace TVGL.TwoDimensional
                 if (noHoles && area < 0) polyCoordinates.Reverse();
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
-            return newPolygons.CreateShallowPolygonTrees(true, out _, out strayHoles);
+            return newPolygons.CreateShallowPolygonTrees(true, out strayHoles);
         }
 
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge, out bool startAgain)

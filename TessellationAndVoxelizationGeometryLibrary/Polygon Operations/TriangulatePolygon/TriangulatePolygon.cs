@@ -22,53 +22,14 @@ namespace TVGL.TwoDimensional
     /// </References>
     public static partial class PolygonOperations
     {
-        /// <summary>
-        /// Triangulates a list of loops into faces in O(n*log(n)) time.
-        /// </summary>
-        /// <param name="loops">The loops.</param>
-        /// <param name="normal">The normal.</param>
-        /// <param name="groupsOfLoops">The groups of loops.</param>
-        /// <param name="isPositive">The is positive.</param>
-        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
-        /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        public static List<List<Vertex[]>> Triangulate(this IEnumerable<IEnumerable<Vertex>> loops, Vector3 normal,
-            out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
+        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal)
         {
-            //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight   
-            var points2D = loops.Select(loop => loop.ProjectTo2DCoordinates(normal, out _).ToArray()).ToArray();
-            var polygons = points2D.CreateShallowPolygonTrees(false, out var connectingIndices, out _);
-            isPositive = new bool[connectingIndices.Length];
-            var index = 0;
-            foreach (var poly in polygons)
-            {
-                var connectingIndex = connectingIndices.FindIndex(x => x == index);
-                isPositive[connectingIndex] = true;
-                index++;
-                foreach (var hole in poly.InnerPolygons)
-                {
-                    connectingIndex = connectingIndices.FindIndex(x => x == index);
-                    isPositive[connectingIndex] = false;
-                    index++;
-                }
-            }
-            var triangleIndices = polygons.Triangulate(out groupsOfLoops, ignoreNegativeSpace);
-            var int2VertexDict = new Dictionary<int, Vertex>();
-            var vertexID = 0;
-            foreach (var loop in loops)
-                foreach (var vertex in loop)
-                    int2VertexDict.Add(vertexID++, vertex);
-            var result = new List<List<Vertex[]>>();
-            foreach (var polygonTriangleIndices in triangleIndices)
-            {
-                var polygonTriangles = new List<Vertex[]>();
-                foreach (var triangle in polygonTriangleIndices)
-                    polygonTriangles.Add(new[] { int2VertexDict[triangle[0]],
-                        int2VertexDict[triangle[1]], int2VertexDict[triangle[2]] });
-                result.Add(polygonTriangles);
-            }
-            return result;
+            var vertexList = vertexLoop as List<Vertex> ?? vertexLoop.ToList();
+            var transform = normal.TransformToXYPlane(out _);
+            var polygon = new Polygon(vertexLoop.Select(v => new Vertex2D(v.ConvertTo2DCoordinates(transform), v.IndexInList, -1)).ToList());
+            foreach (var triangleIndices in polygon.Triangulate())
+                yield return new[] { vertexList[triangleIndices[0]], vertexList[triangleIndices[1]], vertexList[triangleIndices[2]] };
         }
-
 
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
@@ -112,29 +73,14 @@ namespace TVGL.TwoDimensional
         // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
         // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
         // 5: If isPositive == null, then 
-        public static List<List<int[]>> Triangulate(this IEnumerable<Polygon> polygons, out List<List<int>> groupsOfLoops,
-             bool onlyOuterPolygons = false)
+        public static List<int[]> Triangulate(this Polygon polygon)
         {
-            var polygonList = polygons.OrderByDescending(p => p.Area).ToList();
-            if (onlyOuterPolygons)
-            {   // this is a n^2 check. but no other way to do it. however, there shouldn't be many polygons and having them ordered reduces
-                // the number of checks
-                for (int i = polygonList.Count - 2; i >= 0; i--)
-                {
-                    for (int j = polygonList.Count - 1; j > i; j--)
-                    {
-                        if (polygonList[i].IsNonIntersectingPolygonInside(true, polygonList[j], true, out _) == true)
-                            polygonList.RemoveAt(j);
-                    }
-                }
-            }
             var successful = false;
             var attempts = 0;
             var random = new Random(1);
             //Create return variables. These intializations are unnecessary but C# won't compile unless it's sure that we set these
             //before exiting. 
-            List<List<int[]>> triangleFaceList = new List<List<int[]>>();
-            groupsOfLoops = new List<List<int>>();
+            var triangleFaceList = new List<int[]>();
             do
             {
                 try
@@ -142,7 +88,6 @@ namespace TVGL.TwoDimensional
                     attempts++;
                     //Reset return variables
                     triangleFaceList.Clear();
-                    groupsOfLoops.Clear();
 
                     #region Setup up polygon nodes and segments
                     // 1) For each loop in points2D
@@ -163,249 +108,27 @@ namespace TVGL.TwoDimensional
                     var theta = 2 * Math.PI * random.NextDouble();
                     var randRotMatrix = Matrix3x3.CreateRotation(theta);
                     var loopsCount = 0;
-                    /* todo: some portion of this loop needs to be used
-                    foreach (var origLoop in polygons)
+                    // todo: some portion of this loop needs to be used
+                    foreach (var origLoop in polygon.AllPolygons)
                     {
                         var nodes = new List<Vertex2D>();
-                        foreach (var coordinates in origLoop)
+                        foreach (var coordinates in origLoop.Path)
                             nodes.Add(new Vertex2D(coordinates.Transform(randRotMatrix), pointCount++, loopsCount));
-                        var polygon = new Polygon(nodes, true, loopsCount);
-                        var sortedLoop = polygon.Vertices.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
-                        polygonNodes.Add(polygon.Vertices);
+                        var polygo = new Polygon(nodes, loopsCount);
+                        var sortedLoop = polygo.Vertices.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
+                        polygonNodes.Add(polygo.Vertices);
                         sortedPolygonNodes.Add(sortedLoop);
-                        polygonLines.Add(polygon.Lines);
+                        polygonLines.Add(polygo.Lines);
                         loopsCount++;
                     }
-                    */
+
                     #endregion
 
 
                     #region Get the number of positive and negative loops. 
-                    var negativeLoopCount = 0;
-                    var positiveLoopCount = 0;
-                    var isPositive = new bool[loopsCount];
-                    //First, find the first node from each loop and then sort them. This determines the order the loops
-                    //will be visited in.
-                    var sortedFirstNodes = sortedPolygonNodes.Select(sortedLoop => sortedLoop[0])
-                        .OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
-                    //Use a red-black tree to track whether loops are inside other loops
-                    var tempSortedLoops1 = new List<List<Vertex2D>>(sortedPolygonNodes);
-                    while (tempSortedLoops1.Any())
-                    {
-                        //Set the start loop and remove necessary information
-                        var startLoop = sortedPolygonNodes[sortedFirstNodes[0].LoopID];
-                        isPositive[sortedFirstNodes[0].LoopID] = true; //The first loop in the group must always be CCW positive
-                        sortedFirstNodes.RemoveAt(0);
-                        tempSortedLoops1.Remove(startLoop);
-                        if (!sortedFirstNodes.Any()) continue; //Exit while loop
-                        var sortedGroup = new List<Vertex2D>(startLoop);
-
-                        //Add the remaining first points from each loop into sortedGroup.
-                        foreach (var firstNode in sortedFirstNodes)
-                        {
-                            InsertNodeInSortedList(sortedGroup, firstNode);
-                        }
-
-                        //inititallize lineList 
-                        var lineList = new List<PolygonSegment>();
-                        for (var j = 0; j < sortedGroup.Count; j++)
-                        {
-                            var node = sortedGroup[j];
-
-                            if (sortedFirstNodes.Contains(node)) //if first point in the sorted loop 
-                            {
-                                bool isInside;
-                                bool isOnLine;
-                                //If remainder is not equal to 0, then it is odd.
-                                //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                                PolygonSegment leftLine;
-                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
-                                {
-                                    PolygonSegment rightLine;
-                                    isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
-                                }
-                                else isInside = false;
-                                if (isInside) //Merge the loop into this one and remove from the tempList
-                                {
-                                    isPositive[node.LoopID] = false; //This is a negative loop
-                                    sortedFirstNodes.Remove(node);
-                                    tempSortedLoops1.Remove(sortedPolygonNodes[node.LoopID]);
-                                    if (!tempSortedLoops1.Any()) break; //That was the last loop
-                                    MergeSortedListsOfNodes(sortedGroup, sortedPolygonNodes[node.LoopID], node);
-                                }
-                                else //remove the node from this group and continue
-                                {
-                                    sortedGroup.Remove(node);
-                                    j--; //Pick the same index for the next iteration as the node which was just removed
-                                    continue;
-                                }
-                            }
-
-                            //Add to or remove from Red-Black Tree
-                            if (lineList.Contains(node.StartLine))
-                            {
-                                lineList.Remove(node.StartLine);
-                            }
-                            else
-                            {
-                                lineList.Add(node.StartLine);
-                            }
-                            if (lineList.Contains(node.EndLine))
-                            {
-                                lineList.Remove(node.EndLine);
-                            }
-                            else
-                            {
-                                lineList.Add(node.EndLine);
-                            }
-                        }
-                    }
-
-                    //Check to see that the loops are ordered correctly to their isPositive boolean
-                    //If they are incorrectly ordered, reverse the order.
-                    var nodesLoopsCorrected = new List<List<Vertex2D>>();
-                    for (var j = 0; j < polygonNodes.Count; j++)
-                    {
-                        var orderedLoop = polygonNodes[j];
-                        var index = orderedLoop.IndexOf(sortedPolygonNodes[j][0]); // index of first node in orderedLoop
-                        NodeType nodeType;
-                        if (index == 0)
-                        {
-                            nodeType = GetNodeType(orderedLoop.Last(), orderedLoop.First(), orderedLoop[1]);
-                        }
-                        else if (index == orderedLoop.Count - 1)
-                        {
-                            nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop.Last(), orderedLoop.First());
-                        }
-                        else nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop[index], orderedLoop[index + 1]);
-                        //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
-                        //reverse the order of the loop
-                        if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
-                        {
-                            orderedLoop.Reverse();
-                            //Also, reorder all the lines for these nodes
-                            for (int i = 0; i < polygonLines[j].Count; i++)
-                                polygonLines[j][i] = polygonLines[j][i].Reverse();
-                            //And reorder all the node - line identifiers
-                            foreach (var node in orderedLoop)
-                            {
-                                var tempLine = node.EndLine;
-                                node.EndLine = node.StartLine;
-                                node.StartLine = tempLine;
-                            }
-                        }
-                        nodesLoopsCorrected.Add(orderedLoop);
-                    }
-                    polygonNodes = new List<List<Vertex2D>>(nodesLoopsCorrected);
-
-                    #region Ignore Negative Space Alterations
-                    //If we are to ignore the negative space, we need to get rid of any loops that are inside other loops.
-                    //All negative loops must be inside, so remove them.
-                    //Some positive loops may be nested inside a negative then a postive, and therefore they are inside a positive. Remove them.
-                    //Note that sorted groups were modifies earlier with this bool.
-                    if (onlyOuterPolygons)
-                    {
-                        var listOfLoopIDsToKeep = new List<int>();
-                        foreach (var positiveLoop1 in polygonNodes)
-                        {
-                            //If its a negative loop, continue
-                            if (!isPositive[positiveLoop1.First().LoopID]) continue;
-                            var isInside = false;
-                            foreach (var positiveLoop2 in polygonNodes)
-                            {
-                                if (!isPositive[positiveLoop2.First().LoopID]) continue; //Only concerned about positive loops
-                                if (positiveLoop1 == positiveLoop2) continue;
-                                //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
-                                //Note: If this occurs, any loops inside loop 1 will also be inside loop 2, so no information is lost.
-                                var otherLoopID = positiveLoop2.First().LoopID;
-                                isInside = IsPointInsidePolygon(new Polygon(polygonNodes[otherLoopID], polygonLines[otherLoopID], otherLoopID), true,
-                                     positiveLoop1.First().Coordinates, out _);
-                                if (isInside) break;
-                            }
-                            //Only keep it if its not inside other loops
-                            if (!isInside) listOfLoopIDsToKeep.Add(positiveLoop1.First().LoopID);
-                        }
-
-                        //Rewrite the lists 
-                        var tempOrderedLoops = new List<List<Vertex2D>>();
-                        var tempSortedLoops2 = new List<List<Vertex2D>>();
-                        foreach (var index in listOfLoopIDsToKeep)
-                        {
-                            tempOrderedLoops.Add(polygonNodes[index]);
-                            tempSortedLoops2.Add(sortedPolygonNodes[index]);
-                        }
-                        polygonNodes = new List<List<Vertex2D>>(tempOrderedLoops);
-                        sortedPolygonNodes = new List<List<Vertex2D>>(tempSortedLoops2);
-
-                        //Create a new bool list and update the loop IDs and point count.
-                        pointCount = 0;
-                        for (var j = 0; j < polygonNodes.Count; j++)
-                        {
-                            //Update the LoopID's. Note that the nodes in the 
-                            //sorted loops are the same nodes.
-                            pointCount = pointCount + polygonNodes[j].Count;
-                            foreach (var node in polygonNodes[j])
-                            {
-                                node.LoopID = j;
-                            }
-                        }
-                    }
-                    #endregion
-
-                    //Set the NodeTypes of every Vertex2D. This step is after "isPositive == null" fuction because
-                    //the CW/CCW order of the loops must be accurate.
-                    var loopI = 0;
-                    foreach (var orderedLoop in polygonNodes)
-                    {
-                        //Set nodeType for the first node
-                        orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
-
-                        //Set nodeTypes for other nodes
-                        for (var j = 1; j < orderedLoop.Count - 1; j++)
-                        {
-                            orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
-                        }
-
-                        //Set nodeType for the last node
-                        //Create last node
-                        orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
-
-                        //Debug to see if the proper balance of point types has been used
-                        var downwardReflexCount = 0;
-                        var upwardReflexCount = 0;
-                        var peakCount = 0;
-                        var rootCount = 0;
-                        foreach (var node in orderedLoop)
-                        {
-                            if (node.Type == NodeType.DownwardReflex) downwardReflexCount++;
-                            else if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
-                            else if (node.Type == NodeType.Peak) peakCount++;
-                            else if (node.Type == NodeType.Root) rootCount++;
-                            else if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
-                        }
-                        if (isPositive[loopI]) //If a positive loop, the following conditions must be balanced
-                        {
-                            if (peakCount != downwardReflexCount + 1 || rootCount != upwardReflexCount + 1)
-                            {
-                                throw new Exception("Incorrect balance of node types");
-                            }
-                        }
-                        else //If negative loop, the conditions change
-                        {
-                            if (peakCount != downwardReflexCount - 1 || rootCount != upwardReflexCount - 1)
-                            {
-                                throw new Exception("Incorrect balance of node types");
-                            }
-                        }
-                        loopI++;
-                    }
-
-                    //Get the number of negative loops
-                    foreach (var boolean in isPositive)
-                    {
-                        if (boolean) positiveLoopCount++;
-                        else negativeLoopCount++;
-                    }
+                    bool[] isPositive;
+                    int loopI;
+                    polygonNodes = getNumPositiveAndNegativeLoops(polygonNodes, sortedPolygonNodes, polygonLines, loopsCount, out isPositive, out loopI);
                     #endregion
 
                     // 1) For each positive loop
@@ -719,12 +442,9 @@ namespace TVGL.TwoDimensional
 
                         #region Triangulate Monotone Polygons
                         //Triangulates the monotone polygons
-                        var newTriangles = new List<int[]>();
                         foreach (var monotonePolygon2 in monotonePolygons)
-                            newTriangles.AddRange(Triangulate(monotonePolygon2));
-                        triangleFaceList.Add(newTriangles);
-                        numTriangles += newTriangles.Count;
-                        groupsOfLoops.Add(group);
+                            triangleFaceList.AddRange(Triangulate(monotonePolygon2));
+                        //numTriangles += newTriangles.Count;
                         #endregion
                     }
                     //Check to see if the proper number of triangles were created from this set of loops
@@ -732,10 +452,10 @@ namespace TVGL.TwoDimensional
                     //The addition of negative loops makes this: triangles = (number of vertices) + 2*(number of negative loops) - 2
                     //The most general form (by inspection) is then: triangles = (number of vertices) + 2*(number of negative loops) - 2*(number of positive loops)
                     //You could individually solve the equation for each positive loop, but simpler just to use most general form.
-                    if (numTriangles != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
-                    {
-                        throw new Exception("Incorrect number of triangles created in triangulate function");
-                    }
+                    //if (numTriangles != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
+                    //{
+                    //    throw new Exception("Incorrect number of triangles created in triangulate function");
+                    //}
                     successful = true;
 
                     #region DEBUG: Find a particular triangle or all triangles with a particular vertex
@@ -806,6 +526,184 @@ namespace TVGL.TwoDimensional
             }
             while (!successful);
             return triangleFaceList;
+        }
+
+        private static List<List<Vertex2D>> getNumPositiveAndNegativeLoops(List<List<Vertex2D>> polygonNodes, List<List<Vertex2D>> sortedPolygonNodes, List<List<PolygonSegment>> polygonLines, int loopsCount, out bool[] isPositive, out int loopI)
+        {
+            var negativeLoopCount = 0;
+            var positiveLoopCount = 0;
+            isPositive = new bool[loopsCount];
+            //First, find the first node from each loop and then sort them. This determines the order the loops
+            //will be visited in.
+            var sortedFirstNodes = sortedPolygonNodes.Select(sortedLoop => sortedLoop[0])
+                .OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
+            //Use a red-black tree to track whether loops are inside other loops
+            var tempSortedLoops1 = new List<List<Vertex2D>>(sortedPolygonNodes);
+            while (tempSortedLoops1.Any())
+            {
+                //Set the start loop and remove necessary information
+                var startLoop = sortedPolygonNodes[sortedFirstNodes[0].LoopID];
+                isPositive[sortedFirstNodes[0].LoopID] = true; //The first loop in the group must always be CCW positive
+                sortedFirstNodes.RemoveAt(0);
+                tempSortedLoops1.Remove(startLoop);
+                if (!sortedFirstNodes.Any()) continue; //Exit while loop
+                var sortedGroup = new List<Vertex2D>(startLoop);
+
+                //Add the remaining first points from each loop into sortedGroup.
+                foreach (var firstNode in sortedFirstNodes)
+                {
+                    InsertNodeInSortedList(sortedGroup, firstNode);
+                }
+
+                //inititallize lineList 
+                var lineList = new List<PolygonSegment>();
+                for (var j = 0; j < sortedGroup.Count; j++)
+                {
+                    var node = sortedGroup[j];
+
+                    if (sortedFirstNodes.Contains(node)) //if first point in the sorted loop 
+                    {
+                        bool isInside;
+                        bool isOnLine;
+                        //If remainder is not equal to 0, then it is odd.
+                        //If both LinesToLeft and LinesToRight are odd, then it must be inside.
+                        PolygonSegment leftLine;
+                        if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
+                        {
+                            PolygonSegment rightLine;
+                            isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
+                        }
+                        else isInside = false;
+                        if (isInside) //Merge the loop into this one and remove from the tempList
+                        {
+                            isPositive[node.LoopID] = false; //This is a negative loop
+                            sortedFirstNodes.Remove(node);
+                            tempSortedLoops1.Remove(sortedPolygonNodes[node.LoopID]);
+                            if (!tempSortedLoops1.Any()) break; //That was the last loop
+                            MergeSortedListsOfNodes(sortedGroup, sortedPolygonNodes[node.LoopID], node);
+                        }
+                        else //remove the node from this group and continue
+                        {
+                            sortedGroup.Remove(node);
+                            j--; //Pick the same index for the next iteration as the node which was just removed
+                            continue;
+                        }
+                    }
+
+                    //Add to or remove from Red-Black Tree
+                    if (lineList.Contains(node.StartLine))
+                    {
+                        lineList.Remove(node.StartLine);
+                    }
+                    else
+                    {
+                        lineList.Add(node.StartLine);
+                    }
+                    if (lineList.Contains(node.EndLine))
+                    {
+                        lineList.Remove(node.EndLine);
+                    }
+                    else
+                    {
+                        lineList.Add(node.EndLine);
+                    }
+                }
+            }
+
+            //Check to see that the loops are ordered correctly to their isPositive boolean
+            //If they are incorrectly ordered, reverse the order.
+            var nodesLoopsCorrected = new List<List<Vertex2D>>();
+            for (var j = 0; j < polygonNodes.Count; j++)
+            {
+                var orderedLoop = polygonNodes[j];
+                var index = orderedLoop.IndexOf(sortedPolygonNodes[j][0]); // index of first node in orderedLoop
+                NodeType nodeType;
+                if (index == 0)
+                {
+                    nodeType = GetNodeType(orderedLoop.Last(), orderedLoop.First(), orderedLoop[1]);
+                }
+                else if (index == orderedLoop.Count - 1)
+                {
+                    nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop.Last(), orderedLoop.First());
+                }
+                else nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop[index], orderedLoop[index + 1]);
+                //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
+                //reverse the order of the loop
+                if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
+                {
+                    orderedLoop.Reverse();
+                    //Also, reorder all the lines for these nodes
+                    for (int i = 0; i < polygonLines[j].Count; i++)
+                        polygonLines[j][i] = polygonLines[j][i].Reverse();
+                    //And reorder all the node - line identifiers
+                    foreach (var node in orderedLoop)
+                    {
+                        var tempLine = node.EndLine;
+                        node.EndLine = node.StartLine;
+                        node.StartLine = tempLine;
+                    }
+                }
+                nodesLoopsCorrected.Add(orderedLoop);
+            }
+            polygonNodes = new List<List<Vertex2D>>(nodesLoopsCorrected);
+
+
+            //Set the NodeTypes of every Vertex2D. This step is after "isPositive == null" fuction because
+            //the CW/CCW order of the loops must be accurate.
+            loopI = 0;
+            foreach (var orderedLoop in polygonNodes)
+            {
+                //Set nodeType for the first node
+                orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
+
+                //Set nodeTypes for other nodes
+                for (var j = 1; j < orderedLoop.Count - 1; j++)
+                {
+                    orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
+                }
+
+                //Set nodeType for the last node
+                //Create last node
+                orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
+
+                //Debug to see if the proper balance of point types has been used
+                var downwardReflexCount = 0;
+                var upwardReflexCount = 0;
+                var peakCount = 0;
+                var rootCount = 0;
+                foreach (var node in orderedLoop)
+                {
+                    if (node.Type == NodeType.DownwardReflex) downwardReflexCount++;
+                    else if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
+                    else if (node.Type == NodeType.Peak) peakCount++;
+                    else if (node.Type == NodeType.Root) rootCount++;
+                    else if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
+                }
+                if (isPositive[loopI]) //If a positive loop, the following conditions must be balanced
+                {
+                    if (peakCount != downwardReflexCount + 1 || rootCount != upwardReflexCount + 1)
+                    {
+                        throw new Exception("Incorrect balance of node types");
+                    }
+                }
+                else //If negative loop, the conditions change
+                {
+                    if (peakCount != downwardReflexCount - 1 || rootCount != upwardReflexCount - 1)
+                    {
+                        throw new Exception("Incorrect balance of node types");
+                    }
+                }
+                loopI++;
+            }
+
+            //Get the number of negative loops
+            foreach (var boolean in isPositive)
+            {
+                if (boolean) positiveLoopCount++;
+                else negativeLoopCount++;
+            }
+
+            return polygonNodes;
         }
 
 

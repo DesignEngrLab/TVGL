@@ -501,20 +501,19 @@ namespace TVGL
                             edgeDic.Add(checksum, edge);
                         }
                     }
-                    List<List<Vertex[]>> triangleFaceList = null;
+                    List<Vertex[]> triangleFaceList = null;
                     try
                     {
-                        triangleFaceList = (new[] { edges.Select(e => e.To).ToArray() }).Triangulate(normal, out _, out _);
+                        triangleFaceList = edges.Select(e => e.To).Triangulate(normal).ToList();
                     }
                     catch
                     {
                         continue;
                     }
-                    var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
-                    if (triangles.Any())
+                    if (triangleFaceList.Any())
                     {
-                        Message.output("loop successfully repaired with " + triangles.Count, 5);
-                        foreach (var triangle in triangles)
+                        Message.output("loop successfully repaired with " + triangleFaceList.Count, 5);
+                        foreach (var triangle in triangleFaceList)
                         {
                             var newFace = new PolygonalFace(triangle, normal);
                             if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;

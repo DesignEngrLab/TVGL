@@ -166,14 +166,6 @@
         { return Quaternion.Dot(quaternion1, quaternion2); }
         public static Quaternion Concatenate(this Quaternion quaternion1, Quaternion quaternion2)
         { return Quaternion.Concatenate(quaternion1, quaternion2); }
-
-        public static Plane Normalize(this Plane value)
-        { return Plane.Normalize(value); }
-        public static Plane Transform(this Plane plane, Matrix4x4 matrix)
-        { return Plane.Transform(plane, matrix); }
-        public static Plane Transform(this Plane plane, Quaternion rotation)
-        { return Plane.Transform(plane, rotation); }
-
         public static double DotCoordinate(this Plane plane, Vector3 value)
         { return Plane.DotCoordinate(plane, value); }
         public static double DotNormal(this Plane plane, Vector3 value)

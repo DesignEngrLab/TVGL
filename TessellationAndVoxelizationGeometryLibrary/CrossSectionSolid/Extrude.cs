@@ -50,7 +50,7 @@ namespace TVGL
             // the basePlaneDistance defines the plane closer to the origin. we can get this from the any input coordinate
             var basePlaneDistance = extrudeDirection.Dot(loops.First().First());
             if (midPlane) basePlaneDistance -= extrusionHeight / 2.0;
-            var polygons = paths.CreateShallowPolygonTrees(false, out _, out _);
+            var polygons = paths.CreateShallowPolygonTrees(false, out _);
             return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
              extrudeDirection, basePlaneDistance, extrusionHeight)).ToList();
         }
@@ -67,7 +67,7 @@ namespace TVGL
         public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this IEnumerable<IEnumerable<Vector2>> paths, Vector3 basePlaneNormal,
             double basePlaneDistance, double extrusionHeight)
         {
-            var polygons = paths.CreateShallowPolygonTrees(false, out _, out _);
+            var polygons = paths.CreateShallowPolygonTrees(false, out _);
             return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
              basePlaneNormal, basePlaneDistance, extrusionHeight)).ToList();
         }
@@ -84,13 +84,12 @@ namespace TVGL
         public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                 double basePlaneDistance, double extrusionHeight)
         {
-            List<List<int[]>> triangleIndices;
-            var paths = polygon.AllPolygons.Select(p => p).ToList();  //.Path);
+            List<int[]> triangleIndices;
             #region First, run the triangulate polygons to define how the ends of the extruded shape will be defined
 
             try
             {
-                triangleIndices = PolygonOperations.Triangulate(paths, out _);
+                triangleIndices = polygon.Triangulate();
             }
             catch
             {
@@ -99,24 +98,15 @@ namespace TVGL
                     //Do some polygon functions to clean up issues and try again
                     //This is important because the Get2DProjections may produce invalid paths and because
                     //triangulate will try 3 times before throwing the exception to go to the catch.
-                    paths = paths.Union();
-                    triangleIndices = paths.Triangulate(out _);
+                    //Do some polygon functions to clean up issues and try again
+                    polygon = polygon.OffsetMiter(extrusionHeight / 1000)[0];
+                    polygon = polygon.OffsetMiter(-extrusionHeight / 1000)[0];
+                    triangleIndices = polygon.Triangulate();
                 }
-                catch
+                catch (Exception exc)
                 {
-                    try
-                    {
-                        //Do some polygon functions to clean up issues and try again
-                        paths = paths.Union();
-                        paths = paths.OffsetMiter(extrusionHeight / 1000);
-                        paths = paths.OffsetMiter(-extrusionHeight / 1000);
-                        triangleIndices = paths.Triangulate(out _);
-                    }
-                    catch (Exception exc)
-                    {
-                        Debug.WriteLine("Tried extrusion three-times and it failed." + exc.Message);
-                        return null;
-                    }
+                    Debug.WriteLine("Tried extrusion three-times and it failed." + exc.Message);
+                    return null;
                 }
             }
             #endregion
@@ -126,7 +116,7 @@ namespace TVGL
             var int2VertexDict = new Dictionary<int, Vertex>();
             var baseVertices = new List<List<Vertex>>();
             var vertexID = 0;
-            foreach (var loop in paths)
+            foreach (var loop in polygon.AllPolygons)
             {
                 var vertexLoop = new List<Vertex>();
                 baseVertices.Add(vertexLoop);
@@ -140,9 +130,8 @@ namespace TVGL
                 }
             }
             var result = new List<PolygonalFace>();
-            foreach (var polygonTriangleIndices in triangleIndices)
-                foreach (var triangle in polygonTriangleIndices)
-                    result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[2]],
+            foreach (var triangle in triangleIndices)
+                result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[2]],
                         int2VertexDict[triangle[1]], int2VertexDict[triangle[0]] }));
             #endregion
             #region Make Top faces
@@ -150,7 +139,7 @@ namespace TVGL
             var topVertices = new List<List<Vertex>>();
             vertexID = 0;
             basePlaneDistance += extrusionHeight;
-            foreach (var loop in paths)
+            foreach (var loop in polygon.AllPolygons)
             {
                 var vertexLoop = new List<Vertex>();
                 topVertices.Add(vertexLoop);
@@ -163,16 +152,15 @@ namespace TVGL
                     vertexID++;
                 }
             }
-            foreach (var polygonTriangleIndices in triangleIndices)
-                foreach (var triangle in polygonTriangleIndices)
-                    result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[0]],
+            foreach (var triangle in triangleIndices)
+                result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[0]],
                         int2VertexDict[triangle[1]], int2VertexDict[triangle[2]] }));
             #endregion
             #region Make Faces on the sides
             //The normals of the faces are dependent on the whether the loops are ordered correctly from the view of the extrude direction
             //This influences which order the vertices are used to create triangles.
             var index = 0;
-            foreach (var vectorLoop in paths)
+            foreach (var vectorLoop in polygon.AllPolygons)
             {
                 var topLoop = topVertices[index];
                 var baseLoop = baseVertices[index];
