@@ -8,8 +8,8 @@ namespace TVGL.TwoDimensional
     public enum MonotonicityChange { X, Y, Both, Neither }
     public readonly struct MonotoneBox
     {
-        public readonly Vertex2D vertex1;
-        public readonly Vertex2D vertex2;
+        public readonly Vertex2D Vertex1;
+        public readonly Vertex2D Vertex2;
         public readonly double Left;
         public readonly double Right;
         public readonly double Bottom;
@@ -22,8 +22,8 @@ namespace TVGL.TwoDimensional
         public MonotoneBox(Vertex2D vertex1, Vertex2D vertex2, MonotonicityChange lowMonoChange,
             MonotonicityChange hiMonoChange, bool xInPositiveMonotonicity, bool yInPositiveMonotonicity) : this()
         {
-            this.vertex1 = vertex1;
-            this.vertex2 = vertex2;
+            this.Vertex1 = vertex1;
+            this.Vertex2 = vertex2;
             this.LowChange = lowMonoChange;
             this.HiChange = hiMonoChange;
             XInPositiveMonotonicity = xInPositiveMonotonicity;

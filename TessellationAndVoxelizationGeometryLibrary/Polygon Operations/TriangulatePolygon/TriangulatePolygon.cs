@@ -25,9 +25,11 @@ namespace TVGL.TwoDimensional
         {
             var vertexList = vertexLoop as List<Vertex> ?? vertexLoop.ToList();
             var transform = normal.TransformToXYPlane(out _);
-            var polygon = new Polygon(vertexList.Select(v => new Vertex2D(v.ConvertTo2DCoordinates(transform), v.IndexInList, -1)).ToList());
+            var polygon = new Polygon(vertexList
+                .Select(v => new Vertex2D(v.ConvertTo2DCoordinates(transform), v.IndexInList, -1)).ToList());
             foreach (var triangleIndices in polygon.Triangulate())
-                yield return new[] { vertexList[triangleIndices[0]], vertexList[triangleIndices[1]], vertexList[triangleIndices[2]] };
+                yield return new[]
+                    {vertexList[triangleIndices[0]], vertexList[triangleIndices[1]], vertexList[triangleIndices[2]]};
         }
 
         /// <summary>
@@ -75,986 +77,97 @@ namespace TVGL.TwoDimensional
             var randomAngles = new double[maxNumberOfAttempts];
             for (int i = 1; i < maxNumberOfAttempts; i++)
                 randomAngles[i] = 2 * Math.PI * random.NextDouble();
-            var successful = false;
 
             if (reIndexPolygons)
             {
                 var index = 0;
                 foreach (var subPolygon in polygon.AllPolygons)
-                    foreach (var vertex in subPolygon.Vertices)
-                        vertex.IndexInList = index++;
+                foreach (var vertex in subPolygon.Vertices)
+                    vertex.IndexInList = index++;
             }
 
 
             foreach (var randomAngle in randomAngles)
             {
-            var triangleFaceList = new List<int[]>(); // this is the returned list of triangles. Well, not actually triangles but three integers each - corresponding
-            // to the 3 indices of the input polygon's Vertex2D
-try
+                var triangleFaceList =
+                    new List<int[]>(); // this is the returned list of triangles. Well, not actually triangles but three integers each - corresponding
+                // to the 3 indices of the input polygon's Vertex2D
+                try
                 {
-                    if (randomAngle!=0)
+                    if (randomAngle != 0)
                         polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
-
-                    #region Setup up polygon nodes and segments
-                    // 1) For each loop in points2D
-                    // 2)   Count the number of points and add to total.
-                    // 3)   Create nodes and lines from points, and retain whether a point
-                    //      was in a positive or negative loop.
-                    // 4)   Add nodes to an ordered loop (same as points2D except now Nodes) 
-                    //      and a sorted loop (used for sweeping).
-                    var polygonNodes = new List<List<Vertex2D>>();
-                    var sortedPolygonNodes = new List<List<Vertex2D>>();
-                    var polygonLines = new List<List<PolygonSegment>>();
-
-                    var pointCount = 0;
-
-                    //Since the algorithm may fail for polygonal lines that are perfectly vertical or 
-                    //horizontal and since rotating the polygon doesn't change how it should be triangulated - 
-                    //a random rotation is applied to all coordinates at the start
-                    var theta = 2 * Math.PI * random.NextDouble();
-                    var randRotMatrix = Matrix3x3.CreateRotation(theta);
-                    var loopsCount = 0;
-                    // todo: some portion of this loop needs to be used
-                    foreach (var origLoop in polygon.AllPolygons)
+                    foreach (var monoPoly in MakeXMonotonePolygons(polygon))
                     {
-                        var nodes = new List<Vertex2D>();
-                        foreach (var coordinates in origLoop.Path)
-                            nodes.Add(new Vertex2D(coordinates.Transform(randRotMatrix), pointCount++, loopsCount));
-                        var polygo = new Polygon(nodes, loopsCount);
-                        var sortedLoop = polygo.Vertices.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
-                        polygonNodes.Add(polygo.Vertices);
-                        sortedPolygonNodes.Add(sortedLoop);
-                        polygonLines.Add(polygo.Lines);
-                        loopsCount++;
+                        triangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                     }
-
-                    #endregion
-
-
-                    #region Get the number of positive and negative loops. 
-                    bool[] isPositive;
-                    int loopI;
-                    polygonNodes = getNumPositiveAndNegativeLoops(polygonNodes, sortedPolygonNodes, polygonLines, loopsCount, out isPositive, out loopI);
-                    #endregion
-
-                    // 1) For each positive loop
-                    // 2)   Remove it from orderedLoops.
-                    // 3)   Create a new group
-                    // 4)   Insert the first node from all the negative loops remaining into the group list in the correct sorted order.
-                    // 5)   Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
-                    //         Refer to http://alienryderflex.com/polygon/ for how to determine if a point is inside a polygon.
-                    // 6)   If not inside, remove that nodes from the group list. 
-                    // 7)      else remove the negative loop from orderedLoops and merge the negative loop with the group list.
-                    // 8)   Continue with Trapezoidation
-                    var listPositive = isPositive.ToList();
-                    var completeListSortedLoops = new List<List<Vertex2D>>(sortedPolygonNodes);
-                    var numTriangles = 0;
-                    while (polygonNodes.Any())
-                    {
-                        //Get information about positive loop, remove from loops, and create new group
-                        loopI = listPositive.FindIndex(true);
-                        if (loopI == -1) throw new Exception("Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
-                        var sortedGroup = new List<Vertex2D>(sortedPolygonNodes[loopI]);
-                        var group = new List<int> { sortedGroup[0].LoopID };
-                        listPositive.RemoveAt(loopI);
-                        polygonNodes.RemoveAt(loopI);
-                        sortedPolygonNodes.RemoveAt(loopI);
-
-                        //Insert the first node from all the negative loops remaining into the group list in the correct sorted order.
-                        for (var j = 0; j < polygonNodes.Count; j++)
-                        {
-                            if (listPositive[j] == false)
-                            {
-                                InsertNodeInSortedList(sortedGroup, sortedPolygonNodes[j][0]);
-                            }
-                        }
-
-                        //inititallize lineList and sortedNodes
-                        var lineList = new List<PolygonSegment>();
-
-                        #region Trapezoidize Polygons
-
-                        var trapTree = new List<PartialTrapezoid>();
-                        var completedTrapezoids = new List<Trapezoid>();
-
-                        //Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
-                        //for each node in sortedNodes, update the lineList. Note that at this point each node only has two edges.
-                        for (var j = 0; j < sortedGroup.Count; j++)
-                        {
-                            var node = sortedGroup[j];
-                            PolygonSegment leftLine = null;
-                            PolygonSegment rightLine = null;
-
-                            //Check if negative loop is inside polygon 
-                            //note that listPositive changes order /size , while isPositive is static like loopID.
-                            //Similarly points2D is static.
-                            if (node == completeListSortedLoops[node.LoopID][0] && !isPositive[node.LoopID])
-                            //if first point in the sorted loop and loop is negative 
-                            {
-                                bool isInside;
-                                bool isOnLine;
-                                //If remainder is not equal to 0, then it is odd.
-                                //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
-                                {
-                                    isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
-                                }
-                                else isInside = false;
-                                if (isInside)
-                                {
-                                    //NOTE: This node must be a reflex upward point by observation
-                                    //leftLine and rightLine are set in the two previous call and are now not null.
-                                    //Add remaining points from loop into sortedGroup.
-                                    MergeSortedListsOfNodes(sortedGroup, completeListSortedLoops[node.LoopID], node);
-
-                                    //Remove this loop from lists of loops and the boolean list
-                                    var loop = completeListSortedLoops[node.LoopID];
-                                    var k = sortedPolygonNodes.FindIndex(loop);
-                                    listPositive.RemoveAt(k);
-                                    polygonNodes.RemoveAt(k);
-                                    sortedPolygonNodes.RemoveAt(k);
-                                    group.Add(node.LoopID);
-                                }
-                                else
-                                {
-                                    sortedGroup.Remove(node);
-                                    j--; //Pick the same index for the next iteration as the node which was just removed
-                                    continue;
-                                }
-                            }
-
-                            //Add to or remove from Red-Black Tree
-                            if (lineList.Contains(node.StartLine))
-                            {
-                                lineList.Remove(node.StartLine);
-                            }
-                            else
-                            {
-                                lineList.Add(node.StartLine);
-                            }
-                            if (lineList.Contains(node.EndLine))
-                            {
-                                lineList.Remove(node.EndLine);
-                            }
-                            else
-                            {
-                                lineList.Add(node.EndLine);
-                            }
-
-                            switch (node.Type)
-                            {
-                                case NodeType.DownwardReflex:
-                                    {
-                                        FindLeftLine(node, lineList, out leftLine);
-                                        FindRightLine(node, lineList, out rightLine);
-
-                                        //Close two trapezoids
-                                        //Left trapezoid:
-                                        InsertTrapezoid(node, leftLine, node.StartLine, trapTree, completedTrapezoids);
-                                        //Right trapezoid:
-                                        InsertTrapezoid(node, node.EndLine, rightLine, trapTree, completedTrapezoids);
-
-                                        //Create one new partial trapezoid
-                                        var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, rightLine);
-                                        trapTree.Add(newPartialTrapezoid);
-                                    }
-                                    break;
-                                case NodeType.UpwardReflex:
-                                    {
-                                        if (leftLine == null) //If from the first negative point, leftLine and rightLine will already be set.
-                                        {
-                                            FindLeftLine(node, lineList, out leftLine);
-                                            FindRightLine(node, lineList, out rightLine);
-                                        }
-
-                                        //Close one trapezoid
-                                        InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
-
-                                        //Create two new partial trapezoids
-                                        //Left Trapezoid
-                                        var newPartialTrapezoid1 = new PartialTrapezoid(node, leftLine, node.EndLine);
-                                        trapTree.Add(newPartialTrapezoid1);
-                                        //Right Trapezoid
-                                        var newPartialTrapezoid2 = new PartialTrapezoid(node, node.StartLine, rightLine);
-                                        trapTree.Add(newPartialTrapezoid2);
-                                    }
-                                    break;
-                                case NodeType.Peak:
-                                    {
-                                        //Create one new partial trapezoid
-                                        var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, node.EndLine);
-                                        trapTree.Add(newPartialTrapezoid);
-                                    }
-                                    break;
-                                case NodeType.Root:
-                                    {
-                                        //Close one trapezoid
-                                        InsertTrapezoid(node, node.EndLine, node.StartLine, trapTree, completedTrapezoids);
-                                    }
-                                    break;
-                                case NodeType.Left:
-                                    {
-                                        //Create one trapezoid
-                                        FindLeftLine(node, lineList, out leftLine);
-                                        rightLine = node.StartLine;
-                                        InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
-
-                                        //Create one new partial trapezoid
-                                        var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, node.EndLine);
-                                        trapTree.Add(newPartialTrapezoid);
-                                    }
-                                    break;
-                                case NodeType.Right:
-                                    {
-                                        //Create one trapezoid
-                                        FindRightLine(node, lineList, out rightLine);
-                                        leftLine = node.EndLine;
-                                        InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
-
-                                        //Create one new partial trapezoid
-                                        var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, rightLine);
-                                        trapTree.Add(newPartialTrapezoid);
-                                    }
-                                    break;
-                            }
-                        }
-                        if (trapTree.Count > 0)
-                        {
-                            throw new Exception("Trapezoidation failed to complete properly. Check to see that the assumptions are met.");
-                        }
-                        #endregion
-
-                        #region Create Monotone Polygons
-
-                        //for each trapezoid with a reflex edge, split in two. 
-                        //Insert new trapezoids in correct position in list.
-                        for (var j = 0; j < completedTrapezoids.Count; j++)
-                        {
-                            var trapezoid = completedTrapezoids[j];
-                            if (trapezoid.TopNode.Type == NodeType.DownwardReflex) //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
-                            {
-                                var newLine = new PolygonSegment(trapezoid.TopNode, trapezoid.BottomNode);
-                                completedTrapezoids.RemoveAt(j);
-                                var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
-                                var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
-                                completedTrapezoids.Insert(j, rightTrapezoid); //right trapezoid will end up right below left trapezoid
-                                completedTrapezoids.Insert(j, leftTrapezoid); //left trapezoid will end up were the original trapezoid was located
-                                j++; //Extra counter to skip extra trapezoid
-                            }
-                            else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
-                            {
-                                var newLine = new PolygonSegment(trapezoid.TopNode, trapezoid.BottomNode);
-                                completedTrapezoids.RemoveAt(j);
-                                var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
-                                var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
-                                completedTrapezoids.Insert(j, rightTrapezoid); //right trapezoid will end up right below left trapezoid
-                                completedTrapezoids.Insert(j, leftTrapezoid); //left trapezoid will end up were the original trapezoid was located
-                                j++; //Extra counter to skip extra trapezoid
-                            }
-                        }
-
-                        //Create Monotone Polygons from Trapezoids
-                        var currentTrap = completedTrapezoids[0];
-                        var monotoneTrapPolygon1 = new List<Trapezoid> { currentTrap };
-                        var monotoneTrapPolygons = new List<List<Trapezoid>> { monotoneTrapPolygon1 };
-                        //for each trapezoid except the first one, which was added in the intitialization above.
-                        for (var j = 1; j < completedTrapezoids.Count; j++)
-                        {
-                            //Check if next trapezoid can attach to any existing monotone polygon
-                            var boolstatus = false;
-                            foreach (var monotoneTrapPolygon in monotoneTrapPolygons)
-                            {
-                                currentTrap = monotoneTrapPolygon.Last();
-
-                                if (currentTrap.BottomNode == completedTrapezoids[j].TopNode &&
-                                    (currentTrap.LeftLine == completedTrapezoids[j].LeftLine ||
-                                     currentTrap.RightLine == completedTrapezoids[j].RightLine))
-                                {
-                                    monotoneTrapPolygon.Add(completedTrapezoids[j]);
-                                    boolstatus = true;
-                                    break;
-                                }
-                            }
-                            // If they cannot be attached to any existing monotone polygon, create a new monotone polygon
-                            if (boolstatus == false)
-                            {
-                                var trapezoidList = new List<Trapezoid> { completedTrapezoids[j] };
-                                monotoneTrapPolygons.Add(trapezoidList);
-                            }
-                        }
-
-                        //Convert the lists of trapezoids that form monotone polygons into the monotone polygon class\
-                        //This class includes a sorted list of all the points in the monotone polygon and two monotone chains.
-                        //Both of these lists are used during traingulation.
-                        var monotonePolygons = new List<MonotonePolygon>();
-                        foreach (var monotoneTrapPoly in monotoneTrapPolygons)
-                        {
-                            //Biuld the right left chains and the sorted list of all nodes
-                            var monotoneRightChain = new List<Vertex2D>();
-                            var monotoneLeftChain = new List<Vertex2D>();
-                            var sortedMonotonePolyNodes = new List<Vertex2D>();
-
-                            //Add upper node to both chains and sorted list
-                            monotoneRightChain.Add(monotoneTrapPoly[0].TopNode);
-                            monotoneLeftChain.Add(monotoneTrapPoly[0].TopNode);
-                            sortedMonotonePolyNodes.Add(monotoneTrapPoly[0].TopNode);
-
-                            //Add all the middle nodes to one chain (right or left)
-                            for (var j = 1; j < monotoneTrapPoly.Count; j++)
-                            {
-                                //Add the topNode of each trapezoid (minus the initial trapezoid) to the sorted list.
-                                sortedMonotonePolyNodes.Add(monotoneTrapPoly[j].TopNode);
-
-                                //If trapezoid upper node is on the right line, add it to the right chain
-                                if (monotoneTrapPoly[j].RightLine.FromPoint == monotoneTrapPoly[j].TopNode ||
-                                    monotoneTrapPoly[j].RightLine.ToPoint == monotoneTrapPoly[j].TopNode)
-                                {
-                                    monotoneRightChain.Add(monotoneTrapPoly[j].TopNode);
-                                }
-                                //Else add it to the left chain
-                                else
-                                {
-                                    monotoneLeftChain.Add(monotoneTrapPoly[j].TopNode);
-                                }
-                            }
-
-                            //Add bottom node of last trapezoid to both chains and sorted list
-                            monotoneRightChain.Add(monotoneTrapPoly.Last().BottomNode);
-                            monotoneLeftChain.Add(monotoneTrapPoly.Last().BottomNode);
-                            sortedMonotonePolyNodes.Add(monotoneTrapPoly.Last().BottomNode);
-
-                            //Create new monotone polygon based on these two chains and sorted list.
-                            var monotonePolygon = new MonotonePolygon(monotoneLeftChain, monotoneRightChain, sortedMonotonePolyNodes);
-                            monotonePolygons.Add(monotonePolygon);
-                        }
-                        #endregion
-
-                        #region DEBUG: Find a chain containing a particular vertex
-                        //var vertexInQuestion = new Vertex(new Vector2 { 200.0, 100.0, 750.0 });
-                        //foreach (var monotonePolygon in monotonePolygons)
-                        //{
-                        //    foreach (var node in monotonePolygon.SortedNodes)
-                        //    {
-                        //        var vertex = node.Point.References[0];
-                        //        if (vertex.X.IsPracticallySame(vertexInQuestion.X) &&
-                        //            vertex.Y.IsPracticallySame(vertexInQuestion.Y) &&
-                        //            vertex.Z.IsPracticallySame(vertexInQuestion.Z))
-                        //        {
-                        //            break;
-                        //        }
-                        //    }
-                        //}
-                        #endregion
-
-                        #region Triangulate Monotone Polygons
-                        //Triangulates the monotone polygons
-                        foreach (var monotonePolygon2 in monotonePolygons)
-                            triangleFaceList.AddRange(Triangulate(monotonePolygon2));
-                        //numTriangles += newTriangles.Count;
-                        #endregion
-                    }
-                    //Check to see if the proper number of triangles were created from this set of loops
-                    //For a polygon: triangles = (number of vertices) - 2
-                    //The addition of negative loops makes this: triangles = (number of vertices) + 2*(number of negative loops) - 2
-                    //The most general form (by inspection) is then: triangles = (number of vertices) + 2*(number of negative loops) - 2*(number of positive loops)
-                    //You could individually solve the equation for each positive loop, but simpler just to use most general form.
-                    //if (numTriangles != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
-                    //{
-                    //    throw new Exception("Incorrect number of triangles created in triangulate function");
-                    //}
-                    successful = true;
-
-                    #region DEBUG: Find a particular triangle or all triangles with a particular vertex
-                    //Find all triangles with a particular vertex
-                    //var vertexInQuestion1 = new Vertex(new Vector2 { 200.0, 100.0, 750.0 });
-                    //var vertexInQuestion2 = new Vertex(new Vector2 { 50.0, 100.0, 784.99993896484375 });
-                    //var vertexInQuestion3 = new Vertex(new Vector2 { 250.0, 100.0, 657.68762588382879 });
-                    //var trianglesInQuestion = new List<Vertex[]>();
-                    //foreach (var triangle in triangles)
-                    //{
-                    //    foreach (var vertex in triangle)
-                    //    {
-                    //        if (vertex.X.IsPracticallySame(vertexInQuestion1.X) && 
-                    //            vertex.Y.IsPracticallySame(vertexInQuestion1.Y) && 
-                    //            vertex.Z.IsPracticallySame(vertexInQuestion1.Z))
-                    //        {
-                    //            trianglesInQuestion.Add(triangle);
-                    //            break;
-                    //        }
-                    //    }
-                    //}
-                    //trianglesInQuestion.Clear();
-                    //var p = -1;
-                    //for (var q = 0; q < triangles.Count(); q++ )
-                    //{
-                    //    var triangle = triangles[q];
-                    //    foreach (var vertex in triangle)
-                    //    {
-                    //        if (vertex.X.IsPracticallySame(vertexInQuestion1.X) &&
-                    //            vertex.Y.IsPracticallySame(vertexInQuestion1.Y) &&
-                    //            vertex.Z.IsPracticallySame(vertexInQuestion1.Z))
-                    //        {
-                    //            foreach (var vertex2 in triangle)
-                    //            {
-                    //                if (vertex2.X.IsPracticallySame(vertexInQuestion2.X) &&
-                    //                    vertex2.Y.IsPracticallySame(vertexInQuestion2.Y) &&
-                    //                    vertex2.Z.IsPracticallySame(vertexInQuestion2.Z))
-                    //                {
-                    //                    foreach (var vertex3 in triangle)
-                    //                    {
-                    //                        if (vertex3.X.IsPracticallySame(vertexInQuestion3.X) &&
-                    //                            vertex3.Y.IsPracticallySame(vertexInQuestion3.Y) &&
-                    //                            vertex3.Z.IsPracticallySame(vertexInQuestion3.Z))
-                    //                        {
-                    //                            trianglesInQuestion.Add(triangle);
-                    //                            p = q;
-                    //                            break;
-                    //                        }
-                    //                    }
-                    //                }
-                    //            }
-                    //        }
-                    //    }
-                    //}
-                    //trianglesInQuestion.Clear();
-                    #endregion
-
+                    return triangleFaceList;
                 }
-                catch (Exception e)
+                catch (Exception exception)
                 {
-                    if (attempts >= 3)
-                    {
-                        throw new Exception("Triangulation failed after " + attempts +
-                                            " attempts. Points may be too close to distinguish.");
-                    }
-                    attempts++;
+                    if (randomAngle != 0)
+                        polygon.Transform(Matrix3x3.CreateRotation(-randomAngle));
                 }
             }
-            while (!successful);
-            return triangleFaceList;
+            return null;
         }
 
-        private static List<List<Vertex2D>> getNumPositiveAndNegativeLoops(List<List<Vertex2D>> polygonNodes, List<List<Vertex2D>> sortedPolygonNodes, List<List<PolygonSegment>> polygonLines, int loopsCount, out bool[] isPositive, out int loopI)
+        private static IEnumerable<Polygon> MakeXMonotonePolygons(Polygon polygon)
         {
-            var negativeLoopCount = 0;
-            var positiveLoopCount = 0;
-            isPositive = new bool[loopsCount];
-            //First, find the first node from each loop and then sort them. This determines the order the loops
-            //will be visited in.
-            var sortedFirstNodes = sortedPolygonNodes.Select(sortedLoop => sortedLoop[0])
-                .OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
-            //Use a red-black tree to track whether loops are inside other loops
-            var tempSortedLoops1 = new List<List<Vertex2D>>(sortedPolygonNodes);
-            while (tempSortedLoops1.Any())
+            var sortedVertices =
+                CombineSortedVerticesIntoOneCollection(polygon.AllPolygons.Select(p => p.OrderedXVertices).ToList());
+            var newEdgeDict = new Dictionary<Vertex2D,Vertex2D>();
+            var edgeDatums = new List<(PolygonSegment, Vertex2D)>();
+            foreach (var vertex in sortedVertices)
             {
-                //Set the start loop and remove necessary information
-                var startLoop = sortedPolygonNodes[sortedFirstNodes[0].LoopID];
-                isPositive[sortedFirstNodes[0].LoopID] = true; //The first loop in the group must always be CCW positive
-                sortedFirstNodes.RemoveAt(0);
-                tempSortedLoops1.Remove(startLoop);
-                if (!sortedFirstNodes.Any()) continue; //Exit while loop
-                var sortedGroup = new List<Vertex2D>(startLoop);
-
-                //Add the remaining first points from each loop into sortedGroup.
-                foreach (var firstNode in sortedFirstNodes)
+                var monoChange = GetMonotonicityChange(vertex);
+                var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
+                if (monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
+                    // then it's regular
                 {
-                    InsertNodeInSortedList(sortedGroup, firstNode);
+                    if (vertex.StartLine.Vector.X > 0)
+                        edgeDatums.Add(vertex.StartLine, vertex);
                 }
-
-                //inititallize lineList 
-                var lineList = new List<PolygonSegment>();
-                for (var j = 0; j < sortedGroup.Count; j++)
+                else if (cornerCross > 0) //then either start or end
                 {
-                    var node = sortedGroup[j];
-
-                    if (sortedFirstNodes.Contains(node)) //if first point in the sorted loop 
-                    {
-                        bool isInside;
-                        bool isOnLine;
-                        //If remainder is not equal to 0, then it is odd.
-                        //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                        PolygonSegment leftLine;
-                        if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
-                        {
-                            PolygonSegment rightLine;
-                            isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
-                        }
-                        else isInside = false;
-                        if (isInside) //Merge the loop into this one and remove from the tempList
-                        {
-                            isPositive[node.LoopID] = false; //This is a negative loop
-                            sortedFirstNodes.Remove(node);
-                            tempSortedLoops1.Remove(sortedPolygonNodes[node.LoopID]);
-                            if (!tempSortedLoops1.Any()) break; //That was the last loop
-                            MergeSortedListsOfNodes(sortedGroup, sortedPolygonNodes[node.LoopID], node);
-                        }
-                        else //remove the node from this group and continue
-                        {
-                            sortedGroup.Remove(node);
-                            j--; //Pick the same index for the next iteration as the node which was just removed
-                            continue;
-                        }
-                    }
-
-                    //Add to or remove from Red-Black Tree
-                    if (lineList.Contains(node.StartLine))
-                    {
-                        lineList.Remove(node.StartLine);
-                    }
-                    else
-                    {
-                        lineList.Add(node.StartLine);
-                    }
-                    if (lineList.Contains(node.EndLine))
-                    {
-                        lineList.Remove(node.EndLine);
-                    }
-                    else
-                    {
-                        lineList.Add(node.EndLine);
-                    }
+                }
+                else //then either split or merge
+                {
                 }
             }
-
-            //Check to see that the loops are ordered correctly to their isPositive boolean
-            //If they are incorrectly ordered, reverse the order.
-            var nodesLoopsCorrected = new List<List<Vertex2D>>();
-            for (var j = 0; j < polygonNodes.Count; j++)
-            {
-                var orderedLoop = polygonNodes[j];
-                var index = orderedLoop.IndexOf(sortedPolygonNodes[j][0]); // index of first node in orderedLoop
-                NodeType nodeType;
-                if (index == 0)
-                {
-                    nodeType = GetNodeType(orderedLoop.Last(), orderedLoop.First(), orderedLoop[1]);
-                }
-                else if (index == orderedLoop.Count - 1)
-                {
-                    nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop.Last(), orderedLoop.First());
-                }
-                else nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop[index], orderedLoop[index + 1]);
-                //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
-                //reverse the order of the loop
-                if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
-                {
-                    orderedLoop.Reverse();
-                    //Also, reorder all the lines for these nodes
-                    for (int i = 0; i < polygonLines[j].Count; i++)
-                        polygonLines[j][i] = polygonLines[j][i].Reverse();
-                    //And reorder all the node - line identifiers
-                    foreach (var node in orderedLoop)
-                    {
-                        var tempLine = node.EndLine;
-                        node.EndLine = node.StartLine;
-                        node.StartLine = tempLine;
-                    }
-                }
-                nodesLoopsCorrected.Add(orderedLoop);
-            }
-            polygonNodes = new List<List<Vertex2D>>(nodesLoopsCorrected);
-
-
-            //Set the NodeTypes of every Vertex2D. This step is after "isPositive == null" fuction because
-            //the CW/CCW order of the loops must be accurate.
-            loopI = 0;
-            foreach (var orderedLoop in polygonNodes)
-            {
-                //Set nodeType for the first node
-                orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
-
-                //Set nodeTypes for other nodes
-                for (var j = 1; j < orderedLoop.Count - 1; j++)
-                {
-                    orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
-                }
-
-                //Set nodeType for the last node
-                //Create last node
-                orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
-
-                //Debug to see if the proper balance of point types has been used
-                var downwardReflexCount = 0;
-                var upwardReflexCount = 0;
-                var peakCount = 0;
-                var rootCount = 0;
-                foreach (var node in orderedLoop)
-                {
-                    if (node.Type == NodeType.DownwardReflex) downwardReflexCount++;
-                    else if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
-                    else if (node.Type == NodeType.Peak) peakCount++;
-                    else if (node.Type == NodeType.Root) rootCount++;
-                    else if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
-                }
-                if (isPositive[loopI]) //If a positive loop, the following conditions must be balanced
-                {
-                    if (peakCount != downwardReflexCount + 1 || rootCount != upwardReflexCount + 1)
-                    {
-                        throw new Exception("Incorrect balance of node types");
-                    }
-                }
-                else //If negative loop, the conditions change
-                {
-                    if (peakCount != downwardReflexCount - 1 || rootCount != upwardReflexCount - 1)
-                    {
-                        throw new Exception("Incorrect balance of node types");
-                    }
-                }
-                loopI++;
-            }
-
-            //Get the number of negative loops
-            foreach (var boolean in isPositive)
-            {
-                if (boolean) positiveLoopCount++;
-                else negativeLoopCount++;
-            }
-
-            return polygonNodes;
         }
 
-
-        #region Get Node Type
-        /// <summary>
-        /// Gets the type of node for B.
-        /// </summary>
-        /// A, B, and C are counterclockwise ordered points.
-        internal static NodeType GetNodeType(Vertex2D a, Vertex2D b, Vertex2D c)
+        private static IEnumerable<Vertex2D> CombineSortedVerticesIntoOneCollection(List<List<Vertex2D>> orderedListsOfVertices)
         {
-            var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(a.Coordinates, b.Coordinates, c.Coordinates);
-            if (angle > Math.PI * 2) throw new Exception();
-            if (a.Y.IsPracticallySame(b.Y))
+            var numLists = orderedListsOfVertices.Count;
+            var currentIndices = new int[numLists];
+            while (true)
             {
-                if (c.Y.IsPracticallySame(b.Y))
+                var lowestXValue = double.PositiveInfinity;
+                var lowestYValue = double.PositiveInfinity;
+                var lowestEntry = -1;
+                for (int i = 0; i < numLists; i++)
                 {
-                    if (a.X.IsPracticallySame(c.X)) return NodeType.Duplicate; //signifies an error (two points with practically the same coordinates)
-                    return a.X > c.X ? NodeType.Right : NodeType.Left;
-                }
-                if (c.Y > b.Y) return angle > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
-                //else c.Y < b.Y
-                return angle > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
-            }
-
-            if (a.Y < b.Y)
-            {
-                if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Peak : NodeType.Left;
-                if (c.Y > b.Y) return NodeType.Left;
-                //else c.Y < b.Y
-                return angle < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
-            }
-
-            //else a.Y > b.Y)
-            if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Root : NodeType.Right;
-            if (c.Y > b.Y) return angle < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
-            //else (c.Y < b.Y)
-            return NodeType.Right;
-        }
-        #endregion
-
-        #region Create Trapezoid and Insert Into List
-        internal static void InsertTrapezoid(Vertex2D node, PolygonSegment leftLine, PolygonSegment rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
-        {
-            var matchesTrap = false;
-            var i = 0;
-            while (matchesTrap == false && i < trapTree.Count)
-            {
-                var partialTrap = trapTree[i];
-                if (partialTrap.Contains(leftLine, rightLine))
-                {
-                    var newTrapezoid = new Trapezoid(partialTrap.TopNode, node, partialTrap.LeftLine, partialTrap.RightLine);
-                    completedTrapezoids.Add(newTrapezoid);
-                    trapTree.Remove(partialTrap);
-                    matchesTrap = true;
-                }
-                i++;
-            }
-            if (matchesTrap == false) throw new Exception("Trapezoid failed to find left or right line.");
-        }
-        #endregion
-
-        #region Find Lines to Left or Right
-        internal static int LinesToLeft(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine, out bool isOnLine)
-        {
-            isOnLine = false;
-            leftLine = null;
-            var xleft = double.NegativeInfinity;
-            var counter = 0;
-            foreach (var line in lineList)
-            {
-                //Check to make sure that the line does not contain the node
-                if (line.FromPoint == node || line.ToPoint == node) continue;
-                //Find distance to line
-                var x = line.XGivenY(node.Y, out _);
-                var xdif = x - node.X;
-                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
-                if (xdif < 0 && !xdif.IsNegligible())//Moved to the left by some tolerance 
-                {
-
-                    counter++;
-                    if (xdif.IsPracticallySame(xleft)) // if approximately equal
+                    var index = currentIndices[i];
+                    if (orderedListsOfVertices[i].Count <= index) continue;
+                    var vertex = orderedListsOfVertices[i][index];
+                    if (vertex.X < lowestXValue ||
+                        (vertex.X == lowestXValue && vertex.Y < lowestYValue))
                     {
-                        //Find the shared node
-                        Vertex2D nodeOnLine;
-                        if (leftLine == null) throw new Exception("Null Reference");
-                        if (leftLine.ToPoint == line.FromPoint)
-                        {
-                            nodeOnLine = line.FromPoint;
-                        }
-                        else if (leftLine.FromPoint == line.ToPoint)
-                        {
-                            nodeOnLine = line.ToPoint;
-                        }
-                        else throw new Exception("Rounding Error");
-
-                        //Choose whichever line has the right most other node
-                        //Note that this condition will only occur when line and
-                        //leftLine share a node. 
-                        leftLine = nodeOnLine.EndLine.FromPoint.X > nodeOnLine.StartLine.ToPoint.X ? nodeOnLine.EndLine : nodeOnLine.StartLine;
-                    }
-                    else if (xdif >= xleft)
-                    {
-                        xleft = xdif;
-                        leftLine = line;
+                        lowestXValue = vertex.X;
+                        lowestYValue = vertex.Y;
+                        lowestEntry = i;
                     }
                 }
+                if (lowestEntry==-1) yield break;
+                yield return orderedListsOfVertices[lowestEntry][currentIndices[lowestEntry]];
+                currentIndices[lowestEntry]++;
             }
-            return counter;
         }
 
-        internal static void FindLeftLine(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment leftLine)
+        private static IEnumerable<int[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {
-            bool isOnLine;
-            LinesToLeft(node, lineList, out leftLine, out isOnLine);
-            if (leftLine == null) throw new Exception("Failed to find line to left.");
+            throw new NotImplementedException();
         }
 
-        internal static int LinesToRight(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine, out bool isOnLine)
-        {
-            isOnLine = false;
-            rightLine = null;
-            var xright = double.PositiveInfinity;
-            var counter = 0;
-            foreach (var line in lineList)
-            {
-                //Check to make sure that the line does not contain the node
-                if (line.FromPoint == node || line.ToPoint == node) continue;
-                //Find distance to line
-                var x = line.XGivenY(node.Y, out _);
-                var xdif = x - node.X;
-                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
-                if (xdif > 0 && !xdif.IsNegligible())//Moved to the right by some tolerance
-                {
-                    counter++;
-                    if (xdif.IsPracticallySame(xright)) // if approximately equal
-                    {
-                        //Choose whichever line has the right most other node
-                        //Note that this condition will only occur when line and
-                        //leftLine share a node.                        
-                        Vertex2D nodeOnLine;
-                        if (rightLine == null) throw new Exception("Null Reference");
-                        if (rightLine.ToPoint == line.FromPoint)
-                        {
-                            nodeOnLine = line.FromPoint;
-                        }
-                        else if (rightLine.FromPoint == line.ToPoint)
-                        {
-                            nodeOnLine = line.ToPoint;
-                        }
-                        else throw new Exception("Rounding Error");
-
-                        //Choose whichever line has the right most other node
-                        rightLine = nodeOnLine.EndLine.FromPoint.X > nodeOnLine.StartLine.ToPoint.X ? nodeOnLine.StartLine : nodeOnLine.EndLine;
-                    }
-                    else if (xdif <= xright) //If less than
-                    {
-                        xright = xdif;
-                        rightLine = line;
-                    }
-                }
-            }
-            return counter;
-        }
-
-        internal static void FindRightLine(Vertex2D node, IEnumerable<PolygonSegment> lineList, out PolygonSegment rightLine)
-        {
-            bool isOnLine;
-            LinesToRight(node, lineList, out rightLine, out isOnLine);
-            if (rightLine == null) throw new Exception("Failed to find line to right.");
-        }
-        #endregion
-
-        #region Insert Node in Sorted List
-        internal static int InsertNodeInSortedList(List<Vertex2D> sortedNodes, Vertex2D node)
-        {
-            //Search for insertion location starting from the first element in the list.
-            for (var i = 0; i < sortedNodes.Count; i++)
-            {
-                if (node.Y.IsPracticallySame(sortedNodes[i].Y) && node.X.IsPracticallySame(sortedNodes[i].X)) //Descending X
-                {
-                    throw new Exception("Points are practically the same.");
-                }
-                if (node.Y.IsPracticallySame(sortedNodes[i].Y) && node.X > sortedNodes[i].X) //Descending X
-                {
-                    sortedNodes.Insert(i, node);
-                    return i;
-                }
-                if (node.Y > sortedNodes[i].Y) //Descending Y
-                {
-                    sortedNodes.Insert(i, node);
-                    return i;
-                }
-            }
-
-            //If not greater than any elements in the list, add the element to the end of the list
-            sortedNodes.Add(node);
-            return sortedNodes.Count - 1;
-        }
-        #endregion
-
-        #region Merge Two Sorted Lists of Nodes
-        internal static void MergeSortedListsOfNodes(List<Vertex2D> sortedNodes, List<Vertex2D> negativeLoop, Vertex2D startingNode)
-        {
-            //For each node in negativeLoop, minus the first node (which is already in the list)
-            var nodeId = sortedNodes.IndexOf(startingNode);
-            for (var i = 1; i < negativeLoop.Count; i++)
-            {
-                var isInserted = false;
-                //Starting from after the nodeID, search for an insertion location
-                for (var j = nodeId + 1; j < sortedNodes.Count; j++)
-                {
-                    if (negativeLoop[i].Y.IsPracticallySame(sortedNodes[j].Y) && negativeLoop[i].X.IsPracticallySame(sortedNodes[j].X)) //Descending X
-                    {
-                        throw new Exception("Points are practically the same.");
-                    }
-                    if (negativeLoop[i].Y.IsPracticallySame(sortedNodes[j].Y) && negativeLoop[i].X > sortedNodes[j].X) //Descending X
-                    {
-                        sortedNodes.Insert(j, negativeLoop[i]);
-                        isInserted = true;
-                        break;
-                    }
-                    if (negativeLoop[i].Y > sortedNodes[j].Y) //Descending Y
-                    {
-                        sortedNodes.Insert(j, negativeLoop[i]);
-                        isInserted = true;
-                        break;
-                    }
-                }
-
-                //If not greater than any elements in the list, ERROR. This should never happen since the negative loop is assumed
-                //to be fully encapsulated by the positive polygon.
-                if (isInserted == false)
-                {
-                    throw new Exception("Negative loop must be fully enclosed");
-                }
-            }
-        }
-        #endregion
-
-        #region Triangulate Monotone Polygon
-        internal static List<int[]> Triangulate(MonotonePolygon monotonePolygon)
-        {
-            var triangles = new List<int[]>();
-            var scan = new List<Vertex2D>();
-            var leftChain = monotonePolygon.LeftChain;
-            var rightChain = monotonePolygon.RightChain;
-            var sortedNodes = monotonePolygon.SortedNodes;
-
-
-            //For each node other than the start and finish, add a chain affiliation.
-            //Note that this is updated each time the triangulate function is called, 
-            //thus allowing a node to be part of multiple monotone polygons
-            for (var i = 1; i < leftChain.Count; i++)
-            {
-                var node = leftChain[i];
-                node.IsRightChain = false;
-                node.IsLeftChain = true;
-            }
-            for (var i = 1; i < rightChain.Count; i++)
-            {
-                var node = rightChain[i];
-                node.IsRightChain = true;
-                node.IsLeftChain = false;
-            }
-            //The start node belongs to both chains
-            var startNode = sortedNodes[0];
-            startNode.IsRightChain = true;
-            startNode.IsLeftChain = true;
-            //The end node belongs to both chains
-            var endNode = sortedNodes.Last();
-            endNode.IsRightChain = true;
-            endNode.IsLeftChain = true;
-
-            //Add first two nodes to scan 
-            scan.Add(startNode);
-            scan.Add(sortedNodes[1]);
-
-            //Begin to find triangles
-            for (var i = 2; i < sortedNodes.Count; i++)
-            {
-                var node = sortedNodes[i];
-                ////If the root, make the final triangle regardless of angle/area tolerance
-                if (i == sortedNodes.Count - 1 && scan.Count == 2)
-                {
-                    AddTriangle(triangles, node, scan[0], scan[1]);
-                    continue;
-                }
-                //If the nodes is on the opposite chain from any other node (s). 
-                if ((node.IsLeftChain && (scan.Last().IsLeftChain == false || scan[scan.Count - 2].IsLeftChain == false)) ||
-                    (node.IsRightChain && (scan.Last().IsRightChain == false || scan[scan.Count - 2].IsRightChain == false)))
-                {
-                    while (scan.Count > 1)
-                    {
-                        //Do not skip, even if angle is close to Math.PI, because skipping could break the algorithm (create incorrect triangles)
-                        //Better to output negligible triangles.
-                        AddTriangle(triangles, node, scan[0], scan[1]);
-                        scan.RemoveAt(0);
-                        //Make the new scan[0] point both left and right for the remaining chain
-                        //Essentially this moves the peak. 
-                        //Though not mentioned explicitly in algorithm description, this step is required.
-                        scan[0].IsLeftChain = true;
-                        scan[0].IsRightChain = true;
-                    }
-                    //If we haven't added the node to the list, add node to end of scan list
-                    scan.Add(node);
-                }
-                else
-                {
-                    var exitBool = false;
-                    while (scan.Count > 1 && exitBool == false)
-                    {
-                        //Check to see if the angle is concave (Strictly less than PI). Exit if it is convex.
-                        //Note that if the chain is the right chain, the order of nodes will be backwards 
-                        var angle = (node.IsRightChain)
-                            ? MiscFunctions.InteriorAngleBetweenEdgesInCCWList(node.Coordinates, scan.Last().Coordinates, scan[scan.Count - 2].Coordinates)
-                            : MiscFunctions.ExteriorAngleBetweenEdgesInCCWList(node.Coordinates, scan.Last().Coordinates, scan[scan.Count - 2].Coordinates);
-                        //Skip if greater than OR close to Math.PI, because that will yield a Negligible area triangle
-                        if (angle > Math.PI || Math.Abs(angle - Math.PI) < 1E-6)
-                        {
-                            exitBool = true;
-                            continue;
-                        }
-                        AddTriangle(triangles, scan[scan.Count - 2], scan.Last(), node);
-                        //Remove last node from scan list 
-                        scan.Remove(scan.Last());
-                    }
-                    //Regardless of whether the while loop is activated, add node to scan list
-                    scan.Add(node);
-                }
-            }
-            //Check to see if the proper number of triangles were created from this monotone polygon
-            if (triangles.Count != sortedNodes.Count - 2)
-            {
-                throw new Exception("Incorrect number of triangles created in triangulate monotone polgon function. This is likely due to angle and area tolerances.");
-            }
-            return triangles;
-        }
-
-        private static void AddTriangle(List<int[]> triangles, Vertex2D node1, Vertex2D node2, Vertex2D node3)
-        {
-            var cross = (node2.Coordinates - node1.Coordinates).Cross(node3.Coordinates - node1.Coordinates);
-            if (cross >= 0) triangles.Add(new[] { node1.IndexInList, node2.IndexInList, node3.IndexInList });
-            else triangles.Add(new[] { node3.IndexInList, node2.IndexInList, node1.IndexInList });
-        }
-        #endregion
     }
-
 }
