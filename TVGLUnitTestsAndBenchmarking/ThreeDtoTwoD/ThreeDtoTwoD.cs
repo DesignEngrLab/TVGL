@@ -59,10 +59,12 @@ namespace TVGLUnitTestsAndBenchmarking
                     var direction = Vector3.UnitVector((CartesianDirections)j);
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
-                    //var silhouette = solid.CreateSilhouetteSimple(direction);
-                    //Presenter.ShowAndHang(silhouette);
+
                     var silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);
+                    var length= solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
+                    var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
+                    solid.GetSliceContactData(plane, out var contactData);
                 }
             }
 

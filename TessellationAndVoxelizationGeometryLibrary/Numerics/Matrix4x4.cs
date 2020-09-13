@@ -1469,7 +1469,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Transposes the rows and columns of a matrix.
+        /// Transposes the specified matrix. Recall that this flips the matrix 
+        /// about its diagonal (rows become columns and columns become rows).
         /// </summary>
         /// <param name="matrix">The source matrix.</param>
         /// <returns>The transposed matrix.</returns>

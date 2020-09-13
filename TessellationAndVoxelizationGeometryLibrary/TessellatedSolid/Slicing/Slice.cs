@@ -123,8 +123,8 @@ namespace TVGL.Boolean_Operations
         /// <param name="setIntersectionGroups"></param>
         /// <param name="loopsToIgnore"></param>
         /// <param name="undoPlaneOffset"></param>
-        public static bool GetSliceContactData(this TessellatedSolid ts, Plane plane, out ContactData contactData, bool setIntersectionGroups,
-            ICollection<int> loopsToIgnore = null, bool undoPlaneOffset = false)
+        public static bool GetSliceContactData(this TessellatedSolid ts, Plane plane, out ContactData contactData,
+            bool setIntersectionGroups, ICollection<int> loopsToIgnore = null, bool undoPlaneOffset = false)
         {
             #region Get the loops
             //1. Offset positive and get the positive faces.

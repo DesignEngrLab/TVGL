@@ -188,7 +188,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         #region Public Static Methods
         /// <summary>
-        /// Returns the Euclidean distance between the two given points.
+        /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
+        /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
         /// </summary>
         /// <param name="value1">The first point.</param>
         /// <param name="value2">The second point.</param>
@@ -214,7 +215,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Returns the Euclidean distance squared between the two given points.
+        /// Returns the Euclidean distance squared between the two given points. This is useful when the actual
+        /// value of distance is not so imporant as the relative value to other distances. Taking the square-root
+        /// is expensive when called many times.
         /// </summary>
         /// <param name="value1">The first point.</param>
         /// <param name="value2">The second point.</param>
@@ -365,7 +368,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Transforms a vector normal by the given matrix.
+        /// Transforms a vector by the given matrix without the translation component.
+        /// This is often used for transforming normals, however note that proper transformations
+        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -385,6 +390,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 position.X * matrix.M12 + position.Y * matrix.M22);
         }
 
+        /// <summary>
+        /// Transforms a vector by the given matrix without the translation component.
+        /// This is often used for transforming normals, however note that proper transformations
+        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 TransformNoTranslate(Vector2 position, Matrix4x4 matrix)
         {

@@ -381,6 +381,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
         }
 
+        /// <summary>
+        /// Transposes the specified matrix. Recall that this flips the matrix about its diagonal (rows
+        /// become columns and columns become rows)
+        /// </summary>
+        /// <param name="m">The matrix to be transponsed.</param>
+        /// <returns>Matrix3x3.</returns>
         public static Matrix3x3 Transpose(Matrix3x3 m)
         { return new Matrix3x3(m.M11, m.M21, m.M31, m.M12, m.M22, m.M32, m.M13, m.M23, m.M33); }
 
