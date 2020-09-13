@@ -275,7 +275,80 @@ namespace TVGL.TwoDimensional
 
         private static IEnumerable<int[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {
-            throw new NotImplementedException();
+            Vertex2D bottomVertex = monoPoly.Vertices[0];
+            foreach (var vertex in monoPoly.Vertices.Skip(1))
+                if (bottomVertex.X > vertex.X || (bottomVertex.X == vertex.X && bottomVertex.Y > vertex.Y))
+                    bottomVertex = vertex;
+            var topVertex = bottomVertex;
+            var nextVertex = NextXVertex(ref bottomVertex, ref topVertex, out var belongsToBottom);
+
+            var concaveFunnelStack = new Stack<Vertex2D>();
+            concaveFunnelStack.Push(bottomVertex);
+            concaveFunnelStack.Push(nextVertex);
+
+            do
+            {
+                nextVertex = NextXVertex(ref bottomVertex, ref topVertex, out var newVertexIsOnBottom);
+                if (newVertexIsOnBottom == belongsToBottom)
+                {
+                    Vertex2D vertex1 = concaveFunnelStack.Pop();
+                    Vertex2D vertex2 = concaveFunnelStack.Pop();
+                    while (vertex1 != null &&
+                        (vertex1.Coordinates - nextVertex.Coordinates).Cross(vertex2.Coordinates - vertex1.Coordinates) > 0)
+                    {
+                        if (belongsToBottom)
+                            yield return new[] { nextVertex.IndexInList, vertex2.IndexInList, vertex1.IndexInList };
+                        else yield return new[] { nextVertex.IndexInList, vertex1.IndexInList, vertex2.IndexInList };
+                        vertex2 = vertex1;
+                        if (!concaveFunnelStack.Any()) vertex1 = concaveFunnelStack.Pop();
+                        else vertex1 = null;
+                    }
+                    concaveFunnelStack.Push(vertex2);
+                    if (vertex1 != null) concaveFunnelStack.Push(vertex1);
+                    concaveFunnelStack.Push(nextVertex);                    
+                }
+                else //connect this to all on the stack
+                {
+                    Vertex2D topOfStackVertex = null;
+                    Vertex2D prevVertex2 = null;
+                    while (!concaveFunnelStack.Any())
+                    {
+                        var prevVertex1 = concaveFunnelStack.Pop();
+                        if (topOfStackVertex == null) topOfStackVertex = prevVertex1;
+                        if (prevVertex2 != null)
+                        {
+                            if (belongsToBottom)
+                                yield return new[] { nextVertex.IndexInList, prevVertex2.IndexInList, prevVertex1.IndexInList };
+                            else yield return new[] { nextVertex.IndexInList, prevVertex1.IndexInList, prevVertex2.IndexInList };
+                        }
+                        prevVertex2 = prevVertex1;
+                    }
+                    concaveFunnelStack.Push(topOfStackVertex);
+                    concaveFunnelStack.Push(nextVertex);
+                    belongsToBottom = newVertexIsOnBottom;
+                }
+            } while (bottomVertex != null);
+        }
+
+        private static Vertex2D NextXVertex(ref Vertex2D topVertex, ref Vertex2D bottomVertex, out bool belongsToBottom)
+        {
+            var nextTopVertex = topVertex.EndLine.FromPoint;
+            var nextBottomVertex = bottomVertex.StartLine.ToPoint;
+            if (nextTopVertex == nextBottomVertex)
+            {
+                topVertex = bottomVertex = null;
+                belongsToBottom = false;
+                return nextTopVertex;
+            }
+            if (nextBottomVertex.X <= nextTopVertex.X)
+            {
+                belongsToBottom = true;
+                bottomVertex = nextBottomVertex;
+                return bottomVertex;
+            }
+            belongsToBottom = false;
+            topVertex = nextTopVertex;
+            return topVertex;
         }
 
     }
