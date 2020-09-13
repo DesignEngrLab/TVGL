@@ -54,7 +54,7 @@ namespace TVGL.TwoDimensional
         /// <param name="sortedVertices">The sorted vertices.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns><c>true</c> if [is non intersecting polygon inside] [the specified sorted vertices]; otherwise, <c>false</c>.</returns>
-        internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonSegment> sortedEdges, List<Vertex2D> sortedVertices, double tolerance)
+        internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonEdge> sortedEdges, List<Vertex2D> sortedVertices, double tolerance)
         {
             var edgeIndex = 0;
             foreach (var vertex in sortedVertices)
@@ -173,9 +173,9 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2 point, PolygonSegment line, double tolerance)
+        private static VerticalLineReferenceType DetermineLineToPointVerticalReferenceType(Vector2 point, PolygonEdge line, double tolerance)
         {
-            // this is basically the function PolygonSegment.YGivenX, but it is a little different here since check if line is horizontal cusp
+            // this is basically the function PolygonEdge.YGivenX, but it is a little different here since check if line is horizontal cusp
             if (point.IsPracticallySame(line.FromPoint.Coordinates, tolerance) &&
                 point.IsPracticallySame(line.ToPoint.Coordinates, tolerance))
             {   // this means the line is vertical and lines up with the point. Other adjacent line segments will be found
@@ -219,7 +219,7 @@ namespace TVGL.TwoDimensional
             var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
             return ArePointsInsidePolygonLines(sortedLines, sortedLines.Count, sortedPoints, out onBoundary, tolerance, onBoundaryIsInside);
         }
-        internal static bool ArePointsInsidePolygonLines(IList<PolygonSegment> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
+        internal static bool ArePointsInsidePolygonLines(IList<PolygonEdge> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
             out bool onBoundary, double tolerance, bool onBoundaryIsInside = true)
         {
             var evenNumberOfCrossings = true; // starting at zero. 
@@ -361,7 +361,7 @@ namespace TVGL.TwoDimensional
             var intersections = new List<double[]>();
             var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.X).ToList();
             var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
-            var currentLines = new HashSet<PolygonSegment>();
+            var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().X;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
             var pointIndex = 0;
@@ -411,7 +411,7 @@ namespace TVGL.TwoDimensional
             var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
                 subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToList();
             var tolerance = (sortedPoints[^1].Y - sortedPoints[0].Y) * Constants.BaseTolerance;
-            var currentLines = new HashSet<PolygonSegment>();
+            var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().Y;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
             var pointIndex = 0;
@@ -541,7 +541,7 @@ namespace TVGL.TwoDimensional
             out List<SegmentIntersection> intersections, double tolerance)
         {
             intersections = new List<SegmentIntersection>();
-            var possibleDuplicates = new List<(int, PolygonSegment, PolygonSegment)>();
+            var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>();
             //As a first check, determine if the axis aligned bounding boxes overlap. If not, then we can
             // safely return that the polygons are separated.
             if (subPolygonA.MinX > subPolygonB.MaxX ||
@@ -666,7 +666,7 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static void RemoveDuplicateIntersections(List<(int index, PolygonSegment lineA, PolygonSegment lineB)> possibleDuplicates, List<SegmentIntersection> intersections,
+        private static void RemoveDuplicateIntersections(List<(int index, PolygonEdge lineA, PolygonEdge lineB)> possibleDuplicates, List<SegmentIntersection> intersections,
             double tolerance)
         {
             foreach (var dupeData in possibleDuplicates)
@@ -699,8 +699,8 @@ namespace TVGL.TwoDimensional
         /// <param name="lineB">The line b.</param>
         /// <param name="intersections">The intersections.</param>
         /// <returns>PolygonSegmentRelationship.</returns>
-        internal static bool AddIntersectionBetweenLines(PolygonSegment lineA, PolygonSegment lineB,
-            List<SegmentIntersection> intersections, List<(int, PolygonSegment, PolygonSegment)> possibleDuplicates, double tolerance)
+        internal static bool AddIntersectionBetweenLines(PolygonEdge lineA, PolygonEdge lineB,
+            List<SegmentIntersection> intersections, List<(int, PolygonEdge, PolygonEdge)> possibleDuplicates, double tolerance)
         {
             // first check if bounding boxes overlap. Actually, we don't need to check the x values (lineA.XMax < lineB.XMin || 
             // lineB.XMax < lineA.XMin)- this is already known from the calling function and the way it calls based on sorted x values
@@ -833,8 +833,8 @@ namespace TVGL.TwoDimensional
         }
 
 
-        internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationship(in PolygonSegment lineA,
-            in PolygonSegment lineB, in WhereIsIntersection where, in double lineACrossLineB, in double tolerance)
+        internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationship(in PolygonEdge lineA,
+            in PolygonEdge lineB, in WhereIsIntersection where, in double lineACrossLineB, in double tolerance)
         {
             // first off - handle the intermediate case right away. since it's simple and happens often
             if (where == WhereIsIntersection.Intermediate)
@@ -993,11 +993,11 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static PolygonSegment[] GetOrderedLines(List<Vertex2D> orderedPoints)
+        private static PolygonEdge[] GetOrderedLines(List<Vertex2D> orderedPoints)
         {
             var length = orderedPoints.Count;
-            var result = new PolygonSegment[length];
-            var smallHashOfLinesOfEqualX = new HashSet<PolygonSegment>();
+            var result = new PolygonEdge[length];
+            var smallHashOfLinesOfEqualX = new HashSet<PolygonEdge>();
             var k = 0;
             for (int i = 0; i < length; i++)
             {
@@ -1028,7 +1028,7 @@ namespace TVGL.TwoDimensional
         private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA, double tolerance)
         {
             var intersections = new List<SegmentIntersection>();
-            var possibleDuplicates = new List<(int index, PolygonSegment lineA, PolygonSegment lineB)>();
+            var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
             var numLines = polygonA.Lines.Count;
             var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
             for (int i = 0; i < numLines - 1; i++)

@@ -219,7 +219,7 @@
     public class Polygon
         public List<Vector2> Path
         public List<Vertex2D> Vertices
-        public List<PolygonSegment> Lines
+        public List<PolygonEdge> Lines
         public List<Polygon> InnerPolygons
         public int Index { get; set; }
         public bool IsPositive
@@ -230,7 +230,7 @@
         public double MaxY
         public double MinY
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
-        public Polygon(List<Vertex2D> points, List<PolygonSegment> lines, int index = -1)
+        public Polygon(List<Vertex2D> points, List<PolygonEdge> lines, int index = -1)
         public bool IsConvex()
     public static class PolygonOperations
         public static double Perimeter(this IEnumerable<IEnumerable<Vector2>> paths)

@@ -33,7 +33,7 @@ namespace TVGL.TwoDimensional
             return newPolygons.CreateShallowPolygonTrees(true, out strayHoles);
         }
 
-        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge, out bool startAgain)
+        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge, out bool startAgain)
         {
             startAgain = false;
             if (intersectionData.VisitedB && intersectionData.VisitedA)
@@ -62,7 +62,7 @@ namespace TVGL.TwoDimensional
         }
 
         protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
-            PolygonSegment currentEdge, PolygonSegment startingEdge)
+            PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             return startingIntersection == currentIntersection && currentEdge == startingEdge;
         }

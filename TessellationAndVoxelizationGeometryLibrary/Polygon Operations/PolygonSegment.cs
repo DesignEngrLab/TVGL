@@ -22,7 +22,8 @@ namespace TVGL.TwoDimensional
     /// <summary>
     ///     NodeLine
     /// </summary>
-    public class PolygonSegment
+    public class PolygonEdge
+
     {
         #region Properties
         /// <summary>
@@ -138,7 +139,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="fromNode">From node.</param>
         /// <param name="toNode">To node.</param>
-        internal PolygonSegment(Vertex2D fromNode, Vertex2D toNode)
+        internal PolygonEdge(Vertex2D fromNode, Vertex2D toNode)
         {
             FromPoint = fromNode;
             ToPoint = toNode;
@@ -169,7 +170,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="other">The other.</param>
         /// <returns><c>true</c> if [is adjacent to] [the specified other]; otherwise, <c>false</c>.</returns>
-        public bool IsAdjacentTo(PolygonSegment other)
+        public bool IsAdjacentTo(PolygonEdge other)
         {
             return (FromPoint == other.ToPoint
                 || ToPoint == other.FromPoint);
@@ -187,9 +188,9 @@ namespace TVGL.TwoDimensional
         /// <summary>
         ///     Reverses this instance.
         /// </summary>
-        internal PolygonSegment Reverse()
+        internal PolygonEdge Reverse()
         {
-            return new PolygonSegment(ToPoint, FromPoint);
+            return new PolygonEdge(ToPoint, FromPoint);
         }
 
         /// <summary>

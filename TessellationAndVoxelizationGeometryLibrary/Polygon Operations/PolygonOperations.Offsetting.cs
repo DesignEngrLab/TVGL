@@ -123,7 +123,7 @@ namespace TVGL.TwoDimensional
             //return positivePolygons;
         }
 
-        private static List<Vector2> OffsetRoutineForward(List<PolygonSegment> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
+        private static List<Vector2> OffsetRoutineForward(List<PolygonEdge> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var numPoints = Lines.Count;
@@ -196,7 +196,7 @@ namespace TVGL.TwoDimensional
             return pointsList;
         }
 
-        private static List<Vector2> OffsetRoutineBackwards(List<PolygonSegment> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
+        private static List<Vector2> OffsetRoutineBackwards(List<PolygonEdge> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var numPoints = Lines.Count;

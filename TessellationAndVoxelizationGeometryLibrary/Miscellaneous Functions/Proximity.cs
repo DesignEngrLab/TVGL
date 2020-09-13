@@ -171,7 +171,7 @@ namespace TVGL
         /// <param name="line"></param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonSegment line, Vector2 p)
+        public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
             //the line.FromPoint

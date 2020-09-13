@@ -12,12 +12,12 @@ namespace TVGL.TwoDimensional
         /// Gets Polygon Edge A.
         /// </summary>
         /// <value>The edge a.</value>
-        public PolygonSegment EdgeA { get; }
+        public PolygonEdge EdgeA { get; }
         /// <summary>
         /// Gets Polygon Edge B.
         /// </summary>
         /// <value>The edge b.</value>
-        public PolygonSegment EdgeB { get; }
+        public PolygonEdge EdgeB { get; }
         /// <summary>
         /// Gets the intersection coordinates.
         /// </summary>
@@ -51,7 +51,7 @@ namespace TVGL.TwoDimensional
         /// <param name="edgeB">The edge b.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
         /// <param name="relationship">The relationship.</param>
-        internal SegmentIntersection(PolygonSegment edgeA, PolygonSegment edgeB, Vector2 intersectionPoint, SegmentRelationship relationship,
+        internal SegmentIntersection(PolygonEdge edgeA, PolygonEdge edgeB, Vector2 intersectionPoint, SegmentRelationship relationship,
             WhereIsIntersection whereIsIntersection, CollinearityTypes collinearity)
         {
             this.EdgeA = edgeA;

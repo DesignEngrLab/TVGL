@@ -116,12 +116,12 @@ namespace TVGL.TwoDimensional
         {
             var tolerance = Constants.BaseTolerance * Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY);
             bool polygonIsAInInteractions = subPolygonToInt[polygon] < numPolygonsInA;
-            var visitedIntersectionPairs = new HashSet<(PolygonSegment, PolygonSegment)>();
+            var visitedIntersectionPairs = new HashSet<(PolygonEdge, PolygonEdge)>();
             var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
             polygon = polygon.Copy(true, true);
             var allLines = polygon.AllPolygons.SelectMany(p => p.Lines).ToList();
             var newIntersections = new List<SegmentIntersection>();
-            var possibleDuplicates = new List<(int, PolygonSegment, PolygonSegment)>();
+            var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>();
             for (int i = 0; i < IntersectionData.Count; i++)
             {
                 var oldIntersection = IntersectionData[i];

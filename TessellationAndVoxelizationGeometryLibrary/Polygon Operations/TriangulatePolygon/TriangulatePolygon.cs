@@ -77,15 +77,33 @@ namespace TVGL.TwoDimensional
             var randomAngles = new double[maxNumberOfAttempts];
             for (int i = 1; i < maxNumberOfAttempts; i++)
                 randomAngles[i] = 2 * Math.PI * random.NextDouble();
-
+            var numVertices = -1;
             if (reIndexPolygons)
             {
                 var index = 0;
                 foreach (var subPolygon in polygon.AllPolygons)
-                foreach (var vertex in subPolygon.Vertices)
-                    vertex.IndexInList = index++;
+                    foreach (var vertex in subPolygon.Vertices)
+                        vertex.IndexInList = index++;
+                numVertices = index;
             }
+            else numVertices = polygon.AllPolygons.Sum(polygon => polygon.Vertices.Count);
 
+            if (numVertices <= 2) return new List<int[]>();
+            if (numVertices == 3) return new List<int[]> { polygon.Vertices.Select(v => v.IndexInList).ToArray() };
+            if (numVertices == 4)
+            {
+                var verts = polygon.Vertices.Select(v => v.IndexInList).ToList();
+                var concaveEdge = polygon.Vertices.FirstOrDefault(v => v.EndLine.Vector.Cross(v.StartLine.Vector) < 0);
+                if (concaveEdge != null)
+                {
+                    while (verts[0] != concaveEdge.IndexInList)
+                    {
+                        verts.Add(concaveEdge.IndexInList);
+                        verts.RemoveAt(0);
+                    }
+                }
+                return new List<int[]> { new[] { verts[0], verts[1], verts[2] }, new[] { verts[0], verts[2], verts[3] } };
+            }
 
             foreach (var randomAngle in randomAngles)
             {
@@ -113,28 +131,119 @@ namespace TVGL.TwoDimensional
 
         private static IEnumerable<Polygon> MakeXMonotonePolygons(Polygon polygon)
         {
+            var newEdgeDict = FindInternalDiagonalsForMonotone(polygon);
+            var unVisitedVertices = polygon.AllPolygons.SelectMany(p => p.Vertices).ToHashSet();
+            while (unVisitedVertices.Any())
+            {
+                var newVertices = new List<Vertex2D>();
+                var start = newVertices.First();
+                var current = start;
+                do
+                {
+                    newVertices.Add(current.Copy());
+                    unVisitedVertices.Remove(current);
+                    if (newEdgeDict.ContainsKey(current))
+                    {
+                        current = newEdgeDict[current];
+                        newEdgeDict.Remove(current);
+                    }
+                    else current = current.StartLine.ToPoint;
+                } while (current != start);
+                yield return new Polygon(newVertices);
+            }
+        }
+
+        private static Dictionary<Vertex2D, Vertex2D> FindInternalDiagonalsForMonotone(Polygon polygon)
+        {
             var sortedVertices =
                 CombineSortedVerticesIntoOneCollection(polygon.AllPolygons.Select(p => p.OrderedXVertices).ToList());
-            var newEdgeDict = new Dictionary<Vertex2D,Vertex2D>();
-            var edgeDatums = new List<(PolygonSegment, Vertex2D)>();
+            var newEdgeDict = new Dictionary<Vertex2D, Vertex2D>();
+            var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
             foreach (var vertex in sortedVertices)
             {
                 var monoChange = GetMonotonicityChange(vertex);
                 var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
                 if (monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
-                    // then it's regular
+                // then it's regular
                 {
                     if (vertex.StartLine.Vector.X > 0)
-                        edgeDatums.Add(vertex.StartLine, vertex);
+                    {
+                        MakeNewDiagonalEdgeIfMerge(newEdgeDict, edgeDatums, vertex.EndLine, vertex);
+                        edgeDatums.Remove(vertex.EndLine);
+                        edgeDatums.Add(vertex.StartLine, (vertex, false));
+                    }
+                    else
+                    {
+                        PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
+                        MakeNewDiagonalEdgeIfMerge(newEdgeDict, edgeDatums, closestDatum, vertex);
+                        edgeDatums[closestDatum] = (vertex, false);
+                    }
                 }
                 else if (cornerCross > 0) //then either start or end
                 {
+                    if (vertex.StartLine.Vector.X >= 0 && vertex.EndLine.Vector.X <= 0) // then start
+                        edgeDatums.Add(vertex.StartLine, (vertex, false));
+                    else // then it's an end
+                    {
+                        MakeNewDiagonalEdgeIfMerge(newEdgeDict, edgeDatums, vertex.EndLine, vertex);
+                        edgeDatums.Remove(vertex.EndLine);
+                    }
                 }
                 else //then either split or merge
                 {
+                    if (vertex.StartLine.Vector.X >= 0 && vertex.EndLine.Vector.X <= 0) // then split
+                    {
+                        PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
+                        MakeNewDiagonalEdgeIfMerge(newEdgeDict, edgeDatums, closestDatum, vertex);
+                        edgeDatums[closestDatum] = (vertex, false);
+                        edgeDatums[vertex.StartLine] = (vertex, false);
+
+                    }
+                    else //the it's a merge
+                    {
+                        MakeNewDiagonalEdgeIfMerge(newEdgeDict, edgeDatums, vertex.EndLine, vertex);
+                        edgeDatums.Remove(vertex.EndLine);
+                        PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
+                        MakeNewDiagonalEdgeIfMerge(newEdgeDict, edgeDatums, closestDatum, vertex);
+                        edgeDatums[closestDatum] = (vertex, false);
+                    }
                 }
             }
+            return newEdgeDict;
         }
+
+        private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, Vertex2D> newEdgeDict,
+            Dictionary<PolygonEdge, (Vertex2D, bool)> edgeDatums, PolygonEdge datum, Vertex2D vertex)
+        {
+            var prevLineHelperData = edgeDatums[datum];
+            var helperVertex = prevLineHelperData.Item1;
+            var isMergePoint = prevLineHelperData.Item2;
+            if (isMergePoint) //if this was a merge point
+            {
+                newEdgeDict.Add(vertex, helperVertex);
+                newEdgeDict.Add(helperVertex, vertex);
+            }
+        }
+
+
+        private static PolygonEdge FindClosestLowerDatum(IEnumerable<PolygonEdge> edges, Vector2 point)
+        {
+            var closestDistance = double.PositiveInfinity;
+            PolygonEdge closestEdge = null;
+            foreach (var edge in edges)
+            {
+                var intersectionYValue = edge.YGivenX(point.X, out var betweenPoints);
+                if (!betweenPoints) continue;
+                var delta = point.Y - intersectionYValue;
+                if (delta >= 0 && delta < closestDistance)
+                {
+                    closestDistance = delta;
+                    closestEdge = edge;
+                }
+            }
+            return closestEdge;
+        }
+
 
         private static IEnumerable<Vertex2D> CombineSortedVerticesIntoOneCollection(List<List<Vertex2D>> orderedListsOfVertices)
         {
@@ -158,7 +267,7 @@ namespace TVGL.TwoDimensional
                         lowestEntry = i;
                     }
                 }
-                if (lowestEntry==-1) yield break;
+                if (lowestEntry == -1) yield break;
                 yield return orderedListsOfVertices[lowestEntry][currentIndices[lowestEntry]];
                 currentIndices[lowestEntry]++;
             }

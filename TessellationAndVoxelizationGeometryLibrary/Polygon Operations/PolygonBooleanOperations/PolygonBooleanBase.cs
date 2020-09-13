@@ -108,7 +108,7 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected bool GetNextStartingIntersection(List<SegmentIntersection> intersections,
-            out SegmentIntersection nextStartingIntersection, out PolygonSegment currentEdge, out bool switchPolygon,
+            out SegmentIntersection nextStartingIntersection, out PolygonEdge currentEdge, out bool switchPolygon,
             ref int indexIntersectionStart)
         {
             for (int i = indexIntersectionStart; i < intersections.Count; i++)
@@ -149,7 +149,7 @@ namespace TVGL.TwoDimensional
 
 
 
-        protected abstract bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge,
+        protected abstract bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge,
             out bool startAgain);
 
 
@@ -167,7 +167,7 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
-            SegmentIntersection startingIntersection, PolygonSegment startingEdge, bool switchPolygon)
+            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon)
 
         {
             var newPath = new List<Vector2>();
@@ -223,7 +223,7 @@ namespace TVGL.TwoDimensional
         /// <param name="bestIntersection">The index of intersection.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonSegment currentEdge, List<SegmentIntersection> allIntersections,
+        private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonEdge currentEdge, List<SegmentIntersection> allIntersections,
         Vector2 formerIntersectCoords, out SegmentIntersection bestIntersection, out bool switchPolygon)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
@@ -290,7 +290,7 @@ namespace TVGL.TwoDimensional
         protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA);
 
         protected abstract bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
-           PolygonSegment currentEdge, PolygonSegment startingEdge);
+           PolygonEdge currentEdge, PolygonEdge startingEdge);
         protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB);
 

@@ -708,30 +708,6 @@ namespace TVGL
         ZPositive = 3
     }
 
-
-    /// <summary>
-    ///     Enum NodeType
-    /// </summary>
-    internal enum NodeType
-    {
-        Unknown,
-        /// <summary>
-        ///     The downward reflex
-        /// </summary>
-        DownwardReflex,
-        UpwardReflex,
-        Peak,
-        Root,
-        Left,
-        Right,
-
-        /// <summary>
-        ///     The duplicate
-        /// </summary>
-        Duplicate,
-    }
-
-
     internal enum VerticalLineReferenceType
     {
         Above,

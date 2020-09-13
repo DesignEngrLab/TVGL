@@ -10,7 +10,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonUnion : PolygonBooleanBase
     {
-        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonSegment currentEdge,
+        protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge,
             out bool startAgain)
         {
             startAgain = false;
@@ -84,7 +84,7 @@ namespace TVGL.TwoDimensional
         }
 
 
-        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonSegment currentEdge, PolygonSegment startingEdge)
+        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             if (startingIntersection != currentIntersection) return false;
             if (startingIntersection.Relationship == SegmentRelationship.NoOverlap &&

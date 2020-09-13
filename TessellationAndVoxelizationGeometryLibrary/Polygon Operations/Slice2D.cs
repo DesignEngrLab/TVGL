@@ -95,10 +95,10 @@ namespace TVGL.TwoDimensional
                  the intersection points and lines.*/
 
             //(1) Find the intersection lines and the lines to the left of the current distance      
-            var intersectionLines = new HashSet<PolygonSegment>();
+            var intersectionLines = new HashSet<PolygonEdge>();
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = distanceAlongDirection * lineNormalDirection;
-            var sortedPoints = new SortedList<double, (Vector2, PolygonSegment)>();
+            var sortedPoints = new SortedList<double, (Vector2, PolygonEdge)>();
             foreach (var polygons in shallowPolygonTree.AllPolygons)
                 foreach (var line in polygons.Lines)
                 {

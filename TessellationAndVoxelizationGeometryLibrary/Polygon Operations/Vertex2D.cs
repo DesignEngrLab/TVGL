@@ -49,19 +49,14 @@ namespace TVGL.TwoDimensional
         ///     Gets the line that starts at this node.
         /// </summary>
         /// <value>The start line.</value>
-        internal PolygonSegment StartLine { get; set; }
+        internal PolygonEdge StartLine { get; set; }
 
         /// <summary>
         ///     Gets the line that ends at this node.
         /// </summary>
         /// <value>The end line.</value>
-        internal PolygonSegment EndLine { get; set; }
+        internal PolygonEdge EndLine { get; set; }
 
-        /// <summary>
-        ///     Gets the type of  node.
-        /// </summary>
-        /// <value>The type.</value>
-        internal NodeType Type { get; set; }
 
         /// <summary>
         ///     Gets the base class, Point of this node.
@@ -69,17 +64,7 @@ namespace TVGL.TwoDimensional
         /// <value>The point.</value>
         internal Vector2 Coordinates { get; private set; }
         internal int IndexInList { get; set; }
-        /// <summary>
-        ///     Gets the base class, Point of this node.
-        /// </summary>
-        /// <value><c>true</c> if this instance is right chain; otherwise, <c>false</c>.</value>
-        internal bool IsRightChain { get; set; }
 
-        /// <summary>
-        ///     Gets the base class, Point of this node.
-        /// </summary>
-        /// <value><c>true</c> if this instance is left chain; otherwise, <c>false</c>.</value>
-        internal bool IsLeftChain { get; set; }
 
         #endregion
 
@@ -102,10 +87,7 @@ namespace TVGL.TwoDimensional
             {
                 Coordinates = this.Coordinates,
                 IndexInList = this.IndexInList,
-                IsLeftChain = this.IsLeftChain,
-                IsRightChain = this.IsRightChain,
                 LoopID = this.LoopID,
-                Type = this.Type
             };
         }
         // the following private argument-less constructor is only used in the copy function

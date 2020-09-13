@@ -89,12 +89,12 @@ namespace TVGL.TwoDimensional
         /// Gets the list of lines that make up a polygon. This is not set by default.
         /// </summary>
         /// <value>The lines.</value>
-        public List<PolygonSegment> Lines => _lines;
+        public List<PolygonEdge> Lines => _lines;
 
         /// <summary>
         /// The lines
         /// </summary>
-        private List<PolygonSegment> _lines;
+        private List<PolygonEdge> _lines;
 
         /// <summary>
         /// Makes the vertices.
@@ -119,13 +119,13 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in AllPolygons)
             {
                 var numPoints = polygon.Vertices.Count;
-                var linesArray = new PolygonSegment[numPoints];
+                var linesArray = new PolygonEdge[numPoints];
                 for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
                 // note this compact approach to setting i and j. 
                 {
                     var fromNode = polygon.Vertices[j];
                     var toNode = polygon.Vertices[i];
-                    var polySegment = new PolygonSegment(fromNode, toNode);
+                    var polySegment = new PolygonEdge(fromNode, toNode);
                     fromNode.StartLine = polySegment;
                     toNode.EndLine = polySegment;
                     linesArray[i] = polySegment;
@@ -474,7 +474,7 @@ namespace TVGL.TwoDimensional
         /// <param name="vertices">The vertices.</param>
         /// <param name="lines">The lines.</param>
         /// <param name="index">The index.</param>
-        public Polygon(List<Vertex2D> vertices, List<PolygonSegment> lines, int index = -1)
+        public Polygon(List<Vertex2D> vertices, List<PolygonEdge> lines, int index = -1)
         {
             _vertices = vertices;
             _lines = lines;
