@@ -8,12 +8,31 @@ namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
+        /// <summary>
+        /// Creates the uniform cross section solid.
+        /// </summary>
+        /// <param name="bottomPolygon">The bottom polygon.</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="sameToleranceTVGL">The same tolerance TVGL.</param>
+        /// <param name="unitsTVGL">The units TVGL.</param>
+        /// <returns>CrossSectionSolid.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         public CrossSectionSolid CreateUniformCrossSectionSolid(IEnumerable<IEnumerable<Vector2>> bottomPolygon, Matrix4x4 transform,
             double sameToleranceTVGL, UnitType unitsTVGL)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Creates the uniform cross section solid.
+        /// </summary>
+        /// <param name="buildDirection">The build direction.</param>
+        /// <param name="distanceOfPlane">The distance of plane.</param>
+        /// <param name="extrudeThickness">The extrude thickness.</param>
+        /// <param name="shape">The shape.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <param name="units">The units.</param>
+        /// <returns>CrossSectionSolid.</returns>
         public static CrossSectionSolid CreateUniformCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
             IEnumerable<Polygon> shape, double sameTolerance, UnitType units)
         {
@@ -23,6 +42,16 @@ namespace TVGL
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
+        /// <summary>
+        /// Gets the uniformly spaced slices.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="startDistanceAlongDirection">The start distance along direction.</param>
+        /// <param name="numSlices">The number slices.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <returns>List&lt;Polygon&gt;[].</returns>
+        /// <exception cref="ArgumentException">Either a valid stepSize or a number of slices greater than zero must be specified.</exception>
         public static List<Polygon>[] GetUniformlySpacedSlices(TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
             double stepSize = double.NaN)
         {

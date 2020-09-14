@@ -64,7 +64,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     Presenter.ShowAndHang(silhouette);
                     var length= solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
                     var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
-                    solid.GetSliceContactData(plane, out var contactData);
+                    solid.GetSliceContactData(plane, out var contactData, false);
                 }
             }
 

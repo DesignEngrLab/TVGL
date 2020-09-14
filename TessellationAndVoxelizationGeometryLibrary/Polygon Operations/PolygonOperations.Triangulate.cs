@@ -9,18 +9,21 @@ namespace TVGL.TwoDimensional
     /// Triangulates a Polygon into faces in O(n log n) time.
     /// </summary>
     ///  <References>
-    ///     Trapezoidation algorithm heavily based on: 
-    ///     "A Fast Trapezoidation Technique For Planar Polygons" by
-    ///     Gian Paolo Lorenzetto, Amitava Datta, and Richard Thomas. 2000.
-    ///     http://www.researchgate.net/publication/2547487_A_Fast_Trapezoidation_Technique_For_Planar_Polygons
-    ///     This algorithm should run in O(n log n)  time.    
-    /// 
-    ///     Triangulation method based on Montuno's work, but referenced material and algorithm are from:
-    ///     http://www.personal.kent.edu/~rmuhamma/Compgeometry/MyCG/PolyPart/polyPartition.htm
-    ///     This algorithm should run in O(n) time.
+    ///     The new approach is based on how it is presented in 
+    ///     the book
+    ///     "Computational geometry: algorithms and applications". 2000
+    ///     Authors: de Berg, Mark and van Kreveld, Marc and Overmars, Mark and Schwarzkopf, Otfried and Overmars, M
     /// </References>
+    /// A good summary of how the monotone polygons are created can be seen in the video: https://youtu.be/IkA-2Y9lBvM
+    /// and the algorithm for triangulating the monotone polygons can be found here: https://youtu.be/pfXXgV9u6cw
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="vertexLoop">The vertex loop.</param>
+        /// <param name="normal">The normal direction.</param>
+        /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal)
         {
             var vertexList = vertexLoop as List<Vertex> ?? vertexLoop.ToList();
@@ -32,46 +35,17 @@ namespace TVGL.TwoDimensional
                     {vertexList[triangleIndices[0]], vertexList[triangleIndices[1]], vertexList[triangleIndices[2]]};
         }
 
-        /// <summary>
-        /// Triangulates a list of loops into faces in O(n*log(n)) time.
-        /// If ignoring negative space, the function will fill in holes. 
-        /// DO NOT USE "ignoreNegativeSpace" for watertight geometry.
-        /// </summary>
-        /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
-        /// <exception cref="System.Exception">
-        /// Inputs into 'TriangulatePolygon' are unbalanced
-        /// or
-        /// Duplicate point found
-        /// or
-        /// Incorrect balance of node types
-        /// or
-        /// Incorrect balance of node types
-        /// or
-        /// Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.
-        /// or
-        /// Trapezoidation failed to complete properly. Check to see that the assumptions are met.
-        /// or
-        /// Incorrect number of triangles created in triangulate function
-        /// or
-        /// </exception>
-        /// <exception cref="Exception"></exception>
-        /// <exception cref="Exception"></exception>
-        //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
-        //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
-        //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
-        //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
-        //Ex 3) If a positive loop intersects itself, it should be two separate positive loops.
 
-        //ROBUST FEATURES:
-        // 1: Two positive loops may share a point, because they are processed separately.
-        // 2: Loops can be in given CW or CCW, because as long as the isPositive boolean is correct, 
-        // the code recognizes when the loop should be reversed.
-        // 3: If isPositive == null, CW and CCW ordering for the loops is unknown. A preprocess step can build a new isPositive variable.
-        // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
-        // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
-        // 5: If isPositive == null, then 
+        /// <summary>
+        /// Triangulates the specified polygons which may include holes. However, the .
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
+        /// <returns>List&lt;System.Int32[]&gt;.</returns>
         public static List<int[]> Triangulate(this Polygon polygon, bool reIndexPolygons = true)
         {
+            if (!polygon.IsPositive)
+                throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", "polygon");
             const int maxNumberOfAttempts = 3;
             var random = new Random(1);
             var randomAngles = new double[maxNumberOfAttempts];
@@ -104,20 +78,27 @@ namespace TVGL.TwoDimensional
                 }
                 return new List<int[]> { new[] { verts[0], verts[1], verts[2] }, new[] { verts[0], verts[2], verts[3] } };
             }
+            var triangleFaceList = new List<int[]>();
+            // this is the returned list of triangles. Well, not actually triangles but three integers each - corresponding
+            // to the 3 indices of the input polygon's Vertex2D
+
+            // in case this is a deep polygon tree - recurse down and solve for the inner positive polygons
+            foreach (var hole in polygon.InnerPolygons)
+                foreach (var smallInnerPolys in hole.InnerPolygons)
+                    triangleFaceList.AddRange(Triangulate(smallInnerPolys, false));
 
             foreach (var randomAngle in randomAngles)
             {
-                var triangleFaceList =
-                    new List<int[]>(); // this is the returned list of triangles. Well, not actually triangles but three integers each - corresponding
-                // to the 3 indices of the input polygon's Vertex2D
                 try
                 {
+                    var localTriangleFaceList = new List<int[]>();
                     if (randomAngle != 0)
                         polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
                     foreach (var monoPoly in MakeXMonotonePolygons(polygon))
                     {
-                        triangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
+                        localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                     }
+                    triangleFaceList.AddRange(localTriangleFaceList);
                     return triangleFaceList;
                 }
                 catch (Exception exception)
@@ -132,7 +113,9 @@ namespace TVGL.TwoDimensional
         private static IEnumerable<Polygon> MakeXMonotonePolygons(Polygon polygon)
         {
             var newEdgeDict = FindInternalDiagonalsForMonotone(polygon);
-            var unVisitedVertices = polygon.AllPolygons.SelectMany(p => p.Vertices).ToHashSet();
+            var unVisitedVertices = polygon.Vertices.ToHashSet();
+            foreach (var vert in polygon.InnerPolygons.SelectMany(p => p.Vertices))
+                unVisitedVertices.Add(vert);
             while (unVisitedVertices.Any())
             {
                 var newVertices = new List<Vertex2D>();
@@ -155,8 +138,11 @@ namespace TVGL.TwoDimensional
 
         private static Dictionary<Vertex2D, Vertex2D> FindInternalDiagonalsForMonotone(Polygon polygon)
         {
-            var sortedVertices =
-                CombineSortedVerticesIntoOneCollection(polygon.AllPolygons.Select(p => p.OrderedXVertices).ToList());
+            var orderedListsOfVertices = new List<List<Vertex2D>>();
+            orderedListsOfVertices.Add(polygon.OrderedXVertices);
+            foreach (var hole in polygon.InnerPolygons)
+                orderedListsOfVertices.Add(hole.OrderedXVertices);
+            var sortedVertices = CombineSortedVerticesIntoOneCollection(orderedListsOfVertices);
             var newEdgeDict = new Dictionary<Vertex2D, Vertex2D>();
             var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
             foreach (var vertex in sortedVertices)
@@ -305,7 +291,7 @@ namespace TVGL.TwoDimensional
                     }
                     concaveFunnelStack.Push(vertex2);
                     if (vertex1 != null) concaveFunnelStack.Push(vertex1);
-                    concaveFunnelStack.Push(nextVertex);                    
+                    concaveFunnelStack.Push(nextVertex);
                 }
                 else //connect this to all on the stack
                 {
