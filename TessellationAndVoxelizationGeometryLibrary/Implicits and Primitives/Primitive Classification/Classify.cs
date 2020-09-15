@@ -516,7 +516,7 @@ namespace TVGL
         private static PrimitiveSurfaceType FaceClassifier(int[] bestCombination, List<List<int>> faceRules)
         {
             var intToString = new Dictionary<int, PrimitiveSurfaceType>();
-            intToString.Add(200, PrimitiveSurfaceType.Flat);
+            intToString.Add(200, PrimitiveSurfaceType.Plane);
             intToString.Add(201, PrimitiveSurfaceType.Cylinder);
             intToString.Add(202, PrimitiveSurfaceType.Sphere);
             intToString.Add(203, PrimitiveSurfaceType.Flat_to_Curve);
@@ -828,7 +828,7 @@ namespace TVGL
 
             switch (surfaceType)
             {
-                case PrimitiveSurfaceType.Flat:
+                case PrimitiveSurfaceType.Plane:
                     return new Plane(faces);
                 case PrimitiveSurfaceType.Cylinder:
                     Vector3 axis;
@@ -1015,7 +1015,7 @@ namespace TVGL
         /// <summary>
         /// The flat
         /// </summary>
-        Flat = 500,
+        Plane = 500,
         /// <summary>
         /// The cylinder
         /// </summary>

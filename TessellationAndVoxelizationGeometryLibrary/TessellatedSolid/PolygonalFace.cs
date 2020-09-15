@@ -185,7 +185,7 @@ namespace TVGL
             : this(vertices, connectVerticesBackToFace)
         {
             bool reverseVertexOrder;
-            _normal = MiscFunctions.DetermineNormalPolygon(Vertices.Count, Vertices, out reverseVertexOrder, suggestedNormal);
+            _normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(Vertices.Count, Vertices, out reverseVertexOrder, suggestedNormal);
             if (reverseVertexOrder) Vertices.Reverse();
         }
 

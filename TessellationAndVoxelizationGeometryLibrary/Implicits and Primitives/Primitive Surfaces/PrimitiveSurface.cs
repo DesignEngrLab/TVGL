@@ -255,7 +255,8 @@ namespace TVGL
         /// </summary>
         /// <param name="edges"></param>
         /// <returns></returns>
-        public static (bool allLoopsClosed, List<List<Edge>> edgeLoops, List<List<Vertex>> vertexLoops) GetLoops(HashSet<Edge> outerEdges, bool canModifyTheInput)
+        public static (bool allLoopsClosed, List<List<Edge>> edgeLoops, List<List<Vertex>> vertexLoops) GetLoops(HashSet<Edge> outerEdges,
+            bool canModifyTheInput)
         {
             //Use a boolean canModifyTheInput, so that we can save time creating a hashset if the user allows it to be mutated. 
             var edges = canModifyTheInput ? outerEdges : new HashSet<Edge>(outerEdges);

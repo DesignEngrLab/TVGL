@@ -60,7 +60,8 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="offset">The offset.</param>
-        /// <param name="maxCircleDeviation">The maximum circle deviation.</param>
+        /// <param name="maxCircleDeviation">The maximum circle deviation. If none is provided, then vertices are
+        /// placed at every 1 degree (pi/180 radians).</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this Polygon polygon, double offset, double maxCircleDeviation = double.NaN)
         {

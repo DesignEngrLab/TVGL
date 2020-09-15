@@ -111,7 +111,11 @@ namespace TVGL.Boolean_Operations
                 Debug.WriteLine("CuttingPlane does not cut through the given solid.");
                 return;
             }
-            MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
+            //MakeSingleSolidOnEachSideOfInfitePlane(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
+            List<PolygonalFace> positiveSideFaces = new List<PolygonalFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
+            positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, true, units: ts.Units);
+            var negativeSideFaces = new List<PolygonalFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
+            negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, true, units: ts.Units);
         }
 
         /// <summary>
@@ -161,21 +165,6 @@ namespace TVGL.Boolean_Operations
         {
             solids = contactData.SolidContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, true,
                 true, units: unitType)).ToList();
-        }
-
-        /// <summary>
-        /// Returns a single positive side and negative side solid, given contact data for this slice
-        /// </summary>
-        /// <param name="contactData"></param>
-        /// <param name="unitType"></param>
-        /// <param name="positiveSideSolid"></param>
-        /// <param name="negativeSideSolid"></param>
-        public static void MakeSingleSolidOnEachSideOfInfitePlane(this ContactData contactData, UnitType unitType, out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
-        {
-            var positiveSideFaces = new List<PolygonalFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            positiveSideSolid = new TessellatedSolid(positiveSideFaces, true, true, units: unitType);
-            var negativeSideFaces = new List<PolygonalFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
-            negativeSideSolid = new TessellatedSolid(negativeSideFaces, true, true, units: unitType);
         }
 
 

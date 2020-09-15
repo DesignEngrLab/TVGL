@@ -529,16 +529,17 @@ namespace TVGL
                     listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices) { Color = color });
                 else
                 {
-                    var normal = MiscFunctions.DetermineNormalPolygon(faceVertices.Length, faceVertices, out _, Vector3.Null);
+                    var normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(faceVertices.Length, faceVertices, out _, Vector3.Null);
                     var triangulatedList = faceVertices.Triangulate(normal);
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        var v1 = vertexSet[1].Coordinates - (vertexSet[0].Coordinates);
-                        var v2 = vertexSet[2].Coordinates - (vertexSet[0].Coordinates);
-                        var face = v1.Cross(v2).Dot(normal) < 0
-                            ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
-                            : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
+                        //var v1 = vertexSet[1].Coordinates - (vertexSet[0].Coordinates);
+                        //var v2 = vertexSet[2].Coordinates - (vertexSet[0].Coordinates);
+                        var face =
+                        //= v1.Cross(v2).Dot(normal) < 0
+                        //    ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }:
+                             new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
                     }

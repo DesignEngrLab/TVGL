@@ -29,7 +29,7 @@ namespace TVGL.PrimitiveClassificationDetail
                 double TypeMultiplier;
                 switch (SurfaceType)
                 {
-                    case PrimitiveSurfaceType.Flat:
+                    case PrimitiveSurfaceType.Plane:
                         TypeMultiplier = 20;
                         break;
                     case PrimitiveSurfaceType.Cylinder:

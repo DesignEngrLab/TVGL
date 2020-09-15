@@ -80,7 +80,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         public Plane(IEnumerable<PolygonalFace> faces)
             : base(faces)
         {
-            Type = PrimitiveSurfaceType.Flat;
+            Type = PrimitiveSurfaceType.Plane;
 
             //Set the normal by weighting each face's normal with its area
             //This makes small faces have less effect at shifting the normal
@@ -104,7 +104,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public Plane() : base()
         {
-            Type = PrimitiveSurfaceType.Flat;
+            Type = PrimitiveSurfaceType.Plane;
         }
 
         /// <summary>

@@ -30,7 +30,7 @@ namespace TVGL.TwoDimensional
         ///     Gets the loop ID that this node belongs to.
         /// </summary>
         /// <value>The loop identifier.</value>
-        internal int LoopID { get; set; }
+        public int LoopID { get; set; }
 
         /// <summary>
         ///     Gets or sets the x.
@@ -49,21 +49,21 @@ namespace TVGL.TwoDimensional
         ///     Gets the line that starts at this node.
         /// </summary>
         /// <value>The start line.</value>
-        internal PolygonEdge StartLine { get; set; }
+        public PolygonEdge StartLine { get; internal set; }
 
         /// <summary>
         ///     Gets the line that ends at this node.
         /// </summary>
         /// <value>The end line.</value>
-        internal PolygonEdge EndLine { get; set; }
+        public PolygonEdge EndLine { get; internal set; }
 
 
         /// <summary>
         ///     Gets the base class, Point of this node.
         /// </summary>
         /// <value>The point.</value>
-        internal Vector2 Coordinates { get; private set; }
-        internal int IndexInList { get; set; }
+        public Vector2 Coordinates { get; private set; }
+        public int IndexInList { get; internal set; }
 
 
         #endregion

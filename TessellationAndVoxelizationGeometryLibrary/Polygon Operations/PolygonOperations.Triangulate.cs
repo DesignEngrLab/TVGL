@@ -24,15 +24,57 @@ namespace TVGL.TwoDimensional
         /// <param name="vertexLoop">The vertex loop.</param>
         /// <param name="normal">The normal direction.</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
+        /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
         public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal)
         {
-            var vertexList = vertexLoop as List<Vertex> ?? vertexLoop.ToList();
             var transform = normal.TransformToXYPlane(out _);
-            var polygon = new Polygon(vertexList
-                .Select(v => new Vertex2D(v.ConvertTo2DCoordinates(transform), v.IndexInList, -1)).ToList());
-            foreach (var triangleIndices in polygon.Triangulate())
+            var coords = new List<Vertex2D>();
+            var indexToVertexDict = new Dictionary<int, Vertex>();
+            foreach (var vertex in vertexLoop)
+            {
+                coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
+                if (indexToVertexDict.ContainsKey(vertex.IndexInList))
+                    throw new ArgumentException("The vertices must all have a unique IndexInList value", "vertexLoop");
+                indexToVertexDict.Add(vertex.IndexInList, vertex);
+            }
+            var polygon = new Polygon(coords);
+            foreach (var triangleIndices in polygon.Triangulate(false))
                 yield return new[]
-                    {vertexList[triangleIndices[0]], vertexList[triangleIndices[1]], vertexList[triangleIndices[2]]};
+                    {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
+                        indexToVertexDict[triangleIndices[2]]};
+        }
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="vertexLoops">The vertex loops.</param>
+        /// <param name="normal">The normal direction.</param>
+        /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
+        /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
+        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<IList<Vertex>> vertexLoops, Vector3 normal)
+        {
+            var transform = normal.TransformToXYPlane(out _);
+            var polygons = new List<Polygon>();
+            var indexToVertexDict = new Dictionary<int, Vertex>();
+            foreach (var vertexLoop in vertexLoops)
+            {
+                var coords = new List<Vertex2D>();
+                foreach (var vertex in vertexLoop)
+                {
+                    coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
+                    if (indexToVertexDict.ContainsKey(vertex.IndexInList))
+                        throw new ArgumentException("The vertices must all have a unique IndexInList value", "vertexLoop");
+                    indexToVertexDict.Add(vertex.IndexInList, vertex);
+                }
+                polygons.Add(new Polygon(coords));
+            }
+            polygons = polygons.CreateShallowPolygonTrees(false, out _);
+            foreach (var polygon in polygons)
+            {
+                foreach (var triangleIndices in polygon.Triangulate(false))
+                    yield return new[]
+                        {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
+                        indexToVertexDict[triangleIndices[2]]};
+            }
         }
 
 

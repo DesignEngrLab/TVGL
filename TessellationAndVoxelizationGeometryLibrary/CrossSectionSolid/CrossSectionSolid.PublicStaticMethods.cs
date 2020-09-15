@@ -11,21 +11,6 @@ namespace TVGL
         /// <summary>
         /// Creates the uniform cross section solid.
         /// </summary>
-        /// <param name="bottomPolygon">The bottom polygon.</param>
-        /// <param name="transform">The transform.</param>
-        /// <param name="sameToleranceTVGL">The same tolerance TVGL.</param>
-        /// <param name="unitsTVGL">The units TVGL.</param>
-        /// <returns>CrossSectionSolid.</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public CrossSectionSolid CreateUniformCrossSectionSolid(IEnumerable<IEnumerable<Vector2>> bottomPolygon, Matrix4x4 transform,
-            double sameToleranceTVGL, UnitType unitsTVGL)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Creates the uniform cross section solid.
-        /// </summary>
         /// <param name="buildDirection">The build direction.</param>
         /// <param name="distanceOfPlane">The distance of plane.</param>
         /// <param name="extrudeThickness">The extrude thickness.</param>
@@ -39,6 +24,25 @@ namespace TVGL
             var shapeList = shape as IList<Polygon> ?? shape.ToList();
             var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
             var layers2D = new Dictionary<int, IList<Polygon>> { { 0, shapeList }, { 1, shapeList } };
+            return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
+        }
+
+
+        /// <summary>
+        /// Creates the uniform cross section solid.
+        /// </summary>
+        /// <param name="buildDirection">The build direction.</param>
+        /// <param name="distanceOfPlane">The distance of plane.</param>
+        /// <param name="extrudeThickness">The extrude thickness.</param>
+        /// <param name="shape">The shape.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <param name="units">The units.</param>
+        /// <returns>CrossSectionSolid.</returns>
+        public static CrossSectionSolid CreateUniformCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
+            Polygon shape, double sameTolerance, UnitType units)
+        {
+            var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
+            var layers2D = new Dictionary<int, IList<Polygon>> { { 0, new[] { shape} }, { 1, new[] { shape } } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 

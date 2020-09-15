@@ -165,7 +165,7 @@ namespace TVGL
 
         #region Dealing with Flat Patches
 
-        internal static Vector3 DetermineNormalPolygon(int numSides, IList<Vertex> vertices, out bool reverseVertexOrder, 
+        internal static Vector3 DetermineNormalForA3DVertexPolygon(int numSides, IList<Vertex> vertices, out bool reverseVertexOrder, 
             Vector3 suggestedNormal)
         {
             reverseVertexOrder = false;

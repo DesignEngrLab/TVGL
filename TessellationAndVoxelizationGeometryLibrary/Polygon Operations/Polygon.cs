@@ -13,13 +13,8 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
-using Newtonsoft.Json;
 using TVGL.Numerics;
-
-using TVGL.IOFunctions;
 
 namespace TVGL.TwoDimensional
 {
@@ -461,9 +456,9 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="index">The index.</param>
-        public Polygon(List<Vertex2D> vertices, int index = -1)
+        public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
         {
-            _vertices = vertices;
+            _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
             Index = index;
             MakeLineSegments();
         }

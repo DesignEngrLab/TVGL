@@ -67,7 +67,7 @@ namespace TVGL.PrimitiveClassificationDetail
             Edge = edge;
         }
         /// <summary>
-        /// A dictionary with 5 groups of Flat, Cylinder, Sphere, Flat to Curve and Sharp Edge and their 
+        /// A dictionary with 5 groups of Plane, Cylinder, Sphere, Flat to Curve and Sharp Edge and their 
         /// probabilities.
         /// </summary>
         /// <value>
