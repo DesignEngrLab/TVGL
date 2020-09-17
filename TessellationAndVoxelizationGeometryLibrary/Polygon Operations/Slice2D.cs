@@ -22,7 +22,7 @@ namespace TVGL.TwoDimensional
         /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
         /// <returns>Vector2[].</returns>
         public static Vector2[] SliceAtLine(this IEnumerable<IEnumerable<Vector2>> shape, Vector2 lineNormalDirection, double distanceAlongDirection,
-            out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
+            out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
             var polyTrees = CreateShallowPolygonTrees(shape, false, out _);
@@ -42,11 +42,11 @@ namespace TVGL.TwoDimensional
         /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
         /// <returns>Vector2[].</returns>
         public static Vector2[] SliceAtLine(this IEnumerable<Polygon> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
-            out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
+            out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
-            negativeSidePolygons = new List<List<Vector2>>();
-            positiveSidePolygons = new List<List<Vector2>>();
+            negativeSidePolygons = new List<Polygon>();
+            positiveSidePolygons = new List<Polygon>();
             var intersections = new List<Vector2>();
             foreach (var shallowPolygonTree in polyTrees)
             {
@@ -80,14 +80,12 @@ namespace TVGL.TwoDimensional
         /// intersection points before the line).
         /// </remarks>
         public static Vector2[] SliceAtLine(this Polygon shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection,
-            out List<List<Vector2>> negativeSidePolygons, out List<List<Vector2>> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
+            out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
             // like 3D slicing, it is too complicated to try and manage collinear points or line segments. it is better to just change the slice
             // distance by some small amount. This is checked and handled in the ShiftLineToAvoidCollinearPoints
             distanceAlongDirection = ShiftLineToAvoidCollinearPoints(shallowPolygonTree, lineNormalDirection, distanceAlongDirection);
-            negativeSidePolygons = new List<List<Vector2>>();
-            positiveSidePolygons = new List<List<Vector2>>();
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
@@ -116,6 +114,7 @@ namespace TVGL.TwoDimensional
             // this is what is returned. although now sure if this is useful in any case
 
             #region patching up negative side polygons
+            var negSidePolyCoords = new List<List<Vector2>>();
             for (int i = 0; i < pointsOnLineTuples.Length; i++)
             {
                 // the first segment in the list should be passing from negative side to positive side (item3 should be true)
@@ -136,11 +135,11 @@ namespace TVGL.TwoDimensional
                     negSideTo += offsetAtLineForNegativeSide * lineNormalDirection;
                 }
                 // see if there is an existing polygon that ends where this one start
-                var existingNegSidePolygon = negativeSidePolygons.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
+                var existingNegSidePolygon = negSidePolyCoords.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
                 if (existingNegSidePolygon == null)
                 {
                     existingNegSidePolygon = new List<Vector2>();
-                    negativeSidePolygons.Add(existingNegSidePolygon);
+                    negSidePolyCoords.Add(existingNegSidePolygon);
                 }
                 existingNegSidePolygon.Add(negSideFrom);
                 existingNegSidePolygon.Add(negSideTo);
@@ -152,10 +151,11 @@ namespace TVGL.TwoDimensional
                     polySegment = polySegment.ToPoint.StartLine;
                 }
                 while (!intersectionLines.Contains(polySegment));
-
             }
+            negativeSidePolygons = negSidePolyCoords.Select(loop => new Polygon(loop)).ToList();
             #endregion
             #region patching up positive side polygons
+            var posSidePolyCoords = new List<List<Vector2>>();
             for (int i = sortedPoints.Count - 1; i >= 0; i--)
             {
                 var newSegmentTupleA = pointsOnLineTuples[i];
@@ -169,11 +169,11 @@ namespace TVGL.TwoDimensional
                     posSideFrom -= offsetAtLineForPositiveSide * lineNormalDirection;
                     posSideTo -= offsetAtLineForPositiveSide * lineNormalDirection;
                 }
-                var existingPosSidePolygon = positiveSidePolygons.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
+                var existingPosSidePolygon = posSidePolyCoords.FirstOrDefault(p => p.Last().Equals(newSegmentTupleA.Item2.FromPoint.Coordinates));
                 if (existingPosSidePolygon == null)
                 {
                     existingPosSidePolygon = new List<Vector2>();
-                    positiveSidePolygons.Add(existingPosSidePolygon);
+                    posSidePolyCoords.Add(existingPosSidePolygon);
                 }
                 existingPosSidePolygon.Add(posSideFrom);
                 existingPosSidePolygon.Add(posSideTo);
@@ -187,6 +187,8 @@ namespace TVGL.TwoDimensional
                 while (!intersectionLines.Contains(polySegment));
 
             }
+            positiveSidePolygons = posSidePolyCoords.Select(loop => new Polygon(loop)).ToList();
+
             #endregion
             return pointsOnLineTuples.Select(p => p.Item1).ToArray();
         }
