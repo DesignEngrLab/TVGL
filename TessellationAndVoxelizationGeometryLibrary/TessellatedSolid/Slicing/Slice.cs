@@ -130,18 +130,12 @@ namespace TVGL.Boolean_Operations
         public static bool GetSliceContactData(this TessellatedSolid ts, Plane plane, out ContactData contactData,
             bool setIntersectionGroups, ICollection<int> loopsToIgnore = null, bool undoPlaneOffset = false)
         {
-            #region Get the loops
-            //1. Offset positive and get the positive faces.
-            //Straddle faces are split into 2 or 3 new faces.
-            //Note that this ensures that the loops are made from all new vertices
-            //and are unique for the positive and negative sides.
-            var isSuccessful = ShiftPlaneForRobustCut(ts, plane, out var distancesToPlane, out var posPlaneShift,
-                out var negPlaneShift);
-            if (!isSuccessful)
-            {
-                contactData = null;
-                return false; //This plane does not slice through the solid, or an error occured from the plane shift
-            }
+            var posPlaneShift = 0.0;
+            var negPlaneShift = 0.0;
+            var distancesToPlane = ts.Vertices.Select(v => v.Coordinates.Dot(plane.Normal)).ToList();
+            distancesToPlane.SetPositiveAndNegativeShifts(plane.DistanceToOrigin, ts.SameTolerance,
+                ref posPlaneShift, ref negPlaneShift);
+
             DivideUpFaces(ts, new Plane(plane.DistanceToOrigin + posPlaneShift, plane.Normal),
                 out var positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift, loopsToIgnore, undoPlaneOffset);
             DivideUpFaces(ts, new Plane(plane.DistanceToOrigin + negPlaneShift, plane.Normal),
@@ -358,96 +352,15 @@ namespace TVGL.Boolean_Operations
             return contactDataForEachSolid;
         }
 
-        private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Plane plane, out List<double> distancesToPlane, out double posPlaneShift,
-            out double negPlaneShift)
-        {
-            //Set the distance of every vertex in the solid to the plane
-            distancesToPlane = new List<double>();
-            posPlaneShift = 0;
-            negPlaneShift = 0;
-            var distancesToPosPlane = new List<double>();
-            var distancesToNegPlane = new List<double>();
-            var atLeastOneVertexOnPlane = false;
-            var pointOnPlane = plane.Normal * plane.DistanceToOrigin;
-            foreach (var vertex in ts.Vertices)
-            {
-                var distance = vertex.Coordinates.Subtract(pointOnPlane).Dot(plane.Normal);
-                distancesToPlane.Add(distance);
-                if (distance > 0) distancesToPosPlane.Add(distance);
-                else if (distance < 0) distancesToNegPlane.Add(Math.Abs(distance));
-                else atLeastOneVertexOnPlane = true;
-            }
-
-            //Make sure the plane actually cuts the part into two or more parts
-            if (!distancesToNegPlane.Any() || !distancesToPosPlane.Any()) return false;
-
-            //Sort Results
-            distancesToPosPlane.Sort();
-            //This will sort it from small negative to large negative values (magnitude), since the input was the 
-            //absolute value of distance
-            distancesToNegPlane.Sort();
-
-            //Check if EXACT current plane is sufficient
-            var minimumShift = Math.Sqrt(ts.SameTolerance);
-            if (!atLeastOneVertexOnPlane && distancesToPosPlane[0] > minimumShift &&
-                distancesToNegPlane[0] > minimumShift) return true;
-
-            //Shift the plane a small amount positive and negative, creating the respective disctanceToPlane lists
-            //This forces NO vertices to be "on plane," making the slice function simpler in that it only deals
-            //with straddle edges. 
-            //However, if there are no "in plane edges" currently, then the plane does not need to be shifted
-            //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
-            //along direction of normal, and add a  negative offset to move backward along normal.
-            var i = 0;
-            var difference = distancesToPosPlane[i];
-            if (difference >= 2 * minimumShift) posPlaneShift = minimumShift;
-            else
-            {
-                while (difference < 2 * minimumShift)
-                {
-                    i++;
-                    if (i == distancesToPosPlane.Count) return false; //This plane is essentially on an outer face. Don't pursue.
-                    difference = distancesToPosPlane[i] - distancesToPosPlane[i - 1];
-                }
-                //i will be greater than 1 since the first difference must be less than ts.SameTolerance
-                posPlaneShift = distancesToPosPlane[i - 1] + minimumShift;
-            }
-
-            //Now do the negative side
-            i = 0;
-            difference = distancesToNegPlane[i];
-            if (difference >= 2 * minimumShift) negPlaneShift = -minimumShift;
-            else
-            {
-                while (difference < 2 * minimumShift)
-                {
-                    i++;
-                    if (i == distancesToNegPlane.Count) return false; //This plane is essentially on an outer face. Don't pursue.
-                    difference = distancesToNegPlane[i] - distancesToNegPlane[i - 1];
-                }
-                //Subtract the distance to plane and minimum shift to make a negative shift to the plane
-                negPlaneShift = -distancesToNegPlane[i - 1] - minimumShift;
-            }
-            return true;
-        }
 
         ///Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the 
         /// halves of the straddle faces that are on this side.
         private static void DivideUpFaces(TessellatedSolid ts, Plane plane, out List<Loop> loops, int isPositiveSide,
-            IList<double> distancesToPlane, double planeOffset = double.NaN, ICollection<int> loopsToIgnore = null,
+            IList<double> distancesToPlane, double planeOffset, ICollection<int> loopsToIgnore = null,
             bool undoPlaneOffset = false)
         {
-            loops = new List<Loop>();
-
-            //If offset exists, go ahead and make offset
-            if (!double.IsNaN(planeOffset))
-            {
-                for (var i = 0; i < distancesToPlane.Count; i++)
-                {
-                    distancesToPlane[i] = distancesToPlane[i] - planeOffset;
-                    if (Math.Abs(distancesToPlane[i]) < ts.SameTolerance) throw new Exception("Issue in implementation of shift plane function");
-                }
-            }
+            for (var i = 0; i < distancesToPlane.Count; i++)
+                distancesToPlane[i] -= planeOffset;
 
             //Find all the straddle edges and add the new intersect vertices to both the pos and neg loops.
             var straddleEdges = new List<StraddleEdge>();
@@ -460,15 +373,7 @@ namespace TVGL.Boolean_Operations
                 if (Math.Sign(toDistance) == Math.Sign(fromDistance)) continue;
 
                 //If it is a straddle edge, then figure out which vertex is the offSideVertex (the one we aren't keeping)
-                Vertex offSideVertex;
-                if (isPositiveSide == 1)
-                {
-                    offSideVertex = toDistance > 0 ? edge.From : edge.To;
-                }
-                else
-                {
-                    offSideVertex = toDistance > 0 ? edge.To : edge.From;
-                }
+                Vertex offSideVertex = isPositiveSide * toDistance > 0 ? edge.From : edge.To;
                 straddleEdges.Add(undoPlaneOffset
                     ? new StraddleEdge(edge, plane, offSideVertex, planeOffset)
                     : new StraddleEdge(edge, plane, offSideVertex));
@@ -494,9 +399,9 @@ namespace TVGL.Boolean_Operations
             //Get loops of straddleEdges 
             var loopsOfStraddleEdges = new List<List<StraddleEdge>>();
             var loopsOfStraddleFaceIndices = new List<HashSet<int>>();
-            var maxCount = straddleEdges.Count / 3;
+            var maxAttempts = straddleEdges.Count / 3;
             var attempts = 0;
-            while (straddleEdges.Any() && attempts < maxCount)
+            while (straddleEdges.Any() && attempts < maxAttempts)
             {
                 attempts++;
                 var loopOfStraddleEdges = new List<StraddleEdge>();
@@ -541,6 +446,7 @@ namespace TVGL.Boolean_Operations
             //It also keeps track of how many new vertices should be created.
             var newVertexIndex = ts.NumberOfVertices;
             var tolerance = Math.Sqrt(ts.SameTolerance);
+            loops = new List<Loop>();
             for (var i = 0; i < loopsOfStraddleEdges.Count; i++)
             {
                 var loopIndex = (i + 1) * isPositiveSide;
@@ -858,6 +764,5 @@ namespace TVGL.Boolean_Operations
                 return Edge.OwnedFace == face ? Edge.OtherFace : Edge.OwnedFace;
             }
         }
-        #endregion
     }
 }

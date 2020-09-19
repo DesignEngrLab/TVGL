@@ -1812,6 +1812,44 @@ namespace TVGL
         }
         #endregion
 
+
+        internal static void SetPositiveAndNegativeShifts(this IList<double> distances,
+            double distanceAlongDirection, double tolerance, ref double positiveShift, ref double negativeShift)
+        {
+            var noChange = true;
+            var closestDeltaAbove = double.PositiveInfinity;
+            var closestPointBelow = double.NegativeInfinity;
+            foreach (var d in distances)
+            {
+                if (d >= distanceAlongDirection + positiveShift)
+                {
+                    var delta = d - (distanceAlongDirection + positiveShift);
+                    if (closestDeltaAbove > delta) closestDeltaAbove = delta;
+                }
+                if (d <= distanceAlongDirection + negativeShift)
+                {
+                    var delta = d - (distanceAlongDirection + negativeShift);
+                    if (closestPointBelow < delta) closestPointBelow = delta;
+                }
+            }
+            if (closestDeltaAbove < tolerance)
+            {
+                positiveShift += tolerance;
+                noChange = false;
+            }
+            // same for the reverse
+            if (-closestPointBelow < tolerance)
+            {
+                negativeShift -= tolerance;
+                noChange = false;
+            }
+            if (noChange) return;
+            SetPositiveAndNegativeShifts(distances, distanceAlongDirection, tolerance, ref positiveShift, ref negativeShift);
+
+        }
+
+
+
         /// <summary>
         /// Converts the to a 1D collection of doubles.
         /// </summary>
