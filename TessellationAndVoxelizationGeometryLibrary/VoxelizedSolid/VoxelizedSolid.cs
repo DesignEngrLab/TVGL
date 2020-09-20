@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
@@ -174,7 +175,7 @@ namespace TVGL.Voxelization
         {
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
-            var decomp = CrossSectionSolid.GetUniformlySpacedSlices(ts, CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
+            var decomp = ts.GetUniformlySpacedCrossSections(CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
             //Parallel.For(0, numVoxelsZ, k =>

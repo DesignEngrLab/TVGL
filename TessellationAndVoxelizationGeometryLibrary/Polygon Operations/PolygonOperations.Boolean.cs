@@ -283,6 +283,23 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
+        /// Subtracts the specified polygons in b from the polygons in a.
+        /// </summary>
+        /// <param name="polygonsA">The polygons in a.</param>
+        /// <param name="polygonsB">The polygons b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> Subtract(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB,
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+        {
+            var allPolygons = new List<Polygon>();
+            allPolygons.AddRange(polygonsA);
+            allPolygons.AddRange(polygonsB.Select(p => p.Copy(true, true)));
+            return Intersect(allPolygons, outputAsCollectionType, tolerance);
+        }
+
+        /// <summary>
         /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
         /// between the two polygons, the operation will be performed with less time and memory.
         /// </summary>

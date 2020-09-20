@@ -47,14 +47,14 @@ namespace TVGL.TwoDimensional
         /// <param name="connectingIndices">The connecting indices.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect, 
+        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect,
             out List<Polygon> strayHoles)
         {
             var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
             var polygonList = new List<Polygon>();
             foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
                 if (polygon.IsPositive) polygonList.Add(polygon);
-            
+
             foreach (var polygon in polygonList)
                 foreach (var hole in polygon.InnerPolygons)
                     hole.RemoveAllInnerPolygon();
@@ -88,22 +88,35 @@ namespace TVGL.TwoDimensional
             }
             var polygonTrees = new List<Polygon>();
             int j = branches.Count;
-            while (j-- > 0)
+            if (polygonSignIsCorrect)
             {
-                var current = branches[j];
-                if (!current.IsPositive)
+                while (j-- > 0)
                 {
-                    strayHoles.Add(current);
-                    branches.RemoveAt(j);
-                    foreach (var inner in current.InnerPolygons)
-                        branches.Insert(j++, inner);
-                    current.RemoveAllInnerPolygon();
-                    continue;
+                    var current = branches[j];
+                    if (!current.IsPositive)
+                    {
+                        strayHoles.Add(current);
+                        branches.RemoveAt(j);
+                        foreach (var inner in current.InnerPolygons)
+                            branches.Insert(j++, inner);
+                        current.RemoveAllInnerPolygon();
+                    }
+                    else
+                    {
+                        RecurseDownPolygonTreeCleanUp(current);
+                        polygonTrees.Add(current);
+                    }
                 }
-                if (polygonSignIsCorrect)
-                    RecurseDownPolygonTreeCleanUp(current);
-                else RecurseDownPolygonTreeAndFlipSigns(current);
-                polygonTrees.Add(current);
+            }
+            else
+            {
+                var negativeTopParent = new Polygon(new List<Vector2>());
+                negativeTopParent.IsPositive = false;
+                foreach (var branch in branches)
+                {
+                    RecurseDownPolygonTreeAndFlipSigns(negativeTopParent);
+                    polygonTrees.Add(branch);
+                }
             }
             return polygonTrees;
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using TVGL.Boolean_Operations;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -122,7 +123,7 @@ namespace TVGL
             //stepDistances[i] = stepDistances[i - 1] + stepSize;
             var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
 
-            var layers = CrossSectionSolid.GetUniformlySpacedSlices(ts, direction, stepDistances[0], numberOfLayers, stepSize);
+            var layers = ts.GetUniformlySpacedCrossSections(direction, stepDistances[0], numberOfLayers, stepSize);
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);

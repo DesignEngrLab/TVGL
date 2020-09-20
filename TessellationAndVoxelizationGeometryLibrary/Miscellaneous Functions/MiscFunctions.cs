@@ -799,7 +799,7 @@ namespace TVGL
         #endregion
 
         /// <summary>
-        ///     Transforms to xy plane.
+        ///  Create a transforms from normal direction for 2D xy plane.
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
@@ -1608,14 +1608,14 @@ namespace TVGL
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnXPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+        public static Vector2 PointOnXPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
             Vector3 point2)
         {
             var toFactor = (distOfPlane - point1.X) / (point2.X - point1.X);
             var fromFactor = 1 - toFactor;
 
-            return new Vector3(distOfPlane, fromFactor * point1.Y + toFactor * point2.Y, fromFactor * point1.Z + toFactor * point2.Z);
+            return new Vector2(fromFactor * point1.Y + toFactor * point2.Y, 
+                fromFactor * point1.Z + toFactor * point2.Z);
         }
 
         /// <summary>
@@ -1628,14 +1628,14 @@ namespace TVGL
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
-        public static Vector3 PointOnYPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
+        public static Vector2 PointOnYPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
             Vector3 point2)
         {
             var toFactor = (distOfPlane - point1.Y) / (point2.Y - point1.Y);
             var fromFactor = 1 - toFactor;
 
-            return new Vector3(fromFactor * point1.X + toFactor * point2.X, distOfPlane,
-                fromFactor * point1.Z + toFactor * point2.Z);
+            return new Vector2( fromFactor * point1.Z + toFactor * point2.Z,
+                fromFactor * point1.X + toFactor * point2.X);
         }
 
         /// <summary>
@@ -1647,7 +1647,6 @@ namespace TVGL
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
         /// <returns>Vertex.</returns>
-        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Vector2 PointOnZPlaneFromIntersectingLine(double distOfPlane, Vector3 point1,
             Vector3 point2)
         {
