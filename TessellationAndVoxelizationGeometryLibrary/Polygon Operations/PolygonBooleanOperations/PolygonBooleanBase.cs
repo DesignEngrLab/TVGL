@@ -257,14 +257,8 @@ namespace TVGL.TwoDimensional
                     // into the polygon
                     var bestEdge = bestIntersection.EdgeA == currentEdge ? bestIntersection.EdgeB : bestIntersection.EdgeA;
                     var newCandidateEdge = candidateIntersect.EdgeA == currentEdge ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
-                    var bestVector = bestEdge.Vector.Normalize();
-                    var newCandidateVector = newCandidateEdge.Vector.Normalize();
-                    var bestCross = currentEdge.Vector.Cross(bestVector);
-                    var newCandidateCross = currentEdge.Vector.Cross(newCandidateVector);
-                    var bestDot = currentEdge.Vector.Dot(bestVector);
-                    var newCandidateDot = currentEdge.Vector.Dot(newCandidateVector);
-                    var bestAngle = Math.Atan2(bestCross, bestDot);
-                    var newCandidateAngle = Math.Atan2(newCandidateCross, newCandidateDot);
+                    var bestAngle = currentEdge.Vector.InteriorAngleBetweenVectors(bestEdge.Vector);
+                    var newCandidateAngle = currentEdge.Vector.InteriorAngleBetweenVectors(newCandidateEdge.Vector);
                     if (newCandidateAngle > bestAngle) bestIntersection = candidateIntersect;
                     if (newCandidateAngle == bestAngle)
                     {   // really?! if you are here than not only are there two segments that pass through currentEdge at the same

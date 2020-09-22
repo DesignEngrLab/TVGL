@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TVGL;
@@ -33,8 +34,8 @@ namespace TVGLUnitTestsAndBenchmarking
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("*").Reverse().ToArray();
-            for (var i = 10; i < fileNames.Length - 0; i++)
+            var fileNames = dir.GetFiles("*").ToArray();
+            for (var i = 6; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -58,12 +59,30 @@ namespace TVGLUnitTestsAndBenchmarking
 
                     var silhouette = solid.CreateSilhouette(direction);
                     Presenter.ShowAndHang(silhouette);
-                    var length= solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
+                    solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
                     var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
-                    solid.GetSliceContactData(plane, out var contactData, false);
+                    var xsection = solid.GetCrossSection(plane);
+                    Presenter.ShowAndHang(xsection);
+                    var triIndices = xsection[0].Triangulate();
+                    PlotTriangulation(xsection[0], triIndices);
                 }
             }
 
+        }
+
+        public static void TestTriangulate()
+        {
+            var testcase = new Polygon(TestCases.Ersatz["hand"].Item1[0]);
+            //var testcase =new Polygon(TestCases.MakeStarryCircularPolygon(13, 10,7));
+            //testcase.Transform(Matrix3x3.CreateRotation(Math.PI));
+            Presenter.ShowAndHang(testcase);
+            var ti = testcase.Triangulate();
+            PlotTriangulation(testcase, ti);
+        }
+        private static void PlotTriangulation(Polygon polygon, List<int[]> triIndices)
+        {
+            var index2CoordsDict = polygon.AllPolygons.SelectMany(p => p.Vertices).ToDictionary(v => v.IndexInList, v => v.Coordinates);
+            Presenter.ShowAndHang(triIndices.Select(ti => ti.Select(i => index2CoordsDict[i])));
         }
     }
 }

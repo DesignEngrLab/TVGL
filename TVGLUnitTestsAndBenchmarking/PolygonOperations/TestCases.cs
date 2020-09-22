@@ -82,6 +82,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 { "pinch", (
                     new [] { new [] { new Vector2(-3,-3), new Vector2(10, 0), new Vector2(0, 0), new Vector2(0, 10) } },
                     new [] { new [] { new Vector2(0,10), new Vector2(0,5), new Vector2(10,0) } })},
+
                 { "trapInTri", (
                     new [] { new [] { new Vector2(0,0), new Vector2(10,0), new Vector2(0,10) } },
                     new [] { new [] { new Vector2(0,0), new Vector2(4,0), new Vector2(6,4), new Vector2(3,7) } })},
@@ -95,6 +96,10 @@ namespace TVGLUnitTestsAndBenchmarking
                         new [] { new Vector2(2, 2), new Vector2(2, 8), new Vector2(8, 8), new Vector2(8, 2) } },
                     new [] { new [] { new Vector2(1,1), new Vector2(9,1), new Vector2(9, 9), new Vector2(1, 9) },
                         new [] { new Vector2(3, 3), new Vector2(3, 7), new Vector2(7, 7), new Vector2(7, 3) } })},
+                { "hand", (
+                    new [] { new [] { new Vector2(0,5), new Vector2(3, 4), new Vector2(1, 3), new Vector2(4, 2) , new Vector2(2, 1),
+                    new Vector2(12,5),new Vector2(2.2,9),new Vector2(4.4,8),new Vector2(1.1,7),new Vector2(3.3,6)
+                    } }, null) },
                {"boundingRectTest1",(
                     new[] { new[] {
                         new Vector2(2.26970768, 4.28080463), new Vector2(5.84034252, 0), new Vector2(12.22331619, 2.24806976),

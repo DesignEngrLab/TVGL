@@ -165,7 +165,7 @@ namespace TVGL
 
         #region Dealing with Flat Patches
 
-        internal static Vector3 DetermineNormalForA3DVertexPolygon(int numSides, IList<Vertex> vertices, out bool reverseVertexOrder, 
+        internal static Vector3 DetermineNormalForA3DVertexPolygon(int numSides, IList<Vertex> vertices, out bool reverseVertexOrder,
             Vector3 suggestedNormal)
         {
             reverseVertexOrder = false;
@@ -871,7 +871,7 @@ namespace TVGL
         {
             var axis = edge1.Vector.Cross(edge2.Vector);
             var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            var extAngle = ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            var extAngle = ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
             return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
         }
 
@@ -884,7 +884,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double SmallerAngleBetweenEdges(Vector2 v0, Vector2 v1)
         {
-            var extAngle = ExteriorAngleBetweenEdgesInCCWList(v0, v1);
+            var extAngle = ExteriorAngleBetweenVectors(v0, v1);
             return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
         }
 
@@ -898,7 +898,7 @@ namespace TVGL
         internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -911,7 +911,7 @@ namespace TVGL
         internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return InteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -924,7 +924,7 @@ namespace TVGL
         internal static double ExteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -937,16 +937,16 @@ namespace TVGL
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
+            return InteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
         }
 
         internal static double ExteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
         {
-            return Constants.TwoPi - InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
+            return Constants.TwoPi - InteriorAngleBetweenVectors(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
         {
-            return InteriorAngleBetweenEdgesInCCWList(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
+            return InteriorAngleBetweenVectors(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
 
 
@@ -967,7 +967,7 @@ namespace TVGL
         internal static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Matrix4x4 flattenTransform)
         {
             var points = (new List<Vertex> { a, b, c }).ProjectTo2DCoordinates(flattenTransform).ToArray();
-            return InteriorAngleBetweenEdgesInCCWList(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
+            return InteriorAngleBetweenVectors(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
                 new Vector2(points[2].X - points[1].X, points[2].Y - points[1].Y));
         }
 
@@ -977,40 +977,20 @@ namespace TVGL
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double ExteriorAngleBetweenEdgesInCCWList(Vector2 v0, Vector2 v1)
+        public static double ExteriorAngleBetweenVectors(this Vector2 v0, Vector2 v1)
         {
-            return 2 * Math.PI - InteriorAngleBetweenEdgesInCCWList(v0, v1);
+            return Math.PI + Math.Atan2(v0.Cross(v1), v0.Dot(v1));
         }
 
         /// <summary>
-        ///     Gets the interior angle between two edges, assuming the edges are listed in CCW order.
-        ///     NOTE: This is opposite from getting the CCW angle from v0 and v1.
+        /// Gets the interior angle between two vectors, assuming the edges are listed in CCW order.
         /// </summary>
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        public static double InteriorAngleBetweenEdgesInCCWList(Vector2 v0, Vector2 v1)
+        public static double InteriorAngleBetweenVectors(this Vector2 v0, Vector2 v1)
         {
-            #region Law of Cosines Approach (Commented Out)
-
-            ////This is an alternative approach to the one that is not commented out
-            ////Use law of cosines to find smaller angle between two vectors
-            //var aSq = v0.X * v0.X + v0.Y * v0.Y;
-            //var bSq = v1.X * v1.X + v1.Y * v1.Y;
-            //var cSq = (v0.X + v1.X) * (v0.X + v1.X) + (v0.Y + v1.Y) * (v0.Y + v1.Y);
-            //var angle = Math.Acos((aSq + bSq - cSq) / (2 * Math.Sqrt(aSq) * Math.Sqrt(bSq)));
-            ////Use cross product sign to determine if smaller angle is CCW from v0
-            //var cross = v0.X * v1.Y - v0.Y * v1.X;
-            //if (Math.Sign(cross) < 0) angle = 2 * Math.PI - angle;
-
-            #endregion
-
-            var angleV0 = Math.Atan2(v0.Y, v0.X);
-            var angleV1 = Math.Atan2(v1.Y, v1.X);
-            var angleChange = Math.PI - (angleV1 - angleV0);
-            if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
-            if (angleChange < 0) return angleChange + 2 * Math.PI;
-            return angleChange;
+            return Math.PI - Math.Atan2(v0.Cross(v1), v0.Dot(v1));
         }
 
         #endregion
@@ -1614,7 +1594,7 @@ namespace TVGL
             var toFactor = (distOfPlane - point1.X) / (point2.X - point1.X);
             var fromFactor = 1 - toFactor;
 
-            return new Vector2(fromFactor * point1.Y + toFactor * point2.Y, 
+            return new Vector2(fromFactor * point1.Y + toFactor * point2.Y,
                 fromFactor * point1.Z + toFactor * point2.Z);
         }
 
@@ -1634,7 +1614,7 @@ namespace TVGL
             var toFactor = (distOfPlane - point1.Y) / (point2.Y - point1.Y);
             var fromFactor = 1 - toFactor;
 
-            return new Vector2( fromFactor * point1.Z + toFactor * point2.Z,
+            return new Vector2(fromFactor * point1.Z + toFactor * point2.Z,
                 fromFactor * point1.X + toFactor * point2.X);
         }
 

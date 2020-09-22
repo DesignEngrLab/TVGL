@@ -17,6 +17,8 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public class PolygonOperationsTesting
     {
+        static Random r = new Random();
+        static double r1 => 2.0 * r.NextDouble() - 1.0;
 
 
         internal static void DebugEdgeCases(string name)
@@ -154,7 +156,8 @@ namespace TVGLUnitTestsAndBenchmarking
             Presenter.ShowAndHang(polygon);
             polygon.SliceAtLine(new Vector2(1, -0.1).Normalize(), 0, out var negPolys, out var posPolys, -0.3, -0.3);
 
-            Presenter.ShowAndHang(new[] { negPolys, posPolys });
+            Presenter.ShowAndHang(negPolys);
+            Presenter.ShowAndHang(posPolys );
         }
 
         public static void TestOffsetting()

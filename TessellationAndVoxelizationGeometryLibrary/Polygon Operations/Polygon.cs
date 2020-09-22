@@ -445,7 +445,7 @@ namespace TVGL.TwoDimensional
                     _path.Add(p);
                 }
             }
-            if (_path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
+            if (_path.Count>1 && _path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
             Index = index;
             MakeVertices();
             MakeLineSegments();

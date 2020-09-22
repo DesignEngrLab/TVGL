@@ -18,7 +18,7 @@ namespace TVGLUnitTestsAndBenchmarking
             var ts = new TessellatedSolid();
             ts = new TessellatedSolid(new[] { new List<Vector3>() }, true, new TVGL.Color[0]);
             ts = new TessellatedSolid(new Vector3[0], new[] { new[] { 1, 2, 3 } }, true, new TVGL.Color[0]);
-            ts.AddPrimitive(new Flat());
+            ts.AddPrimitive(new Plane());
             ts.CheckModelIntegrity();
             ts.ClassifyPrimitiveSurfaces();
             ts.Complexify();
@@ -32,9 +32,9 @@ namespace TVGLUnitTestsAndBenchmarking
             ts.SimplifyFlatPatches();
             ts.Transform(new Matrix4x4());
             ts.TransformToNewSolid(new Matrix4x4());
-            ts.SliceOnInfiniteFlat(new Flat(), out List<TessellatedSolid> solids, out ContactData contactData);
-            ts.SliceOnFlatAsSingleSolids(new Flat(), out TessellatedSolid positiveSideSolids, out TessellatedSolid negativeSideSolid);
-            ts.GetSliceContactData(new Flat(), out contactData, false);
+            ts.SliceOnInfiniteFlat(new Plane(), out List<TessellatedSolid> solids, out ContactData contactData);
+            ts.SliceOnFlatAsSingleSolids(new Plane(), out TessellatedSolid positiveSideSolids, out TessellatedSolid negativeSideSolid);
+            ts.GetSliceContactData(new Plane(), out contactData, false);
             ts.ConvexHull.Vertices.MinimumBoundingCylinder();
             ts.ConvexHull.Vertices.OrientedBoundingBox();
             var length = ts.ConvexHull.Vertices.GetLengthAndExtremeVertices(Vector3.UnitX, out List<IVertex3D> bottomVertices,

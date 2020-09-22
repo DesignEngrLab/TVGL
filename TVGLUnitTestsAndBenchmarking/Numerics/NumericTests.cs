@@ -1,6 +1,7 @@
 using System;
 using Xunit;
 using TVGL.Numerics;
+using TVGL;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -36,6 +37,19 @@ namespace TVGLUnitTestsAndBenchmarking
             var v2 = v1.Normalize();
             Assert.Equal(v2.Length(), 1.0, 10);
         }
+
+
+        [Fact]
+        public static void InteriorAngle()
+        {
+            //var v1 = new Vector2(r100, r100);
+            var v1 = new Vector2(1, 0);
+            var angle = 2 * Math.PI * r.NextDouble() - Math.PI;
+            var v2 = new Vector2(Math.Cos(angle), Math.Sin(angle));
+            //var v2 = v1.Transform(Matrix3x3.CreateRotation(angle));
+            Assert.Equal(Math.PI - angle, v1.InteriorAngleBetweenVectors(v2), 10);
+        }
+
         [Fact]
         public static void Matrix3InvertSimple()
         {

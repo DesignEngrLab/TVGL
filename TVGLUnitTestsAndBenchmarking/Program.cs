@@ -3,17 +3,23 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using TVGL;
+using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
+        static Random r = new Random();
+        static double r1 => 2.0 * r.NextDouble() - 1.0;
+
+
 
         [STAThread]
         private static void Main(string[] args)
         {
-            TVGL3Dto2DTests.TestSilhouette();
+            //TVGL3Dto2DTests.TestSilhouette();
+             TVGL3Dto2DTests.TestTriangulate();
 
 #if PRESENT
             //var polys = TestCases.BenchKnown(16);
