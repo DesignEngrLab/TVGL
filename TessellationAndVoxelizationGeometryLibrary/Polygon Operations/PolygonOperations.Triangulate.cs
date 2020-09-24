@@ -138,7 +138,7 @@ namespace TVGL.TwoDimensional
                     polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
                 foreach (var monoPoly in MakeXMonotonePolygons(polygon))
                 {
-                    //Presenter.ShowAndHang(monoPoly);
+                    Presenter.ShowAndHang(monoPoly);
                     localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                 }
                 triangleFaceList.AddRange(localTriangleFaceList);
@@ -163,17 +163,18 @@ namespace TVGL.TwoDimensional
                     AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
             while (connections.Any())
             {
-                var startingConnection = connections.First();
-                var start = startingConnection.Key;
-                var next = startingConnection.Value[0];
+                var startingConnectionKVP = connections.First();
+                var start = startingConnectionKVP.Key;
                 var newVertices = new List<Vertex2D> { start };
                 var current = start;
+                var nextConnections = connections[current];
+                Vertex2D next = nextConnections[0];
                 while (next != start)
                 {
                     newVertices.Add(next);
                     RemoveConnection(connections, current, next);
                     current = next;
-                    var nextConnections = connections[current];
+                    nextConnections = connections[current];
                     if (nextConnections.Count == 1) next = nextConnections[0];
                     else next = ChooseTightestLeftTurn(nextConnections, current,
                         current.Coordinates - newVertices[^2].Coordinates);
@@ -190,7 +191,7 @@ namespace TVGL.TwoDimensional
             {
                 if (vertex == current) continue;
                 var angle = (vertex.Coordinates - current.Coordinates).InteriorAngleBetweenVectors(lastVector);
-                if (minAngle>angle)
+                if (minAngle > angle && !angle.IsNegligible())
                 {
                     minAngle = angle;
                     bestVertex = vertex;
