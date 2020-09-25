@@ -137,10 +137,7 @@ namespace TVGL.TwoDimensional
                 if (randomAngle != 0)
                     polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
                 foreach (var monoPoly in MakeXMonotonePolygons(polygon))
-                {
-                    Presenter.ShowAndHang(monoPoly);
                     localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-                }
                 triangleFaceList.AddRange(localTriangleFaceList);
                 return triangleFaceList;
                 //}
@@ -167,7 +164,7 @@ namespace TVGL.TwoDimensional
                 var start = startingConnectionKVP.Key;
                 var newVertices = new List<Vertex2D> { start };
                 var current = start;
-                var nextConnections = connections[current];
+                var nextConnections = startingConnectionKVP.Value;
                 Vertex2D next = nextConnections[0];
                 while (next != start)
                 {
@@ -179,7 +176,8 @@ namespace TVGL.TwoDimensional
                     else next = ChooseTightestLeftTurn(nextConnections, current,
                         current.Coordinates - newVertices[^2].Coordinates);
                 }
-                yield return new Polygon(newVertices);
+                RemoveConnection(connections, current, next);
+                yield return new Polygon(newVertices.Select(v => v.Copy()));
             }
         }
 
@@ -190,7 +188,7 @@ namespace TVGL.TwoDimensional
             foreach (var vertex in nextVertices)
             {
                 if (vertex == current) continue;
-                var angle = (vertex.Coordinates - current.Coordinates).InteriorAngleBetweenVectors(lastVector);
+                var angle = lastVector.InteriorAngleBetweenVectors(vertex.Coordinates - current.Coordinates);
                 if (minAngle > angle && !angle.IsNegligible())
                 {
                     minAngle = angle;
@@ -350,11 +348,14 @@ namespace TVGL.TwoDimensional
 
         private static IEnumerable<int[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {
-            Vertex2D bottomVertex = monoPoly.Vertices[0];
+            if (monoPoly.Vertices.Count == 3)
+                yield return new[] { monoPoly.Vertices[0].IndexInList, monoPoly.Vertices[1].IndexInList, monoPoly.Vertices[2].IndexInList };
+            Vertex2D bottomVertex = monoPoly.Vertices[0]; // Q: why is this called bottom and not leftmost?
+            // A: because in the loop below it becomes the vertex on the bottom branch of the polygon
             foreach (var vertex in monoPoly.Vertices.Skip(1))
                 if (bottomVertex.X > vertex.X || (bottomVertex.X == vertex.X && bottomVertex.Y > vertex.Y))
                     bottomVertex = vertex;
-            var topVertex = bottomVertex;
+            var topVertex = bottomVertex; //initialize top to the same as bottom
             var nextVertex = NextXVertex(ref bottomVertex, ref topVertex, out var belongsToBottom);
 
             var concaveFunnelStack = new Stack<Vertex2D>();
@@ -368,31 +369,30 @@ namespace TVGL.TwoDimensional
                 {
                     Vertex2D vertex1 = concaveFunnelStack.Pop();
                     Vertex2D vertex2 = concaveFunnelStack.Pop();
-                    while (vertex1 != null &&
-                        (vertex1.Coordinates - nextVertex.Coordinates).Cross(vertex2.Coordinates - vertex1.Coordinates) > 0)
+                    while (vertex2 != null && newVertexIsOnBottom ==
+                        (vertex1.Coordinates - nextVertex.Coordinates).Cross(vertex2.Coordinates - vertex1.Coordinates) < 0)
                     {
-                        if (belongsToBottom)
+                        if (newVertexIsOnBottom)
                             yield return new[] { nextVertex.IndexInList, vertex2.IndexInList, vertex1.IndexInList };
                         else yield return new[] { nextVertex.IndexInList, vertex1.IndexInList, vertex2.IndexInList };
-                        vertex2 = vertex1;
-                        if (!concaveFunnelStack.Any()) vertex1 = concaveFunnelStack.Pop();
-                        else vertex1 = null;
+                        vertex1 = vertex2;
+                        vertex2 = concaveFunnelStack.Any() ? concaveFunnelStack.Pop() : null;
                     }
-                    concaveFunnelStack.Push(vertex2);
-                    if (vertex1 != null) concaveFunnelStack.Push(vertex1);
+                    if (vertex2 != null) concaveFunnelStack.Push(vertex2);
+                    concaveFunnelStack.Push(vertex1);
                     concaveFunnelStack.Push(nextVertex);
                 }
                 else //connect this to all on the stack
                 {
                     Vertex2D topOfStackVertex = null;
                     Vertex2D prevVertex2 = null;
-                    while (!concaveFunnelStack.Any())
+                    while (concaveFunnelStack.Any())
                     {
                         var prevVertex1 = concaveFunnelStack.Pop();
                         if (topOfStackVertex == null) topOfStackVertex = prevVertex1;
                         if (prevVertex2 != null)
                         {
-                            if (belongsToBottom)
+                            if (newVertexIsOnBottom)
                                 yield return new[] { nextVertex.IndexInList, prevVertex2.IndexInList, prevVertex1.IndexInList };
                             else yield return new[] { nextVertex.IndexInList, prevVertex1.IndexInList, prevVertex2.IndexInList };
                         }
@@ -405,7 +405,7 @@ namespace TVGL.TwoDimensional
             } while (bottomVertex != null);
         }
 
-        private static Vertex2D NextXVertex(ref Vertex2D topVertex, ref Vertex2D bottomVertex, out bool belongsToBottom)
+        private static Vertex2D NextXVertex(ref Vertex2D bottomVertex, ref Vertex2D topVertex, out bool belongsToBottom)
         {
             var nextTopVertex = topVertex.EndLine.FromPoint;
             var nextBottomVertex = bottomVertex.StartLine.ToPoint;
