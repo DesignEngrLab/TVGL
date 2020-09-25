@@ -896,8 +896,13 @@ namespace TVGL
 
         #endregion
 
-
-
+        #region Reset Color Function
+        public void ResetDefaultColor()
+        {
+            var defaultColor = new Color(KnownColors.LightGray);
+            foreach (var face in Faces) face.Color = defaultColor;
+        }
+        #endregion
 
         #region Transform
         /// <summary>

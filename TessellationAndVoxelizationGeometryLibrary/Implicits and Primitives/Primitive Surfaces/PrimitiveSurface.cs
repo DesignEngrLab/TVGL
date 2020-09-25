@@ -338,5 +338,10 @@ namespace TVGL
                 if (z < MinZ) MinZ = z;
             }
         }
+
+        public void SetColor(Color color)
+        {
+            foreach (var face in Faces) face.Color = color;
+        }
     }
 }
