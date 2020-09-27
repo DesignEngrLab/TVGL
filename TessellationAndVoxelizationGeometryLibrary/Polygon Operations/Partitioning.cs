@@ -5,7 +5,7 @@ using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
-    public enum MonotonicityChange { X, Y, Both, Neither }
+    public enum MonotonicityChange { X, Y, Both, Neither, SameAsNeighbor }
     public readonly struct MonotoneBox
     {
         public readonly Vertex2D Vertex1;
@@ -92,46 +92,58 @@ namespace TVGL.TwoDimensional
                 lastVertex.Y - beginBoxVertex.Y >= 0);
         }
 
-  
+
         static MonotonicityChange GetMonotonicityChange(Vertex2D vertex)
         {
-            var prevVector = vertex.EndLine.Vector;
-            var nextVector = vertex.StartLine.Vector;
-            if ((prevVector.X == 0 && prevVector.Y == 0) || (nextVector.X == 0 && nextVector.Y == 0))
-                return MonotonicityChange.Neither;
-            var xChange = (prevVector.X < 0 && nextVector.X > 0) || (prevVector.X > 0 && nextVector.X < 0);
-            var yChange = (prevVector.Y < 0 && nextVector.Y > 0) || (prevVector.Y > 0 && nextVector.Y < 0);
-            if (xChange && yChange) return MonotonicityChange.Both;
-            var xSame = (prevVector.X < 0 && nextVector.X < 0) || (prevVector.X > 0 && nextVector.X > 0);
-            if (yChange && xSame) return MonotonicityChange.Y;
-            var ySame = (prevVector.Y < 0 && nextVector.Y < 0) || (prevVector.Y > 0 && nextVector.Y > 0);
-            if (xChange && ySame) return MonotonicityChange.X;
-            if (xSame && ySame) return MonotonicityChange.Neither;
-            // if at this point then one or more values in the vectors is zero since the above booleans were defined with
-            // strict inequality
-            if (prevVector.X == 0)
-                return yChange ? MonotonicityChange.Y : MonotonicityChange.Neither;
-            if (prevVector.Y == 0)
-                return xChange ? MonotonicityChange.X : MonotonicityChange.Neither;
-            if (nextVector.X == 0)
-            {
-                var aheadLine = vertex.StartLine.ToPoint.StartLine;
-                while (aheadLine.Vector.X == 0)
-                    aheadLine = aheadLine.ToPoint.StartLine;
-                if ((aheadLine.Vector.X > 0 && prevVector.X < 0) || (aheadLine.Vector.X < 0 && prevVector.X > 0))
-                    return yChange ? MonotonicityChange.Both : MonotonicityChange.X;
-                return yChange ? MonotonicityChange.Y : MonotonicityChange.Neither;
-            }
-            //if (nextVector.Y == 0)  //this must be true given the above conditions. So for simplicity of code and
-            // speed, we simply comment it out
-            {
-                var aheadLine = vertex.StartLine.ToPoint.StartLine;
-                while (aheadLine.Vector.Y == 0)
-                    aheadLine = aheadLine.ToPoint.StartLine;
-                if ((aheadLine.Vector.Y > 0 && prevVector.Y < 0) || (aheadLine.Vector.Y < 0 && prevVector.Y > 0))
-                    return xChange ? MonotonicityChange.Both : MonotonicityChange.Y;
-                return xChange ? MonotonicityChange.X : MonotonicityChange.Neither;
-            }
+            var xPrev = vertex.EndLine.Vector.X;
+            var yPrev = vertex.EndLine.Vector.Y;
+            if (xPrev.IsNegligible() && yPrev.IsNegligible()) return MonotonicityChange.SameAsNeighbor;
+            var xNext = vertex.StartLine.Vector.X;
+            var yNext = vertex.StartLine.Vector.Y;
+            if (xNext.IsNegligible() && yNext.IsNegligible()) return MonotonicityChange.SameAsNeighbor;
+
+            // first check the cases where all four numbers are not negligible
+            var xChangesDir = (xPrev.IsLessThanNonNegligible() && xNext.IsGreaterThanNonNegligible())
+                || (xPrev.IsGreaterThanNonNegligible() && xNext.IsLessThanNonNegligible());
+            var yChangesDir = (yPrev.IsLessThanNonNegligible() && yNext.IsGreaterThanNonNegligible())
+                || (yPrev.IsGreaterThanNonNegligible() && yNext.IsLessThanNonNegligible());
+            if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
+            var xSameDir = (xPrev.IsLessThanNonNegligible() && xNext.IsLessThanNonNegligible())
+                || (xPrev.IsGreaterThanNonNegligible() && xNext.IsGreaterThanNonNegligible());
+            if (yChangesDir && xSameDir) return MonotonicityChange.Y;
+            var ySameDir = (yPrev.IsLessThanNonNegligible() && yNext.IsLessThanNonNegligible())
+                || (yPrev.IsGreaterThanNonNegligible() && yNext.IsGreaterThanNonNegligible());
+            if (xChangesDir && ySameDir) return MonotonicityChange.X;
+            if (xSameDir && ySameDir) return MonotonicityChange.Neither;
+
+            // if at this point then one or more values in the vectors is zero/negligible) since the above booleans were 
+            // defined with this restriction
+            if (xPrev.IsNegligible() && xNext.IsNegligible()) // then line is vertical
+                return (Math.Sign(yPrev) == Math.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
+            // eww, the latter in that return is problematic at it would be a knife edge. but that's not this functions job to police
+            if (yPrev.IsNegligible() && yNext.IsNegligible()) // then line is horizontal
+                return (Math.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
+
+            // at this point, we've checked that 1) no vector is zero (return SameAsNeighbor), 2) all are nonnegligible, 
+            // 3) either both x's or both y's are negligible.
+            // the last case is tricky. if one is zero...here we will rely on the fact that we are sorting first by X, 
+            // and then by Y. We can imagine an infinitesimal CW tilt in the polygon
+            if (xPrev.IsNegligible()) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given 
+                // the condition before the last). it's possible that yNext is zero, but it doesn't affect the verdict
+                xChangesDir = (Math.Sign(yPrev) != Math.Sign(xNext)); // recall infinitesimal tilt. if going up and turning
+            // right (xNext is '+') then that's not a change in X or if going down and turning in the negative x dir.
+            // if going up then x-negative (like "end" point in x-Monotone polygon) or going down and turn positive 
+            // (like "start" point in x-Monotone polygon). 
+            if (xNext.IsNegligible())
+                xChangesDir = Math.Sign(xPrev) != Math.Sign(yNext);
+            if (yPrev.IsNegligible())
+                yChangesDir = Math.Sign(xPrev) == Math.Sign(yNext);
+            if (yNext.IsNegligible())
+                yChangesDir = (Math.Sign(yPrev) == Math.Sign(xNext));
+            if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
+            if (xChangesDir) return MonotonicityChange.X;
+            if (yChangesDir) return MonotonicityChange.Y;
+            return MonotonicityChange.Neither;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
         {
             //TVGL3Dto2DTests.TestSilhouette();
-             TVGL3Dto2DTests.TestTriangulate();
+             TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
             //var polys = TestCases.BenchKnown(16);

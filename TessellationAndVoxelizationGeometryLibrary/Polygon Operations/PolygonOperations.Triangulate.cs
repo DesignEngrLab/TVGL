@@ -136,7 +136,7 @@ namespace TVGL.TwoDimensional
                 var localTriangleFaceList = new List<int[]>();
                 if (randomAngle != 0)
                     polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
-                foreach (var monoPoly in MakeXMonotonePolygons(polygon))
+                foreach (var monoPoly in ConvertXMonotonePolygons(polygon))
                     localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                 triangleFaceList.AddRange(localTriangleFaceList);
                 return triangleFaceList;
@@ -150,9 +150,11 @@ namespace TVGL.TwoDimensional
             return null;
         }
 
-        private static IEnumerable<Polygon> MakeXMonotonePolygons(Polygon polygon)
+        public static IEnumerable<Polygon> ConvertXMonotonePolygons(Polygon polygon)
         {
-            var connections = FindInternalDiagonalsForMonotone(polygon);
+            if (!FindInternalDiagonalsForMonotone(polygon, out var connections))
+                throw new ArgumentException("There are duplicate points in the polygon. Please remove before calling " +
+                    "this function.", "polygon");
             foreach (var edge in polygon.Lines)
                 AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
             foreach (var vert in polygon.InnerPolygons.SelectMany(p => p.Lines))
@@ -198,18 +200,20 @@ namespace TVGL.TwoDimensional
             return bestVertex;
         }
 
-        private static Dictionary<Vertex2D, List<Vertex2D>> FindInternalDiagonalsForMonotone(Polygon polygon)
+        private static bool FindInternalDiagonalsForMonotone(Polygon polygon,
+            out Dictionary<Vertex2D, List<Vertex2D>> connections)
         {
             var orderedListsOfVertices = new List<List<Vertex2D>>();
             orderedListsOfVertices.Add(polygon.OrderedXVertices);
             foreach (var hole in polygon.InnerPolygons)
                 orderedListsOfVertices.Add(hole.OrderedXVertices);
             var sortedVertices = CombineSortedVerticesIntoOneCollection(orderedListsOfVertices);
-            var connections = new Dictionary<Vertex2D, List<Vertex2D>>();
+            connections = new Dictionary<Vertex2D, List<Vertex2D>>();
             var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
             foreach (var vertex in sortedVertices)
             {
                 var monoChange = GetMonotonicityChange(vertex);
+                if (monoChange == MonotonicityChange.SameAsNeighbor) return false;
                 var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
                 if (monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
@@ -260,7 +264,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            return connections;
+            return true;
         }
 
         private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> newEdgeDict,

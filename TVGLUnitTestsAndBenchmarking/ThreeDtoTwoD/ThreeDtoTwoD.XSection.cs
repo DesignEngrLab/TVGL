@@ -10,13 +10,11 @@ using TVGL.TwoDimensional;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    public static class TVGL3Dto2DTests
+    public  static partial class TVGL3Dto2DTests
     {
-        static Random r = new Random();
-        static double r100 => 200.0 * r.NextDouble() - 100.0;
 
         //[Fact]
-        public static void TestSilhouette()
+        public static void TestXSectionAndMonotoneTriangulate()
         {
             DirectoryInfo dir;
             if (Directory.Exists("../../../../TestFiles"))
@@ -57,8 +55,6 @@ namespace TVGLUnitTestsAndBenchmarking
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
 
-                    var silhouette = solid.CreateSilhouette(direction);
-                    Presenter.ShowAndHang(silhouette);
                     solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
                     var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
                     var xsection = solid.GetCrossSection(plane);
