@@ -64,14 +64,8 @@ namespace TVGL.IOFunctions
         [XmlAttribute("unit")]
         public string UnitsAsString
         {
-            get
-            {
-                return Enum.GetName(typeof(UnitType), Units);
-            }
-            set
-            {
-                Units = ParseUnits(value);
-            }
+            get => Enum.GetName(typeof(UnitType), Units);
+            set => Units = ParseUnits(value);
         }
 
         /// <summary>

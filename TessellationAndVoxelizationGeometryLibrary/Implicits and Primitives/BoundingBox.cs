@@ -238,10 +238,7 @@ namespace TVGL
                 }
                 return _center;
             }
-            set
-            {
-                _center = value;
-            }
+            set => _center = value;
         }
 
         private Vector3 _center = Vector3.Null;
@@ -417,7 +414,7 @@ namespace TVGL
         public void MoveFaceOutward(Vector3 direction, double distance)
         {
             var unitDir = direction.Normalize();
-            CartesianDirections cartesian = CartesianDirections.ZNegative;
+            CartesianDirections cartesian;
             if (unitDir.Dot(Directions[0]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.XPositive;
             else if (unitDir.Dot(Directions[1]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.YPositive;
             else if (unitDir.Dot(Directions[2]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.ZPositive;

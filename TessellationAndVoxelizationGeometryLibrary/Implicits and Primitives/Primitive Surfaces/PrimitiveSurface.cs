@@ -97,7 +97,7 @@ namespace TVGL
                     return Vertices.Select(v => v.IndexInList).ToArray();
                 return Array.Empty<int>();
             }
-            set { _vertexIndices = value; }
+            set => _vertexIndices = value;
         }
 
 
@@ -113,7 +113,7 @@ namespace TVGL
                 if (_innerEdges == null) DefineInnerOuterEdges();
                 return _innerEdges;
             }
-            protected set { _innerEdges = value; }
+            protected set => _innerEdges = value;
         }
 
 
@@ -139,7 +139,7 @@ namespace TVGL
                 if (_outerEdges == null) DefineInnerOuterEdges();
                 return _outerEdges;
             }
-            protected set { _outerEdges = value; }
+            protected set => _outerEdges = value;
         }
 
         public int[] OuterEdgeIndices

@@ -92,30 +92,21 @@ namespace TVGL
         /// </summary>
         /// <value>The x.</value>
         [JsonIgnore]
-        public double X
-        {
-            get { return Coordinates.X; }
-        }
+        public double X => Coordinates.X;
 
         /// <summary>
         ///     Gets the y.
         /// </summary>
         /// <value>The y.</value>
         [JsonIgnore]
-        public double Y
-        {
-            get { return Coordinates.Y; }
-        }
+        public double Y => Coordinates.Y;
 
         /// <summary>
         ///     Gets the z.
         /// </summary>
         /// <value>The z.</value>
         [JsonIgnore]
-        public double Z
-        {
-            get { return Coordinates.Z; }
-        }
+        public double Z => Coordinates.Z;
 
         /// <summary>
         ///     Gets the edges.

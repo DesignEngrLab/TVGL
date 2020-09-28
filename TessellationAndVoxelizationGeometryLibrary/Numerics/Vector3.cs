@@ -21,37 +21,24 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (0,0,0).
         /// </summary>
-        public static Vector3 Zero
-        {
+        public static Vector3 Zero =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return default;
-            }
-        }
+            default;
+
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
-        public static Vector3 One
-        {
+        public static Vector3 One =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector3(1.0, 1.0, 1.0);
-            }
-        }
+            new Vector3(1.0, 1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
-        public static Vector3 Null
-        {
+        public static Vector3 Null =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector3(double.NaN, double.NaN, double.NaN);
-            }
-        }
+            new Vector3(double.NaN, double.NaN, double.NaN);
+
         public bool IsNull()
         {
             return double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z);
@@ -67,15 +54,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (1,0,0).
         /// </summary>
-        public static Vector3 UnitX { get { return new Vector3(1.0, 0.0, 0.0); } }
+        public static Vector3 UnitX => new Vector3(1.0, 0.0, 0.0);
+
         /// <summary>
         /// Returns the vector (0,1,0).
         /// </summary>
-        public static Vector3 UnitY { get { return new Vector3(0.0, 1.0, 0.0); } }
+        public static Vector3 UnitY => new Vector3(0.0, 1.0, 0.0);
+
         /// <summary>
         /// Returns the vector (0,0,1).
         /// </summary>
-        public static Vector3 UnitZ { get { return new Vector3(0.0, 0.0, 1.0); } }
+        public static Vector3 UnitZ => new Vector3(0.0, 0.0, 1.0);
 
         public static Vector3 UnitVector(CartesianDirections direction)
         {

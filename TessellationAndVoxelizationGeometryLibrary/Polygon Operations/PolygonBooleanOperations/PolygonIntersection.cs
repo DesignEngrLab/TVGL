@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using TVGL.Numerics;
+﻿using System.Collections.Generic;
 
 namespace TVGL.TwoDimensional
 {
@@ -14,7 +11,7 @@ namespace TVGL.TwoDimensional
             out PolygonEdge currentEdge,
             out bool startAgain)
         {
-                startAgain = false;
+            startAgain = false;
             if (intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
             {
                 if (intersectionData.CollinearityType == CollinearityTypes.ABeforeBAfter && !intersectionData.VisitedA && !intersectionData.VisitedB)

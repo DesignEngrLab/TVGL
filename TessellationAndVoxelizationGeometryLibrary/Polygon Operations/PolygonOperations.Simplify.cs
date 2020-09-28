@@ -153,7 +153,7 @@ namespace TVGL.TwoDimensional
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static IEnumerable<Polygon> Simplify(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
-            var simplifiedPaths = polygons.SelectMany(poly => poly.AllPolygons.Select(poly => poly.Path)).Simplify(targetNumberOfPoints);
+            var simplifiedPaths = polygons.SelectMany(poly => poly.AllPolygons.Select(p => p.Path)).Simplify(targetNumberOfPoints);
             return CreateShallowPolygonTreesOrderedListsAndVertices(simplifiedPaths);
         }
 

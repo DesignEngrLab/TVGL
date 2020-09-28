@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
     public static partial class PolygonOperations
     {
         /// <summary>
-        /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes. 
+        /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes.
         /// Best way to show is using "Presenter.ShowAndHang(silhouette, medialAxis, "", Plot2DType.Line, false);"
         /// </summary>
         /// <param name="silhouette"></param>
@@ -32,7 +29,7 @@ namespace TVGL.TwoDimensional
                 var sampled = PolygonOperations.Simplify(positivePolygon);
                 var smaller = PolygonOperations.OffsetRound(new Polygon(sampled), -0.001 * perimeter).First();
 
-                //Delaunay Medial Axis             
+                //Delaunay Medial Axis
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
                 var lines = new List<List<Vector2>>();
                 foreach (var triangle in delaunay.Cells)
@@ -47,21 +44,21 @@ namespace TVGL.TwoDimensional
                         triangleCenterLineVertices.Add(edge2Center);
 
                     var edge3Center = 0.5 * (triangle.Vertices[2] + triangle.Vertices[0]);
-                    if (smaller.IsPointInsidePolygon(true,edge3Center, out _))
+                    if (smaller.IsPointInsidePolygon(true, edge3Center, out _))
                         triangleCenterLineVertices.Add(edge3Center);
 
                     if (triangleCenterLineVertices.Any())
                     {
                         if (triangleCenterLineVertices.Count == 1)
                         {
-                            continue; // This vertex has no line associated with it. 
+                            continue; // This vertex has no line associated with it.
                                       //If the vertex should be attached to a line, it will show up again for another triangle.
                         }
                         if (triangleCenterLineVertices.Count == 3)
                         {
                             //If there are two long edges with one short, collapse the long edges to the middle
                             //of the short edge.
-                            //If 
+                            //If
                             //Order the points, such that the larger edge is not included
                             var d0 = (edge1Center - edge2Center).Length();
                             var d1 = (edge2Center - edge3Center).Length();
@@ -112,7 +109,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
 
-                //Merge all the points 
+                //Merge all the points
                 var mergerTolerance = 0.0001;
                 for (var j = 0; j < lines.Count - 1; j++)
                 {
@@ -236,7 +233,7 @@ namespace TVGL.TwoDimensional
                             {
                                 if (line[1] == p0)
                                 {
-                                    //This line is the starting line for the branch. 
+                                    //This line is the starting line for the branch.
                                     continue;
                                 }
                                 branch.Add(line[1]);
@@ -248,7 +245,7 @@ namespace TVGL.TwoDimensional
                             {
                                 if (line[0] == p0)
                                 {
-                                    //This line is the starting line for the branch. 
+                                    //This line is the starting line for the branch.
                                     continue;
                                 }
                                 branch.Add(line[0]);
@@ -260,10 +257,8 @@ namespace TVGL.TwoDimensional
                     }
                     allBranches.Add(branch.ToList());
                 }
-
             }
             return allBranches;
         }
-
     }
 }

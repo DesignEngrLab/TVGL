@@ -111,17 +111,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns a null matrix, which means all values are set to Not-A-Number.
         /// </summary>
-        public static Matrix4x4 Null
-        {
-            get
-            {
-                return new Matrix4x4(
-                    double.NaN, double.NaN, double.NaN,
-                    double.NaN, double.NaN, double.NaN,
-                    double.NaN, double.NaN, double.NaN,
-                    double.NaN, double.NaN, double.NaN);
-            }
-        }
+        public static Matrix4x4 Null =>
+            new Matrix4x4(
+                double.NaN, double.NaN, double.NaN,
+                double.NaN, double.NaN, double.NaN,
+                double.NaN, double.NaN, double.NaN,
+                double.NaN, double.NaN, double.NaN);
+
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>

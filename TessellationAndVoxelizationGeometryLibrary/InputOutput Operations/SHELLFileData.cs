@@ -144,7 +144,7 @@ namespace TVGL.IOFunctions
 
         private void ReadMaterial(string line)
         {
-            float r = 0, g = 0, b = 0;
+            float r, g, b;
             string id, values, shellName, colorString;
             ParseLine(line, out id, out values);
             ParseLine(values, out shellName, out colorString);

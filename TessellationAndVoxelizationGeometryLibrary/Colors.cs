@@ -14,8 +14,6 @@
 
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 
 namespace TVGL
 {
@@ -819,7 +817,6 @@ namespace TVGL
             B = (byte)(argb & 0x000000ff);
         }
 
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
@@ -843,7 +840,6 @@ namespace TVGL
         /// <param name="b">The b.</param>
         public Color(float r, float g, float b)
         {
-
             A = 1;
             R = Convert(r);
             G = Convert(g);
@@ -876,7 +872,10 @@ namespace TVGL
         {
         }
 
-        public Color() { }
+        public Color()
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Color"/> class.
         /// </summary>
@@ -895,6 +894,7 @@ namespace TVGL
                 else A = 255;
             }
         }
+
         // this function is from https://stackoverflow.com/questions/17080535/hsv-to-rgb-stops-at-yellow-c-sharp
         // the initial while's and if's seem pretty amateur though
         public static Color HSVtoRGB(float hue, float saturation, float value, float alpha = 1f)
@@ -922,20 +922,25 @@ namespace TVGL
             {
                 case 0:
                     return new Color(alpha, value, t, p);
+
                 case 1:
                     return new Color(alpha, q, value, p);
+
                 case 2:
                     return new Color(alpha, p, value, t);
+
                 case 3:
                     return new Color(alpha, p, q, value);
+
                 case 4:
                     return new Color(alpha, t, p, value);
+
                 default:
                     return new Color(alpha, value, p, q);
             }
         }
-        #endregion Constructors
 
+        #endregion Constructors
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
@@ -979,8 +984,8 @@ namespace TVGL
         [JsonIgnore]
         public float Af
         {
-            get { return Convert(A); }
-            set { A = Convert(value); }
+            get => Convert(A);
+            set => A = Convert(value);
         }
 
         /// <summary>
@@ -990,8 +995,8 @@ namespace TVGL
         [JsonIgnore]
         public float Rf
         {
-            get { return Convert(R); }
-            set { R = Convert(value); }
+            get => Convert(R);
+            set => R = Convert(value);
         }
 
         /// <summary>
@@ -1001,8 +1006,8 @@ namespace TVGL
         [JsonIgnore]
         public float Gf
         {
-            get { return Convert(G); }
-            set { G = Convert(value); }
+            get => Convert(G);
+            set => G = Convert(value);
         }
 
         /// <summary>
@@ -1012,8 +1017,8 @@ namespace TVGL
         [JsonIgnore]
         public float Bf
         {
-            get { return Convert(B); }
-            set { B = Convert(value); }
+            get => Convert(B);
+            set => B = Convert(value);
         }
 
         public float GetHue()
@@ -1045,7 +1050,6 @@ namespace TVGL
                 return delta / max; // s
             else return 0f;
         }
-
 
         public float GetValue()
         {

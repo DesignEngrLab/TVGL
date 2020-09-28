@@ -271,8 +271,7 @@ namespace TVGL.TwoDimensional
                     break;
                 }
             }
-            if (enclosingPolygon != null)
-                enclosingPolygon.AddInnerPolygon(hole);
+            enclosingPolygon?.AddInnerPolygon(hole);
         }
 
         /// <summary>

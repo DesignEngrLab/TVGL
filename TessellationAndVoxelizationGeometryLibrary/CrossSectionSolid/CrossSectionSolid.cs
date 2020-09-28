@@ -157,8 +157,8 @@ namespace TVGL
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
             //if (!Layer3D.Any()) SetAllVertices();
-            var start = Layer2D.Where(p => p.Value.Count > 1).FirstOrDefault().Key;
-            var stop = Layer2D.Where(p => p.Value.Count > 1).LastOrDefault().Key;
+            var start = Layer2D.FirstOrDefault(p => p.Value.Count > 1).Key;
+            var stop = Layer2D.LastOrDefault(p => p.Value.Count > 1).Key;
             var increment = start < stop ? 1 : -1;
             //var direction = increment == 1 ? Direction : -1 * Direction;
             var faces = new List<PolygonalFace>();
@@ -177,9 +177,8 @@ namespace TVGL
                 if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-                List<PolygonalFace> layerfaces = null;
                 //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-                layerfaces = Layer2D[i].SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon, Direction,
+                var layerfaces = Layer2D[i].SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon, Direction,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
                 if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);

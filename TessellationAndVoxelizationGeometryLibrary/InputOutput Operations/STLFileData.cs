@@ -95,7 +95,7 @@ namespace TVGL.IOFunctions
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
-            var typeString = "";
+            string typeString;
             var now = DateTime.Now;
             List<STLFileData> stlData;
             // Try to read in BINARY format

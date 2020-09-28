@@ -1,10 +1,6 @@
-﻿using Priority_Queue;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using TVGL.Enclosure_Operations;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional

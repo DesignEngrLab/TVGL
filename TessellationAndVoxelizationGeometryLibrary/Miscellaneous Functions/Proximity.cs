@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using TVGL.Numerics;
+﻿using TVGL.Numerics;
 using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
 namespace TVGL
 {

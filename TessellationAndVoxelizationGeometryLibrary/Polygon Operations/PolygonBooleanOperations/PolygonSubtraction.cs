@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using TVGL.Numerics;
+﻿using System.Collections.Generic;
 
 namespace TVGL.TwoDimensional
 {
@@ -47,7 +44,7 @@ namespace TVGL.TwoDimensional
                 {
                     var rel = enumerator.Current.Item1;
                     var otherIsPositive = enumerator.Current.Item2;
-                    if ((rel & PolygonRelationship.BInsideA) != 0b0 != otherIsPositive)  // either 1) B is inside of A and A is negative or 2) A is inside B and 
+                    if ((rel & PolygonRelationship.BInsideA) != 0b0 != otherIsPositive)  // either 1) B is inside of A and A is negative or 2) A is inside B and
                         // A is positive then just return
                         return;
                 }

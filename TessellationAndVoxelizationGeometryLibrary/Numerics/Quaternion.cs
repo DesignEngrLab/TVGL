@@ -35,17 +35,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns a Quaternion representing no rotation.
         /// </summary>
-        public static Quaternion Identity
-        {
-            get { return new Quaternion(0, 0, 0, 1); }
-        }
+        public static Quaternion Identity => new Quaternion(0, 0, 0, 1);
+
         /// <summary>
         /// Returns a Quaternion representing no rotation.
         /// </summary>
-        public static Quaternion Null
-        {
-            get { return new Quaternion(double.NaN, double.NaN, double.NaN, double.NaN); }
-        }
+        public static Quaternion Null => new Quaternion(double.NaN, double.NaN, double.NaN, double.NaN);
 
         /// <summary>
         /// Returns whether the Quaternion is the identity Quaternion.

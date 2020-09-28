@@ -501,7 +501,7 @@ namespace TVGL
                             edgeDic.Add(checksum, edge);
                         }
                     }
-                    List<Vertex[]> triangleFaceList = null;
+                    List<Vertex[]> triangleFaceList;
                     try
                     {
                         triangleFaceList = edges.Select(e => e.To).Triangulate(normal).ToList();

@@ -108,13 +108,12 @@ namespace TVGL.Voxelization
             }
             set
             {
-                var dummy = 0;
                 if (value)
                     lock (indices)
-                        TurnOn((ushort)index, ref dummy);
+                        TurnOn((ushort)index);
                 else
                     lock (indices)
-                        TurnOff((ushort)index, ref dummy);
+                        TurnOff((ushort)index);
             }
         }
 
@@ -186,8 +185,9 @@ namespace TVGL.Voxelization
             return lo;
         }
 
-        void TurnOn(ushort value, ref int index)
+        void TurnOn(ushort value)
         {
+            int index;
             var count = indices.Count;
             if (count == 0)
             {   //since there are no voxels add this one a a lone lower and upper range.
@@ -223,8 +223,9 @@ namespace TVGL.Voxelization
             }
         }
 
-        void TurnOff(ushort value, ref int index)
+        void TurnOff(ushort value)
         {
+            int index;
             var count = indices.Count;
             if (count == 0)
             {

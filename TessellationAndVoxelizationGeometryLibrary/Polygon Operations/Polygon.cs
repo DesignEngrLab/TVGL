@@ -224,18 +224,16 @@ namespace TVGL.TwoDimensional
         public int Index
         {
             get => index;
-            set
-            {
+            set =>
                 //if (index == value) return;
                 //if (value < 0)
                 //    throw new ArgumentException("The ID or Index of a polygon must be a non-negative integer.");
                 index = value;
-                //if (_vertices != null)
-                //    foreach (var v in Vertices)
-                //    {
-                //        v.LoopID = index;
-                //    }
-            }
+            //if (_vertices != null)
+            //    foreach (var v in Vertices)
+            //    {
+            //        v.LoopID = index;
+            //    }
         }
 
         /// <summary>
@@ -244,7 +242,7 @@ namespace TVGL.TwoDimensional
         /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
         public bool IsPositive
         {
-            get { return PathArea > 0; }
+            get => PathArea > 0;
             set
             {
                 if (value != (PathArea > 0))

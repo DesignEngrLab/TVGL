@@ -26,7 +26,7 @@ namespace TVGL.TwoDimensional
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection,
             double tolerance = double.NaN)
         {
-            var areaTolerance = double.NaN;
+            double areaTolerance;
             if (double.IsNaN(tolerance))
             {
                 var minDimension = Math.Min(polygonA.MaxX - polygonA.MinX, Math.Min(polygonA.MaxY - polygonA.MinY,

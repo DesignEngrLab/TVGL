@@ -264,10 +264,10 @@ namespace TVGL
                     {
                         double Prob;
                         int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out Prob);
-                        if (!e.CatProb.Keys.Contains(@group))
-                            e.CatProb.Add(@group, Prob);
-                        else if (e.     CatProb[@group] < Prob)
-                            e.CatProb[@group] = Prob;
+                        if (!e.CatProb.Keys.Contains(group))
+                            e.CatProb.Add(group, Prob);
+                        else if (e.CatProb[group] < Prob)
+                            e.CatProb[group] = Prob;
                     }
         }
 
@@ -605,7 +605,7 @@ namespace TVGL
                     }
                 }
                 bool equals = counter == 3;
-                if (@equals)
+                if (equals)
                 {
                     for (int i = 0; i < 3; i++)
                     {
@@ -643,7 +643,7 @@ namespace TVGL
                 }
                 bool equals = counter == 3;
                 arrayOfRule.OrderBy(n => n).ToArray();
-                if (@equals)
+                if (equals)
                 {
                     var EdgesLead = new[] { faceRules[4][i], faceRules[5][i], faceRules[6][i] };
                     var SortedEL = EdgesLead.OrderBy(n => n).ToArray();

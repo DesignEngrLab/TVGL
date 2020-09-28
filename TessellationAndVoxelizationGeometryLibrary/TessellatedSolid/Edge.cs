@@ -64,8 +64,8 @@ namespace TVGL
             else TessellatedSolid.SetAndGetEdgeChecksum(this);
             _ownedFace = ownedFace;
             _otherFace = otherFace;
-            if (ownedFace != null) ownedFace.AddEdge(this);
-            if (otherFace != null) otherFace.AddEdge(this);
+            ownedFace?.AddEdge(this);
+            otherFace?.AddEdge(this);
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace TVGL
         /// <value>The owned face.</value>
         public PolygonalFace OwnedFace
         {
-            get { return _ownedFace; }
+            get => _ownedFace;
             internal set
             {
                 if (_ownedFace == value) return;
@@ -167,7 +167,7 @@ namespace TVGL
         /// <value>The other face.</value>
         public PolygonalFace OtherFace
         {
-            get { return _otherFace; }
+            get => _otherFace;
             internal set
             {
                 if (_otherFace == value) return;

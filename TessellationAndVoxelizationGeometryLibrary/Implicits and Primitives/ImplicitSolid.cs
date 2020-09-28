@@ -49,13 +49,7 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
-        public double this[double x, double y, double z]
-        {
-            get
-            {
-                return Evaluate(x, y, z);
-            }
-        }
+        public double this[double x, double y, double z] => Evaluate(x, y, z);
 
         private double Evaluate(double x, double y, double z)
         {

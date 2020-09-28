@@ -117,12 +117,12 @@ namespace TVGL
         /// <value>The bounds.</value>
         public Vector3[] Bounds { get; set; }
 
-        public double XMin { get => Bounds[0].X; }
-        public double XMax { get => Bounds[1].X; }
-        public double YMin { get => Bounds[0].Y; }
-        public double YMax { get => Bounds[1].Y; }
-        public double ZMin { get => Bounds[0].Z; }
-        public double ZMax { get => Bounds[1].Z; }
+        public double XMin => Bounds[0].X;
+        public double XMax => Bounds[1].X;
+        public double YMin => Bounds[0].Y;
+        public double YMax => Bounds[1].Y;
+        public double ZMin => Bounds[0].Z;
+        public double ZMax => Bounds[1].Z;
 
 
         /// <summary>

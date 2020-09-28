@@ -62,7 +62,7 @@ namespace TVGL.TwoDimensional
                 {
                     coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
                     if (indexToVertexDict.ContainsKey(vertex.IndexInList))
-                        throw new ArgumentException("The vertices must all have a unique IndexInList value", "vertexLoop");
+                        throw new ArgumentException("The vertices must all have a unique IndexInList value", "vertexLoops");
                     indexToVertexDict.Add(vertex.IndexInList, vertex);
                 }
                 polygons.Add(new Polygon(coords));
@@ -93,7 +93,7 @@ namespace TVGL.TwoDimensional
             var randomAngles = new double[maxNumberOfAttempts];
             for (int i = 1; i < maxNumberOfAttempts; i++)
                 randomAngles[i] = 2 * Math.PI * random.NextDouble();
-            var numVertices = -1;
+            int numVertices;
             if (reIndexPolygons)
             {
                 var index = 0;
@@ -102,7 +102,7 @@ namespace TVGL.TwoDimensional
                         vertex.IndexInList = index++;
                 numVertices = index;
             }
-            else numVertices = polygon.AllPolygons.Sum(polygon => polygon.Vertices.Count);
+            else numVertices = polygon.AllPolygons.Sum(p => p.Vertices.Count);
 
             if (numVertices <= 2) return new List<int[]>();
             if (numVertices == 3) return new List<int[]> { polygon.Vertices.Select(v => v.IndexInList).ToArray() };
@@ -136,13 +136,8 @@ namespace TVGL.TwoDimensional
                 var localTriangleFaceList = new List<int[]>();
                 if (randomAngle != 0)
                     polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
-                foreach (var monoPoly in ConvertXMonotonePolygons(polygon))
-                {
-                    Presenter.ShowAndHang(monoPoly);
-
+                foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                     localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-
-                }
                 triangleFaceList.AddRange(localTriangleFaceList);
                 return triangleFaceList;
                 //}
@@ -155,16 +150,15 @@ namespace TVGL.TwoDimensional
             return null;
         }
 
-        public static IEnumerable<Polygon> ConvertXMonotonePolygons(Polygon polygon)
+        public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
             if (!FindInternalDiagonalsForMonotone(polygon, out var connections))
                 throw new ArgumentException("There are duplicate points in the polygon. Please remove before calling " +
                     "this function.", "polygon");
             foreach (var edge in polygon.Lines)
                 AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
-            foreach (var vert in polygon.InnerPolygons.SelectMany(p => p.Lines))
-                foreach (var edge in polygon.Lines)
-                    AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
+            foreach (var edge in polygon.InnerPolygons.SelectMany(p => p.Lines))
+                AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
             while (connections.Any())
             {
                 var startingConnectionKVP = connections.First();
@@ -358,6 +352,7 @@ namespace TVGL.TwoDimensional
 
         private static IEnumerable<int[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {
+            if (monoPoly.Vertices.Count < 3) yield break;
             if (monoPoly.Vertices.Count == 3)
                 yield return new[] { monoPoly.Vertices[0].IndexInList, monoPoly.Vertices[1].IndexInList, monoPoly.Vertices[2].IndexInList };
             Vertex2D bottomVertex = monoPoly.Vertices[0]; // Q: why is this called bottom and not leftmost?
@@ -366,10 +361,9 @@ namespace TVGL.TwoDimensional
                 if (bottomVertex.X > vertex.X || (bottomVertex.X == vertex.X && bottomVertex.Y > vertex.Y))
                     bottomVertex = vertex;
             var topVertex = bottomVertex; //initialize top to the same as bottom
-            var nextVertex = NextXVertex(ref bottomVertex, ref topVertex, out var belongsToBottom);
-
             var concaveFunnelStack = new Stack<Vertex2D>();
             concaveFunnelStack.Push(bottomVertex);
+            var nextVertex = NextXVertex(ref bottomVertex, ref topVertex, out var belongsToBottom);
             concaveFunnelStack.Push(nextVertex);
 
             do

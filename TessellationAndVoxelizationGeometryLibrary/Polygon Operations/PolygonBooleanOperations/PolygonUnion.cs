@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using TVGL.Numerics;
+﻿using System.Collections.Generic;
 
 namespace TVGL.TwoDimensional
 {
@@ -83,7 +80,6 @@ namespace TVGL.TwoDimensional
                 intersectionData.Relationship == SegmentRelationship.AEnclosesB;
         }
 
-
         protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             if (startingIntersection != currentIntersection) return false;
@@ -104,11 +100,11 @@ namespace TVGL.TwoDimensional
         {
             if (!identicalPolygonIsInverted)
                 newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or add the negative as a negative
-            // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result. 
+            // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result.
             // a hole is effectively removed
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, 
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
         {
             var enumerator = relationships.GetEnumerator();

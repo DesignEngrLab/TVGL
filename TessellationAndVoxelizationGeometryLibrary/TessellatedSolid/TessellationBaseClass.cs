@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TVGL.Numerics;
-using TVGL.Voxelization;
+﻿using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -14,6 +9,7 @@ namespace TVGL
         /// </summary>
         /// <value>The index in list.</value>
         public int IndexInList { get; set; }
+
         /// <summary>
         ///     Gets a value indicating whether [it is part of the convex hull].
         /// </summary>
@@ -24,13 +20,12 @@ namespace TVGL
         ///     Gets the curvature.
         /// </summary>
         /// <value>The curvature.</value>
-        public abstract CurvatureType Curvature { get; } 
+        public abstract CurvatureType Curvature { get; }
 
         /// <summary>
         ///     Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
         public abstract Vector3 Normal { get; }
-
     }
 }

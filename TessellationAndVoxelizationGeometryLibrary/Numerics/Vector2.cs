@@ -21,46 +21,34 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (NaN,NaN). This is often used in place of null.
         /// </summary>
-        public static Vector2 Null
-        {
+        public static Vector2 Null =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector2(double.NaN, double.NaN);
-            }
-        }
+            new Vector2(double.NaN, double.NaN);
 
 
         /// <summary>
         /// Returns the vector (0,0).
         /// </summary>
-        public static Vector2 Zero
-        {
+        public static Vector2 Zero =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return default;
-            }
-        }
+            default;
+
         /// <summary>
         /// Returns the vector (1,1).
         /// </summary>
-        public static Vector2 One
-        {
+        public static Vector2 One =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector2(1.0, 1.0);
-            }
-        }
+            new Vector2(1.0, 1.0);
+
         /// <summary>
         /// Returns the vector (1,0).
         /// </summary>
-        public static Vector2 UnitX { get { return new Vector2(1.0, 0.0); } }
+        public static Vector2 UnitX => new Vector2(1.0, 0.0);
+
         /// <summary>
         /// Returns the vector (0,1).
         /// </summary>
-        public static Vector2 UnitY { get { return new Vector2(0.0, 1.0); } }
+        public static Vector2 UnitY => new Vector2(0.0, 1.0);
 
         /// <summary>
         /// Makes a copy of the current Vector.

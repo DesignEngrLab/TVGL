@@ -66,30 +66,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the multiplicative identity matrix.
         /// </summary>
-        public static Matrix3x3 Identity
-        {
-            get
-            {
-                return new Matrix3x3(
-                    1, 0,
-                    0, 1,
-                    0, 0);
-            }
-        }
+        public static Matrix3x3 Identity =>
+            new Matrix3x3(
+                1, 0,
+                0, 1,
+                0, 0);
 
         /// <summary>
         /// Returns a null matrix, which means all values are set to Not-A-Number.
         /// </summary>
-        public static Matrix3x3 Null
-        {
-            get
-            {
-                return new Matrix3x3(
-                    double.NaN, double.NaN,
-                    double.NaN, double.NaN,
-                    double.NaN, double.NaN);
-            }
-        }
+        public static Matrix3x3 Null =>
+            new Matrix3x3(
+                double.NaN, double.NaN,
+                double.NaN, double.NaN,
+                double.NaN, double.NaN);
 
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
@@ -121,13 +111,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Gets or sets the translation component of this matrix.
         /// </summary>
-        public Vector2 Translation
-        {
-            get
-            {
-                return new Vector2(M31, M32);
-            }
-        }
+        public Vector2 Translation => new Vector2(M31, M32);
 
         /// <summary>
         /// Constructs a Matrix3x3 from the given components.
