@@ -125,8 +125,7 @@ namespace TVGL.IOFunctions
 
         private void FixColors()
         {
-            if (faceColors == null)
-                faceColors = new List<Color>();
+            faceColors ??= new List<Color>();
             if (!faceColors.Any() && uniformColor != null)
                 faceColors.Add(uniformColor);
             else if (vertexColors != null)
@@ -150,7 +149,7 @@ namespace TVGL.IOFunctions
                 for (int i = 0; i < numFaces; i++)
                 {
                     if (faceColors.Count == i) faceColors.Add(null);
-                    if (faceColors[i] == null) faceColors[i] = uniformColor;
+                    faceColors[i] ??= uniformColor;
                 }
         }
 
@@ -176,18 +175,15 @@ namespace TVGL.IOFunctions
                     if (reader.EndOfStream) break;
                 } while (string.IsNullOrWhiteSpace(line));
                 line = line.Trim();
-                string id, values;
-                ParseLine(line, out id, out values);
+                ParseLine(line, out var id, out var values);
                 if (id.Equals("comment"))
                     Comments.Add(values);
                 else if (id.Equals("format"))
                     Enum.TryParse(values.Split(' ')[0], true, out endiannessType);
                 else if (id.Equals("element"))
                 {
-                    string numberString;
-                    ParseLine(values, out id, out numberString);
-                    int numberInt;
-                    var successfulParse = int.TryParse(numberString, out numberInt);
+                    ParseLine(values, out id, out var numberString);
+                    var successfulParse = int.TryParse(numberString, out var numberInt);
                     if (id.Equals("vertex"))
                     {
                         readInOrder.Add(ShapeElement.Vertex);
@@ -218,10 +214,8 @@ namespace TVGL.IOFunctions
                         #region Vertex
                         case ShapeElement.Vertex:
                             {
-                                string typeString, propertyString;
-                                Type type;
-                                ParseLine(values, out typeString, out propertyString);
-                                if (!TryParseNumberTypeFromString(typeString, out type))
+                                ParseLine(values, out var typeString, out var propertyString);
+                                if (!TryParseNumberTypeFromString(typeString, out var type))
                                     throw new ArgumentException("Unable to parse " + typeString + " as a type of number");
                                 vertexTypes.Add(type);
 
@@ -265,8 +259,7 @@ namespace TVGL.IOFunctions
                                         vertexColorElementType = new List<Type>();
                                     }
                                     vertexColorDescriptor.Add(colorElt);
-                                    Type colorType;
-                                    if (TryParseNumberTypeFromString(typeString, out colorType))
+                                    if (TryParseNumberTypeFromString(typeString, out var colorType))
                                         vertexColorElementType.Add(colorType);
 
                                 }
@@ -277,16 +270,14 @@ namespace TVGL.IOFunctions
                         #region Face
                         case ShapeElement.Face:
                             {
-                                string typeString, restString;
-                                ParseLine(values, out typeString, out restString);
+                                ParseLine(values, out var typeString, out var restString);
                                 if (typeString.Equals("list"))
                                 {
                                     if (!restString.Contains("vertex_index") && !restString.Contains("vertex_indices"))
                                         throw new ArgumentException("The faces in PLY are specified in unknown manner: " +
                                                                     restString);
                                     var words = restString.Split(' ');
-                                    Type type;
-                                    if (TryParseNumberTypeFromString(words[0], out type))
+                                    if (TryParseNumberTypeFromString(words[0], out var type))
                                         vertexAmountType = type;
                                     else
                                         throw new ArgumentException("The number of vertex in the PLY face definition are of unknown type: "
@@ -329,8 +320,7 @@ namespace TVGL.IOFunctions
                                     faceColors = new List<Color>();
                                 }
                                 faceColorDescriptor.Add(colorElt);
-                                Type colorType;
-                                if (TryParseNumberTypeFromString(typeString, out colorType))
+                                if (TryParseNumberTypeFromString(typeString, out var colorType))
                                     faceColorElementType.Add(colorType);
                                 break;
                             }
@@ -339,9 +329,8 @@ namespace TVGL.IOFunctions
                         #region Uniform_Color
                         case ShapeElement.Uniform_Color:
                             {
-                                string typeString, restString;
                                 ColorElements colorElt;
-                                ParseLine(values, out typeString, out restString);
+                                ParseLine(values, out var typeString, out var restString);
                                 if (restString.Equals("red", StringComparison.CurrentCultureIgnoreCase)
                                     || restString.Equals("r", StringComparison.CurrentCultureIgnoreCase))
                                     colorElt = ColorElements.Red;
@@ -371,8 +360,7 @@ namespace TVGL.IOFunctions
                                     uniformColorElementType = new List<Type>();
                                 }
                                 uniformColorDescriptor.Add(colorElt);
-                                Type colorType;
-                                if (TryParseNumberTypeFromString(typeString, out colorType))
+                                if (TryParseNumberTypeFromString(typeString, out var colorType))
                                     uniformColorElementType.Add(colorType);
                                 break;
                             }

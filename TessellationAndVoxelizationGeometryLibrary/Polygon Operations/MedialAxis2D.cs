@@ -25,9 +25,10 @@ namespace TVGL.TwoDimensional
             var allBranches = new List<List<Vector2>>();
             foreach (var positivePolygon in silhouette.Where(p => p.Area() > 0))
             {
-                var perimeter = positivePolygon.Perimeter();
-                var sampled = PolygonOperations.Simplify(positivePolygon);
-                var smaller = PolygonOperations.OffsetRound(new Polygon(sampled), -0.001 * perimeter).First();
+                var posPolygonList = positivePolygon.ToList();
+                var perimeter = posPolygonList.Perimeter();
+                var sampled = posPolygonList.Simplify();
+                var smaller = new Polygon(sampled).OffsetRound(-0.001 * perimeter).First();
 
                 //Delaunay Medial Axis
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);

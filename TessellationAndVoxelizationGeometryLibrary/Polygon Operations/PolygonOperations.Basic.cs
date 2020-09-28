@@ -68,7 +68,7 @@ namespace TVGL.TwoDimensional
         public static double Area(this IEnumerable<Vector2> polygon)
         {
             var area = 0.0;
-            var enumerator = polygon.GetEnumerator();
+            using var enumerator = polygon.GetEnumerator();
             enumerator.MoveNext();
             var basePoint = enumerator.Current;
             enumerator.MoveNext();
@@ -105,7 +105,7 @@ namespace TVGL.TwoDimensional
         ///                    "convert the 1D array of double to an array of vectors.</exception>
         public static IEnumerable<Vector2> ConvertToVector2s(this IEnumerable<double> coordinates)
         {
-            var enumerator = coordinates.GetEnumerator();
+            using var enumerator = coordinates.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 var x = enumerator.Current;
@@ -136,8 +136,9 @@ namespace TVGL.TwoDimensional
             //If true, then check the polygon area vs. its minBoundingRectangle area. 
             //The area / perimeter check is not strictly necessary, but can provide some speed-up
             //For obviously not rectangular pieces
-            var perimeter = polygon.Perimeter();
-            var area = polygon.Area();
+            var polygonList = polygon as IList<Vector2> ?? polygon.ToList();
+            var perimeter = polygonList.Perimeter();
+            var area = polygonList.Area();
             var sqrRootTerm = Math.Sqrt(perimeter * perimeter - 16 * area);
             var length = 0.25 * (perimeter + sqrRootTerm);
             var width = 0.25 * (perimeter - sqrRootTerm);
@@ -150,7 +151,7 @@ namespace TVGL.TwoDimensional
                 return false;
             }
 
-            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon);
+            var minBoundingRectangle = polygonList.BoundingRectangle();
             return area.IsPracticallySame(minBoundingRectangle.Area, area * tolerancePercentage);
         }
 
@@ -175,10 +176,11 @@ namespace TVGL.TwoDimensional
         public static bool IsCircular(this IEnumerable<Vector2> polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
-            minCircle = MinimumEnclosure.MinimumCircle(polygon);
+            var points = polygon as IList<Vector2> ?? polygon.ToList();
+            minCircle = points.MinimumCircle();
 
             //Check if areas are close to the same
-            var polygonArea = polygon.Area();
+            var polygonArea = points.Area();
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 

@@ -48,8 +48,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
-            Vector3 pointOnLine;
-            var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
+            var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out var pointOnLine);
             var fractionToMove = 1/Faces.Count;
             var moveVector = pointOnLine.Subtract(Center);
             Center =
@@ -86,14 +85,12 @@ namespace TVGL
             : base(facesAll)
         {
             Type = PrimitiveSurfaceType.Sphere;
-            var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
+            var faces = MiscFunctions.FacesWithDistinctNormals(Faces);
             var n = faces.Count;
             var centers = new List<Vector3>();
-            Vector3 center;
-            double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
+                faces[n - 1].Center, faces[n - 1].Normal, out var center, out var t1, out var t2);
             if (!center.IsNull())
             {
                 centers.Add(center);

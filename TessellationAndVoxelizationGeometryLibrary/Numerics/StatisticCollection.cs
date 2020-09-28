@@ -107,10 +107,11 @@ namespace TVGL
         /// <value>The variance from mean.</value>
         public static double VarianceFromMean(this IEnumerable<double> numbers, double mean = double.NaN)
         {
-            if (double.IsNaN(mean)) mean = Mean(numbers);
+            var numbersList = numbers as IList<double> ?? numbers.ToList();
+            if (double.IsNaN(mean)) mean = Mean(numbersList);
             var varianceFromMean = 0.0;
             int count = 0;
-            foreach (var x in numbers)
+            foreach (var x in numbersList)
             {
                 var d = x - mean;
                 varianceFromMean += d * d;
@@ -129,10 +130,11 @@ namespace TVGL
         /// <value>The variance from median.</value>
         public static double VarianceFromMedian(this IEnumerable<double> numbers, double median = double.NaN)
         {
-            if (double.IsNaN(median)) median = Median(numbers);
+            var numbersList = numbers as IList<double> ?? numbers.ToList();
+            if (double.IsNaN(median)) median = Median(numbersList);
             var varianceFromMean = 0.0;
             int count = 0;
-            foreach (var x in numbers)
+            foreach (var x in numbersList)
             {
                 var d = x - median;
                 varianceFromMean += d * d;

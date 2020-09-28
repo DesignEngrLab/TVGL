@@ -73,7 +73,7 @@ namespace TVGL
             edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out var removedVertices));
             if (borderEdges.Count > 0)
             {
-                if (Errors == null) Errors = new TessellationError();
+                Errors ??= new TessellationError();
                 if (Errors.SingledSidedEdges == null)
                     Errors.SingledSidedEdges = new List<Edge>(borderEdges);
                 else Errors.SingledSidedEdges.AddRange(borderEdges);
@@ -364,8 +364,7 @@ namespace TVGL
 
         internal static bool VerticesAreAdjacent(Vertex v1, Vertex v2)
         {
-            Edge commonEdge;
-            return VerticesAreAdjacent(v1, v2, out commonEdge);
+            return VerticesAreAdjacent(v1, v2, out var commonEdge);
         }
 
         internal static bool VerticesAreAdjacent(Vertex v1, Vertex v2, out Edge commonEdge)
@@ -415,7 +414,7 @@ namespace TVGL
                 remainingEdges.RemoveAt(0);
                 do
                 {
-                    var possibleNextEdges = remainingEdges.Where(e => e.To == loop.Last().From);
+                    var possibleNextEdges = remainingEdges.Where(e => e.To == loop.Last().From).ToList();
                     if (possibleNextEdges.Any())
                     {
                         var bestNext = pickBestEdge(possibleNextEdges, loop.Last().Vector, normal);
@@ -434,7 +433,7 @@ namespace TVGL
                     }
                     else
                     {
-                        possibleNextEdges = remainingEdges.Where(e => e.From == loop[0].To);
+                        possibleNextEdges = remainingEdges.Where(e => e.From == loop[0].To).ToList();
                         if (possibleNextEdges.Any())
                         {
                             var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector * -1,

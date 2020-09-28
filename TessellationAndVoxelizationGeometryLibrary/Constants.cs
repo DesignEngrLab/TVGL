@@ -128,10 +128,11 @@ namespace TVGL
         /// <returns>System.Int32.</returns>
         internal static int FindIndex<T>(this IEnumerable<T> items, Predicate<T> predicate)
         {
-            var numItems = items.Count();
+            var itemsList = items as IList<T> ?? items.ToList();
+            var numItems = itemsList.Count();
             if (numItems == 0) return -1;
             var index = 0;
-            foreach (var item in items)
+            foreach (var item in itemsList)
             {
                 if (predicate(item)) return index;
                 index++;
@@ -148,8 +149,6 @@ namespace TVGL
         /// <returns>System.Int32.</returns>
         internal static int FindIndex<T>(this IEnumerable<T> items, T predicate)
         {
-            var numItems = items.Count();
-            if (numItems == 0) return -1;
             var index = 0;
             foreach (var item in items)
             {

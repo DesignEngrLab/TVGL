@@ -112,8 +112,9 @@ namespace TVGL
             string language = "")
             : base(units, name, filename, comments, language)
         {
-            DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
-            MakeVertices(vertsPerFace, out List<int[]> faceToVertexIndices);
+            var vertsPerFaceList = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToList();
+            DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(v => v));
+            MakeVertices(vertsPerFaceList, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
             if (createFullVersion) CompleteInitiation();
@@ -248,10 +249,12 @@ namespace TVGL
                 HasUniformColor = true;
             }
             var manyInputColors = (colors != null && colors.Count() > 1);
+            Faces = faces.ToArray();
+            NumberOfFaces = Faces.Length;
             if (vertices == null)
             {
                 vertices = new HashSet<Vertex>();
-                foreach (var face in faces)
+                foreach (var face in Faces)
                     foreach (var vertex in face.Vertices)
                         if (!vertices.Contains(vertex))
                             ((HashSet<Vertex>)vertices).Add(vertex);
@@ -283,13 +286,11 @@ namespace TVGL
 
             if (createFullVersion)
             {
-                DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Coordinates));
+                DefineAxisAlignedBoundingBoxAndTolerance(Vertices.Select(v => v.Coordinates));
                 if (copyElements)
                 {
-                    NumberOfFaces = faces.Count();
-                    Faces = new PolygonalFace[NumberOfFaces];
                     var i = 0;
-                    foreach (var origFace in faces)
+                    foreach (var origFace in Faces)
                     {
                         //Keep "CreatedInFunction" to help with debug
                         var face = origFace.Copy();
@@ -317,7 +318,6 @@ namespace TVGL
                 }
                 else
                 {
-                    Faces = faces.ToArray();
                     NumberOfFaces = Faces.Length;
                     for (var i = 0; i < NumberOfFaces; i++)
                     {
@@ -340,13 +340,11 @@ namespace TVGL
             {
                 if (copyElements)
                 {
-                    NumberOfFaces = faces.Count();
-                    Faces = new PolygonalFace[NumberOfFaces];
                     var i = 0;
-                    foreach (var origFace in faces)
+                    foreach (var origFace in Faces)
                     {
                         //Keep "CreatedInFunction" to help with debug
-                        var face = copyElements ? origFace.Copy() : origFace;
+                        var face = origFace.Copy();
                         face.PartOfConvexHull = false;
                         face.IndexInList = i;
                         var faceVertices = new List<Vertex>();
@@ -371,8 +369,6 @@ namespace TVGL
                 }
                 else
                 {
-                    Faces = faces.ToArray();
-                    NumberOfFaces = Faces.Length;
                     for (var i = 0; i < NumberOfFaces; i++)
                     {
                         var face = Faces[i];
@@ -395,7 +391,7 @@ namespace TVGL
         {
             MakeEdges();
             CalculateVolume();
-            ModifyTessellation.CheckModelIntegrity(this);
+            this.CheckModelIntegrity();
             ConvexHull = new TVGLConvexHull(this);
             if (ConvexHull.Vertices != null)
                 foreach (var cvxHullPt in ConvexHull.Vertices)
@@ -543,7 +539,7 @@ namespace TVGL
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
                     }
-                    if (Primitives == null) Primitives = new List<PrimitiveSurface>();
+                    Primitives ??= new List<PrimitiveSurface>();
                     Primitives.Add(new Plane(listOfFlatFaces));
                 }
             }
@@ -920,7 +916,7 @@ namespace TVGL
         /// <param name="p">The p.</param>
         public void AddPrimitive(PrimitiveSurface p)
         {
-            if (Primitives == null) Primitives = new List<PrimitiveSurface>();
+            Primitives ??= new List<PrimitiveSurface>();
             Primitives.Add(p);
         }
 
@@ -951,7 +947,7 @@ namespace TVGL
         /// <returns></returns>
         public TessellatedSolid SetToOriginAndSquareToNewSolid(out BoundingBox originalBoundingBox)
         {
-            originalBoundingBox = MinimumEnclosure.OrientedBoundingBox(this);
+            originalBoundingBox = this.OrientedBoundingBox();
             Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
             return (TessellatedSolid)TransformToNewSolid(transform);
         }
@@ -962,7 +958,7 @@ namespace TVGL
         /// <returns></returns>
         public void SetToOriginAndSquare(out BoundingBox originalBoundingBox)
         {
-            originalBoundingBox = MinimumEnclosure.OrientedBoundingBox(this);
+            originalBoundingBox = this.OrientedBoundingBox();
             Matrix4x4.Invert(originalBoundingBox.Transform, out var transform);
             Transform(transform);
         }
@@ -1005,13 +1001,10 @@ namespace TVGL
             }
             _center = _center.Transform(transformMatrix);
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
-            if (_inertiaTensor != null)
-            {
-                var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
+            var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
                     transformMatrix.M31, transformMatrix.M32, transformMatrix.M33);
-                _inertiaTensor = _inertiaTensor * rotMatrix;
-            }
+            _inertiaTensor *= rotMatrix;
             if (Primitives != null)
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
@@ -1057,15 +1050,15 @@ namespace TVGL
             double oldVolume;
             var iterations = 0;
             Vector3 oldCenter1 = center;
-            Vector3 oldCenter2;
+            var facesList = faces as IList<PolygonalFace> ?? faces.ToList();
             do
             {
                 oldVolume = volume;
-                oldCenter2 = oldCenter1;
+                var oldCenter2 = oldCenter1;
                 oldCenter1 = center;
                 volume = 0;
                 center = Vector3.Zero;
-                foreach (var face in faces)
+                foreach (var face in facesList)
                 {
                     if (face.Area.IsNegligible(tolerance)) continue; //Ignore faces with zero area, since their Normals are not set.
                     var tetrahedronVolume = face.Area * face.Normal.Dot(face.Vertices[0].Coordinates - oldCenter1) / 3;

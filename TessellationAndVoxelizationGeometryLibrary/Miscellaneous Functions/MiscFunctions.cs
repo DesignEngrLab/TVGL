@@ -75,7 +75,7 @@ namespace TVGL
         private static IEnumerable<(Vertex, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vertex> vertices,
             double sameTolerance = Constants.BaseTolerance)
         {
-            var vertexDistances = new List<(Vertex, double)>(vertices.Count());
+            var vertexDistances = new List<(Vertex, double)>();
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             foreach (var vertex in vertices)
@@ -90,7 +90,7 @@ namespace TVGL
         private static IEnumerable<(Vector3, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vector3> vertices,
             double sameTolerance = Constants.BaseTolerance)
         {
-            var vertexDistances = new List<(Vector3, double)>(vertices.Count());
+            var vertexDistances = new List<(Vector3, double)>();
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             foreach (var vertex in vertices)
@@ -194,8 +194,6 @@ namespace TVGL
                     return tempCross;
                 // chances are one will exit in the above if statement. All the remaining code in this method
                 // is for cases where there is a bigger polygon - potentially with concavities or collinear points
-                if (normals == null)
-                    normals = new List<Vector3>();
                 normals.Add(tempCross);
             }
             var lastCross = edgeVectors[numSides - 1].Cross(edgeVectors[0]).Normalize();
@@ -259,7 +257,7 @@ namespace TVGL
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="removeOpposites">if set to <c>true</c> [remove opposites].</param>
         /// <returns>List&lt;PolygonalFace&gt;.</returns>
-        public static List<PolygonalFace> FacesWithDistinctNormals(IEnumerable<PolygonalFace> faces,
+        public static List<PolygonalFace> FacesWithDistinctNormals(this IEnumerable<PolygonalFace> faces,
             double tolerance = Constants.SameFaceNormalDotTolerance, bool removeOpposites = true)
         {
             // This is done by sorting the normals first by the x-component, then by the y and then the z. 

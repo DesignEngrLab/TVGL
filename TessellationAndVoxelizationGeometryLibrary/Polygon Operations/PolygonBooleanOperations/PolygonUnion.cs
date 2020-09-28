@@ -107,7 +107,7 @@ namespace TVGL.TwoDimensional
         protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
         {
-            var enumerator = relationships.GetEnumerator();
+            using var enumerator = relationships.GetEnumerator();
             enumerator.MoveNext();
             var rel = enumerator.Current.Item1;
             if (rel < PolygonRelationship.AInsideB ||  //separated

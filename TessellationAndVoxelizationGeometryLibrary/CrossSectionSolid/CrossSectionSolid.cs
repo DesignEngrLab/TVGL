@@ -65,7 +65,7 @@ namespace TVGL
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
             : this(stepDistances)
         {
-            TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out _);
+            TransformMatrix = direction.TransformToXYPlane(out _);
             NumLayers = stepDistances.Count;
             if (bounds != null)
                 Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
@@ -80,7 +80,7 @@ namespace TVGL
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
-            MiscFunctions.TransformToXYPlane(direction, out var backTransform);
+            direction.TransformToXYPlane(out var backTransform);
             TransformMatrix = backTransform;
             //TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out var backTransform);
             this.Layer2D = Layer2D;
@@ -178,9 +178,8 @@ namespace TVGL
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-                var layerfaces = Layer2D[i].SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon, Direction,
+                var layerfaces = Layer2D[i].SelectMany(polygon => polygon.ExtrusionFacesFrom2DPolygons(Direction,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
-                if (layerfaces == null) continue;
                 faces.AddRange(layerfaces);
             }
             return new TessellatedSolid(faces, createFullVersion, false);

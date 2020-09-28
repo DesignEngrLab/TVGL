@@ -58,7 +58,6 @@ namespace TVGL.PrimitiveClassificationDetail
     internal class EdgeWithScores
     {
         internal Edge Edge;
-        private Edge e;
 
         internal EdgeWithScores(Edge edge)
         {

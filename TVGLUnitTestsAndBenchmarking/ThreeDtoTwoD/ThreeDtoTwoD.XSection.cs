@@ -10,7 +10,7 @@ using TVGL.TwoDimensional;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    public  static partial class TVGL3Dto2DTests
+    public static partial class TVGL3Dto2DTests
     {
 
         //[Fact]
@@ -60,12 +60,20 @@ namespace TVGLUnitTestsAndBenchmarking
                     var xsection = solid.GetCrossSection(plane);
                     Presenter.ShowAndHang(xsection);
                     var monoPolys = new List<Polygon>();
-                    foreach(var monopoly in xsection.SelectMany(p=>p.CreateXMonotonePolygons())
-                        {
+                    var error = false;
+                    var totalArea = 0.0;
+                    foreach (var monopoly in xsection.SelectMany(p => p.CreateXMonotonePolygons()))
+                    {
                         monoPolys.Add(monopoly);
-                        var xMin = monopoly.Vertices.Min(v=>v.m)
+                        var extremeVerts = monopoly.Vertices.Where(v =>
+                            v.GetMonotonicityChange() == MonotonicityChange.X ||
+                            v.GetMonotonicityChange() == MonotonicityChange.Both).ToList();
+                        if (extremeVerts.Count != 2 ||
+  monopoly.MinX != Math.Min(extremeVerts[0].X, extremeVerts[1].X) ||
+  monopoly.MaxX != Math.Max(extremeVerts[0].X, extremeVerts[1].X))
+                            error = true;
                     }
-                    
+
                     //var triIndices = xsection[0].Triangulate();
                     //PlotTriangulation(xsection[0], triIndices);
                 }
@@ -76,7 +84,7 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void TestTriangulate()
         {
             //var testcase = new Polygon(TestCases.Ersatz["hand"].Item1[0]);
-            var testcase =new Polygon(TestCases.MakeStarryCircularPolygon(13, 10,7));
+            var testcase = new Polygon(TestCases.MakeStarryCircularPolygon(13, 10, 7));
             //testcase.Transform(Matrix3x3.CreateRotation(Math.PI));
             Presenter.ShowAndHang(testcase);
             var ti = testcase.Triangulate();

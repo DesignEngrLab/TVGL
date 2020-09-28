@@ -521,15 +521,13 @@ namespace TVGL.Voxelization
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurfaces(double dirX, double dirY, double dirZ,
             double toolDia)
         {
-            var voxels = new HashSet<int[]>(new SameCoordinates());
-            var directions = GetVoxelDirections(dirX, dirY, dirZ);
-            foreach (var direction in directions)
+            var surfaceVoxels = new HashSet<int[]>(new SameCoordinates());
+            foreach (var direction in GetVoxelDirections(dirX, dirY, dirZ))
             {
-                var voxel = GetAllVoxelsOnBoundingSurface(direction, toolDia);
-                foreach (var vox in voxel)
-                    voxels.Add(vox);
+                foreach (var vox in GetAllVoxelsOnBoundingSurface(direction, toolDia))
+                    surfaceVoxels.Add(vox);
             }
-            return voxels;
+            return surfaceVoxels;
         }
 
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(CartesianDirections dir, double toolDia)
@@ -753,7 +751,7 @@ namespace TVGL.Voxelization
             var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
                 if (dir[i] < 0) initCoord[i] = VoxelsPerSide[i] - 1;
-            var voxels = new List<int[]>(new[] { initCoord });
+            var maskVoxels = new List<int[]>(new[] { initCoord });
             var c = new Vector3(initCoord[0] + 0.5, initCoord[1] + 0.5, initCoord[2] + 0.5);
             var ts = FindIntersectionDistances(c, dir, tLimit);
             foreach (var t in ts)
@@ -761,9 +759,9 @@ namespace TVGL.Voxelization
                 var cInt = c + (dir * t);
                 cInt += new Vector3(
                    Math.Round(cInt.X, 5), Math.Round(cInt.Y, 5), Math.Round(cInt.Z, 5));
-                voxels.Add(GetNextVoxelCoord(cInt, dir));
+                maskVoxels.Add(GetNextVoxelCoord(cInt, dir));
             }
-            return voxels.ToArray();
+            return maskVoxels.ToArray();
         }
 
         //Exclusive by default (i.e. if line passes through vertex/edge it ony includes two voxels that are actually passed through)

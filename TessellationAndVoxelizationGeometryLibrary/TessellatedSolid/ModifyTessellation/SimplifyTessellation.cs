@@ -39,7 +39,7 @@ namespace TVGL
             var facesToAdd = new List<PolygonalFace>();
             var verticesToRemove = new List<Vertex>();
             var flats = TVGL.MiscFunctions.FindFlats(ts.Faces);
-            if (ts.Primitives == null) ts.Primitives = new List<PrimitiveSurface>();
+            ts.Primitives ??= new List<PrimitiveSurface>();
             foreach (var flat in flats)
             {
                 if (flat.InnerEdges.Count < flat.Faces.Count) continue;
@@ -119,10 +119,10 @@ namespace TVGL
             while (edgesHashSet.Any())
             {
                 if (startVertex == currentVertex) return loop;
-                var possibleNextEdges = currentVertex.Edges.Where(e => e != currentEdge && edgesHashSet.Contains(e));
+                var possibleNextEdges = currentVertex.Edges.Where(e => e != currentEdge && edgesHashSet.Contains(e)).ToList();
                 if (!possibleNextEdges.Any()) throw new Exception();
                 var lastEdge = currentEdge;
-                currentEdge = (possibleNextEdges.Count() == 1) ? possibleNextEdges.First()
+                currentEdge = (possibleNextEdges.Count == 1) ? possibleNextEdges.First()
                     : pickBestEdge(possibleNextEdges, currentEdge.Vector, normal);
                 currentVertex = currentEdge.OtherVertex(currentVertex);
                 loop.Add(currentVertex);

@@ -393,7 +393,7 @@ namespace TVGL.TwoDimensional
                     while (concaveFunnelStack.Any())
                     {
                         var prevVertex1 = concaveFunnelStack.Pop();
-                        if (topOfStackVertex == null) topOfStackVertex = prevVertex1;
+                        topOfStackVertex ??= prevVertex1;
                         if (prevVertex2 != null)
                         {
                             if (newVertexIsOnBottom)

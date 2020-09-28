@@ -364,16 +364,16 @@ namespace TVGL
 
             Cylinder minCylinder = null;
             var minCylinderVolume = double.PositiveInfinity;
+            var cvxHullVertsList = convexHullVertices as IList<T> ?? convexHullVertices.ToList();
             for (var i = 0; i < 13; i++)
             {
-
                 var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
                     new[] { directions[i], Vector3.Null, Vector3.Null }, default(T), default(T), default(T));
-                box = Find_via_ChanTan_AABB_Approach<T>(convexHullVertices, box);
+                box = Find_via_ChanTan_AABB_Approach<T>(cvxHullVertsList, box);
                 for (var j = 0; j < 3; j++)
                 {
                     var axis = box.Directions[j];
-                    var pointsOnFace_i = convexHullVertices.ProjectTo2DCoordinates(axis, out var backTransform);
+                    var pointsOnFace_i = cvxHullVertsList.ProjectTo2DCoordinates(axis, out var backTransform);
                     var circle = MinimumCircle(pointsOnFace_i);
                     var height = box.Dimensions[j];
                     var volume = height * circle.Area;

@@ -117,36 +117,34 @@ namespace TVGL.IOFunctions
                     IgnoreProcessingInstructions = true,
                     IgnoreWhitespace = true
                 };
-                using (var reader = XmlReader.Create(s, settings))
+                using var reader = XmlReader.Create(s, settings);
+                if (reader.IsStartElement("model"))
                 {
-                    if (reader.IsStartElement("model"))
-                    {
-                        var defaultNamespace = reader["xmlns"];
-                        var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
-                        threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
-                    }
-                    threeMFData.FileName = filename;
-                    var results = new List<TessellatedSolid>();
-                    threeMFData.Name = Path.GetFileNameWithoutExtension(filename);
-                    var nameIndex =
-                        threeMFData.metadata.FindIndex(
-                            md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
-                                                 md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
-                    if (nameIndex != -1)
-                    {
-                        threeMFData.Name = threeMFData.metadata[nameIndex].Value;
-                        threeMFData.metadata.RemoveAt(nameIndex);
-                    }
-                    foreach (var item in threeMFData.build.Items)
-                    {
-                        results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
-                            item.transformMatrix,
-                            threeMFData.Name + "_"));
-                    }
-
-                    Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
-                    return results.ToArray();
+                    var defaultNamespace = reader["xmlns"];
+                    var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
+                    threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
                 }
+                threeMFData.FileName = filename;
+                var results = new List<TessellatedSolid>();
+                threeMFData.Name = Path.GetFileNameWithoutExtension(filename);
+                var nameIndex =
+                    threeMFData.metadata.FindIndex(
+                        md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
+                                             md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
+                if (nameIndex != -1)
+                {
+                    threeMFData.Name = threeMFData.metadata[nameIndex].Value;
+                    threeMFData.metadata.RemoveAt(nameIndex);
+                }
+                foreach (var item in threeMFData.build.Items)
+                {
+                    results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
+                        item.transformMatrix,
+                        threeMFData.Name + "_"));
+                }
+
+                Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
+                return results.ToArray();
             }
             catch (Exception exception)
             {
@@ -218,13 +216,13 @@ namespace TVGL.IOFunctions
                 }
                 if (uniformColor && baseColor.color.Equals(defaultColor)) continue;
                 uniformColor = false;
-                if (colors == null) colors = new Color[mesh.triangles.Count];
+                colors ??= new Color[mesh.triangles.Count];
                 colors[j] = baseColor.color;
             }
             if (uniformColor) colors = new[] { defaultColor };
             else
                 for (var j = 0; j < numTriangles; j++)
-                    if (colors[j] == null) colors[j] = defaultColor;
+                    colors[j] ??= defaultColor;
             return new TessellatedSolid(verts, mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
                 mesh.triangles.Count <= Constants.MaxNumberFacesDefaultFullTS, colors, Units, name, FileName, Comments, Language);
         }
@@ -239,19 +237,17 @@ namespace TVGL.IOFunctions
         {
             ZipArchiveEntry entry;
             Stream entryStream;
-            using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
-            {
-                entry = archive.CreateEntry("3D/3dmodel.model");
-                using (entryStream = entry.Open())
-                    SaveModel(entryStream, solids);
-                archive.CreateEntry("Metadata/thumbnail.png");
-                entry = archive.CreateEntry("_rels/.rels");
-                using (entryStream = entry.Open())
-                    SaveRelationships(entryStream);
-                entry = archive.CreateEntry("[Content_Types].xml");
-                using (entryStream = entry.Open())
-                    SaveContentTypes(entryStream);
-            }
+            using var archive = new ZipArchive(stream, ZipArchiveMode.Create);
+            entry = archive.CreateEntry("3D/3dmodel.model");
+            using (entryStream = entry.Open())
+                SaveModel(entryStream, solids);
+            archive.CreateEntry("Metadata/thumbnail.png");
+            entry = archive.CreateEntry("_rels/.rels");
+            using (entryStream = entry.Open())
+                SaveRelationships(entryStream);
+            entry = archive.CreateEntry("[Content_Types].xml");
+            using (entryStream = entry.Open())
+                SaveContentTypes(entryStream);
             return true;
         }
 
@@ -372,11 +368,9 @@ namespace TVGL.IOFunctions
                     }
                 };
 
-            using (var writer = XmlWriter.Create(stream))
-            {
-                var serializer = new XmlSerializer(typeof(Relationship), defXMLNameSpaceRelationships);
-                serializer.Serialize(writer, rels);
-            }
+            using var writer = XmlWriter.Create(stream);
+            var serializer = new XmlSerializer(typeof(Relationship), defXMLNameSpaceRelationships);
+            serializer.Serialize(writer, rels);
         }
 
         private static void SaveContentTypes(Stream stream)
@@ -397,11 +391,9 @@ namespace TVGL.IOFunctions
             };
             var types = new Types { Defaults = defaults };
 
-            using (var writer = XmlWriter.Create(stream))
-            {
-                var serializer = new XmlSerializer(typeof(Types), defXMLNameSpaceContentTypes);
-                serializer.Serialize(writer, types);
-            }
+            using var writer = XmlWriter.Create(stream);
+            var serializer = new XmlSerializer(typeof(Types), defXMLNameSpaceContentTypes);
+            serializer.Serialize(writer, types);
         }
     }
 }

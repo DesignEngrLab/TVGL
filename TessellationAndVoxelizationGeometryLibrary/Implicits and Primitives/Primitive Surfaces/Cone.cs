@@ -46,11 +46,10 @@ namespace TVGL
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
             var axisRefPoints = new List<Vector3>();
-            Vector3 axisRefPoint;
             var n1 = faces[0].Normal.Cross(axis);
             var n2 = faces[^1].Normal.Cross(axis);
             MiscFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.Dot(n1),
-                n2, faces[^1].Center.Dot(n2), axis, out axisRefPoint);
+                n2, faces[^1].Center.Dot(n2), axis, out var axisRefPoint);
             if (!axisRefPoint.IsNull() && !axisRefPoint.IsNegligible())
                 axisRefPoints.Add(axisRefPoint);
             for (var i = 1; i < numFaces; i++)

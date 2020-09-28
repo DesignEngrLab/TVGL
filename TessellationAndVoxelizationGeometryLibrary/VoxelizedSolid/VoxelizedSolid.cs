@@ -147,9 +147,9 @@ namespace TVGL.Voxelization
 
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
-            if (loops.Any())
-            {
-                var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, numVoxelsY,
+            //if (loops.Any())
+            //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
+                var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, numVoxelsY,
                                 VoxelSideLength, out var yStartIndex);
                 var numYlines = intersections.Count;
                 for (int j = 0; j < numYlines; j++)
@@ -165,7 +165,7 @@ namespace TVGL.Voxelization
                         ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(ep);
                     }
                 }
-            }
+            //}
             FractionDense = 0;
             UpdateProperties();
         }
@@ -194,7 +194,6 @@ namespace TVGL.Voxelization
                         for (var m = 0; m < numXRangesOnThisLine; m += 2)
                         {
                             var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
-                            if (sp < 0) sp = 0;
                             var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
                             ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(sp);
@@ -275,7 +274,7 @@ namespace TVGL.Voxelization
                         var rowDetails = new List<ushort>(sparseRow.indices);
                         rowDetails.Insert(0, (ushort)j);
                         rowDetails.Insert(0, (ushort)i);
-                        allRows.Add(BitConverter.ToString(rowDetails.SelectMany(u => BitConverter.GetBytes(u)).ToArray()));
+                        allRows.Add(BitConverter.ToString(rowDetails.SelectMany(BitConverter.GetBytes).ToArray()));
                     }
                 }
             }

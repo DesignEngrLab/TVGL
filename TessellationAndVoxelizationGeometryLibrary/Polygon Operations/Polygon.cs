@@ -494,7 +494,8 @@ namespace TVGL.TwoDimensional
                 thisPath.RemoveAt(0);
                 thisPath.Add(front);
             }
-            var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ? _innerPolygons.Select(p => p.Copy(copyInnerPolygons, invert)).ToList() : null;
+            var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
+                _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
 
             var copiedPolygon = new Polygon
             {

@@ -334,7 +334,7 @@ namespace TVGL.TwoDimensional
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;Vector2&gt;.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
+        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             throw new NotImplementedException();
@@ -351,7 +351,7 @@ namespace TVGL.TwoDimensional
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(IEnumerable<Polygon> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongVerticalLines(this IEnumerable<Polygon> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
@@ -400,7 +400,7 @@ namespace TVGL.TwoDimensional
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();

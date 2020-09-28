@@ -235,15 +235,15 @@ namespace TVGL.IOFunctions
         {
             var serializer = new JsonSerializer();
             var sr = new StreamReader(s);
-            using (var reader = new JsonTextReader(sr))
-                solid = serializer.Deserialize<VoxelizedSolid>(reader);
+            using var reader = new JsonTextReader(sr);
+            solid = serializer.Deserialize<VoxelizedSolid>(reader);
         }
         public static void Open(Stream s, out CrossSectionSolid solid)
         {
             var serializer = new JsonSerializer();
             var sr = new StreamReader(s);
-            using (var reader = new JsonTextReader(sr))
-                solid = serializer.Deserialize<CrossSectionSolid>(reader);
+            using var reader = new JsonTextReader(sr);
+            solid = serializer.Deserialize<CrossSectionSolid>(reader);
         }
         public static Solid Open(string filename)
         {
@@ -739,7 +739,7 @@ namespace TVGL.IOFunctions
         // Come back to this in the future?
         internal static string ConvertDoubleArrayToString(IEnumerable<double> doubles)
         {
-            var byteArray = doubles.SelectMany(x => BitConverter.GetBytes(x)).ToArray();
+            var byteArray = doubles.SelectMany(BitConverter.GetBytes).ToArray();
             return System.Text.Encoding.Unicode.GetString(byteArray);
         }
         internal static double[] ConvertStringToDoubleArray(string doublesAsString)
@@ -931,8 +931,8 @@ namespace TVGL.IOFunctions
             if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
             filename = Path.GetFileNameWithoutExtension(filename) + "." + GetExtensionFromFileType(fileType);
-            using (var fileStream = File.OpenWrite(filename))
-                return Save(fileStream, solids, fileType);
+            using var fileStream = File.OpenWrite(filename);
+            return Save(fileStream, solids, fileType);
         }
         /// <summary>
         /// Saves the specified solid to a file.
@@ -947,8 +947,8 @@ namespace TVGL.IOFunctions
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
             filename = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename)
                 + "." + GetExtensionFromFileType(fileType);
-            using (var fileStream = File.OpenWrite(filename))
-                return Save(fileStream, solid, fileType);
+            using var fileStream = File.OpenWrite(filename);
+            return Save(fileStream, solid, fileType);
         }
         /// <summary>
         ///     Saves the specified stream.
@@ -1049,12 +1049,10 @@ namespace TVGL.IOFunctions
         /// <returns>System.String.</returns>
         public static string SaveToString(Solid solid, FileType fileType = FileType.unspecified)
         {
-            using (var stream = new MemoryStream())
-            {
-                if (!Save(stream, solid, fileType)) return "";
-                var byteArray = stream.ToArray();
-                return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
-            }
+            using var stream = new MemoryStream();
+            if (!Save(stream, solid, fileType)) return "";
+            var byteArray = stream.ToArray();
+            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
         }
 
         /// <summary>
@@ -1065,12 +1063,10 @@ namespace TVGL.IOFunctions
         /// <returns>System.String.</returns>
         public static string SaveToString(IList<Solid> solids, FileType fileType = FileType.unspecified)
         {
-            using (var stream = new MemoryStream())
-            {
-                if (!Save(stream, solids, fileType)) return "";
-                var byteArray = stream.ToArray();
-                return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
-            }
+            using var stream = new MemoryStream();
+            if (!Save(stream, solids, fileType)) return "";
+            var byteArray = stream.ToArray();
+            return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
         }
 
 

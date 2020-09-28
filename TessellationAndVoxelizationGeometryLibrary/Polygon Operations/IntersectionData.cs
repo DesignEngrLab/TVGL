@@ -152,7 +152,7 @@ namespace TVGL.TwoDimensional
             var newSubPolygonToInt = new Dictionary<Polygon, int>();
             if (!polygonIsAInInteractions)
             {
-                var newPolyEnumerator = polygon.AllPolygons.GetEnumerator();
+                using var newPolyEnumerator = polygon.AllPolygons.GetEnumerator();
                 foreach (var keyValuePair in subPolygonToInt)
                 {
                     if (keyValuePair.Value < numPolygonsInA)

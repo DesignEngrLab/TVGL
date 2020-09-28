@@ -99,7 +99,7 @@ namespace TVGL.TwoDimensional
         {
             var numPoints = polygon.Vertices.Count;
             if (numPoints <= 1)
-                yield break; ;
+                yield break;
             if (numPoints <= 2)
                 yield return
                     new MonotoneBox(polygon.Vertices[0], polygon.Vertices[1], MonotonicityChange.Both,

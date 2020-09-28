@@ -37,7 +37,7 @@ namespace TVGL
         {
             Type = PrimitiveSurfaceType.Unknown;
             Faces = new HashSet<PolygonalFace>(faces);
-            foreach (var face in faces)
+            foreach (var face in Faces)
                 face.BelongsToPrimitive = this;
             Area = Faces.Sum(f => f.Area);
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());

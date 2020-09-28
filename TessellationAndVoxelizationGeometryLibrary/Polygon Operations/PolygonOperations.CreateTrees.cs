@@ -167,12 +167,13 @@ namespace TVGL.TwoDimensional
             Polygon positivePolygon = new Polygon(paths.First());
             foreach (var path in paths.Skip(1))
             {
-                if (path.Area() < 0)
-                    positivePolygon.AddInnerPolygon(new Polygon(path));
+                var coordinates = path as IList<Vector2> ?? path.ToList();
+                if (coordinates.Area() < 0)
+                    positivePolygon.AddInnerPolygon(new Polygon(coordinates));
                 else
                 {
                     yield return positivePolygon;
-                    positivePolygon = new Polygon(path);
+                    positivePolygon = new Polygon(coordinates);
                 }
             }
         }

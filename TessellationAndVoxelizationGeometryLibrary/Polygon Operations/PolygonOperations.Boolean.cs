@@ -74,7 +74,7 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.Intersect:
                     //case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
                     //case PolygonRelationship.BIsInsideHoleOfABButEdgesTouch:
-                    if (polygonUnion == null) polygonUnion = new PolygonUnion();
+                    polygonUnion ??= new PolygonUnion();
                     return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance);
             }
         }
@@ -204,7 +204,7 @@ namespace TVGL.TwoDimensional
                     }
                 default:
                     //case PolygonRelationship.Intersect:
-                    if (polygonIntersection == null) polygonIntersection = new PolygonIntersection();
+                    polygonIntersection ??= new PolygonIntersection();
                     return polygonIntersection.Run(polygonA, polygonB, interaction, outputAsCollectionType, tolerance);
             }
         }
@@ -361,7 +361,7 @@ namespace TVGL.TwoDimensional
                     //case PolygonRelationship.Intersect:
                     //case PolygonRelationship.BInsideAButVerticesTouch:
                     //case PolygonRelationship.BInsideAButEdgesTouch:
-                    if (polygonSubtraction == null) polygonSubtraction = new PolygonSubtraction();
+                    polygonSubtraction ??= new PolygonSubtraction();
                     return polygonSubtraction.Run(polygonA, polygonB, interaction, outputAsCollectionType, tolerance);
             }
         }
@@ -424,7 +424,7 @@ namespace TVGL.TwoDimensional
                 //case PolygonRelationship.BIsInsideAButVerticesTouch:
                 //case PolygonRelationship.BIsInsideAButEdgesTouch:
                 default:
-                    if (polygonSubtraction == null) polygonSubtraction = new PolygonSubtraction();
+                    polygonSubtraction ??= new PolygonSubtraction();
                     var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, false, tolerance);
                     result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, false, tolerance));
                     return result;
@@ -443,7 +443,7 @@ namespace TVGL.TwoDimensional
                 strayHoles = null;
                 return new List<Polygon> { polygon };
             }
-            if (polygonRemoveIntersections == null) polygonRemoveIntersections = new PolygonRemoveIntersections();
+            polygonRemoveIntersections ??= new PolygonRemoveIntersections();
             // if (intersections.Any(n => (n.Relationship & PolygonRemoveIntersections.alignedIntersection) == PolygonRemoveIntersections.alignedIntersection)) 
             return polygonRemoveIntersections.Run(polygon, intersections, noHoles, tolerance, out strayHoles);
         }

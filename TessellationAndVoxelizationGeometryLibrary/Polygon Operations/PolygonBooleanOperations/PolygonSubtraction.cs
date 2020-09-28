@@ -24,7 +24,7 @@ namespace TVGL.TwoDimensional
             IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
         {
             // the possibilities are AInsideB, BInsideA, or Separated
-            var enumerator = relationships.GetEnumerator();
+            using var enumerator = relationships.GetEnumerator();
             if (!partOfPolygonB) // then part of A or the minuend
             {
                 while (enumerator.MoveNext())

@@ -204,7 +204,6 @@ namespace TVGL.Voxelization
                 {  //check to see if this new voxel perfectly fill a gap between two ranges
                     indices.RemoveAt(index);
                     indices.RemoveAt(index);
-                    index--;
                 }
                 else indices[index]++; //otherwise increment the upper range of these on-voxels
             }
@@ -218,7 +217,6 @@ namespace TVGL.Voxelization
                 {  //add this lone voxel in a range of off-voxels
                     indices.Insert(index, (ushort)(value + 1));
                     indices.Insert(index, value);
-                    index++;
                 }
             }
         }
@@ -229,7 +227,6 @@ namespace TVGL.Voxelization
             var count = indices.Count;
             if (count == 0)
             {
-                index = 0;
                 return; //nothing to do. there are no voxels anyway
             }
             index = BinarySearch(indices, count, value, out var valueExists, out var voxelIsOn);
@@ -240,7 +237,6 @@ namespace TVGL.Voxelization
                 {  //check to see if this is deleting a lone voxel
                     indices.RemoveAt(index);
                     indices.RemoveAt(index);
-                    index--;
                 }
                 else indices[index]++;
                 //otherwise increase the lower bound of this range of on-voxels
@@ -255,7 +251,6 @@ namespace TVGL.Voxelization
                 {   // make a one in the range of on-voxels
                     indices.Insert(index, (ushort)(value + 1));
                     indices.Insert(index, value);
-                    index++;
                 }
             }
             if ((indices.Count & 0b1) > 0) Console.WriteLine();

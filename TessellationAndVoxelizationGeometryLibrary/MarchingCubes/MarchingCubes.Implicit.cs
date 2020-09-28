@@ -7,7 +7,7 @@ namespace TVGL
 {
     internal class MarchingCubesImplicit : MarchingCubes<ImplicitSolid, double>
     {
-        private double surfaceLevel;
+        private readonly double surfaceLevel;
 
         internal MarchingCubesImplicit(ImplicitSolid solid, double discretization)
             : base(solid, discretization)

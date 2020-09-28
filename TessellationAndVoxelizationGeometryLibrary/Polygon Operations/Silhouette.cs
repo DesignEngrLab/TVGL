@@ -28,7 +28,7 @@ namespace TVGL.TwoDimensional
             var dotTolerance = (areaTolerance > 0.002) ? 0.002 : areaTolerance; 
             // areaTolerance is used for the dot-product angle because dot is in units of length-squared
             // but in rare cases the number may be quite large. so we set the max to 0.002 or 89.9 degrees - nearly orthogonal
-            var transform = MiscFunctions.TransformToXYPlane(direction, out _);
+            var transform = direction.TransformToXYPlane(out _);
             var polygons = new List<Polygon>();
 
             while (true)

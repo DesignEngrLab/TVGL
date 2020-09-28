@@ -41,16 +41,14 @@ namespace TVGL
             // degenerate triangle edges
             if (a.Distance(b).IsNegligible())
             {
-                double t;
-                var cps = ClosestVertexOnSegmentToVertex(a, c, p, out t);
+                var cps = ClosestVertexOnSegmentToVertex(a, c, p, out var t);
                 uvw = new Vector3(1.0 - t, 0, t);
                 return cps;
 
             }
             else if (a.Distance(c).IsNegligible() || b.Distance(c).IsNegligible())
             {
-                double t;
-                var cps = ClosestVertexOnSegmentToVertex(a, b, p, out t);
+                var cps = ClosestVertexOnSegmentToVertex(a, b, p, out var t);
                 uvw = new Vector3(1.0 - t, t, 0);
                 return cps;
             }

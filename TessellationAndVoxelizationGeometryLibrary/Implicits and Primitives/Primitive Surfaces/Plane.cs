@@ -87,7 +87,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             var normalSumX = 0.0;
             var normalSumY = 0.0;
             var normalSumZ = 0.0;
-            foreach (var face in faces)
+            foreach (var face in Faces)
             {
                 var weightedNormal = face.Normal * face.Area;
                 normalSumX += weightedNormal.X;

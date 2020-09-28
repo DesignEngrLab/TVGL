@@ -9,7 +9,7 @@ namespace TVGL.PrimitiveClassificationDetail
 {
     internal class PlanningSurface
     {
-        internal PrimitiveSurfaceType SurfaceType { get; private set; }
+        internal PrimitiveSurfaceType SurfaceType { get; }
         internal List<FaceWithScores> Faces;
 
         internal PlanningSurface(PrimitiveSurfaceType SurfaceType, params FaceWithScores[] Faces)

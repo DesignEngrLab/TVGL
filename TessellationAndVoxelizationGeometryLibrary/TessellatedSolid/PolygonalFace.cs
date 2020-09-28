@@ -184,8 +184,7 @@ namespace TVGL
         public PolygonalFace(IEnumerable<Vertex> vertices, Vector3 suggestedNormal, bool connectVerticesBackToFace = true)
             : this(vertices, connectVerticesBackToFace)
         {
-            bool reverseVertexOrder;
-            _normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(Vertices.Count, Vertices, out reverseVertexOrder, suggestedNormal);
+            _normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(Vertices.Count, Vertices, out var reverseVertexOrder, suggestedNormal);
             if (reverseVertexOrder) Vertices.Reverse();
         }
 

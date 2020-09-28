@@ -158,10 +158,11 @@ namespace TVGL
             var failedConsecutiveRotations = 0;
             var k = 0;
             var i = 0;
+            var cvxHullVertList = convexHullVertices as IList<T> ?? convexHullVertices.ToList();
             do
             {
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
-                BoundingBox<T> newObb = FindOBBAlongDirection<T>(convexHullVertices, minOBB.Directions[i++]);
+                var newObb = FindOBBAlongDirection<T>(cvxHullVertList, minOBB.Directions[i++]);
                 if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
                 {
                     minOBB = newObb;
@@ -236,9 +237,9 @@ namespace TVGL
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertex = vertices.First(); //this is an unfortunate assignment but the compiler doesn't trust
-            topVertex = vertices.First(); // that is will get assigned in conditions below. Also, can't assign to
-                                          // null, since Vector3 is struct
+            bottomVertex =  default(T); //this is an unfortunate assignment but the compiler doesn't trust
+            topVertex = default(T);  // that is will get assigned in conditions below. Also, can't assign to
+                                     //null, since Vector3 is struct
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
@@ -395,7 +396,7 @@ namespace TVGL
             #region 2) Get Extreme Points and initial angles
             var extremeIndices = new int[4];
             //Point0 = min X, (at the lowest Y value for ties)
-            while (points[extremeIndices[0]].X >= points[(extremeIndices[0] + 1) % (lastIndex + 1)].X)  extremeIndices[0]++;
+            while (points[extremeIndices[0]].X >= points[(extremeIndices[0] + 1) % (lastIndex + 1)].X) extremeIndices[0]++;
             //Point1 = min Y (at the max X value for ties. This is done in the following while-loop)
             extremeIndices[1] = extremeIndices[0];
             while (points[extremeIndices[1]].Y >= points[(extremeIndices[1] + 1) % (lastIndex + 1)].Y) extremeIndices[1]++;
@@ -615,9 +616,10 @@ namespace TVGL
         public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVertex3D
         {
             var direction1 = direction.Normalize();
-            var depth = GetLengthAndExtremeVertices(vertices, direction1, out var bottomVertices, out var topVertices);
+            var vertexList = vertices as IList<T> ?? vertices.ToList();
+            var depth = GetLengthAndExtremeVertices(vertexList, direction1, out var bottomVertices, out var topVertices);
 
-            var pointsDict = vertices.ProjectTo2DCoordinatesReturnDictionary(direction1, out var backTransform);
+            var pointsDict = vertexList.ProjectTo2DCoordinatesReturnDictionary(direction1, out var backTransform);
             var boundingRectangle = RotatingCalipers2DMethod(pointsDict.Keys.ToList(), false, false, true);
             //Get the Direction vectors from rotating caliper and projection.
 

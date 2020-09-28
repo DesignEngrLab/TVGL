@@ -347,7 +347,7 @@ namespace TVGL
             : base(facesAll)
         {
             Type = PrimitiveSurfaceType.Cylinder;
-            var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
+            var faces = Faces.FacesWithDistinctNormals();
             var n = faces.Count;
             var centers = new List<Vector3>();
             Vector3 center;

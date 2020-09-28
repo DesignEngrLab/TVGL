@@ -25,14 +25,14 @@ namespace TVGL.Voxelization
     }
     internal class VoxelEnumerator : IEnumerator<int[]>
     {
-        VoxelizedSolid vs;
+        readonly VoxelizedSolid vs;
         int[] currentVoxelPosition = new int[3];
         int xIndex;
         int yIndex;
         int zIndex;
-        int xLim;
-        int yLim;
-        int zLim;
+        readonly int xLim;
+        readonly int yLim;
+        readonly int zLim;
         public VoxelEnumerator(VoxelizedSolid vs)
         {
             this.vs = vs;
