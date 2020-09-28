@@ -33,7 +33,7 @@ namespace TVGLUnitTestsAndBenchmarking
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
             var fileNames = dir.GetFiles("*").ToArray();
-            for (var i = 6; i < fileNames.Length - 0; i++)
+            for (var i = 16; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -49,7 +49,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 if (name.Contains("yCastin")) continue;
 
-                for (int j = 0; j < 3; j++)
+                for (int j = 1; j < 3; j++)
                 {
                     var direction = Vector3.UnitVector((CartesianDirections)j);
                     //var direction = new Vector3(r100, r100, r100);

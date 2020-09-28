@@ -62,6 +62,9 @@ namespace TVGL.TwoDimensional
             {
                 var vertex = polygon.Vertices[i];
                 var monoChange = GetMonotonicityChange(vertex);
+                if (monoChange == MonotonicityChange.SameAsNeighbor)
+                    throw new ArgumentException("Duplicate vertices in polygon provided to PartitionIntoMonotoneBoxes",
+                        "polygon");
                 if (monoChange != MonotonicityChange.Neither)
                 {
                     if (initBoxIndex < 0)

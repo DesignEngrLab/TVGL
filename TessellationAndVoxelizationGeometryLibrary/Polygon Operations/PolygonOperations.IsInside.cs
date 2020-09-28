@@ -242,7 +242,7 @@ namespace TVGL.TwoDimensional
                         onBoundary = true;
                         if (!onBoundaryIsInside) return false;
                     }
-                    var lineYValue = line.YGivenX(p.X, out var isBetweenEndPoints);
+                    var lineYValue = line.FindYGivenX(p.X, out var isBetweenEndPoints);
                     if (!isBetweenEndPoints) continue;
                     var yDistance = lineYValue - p.Y;
                     if (yDistance.IsNegligible(tolerance))
@@ -387,7 +387,7 @@ namespace TVGL.TwoDimensional
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = line.YGivenX(x, out _);
+                    intersects[index++] = line.FindYGivenX(x, out _);
                 intersections.Add(intersects.OrderBy(y => y).ToArray());
             }
             return intersections;
@@ -439,7 +439,7 @@ namespace TVGL.TwoDimensional
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = line.XGivenY(y, out _);
+                    intersects[index++] = line.FindXGivenY(y, out _);
                 intersections.Add(intersects.OrderBy(x => x).ToArray());
             }
             return intersections;

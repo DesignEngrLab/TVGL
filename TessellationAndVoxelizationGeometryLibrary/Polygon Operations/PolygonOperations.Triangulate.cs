@@ -137,7 +137,12 @@ namespace TVGL.TwoDimensional
                 if (randomAngle != 0)
                     polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
                 foreach (var monoPoly in ConvertXMonotonePolygons(polygon))
+                {
+                    Presenter.ShowAndHang(monoPoly);
+
                     localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
+
+                }
                 triangleFaceList.AddRange(localTriangleFaceList);
                 return triangleFaceList;
                 //}
@@ -218,7 +223,8 @@ namespace TVGL.TwoDimensional
                 if (monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
-                    if (vertex.StartLine.Vector.X > 0)
+                    if (vertex.StartLine.Vector.X > 0 || vertex.EndLine.Vector.X > 0 ||
+                        (vertex.StartLine.Vector.X == 0 && vertex.EndLine.Vector.X == 0 && vertex.StartLine.Vector.Y > 0))
                     {
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
@@ -309,7 +315,7 @@ namespace TVGL.TwoDimensional
             PolygonEdge closestEdge = null;
             foreach (var edge in edges)
             {
-                var intersectionYValue = edge.YGivenX(point.X, out var betweenPoints);
+                var intersectionYValue = edge.FindYGivenX(point.X, out var betweenPoints);
                 if (!betweenPoints) continue;
                 var delta = point.Y - intersectionYValue;
                 if (delta >= 0 && delta < closestDistance)

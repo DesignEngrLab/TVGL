@@ -73,7 +73,7 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (double.IsNaN(_yIntercept))
-                    _yIntercept = YGivenX(0, out _);
+                    _yIntercept = FindYGivenX(0, out _);
                 return _yIntercept;
             }
         }
@@ -83,7 +83,7 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (double.IsNaN(_xIntercept))
-                    _xIntercept = XGivenY(0, out _);
+                    _xIntercept = FindXGivenY(0, out _);
                 return _xIntercept;
             }
         }
@@ -198,8 +198,18 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="xval"></param>
         /// <returns></returns>
-        public double YGivenX(double xval, out bool isBetweenEndPoints)
+        public double FindYGivenX(double xval, out bool isBetweenEndPoints)
         {
+            if (xval.IsPracticallySame(FromPoint.X))
+            {
+                isBetweenEndPoints = true;
+                return FromPoint.Y;
+            }
+            if (xval.IsPracticallySame(ToPoint.X))
+            {
+                isBetweenEndPoints = true;
+                return ToPoint.Y;
+            }
             isBetweenEndPoints = (FromPoint.X < xval) != (ToPoint.X < xval);
             // if both true or both false then endpoints are on same side of point
             if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
@@ -223,8 +233,18 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="yval">The y.</param>
         /// <returns>System.Double.</returns>
-        public double XGivenY(double yval, out bool isBetweenEndPoints)
+        public double FindXGivenY(double yval, out bool isBetweenEndPoints)
         {
+            if (yval.IsPracticallySame(FromPoint.Y))
+            {
+                isBetweenEndPoints = true;
+                return FromPoint.X;
+            }
+            if (yval.IsPracticallySame(ToPoint.Y))
+            {
+                isBetweenEndPoints = true;
+                return ToPoint.X;
+            }
             isBetweenEndPoints = (FromPoint.Y < yval) != (ToPoint.Y < yval);
             // if both true or both false then endpoints are on same side of point
             //If a vertical line, return an x value on that line (e.g., ToNode.X)
