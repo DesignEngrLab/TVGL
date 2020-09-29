@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -66,7 +65,7 @@ namespace TVGL.TwoDimensional
         {
             return startingIntersection == currentIntersection && currentEdge == startingEdge;
         }
-        
+
         //private bool lastSwitch = false;
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
@@ -78,11 +77,9 @@ namespace TVGL.TwoDimensional
             //    return !currentEdgeIsFromPolygonA;
             //if (intersectionData.Relationship == SegmentRelationship.BEnclosesA)
             //    return currentEdgeIsFromPolygonA;
-            //if (intersectionData.Relationship == SegmentRelationship.NoOverlap) 
-                return false;
-
+            //if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
+            return false;
         }
-
 
         /// <summary>
         /// Handles identical polygons. In this case subPolygon is always on polygonA and the duplicated is in polygonB
@@ -91,12 +88,12 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        /// 
+        ///
         protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
         {
             if (!identicalPolygonIsInverted)
                 newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or add the negative as a negative
-            // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result. 
+            // otherwise if the copy is inverted then the two cancel each other out and neither is explicitly needed in the result.
             // a hole is effectively removed
         }
 

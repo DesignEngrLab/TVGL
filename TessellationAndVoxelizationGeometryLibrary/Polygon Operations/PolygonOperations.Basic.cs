@@ -1,7 +1,5 @@
-﻿using Priority_Queue;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -21,6 +19,7 @@ namespace TVGL.TwoDimensional
         {
             return paths.Sum(path => path.Perimeter());
         }
+
         /// <summary>
         /// Gets the perimeter for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
@@ -50,7 +49,6 @@ namespace TVGL.TwoDimensional
             return perimeter;
         }
 
-
         /// <summary>
         ///     Calculate the area for a 2D set of points. Consider using Polygon class when possible.
         /// </summary>
@@ -58,7 +56,6 @@ namespace TVGL.TwoDimensional
         {
             return paths.Sum(path => path.Area());
         }
-
 
         /// <summary>
         /// Gets the area for a 2D set of points defining a polygon. Consider using Polygon class when possible.
@@ -80,7 +77,6 @@ namespace TVGL.TwoDimensional
             }
             return 0.5 * area;
         }
-
 
         /// <summary>
         /// Converts the 2D coordaintes into a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... }
@@ -133,7 +129,7 @@ namespace TVGL.TwoDimensional
             var tolerancePercentage = 1.0 - confidencePercentage;
             //For it to be rectangular, Area = l*w && Perimeter = 2*l + 2*w.
             //This can only gaurantee that it is not a rectangle if false.
-            //If true, then check the polygon area vs. its minBoundingRectangle area. 
+            //If true, then check the polygon area vs. its minBoundingRectangle area.
             //The area / perimeter check is not strictly necessary, but can provide some speed-up
             //For obviously not rectangular pieces
             var polygonList = polygon as IList<Vector2> ?? polygon.ToList();
@@ -154,7 +150,6 @@ namespace TVGL.TwoDimensional
             var minBoundingRectangle = polygonList.BoundingRectangle();
             return area.IsPracticallySame(minBoundingRectangle.Area, area * tolerancePercentage);
         }
-
 
         /// <summary>Determines whether the specified polygon is circular.</summary>
         /// <param name="polygon">The polygon.</param>
@@ -184,7 +179,6 @@ namespace TVGL.TwoDimensional
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 
-
         //Mirrors a shape along a given direction, such that the mid line is the same for both the original and mirror
         public static List<List<Vector2>> Mirror(List<List<Vector2>> shape, Vector2 direction2D)
         {
@@ -209,7 +203,7 @@ namespace TVGL.TwoDimensional
                 //if (!mirror.Last().Area().IsPracticallySame(polygon.Area, Constants.BaseTolerance))
                 //{
                 //   throw new Exception("Areas do not match after mirroring the polygons");
-                //} ********commenting out this check. It should be in unit testing - not slow down this method*** 
+                //} ********commenting out this check. It should be in unit testing - not slow down this method***
             }
             return mirror;
         }

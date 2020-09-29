@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TVGL;
+﻿using System.Collections.Generic;
 
 namespace TVGL.PrimitiveClassificationDetail
 {
@@ -19,6 +14,7 @@ namespace TVGL.PrimitiveClassificationDetail
             foreach (var polygonalFace in Faces)
                 Area += polygonalFace.Face.Area;
         }
+
         internal double Area { get; set; }
         internal double NegativeProbability { get; set; }
 
@@ -32,17 +28,20 @@ namespace TVGL.PrimitiveClassificationDetail
                     case PrimitiveSurfaceType.Plane:
                         TypeMultiplier = 20;
                         break;
+
                     case PrimitiveSurfaceType.Cylinder:
                         TypeMultiplier = 10;
                         break;
+
                     case PrimitiveSurfaceType.Sphere:
                         TypeMultiplier = 5;
                         break;
+
                     default:
                         TypeMultiplier = 1;
                         break;
                 }
-                return TypeMultiplier*Area * (1 - NegativeProbability);
+                return TypeMultiplier * Area * (1 - NegativeProbability);
             }
         }
 

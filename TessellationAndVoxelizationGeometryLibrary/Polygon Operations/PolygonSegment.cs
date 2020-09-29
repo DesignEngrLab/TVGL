@@ -12,10 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
-using System.Collections.Generic;
 using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
@@ -26,6 +23,7 @@ namespace TVGL.TwoDimensional
 
     {
         #region Properties
+
         /// <summary>
         /// Gets the length of the line.
         /// </summary>
@@ -39,7 +37,8 @@ namespace TVGL.TwoDimensional
                 return _length;
             }
         }
-        double _length = double.NaN;
+
+        private double _length = double.NaN;
 
         /// <summary>
         /// Gets the length of the line.
@@ -54,8 +53,8 @@ namespace TVGL.TwoDimensional
                 return _vector;
             }
         }
-        Vector2 _vector = Vector2.Null;
 
+        private Vector2 _vector = Vector2.Null;
 
         public Vector2 Center
         {
@@ -66,7 +65,8 @@ namespace TVGL.TwoDimensional
                 return _center;
             }
         }
-        Vector2 _center = Vector2.Null;
+
+        private Vector2 _center = Vector2.Null;
 
         public double YIntercept
         {
@@ -77,7 +77,9 @@ namespace TVGL.TwoDimensional
                 return _yIntercept;
             }
         }
-        double _yIntercept = double.NaN;
+
+        private double _yIntercept = double.NaN;
+
         public double XIntercept
         {
             get
@@ -87,8 +89,8 @@ namespace TVGL.TwoDimensional
                 return _xIntercept;
             }
         }
-        double _xIntercept = double.NaN;
 
+        private double _xIntercept = double.NaN;
 
         /// <summary>
         /// Gets the vertical slope.
@@ -103,7 +105,8 @@ namespace TVGL.TwoDimensional
                 return _verticalSlope;
             }
         }
-        double _verticalSlope = double.NaN;
+
+        private double _verticalSlope = double.NaN;
 
         /// <summary>
         /// Gets the horizontal slope.
@@ -118,22 +121,24 @@ namespace TVGL.TwoDimensional
                 return _horizontalSlope;
             }
         }
-        double _horizontalSlope = double.NaN;
+
+        private double _horizontalSlope = double.NaN;
 
         public double XMax { get; }
         public double XMin { get; }
         public double YMax { get; }
         public double YMin { get; }
 
-
         /// <summary>
         /// Gets the index in list.
         /// </summary>
         /// <value>The index in list.</value>
         public int IndexInList => ToPoint.IndexInList;
-        #endregion
+
+        #endregion Properties
 
         #region Constructor
+
         /// <summary>
         ///     Sets to and from nodes as well as slope and intercept of line.
         /// </summary>
@@ -148,7 +153,9 @@ namespace TVGL.TwoDimensional
             YMax = (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
             YMin = (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
         }
-        #endregion
+
+        #endregion Constructor
+
         /// <summary>
         ///     Gets the Vertex2D which the line is pointing to. Set is through the constructor.
         /// </summary>
@@ -160,8 +167,6 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <value>From node.</value>
         public Vertex2D FromPoint { get; }
-
-
 
         #region Methods
 
@@ -175,6 +180,7 @@ namespace TVGL.TwoDimensional
             return (FromPoint == other.ToPoint
                 || ToPoint == other.FromPoint);
         }
+
         /// <summary>
         /// Gets the other point that makes up this line.
         /// </summary>
@@ -185,6 +191,7 @@ namespace TVGL.TwoDimensional
             if (point == FromPoint) return ToPoint;
             return point == ToPoint ? FromPoint : null;
         }
+
         /// <summary>
         ///     Reverses this instance.
         /// </summary>
@@ -269,7 +276,6 @@ namespace TVGL.TwoDimensional
             return "from: " + FromPoint + " to: " + ToPoint;
         }
 
-        #endregion
+        #endregion Methods
     }
-
 }

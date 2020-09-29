@@ -243,12 +243,12 @@ namespace TVGL
             IEnumerable<Vertex> vertices = null, IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
-            if (colors != null && colors.Count() == 1)
+            if (colors != null && colors.Count == 1)
             {
                 SolidColor = colors[0];
                 HasUniformColor = true;
             }
-            var manyInputColors = (colors != null && colors.Count() > 1);
+            var manyInputColors = (colors != null && colors.Count > 1);
             Faces = faces.ToArray();
             NumberOfFaces = Faces.Length;
             if (vertices == null)
@@ -525,7 +525,7 @@ namespace TVGL
                     listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices) { Color = color });
                 else
                 {
-                    var normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(faceVertices.Length, faceVertices, out _, Vector3.Null);
+                    var normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null);
                     var triangulatedList = faceVertices.Triangulate(normal);
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)

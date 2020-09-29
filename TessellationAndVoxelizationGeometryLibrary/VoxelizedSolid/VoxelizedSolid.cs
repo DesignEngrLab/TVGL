@@ -12,27 +12,23 @@
 // <summary></summary>
 // ***********************************************************************
 
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using TVGL.Boolean_Operations;
-using TVGL.IOFunctions;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
 namespace TVGL.Voxelization
 {
-    /// <inheritdoc />
     /// <summary>
     /// Class VoxelizedSparseDense.
     /// </summary>
     public partial class VoxelizedSolid : Solid, IEnumerable<int[]>
     {
         #region Properties
+
         internal IVoxelRow[] voxels { get; private set; }
 
         /// <summary>
@@ -40,6 +36,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The count.</value>
         public long Count { get; private set; }
+
         public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         public int[][] VoxelBounds { get; }
         public double VoxelSideLength { get; private set; }
@@ -48,15 +45,16 @@ namespace TVGL.Voxelization
         public int numVoxelsX { get; private set; }
         public int numVoxelsY { get; private set; }
         public int numVoxelsZ { get; private set; }
-        int zMultiplier => numVoxelsY;
+        private int zMultiplier => numVoxelsY;
         public double FractionDense { get; private set; }
-        #endregion
 
-
-
+        #endregion Properties
 
         #region Constructors
-        private VoxelizedSolid() { }
+
+        private VoxelizedSolid()
+        {
+        }
 
         public VoxelizedSolid(VoxelizedSolid vs) : this()
         {
@@ -73,8 +71,6 @@ namespace TVGL.Voxelization
             FractionDense = 0;
             UpdateProperties();
         }
-
-
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
@@ -101,6 +97,7 @@ namespace TVGL.Voxelization
             FractionDense = 0;
             UpdateProperties();
         }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
         /// </summary>
@@ -135,7 +132,7 @@ namespace TVGL.Voxelization
         /// <param name="bounds">The bounds.</param>
         public VoxelizedSolid(IEnumerable<Polygon> loops, int voxelsOnLongSide, IReadOnlyList<Vector2> bounds) : this()
         {
-            Bounds = new[] { new Vector3(bounds[0],0), new Vector3(bounds[1],1) };
+            Bounds = new[] { new Vector3(bounds[0], 0), new Vector3(bounds[1], 1) };
             Dimensions = Bounds[1].Subtract(Bounds[0]);
             VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
             numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
@@ -147,30 +144,31 @@ namespace TVGL.Voxelization
 
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
-            //if (loops.Any())
-            //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
-                var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, numVoxelsY,
-                                VoxelSideLength, out var yStartIndex);
-                var numYlines = intersections.Count;
-                for (int j = 0; j < numYlines; j++)
+                                                              //if (loops.Any())
+                                                              //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
+            var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, numVoxelsY,
+                            VoxelSideLength, out var yStartIndex);
+            var numYlines = intersections.Count;
+            for (int j = 0; j < numYlines; j++)
+            {
+                var intersectionPoints = intersections[j];
+                var numXRangesOnThisLine = intersectionPoints.Length;
+                for (var m = 0; m < numXRangesOnThisLine; m += 2)
                 {
-                    var intersectionPoints = intersections[j];
-                    var numXRangesOnThisLine = intersectionPoints.Length;
-                    for (var m = 0; m < numXRangesOnThisLine; m += 2)
-                    {
-                        var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
-                        var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
-                        if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
-                        ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(sp);
-                        ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(ep);
-                    }
+                    var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                    var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                    if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(sp);
+                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(ep);
                 }
+            }
             //}
             FractionDense = 0;
             UpdateProperties();
         }
 
         #region Fill In From Tessellation Functions
+
         private void FillInFromTessellation(TessellatedSolid ts)
         {
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
@@ -205,14 +203,13 @@ namespace TVGL.Voxelization
             //);
         }
 
-
-        #endregion
-
+        #endregion Fill In From Tessellation Functions
 
         public static VoxelizedSolid CreateFullBlock(VoxelizedSolid vs)
         {
             return CreateFullBlock(vs.VoxelSideLength, vs.Bounds);
         }
+
         public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<Vector3> bounds)
         {
             var fullBlock = new VoxelizedSolid();
@@ -235,9 +232,10 @@ namespace TVGL.Voxelization
             return fullBlock;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Conversion Methods
+
         public void UpdateToAllDense()
         {
             if (FractionDense == 1) return;
@@ -248,6 +246,7 @@ namespace TVGL.Voxelization
             }
             FractionDense = 1;
         }
+
         public void UpdateToAllSparse()
         {
             if (FractionDense == 0) return;
@@ -258,7 +257,6 @@ namespace TVGL.Voxelization
             }
             FractionDense = 0;
         }
-
 
         internal string[] GetVoxelsAsStringArrays()
         {
@@ -280,19 +278,23 @@ namespace TVGL.Voxelization
             }
             return allRows.ToArray();
         }
+
         public TessellatedSolid ConvertToTessellatedSolidRectilinear()
         {
             throw new NotImplementedException();
         }
+
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)
         {
             var marchingCubes = new MarchingCubesDenseVoxels(this, voxelsPerTriangleSpacing);
             var ts = marchingCubes.Generate();
             return ts;
         }
-        #endregion
+
+        #endregion Conversion Methods
 
         #region Overrides of Solid abstract members
+
         public override Solid Copy()
         {
             UpdateToAllSparse();
@@ -303,6 +305,7 @@ namespace TVGL.Voxelization
         {
             throw new NotImplementedException();
         }
+
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
@@ -316,12 +319,10 @@ namespace TVGL.Voxelization
         public IEnumerator<int[]> GetEnumerator()
         {
             return new VoxelEnumerator(this);
-
         }
 
         protected override void CalculateCenter()
         {
-
             Count = 0;
             var xTotal = 0;
             var yTotal = 0;
@@ -359,8 +360,6 @@ namespace TVGL.Voxelization
             throw new NotImplementedException();
         }
 
-        #endregion
-
-
+        #endregion Overrides of Solid abstract members
     }
 }

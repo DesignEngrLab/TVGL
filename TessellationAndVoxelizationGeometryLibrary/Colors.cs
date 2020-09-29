@@ -916,8 +916,8 @@ namespace TVGL
             if (h6 == 6f) { h6 = 0f; }
             int ihue = (int)(h6);
             float p = value * (1f - saturation);
-            float q = value * (1f - (saturation * (h6 - (float)ihue)));
-            float t = value * (1f - (saturation * (1f - (h6 - (float)ihue))));
+            float q = value * (1f - (saturation * (h6 - ihue)));
+            float t = value * (1f - (saturation * (1f - (h6 - ihue))));
             switch (ihue)
             {
                 case 0:

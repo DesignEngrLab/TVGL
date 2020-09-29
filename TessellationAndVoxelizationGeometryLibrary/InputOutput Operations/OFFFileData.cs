@@ -128,9 +128,8 @@ namespace TVGL.IOFunctions
         internal static TessellatedSolid OpenSolid(Stream s, string filename)
         {
             var now = DateTime.Now;
-            OFFFileData offData;
             // Try to read in BINARY format
-            if (TryReadBinary(s, out offData))
+            if (TryReadBinary(s, out var offData))
                 Message.output("Successfully read in binary OFF file (" + (DateTime.Now - now) + ").", 3);
             else
             {

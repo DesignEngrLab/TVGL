@@ -155,7 +155,7 @@ namespace TVGL
             get => _ownedFace;
             internal set
             {
-                if (_ownedFace == value) return;
+                if (_ownedFace != null && _ownedFace == value) return;
                 _ownedFace = value;
             }
         }
@@ -170,7 +170,7 @@ namespace TVGL
             get => _otherFace;
             internal set
             {
-                if (_otherFace == value) return;
+                if (_otherFace != null && _otherFace == value) return;
                 _otherFace = value;
             }
         }

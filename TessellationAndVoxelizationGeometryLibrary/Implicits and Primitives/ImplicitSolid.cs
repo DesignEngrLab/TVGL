@@ -13,17 +13,7 @@
 // ***********************************************************************
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Serialization;
-using MIConvexHull;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using TVGL.IOFunctions;
 using TVGL.Numerics;
-using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -35,6 +25,7 @@ namespace TVGL
         {
             Bounds = new[] { new Vector3(0.0, 0.0, 0.0), new Vector3(10.0, 10.0, 10.0) };
         }
+
         public override Solid Copy()
         {
             throw new NotImplementedException();
@@ -49,6 +40,7 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
+
         public double this[double x, double y, double z] => Evaluate(x, y, z);
 
         private double Evaluate(double x, double y, double z)

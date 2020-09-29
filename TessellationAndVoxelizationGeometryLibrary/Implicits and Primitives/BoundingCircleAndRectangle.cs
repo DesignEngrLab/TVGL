@@ -12,10 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 
-using MIConvexHull;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -44,7 +42,7 @@ namespace TVGL
         public List<Vector2>[] PointsOnSides;
 
         /// <summary>
-        ///     Vector direction of length 
+        ///     Vector direction of length
         /// </summary>
         public Vector2 Direction1;
 
@@ -98,11 +96,10 @@ namespace TVGL
                 if (!areaCheck.IsPracticallySame(Area, 0.01 * Area))
                     throw new Exception("Points are ordered incorrectly");
             }
-            CenterPosition = Direction1 * (Offsets[0] + 0.5 * Length1) 
+            CenterPosition = Direction1 * (Offsets[0] + 0.5 * Length1)
                 + Direction2 * (Offsets[2] + 0.5 * Length2);
         }
     }
-
 
     /// <summary>
     ///     Public circle structure, given a center point and radius

@@ -50,9 +50,8 @@ namespace TVGL
         public override void UpdateWith(PolygonalFace face)
         {
             var numFaces = Faces.Count;
-            Vector3 inBetweenPoint;
             var distance = MiscFunctions.SkewedLineIntersection(face.Center, face.Normal, Anchor, Axis,
-                out inBetweenPoint);
+                out var inBetweenPoint);
             var fractionToMove = 1 / numFaces;
             var moveVector = Anchor.Cross(face.Normal);
             if (moveVector.Dot(face.Center.Subtract(inBetweenPoint)) < 0)
@@ -350,11 +349,9 @@ namespace TVGL
             var faces = Faces.FacesWithDistinctNormals();
             var n = faces.Count;
             var centers = new List<Vector3>();
-            Vector3 center;
-            double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
+                faces[n - 1].Center, faces[n - 1].Normal, out var center, out var t1, out var t2);
             if (!center.IsNull() && !center.IsNegligible())
             {
                 centers.Add(center);
@@ -410,9 +407,8 @@ namespace TVGL
             var v2 = edge.To;
             var v3 = edge.OwnedFace.Vertices.First(v => v != v1 && v != v2);
             var v4 = edge.OtherFace.Vertices.First(v => v != v1 && v != v2);
-            Vector3 center;
             MiscFunctions.SkewedLineIntersection(edge.OwnedFace.Center, edge.OwnedFace.Normal,
-                edge.OtherFace.Center, edge.OtherFace.Normal, out center);
+                edge.OtherFace.Center, edge.OtherFace.Normal, out var center);
             /* determine is positive or negative */
             var isPositive = edge.Curvature == CurvatureType.Convex;
             /* move center to origin plane */

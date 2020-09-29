@@ -1,7 +1,6 @@
 ﻿using Priority_Queue;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -13,6 +12,7 @@ namespace TVGL.TwoDimensional
     public static partial class PolygonOperations
     {
         #region Simplify
+
         /// <summary>
         /// Simplifies the specified polygons no more than the allowable change in area fraction.
         /// </summary>
@@ -23,6 +23,7 @@ namespace TVGL.TwoDimensional
         {
             return polygons.Select(poly => poly.Simplify(allowableChangeInAreaFraction));
         }
+
         /// <summary>
         /// Simplifies the specified polygon no more than theallowable change in area fraction.
         /// </summary>
@@ -36,7 +37,6 @@ namespace TVGL.TwoDimensional
                 simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.Simplify(allowableChangeInAreaFraction)));
             return simplifiedPositivePolygon;
         }
-
 
         /// <summary>
         /// Simplifies the specified polygons no more than theallowable change in area fraction.
@@ -60,19 +60,21 @@ namespace TVGL.TwoDimensional
             var numPoints = polygon.Count;
             var origArea = Math.Abs(polygon.Area());
             if (origArea.IsNegligible()) return polygon;
+
             #region build initial list of cross products
+
             // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points. I'm very tempted
-            // to call it vertex, which is a better name but I don't want to confuse with the Vertex class in TessellatedSolid). 
+            // to call it vertex, which is a better name but I don't want to confuse with the Vertex class in TessellatedSolid).
             // Here we are using the SimplePriorityQueue from BlueRaja (https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp)
             var convexCornerQueue = new SimplePriorityQueue<int, double>(new ForwardSort());
             var concaveCornerQueue = new SimplePriorityQueue<int, double>(new ReverseSort());
             // cross-products which are kept in the same order as the corners they represent. This is solely used with the above
-            // dictionary - to essentially do the reverse lookup. given a corner-index, crossProductsArray will instanly tell us the 
+            // dictionary - to essentially do the reverse lookup. given a corner-index, crossProductsArray will instanly tell us the
             // cross-product. The cross-product is used as the key in the dictionary - to find corner-indices.
             var crossProductsArray = new double[numPoints];
 
-            // make the cross-products. this is a for-loop that is preceded with the first element (requiring the last element, "^1" in 
-            // C# 8 terms) and succeeded by one for the last corner 
+            // make the cross-products. this is a for-loop that is preceded with the first element (requiring the last element, "^1" in
+            // C# 8 terms) and succeeded by one for the last corner
             AddCrossProductToOneOfTheLists(polygon[^1], polygon[0], polygon[1], convexCornerQueue, concaveCornerQueue,
                 crossProductsArray, 0);
             for (int i = 1; i < numPoints - 1; i++)
@@ -80,7 +82,8 @@ namespace TVGL.TwoDimensional
                 crossProductsArray, i);
             AddCrossProductToOneOfTheLists(polygon[^2], polygon[^1], polygon[0], convexCornerQueue, concaveCornerQueue,
                 crossProductsArray, numPoints - 1);
-            #endregion
+
+            #endregion build initial list of cross products
 
             // after much thought, the idea to split up into positive and negative sorted lists is so that we don't over remove vertices
             // by bouncing back and forth between convex and concave while staying with the target deltaArea. So, we do as many convex corners
@@ -106,7 +109,7 @@ namespace TVGL.TwoDimensional
                         break;
                     }
                     deltaArea -= sign * smallestArea;
-                    //  set the corner to null. we'll remove null corners at the end. for now, just set to null. 
+                    //  set the corner to null. we'll remove null corners at the end. for now, just set to null.
                     // this is for speed and keep the indices correct in the various collections
                     polygon[index] = Vector2.Null;
                     // find the four neighbors - two on each side. the closest two (prevIndex and nextIndex) need to be updated
@@ -121,7 +124,7 @@ namespace TVGL.TwoDimensional
                         continue;
 
                     // now, add these new crossproducts both to the dictionary and to the sortedLists. Note, that nothing is
-                    // removed from the sorted lists here. it is more efficient to just remove them if they bubble to the top of the list, 
+                    // removed from the sorted lists here. it is more efficient to just remove them if they bubble to the top of the list,
                     // which is done in PopNextSmallestArea
                     UpdateCrossProductInQueues(polygon[prevIndex], polygon[nextIndex], polygon[nextnextIndex], convexCornerQueue, concaveCornerQueue,
                         crossProductsArray, nextIndex);
@@ -131,7 +134,6 @@ namespace TVGL.TwoDimensional
             }
             return polygon.Where(v => !v.IsNull()).ToList();
         }
-
 
         /// <summary>
         /// Simplifies the specified polygon to the target number of points.
@@ -179,7 +181,9 @@ namespace TVGL.TwoDimensional
             var polygons = path.Select(p => p.ToList()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
+
             #region build initial list of cross products
+
             var cornerQueue = new SimplePriorityQueue<int, double>(new AbsoluteValueSort());
             var crossProductsArray = new double[numPoints.Sum()];
             var index = 0;
@@ -190,9 +194,11 @@ namespace TVGL.TwoDimensional
                     AddCrossProductToQueue(polygons[j][i - 1], polygons[j][i], polygons[j][i + 1], cornerQueue, crossProductsArray, index++);
                 AddCrossProductToQueue(polygons[j][^2], polygons[j][^1], polygons[j][0], cornerQueue, crossProductsArray, index++);
             }
-            #endregion
-            if (numToRemove <= 0) throw new ArgumentOutOfRangeException("targetNumberOfPoints", "The number of points to remove in PolygonOperations.Simplify"
-                  + " is more than the total number of points in the polygon(s).");
+
+            #endregion build initial list of cross products
+
+            if (numToRemove <= 0) throw new ArgumentOutOfRangeException(nameof(targetNumberOfPoints),
+                "The number of points to remove in PolygonOperations.Simplify is more than the total number of points in the polygon(s).");
             while (numToRemove-- > 0)
             {
                 index = cornerQueue.Dequeue();
@@ -278,6 +284,7 @@ namespace TVGL.TwoDimensional
                 return -1;
             }
         }
+
         private class ForwardSort : IComparer<double>
         {
             public int Compare(double x, double y)
@@ -287,6 +294,7 @@ namespace TVGL.TwoDimensional
                 return 1;
             }
         }
+
         private class AbsoluteValueSort : IComparer<double>
         {
             public int Compare(double x, double y)
@@ -306,6 +314,7 @@ namespace TVGL.TwoDimensional
             if (cross < 0) concaveCornerQueue.Enqueue(index, (float)cross);
             else convexCornerQueue.Enqueue(index, (float)cross);
         }
+
         private static void UpdateCrossProductInQueues(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
             SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
             double[] crossProducts, int index)
@@ -349,7 +358,7 @@ namespace TVGL.TwoDimensional
             crossProducts[index] = newCross;
             cornerQueue.UpdatePriority(index, newCross);
         }
-        #endregion
 
+        #endregion Simplify
     }
 }

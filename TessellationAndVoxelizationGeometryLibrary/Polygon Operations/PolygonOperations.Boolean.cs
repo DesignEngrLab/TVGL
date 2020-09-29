@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
@@ -12,14 +11,16 @@ namespace TVGL.TwoDimensional
     {
         // while the main executing methods are provided in this file (all of which can be invoked as Extensions), the code that perform the new polygon creation
         // is provided in the following four non-Static classes. These are non-static because they all inherit from the BooleanBase class. Each of these only needs
-        // to be instantiated once as no data is stored in the class objects. So, this is a sort of singleton model but it's too bad we can have static classes inherit from 
+        // to be instantiated once as no data is stored in the class objects. So, this is a sort of singleton model but it's too bad we can have static classes inherit from
         // other static classes.
-        static PolygonUnion polygonUnion;
-        static PolygonIntersection polygonIntersection;
-        static PolygonSubtraction polygonSubtraction;
-        static PolygonRemoveIntersections polygonRemoveIntersections;
+        private static PolygonUnion polygonUnion;
+
+        private static PolygonIntersection polygonIntersection;
+        private static PolygonSubtraction polygonSubtraction;
+        private static PolygonRemoveIntersections polygonRemoveIntersections;
 
         #region Union Public Methods
+
         /// <summary>
         /// Returns the list of polygons that exist in either A OR B.
         /// </summary>
@@ -34,6 +35,7 @@ namespace TVGL.TwoDimensional
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
             return Union(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
         }
+
         /// <summary>
         /// Returns the list of polygons that exist in either A OR B.By providing the intersections
         /// between the two polygons, the operation will be performed with less time and memory.
@@ -49,8 +51,8 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord polygonInteraction,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (!polygonA.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", "polygonA");
-            if (!polygonB.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", "polygonB");
+            if (!polygonA.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", nameof(polygonA));
+            if (!polygonB.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", nameof(polygonB));
             switch (polygonInteraction.Relationship)
             {
                 case PolygonRelationship.Separated:
@@ -60,15 +62,18 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.BIsInsideHoleOfA:
                 case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
                     return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
+
                 case PolygonRelationship.BIsCompletelyInsideA:
                 case PolygonRelationship.BIsInsideAButEdgesTouch:
                 case PolygonRelationship.BIsInsideAButVerticesTouch:
                 case PolygonRelationship.Equal:
                     return new List<Polygon> { polygonA.Copy(true, false) };
+
                 case PolygonRelationship.AIsCompletelyInsideB:
                 case PolygonRelationship.AIsInsideBButEdgesTouch:
                 case PolygonRelationship.AIsInsideBButVerticesTouch:
                     return new List<Polygon> { polygonB.Copy(true, false) };
+
                 default:
                     //case PolygonRelationship.SeparatedButEdgesTouch:
                     //case PolygonRelationship.Intersect:
@@ -78,6 +83,7 @@ namespace TVGL.TwoDimensional
                     return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance);
             }
         }
+
         /// <summary>
         /// Returns the list of polygons that are the subshapes of ANY of the provided polygons.
         /// </summary>
@@ -139,9 +145,11 @@ namespace TVGL.TwoDimensional
             }
             return polygonList;
         }
-        #endregion
+
+        #endregion Union Public Methods
 
         #region Intersect Public Methods
+
         /// <summary>
         /// Returns the list of polygons that result from the subshapes common to both A and B.
         /// </summary>
@@ -182,6 +190,7 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
                 case PolygonRelationship.BIsInsideHoleOfABButEdgesTouch:
                     return new List<Polygon>();
+
                 case PolygonRelationship.BIsCompletelyInsideA:
                 case PolygonRelationship.BIsInsideAButVerticesTouch:
                 case PolygonRelationship.BIsInsideAButEdgesTouch:
@@ -263,9 +272,10 @@ namespace TVGL.TwoDimensional
             return polygonList;
         }
 
-        #endregion
+        #endregion Intersect Public Methods
 
         #region Subtract Public Methods
+
         /// <summary>
         /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A).
         /// </summary>
@@ -316,6 +326,7 @@ namespace TVGL.TwoDimensional
         {
             return Subtract(polygonA, polygonB, interaction, outputAsCollectionType, false, tolerance);
         }
+
         /// <summary>
         /// Subtracts the specified polygon b.
         /// </summary>
@@ -332,9 +343,9 @@ namespace TVGL.TwoDimensional
            PolygonInteractionRecord interaction, PolygonCollection outputAsCollectionType, bool interactionAlreadyInverted, double tolerance = double.NaN)
         {
             if (!polygonA.IsPositive) throw new ArgumentException("The minuend is already a negative polygon (i.e. hole). Consider another operation"
-                + " to accopmlish this function, like Intersect.", "polygonA");
+                + " to accopmlish this function, like Intersect.", nameof(polygonA));
             if (polygonB.IsPositive == interactionAlreadyInverted) throw new ArgumentException("The subtrahend is already a negative polygon (i.e. hole). Consider another operation"
-                  + " to accopmlish this function, like Intersect.", "polygonB");
+                  + " to accopmlish this function, like Intersect.", nameof(polygonB));
             if (!interactionAlreadyInverted)
                 interaction = interaction.InvertPolygonInRecord(ref polygonB);
             switch (interaction.Relationship)
@@ -349,14 +360,17 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
                 case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
                     return new List<Polygon> { polygonA.Copy(true, false) };
+
                 case PolygonRelationship.BIsCompletelyInsideA:
                     var polygonACopy = polygonA.Copy(true, false);
                     polygonACopy.AddInnerPolygon(polygonB.Copy(true, true));
                     return new List<Polygon> { polygonACopy };
+
                 case PolygonRelationship.AIsCompletelyInsideB:
                 case PolygonRelationship.AIsInsideBButVerticesTouch:
                 case PolygonRelationship.AIsInsideBButEdgesTouch:
                     return new List<Polygon>();
+
                 default:
                     //case PolygonRelationship.Intersect:
                     //case PolygonRelationship.BInsideAButVerticesTouch:
@@ -366,9 +380,10 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        #endregion
+        #endregion Subtract Public Methods
 
         #region Exclusive-OR Public Methods
+
         /// <summary>
         /// Returns the list of polygons that are the Exclusive-OR of the two input polygons. Exclusive-OR are the regions where one polgyon
         /// resides but not both.
@@ -410,10 +425,12 @@ namespace TVGL.TwoDimensional
                 case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
                 case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
                     return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
+
                 case PolygonRelationship.BIsCompletelyInsideA:
                     var polygonACopy1 = polygonA.Copy(true, false);
                     polygonACopy1.AddInnerPolygon(polygonB.Copy(true, true));
                     return new List<Polygon> { polygonACopy1 };
+
                 case PolygonRelationship.AIsCompletelyInsideB:
                     var polygonBCopy2 = polygonB.Copy(true, false);
                     polygonBCopy2.AddInnerPolygon(polygonA.Copy(true, true));
@@ -431,9 +448,10 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        #endregion
+        #endregion Exclusive-OR Public Methods
 
         #region RemoveSelfIntersections Public Method
+
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool noHoles, out List<Polygon> strayHoles, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance)) tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
@@ -444,10 +462,10 @@ namespace TVGL.TwoDimensional
                 return new List<Polygon> { polygon };
             }
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            // if (intersections.Any(n => (n.Relationship & PolygonRemoveIntersections.alignedIntersection) == PolygonRemoveIntersections.alignedIntersection)) 
+            // if (intersections.Any(n => (n.Relationship & PolygonRemoveIntersections.alignedIntersection) == PolygonRemoveIntersections.alignedIntersection))
             return polygonRemoveIntersections.Run(polygon, intersections, noHoles, tolerance, out strayHoles);
         }
-        #endregion
 
+        #endregion RemoveSelfIntersections Public Method
     }
 }

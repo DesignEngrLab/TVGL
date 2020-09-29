@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -12,6 +11,7 @@ namespace TVGL.TwoDimensional
     internal abstract class PolygonBooleanBase
     {
         #region Private Functions used by the above public methods
+
         /// <summary>
         /// All of the previous boolean operations are accomplished by this function. Note that the function RemoveSelfIntersections is also
         /// very simliar to this function.
@@ -34,7 +34,7 @@ namespace TVGL.TwoDimensional
                 tolerance = Constants.BaseTolerance * minDimension;
                 areaTolerance = tolerance * minDimension;
             }
-            else areaTolerance = tolerance * tolerance / Constants.BaseTolerance;   // why change the input tolerance? here, we are using it as a 
+            else areaTolerance = tolerance * tolerance / Constants.BaseTolerance;   // why change the input tolerance? here, we are using it as a
             // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
             // we need to find the characteristic length that was multiplied by the basetolerance to obtain the linear tolerance.
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
@@ -89,12 +89,13 @@ namespace TVGL.TwoDimensional
             {
                 case PolygonCollection.SeparateLoops:
                     return newPolygons;
+
                 case PolygonCollection.PolygonWithHoles:
                     return newPolygons.CreateShallowPolygonTrees(true, out _);
+
                 default:
                     return newPolygons.CreatePolygonTree(true, out _);
             }
-
         }
 
         /// <summary>
@@ -129,8 +130,6 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-
-
         internal static List<int> NumberVerticesAndGetPolygonVertexDelimiter(Polygon polygon, int startIndex = 0)
         {
             var polygonStartIndices = new List<int>();
@@ -147,12 +146,8 @@ namespace TVGL.TwoDimensional
             return polygonStartIndices;
         }
 
-
-
         protected abstract bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge,
             out bool startAgain);
-
-
 
         /// <summary>
         /// Makes the polygon through intersections. This is actually the heart of the matter here. The method is the main
@@ -203,7 +198,7 @@ namespace TVGL.TwoDimensional
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
-                                                            // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on 
+                                                            // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
                 }
             } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge));
@@ -285,9 +280,9 @@ namespace TVGL.TwoDimensional
 
         protected abstract bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
            PolygonEdge currentEdge, PolygonEdge startingEdge);
+
         protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB);
-
 
         /// <summary>
         /// Handles identical polygons. In this case subPolygon is always on polygonA and the duplicated is in polygonB
@@ -297,6 +292,7 @@ namespace TVGL.TwoDimensional
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
         protected abstract void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool equalAndOpposite);
-        #endregion
+
+        #endregion Private Functions used by the above public methods
     }
 }

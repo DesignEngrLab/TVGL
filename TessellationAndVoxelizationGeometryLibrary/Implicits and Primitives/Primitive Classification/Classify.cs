@@ -37,7 +37,7 @@ namespace TVGL
             listOfLimitsSM = Parameters.MakingListOfLimSMbeta2();
             edgeRules = Parameters.readingEdgesRules2();
             faceRules = Parameters.readingFacesRules();
-            Debug.WriteLine("Edges and faces' rules have been read from the corresonding .csv files");
+            Debug.WriteLine("Edges and faces' rules have been read from the corresponding .csv files");
         }
 
         public static List<PrimitiveSurface> ClassifyPrimitiveSurfaces(this TessellatedSolid ts, bool AddToInputSolid = true)
@@ -262,8 +262,7 @@ namespace TVGL
                 foreach (var MCMProbs in MCMid)
                     foreach (var SMProbs in SMid)
                     {
-                        double Prob;
-                        int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out Prob);
+                        int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out var Prob);
                         if (!e.CatProb.Keys.Contains(group))
                             e.CatProb.Add(group, Prob);
                         else if (e.CatProb[group] < Prob)
@@ -443,7 +442,6 @@ namespace TVGL
         #region Face Classification
         private static void FaceFuzzyClassification(FaceWithScores eachFace, List<EdgeWithScores> allEdgeWithScores)
         {
-            var c = 0;
             List<Dictionary<int, double>> t = eachFace.Face.Edges.Select(e => allEdgeWithScores.First(ews => ews.Edge == e).CatProb).ToList();
             eachFace.FaceCat = new Dictionary<PrimitiveSurfaceType, double>();
             eachFace.CatToCom = new Dictionary<PrimitiveSurfaceType, int[]>();
@@ -831,9 +829,7 @@ namespace TVGL
                 case PrimitiveSurfaceType.Plane:
                     return new Plane(faces);
                 case PrimitiveSurfaceType.Cylinder:
-                    Vector3 axis;
-                    double coneAngle;
-                    if (IsReallyACone(faces, out axis, out coneAngle))
+                    if (IsReallyACone(faces, out var axis, out var coneAngle))
                         return new Cone(faces, axis, coneAngle);
                     if (IsReallyAFlat(faces)) return new Plane(faces);
                     return new Cylinder(faces, axis);

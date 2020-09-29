@@ -12,16 +12,10 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Serialization;
-using MIConvexHull;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using TVGL.Numerics;
-using TVGL.IOFunctions;
 
 namespace TVGL
 {
@@ -47,7 +41,7 @@ namespace TVGL
         {
             get
             {
-                if (_center.IsNull())  CalculateCenter();
+                if (_center.IsNull()) CalculateCenter();
                 return _center;
             }
         }
@@ -55,6 +49,7 @@ namespace TVGL
         protected abstract void CalculateCenter();
 
         protected Vector3 _center = Vector3.Null;
+
         /// <summary>
         ///     Gets the volume.
         /// </summary>
@@ -63,7 +58,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(_volume))  CalculateVolume();
+                if (double.IsNaN(_volume)) CalculateVolume();
                 return _volume;
             }
         }
@@ -72,7 +67,6 @@ namespace TVGL
 
         protected double _volume = double.NaN;
 
-       
         /// <summary>
         ///     Gets the surface area.
         /// </summary>
@@ -81,7 +75,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(_surfaceArea))  CalculateSurfaceArea();
+                if (double.IsNaN(_surfaceArea)) CalculateSurfaceArea();
                 return _surfaceArea;
             }
         }
@@ -89,8 +83,6 @@ namespace TVGL
         protected abstract void CalculateSurfaceArea();
 
         protected double _surfaceArea = double.NaN;
-
-
 
         /// <summary>
         /// Gets or sets the inertia tensor.
@@ -110,7 +102,6 @@ namespace TVGL
 
         protected Matrix3x3 _inertiaTensor = Matrix3x3.Null;
 
-
         /// <summary>
         ///     Gets the bounds.
         /// </summary>
@@ -123,7 +114,6 @@ namespace TVGL
         public double YMax => Bounds[1].Y;
         public double ZMin => Bounds[0].Z;
         public double ZMax => Bounds[1].Z;
-
 
         /// <summary>
         ///     The name of solid
@@ -177,7 +167,7 @@ namespace TVGL
 
         public double SameTolerance { get; set; }
 
-        #endregion
+        #endregion Fields and Properties
 
         #region Constructor
 
@@ -196,15 +186,15 @@ namespace TVGL
             Bounds = new Vector3[2];
         }
 
-        #endregion
+        #endregion Constructor
 
         /// <summary>
         /// Transforms the specified transform matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         public abstract void Transform(Matrix4x4 transformMatrix);
-        // here's a good reference for this: http://www.cs.brandeis.edu/~cs155/Lecture_07_6.pdf
 
+        // here's a good reference for this: http://www.cs.brandeis.edu/~cs155/Lecture_07_6.pdf
 
         /// <summary>
         /// Gets a new solid by transforming its vertices.
@@ -215,13 +205,11 @@ namespace TVGL
 
         public abstract Solid Copy();
 
-
         // everything else gets stored here
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
 
         //protected abstract void OnSerializingMethod(StreamingContext context);
         //protected abstract void OnDeserializedMethod(StreamingContext context);
-
     }
 }

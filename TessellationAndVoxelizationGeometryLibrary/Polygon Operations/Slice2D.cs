@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
@@ -96,10 +94,10 @@ namespace TVGL.TwoDimensional
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
-                 Fourth (4), a smart slicing algorithm is used to cut the full shape into a partial shape, using 
+                 Fourth (4), a smart slicing algorithm is used to cut the full shape into a partial shape, using
                  the intersection points and lines.*/
 
-            //(1) Find the intersection lines and the lines to the left of the current distance      
+            //(1) Find the intersection lines and the lines to the left of the current distance
             var intersectionLines = new HashSet<PolygonEdge>();
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var anchorpoint = distanceAlongDirection * lineNormalDirection;
@@ -121,6 +119,7 @@ namespace TVGL.TwoDimensional
             // this is what is returned. although now sure if this is useful in any case
 
             #region patching up negative side polygons
+
             var negSidePolyCoords = new List<List<Vector2>>();
             for (int i = 0; i < pointsOnLineTuples.Length; i++)
             {
@@ -160,8 +159,11 @@ namespace TVGL.TwoDimensional
                 while (!intersectionLines.Contains(polySegment));
             }
             negativeSidePolygons = negSidePolyCoords.Select(loop => new Polygon(loop)).ToList();
-            #endregion
+
+            #endregion patching up negative side polygons
+
             #region patching up positive side polygons
+
             var posSidePolyCoords = new List<List<Vector2>>();
             for (int i = sortedPoints.Count - 1; i >= 0; i--)
             {
@@ -192,11 +194,11 @@ namespace TVGL.TwoDimensional
                     polySegment = polySegment.ToPoint.StartLine;
                 }
                 while (!intersectionLines.Contains(polySegment));
-
             }
             positiveSidePolygons = posSidePolyCoords.Select(loop => new Polygon(loop)).ToList();
 
-            #endregion
+            #endregion patching up positive side polygons
+
             return pointsOnLineTuples.Select(p => p.Item1).ToArray();
         }
 
@@ -218,6 +220,5 @@ namespace TVGL.TwoDimensional
             distances.SetPositiveAndNegativeShifts(distanceAlongDirection, tolerance, ref positiveShift, ref negativeShift);
             return (positiveShift, negativeShift);
         }
-
     }
 }

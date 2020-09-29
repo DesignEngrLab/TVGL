@@ -324,10 +324,10 @@ namespace TVGL
             }
             removedFace1 = edge.OwnedFace;
             removedFace2 = edge.OtherFace;
-            var removedEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(keepVertex, true);
-            var removedEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(keepVertex, true);
-            var keepEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(removedVertex, true);
-            var keepEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(removedVertex, true);
+            var removedEdge1 = removedFace1?.OtherEdge(keepVertex, true);
+            var removedEdge2 = removedFace2?.OtherEdge(keepVertex, true);
+            var keepEdge1 = removedFace1?.OtherEdge(removedVertex, true);
+            var keepEdge2 = removedFace2?.OtherEdge(removedVertex, true);
             if (removedEdge1 != null && removedEdge2 != null && (keepEdge1 == null || keepEdge2 == null))
             {
                 // swap with removed.
@@ -374,13 +374,13 @@ namespace TVGL
             keepVertex.Edges.Remove(edge);
             keepVertex.Faces.Remove(removedFace1);
             keepVertex.Faces.Remove(removedFace2);
-            var farVertex = removedFace1 == null ? null : removedFace1.OtherVertex(edge, true);
+            var farVertex = removedFace1?.OtherVertex(edge, true);
             if (farVertex != null)
             {
                 farVertex.Edges.Remove(removedEdge1);
                 farVertex.Faces.Remove(removedFace1);
             }
-            farVertex = removedFace2 == null ? null : removedFace2.OtherVertex(edge, true);
+            farVertex = removedFace2?.OtherVertex(edge, true);
             if (farVertex != null)
             {
                 farVertex.Edges.Remove(removedEdge2);

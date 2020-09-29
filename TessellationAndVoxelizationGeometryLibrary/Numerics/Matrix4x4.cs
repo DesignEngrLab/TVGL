@@ -256,7 +256,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             matrix.M31, matrix.M32, 0, 1)
         { }
 
-        public Matrix4x4(Vector3 xComponent, Vector3 yComponent, Vector3 zComponent, Vector3 translation) 
+        public Matrix4x4(Vector3 xComponent, Vector3 yComponent, Vector3 zComponent, Vector3 translation)
             : this(xComponent.X, xComponent.Y, xComponent.Z,
                   yComponent.X, yComponent.Y, yComponent.Z,
                   zComponent.X, zComponent.Y, zComponent.Z,
@@ -1265,7 +1265,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             translation = new Vector3(matrix.M41, matrix.M42, matrix.M43);
 
-            var pVectorBasis = new Vector3[] {
+            var pVectorBasis = new[] {
                 new Vector3(matrix.M11, matrix.M12, matrix.M13),
                 new Vector3(matrix.M21, matrix.M22, matrix.M23),
                 new Vector3(matrix.M31, matrix.M32, matrix.M33)
@@ -1322,7 +1322,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 }
             }
             #endregion
-            var canonicalBasis = new Vector3[]
+            var canonicalBasis = new[]
             {
                 new Vector3(1.0, 0.0, 0.0),
                 new Vector3(0.0, 1.0, 0.0),
@@ -1335,11 +1335,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             if (scale[b] < DecomposeEpsilon)
             {
                 int cc;
-                double fAbsX, fAbsY, fAbsZ;
-
-                fAbsX = Math.Abs(pVectorBasis[a].X);
-                fAbsY = Math.Abs(pVectorBasis[a].Y);
-                fAbsZ = Math.Abs(pVectorBasis[a].Z);
+                var fAbsX = Math.Abs(pVectorBasis[a].X);
+                var fAbsY = Math.Abs(pVectorBasis[a].Y);
+                var fAbsZ = Math.Abs(pVectorBasis[a].Z);
 
                 #region Ranking
                 if (fAbsX < fAbsY)

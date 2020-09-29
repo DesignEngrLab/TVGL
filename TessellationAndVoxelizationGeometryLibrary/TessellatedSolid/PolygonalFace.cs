@@ -15,9 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.IOFunctions.amfclasses;
 using TVGL.Numerics;
-
 
 namespace TVGL
 {
@@ -28,8 +26,6 @@ namespace TVGL
     /// </summary>
     public class PolygonalFace : TessellationBaseClass
     {
-
-
         /// <summary>
         ///     Copies this instance. Does not include reference lists.
         /// </summary>
@@ -60,7 +56,7 @@ namespace TVGL
             _curvature = (CurvatureType)(-1 * (int)_curvature);
         }
 
-        //Set new normal and area. 
+        //Set new normal and area.
         //References are assumed to be the same.
         /// <summary>
         ///     Updates normal, vertex order, and area
@@ -150,6 +146,7 @@ namespace TVGL
         }
 
         #region Constructors
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
@@ -158,7 +155,6 @@ namespace TVGL
             Vertices = new List<Vertex>();
             Edges = new List<Edge>();
         }
-
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
@@ -184,7 +180,7 @@ namespace TVGL
         public PolygonalFace(IEnumerable<Vertex> vertices, Vector3 suggestedNormal, bool connectVerticesBackToFace = true)
             : this(vertices, connectVerticesBackToFace)
         {
-            _normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(Vertices.Count, Vertices, out var reverseVertexOrder, suggestedNormal);
+            _normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(Vertices, Vertices.Count, out var reverseVertexOrder, suggestedNormal);
             if (reverseVertexOrder) Vertices.Reverse();
         }
 
@@ -203,10 +199,10 @@ namespace TVGL
                 return _normal;
             }
         }
-        Vector3 _normal = Vector3.Null;
 
+        private Vector3 _normal = Vector3.Null;
 
-        #endregion
+        #endregion Constructors
 
         #region Properties
 
@@ -234,7 +230,6 @@ namespace TVGL
         /// <value>The vertices.</value>
         public Vertex C => Vertices[2];
 
-
         /// <summary>
         ///     Gets the edges.
         /// </summary>
@@ -260,7 +255,8 @@ namespace TVGL
                 return _center;
             }
         }
-        Vector3 _center = Vector3.Null;
+
+        private Vector3 _center = Vector3.Null;
 
         /// <summary>
         ///     Gets the area.
@@ -275,7 +271,8 @@ namespace TVGL
                 return _area;
             }
         }
-        double _area = double.NaN;
+
+        private double _area = double.NaN;
 
         /// <summary>
         ///     Determines the area.
@@ -295,16 +292,13 @@ namespace TVGL
             return double.IsNaN(area) ? 0.0 : area;
         }
 
-
         /// <summary>
         ///     Gets or sets the color.
         /// </summary>
         /// <value>The color.</value>
         public Color Color { get; set; }
 
-
         public PrimitiveSurface BelongsToPrimitive { get; internal set; }
-
 
         /// <summary>
         ///     Gets the adjacent faces.
@@ -336,7 +330,8 @@ namespace TVGL
                 return _curvature;
             }
         }
-        CurvatureType _curvature = CurvatureType.Undefined;
+
+        private CurvatureType _curvature = CurvatureType.Undefined;
 
         /// <summary>
         ///     Defines the face curvature. Depends on DefineEdgeAngle
@@ -352,6 +347,6 @@ namespace TVGL
             else _curvature = CurvatureType.SaddleOrFlat;
         }
 
-        #endregion
+        #endregion Properties
     }
 }

@@ -12,9 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System.Collections.Generic;
 using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
@@ -44,7 +42,6 @@ namespace TVGL.TwoDimensional
         /// <value>The y.</value>
         public double Y => Coordinates.Y;
 
-
         /// <summary>
         ///     Gets the line that starts at this node.
         /// </summary>
@@ -57,16 +54,15 @@ namespace TVGL.TwoDimensional
         /// <value>The end line.</value>
         public PolygonEdge EndLine { get; internal set; }
 
-
         /// <summary>
         ///     Gets the base class, Point of this node.
         /// </summary>
         /// <value>The point.</value>
         public Vector2 Coordinates { get; private set; }
+
         public int IndexInList { get; internal set; }
 
-
-        #endregion
+        #endregion Properties
 
         #region Constructor
 
@@ -81,6 +77,7 @@ namespace TVGL.TwoDimensional
             Coordinates = currentPoint;
             IndexInList = referenceID;
         }
+
         internal Vertex2D Copy()
         {
             return new Vertex2D
@@ -90,15 +87,15 @@ namespace TVGL.TwoDimensional
                 LoopID = this.LoopID,
             };
         }
+
         // the following private argument-less constructor is only used in the copy function
         private Vertex2D() { }
-
 
         public override string ToString()
         {
             return "{" + X + "," + Y + "}";
         }
 
-        #endregion
+        #endregion Constructor
     }
 }

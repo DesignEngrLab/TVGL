@@ -13,21 +13,18 @@
 // ***********************************************************************
 
 using System;
-using TVGL.Numerics;
-using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to refine a solid, which means 
+    ///  This portion of ModifyTessellation includes the functions to refine a solid, which means
     ///  adding more elements to it. invoked during the opening of a tessellated solid from "disk", but the repair function
     ///  may be called on its own.
     /// </summary>
     public static partial class ModifyTessellation
     {
-
-
         /// <summary>
         ///     Adjusts the position of kept vertex.
         /// </summary>

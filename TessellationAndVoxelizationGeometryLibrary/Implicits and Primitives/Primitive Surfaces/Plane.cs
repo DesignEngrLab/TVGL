@@ -423,9 +423,9 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj)
         {
-            if (obj is Plane)
+            if (obj is Plane planeObj)
             {
-                return Equals((Plane)obj);
+                return Equals(planeObj);
             }
 
             return false;

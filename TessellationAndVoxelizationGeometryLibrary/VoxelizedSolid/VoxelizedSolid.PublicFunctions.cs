@@ -60,7 +60,7 @@ namespace TVGL.Voxelization
         public bool GetNeighbors(int xCoord, int yCoord, int zCoord, out int[][] neighbors)
         {
             neighbors = GetNeighbors(xCoord, yCoord, zCoord);
-            return !neighbors.Any(n => n != null);
+            return neighbors.Any(n => n != null);
         }
 
         /// <summary>

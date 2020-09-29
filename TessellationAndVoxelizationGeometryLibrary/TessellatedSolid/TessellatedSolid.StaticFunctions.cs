@@ -12,10 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -34,7 +31,6 @@ namespace TVGL
                 if (orderedIndices[i] == orderedIndices[i + 1]) return true;
             return false;
         }
-
 
         private static void RemoveReferencesToVertex(Vertex vertex)
         {

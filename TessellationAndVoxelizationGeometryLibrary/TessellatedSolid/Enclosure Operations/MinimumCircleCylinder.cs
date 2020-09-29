@@ -107,7 +107,7 @@ namespace TVGL
             //I tried using the extremes (X, Y, and also tried Sum, Diff) to do a first pass at the circle
             //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
             //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
-            var pointList = (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList();
+            var pointList = points as IList<Vector2> ?? points.ToList();
             var circle = new InternalCircle(pointList[0], pointList[pointList.Count / 2]);
             var dummyPoint = new Vector2(double.NaN, double.NaN);
             var stallCounter = 0;
@@ -368,8 +368,9 @@ namespace TVGL
             for (var i = 0; i < 13; i++)
             {
                 var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
-                    new[] { directions[i], Vector3.Null, Vector3.Null }, default(T), default(T), default(T));
-                box = Find_via_ChanTan_AABB_Approach<T>(cvxHullVertsList, box);
+                    new[] { directions[i], Vector3.Null, Vector3.Null }, default, default,
+                    default);
+                box = Find_via_ChanTan_AABB_Approach(cvxHullVertsList, box);
                 for (var j = 0; j < 3; j++)
                 {
                     var axis = box.Directions[j];

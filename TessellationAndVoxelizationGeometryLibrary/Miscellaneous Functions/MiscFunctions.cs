@@ -12,15 +12,11 @@
 // <summary></summary>
 // ***********************************************************************
 
-using MIConvexHull;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -32,47 +28,49 @@ namespace TVGL
         #region Sort Along Direction
 
         /// <summary>
-        ///     Returns a list of sorted locations along a set direction. 
+        ///     Returns a list of sorted locations along a set direction.
         /// </summary>
-        /// <param name="direction">The directions.</param>
         /// <param name="vertices">The locations.</param>
+        /// <param name="direction">The directions.</param>
         /// <param name="sortedVertices">The sorted locations.</param>
-        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vertex> vertices,
+        public static void SortAlongDirection(this IEnumerable<Vertex> vertices,
+            Vector3 direction,
             out List<(Vertex, double)> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
-            //Split positive and negative numbers into seperate lists. 0 is 
+            //Split positive and negative numbers into seperate lists. 0 is
             //considered positive.
             //This is an O(n) preprocessing step
-            var vertexDistances = GetVertexDistances(direction, vertices);
+            var vertexDistances = GetVertexDistances(vertices, direction);
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
-            //toleranceForCombiningPoints as the "isNeglible" star math function 
+            //toleranceForCombiningPoints as the "isNeglible" star math function
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
-
         /// <summary>
-        ///     Returns a list of sorted locations along a set direction. 
+        ///     Returns a list of sorted locations along a set direction.
         /// </summary>
-        /// <param name="direction">The directions.</param>
         /// <param name="vertices">The locations.</param>
+        /// <param name="direction">The directions.</param>
         /// <param name="sortedVertices">The sorted locations.</param>
-        public static void SortAlongDirection(Vector3 direction, IEnumerable<Vector3> vertices,
+        public static void SortAlongDirection(this IEnumerable<Vector3> vertices,
+            Vector3 direction,
             out List<(Vector3, double)> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
-            //Split positive and negative numbers into seperate lists. 0 is 
+            //Split positive and negative numbers into seperate lists. 0 is
             //considered positive.
             //This is an O(n) preprocessing step
-            var vertexDistances = GetVertexDistances(direction, vertices);
+            var vertexDistances = GetVertexDistances(vertices, direction);
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
-            //toleranceForCombiningPoints as the "isNeglible" star math function 
+            //toleranceForCombiningPoints as the "isNeglible" star math function
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
-        private static IEnumerable<(Vertex, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vertex> vertices,
+        private static IEnumerable<(Vertex, double)> GetVertexDistances(this IEnumerable<Vertex> vertices,
+            Vector3 direction,
             double sameTolerance = Constants.BaseTolerance)
         {
             var vertexDistances = new List<(Vertex, double)>();
@@ -87,7 +85,8 @@ namespace TVGL
             return vertexDistances;
         }
 
-        private static IEnumerable<(Vector3, double)> GetVertexDistances(Vector3 direction, IEnumerable<Vector3> vertices,
+        private static IEnumerable<(Vector3, double)> GetVertexDistances(this IEnumerable<Vector3> vertices,
+            Vector3 direction,
             double sameTolerance = Constants.BaseTolerance)
         {
             var vertexDistances = new List<(Vector3, double)>();
@@ -103,33 +102,37 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Returns a list of sorted Vector2s along a set direction. 
+        ///     Returns a list of sorted Vector2s along a set direction.
         /// </summary>
-        /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
+        /// <param name="direction">The directions.</param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(Vector2 direction, IList<Vector2> points,
-               out List<(Vector2, double)> sortedPoints, int numDecimals = -1)
+        /// <param name="numDecimals"></param>
+        public static void SortAlongDirection(this IList<Vector2> points,
+            Vector2 direction,
+            out List<(Vector2, double)> sortedPoints, int numDecimals = -1)
         {
-            var distances = GetPointDistances(direction, points, numDecimals);
+            var distances = GetPointDistances(points, direction, numDecimals);
             sortedPoints = distances.OrderBy(p => p.Item2).ToList();
         }
 
         /// <summary>
-        ///     Returns a list of sorted Vector2s along a set direction. 
+        ///     Returns a list of sorted Vector2s along a set direction.
         /// </summary>
-        /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
+        /// <param name="direction">The directions.</param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(Vector2 direction, IList<Vector2> points,
-               out List<Vector2> sortedPoints, int numDecimals = -1)
+        /// <param name="numDecimals"></param>
+        public static void SortAlongDirection(this IList<Vector2> points,
+            Vector2 direction,
+            out List<Vector2> sortedPoints, int numDecimals = -1)
         {
-            var distances = GetPointDistances(direction, points, numDecimals);
+            var distances = GetPointDistances(points, direction, numDecimals);
             sortedPoints = distances.OrderBy(p => p.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static (Vector2, double)[] GetPointDistances(Vector2 direction,
-            IList<Vector2> points, int numDecimals = -1)
+        private static (Vector2, double)[] GetPointDistances(this IList<Vector2> points, Vector2 direction,
+            int numDecimals = -1)
         {
             var distances = new (Vector2, double)[points.Count];
             for (int i = 0; i < points.Count; i++)
@@ -144,8 +147,7 @@ namespace TVGL
             return distances;
         }
 
-
-        #endregion
+        #endregion Sort Along Direction
 
         #region Perimeter
 
@@ -154,18 +156,20 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon3D"></param>
         /// <returns></returns>
-        public static double Perimeter(IList<Vertex> polygon3D)
+        public static double Perimeter(this IList<Vertex> polygon3D)
         {
             double perimeter = Vector3.Distance(polygon3D.Last().Coordinates, polygon3D[0].Coordinates);
             for (var i = 1; i < polygon3D.Count; i++)
                 perimeter += Vector3.Distance(polygon3D[i - 1].Coordinates, polygon3D[i].Coordinates);
             return perimeter;
         }
-        #endregion
+
+        #endregion Perimeter
 
         #region Dealing with Flat Patches
 
-        internal static Vector3 DetermineNormalForA3DVertexPolygon(int numSides, IList<Vertex> vertices, out bool reverseVertexOrder,
+        internal static Vector3 DetermineNormalForA3DVertexPolygon(this IList<Vertex> vertices, int numSides,
+            out bool reverseVertexOrder,
             Vector3 suggestedNormal)
         {
             reverseVertexOrder = false;
@@ -217,7 +221,7 @@ namespace TVGL
                 // even though the normal provide was wrong above (or nonexistent)
                 // we still check it to see if this is the correct direction.
                 if (suggestedNormal.IsNull() || newNormal.Dot(suggestedNormal) >= 0) return newNormal;
-                // else reverse the order 
+                // else reverse the order
                 reverseVertexOrder = true;
                 return newNormal * -1;
             }
@@ -248,10 +252,8 @@ namespace TVGL
             return normals[0].Normalize();
         }
 
-
-
         /// <summary>
-        /// Gets a collection of faces with distinct normals. These are the largest faces within the set with common normal. 
+        /// Gets a collection of faces with distinct normals. These are the largest faces within the set with common normal.
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
@@ -260,11 +262,11 @@ namespace TVGL
         public static List<PolygonalFace> FacesWithDistinctNormals(this IEnumerable<PolygonalFace> faces,
             double tolerance = Constants.SameFaceNormalDotTolerance, bool removeOpposites = true)
         {
-            // This is done by sorting the normals first by the x-component, then by the y and then the z. 
+            // This is done by sorting the normals first by the x-component, then by the y and then the z.
             // This is to avoid the O(n^2) and be more like O(n). It is a necessary but not sufficient
             // condition that faces with similar x-values in the normal (and then y and then z) will
             // likely be the same normal. So, in this manner we can then check adjacent faces in a sorted
-            // set. However, sorting just in x alone may not be sufficient as the list may jump around. 
+            // set. However, sorting just in x alone may not be sufficient as the list may jump around.
             // For example, a portion of the list may look like: { ... [0 .3 .4], [0 -.3 .4], [0, .29999, .4] }
             // comparing adjacent pairs will miss the fact that 1 and 3 and similar. But - since they have the
             // same x-component as 2, then they are not compared. Here, the chance to catch such cases by sorting
@@ -294,15 +296,15 @@ namespace TVGL
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        public static List<Plane> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+        public static List<Plane> FindFlats(this IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
                int minNumberOfFacesPerFlat = 2)
         {
             //Note: This function has been optimized to run very fast for large amount of faces
-            //Used hashset for "Contains" function calls 
+            //Used hashset for "Contains" function calls
             var usedFaces = new HashSet<PolygonalFace>();
             var listFlats = new List<Plane>();
 
-            //Use an IEnumerable class (List) for iterating through each part, and then the 
+            //Use an IEnumerable class (List) for iterating through each part, and then the
             //"Contains" function to see if it was already used. This is actually much faster
             //than using a while locations with a ".Any" and ".First" call on the Hashset.
             foreach (var startFace in faces)
@@ -314,7 +316,7 @@ namespace TVGL
                 var flatHashSet = new HashSet<PolygonalFace> { startFace };
                 var flat = new Plane(flatHashSet) { Tolerance = tolerance };
                 //Stacks are fast for "Push" and "Pop".
-                //Add all the adjecent faces from the first face to the stack for 
+                //Add all the adjecent faces from the first face to the stack for
                 //consideration in the while locations below.
                 var stack = new Stack<PolygonalFace>(flatHashSet);
                 var reDefineFlat = 3;
@@ -350,9 +352,11 @@ namespace TVGL
             }
             return listFlats;
         }
-        #endregion
+
+        #endregion Dealing with Flat Patches
 
         #region Area of 3D Polygon
+
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon in 3D space (loops)
         ///     This is faster than projecting to a 2D surface first in a seperate function.
@@ -361,7 +365,7 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double.</returns>
         /// <references>http://geomalgorithms.com/a01-_area.html </references>
-        public static double AreaOf3DPolygon(IEnumerable<Vertex> loop, Vector3 normal)
+        public static double AreaOf3DPolygon(this IEnumerable<Vertex> loop, Vector3 normal)
         {
             var ax = Math.Abs(normal.X);
             var ay = Math.Abs(normal.Y);
@@ -392,10 +396,12 @@ namespace TVGL
                     for (i = 1; i < n; i++)
                         area += vertices[i].Y * (vertices[i + 1].Z - vertices[i - 1].Z);
                     break;
+
                 case 2:
                     for (i = 1; i < n; i++)
                         area += vertices[i].Z * (vertices[i + 1].X - vertices[i - 1].X);
                     break;
+
                 case 3:
                     for (i = 1; i < n; i++)
                         area += vertices[i].X * (vertices[i + 1].Y - vertices[i - 1].Y);
@@ -406,9 +412,11 @@ namespace TVGL
                 case 1:
                     area += vertices[n].Y * (vertices[1].Z - vertices[n - 1].Z);
                     break;
+
                 case 2:
                     area += vertices[n].Z * (vertices[1].X - vertices[n - 1].X);
                     break;
+
                 case 3:
                     area += vertices[n].X * (vertices[1].Y - vertices[n - 1].Y);
                     break;
@@ -421,16 +429,17 @@ namespace TVGL
                 case 1:
                     area *= an / (2 * normal.X);
                     break;
+
                 case 2:
                     area *= an / (2 * normal.Y);
                     break;
+
                 case 3:
                     area *= an / (2 * normal.Z);
                     break;
             }
             return area;
         }
-
 
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon in 3D space (loops)
@@ -440,7 +449,7 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double.</returns>
         /// <references>http://geomalgorithms.com/a01-_area.html </references>
-        public static double AreaOf3DPolygon(IEnumerable<Vector3> loop, Vector3 normal)
+        public static double AreaOf3DPolygon(this IEnumerable<Vector3> loop, Vector3 normal)
         {
             var ax = Math.Abs(normal.X);
             var ay = Math.Abs(normal.Y);
@@ -471,10 +480,12 @@ namespace TVGL
                     for (i = 1; i < n; i++)
                         area += vertices[i].Y * (vertices[i + 1].Z - vertices[i - 1].Z);
                     break;
+
                 case 2:
                     for (i = 1; i < n; i++)
                         area += vertices[i].Z * (vertices[i + 1].X - vertices[i - 1].X);
                     break;
+
                 case 3:
                     for (i = 1; i < n; i++)
                         area += vertices[i].X * (vertices[i + 1].Y - vertices[i - 1].Y);
@@ -485,9 +496,11 @@ namespace TVGL
                 case 1:
                     area += vertices[n].Y * (vertices[1].Z - vertices[n - 1].Z);
                     break;
+
                 case 2:
                     area += vertices[n].Z * (vertices[1].X - vertices[n - 1].X);
                     break;
+
                 case 3:
                     area += vertices[n].X * (vertices[1].Y - vertices[n - 1].Y);
                     break;
@@ -500,18 +513,22 @@ namespace TVGL
                 case 1:
                     area *= an / (2 * normal.X);
                     break;
+
                 case 2:
                     area *= an / (2 * normal.Y);
                     break;
+
                 case 3:
                     area *= an / (2 * normal.Z);
                     break;
             }
             return area;
         }
-        #endregion
 
-        #region Split Tesselated Solid into multiple solids if faces are disconnected 
+        #endregion Area of 3D Polygon
+
+        #region Split Tesselated Solid into multiple solids if faces are disconnected
+
         /// <summary>
         ///     Gets all the individual solids from a tesselated solid.
         /// </summary>
@@ -541,22 +558,20 @@ namespace TVGL
                 }
                 seperateSolids.Add(faces.ToList());
             }
-            var count = 0;
             if (seperateSolids.Count == 1)
             {
                 solids.Add(ts);
                 return solids;
             }
             foreach (var seperateSolid in seperateSolids)
-            {
                 solids.Add(new TessellatedSolid(seperateSolid, true, false));
-                count += seperateSolid.Count;
-            }
             return solids;
         }
-        #endregion
+
+        #endregion Split Tesselated Solid into multiple solids if faces are disconnected
 
         #region change 3D locations into 2D coordinates (e.g. Vector2's)
+
         /// <summary>
         /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
         /// These coordinates do not contain references back to the original vertices but are lighter and
@@ -568,7 +583,7 @@ namespace TVGL
         /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple vertices under a single point.
         /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
-        /// 
+        ///
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
@@ -591,7 +606,7 @@ namespace TVGL
         /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
-        /// 
+        ///
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Matrix4x4 transform,
             double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
@@ -616,7 +631,7 @@ namespace TVGL
         /// <summary>
         /// Returns newly created 2D coordinates (of type Vector2) projected using the given transform.
         /// These coordinates do not contain references back to the original locations but are lighter and
-        /// quicker. 
+        /// quicker.
         /// </summary>
         /// <param name="vertices">The locations.</param>
         /// <param name="direction">The direction.</param>
@@ -628,14 +643,14 @@ namespace TVGL
         /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
-        /// 
+        ///
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
             where T : IVertex3D
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return ProjectTo2DCoordinates<T>(locations, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
+            return ProjectTo2DCoordinates(locations, transform, toleranceForCombiningPoints, duplicateEntriesToMaintainPolygonalOrdering);
         }
 
         /// <summary>
@@ -646,13 +661,13 @@ namespace TVGL
         /// <param name="locations">The locations.</param>
         /// <param name="transform">The transform matrix.</param>
         /// <param name="toleranceForCombiningPoints">The tolerance for combining multiple locations under a single point.
-        /// If not provided or less than zero, then one point will be made for each vertex. If zero to 1e-15, then the coordinates 
+        /// If not provided or less than zero, then one point will be made for each vertex. If zero to 1e-15, then the coordinates
         /// will match at the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         /// <param name="duplicateEntriesToMaintainPolygonalOrdering">Output is in the same order as input except when
         /// they are combined from the aforementioned tolerance. If this boolean is true then the output point may appear
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
-        /// 
+        ///
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Matrix4x4 transform,
             double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D
@@ -722,9 +737,10 @@ namespace TVGL
             }
             return new Vector2(x2D, y2D);
         }
-        #endregion
 
-        #region change 2D coordinates (e.g. Vector2's) into 3D locations (e.g. Vector3's) 
+        #endregion change 3D locations into 2D coordinates (e.g. Vector2's)
+
+        #region change 2D coordinates (e.g. Vector2's) into 3D locations (e.g. Vector3's)
 
         /// <summary>
         /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
@@ -755,7 +771,6 @@ namespace TVGL
                 yield return Vector3.Multiply(new Vector3(point2D, 0), transform);
         }
 
-
         /// <summary>
         /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
         /// </summary>
@@ -770,6 +785,7 @@ namespace TVGL
             var transform = backTransform * Matrix4x4.CreateTranslation(normalDirection * distanceAlongDirection);
             return ConvertTo3DLocations(coordinates, transform);
         }
+
         /// <summary>
         /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
         /// </summary>
@@ -794,7 +810,8 @@ namespace TVGL
         {
             return Vector3.Multiply(new Vector3(coordinates2D, 0), transform);
         }
-        #endregion
+
+        #endregion change 2D coordinates (e.g. Vector2's) into 3D locations (e.g. Vector3's)
 
         /// <summary>
         ///  Create a transforms from normal direction for 2D xy plane.
@@ -852,7 +869,7 @@ namespace TVGL
             // The thinking is that - since this is used in the function above (to translate
             // to the x-y plane) - the provided direction, is the new z-direction, so
             // we find something in the x-z plane through this cross-product, so that the
-            // third direction has strong component in positive y-direction - like 
+            // third direction has strong component in positive y-direction - like
             // camera up position.
             return Vector3.UnitY.Cross(direction).Normalize();
         }
@@ -873,14 +890,13 @@ namespace TVGL
             return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
         }
 
-
         /// <summary>
         ///     Smallers the angle between edges.
         /// </summary>
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double SmallerAngleBetweenEdges(Vector2 v0, Vector2 v1)
+        internal static double SmallerAngleBetweenEdges(this Vector2 v0, Vector2 v1)
         {
             var extAngle = ExteriorAngleBetweenVectors(v0, v1);
             return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
@@ -893,7 +909,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(this Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
@@ -906,7 +922,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, Vector3 axis)
+        internal static double InteriorAngleBetweenEdgesInCCWList(this Edge edge1, Edge edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return InteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
@@ -919,7 +935,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(this Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
@@ -932,7 +948,7 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(Vector3 edge1, Vector3 edge2, Vector3 axis)
+        internal static double InteriorAngleBetweenEdgesInCCWList(this Vector3 edge1, Vector3 edge2, Vector3 axis)
         {
             var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
             return InteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
@@ -942,16 +958,17 @@ namespace TVGL
         {
             return Constants.TwoPi - InteriorAngleBetweenVectors(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
+
         internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
         {
             return InteriorAngleBetweenVectors(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
         }
 
-
         public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
             return Constants.TwoPi - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, positiveNormal);
         }
+
         public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
         {
             var flattenTransform = TransformToXYPlane(positiveNormal, out _);
@@ -962,6 +979,7 @@ namespace TVGL
         {
             return Constants.TwoPi - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, flattenTransform);
         }
+
         internal static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Matrix4x4 flattenTransform)
         {
             var points = (new List<Vertex> { a, b, c }).ProjectTo2DCoordinates(flattenTransform).ToArray();
@@ -991,7 +1009,7 @@ namespace TVGL
             return Math.PI - Math.Atan2(v0.Cross(v1), v0.Dot(v1));
         }
 
-        #endregion
+        #endregion Angle between Edges/Lines
 
         #region Intersection Method (between lines, planes, solids, etc.)
 
@@ -1060,6 +1078,7 @@ namespace TVGL
             intersectionPoint = 0.5 * ((1 - t_p) * p1 + t_p * p2 + (1 - t_q) * q1 + t_q * q2);
             return true;
         }
+
         /// <summary>
         /// Determines if Two Lines intersect. Outputs intersection point if they do.
         /// If two lines are collinear, they are not considered intersecting.
@@ -1120,7 +1139,6 @@ namespace TVGL
             return true;
         }
 
-
         /// <summary>
         /// Lines the line2 d intersection.
         /// </summary>
@@ -1165,6 +1183,23 @@ namespace TVGL
             if (!Matrix3x3.Invert(matrixOfNormals, out var mInv))
                 return Vector3.Null;
             return distances.Multiply(mInv);
+        }
+
+        /// <summary>
+        ///     Find the point common to three planes.
+        /// </summary>
+        /// <param name="n1">The n1.</param>
+        /// <param name="d1">The d1.</param>
+        /// <param name="n2">The n2.</param>
+        /// <param name="d2">The d2.</param>
+        /// <param name="n3">The n3.</param>
+        /// <param name="d3">The d3.</param>
+        /// <returns>System.Vector2.</returns>
+        public static Vector3 PointCommonToThreePlanes(this Plane plane1, Plane plane2, Plane plane3)
+        {
+            return PointCommonToThreePlanes(plane1.Normal, plane1.DistanceToOrigin,
+                plane2.Normal, plane2.DistanceToOrigin,
+                plane3.Normal, plane3.DistanceToOrigin);
         }
 
         public static Plane GetPlaneFromThreePoints(Vector3 p1, Vector3 p2, Vector3 p3)
@@ -1212,7 +1247,7 @@ namespace TVGL
             Vector3 directionOfLine, out Vector3 pointOnLine)
         {
             /* to find the point on the line...well a point on the line, it turns out that one has three unknowns (px, py, pz)
-             * and only two equations. Let's put the point on the plane going through the origin. So this plane would have a normal 
+             * and only two equations. Let's put the point on the plane going through the origin. So this plane would have a normal
              * of v (or DirectionOfLine). */
             var a = new Matrix3x3(n1.X, n1.Y, n1.Z, n2.X, n2.Y, n2.Z, directionOfLine.X, directionOfLine.Y, directionOfLine.Z);
             var b = new Vector3(d1, d2, 0);
@@ -1319,7 +1354,7 @@ namespace TVGL
             return interSect1.Distance(interSect2);
         }
 
-        #endregion
+        #endregion Intersection Method (between lines, planes, solids, etc.)
 
         #region Distance Methods (between point, line, and plane)
 
@@ -1346,12 +1381,11 @@ namespace TVGL
         public static double DistancePointToLine(Vector3 qPoint, Vector3 lineRefPt, Vector3 lineVector,
             out Vector3 pointOnLine)
         {
-            double t;
-            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
+            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y) +
-                     lineVector.Z * (qPoint.Z - lineRefPt.Z))
-                    / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y + lineVector.Z * lineVector.Z);
+            var t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y) +
+                      lineVector.Z * (qPoint.Z - lineRefPt.Z))
+                     / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y + lineVector.Z * lineVector.Z);
             pointOnLine = new Vector3(
             lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t, lineRefPt.Z + lineVector.Z * t);
             return qPoint.Distance(pointOnLine);
@@ -1360,10 +1394,9 @@ namespace TVGL
         public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector,
     out Vector2 pointOnLine)
         {
-            double t;
-            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
+            /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
             * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
+            var t = (lineVector.X * (qPoint.X - lineRefPt.X) + lineVector.Y * (qPoint.Y - lineRefPt.Y))
                     / (lineVector.X * lineVector.X + lineVector.Y * lineVector.Y);
             pointOnLine = new Vector2(lineRefPt.X + lineVector.X * t, lineRefPt.Y + lineVector.Y * t);
             return qPoint.Distance(pointOnLine);
@@ -1394,13 +1427,16 @@ namespace TVGL
         {
             return normalOfPlane.Dot(point) - signedDistanceToPlane;
         }
-        #endregion
+
+        #endregion Distance Methods (between point, line, and plane)
 
         #region Find Intersecting Element
+
         #region Point on Face
+
         /// <summary>
         ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
-        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side
         ///     of triangle to return a valid intersection.
         /// </summary>
         /// <param name="face"></param>
@@ -1433,7 +1469,6 @@ namespace TVGL
             if (newPoint.IsNull()) return Vector3.Null;
             return IsVertexInsideTriangle(vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
-
 
         /// <summary>
         ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
@@ -1481,12 +1516,14 @@ namespace TVGL
                     newPoint = new Vector3((d - n.Y * point3D.Y - n.Z * point3D.Z) / n.X, point3D.Y, point3D.Z);
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.X - point3D.X);
                     break;
+
                 case CartesianDirections.YNegative:
                 case CartesianDirections.YPositive:
                     if (face.Normal.Y.IsNegligible()) return Vector3.Null;
                     newPoint = new Vector3(point3D.X, (d - n.X * point3D.X - n.Z * point3D.Z) / n.Y, point3D.Z);
                     signedDistance = (Math.Sign((int)direction)) * (newPoint.Y - point3D.Y);
                     break;
+
                 default:
                     if (face.Normal.Z.IsNegligible()) return Vector3.Null;
                     newPoint = new Vector3(point3D.X, point3D.Y, (d - n.X * point3D.X - n.Y * point3D.Y) / n.Z);
@@ -1495,9 +1532,11 @@ namespace TVGL
             }
             return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : Vector3.Null;
         }
-        #endregion
+
+        #endregion Point on Face
 
         #region Point on Plane
+
         /// <summary>
         /// Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
         /// with that plane.
@@ -1506,7 +1545,7 @@ namespace TVGL
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
         /// <param name="relativeDistance">The relative distance of the plane. If zero, then at point1. If one, then at point2.
-        /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one, 
+        /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one,
         /// then intersection is on the other side of point2.</param>
         /// <returns>IntersectionPoint.</returns>
         public static Vector3 PointOnPlaneFromIntersectingLine(Plane plane, Vector3 point1, Vector3 point2, out double relativeDistance)
@@ -1523,7 +1562,7 @@ namespace TVGL
         /// <param name="point1">The point1.</param>
         /// <param name="point2">The point2.</param>
         /// <param name="relativeDistance">The relative distance of the plane. If zero, then at point1. If one, then at point2.
-        /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one, 
+        /// If less than zero, then intersection occurs on the other side of point1 (not between points). If greater than one,
         /// then intersection is on the other side of point2.</param>
         /// <returns>Vertex.</returns>
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
@@ -1573,9 +1612,6 @@ namespace TVGL
             if (signedDistance.IsNegligible()) return rayPosition;
             return rayPosition + (rayDirection * signedDistance);
         }
-
-
-
 
         /// <summary>
         ///     Finds the point on the x-plane made by a line (which is described by connecting point1 and point2) intersecting
@@ -1634,11 +1670,13 @@ namespace TVGL
             return new Vector2(fromFactor * point1.X + toFactor * point2.X,
                 fromFactor * point1.Y + toFactor * point2.Y);
         }
-        #endregion
 
-        #endregion
+        #endregion Point on Plane
+
+        #endregion Find Intersecting Element
 
         #region Create 2D Circle Paths
+
         /// <summary>
         /// Returns a the path of a circle made up of points. Increment as needed.
         /// </summary>
@@ -1666,7 +1704,8 @@ namespace TVGL
         {
             return CreateCirclePath(circle.Center, circle.Radius, radianIncrement);
         }
-        #endregion
+
+        #endregion Create 2D Circle Paths
 
         #region isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
 
@@ -1704,8 +1743,6 @@ namespace TVGL
                 && ((c - b).Cross(p - b)).Dot((p - b).Cross(a - b)) >= 0;
         }
 
-
-
         /// <summary>
         ///     Determines if a point is inside a tesselated solid (polyhedron).
         ///     And the polygon is not self-intersecting
@@ -1723,12 +1760,12 @@ namespace TVGL
             var facesBelow = new List<PolygonalFace>();
             var inconclusive = true;
             var rnd = new Random();
-            //Added while inconclusive and random direction because there are some special cases that look the  
-            //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis, 
+            //Added while inconclusive and random direction because there are some special cases that look the
+            //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis,
             //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box
             //centered on the origin. A point on the origin would point to an edge (of the two triangles
             //forming the face) above and one below. Therefore, it was decided that special cases (through
-            //edges or locations, will yeild inconclusive results. 
+            //edges or locations, will yeild inconclusive results.
             while (inconclusive)
             {
                 inconclusive = false;
@@ -1758,10 +1795,10 @@ namespace TVGL
                     }
                     if (t > 0.0) //Face is higher on Z axis than vertex.
                     {
-                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
+                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes
                         //through an edge).
                         var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesAbove.Contains(adjacentFace));
-                        //Else, inconclusive (e.g., corners of cresent moon) 
+                        //Else, inconclusive (e.g., corners of cresent moon)
                         if (!onAdjacentFace) facesAbove.Add(face);
                         else
                         {
@@ -1771,11 +1808,11 @@ namespace TVGL
                     }
                     else //Face is lower on Z axis than vertex.
                     {
-                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
+                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes
                         //through an edge).
                         var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesBelow.Contains(adjacentFace));
                         if (!onAdjacentFace) facesBelow.Add(face);
-                        else //Else, inconclusive (e.g., corners of cresent moon) 
+                        else //Else, inconclusive (e.g., corners of cresent moon)
                         {
                             inconclusive = true;
                             break;
@@ -1787,8 +1824,8 @@ namespace TVGL
             return facesAbove.Count % 2 != 0 && facesBelow.Count % 2 != 0;
             //Even number of intercepts, means the vertex is inside
         }
-        #endregion
 
+        #endregion isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
 
         internal static void SetPositiveAndNegativeShifts(this IList<double> distances,
             double distanceAlongDirection, double tolerance, ref double positiveShift, ref double negativeShift)
@@ -1822,10 +1859,7 @@ namespace TVGL
             }
             if (noChange) return;
             SetPositiveAndNegativeShifts(distances, distanceAlongDirection, tolerance, ref positiveShift, ref negativeShift);
-
         }
-
-
 
         /// <summary>
         /// Converts the to a 1D collection of doubles.
@@ -1833,7 +1867,7 @@ namespace TVGL
         /// <param name="coordinates">The coordinates.</param>
         /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
         public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vector3> coordinates)
-        {   // this is not really the place for this function, but since it's so similar to the function above it; 
+        {   // this is not really the place for this function, but since it's so similar to the function above it;
             // it seems okay to leave it here (where else would it go?)
             foreach (var coordinate in coordinates)
             {
@@ -1849,7 +1883,7 @@ namespace TVGL
         /// <param name="coordinates">The coordinates.</param>
         /// <returns>IEnumerable&lt;System.Double&gt;.</returns>
         public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vertex> coordinates)
-        {   // this is not really the place for this function, but since it's so similar to the function above it; 
+        {   // this is not really the place for this function, but since it's so similar to the function above it;
             // it seems okay to leave it here (where else would it go?)
             foreach (var coordinate in coordinates)
             {

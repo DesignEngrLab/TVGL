@@ -12,11 +12,10 @@
 // <summary></summary>
 // ***********************************************************************
 
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using MIConvexHull;
 using TVGL.Numerics;
 
 namespace TVGL
@@ -62,7 +61,6 @@ namespace TVGL
             Edges = MakeEdges(Faces, Vertices);
             TessellatedSolid.CalculateVolumeAndCenter(Faces, tolerance, out Volume, out Center);
         }
-
 
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
             IList<int> convexHullFaceIndices, double tolerance)
@@ -167,6 +165,6 @@ namespace TVGL
         /// <value>The convex hull edges.</value>
         public readonly Edge[] Edges;
 
-        #endregion
+        #endregion Public Properties
     }
 }

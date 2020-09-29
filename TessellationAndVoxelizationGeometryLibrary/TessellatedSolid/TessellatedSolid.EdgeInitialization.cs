@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
-using TVGL.IOFunctions;
 using TVGL.TwoDimensional;
 
 namespace TVGL
@@ -63,7 +62,7 @@ namespace TVGL
             edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out var newFaces, out var moreRemainingEdges));
             remainingEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
             // well, the edgelist is definitely going to work out so, we are going to need to make
-            // sure that they are known to their vertices for the next few steps - so here we take 
+            // sure that they are known to their vertices for the next few steps - so here we take
             // a moment to stitch these to the vertices
             foreach (var tuple in edgeList)
                 tuple.Item1.DoublyLinkVertices();
@@ -102,10 +101,6 @@ namespace TVGL
             RemoveVertices(removedVertices);
         }
 
-
-
-
-
         /// <summary>
         ///     Makes the vertices.
         /// </summary>
@@ -127,7 +122,7 @@ namespace TVGL
                 {
                     //Get vertex from list of vertices
                     var vertex = Vertices[faceToVertexIndex[i]];
-                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
+                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points.
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices. This will catch bidirectional tolerancing (+/-)
                     var position = new Vector3(Math.Round(vertex.X, numDecimalPoints),
@@ -236,8 +231,8 @@ namespace TVGL
                 var candidateFaces = entry.Item2;
                 var numFailedTries = 0;
                 // foreach over-used edge:
-                // first, try to find the best match for each face. Basically, it is assumed that faces with the most similar normals 
-                // should be paired together. 
+                // first, try to find the best match for each face. Basically, it is assumed that faces with the most similar normals
+                // should be paired together.
                 while (candidateFaces.Count > 1 && numFailedTries < candidateFaces.Count)
                 {
                     var highestDot = -2.0;
@@ -295,15 +290,12 @@ namespace TVGL
             return newListOfGoodEdges;
         }
 
-
         private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
         {
             var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Coordinates.Subtract(edge.To.Coordinates);
             var isThisNormal = edge.Vector.Cross(otherEdgeVector);
             return face.Normal.Dot(isThisNormal) > 0;
         }
-
-
 
         private static IEnumerable<(Edge, List<PolygonalFace>)> MatchUpRemainingSingleSidedEdge(
             List<Edge> singleSidedEdges, out HashSet<Edge> borderEdges, out List<Vertex> removedVertices)
@@ -394,7 +386,6 @@ namespace TVGL
                 f.Update();
         }
 
-
         internal static List<(List<Edge>, Vector3)> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
@@ -420,7 +411,7 @@ namespace TVGL
                         var bestNext = pickBestEdge(possibleNextEdges, loop.Last().Vector, normal);
                         if (bestNext == null) break;
                         loop.Add(bestNext);
-                        var n1 = loop[loop.Count - 1].Vector.Cross(loop[loop.Count - 2].Vector).Normalize();
+                        var n1 = loop[^1].Vector.Cross(loop[^2].Vector).Normalize();
                         if (!n1.IsNull())
                         {
                             n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
@@ -558,7 +549,6 @@ namespace TVGL
             }
             return bestEdge;
         }
-
 
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {

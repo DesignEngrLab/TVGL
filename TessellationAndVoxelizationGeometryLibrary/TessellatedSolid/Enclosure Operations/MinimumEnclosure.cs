@@ -101,7 +101,8 @@ namespace TVGL
             for (var i = 0; i < 13; i++)
             {
                 var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
-                    new[] { directions[i], Vector3.UnitY, Vector3.UnitZ }, default(T), default(T), default(T));
+                    new[] { directions[i], Vector3.UnitY, Vector3.UnitZ }, default, default,
+                    default);
                 box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
                 if (box.Volume >= minVolume) continue;
                 minVolume = box.Volume;
@@ -141,8 +142,8 @@ namespace TVGL
             }
             return new BoundingBox<T>(minBox.SortedDimensions.Reverse().ToArray(),
                 new[] { largestDirection, midDirection, smallestDirection },
-                new T[][] {minPointsLargestDir,maxPointsLargestDir,minPointsMediumDir,maxPointsMediumDir,
-                minPointsSmallDir,maxPointsSmallDir});
+                new[] { minPointsLargestDir, maxPointsLargestDir, minPointsMediumDir, maxPointsMediumDir,
+                    minPointsSmallDir,maxPointsSmallDir });
         }
 
         #region ChanTan AABB Approach
@@ -162,7 +163,7 @@ namespace TVGL
             do
             {
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
-                var newObb = FindOBBAlongDirection<T>(cvxHullVertList, minOBB.Directions[i++]);
+                var newObb = FindOBBAlongDirection(cvxHullVertList, minOBB.Directions[i++]);
                 if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
                 {
                     minOBB = newObb;
@@ -237,9 +238,9 @@ namespace TVGL
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertex =  default(T); //this is an unfortunate assignment but the compiler doesn't trust
-            topVertex = default(T);  // that is will get assigned in conditions below. Also, can't assign to
-                                     //null, since Vector3 is struct
+            bottomVertex = default; //this is an unfortunate assignment but the compiler doesn't trust
+            topVertex = default;  // that is will get assigned in conditions below. Also, can't assign to
+                                  //null, since Vector3 is struct
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
@@ -375,7 +376,7 @@ namespace TVGL
              */
             #region 1) Prune and Reorder the points
             var points = pointsAreConvexHull
-                ? (initialPoints is IList<Vector2>) ? (IList<Vector2>)initialPoints : initialPoints.ToList()
+                ? initialPoints as IList<Vector2> ?? initialPoints.ToList()
                 : ConvexHull2D(initialPoints).ToList();
             if (points.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
 

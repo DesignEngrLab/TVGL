@@ -34,7 +34,7 @@ namespace TVGL.TwoDimensional
             {
                 coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
                 if (indexToVertexDict.ContainsKey(vertex.IndexInList))
-                    throw new ArgumentException("The vertices must all have a unique IndexInList value", "vertexLoop");
+                    throw new ArgumentException("The vertices must all have a unique IndexInList value", nameof(vertexLoop));
                 indexToVertexDict.Add(vertex.IndexInList, vertex);
             }
             var polygon = new Polygon(coords);
@@ -62,7 +62,7 @@ namespace TVGL.TwoDimensional
                 {
                     coords.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), vertex.IndexInList, -1));
                     if (indexToVertexDict.ContainsKey(vertex.IndexInList))
-                        throw new ArgumentException("The vertices must all have a unique IndexInList value", "vertexLoops");
+                        throw new ArgumentException("The vertices must all have a unique IndexInList value", nameof(vertexLoops));
                     indexToVertexDict.Add(vertex.IndexInList, vertex);
                 }
                 polygons.Add(new Polygon(coords));
@@ -87,7 +87,7 @@ namespace TVGL.TwoDimensional
         public static List<int[]> Triangulate(this Polygon polygon, bool reIndexPolygons = true)
         {
             if (!polygon.IsPositive)
-                throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", "polygon");
+                throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
             const int maxNumberOfAttempts = 3;
             var random = new Random(1);
             var randomAngles = new double[maxNumberOfAttempts];
@@ -154,7 +154,7 @@ namespace TVGL.TwoDimensional
         {
             if (!FindInternalDiagonalsForMonotone(polygon, out var connections))
                 throw new ArgumentException("There are duplicate points in the polygon. Please remove before calling " +
-                    "this function.", "polygon");
+                    "this function.", nameof(polygon));
             foreach (var edge in polygon.Lines)
                 AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
             foreach (var edge in polygon.InnerPolygons.SelectMany(p => p.Lines))

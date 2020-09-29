@@ -88,8 +88,8 @@ namespace TVGL
                 origRightFace.Update();
                 addedVertex.Faces.Add(origRightFace);
 
-                var newLeftFace = new PolygonalFace(new[] { toVertex, addedVertex, leftFarVertex }, true);
-                var newRightFace = new PolygonalFace(new[] { addedVertex, toVertex, rightFarVertex }, true);
+                var newLeftFace = new PolygonalFace(new[] { toVertex, addedVertex, leftFarVertex });
+                var newRightFace = new PolygonalFace(new[] { addedVertex, toVertex, rightFarVertex });
                 toVertex.Faces.Remove(origLeftFace);
                 toVertex.Faces.Remove(origRightFace);
 

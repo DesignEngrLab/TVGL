@@ -12,7 +12,6 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
@@ -20,13 +19,14 @@ using TVGL.Numerics;
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to repair a solid. It is 
+    ///  This portion of ModifyTessellation includes the functions to repair a solid. It is
     ///  invoked during the opening of a tessellated solid from "disk", but the repair function
     ///  may be called on its own.
     /// </summary>
     public static partial class ModifyTessellation
     {
         #region Check Model Integrity
+
         /// <summary>
         /// Checks the model integrity.
         /// </summary>
@@ -94,7 +94,9 @@ namespace TVGL
                 else Message.output("Repair did not successfully fix all the problems.", 1);
                 return CheckModelIntegrity(ts, false);
             }
+
             #region Report details
+
             if ((int)Message.Verbosity < 3) return false;
             //Note that negligible faces are not truly errors.
             Message.output("Errors found in model:");
@@ -139,11 +141,13 @@ namespace TVGL
             if (ts.Errors.FacesThatDoNotLinkBackToVertex != null)
                 Message.output("==> " + ts.Errors.FacesThatDoNotLinkBackToVertex.Count +
                                " faces that do not link back to vertices that link to them.");
-            #endregion
+
+            #endregion Report details
 
             return false;
         }
-        #endregion
+
+        #endregion Check Model Integrity
 
         #region Error Storing
 
@@ -307,7 +311,6 @@ namespace TVGL
             else ts.Errors.FacesWithTwoVertices.Add(face);
         }
 
-
         /// <summary>
         ///     Stores the face with one edge.
         /// </summary>
@@ -368,7 +371,6 @@ namespace TVGL
             else ts.Errors.DegenerateFaces.Add(faceVertexIndices);
         }
 
-
         /// <summary>
         ///     Stores the duplicate face.
         /// </summary>
@@ -381,7 +383,7 @@ namespace TVGL
             else ts.Errors.DuplicateFaces.Add(faceVertexIndices);
         }
 
-        #endregion
+        #endregion Error Storing
 
         #region Repair Functions
 
@@ -413,7 +415,6 @@ namespace TVGL
             return completelyRepaired;
         }
 
-
         /// <summary>
         ///     Flips the faces based on bad angles.
         /// </summary>
@@ -430,8 +431,8 @@ namespace TVGL
                 var edgesToUpdate = new List<Edge>();
                 foreach (var edge in face.Edges)
                 {
-                    if (edge == null) ; //that's enough to know something is not right!
-                    else if (edgesWithBadAngles.Contains(edge)) edgesToUpdate.Add(edge);
+                    if (edge == null) continue; //that's enough to know something is not right!
+                    if (edgesWithBadAngles.Contains(edge)) edgesToUpdate.Add(edge);
                     else if (facesToConsider.Contains(edge.OwnedFace == face ? edge.OtherFace : edge.OwnedFace))
                         edgesToUpdate.Add(edge);
                     else break;
@@ -451,7 +452,6 @@ namespace TVGL
             return true;
         }
 
-
-        #endregion
+        #endregion Repair Functions
     }
 }

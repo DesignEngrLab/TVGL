@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace TVGL.Voxelization
 {
@@ -16,6 +15,7 @@ namespace TVGL.Voxelization
                     a1[1] == a2[1] &&
                     a1[2] == a2[2]);
         }
+
         public override int GetHashCode(int[] ax)
         {
             if (ax is null) return 0;
@@ -23,16 +23,18 @@ namespace TVGL.Voxelization
             return hCode.GetHashCode();
         }
     }
+
     internal class VoxelEnumerator : IEnumerator<int[]>
     {
-        readonly VoxelizedSolid vs;
-        int[] currentVoxelPosition = new int[3];
-        int xIndex;
-        int yIndex;
-        int zIndex;
-        readonly int xLim;
-        readonly int yLim;
-        readonly int zLim;
+        private readonly VoxelizedSolid vs;
+        private int[] currentVoxelPosition = new int[3];
+        private int xIndex;
+        private int yIndex;
+        private int zIndex;
+        private readonly int xLim;
+        private readonly int yLim;
+        private readonly int zLim;
+
         public VoxelEnumerator(VoxelizedSolid vs)
         {
             this.vs = vs;
@@ -44,7 +46,6 @@ namespace TVGL.Voxelization
         public object Current => currentVoxelPosition;
 
         int[] IEnumerator<int[]>.Current => currentVoxelPosition;
-
 
         public void Dispose()
         {

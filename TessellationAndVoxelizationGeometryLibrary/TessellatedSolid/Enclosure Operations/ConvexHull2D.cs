@@ -12,12 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using MIConvexHull;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -32,9 +28,10 @@ namespace TVGL
         /// <returns>List&lt;Vector2&gt;.</returns>
         public static List<Vector2> ConvexHull2D(this IEnumerable<Vector2> points)
         {
-            var pointList = (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList();
+            var pointList = points as IList<Vector2> ?? points.ToList();
             return (List<Vector2>)MIConvexHull.ConvexHull.Create2D(pointList).Result;
         }
+
         /// <summary>
         /// Creates the convex hull polygon.
         /// </summary>

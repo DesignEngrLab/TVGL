@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -60,7 +59,6 @@ namespace TVGL.TwoDimensional
                     hole.RemoveAllInnerPolygon();
             return polygonList;
         }
-
 
         /// <summary>
         /// Creates the polygon tree from a collection of flat (i.e. no inner polygons) polygons.
@@ -153,9 +151,8 @@ namespace TVGL.TwoDimensional
             }
         }
 
-
         /// <summary>
-        /// Creates the shallow polygon trees from ordered lists and vertices. This means that the loops are one 
+        /// Creates the shallow polygon trees from ordered lists and vertices. This means that the loops are one
         /// positive loop followed by the inner negative holes, then another positive loops and it's holes.
         /// This is an internal/private function which is quick and currently used by Simplify
         /// </summary>
@@ -177,6 +174,5 @@ namespace TVGL.TwoDimensional
                 }
             }
         }
-
     }
 }

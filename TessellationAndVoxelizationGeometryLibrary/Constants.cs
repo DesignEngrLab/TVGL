@@ -129,7 +129,7 @@ namespace TVGL
         internal static int FindIndex<T>(this IEnumerable<T> items, Predicate<T> predicate)
         {
             var itemsList = items as IList<T> ?? items.ToList();
-            var numItems = itemsList.Count();
+            var numItems = itemsList.Count;
             if (numItems == 0) return -1;
             var index = 0;
             foreach (var item in itemsList)

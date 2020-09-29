@@ -154,8 +154,8 @@ namespace TVGL
         {
             get
             {
-                return _directions ?? (_directions = new[]
-                    {Transform.XBasisVector, Transform.YBasisVector, Transform.ZBasisVector});
+                return _directions ??= new[]
+                    {Transform.XBasisVector, Transform.YBasisVector, Transform.ZBasisVector};
             }
         }
 

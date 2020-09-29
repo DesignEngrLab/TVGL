@@ -12,12 +12,11 @@
 // <summary></summary>
 // ***********************************************************************
 
+using MIConvexHull;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MIConvexHull;
-using Newtonsoft.Json;
-using TVGL.Voxelization;
 using TVGL.Numerics;
 
 namespace TVGL
@@ -77,7 +76,7 @@ namespace TVGL
             IndexInList = -1;
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -124,7 +123,6 @@ namespace TVGL
 
         double[] IVertex.Position => Coordinates.Position;
 
-
         /// <summary>
         /// Gets the normal.
         /// </summary>
@@ -138,15 +136,12 @@ namespace TVGL
             }
         }
 
+        private Vector3 _normal = Vector3.Null;
 
-        Vector3 _normal = Vector3.Null;
         private void DetermineNormal()
         {
             throw new NotImplementedException();
         }
-
-
-
 
         /// <summary>
         /// Gets the curvature.
@@ -160,8 +155,8 @@ namespace TVGL
                 return _curvature;
             }
         }
-        CurvatureType _curvature = CurvatureType.Undefined;
 
+        private CurvatureType _curvature = CurvatureType.Undefined;
 
         /// <summary>
         ///     Defines vertex curvature
@@ -178,6 +173,7 @@ namespace TVGL
                 _curvature = CurvatureType.Convex;
             else _curvature = CurvatureType.SaddleOrFlat;
         }
-        #endregion
+
+        #endregion Properties
     }
 }

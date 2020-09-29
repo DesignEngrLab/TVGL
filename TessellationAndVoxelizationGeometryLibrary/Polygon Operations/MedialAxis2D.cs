@@ -212,7 +212,7 @@ namespace TVGL.TwoDimensional
                             if (p1 != node || branch[0] == node) continue;
                             hitNode = true;
                             //Get the branch that has this node and the prior point
-                            var p2 = branch[branch.Count - 2];
+                            var p2 = branch[^2];
                             for (var j = 0; j < branches.Count; j++)
                             {
                                 if ((branches[j][0] - p1).Length().IsNegligible(0.0001) &&

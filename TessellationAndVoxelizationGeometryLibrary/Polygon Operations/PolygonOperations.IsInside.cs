@@ -29,7 +29,7 @@ namespace TVGL.TwoDimensional
             {
                 foreach (var vector2 in subPolygon.Path)
                 {
-                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary, true))
+                    if (!outer.IsPointInsidePolygon(onlyTopOuterPolygon, vector2, out var thisPointOnBoundary))
                         // negative has a point outside of positive. no point in checking other points
                         return false;
                     if (thisPointOnBoundary) onBoundary = true;
@@ -79,8 +79,6 @@ namespace TVGL.TwoDimensional
                             break;
                         case VerticalLineReferenceType.Below:
                             numberBelow++;
-                            break;
-                        default:
                             break;
                     }
                     if (onBoundary) break;
@@ -151,8 +149,6 @@ namespace TVGL.TwoDimensional
                             break;
                         case VerticalLineReferenceType.Below:
                             numberBelow++;
-                            break;
-                        default:
                             break;
                     }
                 }

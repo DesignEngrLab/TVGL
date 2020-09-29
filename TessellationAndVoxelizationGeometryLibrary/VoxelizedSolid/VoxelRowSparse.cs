@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace TVGL.Voxelization
 {
@@ -10,12 +9,12 @@ namespace TVGL.Voxelization
     /// VoxelRowSparse represents a sparse array of bits for this line of voxels
     /// </summary>
     /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
-    internal struct VoxelRowSparse : IVoxelRow
+    internal readonly struct VoxelRowSparse : IVoxelRow
     {
         /// <summary>
         /// The indices are pairs of ranges of on-voxels, where the lo value is the position
         /// of the first voxel in a row. These are always at the even positions in the List.
-        /// The odd positions are the ends of each range and these values are excluded from 
+        /// The odd positions are the ends of each range and these values are excluded from
         /// the range. They are the first off-voxel.
         /// </summary>
         internal readonly List<ushort> indices;
@@ -47,7 +46,7 @@ namespace TVGL.Voxelization
         //to add the dummy input
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRowSparse"/> struct.
-        /// because "structs cannot contain explicit parameterless constructors", 
+        /// because "structs cannot contain explicit parameterless constructors",
         /// We are forced to add the dummy input.
         /// </summary>
         /// <param name="dummy">if set to <c>true</c> [dummy].</param>
@@ -56,6 +55,7 @@ namespace TVGL.Voxelization
             maxNumberOfVoxels = (ushort)length;
             indices = new List<ushort>();
         }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRowSparse"/> struct.
         /// </summary>
@@ -63,10 +63,8 @@ namespace TVGL.Voxelization
         internal VoxelRowSparse(IVoxelRow row, int length)
         {
             maxNumberOfVoxels = (ushort)length;
-            if (row is VoxelRowSparse)
-            {
-                indices = new List<ushort>(((VoxelRowSparse)row).indices);
-            }
+            if (row is VoxelRowSparse sparse)
+                indices = new List<ushort>(sparse.indices);
             else
             {
                 indices = new List<ushort>();
@@ -91,6 +89,7 @@ namespace TVGL.Voxelization
                 if (lastVal) indices.Add(i);
             }
         }
+
         /// <summary>
         /// Gets or sets the <see cref="System.Boolean"/> at the specified index.
         /// </summary>
@@ -117,14 +116,14 @@ namespace TVGL.Voxelization
             }
         }
 
-
-        bool GetValue(int index)
+        private bool GetValue(int index)
         {
             var count = indices.Count;
             if (count == 0 || index < indices[0] || index > indices[count - 1]) return false;
             BinarySearch(indices, count, index, out var _, out var voxelIsOn);
             return voxelIsOn;
         }
+
         /// <summary>
         /// Gets the lower-x neighbor and the upper-x neighbor for the one at xCoord.
         /// </summary>
@@ -150,13 +149,14 @@ namespace TVGL.Voxelization
             }
             else //the current voxel is off
             {
-                if (valueExists) //then current is end of range which means previous is on, 
-                    //current is off, but next could be start of new range 
+                if (valueExists) //then current is end of range which means previous is on,
+                    //current is off, but next could be start of new range
                     return (true, i + 1 < count && xCoord + 1 == indices[i + 1]);
                 else  //but neighbors could be inside
                     return (false, i < count && xCoord + 1 == indices[i]);
             }
         }
+
         // This binary search is modified/simplified from Array.BinarySearch
         // (https://referencesource.microsoft.com/mscorlib/a.html#b92d187c91d4c9a9),
         // but because our lists are pairs of ranges a bunch of extra conditions have been added
@@ -185,7 +185,7 @@ namespace TVGL.Voxelization
             return lo;
         }
 
-        void TurnOn(ushort value)
+        private void TurnOn(ushort value)
         {
             int index;
             var count = indices.Count;
@@ -221,15 +221,14 @@ namespace TVGL.Voxelization
             }
         }
 
-        void TurnOff(ushort value)
+        private void TurnOff(ushort value)
         {
-            int index;
             var count = indices.Count;
             if (count == 0)
             {
                 return; //nothing to do. there are no voxels anyway
             }
-            index = BinarySearch(indices, count, value, out var valueExists, out var voxelIsOn);
+            var index = BinarySearch(indices, count, value, out var valueExists, out var voxelIsOn);
             if (!voxelIsOn) return; //it's already off
             if (valueExists)
             {
@@ -278,6 +277,7 @@ namespace TVGL.Voxelization
                     TurnOnRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
             }
         }
+
         /// <summary>
         /// Intersects the specified other rows with this row.
         /// </summary>
@@ -322,6 +322,7 @@ namespace TVGL.Voxelization
                     TurnOffRange(otherIndices[j], otherIndices[j + 1], ref indexLowerBound);
             }
         }
+
         /// <summary>
         /// Turns all the voxels within the range to on/true.
         /// </summary>
@@ -332,6 +333,7 @@ namespace TVGL.Voxelization
             var dummy = 0;
             TurnOnRange(lo, hi, ref dummy);
         }
+
         private void TurnOnRange(ushort lo, ushort hi, ref int indexLowerBound)
         {
             var count = indices.Count;
@@ -348,6 +350,7 @@ namespace TVGL.Voxelization
             indexLowerBound = hiIndex;
             TurnOnRange(lo, loIndex, loValueExists, loVoxelIsOn, hi, hiIndex, hiValueExists, hiVoxelIsOn, ref indexLowerBound);
         }
+
         private void TurnOnRange(ushort lo, int loIndex, bool loValueExists, bool loVoxelIsOn, ushort hi, int hiIndex,
             bool hiValueExists, bool hiVoxelIsOn, ref int indexLowerBound)
         {

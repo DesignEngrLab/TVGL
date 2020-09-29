@@ -16,9 +16,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Serialization;
 using TVGL.Numerics;
-using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -43,7 +41,7 @@ namespace TVGL
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
-        #endregion
+        #endregion Constructors
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
@@ -81,7 +79,6 @@ namespace TVGL
             }
         }
 
-
         /// <summary>
         ///     Gets the vertices.
         /// </summary>
@@ -100,7 +97,6 @@ namespace TVGL
             set => _vertexIndices = value;
         }
 
-
         /// <summary>
         ///     Gets the inner edges.
         /// </summary>
@@ -115,7 +111,6 @@ namespace TVGL
             }
             protected set => _innerEdges = value;
         }
-
 
         public int[] InnerEdgeIndices
         {
@@ -151,6 +146,7 @@ namespace TVGL
                 return Array.Empty<int>();
             }
         }
+
         private HashSet<Edge> _innerEdges;
         private HashSet<Edge> _outerEdges;
         private int[] _faceIndices;
@@ -249,7 +245,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Takes in a list of edges and returns their list of loops for edges and vertices 
+        /// Takes in a list of edges and returns their list of loops for edges and vertices
         /// The order of the output loops are not considered (i.e., they may be "reversed"),
         /// since no face normal information is used.
         /// </summary>
@@ -258,10 +254,10 @@ namespace TVGL
         public static (bool allLoopsClosed, List<List<Edge>> edgeLoops, List<List<Vertex>> vertexLoops) GetLoops(HashSet<Edge> outerEdges,
             bool canModifyTheInput)
         {
-            //Use a boolean canModifyTheInput, so that we can save time creating a hashset if the user allows it to be mutated. 
+            //Use a boolean canModifyTheInput, so that we can save time creating a hashset if the user allows it to be mutated.
             var edges = canModifyTheInput ? outerEdges : new HashSet<Edge>(outerEdges);
 
-            //loop through the edges to form loops 
+            //loop through the edges to form loops
             var allLoopsClosed = true;
             var loops = new List<List<Vertex>>();
             var edgeLoops = new List<List<Edge>>();
@@ -309,13 +305,14 @@ namespace TVGL
             return (allLoopsClosed, edgeLoops, loops);
         }
 
-        public bool BoundsHaveBeenSet = false;
+        public bool BoundsHaveBeenSet;
         public double MaxX;
         public double MinX;
         public double MaxY;
         public double MinY;
         public double MaxZ;
         public double MinZ;
+
         public void SetBounds(bool ignoreIfAlreadySet = true)
         {
             if (BoundsHaveBeenSet && ignoreIfAlreadySet) return;

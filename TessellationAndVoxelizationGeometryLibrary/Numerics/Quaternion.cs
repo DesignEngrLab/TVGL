@@ -196,19 +196,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             //  Roll first, about axis the object is facing, then
             //  pitch upward, then yaw to face into the new heading
-            double sr, cr, sp, cp, sy, cy;
-
             double halfRoll = roll * 0.5;
-            sr = Math.Sin(halfRoll);
-            cr = Math.Cos(halfRoll);
+            var sr = Math.Sin(halfRoll);
+            var cr = Math.Cos(halfRoll);
 
             double halfPitch = pitch * 0.5;
-            sp = Math.Sin(halfPitch);
-            cp = Math.Cos(halfPitch);
+            var sp = Math.Sin(halfPitch);
+            var cp = Math.Cos(halfPitch);
 
             double halfYaw = yaw * 0.5;
-            sy = Math.Sin(halfYaw);
-            cy = Math.Cos(halfYaw);
+            var sy = Math.Sin(halfYaw);
+            var cy = Math.Cos(halfYaw);
 
             Quaternion result;
 
@@ -776,9 +774,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>True if the Object is equal to this Quaternion; False otherwise.</returns>
         public override bool Equals(object obj)
         {
-            if (obj is Quaternion)
+            if (obj is Quaternion quaternion)
             {
-                return Equals((Quaternion)obj);
+                return Equals(quaternion);
             }
 
             return false;

@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -36,27 +35,32 @@ namespace TVGL.IOFunctions
 #endif
     {
         #region Constructor
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="AMFFileData" /> class.
         /// </summary>
 #if help
     internal AMFFileData()
 #else
+
         public AMFFileData()
 #endif
         {
             Objects = new List<AMF_Object>();
             Textures = new List<AMF_Texture>();
         }
-        #endregion
+
+        #endregion Constructor
 
         #region Fields and Properties
+
 #if help
         internal List<AMF_Texture> Textures { get; set; }
         internal double version { get; set; }
         internal List<AMF_Object> Objects { get; set; }
         internal List<AMF_Constellation> Constellations { get; set; }
 #else
+
         /// <summary>
         ///     Gets or sets the constellations.
         /// </summary>
@@ -83,9 +87,13 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The version.</value>
         public double version { get; set; }
+
 #endif
-        #endregion
+
+        #endregion Fields and Properties
+
         #region Open Solids
+
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -177,13 +185,15 @@ namespace TVGL.IOFunctions
                 for (int i = 0; i < vertices.Count; i++)
                     vertices[i] = vertices[i].Transform(tMatrix);
             }
-            return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(), 
+            return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
                 true, colors, this.Units, name + "_" + amfObject.id, this.FileName,
                 amfObject.metadata.Select(md => md.ToString()).ToList(), this.Language);
         }
 
-        #endregion
+        #endregion Open Solids
+
         #region Save Solids
+
         /// <summary>
         /// Saves the specified stream.
         /// </summary>
@@ -216,6 +226,7 @@ namespace TVGL.IOFunctions
                 return false;
             }
         }
+
         // this is used by the save method above
         private AMFFileData(IList<TessellatedSolid> solids) : this()
         {
@@ -294,6 +305,7 @@ namespace TVGL.IOFunctions
                 });
             }
         }
-        #endregion
+
+        #endregion Save Solids
     }
 }

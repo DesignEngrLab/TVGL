@@ -235,10 +235,9 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-            ZipArchiveEntry entry;
             Stream entryStream;
             using var archive = new ZipArchive(stream, ZipArchiveMode.Create);
-            entry = archive.CreateEntry("3D/3dmodel.model");
+            var entry = archive.CreateEntry("3D/3dmodel.model");
             using (entryStream = entry.Open())
                 SaveModel(entryStream, solids);
             archive.CreateEntry("Metadata/thumbnail.png");

@@ -681,9 +681,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>True if the Object is equal to this matrix; False otherwise.</returns>
         public override bool Equals(object obj)
         {
-            if (obj is Matrix3x3)
+            if (obj is Matrix3x3 matrix3X3)
             {
-                return Equals((Matrix3x3)obj);
+                return Equals(matrix3X3);
             }
 
             return false;

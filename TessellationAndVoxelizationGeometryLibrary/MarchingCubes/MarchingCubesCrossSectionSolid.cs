@@ -86,8 +86,10 @@ namespace TVGL
             //interpolate points for grid
             //call marching cubes function for this z-layer
             // for (var k = 0; k < numGridZ - 1; k++)
-            var comments = new List<string>(solid.Comments);
-            comments.Add("tessellation (via marching cubes) of the cross-section solid, " + solid.Name);
+            var comments = new List<string>(solid.Comments)
+            {
+                "tessellation (via marching cubes) of the cross-section solid, " + solid.Name
+            };
             return new TessellatedSolid(faces, false, false);
         }
 
@@ -109,8 +111,10 @@ namespace TVGL
             //interpolate points for grid
             //call marching cubes function for this z-layer
             // for (var k = 0; k < numGridZ - 1; k++)
-            var comments = new List<string>(solid.Comments);
-            comments.Add("tessellation (via marching cubes) of the cross-section solid, " + solid.Name);
+            var comments = new List<string>(solid.Comments)
+            {
+                "tessellation (via marching cubes) of the cross-section solid, " + solid.Name
+            };
             return new TessellatedSolid(faces,false,false);
         }
 
