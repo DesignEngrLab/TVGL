@@ -210,7 +210,7 @@ namespace TVGL.Boolean_Operations
 
                 foreach (var polygon in polygonsWithHoles)
                 {
-                    var indicesOfTriangles = polygon.Triangulate();
+                    var indicesOfTriangles = polygon.TriangulateToIndices();
                     var positiveLoop = loops[polygon.Index];
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<PolygonalFace>();

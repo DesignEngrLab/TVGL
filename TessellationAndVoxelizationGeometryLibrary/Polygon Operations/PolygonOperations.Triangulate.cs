@@ -38,7 +38,7 @@ namespace TVGL.TwoDimensional
                 indexToVertexDict.Add(vertex.IndexInList, vertex);
             }
             var polygon = new Polygon(coords);
-            foreach (var triangleIndices in polygon.Triangulate(false))
+            foreach (var triangleIndices in polygon.TriangulateToIndices(false))
                 yield return new[]
                     {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
                         indexToVertexDict[triangleIndices[2]]};
@@ -70,7 +70,7 @@ namespace TVGL.TwoDimensional
             polygons = polygons.CreateShallowPolygonTrees(false, out _);
             foreach (var polygon in polygons)
             {
-                foreach (var triangleIndices in polygon.Triangulate(false))
+                foreach (var triangleIndices in polygon.TriangulateToIndices(false))
                     yield return new[]
                         {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
                         indexToVertexDict[triangleIndices[2]]};
@@ -84,7 +84,20 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static List<int[]> Triangulate(this Polygon polygon, bool reIndexPolygons = true)
+        public static IEnumerable<Vector2[]> TriangulateToCoordinates(this Polygon polygon, bool reIndexPolygons = true)
+        {
+            var triIndices = polygon.TriangulateToIndices(reIndexPolygons);
+            var index2CoordsDict = polygon.AllPolygons.SelectMany(p => p.Vertices).ToDictionary(v => v.IndexInList, v => v.Coordinates);
+            return triIndices.Select(ti =>new[] { index2CoordsDict[ti[0]], index2CoordsDict[ti[1]], index2CoordsDict[ti[2]] });
+        }
+
+        /// <summary>
+        /// Triangulates the specified polygons which may include holes. However, the .
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
+        /// <returns>List&lt;System.Int32[]&gt;.</returns>
+        public static List<int[]> TriangulateToIndices(this Polygon polygon, bool reIndexPolygons = true)
         {
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
@@ -114,7 +127,7 @@ namespace TVGL.TwoDimensional
                 {
                     while (verts[0] != concaveEdge.IndexInList)
                     {
-                        verts.Add(concaveEdge.IndexInList);
+                        verts.Add(verts[0]);
                         verts.RemoveAt(0);
                     }
                 }
@@ -127,7 +140,7 @@ namespace TVGL.TwoDimensional
             // in case this is a deep polygon tree - recurse down and solve for the inner positive polygons
             foreach (var hole in polygon.InnerPolygons)
                 foreach (var smallInnerPolys in hole.InnerPolygons)
-                    triangleFaceList.AddRange(Triangulate(smallInnerPolys, false));
+                    triangleFaceList.AddRange(TriangulateToIndices(smallInnerPolys, false));
 
             foreach (var randomAngle in randomAngles)
             {

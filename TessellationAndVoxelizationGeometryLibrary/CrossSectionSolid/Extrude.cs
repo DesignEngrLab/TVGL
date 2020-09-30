@@ -89,7 +89,7 @@ namespace TVGL
 
             try
             {
-                triangleIndices = polygon.Triangulate();
+                triangleIndices = polygon.TriangulateToIndices();
             }
             catch
             {
@@ -101,7 +101,7 @@ namespace TVGL
                     //Do some polygon functions to clean up issues and try again
                     polygon = polygon.OffsetMiter(extrusionHeight / 1000)[0];
                     polygon = polygon.OffsetMiter(-extrusionHeight / 1000)[0];
-                    triangleIndices = polygon.Triangulate();
+                    triangleIndices = polygon.TriangulateToIndices();
                 }
                 catch (Exception exc)
                 {

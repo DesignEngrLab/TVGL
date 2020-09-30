@@ -32,7 +32,7 @@ namespace TVGLUnitTestsAndBenchmarking
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("*").OrderBy(kjhgtfrden=>r.NextDouble()).ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(kjhgtfrden => r.NextDouble()).ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
@@ -51,7 +51,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
                 for (int j = 0; j < 9; j++)
                 {
-                    var direction = Vector3.UnitVector((CartesianDirections)(j %3));
+                    var direction = Vector3.UnitVector((CartesianDirections)(j % 3));
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
 
@@ -72,15 +72,17 @@ namespace TVGLUnitTestsAndBenchmarking
                             !monopoly.MinX.IsPracticallySame(Math.Min(extremeVerts[0].X, extremeVerts[1].X)) ||
                             !monopoly.MaxX.IsPracticallySame(Math.Max(extremeVerts[0].X, extremeVerts[1].X)))
                             error = true;
-                    else
-                    {
-                        Console.WriteLine("testing triangulation.");
-                        var triIndices = monopoly.Triangulate();
-                        var triArea = triIndices.Sum(tr=>tr.Select())
-
-                    }
-                    //var triIndices = xsection[0].Triangulate();
-                    //PlotTriangulation(xsection[0], triIndices);
+                        else
+                        {
+                            //Console.WriteLine("testing triangulation.");
+                            var triangles = monopoly.TriangulateToCoordinates().ToList();
+                            var triArea = triangles.Sum(tr => tr.Area());
+                            if (!triArea.IsPracticallySame(monopoly.Area, monopoly.Area * Constants.BaseTolerance))
+                            {
+                                Console.WriteLine("Error triangulation.");
+                                Presenter.ShowAndHang(triangles);
+                            }
+                        }
                     }
 
                     if (error || !totalArea.IsPracticallySame(xsection.Sum(x => x.Area), 1e-5))
@@ -100,13 +102,9 @@ namespace TVGLUnitTestsAndBenchmarking
             var testcase = new Polygon(TestCases.MakeStarryCircularPolygon(13, 10, 7));
             //testcase.Transform(Matrix3x3.CreateRotation(Math.PI));
             Presenter.ShowAndHang(testcase);
-            var ti = testcase.Triangulate();
-            PlotTriangulation(testcase, ti);
+            var triangles = testcase.TriangulateToCoordinates();
+            Presenter.ShowAndHang(triangles);
         }
-        private static void PlotTriangulation(Polygon polygon, List<int[]> triIndices)
-        {
-            var index2CoordsDict = polygon.AllPolygons.SelectMany(p => p.Vertices).ToDictionary(v => v.IndexInList, v => v.Coordinates);
-            Presenter.ShowAndHang(triIndices.Select(ti => ti.Select(i => index2CoordsDict[i])));
-        }
+
     }
 }
