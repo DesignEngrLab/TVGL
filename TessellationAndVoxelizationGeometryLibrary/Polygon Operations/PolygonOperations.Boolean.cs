@@ -53,35 +53,17 @@ namespace TVGL.TwoDimensional
         {
             if (!polygonA.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", nameof(polygonA));
             if (!polygonB.IsPositive) throw new ArgumentException("A negative polygon (i.e. hole) is provided to Union which results in infinite shape.", nameof(polygonB));
-            switch (polygonInteraction.Relationship)
-            {
-                case PolygonRelationship.Separated:
-                case PolygonRelationship.SeparatedButVerticesTouch:
-                case PolygonRelationship.AIsInsideHoleOfB:
-                case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
-                case PolygonRelationship.BIsInsideHoleOfA:
-                case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
-                    return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
-
-                case PolygonRelationship.BIsCompletelyInsideA:
-                case PolygonRelationship.BIsInsideAButEdgesTouch:
-                case PolygonRelationship.BIsInsideAButVerticesTouch:
-                case PolygonRelationship.Equal:
-                    return new List<Polygon> { polygonA.Copy(true, false) };
-
-                case PolygonRelationship.AIsCompletelyInsideB:
-                case PolygonRelationship.AIsInsideBButEdgesTouch:
-                case PolygonRelationship.AIsInsideBButVerticesTouch:
-                    return new List<Polygon> { polygonB.Copy(true, false) };
-
-                default:
-                    //case PolygonRelationship.SeparatedButEdgesTouch:
-                    //case PolygonRelationship.Intersect:
-                    //case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
-                    //case PolygonRelationship.BIsInsideHoleOfABButEdgesTouch:
-                    polygonUnion ??= new PolygonUnion();
-                    return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance);
-            }
+            if (!polygonInteraction.CoincidentEdges && (polygonInteraction.Relationship == PolygonRelationship.Separated ||
+                polygonInteraction.Relationship == PolygonRelationship.AIsInsideHoleOfB ||
+                polygonInteraction.Relationship == PolygonRelationship.BIsInsideHoleOfA))
+                return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
+            if (polygonInteraction.Relationship == PolygonRelationship.BInsideA ||
+               polygonInteraction.Relationship == PolygonRelationship.Equal)
+                return new List<Polygon> { polygonA.Copy(true, false) };
+            if (polygonInteraction.Relationship == PolygonRelationship.AInsideB)
+                return new List<Polygon> { polygonB.Copy(true, false) };
+            polygonUnion ??= new PolygonUnion();
+            return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance);
         }
 
         /// <summary>

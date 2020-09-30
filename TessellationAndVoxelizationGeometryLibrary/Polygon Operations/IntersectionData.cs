@@ -42,6 +42,10 @@ namespace TVGL.TwoDimensional
         private readonly Dictionary<Polygon, int> subPolygonToInt;
         internal readonly int numPolygonsInA;
         internal readonly int numPolygonsInB;
+        public bool CoincidentEdges;
+        public bool EdgesCross;
+        public bool CoincidentVertices;
+
 
         public IEnumerable<Polygon> AllPolygons
         {

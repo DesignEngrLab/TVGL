@@ -718,40 +718,21 @@ namespace TVGL
     /// <summary>
     /// Enum PolygonRelationship
     /// </summary>
-    [Flags]
     public enum PolygonRelationship
     {
-        // Here are the atomic flags
-        EdgesCross = 1,
-        CoincidentVertices = 2,
-        CoincidentEdges = 4,
-        AInsideB = 8,
-        BInsideA = 16,
-        InsideHole = 32,
-        // the following are the valid combinations of flags
         // first when two polygons are separated 
         Separated = 0,
-        SeparatedButVerticesTouch = CoincidentVertices,
-        SeparatedButEdgesTouch = CoincidentEdges,
 
         // A is inside B
-        AIsCompletelyInsideB = AInsideB,
-        AIsInsideBButVerticesTouch = AInsideB | CoincidentVertices,
-        AIsInsideBButEdgesTouch = AInsideB | CoincidentEdges,
-        AIsInsideHoleOfB = AInsideB | InsideHole,
-        AIsInsideHoleOfBButVerticesTouch = AInsideB | InsideHole | CoincidentVertices,
-        AIsInsideHoleOfBButEdgesTouch = AInsideB | InsideHole | CoincidentEdges,
+        AInsideB,
+        AIsInsideHoleOfB,
 
         // B is inside A
-        BIsCompletelyInsideA = BInsideA,
-        BIsInsideAButVerticesTouch = BInsideA | CoincidentVertices,
-        BIsInsideAButEdgesTouch = BInsideA | CoincidentEdges,
-        BIsInsideHoleOfA = BInsideA | InsideHole,
-        BIsInsideHoleOfABButVerticesTouch = BInsideA | InsideHole | CoincidentVertices,
-        BIsInsideHoleOfABButEdgesTouch = BInsideA | InsideHole | CoincidentEdges,
+        BInsideA,
+        BIsInsideHoleOfA,
 
         // Intersection is inside A
-        Intersection = BInsideA | AInsideB,
+        Intersection,
 
         //Equal
         Equal = 64,

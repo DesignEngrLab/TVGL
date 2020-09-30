@@ -455,12 +455,8 @@ namespace TVGL.TwoDimensional
             }
             var interactionRecord = new PolygonInteractionRecord(polygonA, polygonB);
             var visited = new bool[interactionRecord.numPolygonsInA * interactionRecord.numPolygonsInB];
-            var topRelation = RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, tolerance);
-            foreach (var rel in interactionRecord.GetRelationships(polygonA))
-                topRelation |= rel.Item1;
-            foreach (var rel in interactionRecord.GetRelationships(polygonB))
-                topRelation |= rel.Item1;
-            interactionRecord.Relationship = topRelation;
+            RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, tolerance);
+
             return interactionRecord;
         }
         /// <summary>
@@ -472,42 +468,33 @@ namespace TVGL.TwoDimensional
         /// <param name="visited">The visited.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>PolygonRelationship.</returns>
-        private static PolygonRelationship RecursePolygonInteractions(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
+        private static void RecursePolygonInteractions(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
             bool[] visited, double tolerance)
         {
             var index = interactionRecord.findLookupIndex(polygonA, polygonB);
-            if (visited[index]) return interactionRecord.GetRelationshipBetween(polygonA, polygonB);
-            var relationship = GetSinglePolygonRelationshipAndIntersections(polygonA, polygonB, out var localIntersections, tolerance);
+            if (visited[index]) return;
+            var relationship = GetSinglePolygonRelationshipAndIntersections(polygonA, polygonB, out var localIntersections, tolerance, out var coincidentVertices,
+                out var coincidentEdges, out var edgesCross);
             interactionRecord.IntersectionData.AddRange(localIntersections);
             visited[index] = true;
-            if (relationship != PolygonRelationship.Separated &&
-                relationship != PolygonRelationship.SeparatedButEdgesTouch &&
-                relationship != PolygonRelationship.SeparatedButVerticesTouch)
+            if (relationship != PolygonRelationship.Separated)
             {
-                if (relationship != PolygonRelationship.AIsCompletelyInsideB &&
-                    relationship != PolygonRelationship.AIsInsideBButEdgesTouch &&
-                    relationship != PolygonRelationship.AIsInsideBButVerticesTouch &&
-                    relationship != PolygonRelationship.AIsInsideHoleOfB &&
-                    relationship != PolygonRelationship.AIsInsideHoleOfBButEdgesTouch &&
-                    relationship != PolygonRelationship.AIsInsideHoleOfBButVerticesTouch)
+                if (relationship != PolygonRelationship.AInsideB &&
+                    relationship != PolygonRelationship.AIsInsideHoleOfB)
                 {
                     foreach (var innerPolyA in polygonA.InnerPolygons)
                     {
-                        var rel = RecursePolygonInteractions(innerPolyA, polygonB, interactionRecord, visited, tolerance);
+                        RecursePolygonInteractions(innerPolyA, polygonB, interactionRecord, visited, tolerance);
                         if ((rel & PolygonRelationship.BIsInsideHoleOfA) == PolygonRelationship.BIsInsideHoleOfA)
                             relationship |= PolygonRelationship.InsideHole;
                     }
                 }
-                if (relationship != PolygonRelationship.BIsCompletelyInsideA &&
-                    relationship != PolygonRelationship.BIsInsideAButEdgesTouch &&
-                    relationship != PolygonRelationship.BIsInsideAButVerticesTouch &&
-                relationship != PolygonRelationship.BIsInsideHoleOfA &&
-                relationship != PolygonRelationship.BIsInsideHoleOfABButEdgesTouch &&
-                relationship != PolygonRelationship.BIsInsideHoleOfABButVerticesTouch)
+                if (relationship != PolygonRelationship.BInsideA &&
+                relationship != PolygonRelationship.BIsInsideHoleOfA)
                 {
                     foreach (var innerPolyB in polygonB.InnerPolygons)
                     {
-                        var rel = RecursePolygonInteractions(polygonA, innerPolyB, interactionRecord, visited, tolerance);
+                         RecursePolygonInteractions(polygonA, innerPolyB, interactionRecord, visited, tolerance);
                         if ((rel & PolygonRelationship.AIsInsideHoleOfB) == PolygonRelationship.AIsInsideHoleOfB)
                             relationship |= PolygonRelationship.InsideHole;
                     }
@@ -530,7 +517,7 @@ namespace TVGL.TwoDimensional
         /// Separated, SeparatedButEdgesTouch, SeparatedButVerticesTouch
         ///  </returns>
         private static PolygonRelationship GetSinglePolygonRelationshipAndIntersections(this Polygon subPolygonA, Polygon subPolygonB,
-            out List<SegmentIntersection> intersections, double tolerance)
+            out List<SegmentIntersection> intersections, double tolerance, out bool coincidentVertices, out bool coincidentEdges, out bool edgesCross)
         {
             intersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>();
@@ -539,7 +526,11 @@ namespace TVGL.TwoDimensional
             if (subPolygonA.MinX > subPolygonB.MaxX ||
                 subPolygonA.MaxX < subPolygonB.MinX ||
                 subPolygonA.MinY > subPolygonB.MaxY ||
-                subPolygonA.MaxY < subPolygonB.MinY) return PolygonRelationship.Separated;
+                subPolygonA.MaxY < subPolygonB.MinY)
+            {
+                coincidentEdges = coincidentVertices = edgesCross = false;
+                return PolygonRelationship.Separated;
+            }
             //Else, we need to check for intersections between all lines of the two
             // To avoid an n-squared check (all of A's lines with all of B's), we sort the lines by their XMin
             // value. Instead of directly sorting the Lines, which will have many repeat XMin values (since every
@@ -577,14 +568,17 @@ namespace TVGL.TwoDimensional
                                           // however inner polygons could exhibit difference values than the outer (consider edge case: nested squares). For example,
                                           // A encompasses B but a hole in B is smaller and fits inside hole of A. This should be registered as Intersecting
             {
+                coincidentEdges = coincidentVertices = edgesCross = false;
                 if (subPolygonA.HasABoundingBoxThatEncompasses(subPolygonB) && IsNonIntersectingPolygonInside(aLines, subPolygonB.OrderedXVertices, tolerance) == true)
-                    return subPolygonA.IsPositive ? PolygonRelationship.BIsCompletelyInsideA : PolygonRelationship.BIsInsideHoleOfA;
+                    return subPolygonA.IsPositive ? PolygonRelationship.BInsideA : PolygonRelationship.BIsInsideHoleOfA;
                 if (subPolygonB.HasABoundingBoxThatEncompasses(subPolygonA) && IsNonIntersectingPolygonInside(bLines, subPolygonA.OrderedXVertices, tolerance) == true)
-                    return subPolygonB.IsPositive ? PolygonRelationship.AIsCompletelyInsideB : PolygonRelationship.AIsInsideHoleOfB;
+                    return subPolygonB.IsPositive ? PolygonRelationship.AInsideB : PolygonRelationship.AIsInsideHoleOfB;
                 return PolygonRelationship.Separated;
             }
 
             RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
+            coincidentEdges = intersections.Any(intersection => intersection.CollinearityType != CollinearityTypes.None);
+            coincidentVertices = intersections.Any(intersection => intersection.WhereIntersection != WhereIsIntersection.Intermediate);
 
             var isEqual = true;
             foreach (var intersect in intersections)
@@ -595,8 +589,11 @@ namespace TVGL.TwoDimensional
                     break;
                 }
             }
-            if (isEqual) return PolygonRelationship.Equal;
-
+            if (isEqual)
+            {
+                edgesCross = false;
+                return PolygonRelationship.Equal;
+            }
             var isOpposite = true;
             foreach (var intersect in intersections)
             {
@@ -606,29 +603,31 @@ namespace TVGL.TwoDimensional
                     break;
                 }
             }
-            if (isOpposite) return PolygonRelationship.EqualButOpposite;
+            if (isOpposite)
+            {
+                edgesCross = false;
+                return PolygonRelationship.EqualButOpposite;
+            }
 
             if (intersections.Any(intersection => intersection.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
             intersection.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
             (intersection.Relationship == SegmentRelationship.DoubleOverlap && (subPolygonA.IsPositive || subPolygonB.IsPositive))))
-                return PolygonRelationship.Intersection | PolygonRelationship.EdgesCross;
+            {
+                edgesCross = true;
+                return PolygonRelationship.Intersection;
+            }
 
-            // given the previous comment, we can only reach this point if ALL intersections are of type NoOverlap or Enclose
-
-            var atLeastOneCoincidentEdge = intersections.Any(intersection => intersection.CollinearityType != CollinearityTypes.None);
 
             if (intersections.All(intersection => intersection.Relationship == SegmentRelationship.NoOverlap))
             {   // all intersections of  type, NoOverlap
+                edgesCross = false;
                 if (subPolygonA.IsPositive == subPolygonB.IsPositive)
-                    return atLeastOneCoincidentEdge ? PolygonRelationship.SeparatedButEdgesTouch
-                   : PolygonRelationship.SeparatedButVerticesTouch;
+                    return PolygonRelationship.Separated;
                 // then one is positive and the other is negative
                 if (subPolygonA.IsPositive) // therefore subPolygonB is a hole
-                    return atLeastOneCoincidentEdge ? PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
-                                       : PolygonRelationship.AIsInsideHoleOfBButVerticesTouch;
+                    return PolygonRelationship.AIsInsideHoleOfB;
                 else // then B is positive and A is a negative polygon/hole
-                    return atLeastOneCoincidentEdge ? PolygonRelationship.BIsInsideHoleOfABButEdgesTouch
-                                       : PolygonRelationship.BIsInsideHoleOfABButVerticesTouch;
+                    return PolygonRelationship.BIsInsideHoleOfA;
             }
 
             // given the previous conditions, we can only reach this point if ALL intersections are of type NoOverlap or Enclose
@@ -637,22 +636,21 @@ namespace TVGL.TwoDimensional
             var atLeastOneBEncloseA = intersections.Any(intersection => intersection.Relationship == SegmentRelationship.BEnclosesA);
 
             if (atLeastOneAEncloseB && atLeastOneBEncloseA)
-                return PolygonRelationship.Intersection | PolygonRelationship.EdgesCross;
-
+            {
+                edgesCross = true;
+                return PolygonRelationship.Intersection ;
+            }
+                edgesCross = false;
             if (subPolygonA.IsPositive != subPolygonB.IsPositive)
-                return atLeastOneCoincidentEdge ? PolygonRelationship.SeparatedButEdgesTouch
-               : PolygonRelationship.SeparatedButVerticesTouch;
-
+                return PolygonRelationship.Separated;
             // should "InsideHole" be included in the returns below? I don't think so. Since the previous condition failed, then both
             // are positive or both are negative. The implications of "inside hole" are only meaningful when the shallow polygons can be 
             // considered as non-overlapping. if both postive or both negative then there is overlap in their material
             if (subPolygonA.IsPositive == atLeastOneAEncloseB)
-                return atLeastOneCoincidentEdge ? PolygonRelationship.BIsInsideAButEdgesTouch
-                                   : PolygonRelationship.BIsInsideAButVerticesTouch;
+                return PolygonRelationship.BInsideA;
 
             //if (atLeastOneBEncloseA && subPolygonB.IsPositive)
-            return atLeastOneCoincidentEdge ? PolygonRelationship.AIsInsideBButEdgesTouch
-                               : PolygonRelationship.AIsInsideBButVerticesTouch;
+            return PolygonRelationship.AInsideB;
 
             //else throw new Exception("debug? no default polygon relationship found.")
         }
