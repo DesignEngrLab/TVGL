@@ -32,8 +32,8 @@ namespace TVGLUnitTestsAndBenchmarking
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("*").ToArray();
-            for (var i = 26; i < fileNames.Length - 0; i++)
+            var fileNames = dir.GetFiles("*").OrderBy(kjhgtfrden=>r.NextDouble()).ToArray();
+            for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -41,7 +41,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                Presenter.ShowAndHang(solid);
+                //Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)
                 {
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
@@ -49,33 +49,46 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 if (name.Contains("yCastin")) continue;
 
-                for (int j = 0; j < 3; j++)
+                for (int j = 0; j < 9; j++)
                 {
-                    var direction = Vector3.UnitVector((CartesianDirections)j);
+                    var direction = Vector3.UnitVector((CartesianDirections)(j %3));
                     //var direction = new Vector3(r100, r100, r100);
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
 
                     solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
                     var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
                     var xsection = solid.GetCrossSection(plane);
-                    Presenter.ShowAndHang(xsection);
                     var monoPolys = new List<Polygon>();
                     var error = false;
                     var totalArea = 0.0;
                     foreach (var monopoly in xsection.SelectMany(p => p.CreateXMonotonePolygons()))
                     {
                         monoPolys.Add(monopoly);
+                        totalArea += monopoly.Area;
                         var extremeVerts = monopoly.Vertices.Where(v =>
                             v.GetMonotonicityChange() == MonotonicityChange.X ||
                             v.GetMonotonicityChange() == MonotonicityChange.Both).ToList();
                         if (extremeVerts.Count != 2 ||
-  monopoly.MinX != Math.Min(extremeVerts[0].X, extremeVerts[1].X) ||
-  monopoly.MaxX != Math.Max(extremeVerts[0].X, extremeVerts[1].X))
+                            !monopoly.MinX.IsPracticallySame(Math.Min(extremeVerts[0].X, extremeVerts[1].X)) ||
+                            !monopoly.MaxX.IsPracticallySame(Math.Max(extremeVerts[0].X, extremeVerts[1].X)))
                             error = true;
-                    }
+                    else
+                    {
+                        Console.WriteLine("testing triangulation.");
+                        var triIndices = monopoly.Triangulate();
+                        var triArea = triIndices.Sum(tr=>tr.Select())
 
+                    }
                     //var triIndices = xsection[0].Triangulate();
                     //PlotTriangulation(xsection[0], triIndices);
+                    }
+
+                    if (error || !totalArea.IsPracticallySame(xsection.Sum(x => x.Area), 1e-5))
+                    {
+                        Console.WriteLine("Error in x-monotone polgon.");
+                        Presenter.ShowAndHang(xsection);
+                        Presenter.ShowAndHang(monoPolys);
+                    }
                 }
             }
 

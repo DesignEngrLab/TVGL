@@ -70,7 +70,7 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (_orderedXVertices == null || _orderedXVertices.Count != Vertices.Count)
-                    _orderedXVertices = Vertices.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
+                    _orderedXVertices = Vertices.OrderBy(v => v, new VertexSorter()).ToList();
                 return _orderedXVertices;
 
             }
@@ -443,7 +443,7 @@ namespace TVGL.TwoDimensional
                     _path.Add(p);
                 }
             }
-            if (_path.Count>1 && _path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
+            if (_path.Count > 1 && _path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
             Index = index;
             MakeVertices();
             MakeLineSegments();
@@ -604,6 +604,20 @@ namespace TVGL.TwoDimensional
             area = double.NaN;
             pathArea = double.NaN;
             perimeter = double.NaN;
+        }
+    }
+
+    internal class VertexSorter : IComparer<Vertex2D>
+    {
+        public VertexSorter()
+        {
+        }
+
+        public int Compare(Vertex2D v1, Vertex2D v2)
+        {
+            if (v1.X.IsPracticallySame(v2.X))
+                return (v1.Y < v2.Y) ? -1 : 1;
+            return (v1.X.IsLessThanNonNegligible(v2.X)) ? -1 : 1;
         }
     }
 }

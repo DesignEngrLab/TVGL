@@ -152,6 +152,7 @@ namespace TVGL.TwoDimensional
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
+            polygon = polygon.RemoveSelfIntersections(false, out _).LargestPolygon();
             if (!FindInternalDiagonalsForMonotone(polygon, out var connections))
                 throw new ArgumentException("There are duplicate points in the polygon. Please remove before calling " +
                     "this function.", nameof(polygon));
@@ -217,14 +218,14 @@ namespace TVGL.TwoDimensional
                 if (monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
-                    if (vertex.StartLine.Vector.X > 0 || vertex.EndLine.Vector.X > 0 ||
-                        (vertex.StartLine.Vector.X == 0 && vertex.EndLine.Vector.X == 0 && vertex.StartLine.Vector.Y > 0))
+                    if (vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() || vertex.EndLine.Vector.X.IsGreaterThanNonNegligible() ||  //headed in the positive x direction (enclosing along the bottom)
+                        (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.StartLine.Vector.Y.IsGreaterThanNonNegligible()))
                     {
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
                         edgeDatums.Add(vertex.StartLine, (vertex, false));
                     }
-                    else
+                    else // then headed in negative x direction (enclosing along the top)
                     {
                         PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
@@ -233,7 +234,8 @@ namespace TVGL.TwoDimensional
                 }
                 else if (cornerCross > 0) //then either start or end
                 {
-                    if (vertex.StartLine.Vector.X >= 0 && vertex.EndLine.Vector.X <= 0) // then start
+                    if ((vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible()) || // then start
+                        (vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.Y.IsLessThanNonNegligible()))
                         edgeDatums.Add(vertex.StartLine, (vertex, false));
                     else // then it's an end
                     {
@@ -243,16 +245,15 @@ namespace TVGL.TwoDimensional
                 }
                 else //then either split or merge
                 {
-                    if (vertex.StartLine.Vector.X >= 0 && vertex.EndLine.Vector.X <= 0) // then split
+                    if ((vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible()) || // then split
+                        (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible() && vertex.StartLine.Vector.Y.IsGreaterThanNonNegligible()))
                     {
                         PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
-                        MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
                         var helperVertex = edgeDatums[closestDatum].Item1;
                         AddNewConnection(connections, vertex, helperVertex);
                         AddNewConnection(connections, helperVertex, vertex);
                         edgeDatums[closestDatum] = (vertex, false);
                         edgeDatums[vertex.StartLine] = (vertex, false);
-
                     }
                     else //then it's a merge
                     {
@@ -267,7 +268,7 @@ namespace TVGL.TwoDimensional
             return true;
         }
 
-        private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> newEdgeDict,
+        private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> connections,
             Dictionary<PolygonEdge, (Vertex2D, bool)> edgeDatums, PolygonEdge datum, Vertex2D vertex)
         {
             var prevLineHelperData = edgeDatums[datum];
@@ -275,8 +276,8 @@ namespace TVGL.TwoDimensional
             var isMergePoint = prevLineHelperData.Item2;
             if (isMergePoint) //if this was a merge point
             {
-                AddNewConnection(newEdgeDict, vertex, helperVertex);
-                AddNewConnection(newEdgeDict, helperVertex, vertex);
+                AddNewConnection(connections, vertex, helperVertex);
+                AddNewConnection(connections, helperVertex, vertex);
             }
         }
 
@@ -303,21 +304,25 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static PolygonEdge FindClosestLowerDatum(IEnumerable<PolygonEdge> edges, Vector2 point)
+        private static PolygonEdge FindClosestLowerDatum(IEnumerable<PolygonEdge> edges, Vector2 point, double minfeasible = 0.0)
         {
+            var numEdges = 0;
             var closestDistance = double.PositiveInfinity;
             PolygonEdge closestEdge = null;
             foreach (var edge in edges)
             {
+                numEdges++;
                 var intersectionYValue = edge.FindYGivenX(point.X, out var betweenPoints);
                 if (!betweenPoints) continue;
                 var delta = point.Y - intersectionYValue;
-                if (delta >= 0 && delta < closestDistance)
+                if (delta >= minfeasible && delta < closestDistance)
                 {
                     closestDistance = delta;
                     closestEdge = edge;
                 }
             }
+
+            if (closestEdge == null && numEdges > 0) return FindClosestLowerDatum(edges, point, double.NegativeInfinity);
             return closestEdge;
         }
 
@@ -336,8 +341,8 @@ namespace TVGL.TwoDimensional
                     var index = currentIndices[i];
                     if (orderedListsOfVertices[i].Count <= index) continue;
                     var vertex = orderedListsOfVertices[i][index];
-                    if (vertex.X < lowestXValue ||
-                        (vertex.X == lowestXValue && vertex.Y < lowestYValue))
+                    if (vertex.X.IsLessThanNonNegligible(lowestXValue) ||
+                        (vertex.X.IsPracticallySame(lowestXValue) && vertex.Y < lowestYValue))
                     {
                         lowestXValue = vertex.X;
                         lowestYValue = vertex.Y;

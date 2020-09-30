@@ -818,45 +818,85 @@ namespace TVGL
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
+        /// <param name="tolerance">This tolerance is used to snap to the cartesian direction if the dot product is within this value.</param>
         /// <returns>System.Vector2.</returns>
-        public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform)
+        public static Matrix4x4 TransformToXYPlane(this Vector3 direction, out Matrix4x4 backTransform, double tolerance = Constants.BaseTolerance)
         {
-            if (direction.X.IsNegligible() && direction.Y.IsNegligible())
-            {
-                if (direction.Z > 0)
-                {
-                    backTransform = Matrix4x4.Identity;
-                    return Matrix4x4.Identity;
-                }
-                backTransform = new Matrix4x4(1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0);
-                return backTransform;
-            }
-            else if (direction.X.IsNegligible() && direction.Z.IsNegligible())
-            {
-                if (direction.Y > 0)
-                {
-                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0);
-                    return new Matrix4x4(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0);
-                }
-                backTransform = new Matrix4x4(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0);
-                return new Matrix4x4(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0);
-            }
-            else if (direction.Y.IsNegligible() && direction.Z.IsNegligible())
-            {
-                if (direction.X > 0)
-                {
-                    backTransform = new Matrix4x4(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0);
-                    return new Matrix4x4(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0);
-                }
-                backTransform = new Matrix4x4(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0);
-                return new Matrix4x4(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0);
-            }
+            var closestCartesianDirection = SnapDirectionToCartesian(direction, out var withinTolerance, tolerance);
+            if (withinTolerance)
+                return TransformToXYPlane(closestCartesianDirection, out backTransform);
+
             var zDir = direction.Normalize();
             var xDir = zDir.GetPerpendicularDirection();
             var yDir = zDir.Cross(xDir);
             backTransform = new Matrix4x4(xDir, yDir, zDir, Vector3.Zero);
             Matrix4x4.Invert(backTransform, out var forwardTransform);
             return forwardTransform;
+        }
+
+        /// <summary>
+        ///  Create a transforms from normal direction for 2D xy plane.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="backTransform">The back transform.</param>
+        /// <returns>System.Vector2.</returns>
+        public static Matrix4x4 TransformToXYPlane(this CartesianDirections direction, out Matrix4x4 backTransform)
+        {
+            switch (direction)
+            {
+                case CartesianDirections.XNegative:
+                    backTransform = new Matrix4x4(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0);
+                    return new Matrix4x4(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0);
+                case CartesianDirections.YNegative:
+                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0);
+                    return new Matrix4x4(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0);
+                case CartesianDirections.ZNegative:
+                    backTransform = new Matrix4x4(1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0);
+                    return backTransform;
+                case CartesianDirections.XPositive:
+                    backTransform = new Matrix4x4(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0);
+                    return new Matrix4x4(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0);
+                case CartesianDirections.YPositive:
+                    backTransform = new Matrix4x4(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0);
+                    return new Matrix4x4(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0);
+                case CartesianDirections.ZPositive:
+                    backTransform = Matrix4x4.Identity;
+                    return Matrix4x4.Identity;
+            }
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Snap Direction to Closest Cartesian Direction. 
+        /// </summary>
+        /// <param name="direction">The direction to convert.</param>
+        /// <param name="withinTolerance">To check if direction is within the optionally provided tolerance.</param>
+        /// <param name="tolerance">The optionally provided tolerance for the previous boolean (does not effect the determined direction).</param>
+        /// <returns></returns>
+        public static CartesianDirections SnapDirectionToCartesian(this Vector3 direction, out bool withinTolerance, double tolerance = double.NaN)
+        {
+            var xDot = direction.Dot(Vector3.UnitX);
+            var absXDot = Math.Abs(xDot);
+            var yDot = direction.Dot(Vector3.UnitY);
+            var absYDot = Math.Abs(yDot);
+            var zDot = direction.Dot(Vector3.UnitZ);
+            var absZDot = Math.Abs(zDot);
+
+            // X-direction
+            if (absXDot > absYDot && absXDot > absYDot)
+            {
+                withinTolerance = !double.IsNaN(tolerance) && absXDot.IsPracticallySame(1.0, tolerance);
+                return xDot > 0 ? CartesianDirections.XPositive : CartesianDirections.XNegative;
+            }
+            // Y-direction
+            if (absYDot > absXDot && absYDot > absZDot)
+            {
+                withinTolerance = !double.IsNaN(tolerance) && absYDot.IsPracticallySame(1.0, tolerance);
+                return yDot > 0 ? CartesianDirections.XPositive : CartesianDirections.YNegative;
+            }
+            // Z-direction
+            withinTolerance = !double.IsNaN(tolerance) && absZDot.IsPracticallySame(1.0, tolerance);
+            return zDot > 0 ? CartesianDirections.ZPositive : CartesianDirections.ZNegative;
         }
 
         public static Vector3 GetPerpendicularDirection(this Vector3 direction)
@@ -1392,7 +1432,7 @@ namespace TVGL
         }
 
         public static double DistancePointToLine(Vector2 qPoint, Vector2 lineRefPt, Vector2 lineVector,
-    out Vector2 pointOnLine)
+        out Vector2 pointOnLine)
         {
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p)
             * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */

@@ -56,12 +56,7 @@ namespace TVGL.TwoDimensional
                 polygons.AddRange(ArrangeOuterEdgesIntoPolygon(outerEdges, dot > 0, transform, linearTolerance, areaTolerance));
             }
             //Presenter.ShowAndHang(polygons);
-            return polygons.Union(PolygonCollection.PolygonWithHoles, linearTolerance)
-                .Aggregate((poly1, poly2) => poly1.Area > poly2.Area ? poly1 : poly2);
-                // the preceding use of "Aggregate" is a cryptic but quick trick to get the max using Linq. See: 
-                //https://stackoverflow.com/questions/3188693/how-can-i-get-linq-to-return-the-object-which-has-the-max-value-for-a-given-prop
-                // Union returns a collection of polygons, but we know that it should be one polygon with holes - since the tessellated solid
-                // was one body. Getting the max one makes sense since there may be smaller artifacts returned from the operation.
+            return polygons.Union(PolygonCollection.PolygonWithHoles, linearTolerance).LargestPolygon();
         }
 
         /// <summary>

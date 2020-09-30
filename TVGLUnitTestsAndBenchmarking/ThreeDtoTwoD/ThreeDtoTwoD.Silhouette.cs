@@ -12,7 +12,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public  static partial class TVGL3Dto2DTests
     {
-        static Random r = new Random();
+        static Random r = new Random(10);
         static double r100 => 200.0 * r.NextDouble() - 100.0;
 
         //[Fact]
