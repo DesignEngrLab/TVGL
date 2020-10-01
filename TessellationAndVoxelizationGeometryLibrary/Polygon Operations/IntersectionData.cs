@@ -34,17 +34,34 @@ namespace TVGL.TwoDimensional
             }
             this.polygonRelations = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
             this.IntersectionData = new List<SegmentIntersection>();
+            this.Relationship = PolygonRelationship.Separated;
         }
 
+        /// <summary>
+        /// Gets the relationship.
+        /// </summary>
+        /// <value>The relationship.</value>
         public PolygonRelationship Relationship { get; internal set; }
         public List<SegmentIntersection> IntersectionData { get; }
         private readonly PolygonRelationship[] polygonRelations;
         private readonly Dictionary<Polygon, int> subPolygonToInt;
         internal readonly int numPolygonsInA;
         internal readonly int numPolygonsInB;
-        public bool CoincidentEdges;
-        public bool EdgesCross;
-        public bool CoincidentVertices;
+        /// <summary>
+        /// Gets a value indicating whether [coincident edges].
+        /// </summary>
+        /// <value><c>true</c> if [coincident edges]; otherwise, <c>false</c>.</value>
+        public bool CoincidentEdges { get; internal set; }
+        /// <summary>
+        /// Gets a value indicating whether [edges cross].
+        /// </summary>
+        /// <value><c>true</c> if [edges cross]; otherwise, <c>false</c>.</value>
+        public bool EdgesCross { get; internal set; }
+        /// <summary>
+        /// Gets a value indicating whether [coincident vertices].
+        /// </summary>
+        /// <value><c>true</c> if [coincident vertices]; otherwise, <c>false</c>.</value>
+        public bool CoincidentVertices { get; internal set; }
 
 
         public IEnumerable<Polygon> AllPolygons
@@ -60,10 +77,39 @@ namespace TVGL.TwoDimensional
             var index = findLookupIndex(polygonA, polygonB);
             return polygonRelations[index];
         }
-        internal void SetRelationshipBetween(int index, PolygonRelationship polygonRelationship)
+        internal void SetRelationshipBetween(int index, PolygonRelationship newRel)
         {
-            //var index = findLookupIndex(polygonA, polygonB);
-            polygonRelations[index] = polygonRelationship;
+            polygonRelations[index] = newRel;
+            //Separated
+             //AInsideB
+             //AIsInsideHoleOfB
+             //BInsideA
+             //BIsInsideHoleOfA
+             //Intersection
+             //Equal
+             //EqualButOpposite
+            // okay need to compare all possibilities of the PolygonRelationship enum to itself
+            // there are 8 values so that 8 x 8 = 64 possibilities.
+            // let's see how this breaks down
+            if (this.Relationship == PolygonRelationship.Intersection) return;
+            // if already Intersection, then nothing to do (that's 8)
+            if (newRel == PolygonRelationship.Separated) return;
+            // if the newRel is Separated then no update as well (-7)
+            if (newRel == this.Relationship) return;
+            // if they're the same nothing to do (that 6 more since previous conditions would have caught 2 of these
+            // down to 43
+            if (newRel == PolygonRelationship.Intersection ||
+                ((newRel == PolygonRelationship.AInsideB || newRel == PolygonRelationship.AIsInsideHoleOfB) &&
+                (Relationship == PolygonRelationship.BInsideA || Relationship == PolygonRelationship.BIsInsideHoleOfA)) ||
+                ((Relationship == PolygonRelationship.AInsideB || Relationship == PolygonRelationship.AIsInsideHoleOfB) &&
+                (newRel == PolygonRelationship.BInsideA || newRel == PolygonRelationship.BIsInsideHoleOfA)))
+                this.Relationship = PolygonRelationship.Intersection;
+            // how many more pairs are these: 7 + 8....down to 28
+            else if (Relationship == PolygonRelationship.Separated)
+                Relationship = newRel; //6 more here (i think...not included newRel is Separated or Intersection
+            else if
+
+
         }
         internal int findLookupIndex(Polygon polygonA, Polygon polygonB)
         {
@@ -186,7 +232,5 @@ namespace TVGL.TwoDimensional
             return new PolygonInteractionRecord(Constants.SwitchAAndBPolygonRelationship(Relationship), newIntersections, newPolygonRelations, newSubPolygonToInt,
               numPolygonsInB, numPolygonsInA);
         }
-
-
     }
 }

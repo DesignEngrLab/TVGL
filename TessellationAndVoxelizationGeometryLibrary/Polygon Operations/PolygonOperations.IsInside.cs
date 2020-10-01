@@ -475,33 +475,23 @@ namespace TVGL.TwoDimensional
             if (visited[index]) return;
             var relationship = GetSinglePolygonRelationshipAndIntersections(polygonA, polygonB, out var localIntersections, tolerance, out var coincidentVertices,
                 out var coincidentEdges, out var edgesCross);
+            interactionRecord.SetRelationshipBetween(index, relationship);
+            interactionRecord.CoincidentEdges = interactionRecord.CoincidentEdges || coincidentEdges;
+            interactionRecord.CoincidentVertices = interactionRecord.CoincidentVertices || coincidentVertices;
+            interactionRecord.EdgesCross = interactionRecord.EdgesCross || edgesCross;
             interactionRecord.IntersectionData.AddRange(localIntersections);
             visited[index] = true;
             if (relationship != PolygonRelationship.Separated)
             {
                 if (relationship != PolygonRelationship.AInsideB &&
                     relationship != PolygonRelationship.AIsInsideHoleOfB)
-                {
                     foreach (var innerPolyA in polygonA.InnerPolygons)
-                    {
                         RecursePolygonInteractions(innerPolyA, polygonB, interactionRecord, visited, tolerance);
-                        if ((rel & PolygonRelationship.BIsInsideHoleOfA) == PolygonRelationship.BIsInsideHoleOfA)
-                            relationship |= PolygonRelationship.InsideHole;
-                    }
-                }
                 if (relationship != PolygonRelationship.BInsideA &&
                 relationship != PolygonRelationship.BIsInsideHoleOfA)
-                {
                     foreach (var innerPolyB in polygonB.InnerPolygons)
-                    {
-                         RecursePolygonInteractions(polygonA, innerPolyB, interactionRecord, visited, tolerance);
-                        if ((rel & PolygonRelationship.AIsInsideHoleOfB) == PolygonRelationship.AIsInsideHoleOfB)
-                            relationship |= PolygonRelationship.InsideHole;
-                    }
-                }
+                        RecursePolygonInteractions(polygonA, innerPolyB, interactionRecord, visited, tolerance);
             }
-            interactionRecord.SetRelationshipBetween(index, relationship);
-            return relationship;
         }
 
 
@@ -638,9 +628,9 @@ namespace TVGL.TwoDimensional
             if (atLeastOneAEncloseB && atLeastOneBEncloseA)
             {
                 edgesCross = true;
-                return PolygonRelationship.Intersection ;
+                return PolygonRelationship.Intersection;
             }
-                edgesCross = false;
+            edgesCross = false;
             if (subPolygonA.IsPositive != subPolygonB.IsPositive)
                 return PolygonRelationship.Separated;
             // should "InsideHole" be included in the returns below? I don't think so. Since the previous condition failed, then both
