@@ -2747,17 +2747,8 @@ namespace TVGL
         /// <param name="p"></param>
         /// <param name="returnSharedPointAsInside"></param>
         /// <returns></returns>
-        public static bool IsPointInsidePolygon(PolygonLight polygon, PointLight p, bool returnSharedPointAsInside = false)
+        public static bool IsPointInsidePolygon(PolygonLight polygon, PointLight p)
         {
-            //Check if the point is the same as any of the polygon's points
-            foreach (var point in polygon.Path)
-            {
-                if (point.X.IsPracticallySame(p.X) && point.Y.IsPracticallySame(p.Y))
-                {
-                    return returnSharedPointAsInside;
-                }
-            }
-
             //1) Check if center point is within bounding box of each polygon
             if (!p.X.IsLessThanNonNegligible(polygon.MaxX) ||
                 !p.X.IsGreaterThanNonNegligible(polygon.MinX) ||
@@ -2794,9 +2785,9 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="p"></param>
-        public static bool IsPointInsidePolygon(List<Point> path, Point point, bool returnSharedPointAsInside = false)
+        public static bool IsPointInsidePolygon(List<Point> path, Point point)
         {
-            return IsPointInsidePolygon(path.Select(p => p.Light).ToList(), new PointLight(point.X, point.Y), returnSharedPointAsInside);
+            return IsPointInsidePolygon(path.Select(p => p.Light).ToList(), new PointLight(point.X, point.Y));
         }
 
         /// <summary>
