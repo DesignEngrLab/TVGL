@@ -158,17 +158,17 @@ namespace TVGL
             return -1;
         }
 
-        internal static PolygonRelationship SwitchAAndBPolygonRelationship(this PolygonRelationship relationship)
+        internal static PolyRelInternal SwitchAAndBPolygonRelationship(this PolyRelInternal relationship)
         {
-            if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.AInsideB)
+            if ((relationship & PolyRelInternal.Intersection) == PolyRelInternal.AInsideB)
             {
-                relationship |= PolygonRelationship.BInsideA;
-                relationship &= ~PolygonRelationship.AInsideB;
+                relationship |= PolyRelInternal.BInsideA;
+                relationship &= ~PolyRelInternal.AInsideB;
             }
-            else if ((relationship & PolygonRelationship.Intersection) == PolygonRelationship.BInsideA)
+            else if ((relationship & PolyRelInternal.Intersection) == PolyRelInternal.BInsideA)
             {
-                relationship |= PolygonRelationship.AInsideB;
-                relationship &= ~PolygonRelationship.BInsideA;
+                relationship |= PolyRelInternal.AInsideB;
+                relationship &= ~PolyRelInternal.BInsideA;
             }
             return relationship;
         }
@@ -718,35 +718,69 @@ namespace TVGL
     /// <summary>
     /// Enum PolygonRelationship
     /// </summary>
+    [Flags]
+    internal enum PolyRelInternal
+    {
+        Separated = 0,
+        EdgesCross = 1,
+        CoincidentEdges = 2,
+        CoincidentVertices = 4,
+        InsideHole = 8,
+        AInsideB = 16,
+        BInsideA = 32,
+        Intersection = AInsideB | BInsideA,
+        Equal = 64,
+        EqualButOpposite = 128
+    }
+
+    /// <summary>
+    /// Enum PolygonRelationship
+    /// </summary>
+    [Flags]
     public enum PolygonRelationship
     {
-        // first when two polygons are separated 
+        /// <summary>
+        /// The separated
+        /// </summary>
         Separated = 0,
-
-        // A is inside B
-        AInsideB,
-        AIsInsideHoleOfB,
-
-        // B is inside A
-        BInsideA,
-        BIsInsideHoleOfA,
-
-        // Intersection is inside A
-        Intersection,
-
-        //Equal
+        /// <summary>
+        /// a inside b
+        /// </summary>
+        AInsideB = 16,
+        /// <summary>
+        /// a is inside hole of b
+        /// </summary>
+        AIsInsideHoleOfB = 24,
+        /// <summary>
+        /// The b inside a
+        /// </summary>
+        BInsideA = 32,
+        /// <summary>
+        /// The b is inside hole of a
+        /// </summary>
+        BIsInsideHoleOfA = 40,
+        /// <summary>
+        /// The intersection
+        /// </summary>
+        Intersection = 48,
+        /// <summary>
+        /// The equal
+        /// </summary>
         Equal = 64,
+        /// <summary>
+        /// The equal but opposite
+        /// </summary>
         EqualButOpposite = 128
     }
 
     public enum SegmentRelationship
     {
-        NoOverlap, 
+        NoOverlap,
         DoubleOverlap,
-        BEnclosesA, 
+        BEnclosesA,
         AEnclosesB,
         CrossOver_BOutsideAfter,
-        CrossOver_AOutsideAfter, 
+        CrossOver_AOutsideAfter,
     }
     public enum CollinearityTypes
     {

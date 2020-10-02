@@ -97,7 +97,7 @@ namespace TVGL.TwoDimensional
             // a hole is effectively removed
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
         {
             newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }

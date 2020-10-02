@@ -61,19 +61,19 @@ namespace TVGL.TwoDimensional
                 foreach (var polyB in polygonB.AllPolygons)
                 {
                     var rel = interaction.GetRelationshipBetween(polyA, polyB);
-                    if ((rel & (PolygonRelationship.EdgesCross | PolygonRelationship.CoincidentEdges
-                        | PolygonRelationship.CoincidentVertices)) != 0b0)
+                    if ((rel & (PolyRelInternal.EdgesCross | PolyRelInternal.CoincidentEdges
+                        | PolyRelInternal.CoincidentVertices)) != 0b0)
                     {
                         nonIntersectingASubPolygons.Remove(polyA);
                         nonIntersectingBSubPolygons.Remove(polyB);
                     }
-                    else if (rel == PolygonRelationship.Equal)
+                    else if ((rel & PolyRelInternal.Equal) != 0b0)
                     {
                         nonIntersectingASubPolygons.Remove(polyA);
                         nonIntersectingBSubPolygons.Remove(polyB);
                         HandleIdenticalPolygons(polyA, newPolygons, false);
                     }
-                    else if (rel == PolygonRelationship.EqualButOpposite)
+                    else if ((rel & PolyRelInternal.EqualButOpposite) != 0b0)
                     {
                         nonIntersectingASubPolygons.Remove(polyA);
                         nonIntersectingBSubPolygons.Remove(polyB);
@@ -282,7 +282,7 @@ namespace TVGL.TwoDimensional
            PolygonEdge currentEdge, PolygonEdge startingEdge);
 
         protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
-            IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB);
+            IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB);
 
         /// <summary>
         /// Handles identical polygons. In this case subPolygon is always on polygonA and the duplicated is in polygonB

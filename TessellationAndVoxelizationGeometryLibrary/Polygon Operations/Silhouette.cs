@@ -259,8 +259,8 @@ namespace TVGL.TwoDimensional
             {
                 if (!poly.HasABoundingBoxThatEncompasses(hole)) continue;
                 var interaction = poly.GetPolygonInteraction(hole, tolerance);
-                if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA &&
-                    interaction.GetRelationships(hole).Skip(1).All(r => r.Item1 == PolygonRelationship.Separated))
+                if (interaction.Relationship == PolygonRelationship.BInsideA &&
+                    interaction.GetRelationships(hole).Skip(1).All(r => r.Item1 == PolyRelInternal.Separated))
                 {
                     enclosingPolygon = poly;
                     break;

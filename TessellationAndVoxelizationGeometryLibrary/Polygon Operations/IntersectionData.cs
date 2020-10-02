@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace TVGL.TwoDimensional
@@ -10,7 +11,7 @@ namespace TVGL.TwoDimensional
     public class PolygonInteractionRecord
     {
         private PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<SegmentIntersection> intersections,
-             PolygonRelationship[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB)
+             PolyRelInternal[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB)
         {
             this.Relationship = topLevelRelationship;
             this.IntersectionData = intersections;
@@ -32,7 +33,7 @@ namespace TVGL.TwoDimensional
                     subPolygonToInt.Add(polyB, index++);
                 this.numPolygonsInB = index - numPolygonsInA;
             }
-            this.polygonRelations = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
+            this.polygonRelations = new PolyRelInternal[numPolygonsInA * numPolygonsInB];
             this.IntersectionData = new List<SegmentIntersection>();
             this.Relationship = PolygonRelationship.Separated;
         }
@@ -43,7 +44,7 @@ namespace TVGL.TwoDimensional
         /// <value>The relationship.</value>
         public PolygonRelationship Relationship { get; internal set; }
         public List<SegmentIntersection> IntersectionData { get; }
-        private readonly PolygonRelationship[] polygonRelations;
+        private readonly PolyRelInternal[] polygonRelations;
         private readonly Dictionary<Polygon, int> subPolygonToInt;
         internal readonly int numPolygonsInA;
         internal readonly int numPolygonsInB;
@@ -72,46 +73,83 @@ namespace TVGL.TwoDimensional
                     yield return polygon;
             }
         }
-        public PolygonRelationship GetRelationshipBetween(Polygon polygonA, Polygon polygonB)
+        internal PolyRelInternal GetRelationshipBetween(Polygon polygonA, Polygon polygonB)
         {
             var index = findLookupIndex(polygonA, polygonB);
             return polygonRelations[index];
         }
-        internal void SetRelationshipBetween(int index, PolygonRelationship newRel)
+        internal void SetRelationshipBetween(int index, PolyRelInternal newRel)
         {
             polygonRelations[index] = newRel;
             //Separated
-             //AInsideB
-             //AIsInsideHoleOfB
-             //BInsideA
-             //BIsInsideHoleOfA
-             //Intersection
-             //Equal
-             //EqualButOpposite
+            //AInsideB
+            //AIsInsideHoleOfB
+            //BInsideA
+            //BIsInsideHoleOfA
+            //Intersection
+            //Equal
+            //EqualButOpposite
             // okay need to compare all possibilities of the PolygonRelationship enum to itself
             // there are 8 values so that 8 x 8 = 64 possibilities.
             // let's see how this breaks down
             if (this.Relationship == PolygonRelationship.Intersection) return;
             // if already Intersection, then nothing to do (that's 8)
-            if (newRel == PolygonRelationship.Separated) return;
+            if (newRel == PolyRelInternal.Separated) return;
             // if the newRel is Separated then no update as well (-7)
-            if (newRel == this.Relationship) return;
-            // if they're the same nothing to do (that 6 more since previous conditions would have caught 2 of these
+
+            if ((int)newRel == (int)Relationship) return;
+            // if they're the same then nothing to do (that's 6 more since previous conditions would have caught 2 of these
             // down to 43
-            if (newRel == PolygonRelationship.Intersection ||
-                ((newRel == PolygonRelationship.AInsideB || newRel == PolygonRelationship.AIsInsideHoleOfB) &&
+            if (newRel == PolyRelInternal.Intersection ||
+                ((newRel == PolyRelInternal.AInsideB || newRel == (PolyRelInternal.AInsideB|PolyRelInternal.InsideHole)) &&
                 (Relationship == PolygonRelationship.BInsideA || Relationship == PolygonRelationship.BIsInsideHoleOfA)) ||
                 ((Relationship == PolygonRelationship.AInsideB || Relationship == PolygonRelationship.AIsInsideHoleOfB) &&
-                (newRel == PolygonRelationship.BInsideA || newRel == PolygonRelationship.BIsInsideHoleOfA)))
+                (newRel == PolyRelInternal.BInsideA || newRel == (PolyRelInternal.BInsideA | PolyRelInternal.InsideHole))))
                 this.Relationship = PolygonRelationship.Intersection;
             // how many more pairs are these: 7 + 8....down to 28
             else if (Relationship == PolygonRelationship.Separated)
-                Relationship = newRel; //6 more here (i think...not included newRel is Separated or Intersection
-            else if
-
-
+                Relationship = (PolygonRelationship)(int)newRel; //6 more here (i think...not included newRel is Separated or Intersection
+            else if (newRel == PolyRelInternal.Equal) return; // current Relationship would be more descriptive
+            // so finding out that a subpolygon in Equal doesn't change anything (that 5 more cases)
+            else if (newRel == PolyRelInternal.EqualButOpposite)
+            {
+                if (Relationship == PolygonRelationship.BInsideA)
+                    Relationship = PolygonRelationship.BIsInsideHoleOfA;
+                if (Relationship == PolygonRelationship.AInsideB)
+                    Relationship = PolygonRelationship.AIsInsideHoleOfB;
+                // really need to check the new EqualButOpposite with AInsideB, AIsInsideHoleOfB, BInsideA,
+                // BIsInsideHoleOfA, & Equal (so that's 5 additional cases) but the above two subcases are the
+                // only ways this can ever happen, right?
+            }
+            // there are 12 left, all of which are either impossible or have no effect (I think). These are listed below. 
+            // The first 4 are possible and we need to be careful if the outer positive polygons match, then when we compare
+            // the inner hole of A to the outer of B, we will get the first condition below, but we don't want to change the 
+            // full Relationship unless we are sure it's not identical. This requires us to have one more function at the end
+            // which is DefineOverallInteractionFromFinalListOfSubInteractions
+            //R = Equal , Nrel = AInsideB
+            //R = Equal , Nrel = AIsInsideHoleOfB
+            //R = Equal , Nrel = BInsideA
+            //R = Equal , Nrel = BIsInsideHoleOfA
+            //R = AIsInsideHoleOfB , Nrel = AInsideB
+            //R = AInsideB , Nrel = AIsInsideHoleOfB
+            //R = BIsInsideHoleOfA , Nrel = BInsideA
+            //R = BInsideA , Nrel = BIsInsideHoleOfA
+            //R = EqualButOpposite , Nrel = AInsideB
+            //R = EqualButOpposite , Nrel = AIsInsideHoleOfB
+            //R = EqualButOpposite , Nrel = BInsideA
+            //R = EqualButOpposite , Nrel = BIsInsideHoleOfA
+            return;
         }
-        internal int findLookupIndex(Polygon polygonA, Polygon polygonB)
+        internal void DefineOverallInteractionFromFinalListOfSubInteractions()
+        {
+            CoincidentEdges = polygonRelations.Any(pr => (pr & PolyRelInternal.CoincidentEdges)!=0b0);
+            EdgesCross = polygonRelations.Any(pr => (pr & PolyRelInternal.EdgesCross) != 0b0);
+            CoincidentVertices = polygonRelations.Any(pr => (pr & PolyRelInternal.CoincidentVertices) != 0b0);
+
+            now set the equals if direct 1-to1 match
+        }
+
+    internal int findLookupIndex(Polygon polygonA, Polygon polygonB)
         {
             var indexA = subPolygonToInt[polygonA];
             var indexB = subPolygonToInt[polygonB];
@@ -119,7 +157,7 @@ namespace TVGL.TwoDimensional
                 ? numPolygonsInA * (indexB - numPolygonsInA) + indexA
                 : numPolygonsInA * (indexA - numPolygonsInA) + indexB;
         }
-        public IEnumerable<(PolygonRelationship, bool)> GetRelationships(Polygon polygon)
+        internal IEnumerable<(PolyRelInternal, bool)> GetRelationships(Polygon polygon)
         {
             var index = subPolygonToInt[polygon];
             if (index < numPolygonsInA)
@@ -213,7 +251,7 @@ namespace TVGL.TwoDimensional
                         newSubPolygonToInt.Add(newPolyEnumerator.Current, keyValuePair.Value);
                     }
                 }
-                return new PolygonInteractionRecord(Relationship, newIntersections, (PolygonRelationship[])polygonRelations.Clone(), newSubPolygonToInt,
+                return new PolygonInteractionRecord(Relationship, newIntersections, (PolyRelInternal[])polygonRelations.Clone(), newSubPolygonToInt,
                     numPolygonsInA, numPolygonsInB);
             }
             var index = 0;
@@ -225,12 +263,14 @@ namespace TVGL.TwoDimensional
             foreach (var newpoly in polygon.AllPolygons)
                 newSubPolygonToInt.Add(newpoly, index++);
 
-            var newPolygonRelations = new PolygonRelationship[numPolygonsInA * numPolygonsInB];
+            var newPolygonRelations = new PolyRelInternal[numPolygonsInA * numPolygonsInB];
             for (int i = 0; i < numPolygonsInA; i++)
                 for (int j = 0; j < numPolygonsInB; j++)
                     newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
-            return new PolygonInteractionRecord(Constants.SwitchAAndBPolygonRelationship(Relationship), newIntersections, newPolygonRelations, newSubPolygonToInt,
+            return new PolygonInteractionRecord((PolygonRelationship)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship), 
+                newIntersections, newPolygonRelations, newSubPolygonToInt,
               numPolygonsInB, numPolygonsInA);
         }
+
     }
 }

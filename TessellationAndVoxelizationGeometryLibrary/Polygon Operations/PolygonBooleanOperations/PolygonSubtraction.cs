@@ -21,7 +21,7 @@ namespace TVGL.TwoDimensional
         }
 
         protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
-            IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
+            IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
         {
             // the possibilities are AInsideB, BInsideA, or Separated
             using var enumerator = relationships.GetEnumerator();
@@ -31,7 +31,7 @@ namespace TVGL.TwoDimensional
                 {
                     var rel = enumerator.Current.Item1;
                     var otherIsPositive = enumerator.Current.Item2;
-                    if ((rel & PolygonRelationship.BInsideA) != 0b0 != otherIsPositive)   // either 1) B is inside of A and B is negative (well, originally positive) or 2) A is inside B and B is positive (originally negative)
+                    if ((rel & PolyRelInternal.BInsideA) != 0b0 != otherIsPositive)   // either 1) B is inside of A and B is negative (well, originally positive) or 2) A is inside B and B is positive (originally negative)
                     {
                         newPolygons.Add(subPolygon.Copy(false, false));
                         return;
@@ -44,7 +44,7 @@ namespace TVGL.TwoDimensional
                 {
                     var rel = enumerator.Current.Item1;
                     var otherIsPositive = enumerator.Current.Item2;
-                    if ((rel & PolygonRelationship.BInsideA) != 0b0 != otherIsPositive)  // either 1) B is inside of A and A is negative or 2) A is inside B and
+                    if ((rel & PolyRelInternal.BInsideA) != 0b0 != otherIsPositive)  // either 1) B is inside of A and A is negative or 2) A is inside B and
                         // A is positive then just return
                         return;
                 }

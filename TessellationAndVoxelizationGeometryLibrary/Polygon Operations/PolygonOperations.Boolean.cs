@@ -90,17 +90,13 @@ namespace TVGL.TwoDimensional
                 for (int j = i - 1; j >= 0; j--)
                 {
                     var interaction = GetPolygonInteraction(polygonList[i], polygonList[j], tolerance);
-                    if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA
-                        || interaction.Relationship == PolygonRelationship.BIsInsideAButEdgesTouch
-                        || interaction.Relationship == PolygonRelationship.BIsInsideAButVerticesTouch
+                    if (interaction.Relationship == PolygonRelationship.BInsideA
                         || interaction.Relationship == PolygonRelationship.Equal)
                     {  // remove polygon B
                         polygonList.RemoveAt(j);
                         i--;
                     }
-                    else if (interaction.Relationship == PolygonRelationship.AIsCompletelyInsideB
-                        || interaction.Relationship == PolygonRelationship.AIsInsideBButEdgesTouch
-                        || interaction.Relationship == PolygonRelationship.AIsInsideBButVerticesTouch)
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
                     {                            // remove polygon A
                         polygonList.RemoveAt(i);
                         break; // to stop the inner loop
@@ -163,19 +159,11 @@ namespace TVGL.TwoDimensional
             switch (interaction.Relationship)
             {
                 case PolygonRelationship.Separated:
-                case PolygonRelationship.SeparatedButVerticesTouch:
-                case PolygonRelationship.SeparatedButEdgesTouch:
                 case PolygonRelationship.AIsInsideHoleOfB:
-                case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
-                case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
                 case PolygonRelationship.BIsInsideHoleOfA:
-                case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
-                case PolygonRelationship.BIsInsideHoleOfABButEdgesTouch:
                     return new List<Polygon>();
 
-                case PolygonRelationship.BIsCompletelyInsideA:
-                case PolygonRelationship.BIsInsideAButVerticesTouch:
-                case PolygonRelationship.BIsInsideAButEdgesTouch:
+                case PolygonRelationship.BInsideA:
                     if (polygonB.IsPositive) return new List<Polygon> { polygonB.Copy(true, false) };
                     else
                     {
@@ -183,9 +171,7 @@ namespace TVGL.TwoDimensional
                         polygonACopy.AddInnerPolygon(polygonB.Copy(true, false));
                         return new List<Polygon> { polygonACopy };
                     }
-                case PolygonRelationship.AIsCompletelyInsideB:
-                case PolygonRelationship.AIsInsideBButVerticesTouch:
-                case PolygonRelationship.AIsInsideBButEdgesTouch:
+                case PolygonRelationship.AInsideB:
                     if (polygonA.IsPositive) return new List<Polygon> { polygonA.Copy(true, false) };
                     else
                     {
@@ -217,25 +203,15 @@ namespace TVGL.TwoDimensional
                 {
                     var interaction = GetPolygonInteraction(polygonList[i], polygonList[j], tolerance);
                     if (interaction.Relationship == PolygonRelationship.Separated
-                        || interaction.Relationship == PolygonRelationship.SeparatedButVerticesTouch
-                        || interaction.Relationship == PolygonRelationship.SeparatedButEdgesTouch
                         || interaction.Relationship == PolygonRelationship.AIsInsideHoleOfB
-                        || interaction.Relationship == PolygonRelationship.AIsInsideHoleOfBButVerticesTouch
-                        || interaction.Relationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
-                        || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfA
-                        || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfABButVerticesTouch
-                        || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch)
+                        || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfA)
                         return new List<Polygon>();
-                    else if (interaction.Relationship == PolygonRelationship.BIsCompletelyInsideA
-                        || interaction.Relationship == PolygonRelationship.BIsInsideAButVerticesTouch
-                        || interaction.Relationship == PolygonRelationship.BIsInsideAButEdgesTouch)
+                    else if (interaction.Relationship == PolygonRelationship.BInsideA)
                     {                            // remove polygon A
                         polygonList.RemoveAt(i);
                         break; // to stop the inner loop
                     }
-                    else if (interaction.Relationship == PolygonRelationship.AIsCompletelyInsideB
-                        || interaction.Relationship == PolygonRelationship.AIsInsideBButVerticesTouch
-                        || interaction.Relationship == PolygonRelationship.AIsInsideBButEdgesTouch)
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
                     {  // remove polygon B
                         polygonList.RemoveAt(j);
                         i--;
@@ -333,24 +309,16 @@ namespace TVGL.TwoDimensional
             switch (interaction.Relationship)
             {
                 case PolygonRelationship.Separated:
-                case PolygonRelationship.SeparatedButVerticesTouch:
-                case PolygonRelationship.SeparatedButEdgesTouch:
                 case PolygonRelationship.BIsInsideHoleOfA:
-                case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
-                case PolygonRelationship.BIsInsideHoleOfABButEdgesTouch:
                 case PolygonRelationship.AIsInsideHoleOfB:
-                case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
-                case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
                     return new List<Polygon> { polygonA.Copy(true, false) };
 
-                case PolygonRelationship.BIsCompletelyInsideA:
+                case PolygonRelationship.BInsideA:
                     var polygonACopy = polygonA.Copy(true, false);
                     polygonACopy.AddInnerPolygon(polygonB.Copy(true, true));
                     return new List<Polygon> { polygonACopy };
 
-                case PolygonRelationship.AIsCompletelyInsideB:
-                case PolygonRelationship.AIsInsideBButVerticesTouch:
-                case PolygonRelationship.AIsInsideBButEdgesTouch:
+                case PolygonRelationship.AInsideB:
                     return new List<Polygon>();
 
                 default:
@@ -398,30 +366,24 @@ namespace TVGL.TwoDimensional
             switch (interactionRecord.Relationship)
             {
                 case PolygonRelationship.Separated:
-                case PolygonRelationship.SeparatedButVerticesTouch:
-                case PolygonRelationship.SeparatedButEdgesTouch:
                 case PolygonRelationship.BIsInsideHoleOfA:
-                case PolygonRelationship.BIsInsideHoleOfABButVerticesTouch:
-                case PolygonRelationship.BIsInsideHoleOfABButEdgesTouch:
                 case PolygonRelationship.AIsInsideHoleOfB:
-                case PolygonRelationship.AIsInsideHoleOfBButVerticesTouch:
-                case PolygonRelationship.AIsInsideHoleOfBButEdgesTouch:
                     return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
 
-                case PolygonRelationship.BIsCompletelyInsideA:
+                case PolygonRelationship.BInsideA:
                     var polygonACopy1 = polygonA.Copy(true, false);
                     polygonACopy1.AddInnerPolygon(polygonB.Copy(true, true));
                     return new List<Polygon> { polygonACopy1 };
 
-                case PolygonRelationship.AIsCompletelyInsideB:
+                case PolygonRelationship.AInsideB:
                     var polygonBCopy2 = polygonB.Copy(true, false);
                     polygonBCopy2.AddInnerPolygon(polygonA.Copy(true, true));
                     return new List<Polygon> { polygonBCopy2 };
                 //case PolygonRelationship.Intersect:
-                //case PolygonRelationship.AIsInsideBButVerticesTouch:
-                //case PolygonRelationship.AIsInsideBButEdgesTouch:
-                //case PolygonRelationship.BIsInsideAButVerticesTouch:
-                //case PolygonRelationship.BIsInsideAButEdgesTouch:
+                case PolygonRelationship.AIsInsideBButVerticesTouch:
+                case PolygonRelationship.AIsInsideBButEdgesTouch:
+                case PolygonRelationship.BIsInsideAButVerticesTouch:
+                case PolygonRelationship.BIsInsideAButEdgesTouch:
                 default:
                     polygonSubtraction ??= new PolygonSubtraction();
                     var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, false, tolerance);

@@ -105,14 +105,14 @@ namespace TVGL.TwoDimensional
         }
 
         protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
-            IEnumerable<(PolygonRelationship, bool)> relationships, bool partOfPolygonB)
+            IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
         {
             using var enumerator = relationships.GetEnumerator();
             enumerator.MoveNext();
             var rel = enumerator.Current.Item1;
-            if (rel < PolygonRelationship.AInsideB ||  //separated
-                (!partOfPolygonB && (rel & PolygonRelationship.BInsideA) != 0b0) || //subPolygon is part of A and it encompasses the B (BInsideA)
-                (partOfPolygonB && (rel & PolygonRelationship.AInsideB) != 0b0)) //subPolygon is part of B and it encompasses the A (AInsideB)
+            if (rel < PolyRelInternal.AInsideB ||  //separated
+                (!partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0) || //subPolygon is part of A and it encompasses the B (BInsideA)
+                (partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0)) //subPolygon is part of B and it encompasses the A (AInsideB)
                 //  whether positive or negative - it is included
                 newPolygons.Add(subPolygon.Copy(false, false));
             else
@@ -120,8 +120,8 @@ namespace TVGL.TwoDimensional
                 while (enumerator.MoveNext())
                 {
                     rel = enumerator.Current.Item1;
-                    if ((!partOfPolygonB && (rel & PolygonRelationship.AInsideB) != 0b0) ||
-                        (partOfPolygonB && (rel & PolygonRelationship.BInsideA) != 0b0))
+                    if ((!partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0) ||
+                        (partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0))
                     {
                         newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negatie as a negative
                         return;                                                               // otherwise, the polygon has no effect since it is a subset of the other
