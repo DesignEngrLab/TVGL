@@ -20,6 +20,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 using TVGL.IOFunctions.threemfclasses;
+using TVGL.Numerics;
 using Object = TVGL.IOFunctions.threemfclasses.Object;
 
 namespace TVGL.IOFunctions
@@ -156,11 +157,11 @@ namespace TVGL.IOFunctions
         }
 
         private IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid,
-            double[,] transformMatrix, string name)
+            Matrix4x4 transformMatrix, string name)
         {
             var solid = resources.objects.First(obj => obj.id == objectid);
             var result = TessellatedSolidsFromObject(solid, name);
-            if (transformMatrix != null)
+            if (!transformMatrix.IsNull())
                 foreach (var ts in result)
                     ts.Transform(transformMatrix);
             return result;
@@ -196,7 +197,7 @@ namespace TVGL.IOFunctions
                     if (defaultColorXml != null) defaultColor = defaultColorXml.color;
                 }
             }
-            var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
+            var verts = mesh.vertices.Select(v => new Vector3(v.x, v.y, v.z)).ToList();
 
             Color[] colors = null;
             var uniformColor = true;
@@ -224,9 +225,8 @@ namespace TVGL.IOFunctions
             else
                 for (var j = 0; j < numTriangles; j++)
                     if (colors[j] == null) colors[j] = defaultColor;
-            return new TessellatedSolid(verts,
-                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors, Units,
-                name, FileName, Comments, Language);
+            return new TessellatedSolid(verts, mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
+                mesh.triangles.Count <= Constants.MaxNumberFacesDefaultFullTS, colors, Units, name, FileName, Comments, Language);
         }
 
         /// <summary>

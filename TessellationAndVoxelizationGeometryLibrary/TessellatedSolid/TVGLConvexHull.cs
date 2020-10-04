@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
-using StarMathLib;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -56,17 +56,16 @@ namespace TVGL
                 var checksum = orderedIndices.Select((t, j) => t * checkSumMultipliers[j]).Sum();
                 if (alreadyCreatedFaces.Contains(checksum)) continue;
                 alreadyCreatedFaces.Add(checksum);
-                convexHullFaceList.Add(new PolygonalFace(faceVertices, cvxFace.Normal, false));
+                convexHullFaceList.Add(new PolygonalFace(faceVertices, new Vector3(cvxFace.Normal), false));
             }
             Faces = convexHullFaceList.ToArray();
             Edges = MakeEdges(Faces, Vertices);
-            TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+            TessellatedSolid.CalculateVolumeAndCenter(Faces, out Volume, out Center);
         }
 
 
         internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
-            IList<int> convexHullFaceIndices, double[] center = null, double volume = double.NaN,
-            double surfaceArea = double.NaN)
+            IList<int> convexHullFaceIndices)
         {
             Vertices = convexHullPoints.ToArray();
             var numCvxHullFaces = convexHullFaceIndices.Count / 3;
@@ -92,14 +91,8 @@ namespace TVGL
                 Faces[i] = new PolygonalFace(faceVertices, false);
             }
             Edges = MakeEdges(Faces, Vertices);
-            if (center == null || double.IsNaN(volume) || double.IsNaN(surfaceArea))
-                TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
-            else
-            {
-                Center = center;
-                Volume = volume;
-                SurfaceArea = surfaceArea;
-            }
+            SurfaceArea = Faces.Sum(face => face.Area);
+            TessellatedSolid.CalculateVolumeAndCenter(Faces, out Volume, out Center);
         }
 
         private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)
@@ -144,7 +137,7 @@ namespace TVGL
         /// <summary>
         ///     The center
         /// </summary>
-        public readonly double[] Center;
+        public readonly Vector3 Center;
 
         /// <summary>
         ///     The volume of the Convex Hull.

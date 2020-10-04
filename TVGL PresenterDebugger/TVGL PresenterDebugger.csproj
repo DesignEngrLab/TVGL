@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>TVGL_PresenterDebugger</RootNamespace>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Numerics\README.txt" />
+
+    
+    <Compile Include="..\TVGL Presenter\Presenter.cs">
+      <Link>Presenter\Presenter.cs</Link>
+    </Compile>
+    <Compile Include="..\TVGL Presenter\Window2DPlot.xaml.cs">
+      <Link>Window2DPlot.xaml.cs</Link>
+    </Compile>
+    <Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs">
+      <Link>Window3DPlot.xaml.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv">
+      <Link>TVGL\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv</Link>
+    </None>
+    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewFaRules.csv">
+      <Link>TVGL\Implicits and Primitives\Primitive Classification\NewFaRules.csv</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.11.0" />
+    <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="OptimizedPriorityQueue" Version="4.2.0" />
+    <PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\TVGL Presenter\Window2DPlot.xaml" Link="Window2DPlot.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="..\TVGL Presenter\Window3DPlot.xaml" Link="Window3DPlot.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+</Project>

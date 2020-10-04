@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -34,8 +35,8 @@ namespace TVGL.IOFunctions
         /// </summary>
         internal STLFileData()
         {
-            Normals = new List<double[]>();
-            Vertices = new List<List<double[]>>();
+            Normals = new List<Vector3>();
+            Vertices = new List<List<Vector3>>();
             Colors = new List<Color>();
         }
 
@@ -74,13 +75,13 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<List<double[]>> Vertices { get; }
+        private List<List<Vector3>> Vertices { get; }
 
         /// <summary>
         ///     Gets or sets the normals.
         /// </summary>
         /// <value>The normals.</value>
-        private List<double[]> Normals { get; }
+        private List<Vector3> Normals { get; }
 
         #endregion
 
@@ -117,9 +118,9 @@ namespace TVGL.IOFunctions
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.HasColorSpecified ? stlFileData.Colors : null,
-                    stlFileData.Units, stlFileData.Name,
-                    filename, stlFileData.Comments, stlFileData.Language);
+                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count<=Constants.MaxNumberFacesDefaultFullTS,
+                    stlFileData.HasColorSpecified ? stlFileData.Colors : null,
+                                   stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
@@ -187,19 +188,17 @@ namespace TVGL.IOFunctions
         /// </exception>
         private void ReadFacet(StreamReader reader, string normal)
         {
-            double[] n;
-            if (!TryParseDoubleArray(NormalRegex, normal, out n))
+            if (!TryParseDoubleArray(NormalRegex, normal, out var n))
                 throw new IOException("Unexpected line.");
-            var points = new List<double[]>();
+            var points = new List<Vector3>();
             if (!ReadExpectedLine(reader, "outer loop"))
                 throw new IOException("Unexpected line.");
             while (true)
             {
                 var line = ReadLine(reader);
-                double[] point;
-                if (TryParseDoubleArray(VertexRegex, line, out point))
+                if (TryParseDoubleArray(VertexRegex, line, out var point))
                 {
-                    points.Add(point);
+                    points.Add(new Vector3(point));
                     continue;
                 }
 
@@ -213,7 +212,7 @@ namespace TVGL.IOFunctions
             }
             if (!ReadExpectedLine(reader, "endfacet"))
                 throw new IOException("Unexpected line.");
-            Normals.Add(n);
+            Normals.Add(new Vector3(n));
             Vertices.Add(points);
         }
 
@@ -251,7 +250,7 @@ namespace TVGL.IOFunctions
                 stlSolid1.Name = Path.GetFileNameWithoutExtension(filename);
             do
             {
-                var numFaces = ReadNumberAsInt(reader, typeof(uint),FormatEndiannessType.binary_little_endian);
+                var numFaces = ReadNumberAsInt(reader, typeof(uint), FormatEndiannessType.binary_little_endian);
                 if (length - 84 != numFaces * 50)
                     return false;
                 for (var i = 0; i < numFaces; i++)
@@ -284,17 +283,17 @@ namespace TVGL.IOFunctions
             var x1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v1 = new[] { x1, y1, z1 };
+            var v1 = new Vector3(x1, y1, z1);
 
             var x2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v2 = new[] { x2, y2, z2 };
+            var v2 = new Vector3(x2, y2, z2);
 
             var x3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v3 = new[] { x3, y3, z3 };
+            var v3 = new Vector3(x3, y3, z3);
 
             var attrib = Convert.ToString(ReadNumberAsInt(reader, typeof(ushort), FormatEndiannessType.binary_little_endian),
                 2).PadLeft(16, '0').ToCharArray();
@@ -329,8 +328,8 @@ namespace TVGL.IOFunctions
                     _lastColor = currentColor;
             }
             Colors.Add(_lastColor);
-            Normals.Add(n);
-            Vertices.Add(new List<double[]> { v1, v2, v3 });
+            Normals.Add(new Vector3(n));
+            Vertices.Add(new List<Vector3> { v1, v2, v3 });
         }
         #endregion
 

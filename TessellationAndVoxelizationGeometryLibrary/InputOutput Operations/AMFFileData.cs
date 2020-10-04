@@ -19,8 +19,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using StarMathLib;
+
 using TVGL.IOFunctions.amfclasses;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -162,29 +163,22 @@ namespace TVGL.IOFunctions
                 name = amfObject.metadata[nameIndex].Value;
                 amfObject.metadata.RemoveAt(nameIndex);
             }
-            var vertices = amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList();
+            var vertices = amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsVector3).ToList();
             if (amfInstance != null &&
                 (amfInstance.deltaxSpecified || amfInstance.deltaySpecified || amfInstance.deltazSpecified
                  || amfInstance.rxSpecified || amfInstance.rySpecified || amfInstance.rzSpecified))
             {
                 var tMatrix =
-                    StarMath.RotationX(amfInstance.rx)
-                        .multiply(StarMath.RotationY(amfInstance.ry))
-                        .multiply(StarMath.RotationZ(amfInstance.rz));
-                tMatrix =
-                    StarMath.Translate(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz).multiply(tMatrix);
-                foreach (var coord in vertices)
-                {
-                    var coordWith1 = new[] { coord[0], coord[1], coord[2], 1.0 };
-                    coordWith1 = tMatrix.multiply(coordWith1);
-                    coord[0] = coordWith1[0];
-                    coord[1] = coordWith1[1];
-                    coord[2] = coordWith1[2];
-                }
+                    Matrix4x4.CreateRotationX(Constants.DegreesToRadiansFactor * amfInstance.rx)
+                    * Matrix4x4.CreateRotationY(Constants.DegreesToRadiansFactor * amfInstance.ry)
+                    * Matrix4x4.CreateRotationZ(Constants.DegreesToRadiansFactor * amfInstance.rz);
+                //do matrix multiplication go the other way?
+                tMatrix = tMatrix * Matrix4x4.CreateTranslation(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz);
+                for (int i = 0; i < vertices.Count; i++)
+                    vertices[i] = vertices[i].Transform(tMatrix);
             }
-            return new TessellatedSolid(vertices,
-                amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                colors, this.Units, name + "_" + amfObject.id, this.FileName,
+            return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(), 
+                true, colors, this.Units, name + "_" + amfObject.id, this.FileName,
                 amfObject.metadata.Select(md => md.ToString()).ToList(), this.Language);
         }
 

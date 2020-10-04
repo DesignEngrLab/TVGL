@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -20,7 +21,7 @@ namespace TVGL.IOFunctions
 
         private ShellFileData()
         {
-            Vertices = new List<double[]>();
+            Vertices = new List<Vector3>();
             FaceToVertexIndices = new List<int[]>();
         }
 
@@ -33,7 +34,7 @@ namespace TVGL.IOFunctions
         private static bool startofFacets;
         private static bool endofFacets;
         private List<Color> Colors { get; set; }
-        private List<double[]> Vertices { get; }
+        private List<Vector3> Vertices { get; }
         private List<int[]> FaceToVertexIndices { get; }
         private ShellMaterial Material { get; set; }
 
@@ -113,17 +114,16 @@ namespace TVGL.IOFunctions
                 {
                     var shell = shellData[i];
                     if (shell.Vertices.Any() && shell.FaceToVertexIndices.Any())
-                        results[i] = new TessellatedSolid(shell.Vertices,
-                            shell.FaceToVertexIndices, shell.Colors, unit,
-                            shell.Name + "_" + shell.Material.materialName,
+                        results[i] = new TessellatedSolid(shell.Vertices, shell.FaceToVertexIndices, true,
+                           shell.Colors, unit, shell.Name + "_" + shell.Material.materialName,
                             filename, shell.Comments, shell.Language);
                 }
 
                 Message.output(
                         "Successfully read in SHELL file called " + filename + " in " + (DateTime.Now - now).TotalSeconds +
                         " seconds.", 4);
-                    return results;
-                }
+                return results;
+            }
             catch
             {
                 Message.output("Unable to read in SHELL file.", 1);
@@ -146,10 +146,9 @@ namespace TVGL.IOFunctions
         {
             float r = 0, g = 0, b = 0;
             string id, values, shellName, colorString;
-            double[] shellColor;
             ParseLine(line, out id, out values);
             ParseLine(values, out shellName, out colorString);
-            TryParseDoubleArray(colorString, out shellColor);
+            TryParseDoubleArray(colorString, out var shellColor);
             r = (float)shellColor[0];
             g = (float)shellColor[1];
             b = (float)shellColor[2];
@@ -159,9 +158,8 @@ namespace TVGL.IOFunctions
 
         private bool ReadVertices(string line)
         {
-            double[] point;
-            if (TryParseDoubleArray(line, out point))
-                Vertices.Add(point);
+            if (TryParseDoubleArray(line, out var point))
+                Vertices.Add(new Vector3(point));
             else return false;
             return true;
         }

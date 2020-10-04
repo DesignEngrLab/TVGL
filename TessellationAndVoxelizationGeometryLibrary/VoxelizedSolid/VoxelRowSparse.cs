@@ -459,19 +459,17 @@ namespace TVGL.Voxelization
             indices.Clear();
         }
 
-        public double AverageXPosition()
+        public int TotalXPosition()
         {
-            var count = 0;
-            var rowTotal = 0.0;
+            var rowTotal = 0;
             var numIndices = indices.Count;
-            if (numIndices == 0) return 0.0;
+            if (numIndices == 0) return 0;
             for (int i = 0; i < numIndices; i += 2)
             {
                 var num = indices[i + 1] - indices[i];
-                rowTotal += num * (indices[i] + indices[i + 1]) / 2.0;
-                count += num;
+                rowTotal += num * (indices[i] + indices[i + 1]);
             }
-            return rowTotal / count;
+            return rowTotal;
         }
     }
 }

@@ -4,425 +4,251 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
-using StarMathLib;
+using TVGL.Numerics;
+
 using TVGL.IOFunctions;
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
-    [KnownType(typeof(List<PointLight>))]
-    public readonly struct PolygonLight
-    {
-        /// <summary>
-        /// Gets the PointLights that make up the polygon
-        /// </summary>
-        [JsonIgnore]
-        public readonly List<PointLight> Path;
 
-        /// <summary>
-        /// Gets the area of the polygon. Negative Area for holes.
-        /// </summary>
-        public readonly double Area;
-
-        /// <summary>
-        /// Maximum X value
-        /// </summary>
-        public readonly double MaxX;
-
-        /// <summary>
-        /// Minimum X value
-        /// </summary>
-        public readonly double MinX;
-
-        /// <summary>
-        /// Maximum Y value
-        /// </summary>
-        public readonly double MaxY;
-
-        /// <summary>
-        /// Minimum Y value
-        /// </summary>
-        public readonly double MinY;
-
-        public PolygonLight(Polygon polygon)
-        {
-            Area = polygon.Area;
-            Path = new List<PointLight>();
-            foreach (var point in polygon.Path)
-            {
-                Path.Add(new PointLight(point));
-            }
-
-            MaxX = polygon.MaxX;
-            MaxY = polygon.MaxY;
-            MinX = polygon.MinX;
-            MinY = polygon.MinY;
-        }
-
-        public PolygonLight(IEnumerable<PointLight> points)
-        {
-            Path = new List<PointLight>(points);
-            Area = MiscFunctions.AreaOfPolygon(Path);
-            MaxX = double.MinValue;
-            MinX = double.MaxValue;
-            MaxY = double.MinValue;
-            MinY = double.MaxValue;
-            foreach (var point in Path)
-            {
-                if (point.X > MaxX) MaxX = point.X;
-                if (point.X < MinX) MinX = point.X;
-                if (point.Y > MaxY) MaxY = point.Y;
-                if (point.Y < MinY) MinY = point.Y;
-            }
-        }
-
-        public static PolygonLight Reverse(PolygonLight original)
-        {
-            var path = new List<PointLight>(original.Path);
-            path.Reverse();
-            var newPoly = new PolygonLight(path);
-            return newPoly;
-        }
-
-        public double Length => MiscFunctions.Perimeter(Path);
-
-        public bool IsPositive => Area >= 0;
-
-        public void Serialize(string filename)
-        {
-            using (var writer = new FileStream(filename, FileMode.Create, FileAccess.Write))
-            {
-                var ser = new DataContractSerializer(typeof(PolygonLight));
-                ser.WriteObject(writer, this);
-            }
-        }
-
-        public static PolygonLight Deserialize(string filename)
-        {
-            using (var reader = new FileStream(filename, FileMode.Open, FileAccess.Read))
-            {
-                var ser = new DataContractSerializer(typeof(PolygonLight));
-                return (PolygonLight)ser.ReadObject(reader);
-            }
-        }
-
-        internal IEnumerable<double> ConvertToDoublesArray()
-        {
-            return Path.SelectMany(p => new[] { p.X, p.Y });
-        }
-
-        internal static PolygonLight MakeFromBinaryString(double[] coordinates)
-        {
-            var points = new List<PointLight>();
-            for (int i = 0; i < coordinates.Length; i += 2)
-                points.Add(new PointLight(coordinates[i], coordinates[i + 1]));
-            return new PolygonLight(points);
-        }
-    }
-
-    internal enum PolygonType
-    {
-        Subject,
-        Clip
-    };
-
-    /// <summary>
-    /// A list of 2D points
-    /// </summary>
     public class Polygon
     {
         /// <summary>
         /// The list of 2D points that make up a polygon.
         /// </summary>
-        public List<Point> Path;
+        public List<Vector2> Path
+        {
+            get
+            {
+                if (_path == null)
+                {
+                    _path = new List<Vector2>();
+                    foreach (var point in _points)
+                    {
+                        _path.Add(new Vector2(point.X, point.Y));
+                    }
+                }
+                return _path;
+            }
+        }
+        List<Vector2> _path;
+
+
+        public List<Vertex2D> Vertices
+        {
+            get
+            {
+                if (_points == null) MakeVertices();
+                return _points;
+            }
+        }
+
+        List<Vertex2D> _points;
 
         /// <summary>
-        /// The list of 2D points that make up a polygon.
+        /// Gets the list of lines that make up a polygon. This is not set by default.
         /// </summary>
-        public List<PointLight> PathAsLight => Path.Select(p => p.Light).ToList();
+        /// <value>The lines.</value>
+        public List<PolygonSegment> Lines
+        {
+            get
+            {
+                if (_lines == null)
+                {
+                    if (_points == null) MakeVertices();
+                    MakeLineSegments();
+                }
+                return _lines;
+            }
+        }
+        List<PolygonSegment> _lines;
+        private void MakeVertices()
+        {
+            var numPoints = _path.Count;
+            var _pointsArray = new Vertex2D[numPoints];
+            for (int i = 0; i < numPoints; i++)
+                _pointsArray[i] = new Vertex2D(_path[i], i, Index);
+            _points = _pointsArray.ToList();
+        }
+        private void MakeLineSegments()
+        {
+            var numPoints = _points.Count;
+            _lines = new List<PolygonSegment>();
+            for (int i = 1; i <= numPoints; i++)
+            {
+                var fromNode = _points[i - 1];
+                var toNode = _points[i % numPoints]; // note the mod operator and the fact that the for loop 
+                // goes to and including numPoints. this allows for the last line to connect the last point 
+                // back to the first. it is intended to avoid rewriting the following four lines of code.
+                var polySegment = new PolygonSegment(fromNode, toNode);
+                fromNode.StartLine = polySegment;
+                toNode.EndLine = polySegment;
+                _lines.Add(polySegment);
+            }
+        }
 
-        /// <summary>
-        /// The list of 2D points that make up a polygon.
-        /// </summary>
-        public PolygonLight Light => new PolygonLight(this);
 
-        /// <summary>
-        /// The list of lines that make up a polygon. This is not set by default.
-        /// </summary>
-        public List<Line> PathLines;
 
-        /// <summary>
-        /// A list of the polygons inside this polygon.
-        /// </summary>
-        public List<Polygon> Childern;
+        public List<Polygon> InnerPolygons
+        {
+            get
+            {
+                if (_innerPolygons == null)
+                    _innerPolygons = new List<Polygon>();
+                return _innerPolygons;
+            }
+        }
+        List<Polygon> _innerPolygons;
 
-        /// <summary>
-        /// The polygon that this polygon is inside of.
-        /// </summary>
-        public Polygon Parent;
+        public IEnumerable<Polygon> AllPolygons
+        {
+            get
+            {
+                yield return this;
+                foreach (var innerPolygon in InnerPolygons)
+                    foreach (var polygon in innerPolygon.AllPolygons)
+                        yield return polygon;
+            }
+        }
 
         /// <summary>
         /// The index of this child in its parent's child list.
         /// </summary>
-        public int Index
-        {
-            get { return _index; }
-            set
-            {
-                _index = value;
-                foreach (var point in Path)
-                {
-                    point.PolygonIndex = _index;
-                }
-            }
-        }
-
-        private int _index;
+        public int Index { get; set; }
 
         /// <summary>
         /// Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.
         /// </summary>
         public bool IsPositive
         {
-            get { return !(Area < 0); }
+            get { return Area >= 0; }
             set
             {
-                if (value == true)
-                {
-                    SetToCCWPositive();
-                }
-                else SetToCWNegative();
+                if (value != (Area >= 0))
+                    Reverse();
             }
         }
+
 
         /// <summary>
         /// This reverses the polygon, including updates to area and the point path.
         /// </summary>
         public void Reverse()
         {
-            if (IsPositive) SetToCWNegative();
-            else SetToCCWPositive();
+            area = -Area;
+            Path.Reverse();
+
+            //Only reverse the lines if they have been generated
+            if (_lines == null) return;
+            var lines = _lines;
+            _lines = new List<PolygonSegment>();
+            var n = lines.Count;
+            for (var i = 0; i < n; i++)
+                _lines[i] = lines[n - i - 1].Reverse();
+
         }
 
-        /// <summary>
-        /// Gets the length of the polygon.
-        /// </summary>
-        public double Length;
 
         /// <summary>
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
-        public double Area;
+        public double Area
+        {
+            get
+            {
+                if (double.IsNaN(area))
+                    area = Path.Area();
+                return area + InnerPolygons.Sum(p => p.Area);
+            }
+        }
+
+        private double area = double.NaN;
 
         /// <summary>
         /// Maxiumum X value
         /// </summary>
-        public double MaxX;
+        public double MaxX
+        {
+            get
+            {
+                if (double.IsInfinity(maxX))
+                    SetBounds();
+                return maxX;
+            }
+        }
+
+        private double maxX = double.NegativeInfinity;
 
         /// <summary>
         /// Miniumum X value
         /// </summary>
-        public double MinX;
+        public double MinX
+        {
+            get
+            {
+                if (double.IsInfinity(minX))
+                    SetBounds();
+                return minX;
+            }
+        }
+
+        private double minX = double.PositiveInfinity;
 
         /// <summary>
         /// Maxiumum Y value
         /// </summary>
-        public double MaxY;
+        public double MaxY
+        {
+            get
+            {
+                if (double.IsInfinity(maxY))
+                    SetBounds();
+                return maxY;
+            }
+        }
+
+        private double maxY = double.NegativeInfinity;
 
         /// <summary>
         /// Minimum Y value
         /// </summary>
-        public double MinY;
+        private double minY = double.PositiveInfinity;
+        public double MinY
+        {
+            get
+            {
+                if (double.IsInfinity(minY))
+                    SetBounds();
+                return minY;
+            }
+        }
 
         /// <summary>
         /// Polygon Constructor. Assumes path is closed and not self-intersecting.
         /// </summary>
-        /// <param name="points"></param>
+        /// <param name="coordinates"></param>
         /// <param name="setLines"></param>
         /// <param name="index"></param>
-        public Polygon(IEnumerable<Point> points, bool setLines = false, int index = -1)
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
-            Path = new List<Point>(points);
-            //set index in path
-            MaxX = double.MinValue;
-            MinX = double.MaxValue;
-            MaxY = double.MinValue;
-            MinY = double.MaxValue;
-            for (var i = 0; i < Path.Count; i++)
-            {
-                var point = Path[i];
-                if (point.X > MaxX) MaxX = point.X;
-                if (point.X < MinX) MinX = point.X;
-                if (point.Y > MaxY) MaxY = point.Y;
-                if (point.Y < MinY) MinY = point.Y;
-                point.IndexInPath = i;
-                point.Lines = new List<Line>(); //erase any previous connection to lines.
-            }
+            _path = coordinates.ToList();
             Index = index;
-            Area = CalculateArea();
-            Length = SetLength();
-            PathLines = null;
-            Parent = null;
-            Childern = new List<Polygon>();
-
-            if (setLines)
-            {
-                SetPathLines();
-            }
         }
 
-        public Polygon(PolygonLight poly, bool setLines = false) : this(poly.Path.Select(p => new Point(p)), setLines)
+        public Polygon(List<Vertex2D> points, List<PolygonSegment> lines, int index = -1)
         {
-        }
-
-        private double SetLength()
-        {
-            return MiscFunctions.Perimeter(Path);
-        }
-
-        /// <summary>
-        /// Sets a polygon to counter clock wise positive
-        /// </summary>
-        private void SetToCCWPositive()
-        {
-            //Check if already positive ccw.
-            if (!(Area < 0)) return;
-
-            //It is negative. Reverse the path and path lines.
-            var path = new List<Point>(Path);
-            path.Reverse();
-            for (var i = 0; i < path.Count; i++)
-            {
-                path[i].IndexInPath = i;
-            }
-            Area = -Area;
-            Path = path;
-
-            //Only reverse the lines if they have been generated
-            if (PathLines == null) return;
-            var lines = new List<Line>(PathLines);
-            lines.Reverse();
-            for (var i = 0; i < lines.Count; i++)
-            {
-                lines[i].IndexInPath = i;
-            }
-            PathLines = lines;
-        }
-
-        private void SetToCWNegative()
-        {
-            //Check if already negative cw.
-            if (Area < 0) return;
-
-            //It is positive. Reverse the path and path lines.
-            var path = new List<Point>(Path);
-            path.Reverse();
-            for (var i = 0; i < path.Count; i++)
-            {
-                path[i].IndexInPath = i;
-            }
-            Area = -Area;
-            Path = path;
-
-            //Only reverse the lines if they have been generated
-            if (PathLines == null) return;
-            var lines = new List<Line>(PathLines);
-            lines.Reverse();
-            for (var i = 0; i < lines.Count; i++)
-            {
-                lines[i].IndexInPath = i;
-            }
-            PathLines = lines;
-        }
-
-        private double CalculateArea()
-        {
-            return MiscFunctions.AreaOfPolygon(Path.ToArray());
-        }
-
-        /// <summary>
-        /// Returns a list of lines that make up the path of this polygon
-        /// </summary>
-        /// <returns></returns>
-        public void SetPathLines()
-        {
-            var lines = new List<Line>();
-            var n = Path.Count;
-            for (var i = 0; i < n; i++)
-            {
-                var j = (i + 1) % n;
-                lines.Add(new Line(Path[i], Path[j], true) { IndexInPath = i });
-            }
-            PathLines = new List<Line>(lines);
-        }
-
-        /// <summary>
-        /// Gets the next point in the path, given the current point index. 
-        /// This function automatically wraps back to the first point.
-        /// </summary>
-        /// <param name="currentPointIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public Point NextPoint(int currentPointIndex)
-        {
-            return Path[NextPointIndex(currentPointIndex)];
-        }
-
-        /// <summary>
-        /// Gets the index of the next point in the path, given the current point index. 
-        /// This function automatically wraps back to index 0.
-        /// </summary>
-        /// <param name="currentPointIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public int NextPointIndex(int currentPointIndex)
-        {
-            if (Path[currentPointIndex].IndexInPath != currentPointIndex)
-                throw new Exception("Path has been altered and the indices do not match up");
-            if (Path.Count == currentPointIndex + 1)
-            {
-                return 0;
-            }
-            return currentPointIndex + 1;
-        }
-
-        /// <summary>
-        /// Gets the next line in the path, given the current line index. 
-        /// This function automatically wraps back to the first line.
-        /// </summary>
-        /// <param name="currentLineIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public Line NextLine(int currentLineIndex)
-        {
-            return PathLines[NextLineIndex(currentLineIndex)];
-        }
-
-        /// <summary>
-        /// Gets the index of the next line in the path, given the current line index. 
-        /// This function automatically wraps back to index 0.
-        /// </summary>
-        /// <param name="currentLineIndex"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public int NextLineIndex(int currentLineIndex)
-        {
-            if (PathLines[currentLineIndex].IndexInPath != currentLineIndex)
-                throw new Exception("Path has been altered and the indices do not match up");
-            if (PathLines.Count == currentLineIndex + 1)
-            {
-                return 0;
-            }
-            return currentLineIndex + 1;
+            _points = points;
+            _lines = lines;
+            Index = index;
         }
 
         public bool IsConvex()
         {
             if (!Area.IsGreaterThanNonNegligible()) return false; //It must have an area greater than zero
-            if (PathLines == null) SetPathLines();
-            var firstLine = PathLines.Last();
-            foreach (var secondLine in PathLines)
+            var firstLine = Lines.Last();
+            foreach (var secondLine in Lines)
             {
-                var cross = firstLine.dX * secondLine.dY - firstLine.dY * secondLine.dX;
+                var cross = firstLine.Vector.Cross(secondLine.Vector);
                 if (secondLine.Length.IsNegligible(0.0000001)) continue;// without updating the first line             
                 if (cross < 0)
                 {
@@ -431,6 +257,30 @@ namespace TVGL
                 firstLine = secondLine;
             }
             return true;
+        }
+
+        private void SetBounds()
+        {
+            if (_path != null)
+            {
+                foreach (var point in _path)
+                {
+                    if (point.X > maxX) maxX = point.X;
+                    if (point.X < minX) minX = point.X;
+                    if (point.Y > maxY) maxY = point.Y;
+                    if (point.Y < minY) minY = point.Y;
+                }
+            }
+            else
+            {
+                foreach (var point in _points)
+                {
+                    if (point.X > maxX) maxX = point.X;
+                    if (point.X < minX) minX = point.X;
+                    if (point.Y > maxY) maxY = point.Y;
+                    if (point.Y < minY) minY = point.Y;
+                }
+            }
         }
     }
 }

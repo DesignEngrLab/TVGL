@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
+
 using System;
 
 namespace TVGL
@@ -45,9 +46,9 @@ namespace TVGL
             };
             valueDictionary = new Dictionary<long, StoredValue<ValueT>>();
             faces = new List<PolygonalFace>();
-            GridOffsetTable = new double[8][];
+            GridOffsetTable = new Vector3[8];
             for (int i = 0; i < 8; i++)
-                GridOffsetTable[i] = _unitOffsetTable[i].multiply(this.gridToCoordinateFactor);
+                GridOffsetTable[i] = _unitOffsetTable[i] * this.gridToCoordinateFactor;
         }
         #endregion
 
@@ -56,7 +57,7 @@ namespace TVGL
         protected readonly SolidT solid;
         protected readonly double gridToCoordinateFactor;
         protected readonly double coordToGridFactor;
-        protected readonly double[][] GridOffsetTable;
+        protected readonly Vector3[] GridOffsetTable;
         readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         protected readonly List<PolygonalFace> faces;
         protected const double fractionOfGridToExpand = 1.05;
@@ -85,7 +86,7 @@ namespace TVGL
                         MakeFacesInCube(i, j, k);
             var comments = new List<string>(solid.Comments);
             comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
-            return new TessellatedSolid(faces);
+            return new TessellatedSolid(faces, false, false);
             // vertexDictionaries.SelectMany(d => d.Values), false,
             //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
         }
@@ -132,8 +133,8 @@ namespace TVGL
                 var thisX = xIndex + _unitOffsetTable[i][0];
                 var thisY = yIndex + _unitOffsetTable[i][1];
                 var thisZ = zIndex + _unitOffsetTable[i][2];
-                var id = getIdentifier(thisX, thisY, thisZ);
-                var v = cube[i] = GetValue(thisX, thisY, thisZ, id);
+                var id = getIdentifier((int)thisX, (int)thisY, (int)thisZ);
+                var v = cube[i] = GetValue((int)thisX, (int)thisY, (int)thisZ, id);
                 if (IsInside(v.Value))
                     cubeType |= 1 << i;
             }
@@ -161,13 +162,14 @@ namespace TVGL
                         EdgeVertex[i] = vertexDictionaries[direction][id];
                     else
                     {
+                        var coord = new Vector3(
+                           _xMin + fromCorner.X * gridToCoordinateFactor,
+                            _yMin + fromCorner.Y * gridToCoordinateFactor,
+                            _zMin + fromCorner.Z * gridToCoordinateFactor);
+                        var offSetUnitVector = (direction == 0) ? Vector3.UnitX :
+                            (direction == 1) ? Vector3.UnitY : Vector3.UnitZ;
                         double offset = GetOffset(fromCorner, toCorner, direction, sign);
-                        var coord = new[] {
-                           _xMin+ fromCorner.X*gridToCoordinateFactor,
-                            _yMin+fromCorner.Y*gridToCoordinateFactor,
-                            _zMin+   fromCorner.Z*gridToCoordinateFactor
-                        };
-                        coord[direction] = coord[direction] + sign * offset;
+                        coord = coord + (offSetUnitVector * sign * offset);
                         EdgeVertex[i] = new Vertex(coord);
                         vertexDictionaries[direction].Add(id, EdgeVertex[i]);
                     }
@@ -197,10 +199,10 @@ namespace TVGL
         /// of each of the 8 vertices of a cube.
         /// vertexOffset[8][3]
         /// </summary>
-        protected static readonly int[][] _unitOffsetTable = new int[][]
+        protected static readonly Vector3[] _unitOffsetTable = new[]
         {
-            new[]{0, 0, 0},new[]{1, 0, 0},new[]{1, 1, 0},new[]{0, 1, 0},
-            new[]{0, 0, 1},new[]{1, 0, 1},new[]{1, 1, 1},new[]{0, 1, 1}
+            new Vector3(0, 0, 0),new Vector3(1, 0, 0),new Vector3(1, 1, 0),new Vector3(0, 1, 0),
+            new Vector3(0, 0, 1),new Vector3(1, 0, 1),new Vector3(1, 1, 1),new Vector3(0, 1, 1)
         };
 
         /// <summary>
@@ -250,11 +252,11 @@ namespace TVGL
         /// EdgeDirectionTable lists the direction vector (vertexFrom-vertexTo) for each edge in the cube.
         /// edgeDirection[12][3]
         /// </summary>
-        protected static readonly double[][] EdgeDirectionTable = new double[][]
+        protected static readonly Vector3[] EdgeDirectionTable = new Vector3[]
         {
-            new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
-            new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
-            new[]{0.0, 0.0, 1.0},new[]{0.0, 0.0, 1.0},new[]{ 0.0, 0.0, 1.0},new[]{0.0,  0.0, 1.0}
+            new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
+             new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
+             new Vector3(0.0, 0.0, 1.0),new Vector3(0.0, 0.0, 1.0),new Vector3( 0.0, 0.0, 1.0),new Vector3(0.0,  0.0, 1.0)
         };
         protected static readonly CartesianDirections[] directionTable = new CartesianDirections[]
           {

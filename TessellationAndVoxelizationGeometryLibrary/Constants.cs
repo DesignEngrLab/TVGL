@@ -23,6 +23,7 @@ namespace TVGL
     /// </summary>
     public static class Constants
     {
+        internal const int MaxNumberFacesDefaultFullTS = 50000;
         internal const double TwoPi = 2 * Math.PI;
         internal const double HalfPi = Math.PI / 2;
         internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
@@ -40,10 +41,14 @@ namespace TVGL
 #else
         public const long VertexCheckSumMultiplier = SquareRootOfLongMaxValue;
 #endif
-        /// <summary>
-        ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
-        /// </summary>
-        internal const double ConvexHullRadiusForRobustness = 0.0000001;
+
+
+        /// <summary>The conversion from double to IntPoint as is used in the Clipper polygon functions. 
+        /// See: https://github.com/DesignEngrLab/TVGL/wiki/Determining-the-Double-to-Long-Dimension-Multiplier
+        /// for how this number is established.</summary>
+        internal const int DoubleToIntPointMultipler = 365760000;
+        internal const double IntPointToDoubleMultipler = 1.0 / 365760000.0;
+
 
         /// <summary>
         ///     The default color
@@ -58,17 +63,12 @@ namespace TVGL
         /// <summary>
         ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
         /// </summary>
-        public const double LineSlopeTolerance = 0.0003;
-
-        /// <summary>
-        ///     The tolerance used for simplifying polygons by removing tiny lines.
-        /// </summary>
-        public const double LineLengthMinimum = 1E-7;
+        public const double SimplifyDefaultDeltaArea = 0.0003;
 
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations
         /// </summary>
-        public const double OBBAngleTolerance = 1e-5;
+        public const double OBBTolerance = 1e-5;
 
         /// <summary>
         ///     The error for face in surface
@@ -126,9 +126,6 @@ namespace TVGL
             new []{ -1, -1, -1},
         };
 
-        public static readonly double[] X = new double[] { 1.0, 0, 0 };
-        public static readonly double[] Y = new double[] { 0, 1.0, 0 };
-        public static readonly double[] Z = new double[] { 0, 0, 1.0 };
 
         /// <summary>
         ///     Finds the index.
@@ -170,24 +167,6 @@ namespace TVGL
             return -1;
         }
 
-        public static double dotProduct(this Point a, double[] b)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-        public static double dotProduct(this double[] b, Point a)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-
-        public static double dotProduct(this PointLight a, double[] b)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-        public static double dotProduct(this double[] b, PointLight a)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-
 
         #region new known colors
 
@@ -219,9 +198,9 @@ namespace TVGL
                         { "Dark Sienna", new Color(60, 20, 20)},
                         { "Seal Brown", new Color(50, 20, 20) } } },
                 { ColorFamily.Pink, new Dictionary<string, Color>()
-					{
-						{ "Bubble Gum", new Color(255, 193, 204)},
-						{"Amaranth", new Color(229, 43, 80)},
+                    {
+                        { "Bubble Gum", new Color(255, 193, 204)},
+                        {"Amaranth", new Color(229, 43, 80)},
                         {"Dark Terra Cotta", new Color(204, 78, 92)},
                         {"Bazaar", new Color(152, 119, 123)},
                         {"Alizarin", new Color(227, 38, 54)},
@@ -243,7 +222,7 @@ namespace TVGL
                         {"Bright Maroon", new Color(195, 33, 72)},
                         {"Burgundy", new Color(128, 0, 32)},
                         {"Dark Scarlet", new Color(86, 3, 25) }
-					} },
+                    } },
                 { ColorFamily.Magenta, new Dictionary<string, Color>()
                     {
                         { "Lavender Blush", new Color(255, 240, 245)},
@@ -268,7 +247,7 @@ namespace TVGL
                         { "Dark Pastel Purple", new Color(150, 111, 214)},
                         { "Violet", new Color(143, 0, 255)},
                         { "Dark Lavender", new Color(115, 79, 150)},
-                        { "Purple Heart", new Color(105, 53, 156) } 
+                        { "Purple Heart", new Color(105, 53, 156) }
                     } },
                 { ColorFamily.Blue, new Dictionary<string, Color>()
                     {
@@ -479,6 +458,7 @@ namespace TVGL
                         { "Auburn", new Color(109, 53, 26) }
                     } }
             };
+        internal const double DegreesToRadiansFactor = Math.PI / 180.0;
         #endregion
     }
 
@@ -487,252 +467,257 @@ namespace TVGL
     /// Units of a specified coordinates within the shape or set of shapes.
     /// </summary>
     public enum UnitType
-{
-    /// <summary>
-    /// the unspecified state
-    /// </summary>
-    unspecified = 0,
-    /// <summary>
-    ///     The millimeter
-    /// </summary>
-    millimeter = 11,
-
-    /// <summary>
-    ///     The micron
-    /// </summary>
-    micron = 8,
-
-
-    /// <summary>
-    ///     The centimeter
-    /// </summary>
-    centimeter = 1,
-
-    /// <summary>
-    ///     The inch
-    /// </summary>
-    inch = 4,
-
-    /// <summary>
-    ///     The foot
-    /// </summary>
-    foot = 3,
-
-    /// <summary>
-    ///     The meter
-    /// </summary>
-    meter = 6
-}
-
-
-/// <summary>
-///     Enum CurvatureType
-/// </summary>
-public enum CurvatureType
-{
-    /// <summary>
-    ///     The concave
-    /// </summary>
-    Concave = -1,
-
-    /// <summary>
-    ///     The saddle or flat
-    /// </summary>
-    SaddleOrFlat = 0,
-
-    /// <summary>
-    ///     The convex
-    /// </summary>
-    Convex = 1,
-
-    /// <summary>
-    ///     The undefined
-    /// </summary>
-    Undefined
-}
-
-/// <summary>
-///     Enum FileType
-/// </summary>
-public enum FileType
-{
-    /// <summary>
-    /// represents an unspecified state
-    /// </summary>
-    unspecified,
-    /// <summary>
-    ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
-    /// </summary>
-    // ReSharper disable once InconsistentNaming
-    STL_ASCII,
-
-    /// <summary>
-    ///     Stereolithography (STL) Binary
-    /// </summary>
-    // ReSharper disable once InconsistentNaming
-    STL_Binary,
-
-    /// <summary>
-    ///     Mobile MultiModal Framework
-    /// </summary>
-    ThreeMF,
-
-    /// <summary>
-    ///     Mobile MultiModal Framework
-    /// </summary>
-    Model3MF,
-
-    /// <summary>
-    ///     Additive Manufacturing File Format
-    /// </summary>
-    AMF,
-
-    /// <summary>
-    ///     Object File Format
-    /// </summary>
-    OFF,
-
-    /// <summary>
-    ///     Polygon File Format as ASCII
-    /// </summary>
-    PLY_ASCII,
-    /// <summary>
-    ///     Polygon File Format as Binary
-    /// </summary>
-    PLY_Binary,
-    /// <summary>
-    ///     Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
-    /// </summary>
-    SHELL,
-    /// <summary>
-    ///     A serialized version of the TessellatedSolid object
-    /// </summary>
-    TVGL
-}
-
-internal enum FormatEndiannessType
-{
-    ascii,
-    binary_little_endian,
-    binary_big_endian
-}
-/// <summary>
-///     Enum ShapeElement
-/// </summary>
-internal enum ShapeElement
-{
-    /// <summary>
-    ///     The vertex
-    /// </summary>
-    Vertex,
-    Edge,
-    Face,
-    Uniform_Color
-}
-
-/// <summary>
-///     Enum ColorElements
-/// </summary>
-internal enum ColorElements
-{
-    Red,
-    Green,
-    Blue,
-    Opacity
-}
-
-/// <summary>
-/// CartesianDirections: just the six cardinal directions for the voxelized box around the solid
-/// </summary>
-public enum CartesianDirections
-{
-    /// <summary>
-    /// <summary>
-    /// Enum VoxelDirections
-    /// </summary>
-    /// Negative X Direction
-    /// </summary>
-    /// <summary>
-    /// The x negative
-    /// </summary>
-    XNegative = -1,
-
-    /// <summary>
-    /// Negative Y Direction
-    /// <summary>
-    /// The x negative
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The y negative
-    /// </summary>
-    YNegative = -2,
-
-    /// <summary>
-    /// Negative Z Direction
-    /// <summary>
-    /// The y negative
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The z negative
-    /// </summary>
-    ZNegative = -3,
-
-    /// <summary>
-    /// Positive X Direction
-    /// <summary>
-    /// The z negative
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The x positive
-    /// </summary>
-    XPositive = 1,
-
-    /// <summary>
-    /// Positive Y Direction
-    /// <summary>
-    /// The x positive
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The y positive
-    /// </summary>
-    YPositive = 2,
-
-    /// <summary>
-    /// Positive Z Direction
-    /// <summary>
-    /// The y positive
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The z positive
-    /// </summary>
-    ZPositive = 3
-}
-/// <summary>
-///     A comparer for optimization that can be used for either
-///     minimization or maximization.
-/// </summary>
-internal class NoEqualSort : IComparer<double>
-{
-    /// <summary>
-    ///     Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
-    /// </summary>
-    /// <param name="x">The first object to compare.</param>
-    /// <param name="y">The second object to compare.</param>
-    /// <returns>
-    ///     A signed integer that indicates the relative values of <paramref name="x" /> and <paramref name="y" />, as
-    ///     shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
-    ///     .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
-    ///     <paramref name="y" />.
-    /// </returns>
-    public int Compare(double x, double y)
     {
-        if (x < y) return -1;
-        return 1;
+        /// <summary>
+        /// the unspecified state
+        /// </summary>
+        unspecified = 0,
+        /// <summary>
+        ///     The millimeter
+        /// </summary>
+        millimeter = 11,
+
+        /// <summary>
+        ///     The micron
+        /// </summary>
+        micron = 8,
+
+
+        /// <summary>
+        ///     The centimeter
+        /// </summary>
+        centimeter = 1,
+
+        /// <summary>
+        ///     The inch
+        /// </summary>
+        inch = 4,
+
+        /// <summary>
+        ///     The foot
+        /// </summary>
+        foot = 3,
+
+        /// <summary>
+        ///     The meter
+        /// </summary>
+        meter = 6
     }
-}
+
+
+    /// <summary>
+    ///     Enum CurvatureType
+    /// </summary>
+    public enum CurvatureType
+    {
+        /// <summary>
+        ///     The concave
+        /// </summary>
+        Concave = -1,
+
+        /// <summary>
+        ///     The saddle or flat
+        /// </summary>
+        SaddleOrFlat = 0,
+
+        /// <summary>
+        ///     The convex
+        /// </summary>
+        Convex = 1,
+
+        /// <summary>
+        ///     The undefined
+        /// </summary>
+        Undefined
+    }
+
+    /// <summary>
+    ///     Enum FileType
+    /// </summary>
+    public enum FileType
+    {
+        /// <summary>
+        /// represents an unspecified state
+        /// </summary>
+        unspecified,
+        /// <summary>
+        ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        STL_ASCII,
+
+        /// <summary>
+        ///     Stereolithography (STL) Binary
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        STL_Binary,
+
+        /// <summary>
+        ///     Mobile MultiModal Framework
+        /// </summary>
+        ThreeMF,
+
+        /// <summary>
+        ///     Mobile MultiModal Framework
+        /// </summary>
+        Model3MF,
+
+        /// <summary>
+        ///     Additive Manufacturing File Format
+        /// </summary>
+        AMF,
+
+        /// <summary>
+        ///     Object File Format
+        /// </summary>
+        OFF,
+
+        /// <summary>
+        ///     Polygon File Format as ASCII
+        /// </summary>
+        PLY_ASCII,
+        /// <summary>
+        ///     Polygon File Format as Binary
+        /// </summary>
+        PLY_Binary,
+        /// <summary>
+        ///     Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
+        /// </summary>
+        SHELL,
+        /// <summary>
+        ///     A serialized version of the TessellatedSolid object
+        /// </summary>
+        TVGL
+    }
+
+    internal enum FormatEndiannessType
+    {
+        ascii,
+        binary_little_endian,
+        binary_big_endian
+    }
+    /// <summary>
+    ///     Enum ShapeElement
+    /// </summary>
+    internal enum ShapeElement
+    {
+        /// <summary>
+        ///     The vertex
+        /// </summary>
+        Vertex,
+        Edge,
+        Face,
+        Uniform_Color
+    }
+
+    /// <summary>
+    ///     Enum ColorElements
+    /// </summary>
+    internal enum ColorElements
+    {
+        Red,
+        Green,
+        Blue,
+        Opacity
+    }
+
+    /// <summary>
+    /// CartesianDirections: just the six cardinal directions for the voxelized box around the solid
+    /// </summary>
+    public enum CartesianDirections
+    {
+        /// <summary>
+        /// <summary>
+        /// Enum VoxelDirections
+        /// </summary>
+        /// Negative X Direction
+        /// </summary>
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        XNegative = -1,
+
+        /// <summary>
+        /// Negative Y Direction
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        YNegative = -2,
+
+        /// <summary>
+        /// Negative Z Direction
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        ZNegative = -3,
+
+        /// <summary>
+        /// Positive X Direction
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        XPositive = 1,
+
+        /// <summary>
+        /// Positive Y Direction
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        YPositive = 2,
+
+        /// <summary>
+        /// Positive Z Direction
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z positive
+        /// </summary>
+        ZPositive = 3
+    }
+    /// <summary>
+    ///     A comparer for optimization that can be used for either
+    ///     minimization or maximization.
+    /// </summary>
+    internal class NoEqualSort : IComparer<double>
+    {
+        readonly int direction;
+        internal NoEqualSort(bool minimize = true)
+        {
+            direction = minimize ? -1 : 1;
+        }
+        /// <summary>
+        ///     Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
+        /// </summary>
+        /// <param name="x">The first object to compare.</param>
+        /// <param name="y">The second object to compare.</param>
+        /// <returns>
+        ///     A signed integer that indicates the relative values of <paramref name="x" /> and <paramref name="y" />, as
+        ///     shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
+        ///     .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
+        ///     <paramref name="y" />.
+        /// </returns>
+        public int Compare(double x, double y)
+        {
+            if (x < y) return direction;
+            return -direction;
+        }
+    }
 }

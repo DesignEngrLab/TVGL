@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TVGL.Numerics;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -29,7 +30,7 @@ namespace TVGL
         ///     Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        public double[] Normal { get; internal set; }
+        public Vector3 Normal { get; internal set; }
 
     }
 }

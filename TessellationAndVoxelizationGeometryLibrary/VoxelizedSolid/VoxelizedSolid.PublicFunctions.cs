@@ -3,14 +3,14 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using StarMathLib;
+using TVGL.Numerics;
 
 namespace TVGL.Voxelization
 {
     /// <summary>
     /// Class VoxelizedSolid.
     /// </summary>
-    public partial class VoxelizedSolid:Solid, IEnumerable<int[]>
+    public partial class VoxelizedSolid : Solid, IEnumerable<int[]>
     {
         #region Public Methods that Branch
         /// <summary>
@@ -62,7 +62,7 @@ namespace TVGL.Voxelization
             neighbors = GetNeighbors(xCoord, yCoord, zCoord);
             return !neighbors.Any(n => n != null);
         }
-        
+
         /// <summary>
         /// Gets the neighbors of the specified voxel position (even if specified is an off-voxel).
         /// The result is an array of coordinates or nulls. Where the null represents off-voxels.
@@ -115,27 +115,8 @@ namespace TVGL.Voxelization
         #region Set/update properties
         public void UpdateProperties()
         {
-            Count = 0;
-            var xTotal = 0.0;
-            var yTotal = 0.0;
-            var zTotal = 0.0;
-            for (int j = 0; j < numVoxelsY; j++)
-                for (int k = 0; k < numVoxelsZ; k++)
-                {
-                    var voxelRow = voxels[j + zMultiplier * k];
-                    var rowCount = voxelRow.Count;
-                    xTotal += rowCount * voxelRow.AverageXPosition();
-                    yTotal += rowCount * j;
-                    zTotal += rowCount * k;
-                    Count += rowCount;
-                }
-            Volume = Count * Math.Pow(VoxelSideLength, 3);
-            Center = new double[]
-            {
-                VoxelSideLength*xTotal / Count,
-                VoxelSideLength*yTotal /Count,
-                VoxelSideLength*zTotal / Count
-            };
+            CalculateCenter();
+            CalculateVolume();
         }
 
 
@@ -321,7 +302,7 @@ namespace TVGL.Voxelization
                     {
                         var y = yOff + (j + .5) * VoxelSideLength;
                         var z = zOff + (k + .5) * VoxelSideLength;
-                        var d = MiscFunctions.DistancePointToPlane(new[] { 0, y, z }, normalOfPlane, distOfPlane);
+                        var d = MiscFunctions.DistancePointToPlane(new Vector3(0, y, z), normalOfPlane, distOfPlane);
                         if (d < 0)
                             vs1.voxels[j + zMultiplier * k].Clear();
                         else vs2.voxels[j + zMultiplier * k].Clear();
@@ -464,11 +445,11 @@ namespace TVGL.Voxelization
         /// <param name="maskSize">Size of the mask.</param>
         /// <param name="maskOptions">The mask options.</param>
         /// <returns></returns>
-        public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, double[] dir,
+        public VoxelizedSolid DirectionalErodeToConstraintToNewSolid(in VoxelizedSolid constraintSolid, Vector3 dir,
             double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.DirectionalErodeToConstraint(constraintSolid, dir.normalize(3), tLimit, maskSize, maskOptions);
+            copy.DirectionalErodeToConstraint(constraintSolid, dir.Normalize(), tLimit, maskSize, maskOptions);
             return copy;
         }
 
@@ -486,11 +467,8 @@ namespace TVGL.Voxelization
             double tLimit = 0, double maskSize = 0, params string[] maskOptions)
         {
             var copy = (VoxelizedSolid)Copy();
-
-            var tDir = new[] { .0, .0, .0 };
-            tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
-
-            copy.DirectionalErodeToConstraint(constraintSolid, tDir.normalize(3), tLimit, maskSize, maskOptions);
+            var tDir = Vector3.UnitVector(dir);
+            copy.DirectionalErodeToConstraint(constraintSolid, tDir.Normalize(), tLimit, maskSize, maskOptions);
             return copy;
         }
 
@@ -502,7 +480,7 @@ namespace TVGL.Voxelization
         /// <param name="tLimit">The t limit.</param>
         /// <param name="maskSize">The tool dia.</param>
         /// <param name="toolOptions">The tool options.</param>
-        private void DirectionalErodeToConstraint(VoxelizedSolid constraintSolid, double[] dir,
+        private void DirectionalErodeToConstraint(VoxelizedSolid constraintSolid, Vector3 dir,
             double tLimit, double maskSize, params string[] maskOptions)
         {
             var dirX = dir[0];
@@ -515,8 +493,8 @@ namespace TVGL.Voxelization
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
 
-            tLimit = tLimit <= 0 ? VoxelsPerSide.norm2() : tLimit / VoxelSideLength;
-            var mLimit = tLimit + VoxelsPerSide.norm2();
+            tLimit = tLimit <= 0 ? Math.Sqrt(VoxelsPerSide.Sum(i => i * i)) : tLimit / VoxelSideLength;
+            var mLimit = tLimit + Math.Sqrt(VoxelsPerSide.Sum(i => i * i));
             var mask = CreateProjectionMask(dir, mLimit);
             var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, maskSize);
             var sliceMask = ThickenMask(mask[0], dir, maskSize, maskOptions);
@@ -669,7 +647,7 @@ namespace TVGL.Voxelization
 
 
         #region Functions for Dilation (3D Offsetting)
-        private static int[][] GetVoxelsWithinCircle(double[] center, double[] dir, double radius, bool edge = false)
+        private static int[][] GetVoxelsWithinCircle(Vector3 center, Vector3 dir, double radius, bool edge = false)
         {
             var voxels = new HashSet<int[]>(new SameCoordinates());
 
@@ -679,9 +657,9 @@ namespace TVGL.Voxelization
                     radii.Add(i);
             radii.Add(radius);
             var a = Math.Abs(dir[0]) < 1e-5
-                ? new[] { .0, -dir[2], dir[1] }.normalize(3)
-                : new[] { dir[1], -dir[0], 0 }.normalize(3);
-            var b = a.crossProduct(dir);
+                ? new Vector3(0, -dir[2], dir[1]).Normalize()
+                : new Vector3(dir[1], -dir[0], 0).Normalize();
+            var b = a.Cross(dir);
 
             foreach (var r in radii)
             {
@@ -698,7 +676,7 @@ namespace TVGL.Voxelization
             return voxels.ToArray();
         }
 
-        private static int[][] GetVoxelsOnCone(int[] center, double[] dir, double radius, double angle)
+        private static int[][] GetVoxelsOnCone(int[] center, Vector3 dir, double radius, double angle)
         {
             var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
@@ -709,14 +687,13 @@ namespace TVGL.Voxelization
             var tStep = lStep * Math.Cos(a);
             var rStep = lStep * Math.Sin(a);
 
-            var centerDouble = new double[] { center[0], center[1], center[2] };
-            var c = centerDouble.ToArray();
-            var cStep = dir.multiply(tStep, 3);
+            var c = new Vector3(center[0], center[1], center[2]);
+            var cStep = dir * tStep;
 
             for (var i = 1; i <= numSteps; i++)
             {
                 var r = rStep * i;
-                c = c.subtract(cStep, 3);
+                c = c - cStep;
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
                     voxels.Add(voxel);
@@ -725,11 +702,11 @@ namespace TVGL.Voxelization
             return voxels.ToArray();
         }
 
-        private static int[][] GetVoxelsOnHemisphere(int[] center, double[] dir, double radius)
+        private static int[][] GetVoxelsOnHemisphere(int[] center, Vector3 dir, double radius)
         {
             var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
-            var centerDouble = new double[] { center[0], center[1], center[2] };
+            var centerDouble = new Vector3(center[0], center[1], center[2]);
 
             var numSteps = (int)Math.Ceiling(Math.PI * radius / 2 / 0.5);
             var aStep = Math.PI / 2 / numSteps;
@@ -739,7 +716,7 @@ namespace TVGL.Voxelization
                 var a = aStep * i;
                 var r = radius * Math.Sin(a);
                 var tStep = radius * (1 - Math.Cos(a));
-                var c = centerDouble.subtract(dir.multiply(tStep, 3), 3);
+                var c = centerDouble.Subtract(dir * tStep);
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
                     voxels.Add(voxel);
@@ -748,7 +725,7 @@ namespace TVGL.Voxelization
             return voxels.ToArray();
         }
 
-        private int[][] ThickenMask(int[] vox, double[] dir, double toolDia, params string[] maskOptions)
+        private int[][] ThickenMask(int[] vox, Vector3 dir, double toolDia, params string[] maskOptions)
         {
             if (toolDia <= 0) return new[] { vox };
 
@@ -766,30 +743,31 @@ namespace TVGL.Voxelization
                         angle = 118;
                     return GetVoxelsOnCone(vox, dir, radius, angle);
                 default:
-                    var voxDouble = new double[] { vox[0], vox[1], vox[2] };
+                    var voxDouble = new Vector3(vox[0], vox[1], vox[2]);
                     return GetVoxelsWithinCircle(voxDouble, dir, radius);
             }
         }
 
-        private int[][] CreateProjectionMask(double[] dir, double tLimit)
+        private int[][] CreateProjectionMask(Vector3 dir, double tLimit)
         {
             var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
                 if (dir[i] < 0) initCoord[i] = VoxelsPerSide[i] - 1;
             var voxels = new List<int[]>(new[] { initCoord });
-            var c = initCoord.add(new[] { 0.5, 0.5, 0.5 }, 3);
+            var c = new Vector3(initCoord[0] + 0.5, initCoord[1] + 0.5, initCoord[2] + 0.5);
             var ts = FindIntersectionDistances(c, dir, tLimit);
             foreach (var t in ts)
             {
-                var cInt = c.add(dir.multiply(t, 3), 3);
-                for (var i = 0; i < 3; i++) cInt[i] = Math.Round(cInt[i], 5);
+                var cInt = c + (dir * t);
+                cInt += new Vector3(
+                   Math.Round(cInt.X, 5), Math.Round(cInt.Y, 5), Math.Round(cInt.Z, 5));
                 voxels.Add(GetNextVoxelCoord(cInt, dir));
             }
             return voxels.ToArray();
         }
 
         //Exclusive by default (i.e. if line passes through vertex/edge it ony includes two voxels that are actually passed through)
-        private static int[] GetNextVoxelCoord(double[] cInt, double[] direction)
+        private static int[] GetNextVoxelCoord(Vector3 cInt, Vector3 direction)
         {
             var searchDirs = new List<int>();
             for (var i = 0; i < 3; i++)
@@ -809,7 +787,7 @@ namespace TVGL.Voxelization
         }
 
         //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
-        private double[] FindIntersectionDistances(double[] firstVoxel, double[] direction, double tLimit)
+        private double[] FindIntersectionDistances(Vector3 firstVoxel, Vector3 direction, double tLimit)
         {
             var intersections = new ConcurrentBag<double>();
             var searchDirs = new List<int>();

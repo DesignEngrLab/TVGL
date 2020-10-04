@@ -12,7 +12,9 @@
             <!--<h:GridLinesVisual3D x:Name="GridLines" Visible="False"/>-->
 
             <hx:DirectionalLight3D Direction = "-2,-5,-2"/>
-      <hx:GroupModel3D x:Name="group"   ItemsSource="{Binding ModelGeometry}"   Transform = "{Binding ModelTransform}" />
+      <hx:GroupModel3D x:Name="group"  
+                       ItemsSource="{Binding ModelGeometry}" 
+                       Transform = "{Binding ModelTransform}" />
     </hx:Viewport3DX>
         <Menu Height="20" VerticalAlignment="Top" >
             <!--<MenuItem Header="View">

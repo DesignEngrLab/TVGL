@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -51,7 +52,7 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void Transform(double[,] transformMatrix)
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }

@@ -1,36 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double[] startPoint, double extrudeDistance, 
-            List<PolygonLight> shape, double sameTolerance, UnitType units)
+        public CrossSectionSolid CreateConstantCrossSectionSolid(IEnumerable<IEnumerable<Vector2>> bottomPolygon, Matrix4x4 transform, 
+            double sameToleranceTVGL, UnitType unitsTVGL)
         {
-            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var endPoint = startPoint.add(buildDirection.multiply(extrudeDistance));
-            var stepDistances = new Dictionary<int, double> { { 0, startPoint.dotProduct(buildDirection) }, { 1, endPoint.dotProduct(buildDirection) } };
-            var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, shape }, { 1, shape } };
+            throw new NotImplementedException();
+        }
+
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
+            IEnumerable<IEnumerable<Vector2>> shape, double sameTolerance, UnitType units)
+        {
+            var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
+            var layers2D = new Dictionary<int, List<List<Vector2>>> { { 0, shape.Select(a => new List<Vector2>(a)).ToList() }, 
+                { 1, shape.Select(a => new List<Vector2>(a)).ToList() } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,  
-           double sameTolerance, UnitType units)
-        {
-            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var start = layer3DAtStart.First().Position.dotProduct(buildDirection);
-            var endPoint = layer3DAtStart.First().Position.add(buildDirection.multiply(extrudeDistance));
-            var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.dotProduct(buildDirection) } };
-            var shape = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(layer3DAtStart, buildDirection));
-            if (shape.Area < 0) shape = PolygonLight.Reverse(shape);
-            var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, new List<PolygonLight> { shape } }, { 1, new List<PolygonLight> { shape } } };
-            return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
-        }
-
-        public static List<PolygonLight>[] GetUniformlySpacedSlices(TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
+        public static List<List<Vector2>>[] GetUniformlySpacedSlices(TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
             double stepSize = double.NaN)
         {
             if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
@@ -62,19 +55,19 @@ namespace TVGL
             }
         }
 
-        private static List<PolygonLight>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
+        private static List<List<Vector2>>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
         {
             throw new NotImplementedException();
         }
 
-        private static List<PolygonLight>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
+        private static List<List<Vector2>>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
         {
             throw new NotImplementedException();
         }
 
-        static List<PolygonLight>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
+        static List<List<Vector2>>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
         {
-            List<PolygonLight>[] loopsAlongZ = new List<PolygonLight>[numSteps];
+            List<List<Vector2>>[] loopsAlongZ = new List<List<Vector2>>[numSteps];
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
             var currentEdges = new HashSet<Edge>();
@@ -98,28 +91,28 @@ namespace TVGL
                     thisVertex = sortedVertices[vIndex];
                 }
                 if (needToOffset)
-                    z += Math.Min(stepSize, sortedVertices[vIndex + 1].Z-z) / 10.0;
+                    z += Math.Min(stepSize, sortedVertices[vIndex].Z - z) / 10.0;
                 if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
-                else loopsAlongZ[step] = new List<PolygonLight>();
+                else loopsAlongZ[step] = new List<List<Vector2>>();
             }
             return loopsAlongZ;
         }
 
-        private static List<PolygonLight> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
+        private static List<List<Vector2>> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
         {
-            var loops = new List<PolygonLight>();
+            var loops = new List<List<Vector2>>();
 
             var unusedEdges = new HashSet<Edge>(penetratingEdges);
             while (unusedEdges.Any())
             {
-                var loop = new List<PointLight>();
+                var loop = new List<Vector2>();
                 var firstEdgeInLoop = unusedEdges.First();
                 var finishedLoop = false;
                 var currentEdge = firstEdgeInLoop;
                 do
                 {
                     unusedEdges.Remove(currentEdge);
-                    var intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From, currentEdge.To);
+                    var intersectVertex = MiscFunctions.Vector2OnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From, currentEdge.To);
                     loop.Add(intersectVertex);
                     var nextFace = (currentEdge.From.Z < ZOfPlane) ? currentEdge.OtherFace : currentEdge.OwnedFace;
                     Edge nextEdge = null;
@@ -129,7 +122,7 @@ namespace TVGL
                         if (whichEdge == firstEdgeInLoop)
                         {
                             finishedLoop = true;
-                            loops.Add(new PolygonLight(loop));
+                            loops.Add(new List<Vector2>(loop));
                             break;
                         }
                         else if (unusedEdges.Contains(whichEdge))
@@ -141,7 +134,7 @@ namespace TVGL
                     if (!finishedLoop && nextEdge == null)
                     {
                         Console.WriteLine("Incomplete loop.");
-                        loops.Add(new PolygonLight(loop));
+                        loops.Add(new List<Vector2>(loop));
                     }
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);
@@ -149,7 +142,27 @@ namespace TVGL
             return loops;
         }
 
-
+        public Vector3[][][] GetCrossSectionsAs3DLoops()
+        {
+            var result = new Vector3[Layer2D.Count][][];
+            int k = 0;
+            foreach (var layerKeyValuePair in Layer2D)
+            {
+                var index = layerKeyValuePair.Key;
+                var zValue = StepDistances[index];
+                var numLoops = layerKeyValuePair.Value.Count;
+                var layer = new Vector3[numLoops][];
+                result[k++] = layer;
+                for (int j = 0; j < numLoops; j++)
+                {
+                    var loop = new Vector3[layerKeyValuePair.Value[j].Count];
+                    layer[j] = loop;
+                    for (int i = 0; i < loop.Length; i++)
+                        loop[i] =(new Vector3(layerKeyValuePair.Value[j][i], zValue)).Transform(TransformMatrix);
+                }
+            }
+            return result;
+        }
 
     }
 }

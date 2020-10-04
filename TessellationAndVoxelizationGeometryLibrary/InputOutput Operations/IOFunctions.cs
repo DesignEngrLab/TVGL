@@ -23,6 +23,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using TVGL.Numerics;
+using TVGL.TwoDimensional;
 using TVGL.Voxelization;
 
 namespace TVGL.IOFunctions
@@ -303,6 +305,11 @@ namespace TVGL.IOFunctions
             {
                 throw new Exception("Cannot open file. Message: " + exc.Message);
             }
+        }
+
+        public static void Save(Polygon polygon, string filename)
+        {
+            throw new NotImplementedException();
         }
 
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid solid)
@@ -742,7 +749,7 @@ namespace TVGL.IOFunctions
         internal static double[] ConvertStringToDoubleArray(string doublesAsString)
         {
             var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
-            double[] values = new double[bytes.Length / 8];
+            var values = new double[bytes.Length / 8];
             for (int i = 0; i < values.Length; i++)
                 values[i] = BitConverter.ToDouble(bytes, i * 8);
             return values;

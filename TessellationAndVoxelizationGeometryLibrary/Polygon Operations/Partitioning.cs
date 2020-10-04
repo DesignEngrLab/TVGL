@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using TVGL.Numerics;
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
     public enum MonotonicityChange { X, Y, Both, Neither }
     public struct MonotoneBox
@@ -20,7 +21,7 @@ namespace TVGL
         public bool XInPositiveMonotonicity { get; }
         public bool YInPositiveMonotonicity { get; }
 
-        public MonotoneBox(IList<PointLight> p, int lowIndex, int hiIndex, MonotonicityChange lowMonoChange,
+        public MonotoneBox(IList<Vector2> p, int lowIndex, int hiIndex, MonotonicityChange lowMonoChange,
             MonotonicityChange hiMonoChange, int xDirection, int yDirection) : this()
         {
             this.LowIndex = lowIndex;
@@ -42,9 +43,9 @@ namespace TVGL
     }
     public static partial class PolygonOperations
     {
-        public static List<MonotoneBox> PartitionIntoMonotoneBoxes(IEnumerable<PointLight> polygon)
+        public static List<MonotoneBox> PartitionIntoMonotoneBoxes(IEnumerable<Vector2> polygon)
         {
-            var p = (polygon is IList<PointLight>) ? (IList<PointLight>)polygon : polygon.ToList();
+            var p = (polygon is IList<Vector2>) ? (IList<Vector2>)polygon : polygon.ToList();
             if (p.Count < 3) return new List<MonotoneBox>() {new MonotoneBox(p,0,1,MonotonicityChange.Both,
                 MonotonicityChange.Both,1,1)};
             // assume X and Y monotonicities are both positive, let GetMonotonicityChange tell us the 
@@ -83,7 +84,7 @@ namespace TVGL
             return boxes;
         }
 
-        static MonotonicityChange GetMonotonicityChange(IList<PointLight> p, int index, int xDirection, int yDirection)
+        static MonotonicityChange GetMonotonicityChange(IList<Vector2> p, int index, int xDirection, int yDirection)
         {
             var numPoints = p.Count;
             var nextIndex = index + 1;

@@ -1,0 +1,11 @@
+=====================================================================
+TVGL Changes to Clipper 
+=====================================================================
+The goal has been to keep Clipper mostly identical to the version provided
+by the author, Angus Johnson 
+http://www.angusj.com/delphi/clipper.php
+
+In order to simplify the TVGL API, the following lines of code have been changed:
+#1. The following classes, structs, and enums at the following line numbers were
+    changed from "public" to "internal": 70,130,214,353,424,443,444,450,452,453,
+	455,456,458,479,486,546,1357, 4432

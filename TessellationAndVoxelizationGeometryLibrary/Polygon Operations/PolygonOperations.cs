@@ -1,62 +1,210 @@
 ﻿using ClipperLib;
-using StarMathLib;
+using Priority_Queue;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using TVGL.Numerics;
 
-namespace TVGL
+namespace TVGL.TwoDimensional
 {
-    using Path = List<Point>;
-    using PathAsLight = List<PointLight>;
-    using Paths = List<List<Point>>;
-    using PathsAsLight = List<List<PointLight>>;
-    using Polygons = List<Polygon>;
-    using PolygonsAsLight = List<PolygonLight>;
-
-    internal enum BooleanOperationType
-    {
-        Union,
-        Intersection
-    };
-
-    public enum PolygonFillType //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
-    {
-        Positive, // (Most common if polygons are ordered correctly and not self-intersecting) All sub-regions with winding counts > 0 are filled.
-        EvenOdd,  // (Most common when polygon directions are unknown) Odd numbered sub-regions are filled, while even numbered sub-regions are not.
-        Negative, // (Rarely used) All sub-regions with winding counts < 0 are filled.
-        NonZero //(Common if polygon directions are unknown) All non-zero sub-regions are filled (used in silhouette because we prefer filled regions).
-    };
-
     /// <summary>
     /// A set of general operation for points and paths
     /// </summary>
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// Gets the perimeter for a 2D set of points.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static double Perimeter(this IEnumerable<IEnumerable<Vector2>> paths)
+        {
+            return paths.Sum(path => path.Perimeter());
+        }
+        /// <summary>
+        /// Gets the perimeter for a 2D set of points.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static double Perimeter(this IEnumerable<Vector2> polygon)
+        {
+            var perimeter = 0.0;
+            var firstpass = true;
+            var firstPoint = Vector2.Null;
+            var prevPoint = Vector2.Null;
+            foreach (var currentPt in polygon)
+            {
+                if (firstpass)
+                {
+                    firstpass = false;
+                    firstPoint = prevPoint = currentPt;
+                }
+                else
+                {
+                    perimeter += Vector2.Distance(prevPoint, currentPt);
+                    prevPoint = currentPt;
+                }
+            }
+            perimeter += Vector2.Distance(prevPoint, firstPoint);
+
+            return perimeter;
+        }
+
+
+        /// <summary>
+        ///     Calculate the area of any non-intersecting polygon.
+        /// </summary>
+        public static double Area(this IEnumerable<IEnumerable<Vector2>> paths)
+        {
+            return paths.Sum(path => path.Area());
+        }
+
+
+        /// <summary>
+        /// Gets the area for a 2D set of points defining a polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static double Area(this IEnumerable<Vector2> polygon)
+        {
+            var area = 0.0;
+            var enumerator = polygon.GetEnumerator();
+            enumerator.MoveNext();
+            var basePoint = enumerator.Current;
+            enumerator.MoveNext();
+            var prevPoint = enumerator.Current;
+            foreach (var currentPt in polygon)
+            {
+                area += (prevPoint - basePoint).Cross(currentPt - basePoint);
+                prevPoint = currentPt;
+            }
+            return area / 2;
+        }
+
+        /// <summary>
+        /// Gets the area for a 2D set of points defining a polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static bool IsPositive(this IEnumerable<Vector2> polygon)
+        {
+            return polygon.Area() > 0;
+        }
+
+        public static IEnumerable<double> ConvertTo1DDoublesCollection(this IEnumerable<Vector2> coordinates)
+        {
+            return coordinates.SelectMany(p => p.Position);
+        }
+
+        public static IEnumerable<Vector2> ConvertToVector2s(this IEnumerable<double> coordinates)
+        {
+            var enumerator = coordinates.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                var x = enumerator.Current;
+                if (!enumerator.MoveNext())
+                    throw new ArgumentException("An odd number of coordinates have been provided to " +
+                   "convert the 1D array of double to an array of vectors.");
+                var y = enumerator.Current;
+                yield return new Vector2(x, y);
+            }
+        }
+
+        /// <summary>
+        /// Gets the Shallow Polygon Trees for a given set of paths.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        /// <exception cref="Exception">Negative polygon was not inside any positive polygons</exception>
+        public static Polygon[] CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths)
+        {
+            //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
+            //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
+
+            //The correct order for shallow polygon trees is as follows.
+            //The first polygon in the list is always positive. The next positive polygon signals the start of a new 
+            //shallow tree. Any polygons in-between those belong to the earlier shallow tree.
+
+            //Assumption: Ordered even-odd polygons. 
+            //Example: A negative polygon must be between two concentric positive polygons.
+
+            //By ordering the polygons, we are gauranteed to do the outermost positive polygons first.
+            var positivePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort());
+            var negativePolygons = new SortedDictionary<double, Polygon>(new NoEqualSort(false));
+            foreach (var path in paths)
+            {
+                var polygon = new Polygon(path);
+                var area = polygon.Area;
+                if (area < 0) negativePolygons.Add(area, polygon);
+                if (area > 0) positivePolygons.Add(area, polygon);
+            }
+            var result = positivePolygons.Values.ToArray();
+            //2) Find the positive polygon that this negative polygon is inside.
+            //The negative polygon belongs to the smallest positive polygon that it fits inside.
+            //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
+            //and the reversed ordering, gaurantee that we get the correct shallow tree.
+            foreach (var negativePolygonKVP in negativePolygons)
+            {
+                var isInside = false;
+                var area = negativePolygonKVP.Key;
+                var negativePolygon = negativePolygonKVP.Value;
+                //Start with the smallest positive polygon           
+                foreach (var polygon in result)
+                {
+                    if (-area < polygon.Area
+                        && polygon.IsPointInsidePolygon(negativePolygon.Path[0], out _, out _, out _)
+                        && polygon.IsPolygonIntersectingPolygon(negativePolygon))
+                    {
+                        polygon.InnerPolygons.Add(negativePolygon);
+                        //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
+                        isInside = true;
+                        break;
+                    }
+                }
+
+                if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
+            }
+
+            //Set the polygon indices
+            var polygonCount = 0;
+            foreach (var polygon in result)
+            {
+                polygon.Index = polygonCount;
+                foreach (var hole in polygon.InnerPolygons)
+                    hole.Index = polygonCount;
+                polygonCount += 1 + polygon.InnerPolygons.Count;
+            }
+            return result;
+        }
+
+
         #region Line Intersections with Polygon
 
-        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<PolygonLight> polygons, double[] lineReference, double lineDirection,
+        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<List<Vector2>> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, true)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, double[] lineReference, double lineDirection,
+        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             throw new NotImplementedException();
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonLight> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<List<Vector2>> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, true)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.X).ToList();
-            var currentLines = new HashSet<Line>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.X).ToList();
+            var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().X;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingXValue) / stepSize);
             var pIndex = 0;
@@ -68,11 +216,10 @@ namespace TVGL
                 while (thisPoint.X <= x)
                 {
                     if (x.IsPracticallySame(thisPoint.X)) needToOffset = true;
-                    foreach (var line in thisPoint.Lines)
-                    {
-                        if (currentLines.Contains(line)) currentLines.Remove(line);
-                        else currentLines.Add(line);
-                    }
+                    if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
+                    else currentLines.Add(thisPoint.StartLine);
+                    if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
+                    else currentLines.Add(thisPoint.EndLine);
                     pIndex++;
                     if (pIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pIndex];
@@ -83,23 +230,33 @@ namespace TVGL
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = line.YGivenX(x);
+                    intersects[index++] = line.YGivenX(x, out _);
                 intersections.Add(intersects.OrderBy(y => y).ToArray());
             }
             return intersections;
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<IEnumerable<Vector2>> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, true)), startingYValue,
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
+        /// <summary>
+        /// Returns a list of double arrays. the double array values correspond to only the x-coordinates. the y-coordinates are determined by the input.
+        /// y = startingYValue + (i+firstIntersectingIndex)*stepSize
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="startingYValue">The starting y value.</param>
+        /// <param name="numSteps">The number steps.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.Path).OrderBy(p => p.Y).ToList();
-            var currentLines = new HashSet<Line>();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.Y).ToList();
+            var currentLines = new HashSet<PolygonSegment>();
             var nextDistance = sortedPoints.First().Y;
             firstIntersectingIndex = (int)Math.Ceiling((nextDistance - startingYValue) / stepSize);
             var pIndex = 0;
@@ -111,23 +268,22 @@ namespace TVGL
                 while (thisPoint.Y <= y)
                 {
                     if (y.IsPracticallySame(thisPoint.Y)) needToOffset = true;
-                    foreach (var line in thisPoint.Lines)
-                    {
-                        if (currentLines.Contains(line)) currentLines.Remove(line);
-                        else currentLines.Add(line);
-                    }
+                    if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
+                    else currentLines.Add(thisPoint.StartLine);
+                    if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
+                    else currentLines.Add(thisPoint.EndLine);
                     pIndex++;
                     if (pIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pIndex];
                 }
                 if (needToOffset)
-                    y += Math.Min(stepSize, sortedPoints[pIndex + 1].Y) / 10.0;
+                    y += Math.Min(stepSize, sortedPoints[pIndex].Y) / 10.0;
 
                 var numIntersects = currentLines.Count;
                 var intersects = new double[numIntersects];
                 var index = 0;
                 foreach (var line in currentLines)
-                    intersects[index++] = line.XGivenY(y);
+                    intersects[index++] = line.XGivenY(y, out _);
                 intersections.Add(intersects.OrderBy(x => x).ToArray());
             }
             return intersections;
@@ -143,7 +299,7 @@ namespace TVGL
         /// <param name="dimensions"></param>
         /// <param name="confidencePercentage"></param>
         /// <returns></returns>
-        public static bool IsRectangular(PolygonLight polygon, out double[] dimensions, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsRectangular(this IEnumerable<Vector2> polygon, out Vector2 dimensions, double confidencePercentage = Constants.HighConfidence)
         {
             if (confidencePercentage > 1.0 || Math.Sign(confidencePercentage) < 0)
                 throw new Exception("Confidence percentage must be between 0 and 1");
@@ -153,94 +309,237 @@ namespace TVGL
             //If true, then check the polygon area vs. its minBoundingRectangle area. 
             //The area / perimeter check is not strictly necessary, but can provide some speed-up
             //For obviously not rectangular pieces
-            var p = polygon.Length;
-            var sqrRootTerm = Math.Sqrt(p * p - 16 * polygon.Area);
-            var length = 0.25 * (p + sqrRootTerm);
-            var width = 0.25 * (p - sqrRootTerm);
-            dimensions = new[] { length, width };
+            var perimeter = polygon.Perimeter();
+            var area = polygon.Area();
+            var sqrRootTerm = Math.Sqrt(perimeter * perimeter - 16 * area);
+            var length = 0.25 * (perimeter + sqrRootTerm);
+            var width = 0.25 * (perimeter - sqrRootTerm);
+            dimensions = new Vector2(length, width);
             var areaCheck = length * width;
             var perimeterCheck = 2 * length + 2 * width;
-            if (!polygon.Area.IsPracticallySame(areaCheck, polygon.Area * tolerancePercentage) &&
-                !polygon.Length.IsPracticallySame(perimeterCheck, polygon.Length * tolerancePercentage))
+            if (!area.IsPracticallySame(areaCheck, area * tolerancePercentage) &&
+                !perimeter.IsPracticallySame(perimeterCheck, perimeter * tolerancePercentage))
             {
                 return false;
             }
 
-            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon.Path);
-            return polygon.Area.IsPracticallySame(minBoundingRectangle.Area, polygon.Area * tolerancePercentage);
+            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon);
+            return area.IsPracticallySame(minBoundingRectangle.Area, area * tolerancePercentage);
         }
 
-        public static bool IsCircular(PolygonLight polygon, double confidencePercentage = Constants.HighConfidence)
+
+        /// <summary>Determines whether the specified polygon is circular.</summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="minCircle">The minimum circle.</param>
+        /// <param name="confidencePercentage">The confidence percentage.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
+        public static bool IsCircular(this Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
-            return IsCircular(new Polygon(polygon), out var _, confidencePercentage);
+            return IsCircular(polygon.Path, out minCircle, confidencePercentage);
         }
 
-        public static bool IsCircular(Polygon polygon, double confidencePercentage = Constants.HighConfidence)
-        {
-            return IsCircular(polygon, out var _, confidencePercentage);
-        }
-
-        public static bool IsCircular(Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        /// <summary>Determines whether the specified polygon is circular.</summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="minCircle">The minimum circle.</param>
+        /// <param name="confidencePercentage">The confidence percentage.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
+        public static bool IsCircular(this IEnumerable<Vector2> polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
-            minCircle = MinimumEnclosure.MinimumCircle(polygon.Path);
+            minCircle = MinimumEnclosure.MinimumCircle(polygon);
 
             //Check if areas are close to the same
-            var polygonArea = Math.Abs(polygon.Area);
+            var polygonArea = polygon.Area();
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 
         /// <summary>
-        /// Gets the length of a path
+        ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
+        ///     below, but does allow determination of whether a point is on the boundary.
+        /// </summary>
+        internal static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion, out PolygonSegment closestLineAbove,
+            out PolygonSegment closestLineBelow, out bool onBoundary, bool onBoundaryIsInside = true)
+        {
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
+                                         //This function has three layers of checks. 
+                                         //(1) Check if the point is inside the axis aligned bounding box. If it is not, then return false.
+                                         //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
+                                         //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
+            closestLineAbove = null;
+            closestLineBelow = null;
+            onBoundary = false;
+            //1) Check if center point is within bounding box of each polygon
+            if (qX < polygon.MinX || qY < polygon.MinY ||
+                qX > polygon.MaxX || qY > polygon.MaxY)
+                return false;
+            //2) If the point in question is == a point in points, then it is inside the polygon
+            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion)))
+            {
+                onBoundary = true;
+                return onBoundaryIsInside;
+            }
+            var numberAbove = 0;
+            var numberBelow = 0;
+            var minDistAbove = double.PositiveInfinity;
+            var minDistBelow = double.PositiveInfinity;
+            foreach (var line in polygon.Lines)
+            {
+                if ((line.FromPoint.X < qX) == (line.ToPoint.X < qX))
+                    // if the X values are both on the same side, then ignore it. We are looking for
+                    // lines that 'straddle' the x-values. Then we want to know if the lines' y values
+                    // are above or below
+                    continue;
+                var lineYValue = line.YGivenX(qX, out _); //this out parameter is the same condition
+                                                          //as 5 lines earlier, but that check is kept for efficiency
+                var yDistance = lineYValue - qY;
+                if (yDistance > 0)
+                {
+                    numberAbove++;
+                    if (minDistAbove > yDistance)
+                    {
+                        minDistAbove = yDistance;
+                        closestLineAbove = line;
+                    }
+                }
+                else if (yDistance < 0)
+                {
+                    yDistance = -yDistance;
+                    numberBelow++;
+                    if (minDistBelow > yDistance)
+                    {
+                        minDistBelow = yDistance;
+                        closestLineBelow = line;
+                    }
+                }
+                else //else, the point is on a line in the polygon
+                {
+                    closestLineAbove = closestLineBelow = line;
+                    onBoundary = true;
+                    return true;
+                }
+            }
+            if (numberBelow != numberAbove)
+            {
+                Trace.WriteLine("In IsPointInsidePolygon, the number of points above is not equal to the number below");
+                numberAbove = numberBelow = Math.Max(numberBelow, numberAbove);
+            }
+            return numberAbove % 2 != 0;
+        }
+
+
+        /// <summary>
+        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
+        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
+        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        ///     Major Assumptions: 
+        ///     1) The polygon can be convex
+        ///     2) The direction of the polygon does not matter  
+        /// 
+        ///     Updated by Brandon Massoni: 8.11.2017
         /// </summary>
         /// <param name="path"></param>
-        /// <returns></returns>
-        public static double Length(IList<PointLight> path)
+        /// <param name="pointInQuestion"></param>
+        public static bool IsPointInsidePolygon(this List<Vector2> path, Vector2 pointInQuestion, bool onBoundaryIsInside = false)
         {
-            if (path.Count < 2) return 0.0;
-            var editPath = new List<PointLight>(path) { path.First() };
-            var length = 0.0;
-            for (var i = 0; i < editPath.Count - 1; i++)
+            var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
+            var qY = pointInQuestion.Y;  // we declare these local variables.
+                                         //Check if the point is the same as any of the polygon's points
+            var polygonIsLeftOfPoint = false;
+            var polygonIsRightOfPoint = false;
+            var polygonIsAbovePoint = false;
+            var polygonIsBelowPoint = false;
+            foreach (var point in path)
             {
-                var p1 = editPath[i];
-                var p2 = editPath[i + 1];
-                length += MiscFunctions.DistancePointToPoint(p1, p2);
+                if (point == pointInQuestion)
+                    return onBoundaryIsInside;
+                if (point.X > qX) polygonIsLeftOfPoint = true;
+                else if (point.X < qX) polygonIsRightOfPoint = true;
+                if (point.Y > qY) polygonIsAbovePoint = true;
+                else if (point.Y < qY) polygonIsBelowPoint = true;
             }
-            return length;
+            if (!(polygonIsAbovePoint && polygonIsBelowPoint && polygonIsLeftOfPoint && polygonIsRightOfPoint))
+                // this is like the AABB check. 
+                return false;
+
+            //2) Next, see how many lines are to the left of the point, using a fixed y value.
+            //This compact, effecient 7 lines of code is from W. Randolph Franklin
+            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
+            var inside = false;
+            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            {
+                if ((path[i].Y > pointInQuestion.Y) != (path[j].Y > pointInQuestion.Y) &&
+                     pointInQuestion.X < (path[j].X - path[i].X) * (pointInQuestion.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                {
+                    inside = !inside;
+                }
+            }
+
+            return inside;
         }
 
         /// <summary>
-        /// Gets the length of a path
+        /// This algorithm returns whether two polygons intersect. It can be used to triangle/triangle intersections,
+        /// or any abitrary set of polygons. If two polygons are touching, they are not considered to be intersecting.
         /// </summary>
-        /// <param name="paths"></param>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
         /// <returns></returns>
-        public static double Length(IList<List<PointLight>> paths)
+        //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
+        // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
+        public static bool IsPolygonIntersectingPolygon(this Polygon subject, Polygon clip)
         {
-            return paths.Sum(path => Length(path));
+            //Get the axis aligned bounding box of the path. This is super fast.
+            //If the point is inside the bounding box, continue to check with more detailed methods, 
+            //Else, return false.
+            if (subject.MinX > clip.MaxX ||
+                subject.MaxX < clip.MinX ||
+                subject.MinY > clip.MaxY ||
+                subject.MaxY < clip.MinY) return false;
+
+            //Check if either polygon is fully encompassed by the other
+            if (clip.Path.Any(p => IsPointInsidePolygon(subject, p, out _, out _, out _))) return true;
+            if (subject.Path.Any(p => IsPointInsidePolygon(clip, p, out _, out _, out _))) return true;
+
+            //Else, any remaining intersection will be defined by one or more crossing lines
+            //Check for intersections between all but one of the clip lines with all of the subject lines.
+            //This is enough to test for intersection because we have already performed a point check.
+            //This makes very little difference for large polygons, but cuts 9 operations down to 6 for 
+            //a triangle/triangle intersection
+            var clipPathLength = clip.Path.Count;
+            var subjectPathLength = subject.Path.Count;
+            //This next section gathers the points rather than using polygon.PathLines, so that the 
+            //PathLines do not need to be set (we don't even use them in LineLineIntersection).
+            for (var i = 0; i < clipPathLength - 1; i++) //-1 since we only need two lines
+            {
+                var point1 = clip.Path[i];
+                var point2 = (i == clipPathLength - 1) ? clip.Path[0] : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
+                for (var j = 0; j < subjectPathLength; j++) //Need to consider all the lines
+                {
+                    var point3 = subject.Path[j];
+                    var point4 = (j == subjectPathLength - 1) ? subject.Path[0] : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
+                    if (MiscFunctions.SegmentSegment2DIntersection(point1, point2, point3, point4, out var intersectionPoint, false))
+                    {
+                        if (intersectionPoint == point1 ||
+                            intersectionPoint == point1 ||
+                            intersectionPoint == point3 ||
+                            intersectionPoint == point4)
+                        {
+                            continue;
+                        }
+                        //Else
+                        return true;
+                    }
+                }
+            }
+
+            //No intersections identified. Return false.
+            return false;
         }
 
-        /// <summary>
-        /// Gets the Shallow Polygon Trees for a given set of paths. 
-        /// </summary>
-        /// <param name="paths"></param>
-        /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
-        }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<PointLight>> paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths
-                .Select(path => path.Select(p => new Point(p)).ToList()).ToList());
-        }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(Polygons paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
-        }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<PolygonLight> paths)
-        {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths.Select(p => new Polygon(p)).ToList());
-        }
 
         #region Clockwise / CounterClockwise Ordering
 
@@ -254,10 +553,10 @@ namespace TVGL
         /// 2. the last point is not repeated.
         /// 3. the polygon is simple (does not intersect itself or have holes)
         /// </assumptions>
-        public static List<Point> CCWPositive(IList<Point> p)
+        private static List<Vector2> CCWPositive(IEnumerable<Vector2> p)
         {
-            var polygon = new List<Point>(p);
-            var area = MiscFunctions.AreaOfPolygon(p.ToArray());
+            var polygon = new List<Vector2>(p);
+            var area = p.Area();
             if (area < 0) polygon.Reverse();
             return polygon;
         }
@@ -268,10 +567,10 @@ namespace TVGL
         /// <param name="p"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public static List<Point> CWNegative(IList<Point> p)
+        private static List<Vector2> CWNegative(IEnumerable<Vector2> p)
         {
-            var polygon = new List<Point>(p);
-            var area = MiscFunctions.AreaOfPolygon(p.ToArray());
+            var polygon = new List<Vector2>(p);
+            var area = p.Area();
             if (area > 0) polygon.Reverse();
             return polygon;
         }
@@ -279,16 +578,9 @@ namespace TVGL
         #endregion
 
         #region Simplify
-
-        public static List<List<PointLight>> SimplifyFuzzy(IList<List<PointLight>> paths)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
-            return paths.Select(SimplifyFuzzy).ToList();
-        }
-
-        public static List<List<PointLight>> SimplifyFuzzy(IList<List<PointLight>> paths, double lengthTolerance,
-            double slopeTolerance)
-        {
-            return paths.Select(p => SimplifyFuzzy(p, lengthTolerance, slopeTolerance)).ToList();
+            return paths.Select(p => Simplify(p, allowableChangeInAreaFraction)).ToList();
         }
 
         /// <summary>
@@ -296,170 +588,77 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<PointLight> SimplifyFuzzy(IList<PointLight> path)
+        public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
         {
-            const double lengthTolerance = Constants.LineLengthMinimum;
-            const double slopeTolerance = Constants.LineSlopeTolerance;
-            return SimplifyFuzzy(path, lengthTolerance, slopeTolerance);
-        }
+            var polygon = path.ToArray();
+            var numPoints = polygon.Length;
+            var origArea = Math.Abs(polygon.Area()); //take absolute value s.t. it works on holes as well
+            #region build initial list of cross products
+            // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points. I'm very tempted
+            // to call it vertex, which is a better name but I don't want to confuse with the Vertex class in TessellatedSolid). 
+            // Here we are using the SimplePriorityQueue from BlueRaja (https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp)
+            var convexCornerQueue = new SimplePriorityQueue<int, double>(new ForwardSort());
+            var concaveCornerQueue = new SimplePriorityQueue<int, double>(new ReverseSort());
+            // cross-products which are kept in the same order as the corners they represent. This is solely used with the above
+            // dictionary - to essentially do the reverse lookup. given a corner-index, crossProductsArray will instanly tell us the 
+            // cross-product. The cross-product is used as the key in the dictionary - to find corner-indices.
+            var crossProductsArray = new double[numPoints];
 
-        /// <summary>
-        /// Simplifies the lines on a polygon to use fewer points when possible.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="lengthTolerance"></param>
-        /// <param name="slopeTolerance"></param>
-        /// <returns></returns>
-        public static List<PointLight> SimplifyFuzzy(IList<PointLight> path, double lengthTolerance,
-            double slopeTolerance)
-        {
-            if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
-            var squareLengthTolerance = lengthTolerance * lengthTolerance;
-            var n = path.Count;
-            if (n < 4) return new List<PointLight>(path);
-            var simplePath = new List<PointLight>(path);
+            // make the cross-products. this is a for-loop that is preceded with the first element (requiring the last element, "^1" in 
+            // C# 8 terms) and succeeded by one for the last corner 
+            AddCrossProductToOneOfTheLists(polygon[^1], polygon[0], polygon[1], convexCornerQueue, concaveCornerQueue,
+                crossProductsArray, 0);
+            for (int i = 1; i < numPoints - 1; i++)
+                AddCrossProductToOneOfTheLists(polygon[i - 1], polygon[i], polygon[i + 1], convexCornerQueue, concaveCornerQueue,
+                crossProductsArray, i);
+            AddCrossProductToOneOfTheLists(polygon[^2], polygon[^1], polygon[0], convexCornerQueue, concaveCornerQueue,
+                crossProductsArray, numPoints - 1);
+            #endregion
 
-            //Remove negligible length lines and combine collinear lines.
-            var i = 0;
-            var j = 1;
-            var k = 2;
-            var iX = simplePath[i].X;
-            var iY = simplePath[i].Y;
-            var jX = simplePath[j].X;
-            var jY = simplePath[j].Y;
-            var kX = simplePath[k].X;
-            var kY = simplePath[k].Y;
-            while (i < n)
+            // after much thought, the idea to split up into positive and negative sorted lists is so that we don't over remove vertices
+            // by bouncing back and forth between convex and concave while staying with the target deltaArea. So, we do as many convex corners
+            // before reaching a reducation of deltaArea - followed by a reduction of concave edges so that no omre than deltaArea is re-added
+            for (int sign = 1; sign >= -1; sign -= 2)
             {
-                //The simplification is destroying this polygon. Do not simplify it.
-                if (n < 4) return new List<PointLight>(path);
-
-                //We only check line I-J in the first iteration, since later we
-                //check line J-K instead.
-                if (i == 0 && NegligibleLine(iX, iY, jX, jY, squareLengthTolerance))
+                var deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
+                                                                              // that happens when we change cross-product to area of a triangle
+                var relevantSortedList = (sign == 1) ? convexCornerQueue : concaveCornerQueue;
+                // first we remove any convex corners that would reduce the area
+                while (relevantSortedList.Count > 0)
                 {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    //Current stays the same.
-                    //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                else if (NegligibleLine(jX, jY, kX, kY, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(k);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    //Current and Next stay the same.
-                    //k moves forward but has the same index.
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                //Use an even looser tolerance to determine if slopes are equal.
-                else if (LineSlopesEqual(iX, iY, jX, jY, kX, kY, slopeTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-
-                    //Current stays the same.
-                    //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                else
-                {
-                    //Everything moves forward
-                    i++;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    iX = jX;
-                    iY = jY;
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-            }
-
-            var area1 = MiscFunctions.AreaOfPolygon(path);
-            var area2 = MiscFunctions.AreaOfPolygon(simplePath);
-
-            //If the simplification destroys a polygon, do not simplify it.
-            if (area2.IsNegligible() ||
-                !area1.IsPracticallySame(area2, Math.Abs(area1 * (1 - Constants.HighConfidence))))
-            {
-                return (PathAsLight)path;
-            }
-
-            return simplePath;
-        }
-
-        /// <summary>
-        /// Simplifies the lines on a polygon to use fewer points when possible.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="edgeLength"></param>
-        /// <returns></returns>
-        public static List<PointLight> SampleWithEdgeLength(IList<PointLight> path, double edgeLength)
-        {
-            //ToDo: Speed this up to be like SimplifyFuzzy
-            var lengthTolerance = edgeLength / 2;
-            var squareLengthTolerance = lengthTolerance * lengthTolerance;
-
-            var newPath = new List<PointLight>();
-            var simplePath = new List<PointLight>(path);
-            for (var i = 0; i < simplePath.Count; i++)
-            {
-                var j = i + 1;
-                if (i == simplePath.Count - 1) j = 0;
-                var k = j + 1;
-                if (j == simplePath.Count - 1) k = 0;
-                var current = simplePath[i];
-                var next = simplePath[j];
-                var nextNext = simplePath[k];
-                var length = MiscFunctions.DistancePointToPoint(current, next);
-                if (length > edgeLength)
-                {
-                    var n = (int)(length / edgeLength);
-                    var vector = (next - current).normalize().multiply(edgeLength);
-                    newPath.Add(current);
-                    for (var p = 0; p < n; p++)
-                    {
-                        current = new PointLight(new[] { current.X + vector[0], current.Y + vector[1] });
-                        newPath.Add(current);
+                    var index = relevantSortedList.Dequeue();
+                    var smallestArea = crossProductsArray[index];
+                    if (deltaArea < sign * smallestArea)
+                    { //one tricky little bug! in order to keep this fast, we first dequeue before examining
+                        // the result. if the resulting index produces more area than we need we switch to the
+                        // concave queue. That dequeueing and updating will want this last index on the queues
+                        // if it is a neighbor to a new one being removing. Confusing, eh? So, we need to put it
+                        // back in. Looks kludge-y but this only happens once, and it's better to do this once
+                        // then add more logic to the above statements that would slow it down.
+                        relevantSortedList.Enqueue(index, smallestArea);
+                        break;
                     }
-                }
-                else if (i == 0 && NegligibleLine(current.X, current.Y, next.X, next.Y, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    i--;
-                    continue;
-                }
-                else if (NegligibleLine(next.X, next.Y, nextNext.X, nextNext.Y, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(k);
-                    i--;
-                    continue;
-                }
-                else
-                {
-                    newPath.Add(current);
+                    deltaArea -= sign * smallestArea;
+                    //  set the corner to null. we'll remove null corners at the end. for now, just set to null. 
+                    // this is for speed and keep the indices correct in the various collections
+                    polygon[index] = Vector2.Null;
+                    // find the four neighbors - two on each side. the closest two (prevIndex and nextIndex) need to be updated
+                    // which requires each other (now that the corner in question has been removed) and their neighbors on the other side
+                    // (nextnextIndex and prevprevIndex)
+                    int nextIndex = FindValidNeighborIndex(index, true, polygon, numPoints);
+                    int nextnextIndex = FindValidNeighborIndex(nextIndex, true, polygon, numPoints);
+                    int prevIndex = FindValidNeighborIndex(index, false, polygon, numPoints);
+                    int prevprevIndex = FindValidNeighborIndex(prevIndex, false, polygon, numPoints);
+                    // now, add these new crossproducts both to the dictionary and to the sortedLists. Note, that nothing is
+                    // removed from the sorted lists here. it is more efficient to just remove them if they bubble to the top of the list, 
+                    // which is done in PopNextSmallestArea
+                    UpdateCrossProductInQueues(polygon[prevIndex], polygon[nextIndex], polygon[nextnextIndex], convexCornerQueue, concaveCornerQueue,
+                        crossProductsArray, nextIndex);
+                    UpdateCrossProductInQueues(polygon[prevprevIndex], polygon[prevIndex], polygon[nextIndex], convexCornerQueue, concaveCornerQueue,
+                            crossProductsArray, prevIndex);
                 }
             }
-            return newPath;
+            return polygon.Where(v => !v.IsNull()).ToList();
         }
 
         /// <summary>
@@ -467,128 +666,172 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Point> SimplifyFuzzy(IList<Point> path)
-        {
-            const double lengthTolerance = Constants.LineLengthMinimum;
-            const double slopeTolerance = Constants.LineSlopeTolerance;
-            return SimplifyFuzzy(path, lengthTolerance, slopeTolerance);
-        }
+        public static List<List<Vector2>> Simplify(this IEnumerable<Vector2> path, int targetNumberOfPoints)
+        { return Simplify(new[] { path }, targetNumberOfPoints); }
 
         /// <summary>
-        /// Simplifies the lines on a polygon to use fewer points when possible.
+        /// Simplifies the lines on a polygon to be at the target amount.
         /// </summary>
-        /// <param name="path"></param>
-        /// <param name="lengthTolerance"></param>
-        /// <param name="slopeTolerance"></param>
-        /// <returns></returns>
-        public static List<Point> SimplifyFuzzy(IList<Point> path, double lengthTolerance,
-            double slopeTolerance)
+        /// <param name="path">The path.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
+        ///                   + " is more than the total number of points in the polygon(s).</exception>
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
         {
-            if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
-            var squareLengthTolerance = lengthTolerance * lengthTolerance;
-            var simplePath = new List<Point>(path);
-            var n = simplePath.Count;
-            if (n < 4) return simplePath;
-
-            //Remove negligible length lines and combine collinear lines.
-            var i = 0;
-            var j = 1;
-            var k = 2;
-            var iX = simplePath[i].X;
-            var iY = simplePath[i].Y;
-            var jX = simplePath[j].X;
-            var jY = simplePath[j].Y;
-            var kX = simplePath[k].X;
-            var kY = simplePath[k].Y;
-            while (i < n)
+            var polygons = path.Select(p => p.ToArray()).ToArray();
+            var numPoints = polygons.Select(p => p.Length).ToArray();
+            var numToRemove = numPoints.Sum() - targetNumberOfPoints;
+            #region build initial list of cross products
+            var cornerQueue = new SimplePriorityQueue<int, double>(new AbsoluteValueSort());
+            var crossProductsArray = new double[numPoints.Sum()];
+            var index = 0;
+            for (int j = 0; j < polygons.Length; j++)
             {
-                //We only check line I-J in the first iteration, since later we
-                //check line J-K instead.
-                if (i == 0 && NegligibleLine(iX, iY, jX, jY, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    //Current stays the same.
-                    //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                else if (NegligibleLine(jX, jY, kX, kY, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(k);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    //Current and Next stay the same.
-                    //k moves forward but has the same index.
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                //Use an even looser tolerance to determine if slopes are equal.
-                else if (LineSlopesEqual(iX, iY, jX, jY, kX, kY, slopeTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+                AddCrossProductToQueue(polygons[j][^1], polygons[j][0], polygons[j][1], cornerQueue, crossProductsArray, index++);
+                for (int i = 1; i < numPoints[j] - 1; i++)
+                    AddCrossProductToQueue(polygons[j][i - 1], polygons[j][i], polygons[j][i + 1], cornerQueue, crossProductsArray, index++);
+                AddCrossProductToQueue(polygons[j][^2], polygons[j][^1], polygons[j][0], cornerQueue, crossProductsArray, index++);
+            }
+            #endregion
+            if (numToRemove <= 0) throw new ArgumentOutOfRangeException("targetNumberOfPoints", "The number of points to remove in PolygonOperations.Simplify"
+                  + " is more than the total number of points in the polygon(s).");
+            while (numToRemove-- > 0)
+            {
+                index = cornerQueue.Dequeue();
+                var cornerIndex = index;
+                var polygonIndex = 0;
+                // the index is from stringing together all the original polygons into one long array
+                while (cornerIndex >= polygons[polygonIndex].Length) cornerIndex -= polygons[polygonIndex++].Length;
+                polygons[polygonIndex][cornerIndex] = Vector2.Null;
 
-                    //Current stays the same.
-                    //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                else
+                // find the four neighbors - two on each side. the closest two (prevIndex and nextIndex) need to be updated
+                // which requires each other (now that the corner in question has been removed) and their neighbors on the other side
+                // (nextnextIndex and prevprevIndex)
+                int nextIndex = FindValidNeighborIndex(cornerIndex, true, polygons[polygonIndex], numPoints[polygonIndex]);
+                int nextnextIndex = FindValidNeighborIndex(nextIndex, true, polygons[polygonIndex], numPoints[polygonIndex]);
+                int prevIndex = FindValidNeighborIndex(cornerIndex, false, polygons[polygonIndex], numPoints[polygonIndex]);
+                int prevprevIndex = FindValidNeighborIndex(prevIndex, false, polygons[polygonIndex], numPoints[polygonIndex]);
+                // if the polygon has been reduced to 2 points, then we're going to delete it
+                if (nextnextIndex == prevIndex || nextIndex == prevprevIndex) // then reduced to two points.
                 {
-                    //Everything moves forward
-                    i++;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    iX = jX;
-                    iY = jY;
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
+                    polygons[polygonIndex][nextIndex] = Vector2.Null;
+                    polygons[polygonIndex][nextnextIndex] = Vector2.Null;
+                    numToRemove -= 2;
                 }
+                var polygonStartIndex = index - cornerIndex;
+                // like the AddCrossProductToQueue function used above, we need a global index from stringing together all the polygons.
+                // So, polygonStartIndex is used to find the start of this particular polygon's index and then add prevIndex and nextIndex to it.
+                UpdateCrossProductInQueue(polygons[polygonIndex][prevprevIndex], polygons[polygonIndex][prevIndex], polygons[polygonIndex][nextIndex],
+                    cornerQueue, crossProductsArray, polygonStartIndex + prevIndex);
+                UpdateCrossProductInQueue(polygons[polygonIndex][prevIndex], polygons[polygonIndex][nextIndex], polygons[polygonIndex][nextnextIndex],
+                    cornerQueue, crossProductsArray, polygonStartIndex + nextIndex);
             }
 
-            var area1 = MiscFunctions.AreaOfPolygon(path);
-            var area2 = MiscFunctions.AreaOfPolygon(simplePath);
-
-            //If the simplification destroys a polygon, do not simplify it.
-            if (area2.IsNegligible() ||
-                !area1.IsPracticallySame(area2, Math.Abs(area1 * (1 - Constants.HighConfidence))))
+            var result = new List<List<Vector2>>();
+            foreach (var polygon in polygons)
             {
-                return (Path)path;
+                var resultPolygon = new List<Vector2>();
+                foreach (var corner in polygon)
+                    if (!corner.IsNull()) resultPolygon.Add(corner);
+                if (resultPolygon.Count > 0)
+                    result.Add(resultPolygon);
             }
-
-            return simplePath;
+            return result;
         }
 
-
-        private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
+        private static int FindValidNeighborIndex(int index, bool forward, Vector2[] polygon, int numPoints)
         {
-            var dX = p1X - p2X;
-            var dY = p1Y - p2Y;
-            return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
+            int increment = forward ? 1 : -1;
+            do
+            {
+                index += increment;
+                if (index < 0) index = numPoints - 1;
+                else if (index == numPoints) index = 0;
+            }
+            while (polygon[index].IsNull());
+            return index;
         }
 
-        private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y,
-            double tolerance = Constants.LineSlopeTolerance)
+        private class ReverseSort : IComparer<double>
         {
-            if (tolerance.IsNegligible()) tolerance = Constants.LineSlopeTolerance;
-            var value = (p1Y - p2Y) * (p2X - p3X) - (p1X - p2X) * (p2Y - p3Y);
-            return value.IsNegligible(tolerance);
+            public int Compare(double x, double y)
+            {
+                if (x == y) return 0;
+                if (x < y) return 1;
+                return -1;
+            }
+        }
+        private class ForwardSort : IComparer<double>
+        {
+            public int Compare(double x, double y)
+            {
+                if (x == y) return 0;
+                if (x < y) return -1;
+                return 1;
+            }
+        }
+        private class AbsoluteValueSort : IComparer<double>
+        {
+            public int Compare(double x, double y)
+            {
+                if (Math.Abs(x) == Math.Abs(y)) return 0;
+                if (Math.Abs(x) < Math.Abs(y)) return -1;
+                return 1;
+            }
+        }
+
+        private static void AddCrossProductToOneOfTheLists(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
+            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
+            double[] crossProducts, int index)
+        {
+            var cross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
+            crossProducts[index] = cross;
+            if (cross < 0) concaveCornerQueue.Enqueue(index, (float)cross);
+            else convexCornerQueue.Enqueue(index, (float)cross);
+        }
+        private static void UpdateCrossProductInQueues(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
+            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
+            double[] crossProducts, int index)
+        {
+            var oldCross = crossProducts[index];
+            var newCross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
+            crossProducts[index] = newCross;
+            if (newCross < 0)
+            {
+                if (oldCross < 0)
+                    concaveCornerQueue.UpdatePriority(index, newCross);
+                else //then it used to be positive and needs to be removed from the convexCornerQueue
+                {
+                    convexCornerQueue.Remove(index);
+                    concaveCornerQueue.Enqueue(index, newCross);
+                }
+            }
+            // else newCross is positive and should be on the convexCornerQueue
+            else if (oldCross >= 0)
+                convexCornerQueue.UpdatePriority(index, newCross);
+            else //then it used to be negative and needs to be removed from the concaveCornerQueue
+            {
+                concaveCornerQueue.Remove(index);
+                convexCornerQueue.Enqueue(index, newCross);
+            }
+        }
+
+        private static void AddCrossProductToQueue(Vector2 fromPoint, Vector2 currentPoint,
+            Vector2 nextPoint, SimplePriorityQueue<int, double> cornnerQueue,
+            double[] crossProducts, int index)
+        {
+            var cross = Math.Abs((currentPoint - fromPoint).Cross(nextPoint - currentPoint));
+            crossProducts[index] = cross;
+            cornnerQueue.Enqueue(index, cross);
+        }
+
+        private static void UpdateCrossProductInQueue(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
+            SimplePriorityQueue<int, double> cornerQueue, double[] crossProducts, int index)
+        {
+            var newCross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
+            crossProducts[index] = newCross;
+            cornerQueue.UpdatePriority(index, newCross);
         }
         #endregion
 
@@ -601,16 +844,12 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<PointLight>> OffsetRound(IEnumerable<PointLight> path, double offset,
+        public static List<List<Vector2>> OffsetRound(this IEnumerable<Vector2> path, double offset,
             double minLength = 0.0)
         {
-            return Offset(new PathsAsLight { path.ToList() }, offset, JoinType.jtRound, minLength);
+            return Offset(new List<IEnumerable<Vector2>> { path }, offset, JoinType.jtRound, minLength);
         }
-        public static PolygonsAsLight OffsetRound(PolygonLight path, double offset,
-            double minLength = 0.0)
-        {
-            return Offset(new PolygonsAsLight { path }, offset, JoinType.jtRound, minLength);
-        }
+
 
         /// <summary>
         /// Offsets all paths by the given offset value. Rounds the corners.
@@ -621,13 +860,8 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<PointLight>> OffsetRound(IEnumerable<IEnumerable<PointLight>> paths, double offset,
+        public static List<List<Vector2>> OffsetRound(this IEnumerable<IEnumerable<Vector2>> paths, double offset,
             double minLength = 0.0)
-        {
-            var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.jtRound, minLength);
-        }
-        public static PolygonsAsLight OffsetRound(PolygonsAsLight paths, double offset, double minLength = 0.0)
         {
             return Offset(paths, offset, JoinType.jtRound, minLength);
         }
@@ -640,13 +874,9 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<PointLight>> OffsetMiter(IEnumerable<PointLight> path, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetMiter(this IEnumerable<Vector2> path, double offset, double minLength = 0.0)
         {
-            return Offset(new PathsAsLight { path.ToList() }, offset, JoinType.jtMiter, minLength);
-        }
-        public static List<PolygonLight> OffsetMiter(PolygonLight path, double offset, double minLength = 0.0)
-        {
-            return Offset(new PolygonsAsLight { path }, offset, JoinType.jtMiter, minLength);
+            return Offset(new List<IEnumerable<Vector2>> { path }, offset, JoinType.jtMiter, minLength);
         }
 
         /// <summary>
@@ -658,12 +888,7 @@ namespace TVGL
         /// <param name="minLength"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static List<List<PointLight>> OffsetMiter(IEnumerable<IEnumerable<PointLight>> paths, double offset, double minLength = 0.0)
-        {
-            var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.jtMiter, minLength);
-        }
-        public static PolygonsAsLight OffsetMiter(PolygonsAsLight paths, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetMiter(this IEnumerable<IEnumerable<Vector2>> paths, double offset, double minLength = 0.0)
         {
             return Offset(paths, offset, JoinType.jtMiter, minLength);
         }
@@ -676,13 +901,9 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<PointLight>> OffsetSquare(List<PointLight> path, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetSquare(this IEnumerable<Vector2> path, double offset, double minLength = 0.0)
         {
-            return Offset(new PathsAsLight { path.ToList() }, offset, JoinType.jtSquare, minLength);
-        }
-        public static PolygonsAsLight OffsetSquare(PolygonLight path, double offset, double minLength = 0.0)
-        {
-            return Offset(new PolygonsAsLight { path }, offset, JoinType.jtSquare, minLength);
+            return Offset(new List<IEnumerable<Vector2>> { path }, offset, JoinType.jtSquare, minLength);
         }
 
         /// <summary>
@@ -694,48 +915,55 @@ namespace TVGL
         /// <param name="minLength"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static List<List<PointLight>> OffsetSquare(List<List<PointLight>> paths, double offset, double minLength = 0.0)
-        {
-            var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.jtSquare, minLength);
-        }
-        public static PolygonsAsLight OffsetSquare(PolygonsAsLight paths, double offset, double minLength = 0.0)
+        public static List<List<Vector2>> OffsetSquare(this IEnumerable<IEnumerable<Vector2>> paths, double offset, double minLength = 0.0)
         {
             return Offset(paths, offset, JoinType.jtSquare, minLength);
         }
 
-        private static List<List<PointLight>> Offset(List<List<PointLight>> paths, double offset, JoinType joinType,
+        private static List<List<Vector2>> Offset(IEnumerable<IEnumerable<Vector2>> paths, double offset, JoinType joinType,
             double minLength = 0.0)
         {
-            const double scale = 1000000;
-            if (minLength.IsNegligible())
-            {
-                var totalLength = paths.Sum(loop => Length(loop));
-                minLength = totalLength * 0.001;
-            }
-
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject =
-                paths.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
-
+                paths.Select(loop => loop.Select(point =>
+                new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler))
+                .ToList()).ToList();
+            if (minLength.IsNegligible())
+            {
+                var totalLength = clipperSubject.Sum(Perimeter);
+                minLength = totalLength * 0.001;
+            }
             //Setup Clipper
-            var clip = new ClipperOffset(2, minLength * scale);
+            var clip = new ClipperOffset(2, minLength * Constants.DoubleToIntPointMultipler);
             clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
             var clipperSolution = new List<List<IntPoint>>();
-            clip.Execute(clipperSolution, offset * scale);
+            clip.Execute(clipperSolution, offset * Constants.DoubleToIntPointMultipler);
 
             //Convert back to points and return solution
-            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new PointLight(point.X / scale, point.Y / scale)).ToList()).ToList();
-            return solution;
+            return clipperSolution.Select(clipperPath => clipperPath.Select(point
+                => new Vector2(point.X * Constants.IntPointToDoubleMultipler, point.Y * Constants.IntPointToDoubleMultipler)).ToList()).ToList();
         }
-        private static PolygonsAsLight Offset(IEnumerable<PolygonLight> polygons, double offset, JoinType joinType,
-            double minLength = 0.0)
+
+        private static double Perimeter(this List<IntPoint> polygon)
         {
-            return Offset(polygons.Select(p => p.Path).ToList(), offset, joinType, minLength)
-                .Select(path => new PolygonLight(path)).ToList();
+            var value1 = polygon[^1];
+            var value2 = polygon[0];
+            var dx = value1.X - value2.X;
+            var dy = value1.Y - value2.Y;
+            double perimeter = Math.Sqrt(dx * dx + dy * dy);
+            for (var i = 1; i < polygon.Count; i++)
+            {
+                value1 = polygon[i - 1];
+                value2 = polygon[i];
+                dx = value1.X - value2.X;
+                dy = value1.Y - value2.Y;
+                perimeter += Math.Sqrt(dx * dx + dy * dy);
+            }
+            return perimeter;
         }
+
         #endregion
 
         #region Boolean Operations
@@ -744,75 +972,63 @@ namespace TVGL
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, bool simplifyPriorToUnion = true,
+            PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, (IEnumerable<List<Vector2>>)subject, null, simplifyPriorToUnion);
         }
-        public static PolygonsAsLight Union(PolygonsAsLight subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
-        }
+
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
-        }
-        public static PolygonsAsLight Union(PolygonsAsLight subject, PolygonsAsLight clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
 
+
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, new PathsAsLight { subject }, new PathsAsLight { clip }, simplifyPriorToUnion);
-        }
-        public static PolygonsAsLight Union(PolygonLight subject, PolygonLight clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, new[] { subject }, new[] { clip }, simplifyPriorToUnion);
         }
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// Use CreatePolygons to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, List<PointLight> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Union(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new PathsAsLight { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new[] { clip }, simplifyPriorToUnion);
         }
-        public static PolygonsAsLight Union(PolygonsAsLight subject, PolygonLight clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new PolygonsAsLight { clip }, simplifyPriorToUnion);
-        }
+
         #endregion
 
         #region Difference
@@ -825,11 +1041,8 @@ namespace TVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
-        }
-        public static List<PolygonLight> Difference(IList<PolygonLight> subject, IList<PolygonLight> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
+            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
         }
@@ -843,13 +1056,9 @@ namespace TVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, new PathsAsLight { clip }, simplifyPriorToDifference);
-        }
-        public static PolygonsAsLight Difference(PolygonLight subject, PolygonLight clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToDifference);
+            return Difference(new[] { subject }, new[] { clip }, simplifyPriorToDifference, polyFill);
         }
 
         /// <summary>
@@ -861,13 +1070,9 @@ namespace TVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(IList<List<PointLight>> subject, List<PointLight> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Difference(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<Vector2> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, new PathsAsLight { clip }, simplifyPriorToDifference);
-        }
-        public static PolygonsAsLight Difference(PolygonsAsLight subject, PolygonLight clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, new PolygonsAsLight { clip }, simplifyPriorToDifference);
+            return Difference(subject, new[] { clip }, simplifyPriorToDifference, polyFill);
         }
 
         /// <summary>
@@ -879,15 +1084,10 @@ namespace TVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(List<PointLight> subject, IList<List<PointLight>> clip,
+        public static List<List<Vector2>> Difference(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clip,
             bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, clip, simplifyPriorToDifference);
-        }
-        public static PolygonsAsLight Difference(PolygonLight subject, PolygonsAsLight clip,
-            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PolygonsAsLight { subject }, clip, simplifyPriorToDifference);
+            return Difference(new[] { subject }, clip, simplifyPriorToDifference, polyFill);
         }
         #endregion
 
@@ -900,13 +1100,9 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new PathsAsLight { subject }, new PathsAsLight { clip }, simplifyPriorToIntersection, polyFill);
-        }
-        public static PolygonsAsLight Intersection(PolygonLight subject, PolygonLight clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Intersection(new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(new[] { subject }, new[] { clip }, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -917,13 +1113,9 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(IList<List<PointLight>> subjects, List<PointLight> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new PathsAsLight(subjects), new PathsAsLight { clip }, simplifyPriorToIntersection, polyFill);
-        }
-        public static PolygonsAsLight Intersection(PolygonsAsLight subjects, PolygonLight clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Intersection(subjects, new PolygonsAsLight { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(subjects, new[] { clip }, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -934,13 +1126,9 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(List<PointLight> subject, IList<List<PointLight>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new List<List<PointLight>>() { subject }, new List<List<PointLight>>(clips), simplifyPriorToIntersection, polyFill);
-        }
-        public static PolygonsAsLight Intersection(PolygonLight subject, List<PolygonLight> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Intersection(new PolygonsAsLight { subject }, clips, simplifyPriorToIntersection, polyFill);
+            return Intersection(new[] { subject }, clips, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -951,11 +1139,7 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
-        }
-        public static List<PolygonLight> Intersection(IList<PolygonLight> subject, IList<PolygonLight> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Intersection(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
         }
@@ -971,11 +1155,8 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
-        }
-        public static PolygonsAsLight Xor(PolygonsAsLight subject, PolygonsAsLight clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subject, IEnumerable<IEnumerable<Vector2>> clip,
+            bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
         }
@@ -988,13 +1169,9 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<Vector2> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<PointLight>>() { subject }, new List<List<PointLight>>() { clip }, simplifyPriorToXor, polyFill);
-        }
-        public static PolygonsAsLight Xor(PolygonLight subject, PolygonLight clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Xor(new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToXor, polyFill);
+            return Xor(new[] { subject }, new[] { clip }, simplifyPriorToXor, polyFill);
         }
 
         /// <summary>
@@ -1005,13 +1182,10 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(IList<List<PointLight>> subjects, List<PointLight> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<IEnumerable<Vector2>> subjects, IEnumerable<Vector2> clip,
+            bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<PointLight>>(subjects), new List<List<PointLight>>() { clip }, simplifyPriorToXor, polyFill);
-        }
-        public static PolygonsAsLight Xor(PolygonsAsLight subjects, PolygonLight clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Xor(subjects, new PolygonsAsLight { clip }, simplifyPriorToXor, polyFill);
+            return Xor(subjects, new[] { clip }, simplifyPriorToXor, polyFill);
         }
 
         /// <summary>
@@ -1022,85 +1196,39 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(List<PointLight> subject, IList<List<PointLight>> clips, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<Vector2>> Xor(this IEnumerable<Vector2> subject, IEnumerable<IEnumerable<Vector2>> clips, bool simplifyPriorToXor = true,
+            PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<PointLight>>() { subject }, new List<List<PointLight>>(clips), simplifyPriorToXor, polyFill);
-        }
-        public static PolygonsAsLight Xor(PolygonLight subject, PolygonsAsLight clips, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return Xor(new PolygonsAsLight { subject }, clips, simplifyPriorToXor, polyFill);
+            return Xor(new[] { subject }, clips, simplifyPriorToXor, polyFill);
         }
 
         #endregion
 
-        private static PolygonsAsLight BooleanOperation(PolygonFillType fillMethod, ClipType clipType,
-            IEnumerable<PolygonLight> subject,
-            IEnumerable<PolygonLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
+        private static List<List<Vector2>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType,
+            IEnumerable<IEnumerable<Vector2>> subject,
+           IEnumerable<IEnumerable<Vector2>> clip, bool simplifyPriorToBooleanOperation = true)
         {
-            var clipPaths = clip?.Select(p => p.Path).ToList(); //Handle null clip
-            var paths = BooleanOperation(fillMethod, clipType, subject.Select(p => p.Path).ToList(),
-                clipPaths, simplifyPriorToBooleanOperation, scale);
-            return paths.Select(path => new PolygonLight(path)).ToList();
-        }
-        private static List<List<PointLight>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject,
-           IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
-        {
-            //Convert the fill type from PolygonOperations wrapper to Clipper enum types
-            PolyFillType fillType;
-            switch (fillMethod)
+            var fillType = fillMethod switch
             {
-                case PolygonFillType.Positive:
-                    fillType = PolyFillType.pftPositive;
-                    break;
-                case PolygonFillType.Negative:
-                    fillType = PolyFillType.pftNegative;
-                    break;
-                case PolygonFillType.NonZero:
-                    fillType = PolyFillType.pftNonZero;
-                    break;
-                case PolygonFillType.EvenOdd:
-                    fillType = PolyFillType.pftEvenOdd;
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
-            return BooleanOperation(fillType, clipType, subject, clip, simplifyPriorToBooleanOperation, scale);
-        }
-
-
-        /// <summary>
-        /// Performs the Boolean Operations from the Clipper Library
-        /// </summary>
-        /// <param name="clipType"></param>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToBooleanOperation"></param>
-        /// <param name="scale"></param>
-        /// <param name="fillMethod"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject,
-            IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
-        {
-            //Remove any polygons that are only a line.
-            subject = subject.Where(p => p.Count > 2);
-            clip = clip?.Where(p => p.Count > 2);
+                PolygonFillType.Positive => PolyFillType.pftPositive,
+                PolygonFillType.Negative => PolyFillType.pftNegative,
+                PolygonFillType.NonZero => PolyFillType.pftNonZero,
+                PolygonFillType.EvenOdd => PolyFillType.pftEvenOdd,
+                _ => throw new NotImplementedException(),
+            };
 
             if (simplifyPriorToBooleanOperation)
             {
-                subject = subject.Select(SimplifyFuzzy);
-            }
-            if (simplifyPriorToBooleanOperation)
-            {
+                subject = subject.Select(path => Simplify(path));
                 //If not null
-                clip = clip?.Select(SimplifyFuzzy);
+                clip = clip?.Select(path => Simplify(path));
             }
 
             if (!subject.Any())
             {
                 if (clip == null || !clip.Any())
                 {
-                    return new List<List<PointLight>>();
+                    return new List<List<Vector2>>();
                 }
                 //Use the clip as the subject if this is a union operation and the clip is not null.
                 if (clipType == ClipType.ctUnion)
@@ -1110,28 +1238,40 @@ namespace TVGL
                 }
             }
 
-            var clipperSolution = new List<List<IntPoint>>();
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var clipperSubject =
-                subject.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
-
             //Setup Clipper
-            var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
-            clipper.AddPaths(clipperSubject, PolyType.ptSubject, true);
+            var clipper = new Clipper() { StrictlySimple = true };
+
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            var subjectIntLoops = new List<List<IntPoint>>();
+            foreach (var loop in subject)
+            {
+                var intLoop = loop.Select(point
+                    => new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler)).ToList();
+                if (intLoop.Count > 2) subjectIntLoops.Add(intLoop);
+            }
+            clipper.AddPaths(subjectIntLoops, PolyType.ptSubject, true);
 
             if (clip != null)
             {
-                var clipperClip =
-                    clip.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
-                clipper.AddPaths(clipperClip, PolyType.ptClip, true);
+                var clipIntLoops = new List<List<IntPoint>>();
+                foreach (var loop in clip)
+                {
+                    var intLoop = loop.Select(point
+                        => new IntPoint(point.X * Constants.DoubleToIntPointMultipler, point.Y * Constants.DoubleToIntPointMultipler)).ToList();
+                    if (intLoop.Count > 2) clipIntLoops.Add(intLoop);
+                }
+                clipper.AddPaths(clipIntLoops, PolyType.ptClip, true);
             }
 
             //Begin an evaluation
-            var result = clipper.Execute(clipType, clipperSolution, fillMethod, fillMethod);
+            var clipperSolution = new List<List<IntPoint>>();
+            var result = clipper.Execute(clipType, clipperSolution, fillType, fillType);
             if (!result) throw new Exception("Clipper Union Failed");
 
             //Convert back to points
-            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new PointLight(point.X / scale, point.Y / scale)).ToList()).ToList();
+            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point
+                => new Vector2(point.X * Constants.IntPointToDoubleMultipler, point.Y * Constants.IntPointToDoubleMultipler))
+            .ToList()).ToList();
             return solution;
         }
         #endregion
@@ -1144,7 +1284,7 @@ namespace TVGL
             {
                 var se2 = sweepLines.Item(i);
                 var se2Y = LineIntercept(se2.Point, se2.OtherEvent.Point, se1.Point.X);
-                if (IsPointOnSegment(se2.Point, se2.OtherEvent.Point, new Point(se1.Point.X, se2Y)))
+                if (IsPointOnSegment(se2.Point, se2.OtherEvent.Point, new Vector2(se1.Point.X, se2Y)))
                 {
                     linesBelow++;
                 }
@@ -1158,7 +1298,7 @@ namespace TVGL
         /// A simple algorithm for Boolean operations on polygons. Martínez, et. al. 2013. Advances in Engineering Software.
         /// Links to paper: http://dx.doi.org/10.1016/j.advengsoft.2013.04.004 OR http://www.sciencedirect.com/science/article/pii/S0965997813000379
         /// </reference>
-        private static List<List<Point>> BooleanOperation(IList<List<Point>> subject, IList<List<Point>> clip, BooleanOperationType booleanOperationType)
+        private static List<List<Vector2>> BooleanOperation(IList<List<Vector2>> subject, IList<List<Vector2>> clip, BooleanOperationType booleanOperationType)
         {
             //1.Find intersections with vertical sweep line
             //1.Subdivide the edges of the polygons at their intersection points.
@@ -1175,9 +1315,6 @@ namespace TVGL
                 {
                     var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
                     SweepEvent se1, se2;
-                    path[i].IndexInPath = i;
-                    path[i].InResult = false;
-                    path[i].InResultMultipleTimes = false;
                     if (path[i].X.IsPracticallySame(path[j].X))
                     {
                         if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
@@ -1215,9 +1352,6 @@ namespace TVGL
                 {
                     var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
                     SweepEvent se1, se2;
-                    path[i].IndexInPath = i;
-                    path[i].InResult = false;
-                    path[i].InResultMultipleTimes = false;
                     if (path[i].X.IsPracticallySame(path[j].X))
                     {
                         if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
@@ -1285,8 +1419,8 @@ namespace TVGL
                         //If remotely similar, we need to use the intersection, which is used later on to determine collinearity. (basically, we have to be consistent).
                         if (sweepEvent.Slope.IsPracticallySame(nextSweepEvent.Slope, 0.00001))
                         {
-                            Point intersectionPoint;
-                            if (MiscFunctions.LineLineIntersection(sweepEvent.Point, sweepEvent.OtherEvent.Point,
+                            Vector2 intersectionPoint;
+                            if (MiscFunctions.SegmentSegment2DIntersection(sweepEvent.Point, sweepEvent.OtherEvent.Point,
                                 nextSweepEvent.Point, nextSweepEvent.OtherEvent.Point, out intersectionPoint, true) &&
                                 intersectionPoint == null)
                             {
@@ -1345,19 +1479,16 @@ namespace TVGL
 
             //Next stage. Find the paths
             var hashResult = new HashSet<SweepEvent>(result);
-            var hashPoints = new HashSet<Point>();
+            var hashPoints = new HashSet<Vector2>();
             for (var i = 0; i < result.Count; i++)
             {
                 result[i].PositionInResult = i;
                 result[i].Processed = false;
-                if (!hashResult.Contains(result[i].OtherEvent)) throw new Exception("Error in implementation. Both sweep events in the pair should be in this list.");
+                if (!hashResult.Contains(result[i].OtherEvent))
+                    throw new Exception("Error in implementation. Both sweep events in the pair should be in this list.");
                 var point = result[i].Point;
                 if (hashPoints.Contains(point))
-                {
                     hashPoints.Remove(point);
-                    if (!point.InResult) point.InResult = true;
-                    else point.InResultMultipleTimes = true;
-                }
                 else hashPoints.Add(point);
             }
             if (hashPoints.Select(point => hashPoints.Where(otherPoint => !point.Equals(otherPoint)).Any(otherPoint => point == otherPoint)).Any(duplicateFound => !duplicateFound))
@@ -1365,9 +1496,9 @@ namespace TVGL
                 throw new Exception("Point appears in list an odd number of times. This means there are missing sweep events or one too many.");
             }
 
-            var solution = new Paths();
+            var solution = new List<List<Vector2>>();
             var currentPathID = 0;
-            Path previousPath = null;
+            List<Vector2> previousPath = null;
             foreach (var se1 in result.Where(se1 => !se1.Processed))
             {
                 int parentID;
@@ -1430,7 +1561,7 @@ namespace TVGL
         #endregion
 
         #region Compute Depth
-        private static int ComputeDepth(SweepEvent se, Path previousPath, out int parentID)
+        private static int ComputeDepth(SweepEvent se, List<Vector2> previousPath, out int parentID)
         {
             //This function shoots a ray down from the sweep event point, which is the first point of the path.
             //it must be the left bottom (min X, then min Y) this sweep event is called se2.
@@ -1464,7 +1595,7 @@ namespace TVGL
         #region Compute Paths
         //This can return paths that contain the same point more than once (does this instead of making + and - loop).
         //Could chop them up, but I'm not sure that this is necessary.
-        private static List<Point> ComputePath(SweepEvent startEvent, int pathID, int depth, int parentID, IList<SweepEvent> result)
+        private static List<Vector2> ComputePath(SweepEvent startEvent, int pathID, int depth, int parentID, IList<SweepEvent> result)
         {
             //First, get the proper start event, given the current guess.
             //The proper start event will be the lowest OtherEvent.Y from neighbors at the startEvent.Point.
@@ -1488,7 +1619,7 @@ namespace TVGL
             }
 
             var updateAll = new List<SweepEvent> { startEvent };
-            var path = new Path();
+            var path = new List<Vector2>();
             startEvent.Processed = false; //This will be to true right at the end of the while loop. 
             var currentSweepEvent = startEvent;
             do
@@ -1590,8 +1721,8 @@ namespace TVGL
 
             var newSweepEvents = new List<SweepEvent>();
 
-            Point intersectionPoint;
-            if (MiscFunctions.LineLineIntersection(se1.Point, se1.OtherEvent.Point,
+            Vector2 intersectionPoint;
+            if (MiscFunctions.SegmentSegment2DIntersection(se1.Point, se1.OtherEvent.Point,
                 se2.Point, se2.OtherEvent.Point, out intersectionPoint, true) && intersectionPoint == null)
             {
                 #region SPECIAL CASE: Collinear
@@ -1799,7 +1930,7 @@ namespace TVGL
             }
         }
 
-        private static IEnumerable<SweepEvent> Segment(SweepEvent sweepEvent, Point point)
+        private static IEnumerable<SweepEvent> Segment(SweepEvent sweepEvent, Vector2 point)
         {
             var sweepEventOther = sweepEvent.OtherEvent;
             //Split Sweep Event 1 (previousSweepEvent)
@@ -1947,7 +2078,7 @@ namespace TVGL
         private class SweepEvent
         {
             public int IndexInList { get; set; }
-            public Point Point { get; } //the point for this sweep event
+            public Vector2 Point { get; } //the point for this sweep event
             public bool Left { get; } //The left endpoint of the line
             public bool From { get; } //The point comes first in the path.
             public SweepEvent OtherEvent { get; set; } //The event of the other endpoint of this line
@@ -1969,7 +2100,7 @@ namespace TVGL
             public SweepEvent DuplicateEvent { get; set; }
 
 
-            public SweepEvent(Point point, bool isLeft, bool isFrom, PolygonType polyType)
+            public SweepEvent(Vector2 point, bool isLeft, bool isFrom, PolygonType polyType)
             {
                 Point = point;
                 Left = isLeft;
@@ -2113,7 +2244,7 @@ namespace TVGL
                 i--; //Decrement
                 var se2 = result[i];
                 var se2Y = LineIntercept(se2.Point, se2.OtherEvent.Point, se1.Point.X);
-                var tempPoint = new Point(se1.Point.X, se2Y);
+                var tempPoint = new Vector2(se1.Point.X, se2Y);
                 if (se2Y < se1Y && IsPointOnSegment(se2.Point, se2.OtherEvent.Point, tempPoint))
                 {
                     return se2;
@@ -2127,7 +2258,7 @@ namespace TVGL
             return LineIntercept(se.Point, se.OtherEvent.Point, xval);
         }
 
-        private static double LineIntercept(Point p1, Point p2, double xval)
+        private static double LineIntercept(Vector2 p1, Vector2 p2, double xval)
         {
             if (p1.X.IsPracticallySame(p2.X)) //Vertical line
             {
@@ -2143,7 +2274,7 @@ namespace TVGL
             return m * (xval - p1.X) + p1.Y;
         }
 
-        private static bool IsPointOnSegment(Point p1, Point p2, Point pointInQuestion)
+        private static bool IsPointOnSegment(Vector2 p1, Vector2 p2, Vector2 pointInQuestion)
         {
             if ((pointInQuestion.X < p1.X && pointInQuestion.X < p2.X) ||
                 (pointInQuestion.X > p1.X && pointInQuestion.X > p2.X) ||
@@ -2154,36 +2285,30 @@ namespace TVGL
         #endregion
 
         //Mirrors a shape along a given direction, such that the mid line is the same for both the original and mirror
-        public static PolygonsAsLight Mirror(PolygonsAsLight shape, double[] direction2D)
+        public static List<List<Vector2>> Mirror(List<List<Vector2>> shape, Vector2 direction2D)
         {
-            var mirror = new PolygonsAsLight();
-            var points = new List<PointLight>();
-            foreach (var path in shape)
-            {
-                foreach (var point in path.Path)
-                {
-                    points.Add(point);
-                }
-            }
-            MinimumEnclosure.GetLengthAndExtremePoints(direction2D, points, out var bottomPoints, out _);
-            var distanceFromOriginToClosestPoint = bottomPoints[0].dotProduct(direction2D);
+            var mirror = new List<List<Vector2>>();
+            var points = shape.SelectMany(path => path).ToList();
+
+            MinimumEnclosure.GetLengthAndExtremePoints(points, direction2D, out var bottomPoints, out _);
+            var distanceFromOriginToClosestPoint = bottomPoints[0].Dot(direction2D);
             foreach (var polygon in shape)
             {
-                var newPath = new PathAsLight();
-                foreach (var point in polygon.Path)
+                var newPath = new List<Vector2>();
+                foreach (var point in polygon)
                 {
                     //Get the distance to the point along direction2D
                     //Then subtract 2X the distance along direction2D
-                    var d = point.dotProduct(direction2D) - distanceFromOriginToClosestPoint;
-                    newPath.Add(new PointLight(point.X - direction2D[0] * 2 * d, point.Y - direction2D[1] * 2 * d));
+                    var d = point.Dot(direction2D) - distanceFromOriginToClosestPoint;
+                    newPath.Add(new Vector2(point.X - direction2D.X * 2 * d, point.Y - direction2D.Y * 2 * d));
                 }
                 //Reverse the new path so that it retains the same CW/CCW direction of the original
                 newPath.Reverse();
-                mirror.Add(new PolygonLight(newPath));
-                if (!mirror.Last().Area.IsPracticallySame(polygon.Area, Constants.BaseTolerance))
-                {
-                    throw new Exception("Areas do not match after mirroring the polygons");
-                }
+                mirror.Add(new List<Vector2>(newPath));
+                //if (!mirror.Last().Area().IsPracticallySame(polygon.Area, Constants.BaseTolerance))
+                //{
+                //   throw new Exception("Areas do not match after mirroring the polygons");
+                //} ********commenting out this check. It should be in unit testing - not slow down this method*** 
             }
             return mirror;
         }
