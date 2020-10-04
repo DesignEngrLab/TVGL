@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Alan Grier
-// Last Modified On : 02-18-2019
-// ***********************************************************************
-// <copyright file="VoxelizedSparseDense_Constructors.cs" company="Design Engineering Lab">
-//     Copyright ©  2019
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -56,7 +46,11 @@ namespace TVGL.Voxelization
         {
         }
 
-        public VoxelizedSolid(VoxelizedSolid vs) : this()
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// </summary>
+        /// <param name="vs">The vs.</param>
+        internal VoxelizedSolid(VoxelizedSolid vs) : this()
         {
             Bounds = new[] { vs.Bounds[0], vs.Bounds[1] };
             Dimensions = Bounds[1].Subtract(Bounds[0]);
@@ -205,11 +199,22 @@ namespace TVGL.Voxelization
 
         #endregion Fill In From Tessellation Functions
 
+        /// <summary>
+        /// Creates the full block of voxels using the bounds and dimensions of an existing voxelized solid.
+        /// </summary>
+        /// <param name="vs">The vs.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public static VoxelizedSolid CreateFullBlock(VoxelizedSolid vs)
         {
             return CreateFullBlock(vs.VoxelSideLength, vs.Bounds);
         }
 
+        /// <summary>
+        /// Creates the full block given the dimensions and the size.
+        /// </summary>
+        /// <param name="voxelSideLength">Length of the voxel side.</param>
+        /// <param name="bounds">The bounds.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<Vector3> bounds)
         {
             var fullBlock = new VoxelizedSolid();
@@ -295,17 +300,33 @@ namespace TVGL.Voxelization
 
         #region Overrides of Solid abstract members
 
+        /// <summary>
+        /// Copies this instance. Note, that this overrides the base class, Solid. You may need to 
+        /// cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;
+        /// </summary>
+        /// <returns>Solid.</returns>
         public override Solid Copy()
         {
             UpdateToAllSparse();
             return new VoxelizedSolid(this);
         }
 
+        /// <summary>
+        /// Transforms the solid with the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Create a new version of the solid transformed by the specified transform matrix.
+        /// </summary>
+        /// <param name="transformationMatrix">The transformation matrix.</param>
+        /// <returns>Solid.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
@@ -316,6 +337,11 @@ namespace TVGL.Voxelization
             return new VoxelEnumerator(this);
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection of voxels, which is simply
+        /// a boolean.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
         public IEnumerator<int[]> GetEnumerator()
         {
             return new VoxelEnumerator(this);

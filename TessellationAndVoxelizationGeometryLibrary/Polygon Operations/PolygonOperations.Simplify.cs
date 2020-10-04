@@ -1,4 +1,8 @@
-﻿using Priority_Queue;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,11 +67,11 @@ namespace TVGL.TwoDimensional
 
             #region build initial list of cross products
 
-            // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points. I'm very tempted
-            // to call it vertex, which is a better name but I don't want to confuse with the Vertex class in TessellatedSolid).
+            // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points)
             // Here we are using the SimplePriorityQueue from BlueRaja (https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp)
             var convexCornerQueue = new SimplePriorityQueue<int, double>(new ForwardSort());
             var concaveCornerQueue = new SimplePriorityQueue<int, double>(new ReverseSort());
+            
             // cross-products which are kept in the same order as the corners they represent. This is solely used with the above
             // dictionary - to essentially do the reverse lookup. given a corner-index, crossProductsArray will instanly tell us the
             // cross-product. The cross-product is used as the key in the dictionary - to find corner-indices.
@@ -275,36 +279,6 @@ namespace TVGL.TwoDimensional
             return index;
         }
 
-        private class ReverseSort : IComparer<double>
-        {
-            public int Compare(double x, double y)
-            {
-                if (x == y) return 0;
-                if (x < y) return 1;
-                return -1;
-            }
-        }
-
-        private class ForwardSort : IComparer<double>
-        {
-            public int Compare(double x, double y)
-            {
-                if (x == y) return 0;
-                if (x < y) return -1;
-                return 1;
-            }
-        }
-
-        private class AbsoluteValueSort : IComparer<double>
-        {
-            public int Compare(double x, double y)
-            {
-                if (Math.Abs(x) == Math.Abs(y)) return 0;
-                if (Math.Abs(x) < Math.Abs(y)) return -1;
-                return 1;
-            }
-        }
-
         private static void AddCrossProductToOneOfTheLists(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
             SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
             double[] crossProducts, int index)
@@ -343,12 +317,12 @@ namespace TVGL.TwoDimensional
         }
 
         private static void AddCrossProductToQueue(Vector2 fromPoint, Vector2 currentPoint,
-            Vector2 nextPoint, SimplePriorityQueue<int, double> cornnerQueue,
+            Vector2 nextPoint, SimplePriorityQueue<int, double> cornerQueue,
             double[] crossProducts, int index)
         {
             var cross = Math.Abs((currentPoint - fromPoint).Cross(nextPoint - currentPoint));
             crossProducts[index] = cross;
-            cornnerQueue.Enqueue(index, cross);
+            cornerQueue.Enqueue(index, cross);
         }
 
         private static void UpdateCrossProductInQueue(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,

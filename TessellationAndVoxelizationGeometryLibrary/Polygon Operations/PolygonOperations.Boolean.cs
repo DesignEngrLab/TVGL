@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -101,11 +105,7 @@ namespace TVGL.TwoDimensional
                         polygonList.RemoveAt(i);
                         break; // to stop the inner loop
                     }
-                    else if (interaction.Relationship == PolygonRelationship.SeparatedButEdgesTouch
-                             || interaction.Relationship == PolygonRelationship.AIsInsideHoleOfBButEdgesTouch
-                             || interaction.Relationship == PolygonRelationship.BIsInsideHoleOfABButEdgesTouch
-                             || (interaction.Relationship & PolygonRelationship.Intersection) == PolygonRelationship.Intersection
-                             || (int)interaction.Relationship >= 64)
+                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
                     {
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
@@ -363,32 +363,30 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            switch (interactionRecord.Relationship)
+            if (interactionRecord.Relationship == PolygonRelationship.Separated ||
+                interactionRecord.Relationship == PolygonRelationship.BIsInsideHoleOfA ||
+                interactionRecord.Relationship == PolygonRelationship.AIsInsideHoleOfB)
+                return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
+            else if (interactionRecord.Relationship == PolygonRelationship.BInsideA &&
+                !interactionRecord.CoincidentEdges && !interactionRecord.CoincidentVertices)
             {
-                case PolygonRelationship.Separated:
-                case PolygonRelationship.BIsInsideHoleOfA:
-                case PolygonRelationship.AIsInsideHoleOfB:
-                    return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
-
-                case PolygonRelationship.BInsideA:
-                    var polygonACopy1 = polygonA.Copy(true, false);
-                    polygonACopy1.AddInnerPolygon(polygonB.Copy(true, true));
-                    return new List<Polygon> { polygonACopy1 };
-
-                case PolygonRelationship.AInsideB:
-                    var polygonBCopy2 = polygonB.Copy(true, false);
-                    polygonBCopy2.AddInnerPolygon(polygonA.Copy(true, true));
-                    return new List<Polygon> { polygonBCopy2 };
-                //case PolygonRelationship.Intersect:
-                case PolygonRelationship.AIsInsideBButVerticesTouch:
-                case PolygonRelationship.AIsInsideBButEdgesTouch:
-                case PolygonRelationship.BIsInsideAButVerticesTouch:
-                case PolygonRelationship.BIsInsideAButEdgesTouch:
-                default:
-                    polygonSubtraction ??= new PolygonSubtraction();
-                    var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, false, tolerance);
-                    result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, false, tolerance));
-                    return result;
+                var polygonACopy1 = polygonA.Copy(true, false);
+                polygonACopy1.AddInnerPolygon(polygonB.Copy(true, true));
+                return new List<Polygon> { polygonACopy1 };
+            }
+            else if (interactionRecord.Relationship == PolygonRelationship.AInsideB &&
+                !interactionRecord.CoincidentEdges && !interactionRecord.CoincidentVertices)
+            {
+                var polygonBCopy2 = polygonB.Copy(true, false);
+                polygonBCopy2.AddInnerPolygon(polygonA.Copy(true, true));
+                return new List<Polygon> { polygonBCopy2 };
+            }
+            else
+            {
+                polygonSubtraction ??= new PolygonSubtraction();
+                var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, false, tolerance);
+                result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, false, tolerance));
+                return result;
             }
         }
 

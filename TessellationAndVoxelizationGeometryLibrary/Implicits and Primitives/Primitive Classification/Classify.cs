@@ -1,16 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 05-25-2016
-// ***********************************************************************
-// <copyright file="Primitive_Classification.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

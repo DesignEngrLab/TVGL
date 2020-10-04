@@ -1,12 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;

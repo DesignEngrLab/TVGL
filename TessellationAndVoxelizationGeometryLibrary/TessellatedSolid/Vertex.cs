@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt
-// Last Modified On : 03-18-2015
-// ***********************************************************************
-// <copyright file="Vertex.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using MIConvexHull;
 using Newtonsoft.Json;
 using System;

@@ -1,20 +1,11 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 03-05-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="ComplexifyTessellation.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Priority_Queue;
 
 namespace TVGL
 {
@@ -54,7 +45,7 @@ namespace TVGL
 
 
         /// <summary>
-        /// Complexifies the tesssellation so that no edge is longer than provided the maximum edge length
+        /// Complexifies the tessellation so that no edge is longer than provided the maximum edge length
         /// or for adding the provided number of faces - whichever comes first
         /// </summary>
         /// <param name="ts">The ts.</param>
@@ -62,15 +53,16 @@ namespace TVGL
         /// <param name="maxLength">The maximum length.</param>
         public static void Complexify(TessellatedSolid ts, int numberOfFaces, double maxLength)
         {
-            var sortedEdges = new SortedSet<Edge>(ts.Edges, new SortByLength(false));
+            var edgeQueue = new SimplePriorityQueue<Edge, double>(new ReverseSort());
+            foreach (var e in ts.Edges)
+                edgeQueue.Enqueue(e, e.Length);
             var addedEdges = new List<Edge>();
             var addedVertices = new List<Vertex>();
             var addedFaces = new List<PolygonalFace>();
-            var edge = sortedEdges.First();
+            var edge = edgeQueue.Dequeue();
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
             while (iterations-- != 0 && edge.Length >= maxLength)
             {
-                sortedEdges.Remove(edge);
                 var origLeftFace = edge.OtherFace;
                 var origRightFace = edge.OwnedFace;
                 var leftFarVertex = origLeftFace.OtherVertex(edge);
@@ -119,17 +111,17 @@ namespace TVGL
 
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
                 // it may still be met by this criteria
-                sortedEdges.Add(edge);
-                sortedEdges.Add(inlineEdge);
+                edgeQueue.Enqueue(edge, edge.Length);
+                edgeQueue.Enqueue(inlineEdge, inlineEdge.Length);
                 addedEdges.Add(inlineEdge);
-                sortedEdges.Add(newLeftEdge);
+                edgeQueue.Enqueue(newLeftEdge, newLeftEdge.Length);
                 addedEdges.Add(newLeftEdge);
-                sortedEdges.Add(newRightEdge);
+                edgeQueue.Enqueue(newRightEdge, newRightEdge.Length);
                 addedEdges.Add(newRightEdge);
                 addedFaces.Add(newLeftFace);
                 addedFaces.Add(newRightFace);
                 addedVertices.Add(addedVertex);
-                edge = sortedEdges.First();
+                edge = edgeQueue.First();
             }
             ts.AddVertices(addedVertices);
             ts.AddEdges(addedEdges);

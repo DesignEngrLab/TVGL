@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
@@ -402,6 +406,11 @@ namespace TVGL.TwoDimensional
             var intersections = new List<double[]>();
             var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
                 subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToList();
+            if (sortedPoints.Count == 0)
+            {
+                firstIntersectingIndex = -1;
+                return intersections;
+            }
             var tolerance = (sortedPoints[^1].Y - sortedPoints[0].Y) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().Y;
@@ -477,15 +486,31 @@ namespace TVGL.TwoDimensional
             interactionRecord.SetRelationshipBetween(index, relationship);
             interactionRecord.IntersectionData.AddRange(localIntersections);
             visited[index] = true;
-            if ((relationship &  PolyRelInternal.EqualButOpposite)!=0 ||
-                (int)relationship<16)
+            if ((relationship & PolyRelInternal.EqualButOpposite) == 0 &&
+                (int)relationship >= 16)
             {
-                if ((relationship & PolyRelInternal.AInsideB) !=0)
+                if ((relationship & PolyRelInternal.AInsideB) != 0)
+                {  // if A is inside B then all subpolygons to A are also Inside B and we don't need to check with recursing method
+                    foreach (var innerPolyA in polygonA.InnerPolygons)
+                        interactionRecord.SetRelationshipBetween(interactionRecord.findLookupIndex(innerPolyA, polygonB),
+                            PolyRelInternal.AInsideB);
+                }
+                else // we need to check the inner polygons of A with this B polygon
+                {
                     foreach (var innerPolyA in polygonA.InnerPolygons)
                         RecursePolygonInteractions(innerPolyA, polygonB, interactionRecord, visited, tolerance);
+                }
                 if ((relationship & PolyRelInternal.BInsideA) != 0)
+                {  // if B is inside A then all subpolygons of B are also Inside A and we don't need to check with recursing method
+                    foreach (var innerPolyB in polygonB.InnerPolygons)
+                        interactionRecord.SetRelationshipBetween(interactionRecord.findLookupIndex(polygonA, innerPolyB),
+                            PolyRelInternal.BInsideA);
+                }
+                else // we need to check the inner polygons of B with this A polygon
+                {
                     foreach (var innerPolyB in polygonB.InnerPolygons)
                         RecursePolygonInteractions(polygonA, innerPolyB, interactionRecord, visited, tolerance);
+                }
             }
         }
 
@@ -560,7 +585,7 @@ namespace TVGL.TwoDimensional
                 if (subPolygonB.HasABoundingBoxThatEncompasses(subPolygonA) && IsNonIntersectingPolygonInside(bLines, subPolygonA.OrderedXVertices, tolerance) == true)
                 {
                     if (!subPolygonB.IsPositive) relationship |= PolyRelInternal.InsideHole;
-                    return relationship | PolyRelInternal.AInsideB ;
+                    return relationship | PolyRelInternal.AInsideB;
                 }
                 return PolyRelInternal.Separated;
             }

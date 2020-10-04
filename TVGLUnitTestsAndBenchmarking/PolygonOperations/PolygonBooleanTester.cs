@@ -15,43 +15,43 @@ namespace TVGLUnitTestsAndBenchmarking
     {
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
+        public static List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
             => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<List<PointLight>> ClipperUnion(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
+        public static List<List<PointLight>> ClipperUnion(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
        => OldTVGL.PolygonOperations.Union(cpolygon1, cpolygon2, out ticks);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<Polygon> TVGLIntersect(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
+        public static List<Polygon> TVGLIntersect(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
             => TVGL.TwoDimensional.PolygonOperations.Intersect(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<List<PointLight>> ClipperIntersect(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
+        public static List<List<PointLight>> ClipperIntersect(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
        => OldTVGL.PolygonOperations.Intersection(cpolygon1, cpolygon2, out ticks);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<Polygon> TVGLASubtractB(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
+        public static List<Polygon> TVGLASubtractB(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
             => TVGL.TwoDimensional.PolygonOperations.Subtract(polygon1, polygon2, PolygonCollection.SeparateLoops);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<List<PointLight>> ClipperASubtractB(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
+        public static List<List<PointLight>> ClipperASubtractB(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
        => OldTVGL.PolygonOperations.Difference(cpolygon1, cpolygon2, out ticks);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<Polygon> TVGLBSubtractA(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
+        public static List<Polygon> TVGLBSubtractA(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2)
             => TVGL.TwoDimensional.PolygonOperations.Subtract(polygon2, polygon1, PolygonCollection.SeparateLoops);
 
         [Benchmark]
         [ArgumentsSource(nameof(Data))]
-        public List<List<PointLight>> ClipperBSubtractA(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
+        public static List<List<PointLight>> ClipperBSubtractA(Polygon polygon1, Polygon polygon2, List<List<PointLight>> cpolygon1, List<List<PointLight>> cpolygon2, out long ticks)
        => OldTVGL.PolygonOperations.Difference(cpolygon2, cpolygon1, out ticks);
 
 
@@ -99,10 +99,8 @@ namespace TVGLUnitTestsAndBenchmarking
             SaveFile.Close();
         }
 
-        internal void SingleCompare(List<(string, int, long, long)> stats, Polygon p1, Polygon p2, List<List<PointLight>> v1, List<List<PointLight>> v2)
+        internal static void SingleCompare(List<(string, int, long, long)> stats, Polygon p1, Polygon p2, List<List<PointLight>> v1, List<List<PointLight>> v2)
         {
-            Console.WriteLine(p1.GetPolygonInteraction(p2).IntersectionData.Count);
-            return;
             var stopWatch = new Stopwatch();
             var numIters = 10;
             var operationString = "";
@@ -180,7 +178,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Vector2[][] coords1, coords2;
 
-            /*
+            
              foreach (var testcase in TestCases.GetAllTwoArgumentErsatzCases())
             {
                 Console.WriteLine(testcase.Key);
@@ -217,7 +215,7 @@ namespace TVGLUnitTestsAndBenchmarking
                            }
                        }
 
-        */
+        
             var radius = 100;
             for (int numVerts = 10; numVerts < 20000; numVerts = (int)(1.5 * numVerts))
             {
@@ -251,9 +249,8 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-        private void Compare(List<Polygon> tvglResult, List<List<PointLight>> clipperResult, Polygon polygon1, Polygon polygon2, string operationString)
+        private static void Compare(List<Polygon> tvglResult, List<List<PointLight>> clipperResult, Polygon polygon1, Polygon polygon2, string operationString)
         {
-            return;
             var numVoxels = 500;
             var tolerance = 1e-3;
             var min = new Vector2(Math.Min(polygon1.MinX, polygon2.MinX),
@@ -274,14 +271,13 @@ namespace TVGLUnitTestsAndBenchmarking
                 "SubtractBA" => vp2.SubtractToNewSolid(vp1),
                 _ => throw new NotImplementedException()
             };
-
+            var showResult = false;
+            var tvglError = false;
+            var clipperError = false;
             var tvglVResult = new VoxelizedSolid(tvglResult, 500, new[] { min, max });
             var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.
                    CreateShallowPolygonTrees(clipperResult.Select(c => new Polygon(c.Select(v => new Vector2(v.X, v.Y)))), true, out _);
             var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, 500, new[] { min, max });
-            var showResult = false;
-            var tvglError = false;
-            var clipperError = false;
             if (tvglVResult.SubtractToNewSolid(correctVoxels).Count == 0 && correctVoxels.SubtractToNewSolid(tvglVResult).Count == 0)
                 Console.WriteLine("TVGL result is correct.");
             else
@@ -349,13 +345,13 @@ namespace TVGLUnitTestsAndBenchmarking
                     Presenter.ShowAndHang(tvglResult, "TVGLPro");
                     Presenter.ShowAndHang(clipperShallowPolyTree, "Clipper");
                 }
-                if (tvglError && false)
+                if (tvglError)
                 {
                     Console.WriteLine("showing tvgl error...");
                     var shallowTree = tvglResult.CreateShallowPolygonTrees(true, out _);
-                    Presenter.ShowAndHang(shallowTree[0].ExclusiveOr(clipperShallowPolyTree[0]));
+                    Presenter.ShowAndHang(correctVoxels, shallowTree);
                 }
-                if (clipperError && false)
+                if (clipperError)
                 {
                     Console.WriteLine("showing clipper error...");
                     Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);

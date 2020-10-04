@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -94,6 +98,13 @@ namespace TVGL.Voxelization
         }
 
 
+        /// <summary>
+        /// Returns the number of adjacent voxels (0 to 6)
+        /// </summary>
+        /// <param name="xCoord">The x coord.</param>
+        /// <param name="yCoord">The y coord.</param>
+        /// <param name="zCoord">The z coord.</param>
+        /// <returns>System.Int32.</returns>
         public int NumNeighbors(int xCoord, int yCoord, int zCoord)
         {
             var neighbors = 0;
@@ -113,7 +124,11 @@ namespace TVGL.Voxelization
         #endregion
 
         #region Set/update properties
-        public void UpdateProperties()
+        /// <summary>
+        /// Updates the properties of the solid (center, & volume) and is already invoked from 
+        /// boolean functions
+        /// </summary>
+        private void UpdateProperties()
         {
             CalculateCenter();
             CalculateVolume();
@@ -148,6 +163,11 @@ namespace TVGL.Voxelization
 
         #region Boolean functions
         // NOT A
+        /// <summary>
+        /// Inverts to new solid. This is a boolean function when all empty voxels in the bounds 
+        /// of the solid are made full, and all full are made empty. It is essentially a negation operation.
+        /// </summary>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid InvertToNewSolid()
         {
             var vs = (VoxelizedSolid)Copy();
@@ -155,6 +175,10 @@ namespace TVGL.Voxelization
             return vs;
         }
         // NOT A
+        /// <summary>
+        /// Inverts this instance. This is a boolean function when all empty voxels in the bounds 
+        /// of the solid are made full, and all full are made empty. It is essentially a negation operation.
+        /// </summary>
         public void Invert()
         {
             UpdateToAllSparse();
@@ -163,6 +187,12 @@ namespace TVGL.Voxelization
         }
 
         // A OR B
+        /// <summary>
+        /// Unions to new solid. This is a boolean function that returns a union or OR operation on all
+        /// the voxels of the presented solids. Note, that solids should have same bounds for correctness.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid UnionToNewSolid(params VoxelizedSolid[] solids)
         {
             var vs = (VoxelizedSolid)Copy();
@@ -170,6 +200,11 @@ namespace TVGL.Voxelization
             return vs;
         }
         // A OR B
+        /// <summary>
+        /// Unions the specified solids. This is a boolean function that returns a union or OR operation on all
+        /// the voxels of the presented solids. Note, that solids should have same bounds for correctness.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
         public void Union(params VoxelizedSolid[] solids)
         {
             UpdateToAllSparse();
@@ -183,6 +218,12 @@ namespace TVGL.Voxelization
         }
 
         // A AND B
+        /// <summary>
+        /// Intersects to new solid. This is a boolean function that returns an intersection or AND operation on all
+        /// the voxels of the presented solids. Note, that solids should have same bounds for correctness.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] solids)
         {
             var vs = (VoxelizedSolid)Copy();
@@ -190,6 +231,11 @@ namespace TVGL.Voxelization
             return vs;
         }
         // A AND B
+        /// <summary>
+        /// Intersects the specified solids. This is a boolean function that returns an intersection or AND operation on all
+        /// the voxels of the presented solids. Note, that solids should have same bounds for correctness.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
         public void Intersect(params VoxelizedSolid[] solids)
         {
             UpdateToAllSparse();
@@ -203,6 +249,12 @@ namespace TVGL.Voxelization
         }
 
         // A AND (NOT B)
+        /// <summary>
+        /// Subtracts to new solid. This is a boolean function that returns a new solid treating "this" solid as the
+        /// minuend and all arguments as subtracted from it (or subtrahends).
+        /// </summary>
+        /// <param name="subtrahends">The subtrahends.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)
         {
             var vs = (VoxelizedSolid)Copy();
@@ -211,6 +263,11 @@ namespace TVGL.Voxelization
         }
 
         // A AND (NOT B)
+        /// <summary>
+        /// Subtracts the specified subtrahends. This is a boolean function that removes voxels from "this" solid 
+        /// (which is treated as the minuend) that are present in any of the arguments (or subtrahends).
+        /// </summary>
+        /// <param name="subtrahends">The subtrahends.</param>
         public void Subtract(params VoxelizedSolid[] subtrahends)
         {
             UpdateToAllSparse();
@@ -230,7 +287,15 @@ namespace TVGL.Voxelization
         // distance is the zero-based index of voxel-plane to cut before
         // i.e. distance = 8, would yield one solid with voxels 0 to 7, and one with 8 to end
         // 0 < distance < VoxelsPerSide[cut direction]
-        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(CartesianDirections vd, int distance)
+        /// <summary>
+        /// Slices this solid into two voxelized solids given the plane defined as aligning with
+        ///  the cartesian axis of the voxelized solid.
+        /// </summary>
+        /// <param name="vd">The vd.</param>
+        /// <param name="distance">The distance.</param>
+        /// <returns>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(CartesianDirections vd, int distance)
         {
             if (distance >= VoxelsPerSide[Math.Abs((int)vd) - 1] || distance < 1)
                 throw new ArgumentOutOfRangeException();
@@ -284,7 +349,12 @@ namespace TVGL.Voxelization
 
         // Solid on positive side of flat is in position one of return tuple
         // Voxels exactly on the plane are assigned to the positive side
-        public (VoxelizedSolid, VoxelizedSolid) SliceOnFlat(Plane plane)
+        /// <summary>
+        /// Slices this solid into two voxelized solids given any provided plane.
+        /// </summary>
+        /// <param name="plane">The plane.</param>
+        /// <returns>System.ValueTuple&lt;VoxelizedSolid, VoxelizedSolid&gt;.</returns>
+        public (VoxelizedSolid, VoxelizedSolid) SliceOnPlane(Plane plane)
         {
             var vs1 = (VoxelizedSolid)Copy();
             var vs2 = (VoxelizedSolid)Copy();

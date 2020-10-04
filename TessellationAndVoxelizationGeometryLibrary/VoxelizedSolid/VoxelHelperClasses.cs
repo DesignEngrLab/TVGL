@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Generic;
 
 namespace TVGL.Voxelization
@@ -24,6 +28,11 @@ namespace TVGL.Voxelization
         }
     }
 
+    /// <summary>
+    /// Class VoxelEnumerator.
+    /// Implements the <see cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
     internal class VoxelEnumerator : IEnumerator<int[]>
     {
         private readonly VoxelizedSolid vs;

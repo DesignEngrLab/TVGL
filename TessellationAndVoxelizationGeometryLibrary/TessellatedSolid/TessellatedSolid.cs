@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 03-07-2015
-// ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -93,6 +83,9 @@ namespace TVGL
         #endregion
 
         #region Constructors
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TessellatedSolid"/> class.
+        /// </summary>
         public TessellatedSolid() { }
 
         /// <summary>

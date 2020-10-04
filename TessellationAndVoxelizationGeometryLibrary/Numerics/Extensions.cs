@@ -1,4 +1,8 @@
-﻿namespace TVGL.Numerics
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+namespace TVGL.Numerics
 {
     public static class Extensions
     {

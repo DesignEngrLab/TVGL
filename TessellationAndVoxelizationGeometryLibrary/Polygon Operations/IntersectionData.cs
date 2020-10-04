@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -101,14 +105,14 @@ namespace TVGL.TwoDimensional
             // if they're the same then nothing to do (that's 6 more since previous conditions would have caught 2 of these
             // down to 43
             if (newRel == PolyRelInternal.Intersection ||
-                ((newRel == PolyRelInternal.AInsideB || newRel == (PolyRelInternal.AInsideB|PolyRelInternal.InsideHole)) &&
+                ((newRel == PolyRelInternal.AInsideB || newRel == (PolyRelInternal.AInsideB | PolyRelInternal.InsideHole)) &&
                 (Relationship == PolygonRelationship.BInsideA || Relationship == PolygonRelationship.BIsInsideHoleOfA)) ||
                 ((Relationship == PolygonRelationship.AInsideB || Relationship == PolygonRelationship.AIsInsideHoleOfB) &&
                 (newRel == PolyRelInternal.BInsideA || newRel == (PolyRelInternal.BInsideA | PolyRelInternal.InsideHole))))
                 this.Relationship = PolygonRelationship.Intersection;
             // how many more pairs are these: 7 + 8....down to 28
             else if (Relationship == PolygonRelationship.Separated)
-                Relationship = (PolygonRelationship)(int)newRel; //6 more here (i think...not included newRel is Separated or Intersection
+                Relationship = (PolygonRelationship)newRel; //6 more here (i think...not included newRel is Separated or Intersection
             else if (newRel == PolyRelInternal.Equal) return; // current Relationship would be more descriptive
             // so finding out that a subpolygon in Equal doesn't change anything (that 5 more cases)
             else if (newRel == PolyRelInternal.EqualButOpposite)
@@ -142,20 +146,49 @@ namespace TVGL.TwoDimensional
         }
         internal void DefineOverallInteractionFromFinalListOfSubInteractions()
         {
-            CoincidentEdges = polygonRelations.Any(pr => (pr & PolyRelInternal.CoincidentEdges)!=0b0);
+            CoincidentEdges = polygonRelations.Any(pr => (pr & PolyRelInternal.CoincidentEdges) != 0b0);
             EdgesCross = polygonRelations.Any(pr => (pr & PolyRelInternal.EdgesCross) != 0b0);
             CoincidentVertices = polygonRelations.Any(pr => (pr & PolyRelInternal.CoincidentVertices) != 0b0);
 
-            now set the equals if direct 1-to1 match
+
+            if (polygonRelations[0] == PolyRelInternal.Equal)
+            {
+                var index = 1;
+                var matchedPolygonBIndices = new HashSet<int>();
+                var subPolysA = this.AllPolygons.Skip(1).Take(numPolygonsInA - 1).ToList();
+                var subPolysB = this.AllPolygons.Skip(numPolygonsInA + 1).ToList();
+                foreach (var subPolyA in subPolysA)
+                {
+                    for (int i = 0; i < numPolygonsInB - 1; i++)
+                    {
+                        if (matchedPolygonBIndices.Contains(i)) continue;
+                        if (polygonRelations[findLookupIndex(subPolyA, subPolysB[i])] == PolyRelInternal.Equal)
+                        {
+                            matchedPolygonBIndices.Add(i);
+                            break;
+                        }
+                    }
+                }
+                if (matchedPolygonBIndices.Count() == numPolygonsInB - 1) // then we found a unique match for each hole in
+                    // the polygon
+                    Relationship = PolygonRelationship.Equal;
+                else
+                {
+                    throw new NotImplementedException();
+                    // now we hvae a tricky situation that will need a bunch more lines to code. I fear I'm missing an
+                    // easier fix to the problem. For example, the outer polygons can be equal, and then a b-hole can be
+                    // inside an a-hole, which actually means the overall relationship would be AIsInsideB
+                }
+            }
         }
 
-    internal int findLookupIndex(Polygon polygonA, Polygon polygonB)
+        internal int findLookupIndex(Polygon polygon1, Polygon polygon2)
         {
-            var indexA = subPolygonToInt[polygonA];
-            var indexB = subPolygonToInt[polygonB];
-            return indexA < indexB
-                ? numPolygonsInA * (indexB - numPolygonsInA) + indexA
-                : numPolygonsInA * (indexA - numPolygonsInA) + indexB;
+            var index1 = subPolygonToInt[polygon1];
+            var index2 = subPolygonToInt[polygon2];
+            return index1 < index2
+                ? numPolygonsInA * (index2 - numPolygonsInA) + index1
+                : numPolygonsInA * (index1 - numPolygonsInA) + index2;
         }
         internal IEnumerable<(PolyRelInternal, bool)> GetRelationships(Polygon polygon)
         {
@@ -267,7 +300,7 @@ namespace TVGL.TwoDimensional
             for (int i = 0; i < numPolygonsInA; i++)
                 for (int j = 0; j < numPolygonsInB; j++)
                     newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
-            return new PolygonInteractionRecord((PolygonRelationship)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship), 
+            return new PolygonInteractionRecord((PolygonRelationship)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship),
                 newIntersections, newPolygonRelations, newSubPolygonToInt,
               numPolygonsInB, numPolygonsInA);
         }

@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-26-2016
-// ***********************************************************************
-// <copyright file="Colors.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using System;
 
@@ -20,7 +10,6 @@ namespace TVGL
     /// <summary>
     ///     Enum KnownColors
     /// </summary>
-    [Obsolete("The KnownColors attribute should be replaced with call to Constants.ColorDictionary")]
     public enum KnownColors : uint
     {
         /// <summary>
@@ -975,7 +964,7 @@ namespace TVGL
         public byte G;
 
         /// <summary>
-        ///     Gets or sets the af.
+        ///     Gets or sets the opacity property of the color
         /// </summary>
         /// <value>
         ///     The Alpha channel as a float whose range is [0..1].
@@ -989,7 +978,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the rf.
+        ///     Gets or sets the red property of the color
         /// </summary>
         /// <value>The rf.</value>
         [JsonIgnore]
@@ -1000,7 +989,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the gf.
+        ///     Gets or sets the green property of the color.
         /// </summary>
         /// <value>The gf.</value>
         [JsonIgnore]
@@ -1011,7 +1000,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets or sets the bf.
+        ///     Gets or sets the blue property of the color.
         /// </summary>
         /// <value>The bf.</value>
         [JsonIgnore]
@@ -1021,6 +1010,10 @@ namespace TVGL
             set => B = Convert(value);
         }
 
+        /// <summary>
+        /// Gets the hue as a float.
+        /// </summary>
+        /// <returns>System.Single.</returns>
         public float GetHue()
         {
             float h;
@@ -1041,6 +1034,10 @@ namespace TVGL
             return h;
         }
 
+        /// <summary>
+        /// Gets the saturation as a float.
+        /// </summary>
+        /// <returns>System.Single.</returns>
         public float GetSaturation()
         {
             var min = Math.Min(Rf, Math.Min(Gf, Bf));
@@ -1051,6 +1048,10 @@ namespace TVGL
             else return 0f;
         }
 
+        /// <summary>
+        /// Gets the value (as in the hue-saturation-value) of the color as a float.
+        /// </summary>
+        /// <returns>System.Single.</returns>
         public float GetValue()
         {
             return Math.Max(Rf, Math.Max(Gf, Bf));
@@ -1059,6 +1060,9 @@ namespace TVGL
         #endregion Public Properties
     }
 
+    /// <summary>
+    /// Enum ColorFamily
+    /// </summary>
     public enum ColorFamily
     {
         Red, Pink, Magenta, Blue, CyanBlue, Cyan, GreenCyan, Green, Yellow, OrangeYellow, OrangeBrown, RedOrange

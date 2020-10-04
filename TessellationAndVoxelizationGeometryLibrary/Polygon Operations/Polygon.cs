@@ -1,16 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : campmatt
-// Created          : 08-25-2020
-//
-// Last Modified By : campmatt
-// Last Modified On : 09-09-2020
-// ***********************************************************************
-// <copyright file="Polygon.cs" company="Design Engineering Lab">
-//     2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;

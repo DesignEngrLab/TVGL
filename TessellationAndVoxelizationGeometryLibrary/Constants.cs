@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 04-18-2016
-// ***********************************************************************
-// <copyright file="Constants.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +22,7 @@ namespace TVGL
         /// VertexCheckSumMultiplier is the checksum multiplier to be used for face and edge references.
         /// Since the edges connect two vertices the maximum value this can be is
         /// the square root of the max. value of a long (see above). However, during
-        /// debugging, it is nice to see the digits of the vertex indices embedded in 
+        /// debugging, it is nice to see the digits of the vertex indices embedded in
         /// check, so when debugging, this is reducing to 1 billion instead of 3 billion.
         /// This way if you are connecting vertex 1234 with 5678, you will get a checksum = 5678000001234
         /// </summary>
@@ -71,8 +61,9 @@ namespace TVGL
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-2;
+
         /// <summary>
-        /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in 
+        /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in
         /// a tessellated model.
         /// </summary>
         internal const double MaxAllowableEdgeSimilarityScore = 0.2;
@@ -100,11 +91,12 @@ namespace TVGL
         /// points that they affect.
         /// </summary>
         internal const int MarchingCubesBufferFactor = 5;
+
         internal const int MarchingCubesMissedFactor = 4;
 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
-        /// produces voxels on the edges and faces of a tesselated shape.
+        /// produces voxels on the edges and faces of a tessellated shape.
         /// </summary>
         internal static readonly List<int[]> TessellationToVoxelizationIntersectionCombinations = new List<int[]>()
         {
@@ -117,7 +109,6 @@ namespace TVGL
             new []{ 0, -1, -1},
             new []{ -1, -1, -1},
         };
-
 
         /// <summary>
         ///     Finds the index.
@@ -466,9 +457,9 @@ namespace TVGL
 
         internal const double DegreesToRadiansFactor = Math.PI / 180.0;
         internal const double DefaultRoundOffsetDeltaAngle = Math.PI / 180.0; // which is also one degree or 360 in a circle
-        #endregion
-    }
 
+        #endregion new known colors
+    }
 
     /// <summary>
     /// Units of a specified coordinates within the shape or set of shapes.
@@ -479,6 +470,7 @@ namespace TVGL
         /// the unspecified state
         /// </summary>
         unspecified = 0,
+
         /// <summary>
         ///     The millimeter
         /// </summary>
@@ -488,7 +480,6 @@ namespace TVGL
         ///     The micron
         /// </summary>
         micron = 8,
-
 
         /// <summary>
         ///     The centimeter
@@ -510,7 +501,6 @@ namespace TVGL
         /// </summary>
         meter = 6
     }
-
 
     /// <summary>
     ///     Enum CurvatureType
@@ -554,6 +544,7 @@ namespace TVGL
         /// represents an unspecified state
         /// </summary>
         unspecified,
+
         /// <summary>
         ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
         /// </summary>
@@ -590,14 +581,17 @@ namespace TVGL
         ///     Polygon File Format as ASCII
         /// </summary>
         PLY_ASCII,
+
         /// <summary>
         ///     Polygon File Format as Binary
         /// </summary>
         PLY_Binary,
+
         /// <summary>
         ///     Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
         /// </summary>
         SHELL,
+
         /// <summary>
         ///     A serialized version of the TessellatedSolid object
         /// </summary>
@@ -610,6 +604,7 @@ namespace TVGL
         binary_little_endian,
         binary_big_endian
     }
+
     /// <summary>
     ///     Enum ShapeElement
     /// </summary>
@@ -619,6 +614,7 @@ namespace TVGL
         ///     The vertex
         /// </summary>
         Vertex,
+
         Edge,
         Face,
         Uniform_Color
@@ -743,30 +739,37 @@ namespace TVGL
         /// The separated
         /// </summary>
         Separated = 0,
+
         /// <summary>
         /// a inside b
         /// </summary>
         AInsideB = 16,
+
         /// <summary>
         /// a is inside hole of b
         /// </summary>
         AIsInsideHoleOfB = 24,
+
         /// <summary>
         /// The b inside a
         /// </summary>
         BInsideA = 32,
+
         /// <summary>
         /// The b is inside hole of a
         /// </summary>
         BIsInsideHoleOfA = 40,
+
         /// <summary>
         /// The intersection
         /// </summary>
         Intersection = 48,
+
         /// <summary>
         /// The equal
         /// </summary>
         Equal = 64,
+
         /// <summary>
         /// The equal but opposite
         /// </summary>
@@ -782,6 +785,7 @@ namespace TVGL
         CrossOver_BOutsideAfter,
         CrossOver_AOutsideAfter,
     }
+
     public enum CollinearityTypes
     {
         None,
@@ -792,6 +796,7 @@ namespace TVGL
         AAfterBBefore, // case 14
         ABeforeBAfter
     }
+
     public enum WhereIsIntersection
     {
         Intermediate,
@@ -806,11 +811,13 @@ namespace TVGL
     /// </summary>
     internal class NoEqualSort : IComparer<double>
     {
-        readonly int direction;
+        private readonly int direction;
+
         internal NoEqualSort(bool minimize = true)
         {
             direction = minimize ? -1 : 1;
         }
+
         /// <summary>
         ///     Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
         /// </summary>
