@@ -80,15 +80,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Union(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            var polygonList = polygons.ToList();
+            var polygonList = polygons as List<Polygon> ?? polygons.ToList();
             if (double.IsNaN(tolerance))
-            {
-                var xMin = polygonList.Min(p => p.MinX);
-                var xMax = polygonList.Max(p => p.MaxX);
-                var yMin = polygonList.Min(p => p.MinY);
-                var yMax = polygonList.Max(p => p.MaxY);
-                tolerance = Math.Min(xMax - xMin, yMax - yMin) * Constants.BaseTolerance;
-            }
+                tolerance = GetTolerancesFromPolygons(polygonList);
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
                 for (int j = i - 1; j >= 0; j--)
@@ -122,6 +116,83 @@ namespace TVGL.TwoDimensional
                 }
             }
             return polygonList;
+        }
+
+        /// <summary>
+        /// Returns the list of polygons that are the subshapes of ANY of the provided polygons.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
+        public static List<Polygon> Union(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
+            double tolerance = double.NaN)
+        {
+            var unionedPolygons = polygonsA.ToList(); 
+            var polygonBList = polygonsB as List<Polygon> ?? polygonsB.ToList();
+            if (double.IsNaN(tolerance))
+                tolerance = GetTolerancesFromPolygons(unionedPolygons, polygonBList);
+
+            for (int i = unionedPolygons.Count - 1; i > 0; i--)
+            {
+                for (int j = polygonBList.Count - 1; j >= 0; j--)
+                {
+                    var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j], tolerance);
+                    if (interaction.Relationship == PolygonRelationship.BInsideA
+                        || interaction.Relationship == PolygonRelationship.Equal)
+                    {  // remove polygon B
+                        polygonBList.RemoveAt(j);
+                        i--;
+                    }
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    {                            // remove polygon A
+                        polygonBList.RemoveAt(j);
+                        unionedPolygons[i] = polygonBList[j];
+                        break; // to stop the inner loop
+                    }
+                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
+                    {
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                        var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
+                        //Console.WriteLine("i = {0}, j = {1}", i, j);
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(newPolygons);
+                        unionedPolygons.RemoveAt(i);
+                        polygonBList.RemoveAt(j);
+                        unionedPolygons.AddRange(newPolygons);
+                        i = unionedPolygons.Count; // to restart the outer loop
+                        break; // to stop the inner loop
+                    }
+                }
+            }
+            return Union(unionedPolygons, outputAsCollectionType, tolerance);
+        }
+
+        private static double GetTolerancesFromPolygons(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB = null)
+        {
+            double tolerance;
+            var xMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            var yMin = double.PositiveInfinity;
+            var yMax = double.NegativeInfinity;
+            foreach (var polygon in polygonsA)
+            {
+                if (xMin > polygon.MinX) xMin = polygon.MinX;
+                if (yMin > polygon.MinY) yMin = polygon.MinY;
+                if (xMax < polygon.MaxX) xMax = polygon.MaxX;
+                if (yMax < polygon.MaxY) yMax = polygon.MaxY;
+            }
+            if (polygonsB != null)
+                foreach (var polygon in polygonsB)
+                {
+                    if (xMin > polygon.MinX) xMin = polygon.MinX;
+                    if (yMin > polygon.MinY) yMin = polygon.MinY;
+                    if (xMax < polygon.MaxX) xMax = polygon.MaxX;
+                    if (yMax < polygon.MaxY) yMax = polygon.MaxY;
+                }
+            tolerance = Math.Min(xMax - xMin, yMax - yMin) * Constants.BaseTolerance;
+            return tolerance;
         }
 
         #endregion Union Public Methods
@@ -187,7 +258,7 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Returns the list of polygons that are the subshapes of ALL of the provided polygons.
+        /// Returns the list of polygons that are the sub-shapes of ALL of the provided polygons.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
@@ -196,7 +267,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Intersect(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            var polygonList = polygons.ToList();
+            var polygonList = polygons as List<Polygon> ?? polygons.ToList();
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
                 for (int j = i - 1; j >= 0; j--)
@@ -278,7 +349,7 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         /// <exception cref="ArgumentException">The minuend is already a negative polygon (i.e. hole). Consider another operation"
-        /// +" to accopmlish this function, like Intersect. - polygonA</exception>
+        /// +" to accomplish this function, like Intersect. - polygonA</exception>
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
@@ -301,9 +372,9 @@ namespace TVGL.TwoDimensional
            PolygonInteractionRecord interaction, PolygonCollection outputAsCollectionType, bool interactionAlreadyInverted, double tolerance = double.NaN)
         {
             if (!polygonA.IsPositive) throw new ArgumentException("The minuend is already a negative polygon (i.e. hole). Consider another operation"
-                + " to accopmlish this function, like Intersect.", nameof(polygonA));
+                + " to accomplish this function, like Intersect.", nameof(polygonA));
             if (polygonB.IsPositive == interactionAlreadyInverted) throw new ArgumentException("The subtrahend is already a negative polygon (i.e. hole). Consider another operation"
-                  + " to accopmlish this function, like Intersect.", nameof(polygonB));
+                  + " to accomplish this function, like Intersect.", nameof(polygonB));
             if (!interactionAlreadyInverted)
                 interaction = interaction.InvertPolygonInRecord(ref polygonB);
             switch (interaction.Relationship)

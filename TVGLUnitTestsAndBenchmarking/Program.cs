@@ -14,11 +14,12 @@ namespace TVGLUnitTestsAndBenchmarking
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
-
-
+        
         [STAThread]
         private static void Main(string[] args)
         {
+            var d = new Dictionary<int, List<int>>();
+            var a = new test(d);
             //TVGL3Dto2DTests.TestSilhouette();
             //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
@@ -49,6 +50,14 @@ namespace TVGLUnitTestsAndBenchmarking
             //PolygonOperationsTesting.DebugOctagons();
             //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
             //PolygonOperationsTesting.TestUnionSimple();
+        }
+    }
+
+    class test
+    {
+        public test(Dictionary<int, IList<int>> boogers)
+        {
+
         }
     }
 }

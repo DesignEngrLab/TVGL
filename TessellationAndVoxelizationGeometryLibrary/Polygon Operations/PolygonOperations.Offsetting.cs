@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -27,12 +28,12 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Offset the polygons with square corners. The reultig polygons are joined (unioned) if overlapping.
+        /// Offset the polygons with square corners. The resulting polygons are joined (unioned) if overlapping.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetSquare(this List<Polygon> polygons, double offset)
+        public static List<Polygon> OffsetSquare(this IEnumerable<Polygon> polygons, double offset)
         {
             return Offset(polygons, offset, true);
         }
@@ -48,12 +49,12 @@ namespace TVGL.TwoDimensional
             return Offset(polygon, offset, false);
         }
         /// <summary>
-        /// Offset the polygon with miter (sharp) corners. The reulting polygons are joined (unioned) if overlapping.
+        /// Offset the polygon with miter (sharp) corners. The resulting polygons are joined (unioned) if overlapping.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetMiter(this List<Polygon> polygons, double offset)
+        public static List<Polygon> OffsetMiter(this IEnumerable<Polygon> polygons, double offset)
         {
             return Offset(polygons, offset, false);
         }
@@ -76,13 +77,13 @@ namespace TVGL.TwoDimensional
         }
         /// <summary>
         /// Offset the polygon with "round" corners (in quotes since really lots of small polygon sides).
-        /// The reulting polygons are joined(unioned) if overlapping.
+        /// The resulting polygons are joined(unioned) if overlapping.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
         /// <param name="maxCircleDeviation">The maximum circle deviation.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetRound(this List<Polygon> polygons, double offset, double maxCircleDeviation = double.NaN)
+        public static List<Polygon> OffsetRound(this IEnumerable<Polygon> polygons, double offset, double maxCircleDeviation = double.NaN)
         {
             var deltaAngle = double.IsNaN(maxCircleDeviation)
                 ? Constants.DefaultRoundOffsetDeltaAngle
@@ -128,10 +129,11 @@ namespace TVGL.TwoDimensional
             //return positivePolygons;
         }
 
-        private static List<Vector2> OffsetRoutineForward(List<PolygonEdge> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
+        private static List<Vector2> OffsetRoutineForward(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
-            var numPoints = Lines.Count;
+            var linesList = lines as IList<PolygonEdge> ?? lines.ToList();
+            var numPoints = linesList.Count;
             var startingListSize = numPoints;
             var roundCorners = !double.IsNaN(deltaAngle);
             if (roundCorners) startingListSize += (int)(2 * Math.PI / deltaAngle);
@@ -142,12 +144,12 @@ namespace TVGL.TwoDimensional
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
-            var prevLine = Lines[^1];
+            var prevLine = linesList[^1];
             var prevLineLengthReciprocal = 1.0 / prevLine.Length;
             var prevUnitNormal = new Vector2(prevLine.Vector.Y * prevLineLengthReciprocal, -prevLine.Vector.X * prevLineLengthReciprocal);
             for (int i = 0; i < numPoints; i++)
             {
-                var nextLine = Lines[i];
+                var nextLine = linesList[i];
                 var nextLineLengthReciprocal = 1.0 / nextLine.Length;
                 var nextUnitNormal = new Vector2(nextLine.Vector.Y * nextLineLengthReciprocal, -nextLine.Vector.X * nextLineLengthReciprocal);
                 // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".
@@ -201,10 +203,11 @@ namespace TVGL.TwoDimensional
             return pointsList;
         }
 
-        private static List<Vector2> OffsetRoutineBackwards(List<PolygonEdge> Lines, double offset, bool notMiter, double deltaAngle = double.NaN)
+        private static List<Vector2> OffsetRoutineBackwards(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
-            var numPoints = Lines.Count;
+            var linesList = lines as IList<PolygonEdge> ?? lines.ToList();
+            var numPoints = linesList.Count;
             var startingListSize = numPoints;
             var roundCorners = !double.IsNaN(deltaAngle);
             if (roundCorners) startingListSize += (int)(2 * Math.PI / deltaAngle);
@@ -215,12 +218,12 @@ namespace TVGL.TwoDimensional
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
-            var prevLine = Lines[0];
+            var prevLine = linesList[0];
             var prevLineLengthReciprocal = 1.0 / prevLine.Length;
             var prevUnitNormal = new Vector2(-prevLine.Vector.Y * prevLineLengthReciprocal, prevLine.Vector.X * prevLineLengthReciprocal);
             for (int i = numPoints - 1; i >= 0; i--)
             {
-                var nextLine = Lines[i];
+                var nextLine = linesList[i];
                 var nextLineLengthReciprocal = 1.0 / nextLine.Length;
                 var nextUnitNormal = new Vector2(-nextLine.Vector.Y * nextLineLengthReciprocal, nextLine.Vector.X * nextLineLengthReciprocal);
                 // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".
