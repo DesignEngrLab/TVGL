@@ -1,15 +1,14 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TVGL;
 
 namespace TVGL.PrimitiveClassificationDetail
 {
     internal class PlanningSurface
     {
-        internal PrimitiveSurfaceType SurfaceType { get; private set; }
+        internal PrimitiveSurfaceType SurfaceType { get; }
         internal List<FaceWithScores> Faces;
 
         internal PlanningSurface(PrimitiveSurfaceType SurfaceType, params FaceWithScores[] Faces)
@@ -19,6 +18,7 @@ namespace TVGL.PrimitiveClassificationDetail
             foreach (var polygonalFace in Faces)
                 Area += polygonalFace.Face.Area;
         }
+
         internal double Area { get; set; }
         internal double NegativeProbability { get; set; }
 
@@ -29,20 +29,23 @@ namespace TVGL.PrimitiveClassificationDetail
                 double TypeMultiplier;
                 switch (SurfaceType)
                 {
-                    case PrimitiveSurfaceType.Flat:
+                    case PrimitiveSurfaceType.Plane:
                         TypeMultiplier = 20;
                         break;
+
                     case PrimitiveSurfaceType.Cylinder:
                         TypeMultiplier = 10;
                         break;
+
                     case PrimitiveSurfaceType.Sphere:
                         TypeMultiplier = 5;
                         break;
+
                     default:
                         TypeMultiplier = 1;
                         break;
                 }
-                return TypeMultiplier*Area * (1 - NegativeProbability);
+                return TypeMultiplier * Area * (1 - NegativeProbability);
             }
         }
 

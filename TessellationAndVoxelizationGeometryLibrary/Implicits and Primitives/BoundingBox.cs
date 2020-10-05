@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 02-12-2016
-// ***********************************************************************
-// <copyright file="BoundingBox.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -154,9 +144,8 @@ namespace TVGL
         {
             get
             {
-                if (_directions == null)
-                    _directions = new[] { Transform.XBasisVector, Transform.YBasisVector, Transform.ZBasisVector };
-                return _directions;
+                return _directions ??= new[]
+                    {Transform.XBasisVector, Transform.YBasisVector, Transform.ZBasisVector};
             }
         }
 
@@ -238,10 +227,7 @@ namespace TVGL
                 }
                 return _center;
             }
-            set
-            {
-                _center = value;
-            }
+            set => _center = value;
         }
 
         private Vector3 _center = Vector3.Null;
@@ -417,7 +403,7 @@ namespace TVGL
         public void MoveFaceOutward(Vector3 direction, double distance)
         {
             var unitDir = direction.Normalize();
-            CartesianDirections cartesian = CartesianDirections.ZNegative;
+            CartesianDirections cartesian;
             if (unitDir.Dot(Directions[0]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.XPositive;
             else if (unitDir.Dot(Directions[1]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.YPositive;
             else if (unitDir.Dot(Directions[2]).IsPracticallySame(1.0, smallAngle)) cartesian = CartesianDirections.ZPositive;

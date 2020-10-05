@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 04-18-2016
-// ***********************************************************************
-// <copyright file="Sphere.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,8 +38,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
-            Vector3 pointOnLine;
-            var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
+            var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out var pointOnLine);
             var fractionToMove = 1/Faces.Count;
             var moveVector = pointOnLine.Subtract(Center);
             Center =
@@ -86,14 +75,12 @@ namespace TVGL
             : base(facesAll)
         {
             Type = PrimitiveSurfaceType.Sphere;
-            var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
+            var faces = MiscFunctions.FacesWithDistinctNormals(Faces);
             var n = faces.Count;
             var centers = new List<Vector3>();
-            Vector3 center;
-            double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
+                faces[n - 1].Center, faces[n - 1].Normal, out var center, out var t1, out var t2);
             if (!center.IsNull())
             {
                 centers.Add(center);

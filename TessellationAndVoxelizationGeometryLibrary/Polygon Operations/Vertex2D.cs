@@ -1,20 +1,8 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 05-26-2016
-// ***********************************************************************
-// <copyright file="SpecialClasses.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System.Collections.Generic;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
@@ -30,7 +18,7 @@ namespace TVGL.TwoDimensional
         ///     Gets the loop ID that this node belongs to.
         /// </summary>
         /// <value>The loop identifier.</value>
-        internal int LoopID { get; set; }
+        public int LoopID { get; set; }
 
         /// <summary>
         ///     Gets or sets the x.
@@ -44,47 +32,30 @@ namespace TVGL.TwoDimensional
         /// <value>The y.</value>
         public double Y => Coordinates.Y;
 
-
         /// <summary>
         ///     Gets the line that starts at this node.
         /// </summary>
         /// <value>The start line.</value>
-        internal PolygonSegment StartLine { get; set; }
+        public PolygonEdge StartLine { get; internal set; }
 
         /// <summary>
         ///     Gets the line that ends at this node.
         /// </summary>
         /// <value>The end line.</value>
-        internal PolygonSegment EndLine { get; set; }
-
-        /// <summary>
-        ///     Gets the type of  node.
-        /// </summary>
-        /// <value>The type.</value>
-        internal NodeType Type { get; set; }
+        public PolygonEdge EndLine { get; internal set; }
 
         /// <summary>
         ///     Gets the base class, Point of this node.
         /// </summary>
         /// <value>The point.</value>
-        internal Vector2 Coordinates { get; private set; }
-        internal int ReferenceID { get; set; }
-        /// <summary>
-        ///     Gets the base class, Point of this node.
-        /// </summary>
-        /// <value><c>true</c> if this instance is right chain; otherwise, <c>false</c>.</value>
-        internal bool IsRightChain { get; set; }
+        public Vector2 Coordinates { get; private set; }
 
-        /// <summary>
-        ///     Gets the base class, Point of this node.
-        /// </summary>
-        /// <value><c>true</c> if this instance is left chain; otherwise, <c>false</c>.</value>
-        internal bool IsLeftChain { get; set; }
+        public int IndexInList { get; internal set; }
 
-        #endregion
+        #endregion Properties
 
         #region Constructor
-        
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Node" /> class.
         /// </summary>
@@ -94,9 +65,27 @@ namespace TVGL.TwoDimensional
         {
             LoopID = loopID;
             Coordinates = currentPoint;
-            ReferenceID = referenceID;
+            IndexInList = referenceID;
         }
 
-        #endregion
+        internal Vertex2D Copy()
+        {
+            return new Vertex2D
+            {
+                Coordinates = this.Coordinates,
+                IndexInList = this.IndexInList,
+                LoopID = this.LoopID,
+            };
+        }
+
+        // the following private argument-less constructor is only used in the copy function
+        private Vertex2D() { }
+
+        public override string ToString()
+        {
+            return "{" + X + "," + Y + "}";
+        }
+
+        #endregion Constructor
     }
 }

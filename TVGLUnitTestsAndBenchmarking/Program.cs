@@ -1,36 +1,54 @@
 using BenchmarkDotNet.Running;
+using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using TVGL;
-using TVGL.Boolean_Operations;
-using TVGL.IOFunctions;
 using TVGL.Numerics;
-using TVGLUnitTestsAndBenchmarking;
+using TVGL.TwoDimensional;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
+        static Random r = new Random();
+        static double r1 => 2.0 * r.NextDouble() - 1.0;
 
-        static readonly Stopwatch stopwatch = new Stopwatch();
+
 
         [STAThread]
         private static void Main(string[] args)
         {
-            //Voxels.InitialTest();
-            var tVGL3Dto2DTests = new TVGL3Dto2DTests();
-            tVGL3Dto2DTests.BoxSilhouette();
+            //TVGL3Dto2DTests.TestSilhouette();
+            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
-            PolygonOperationsTesting.TestBoundingRectangle();
-            //PolygonOperationsTesting.TestSimplify();
+#if PRESENT
+            var polys = TestCases.Ersatz["nestedSquares"];
+            var p1 = TestCases.C2Poly(polys.Item1);
+            var p2 = TestCases.C2Poly(polys.Item2);
+            Presenter.ShowAndHang(new[] { p1, p2 });
+            Presenter.ShowAndHang(p1.Union(p2));
 
-            //BenchmarkRunner.Run<PolygonOperationsTesting> ();
-            //var po =new PolygonOperations();
-            //po.Perimeter(4, 10);
-            //Console.WriteLine(summary);
+#else
+            //#endif
+            var stats = new List<(string, int, long, long)>();
+
+            foreach (var testCase in TestCases.GetAllTwoArgumentErsatzCases())
+            {
+                var polys = testCase.Value;
+                PolygonBooleanTester.SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2),
+                    TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
+            }
+#endif
+
+            //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
+            //PolygonOperationsTesting.DebugBoolean();
+            //PolygonOperationsTesting.TestBooleanCompare();
+            //PolygonOperationsTesting.TestRemoveSelfIntersect();
+            //PolygonOperationsTesting.DebugEdgeCases();
+            //PolygonOperationsTesting.DebugOctagons();
+            //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
+            //PolygonOperationsTesting.TestUnionSimple();
         }
     }
 }

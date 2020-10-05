@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 02-18-2015
-// ***********************************************************************
-// <copyright file="Cylinder.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,9 +40,8 @@ namespace TVGL
         public override void UpdateWith(PolygonalFace face)
         {
             var numFaces = Faces.Count;
-            Vector3 inBetweenPoint;
             var distance = MiscFunctions.SkewedLineIntersection(face.Center, face.Normal, Anchor, Axis,
-                out inBetweenPoint);
+                out var inBetweenPoint);
             var fractionToMove = 1 / numFaces;
             var moveVector = Anchor.Cross(face.Normal);
             if (moveVector.Dot(face.Center.Subtract(inBetweenPoint)) < 0)
@@ -316,7 +305,7 @@ namespace TVGL
 
         public List<Edge> EdgeLoop2 { get; set; }
 
-        public HashSet<Flat> SmallFlats { get; set; }
+        public HashSet<Plane> SmallFlats { get; set; }
 
         public List<Vector2> Loop2D { get; set; }
 
@@ -330,7 +319,7 @@ namespace TVGL
         /// <param name="faces">The faces all.</param>
         /// <param name="axis">The axis.</param>
         public Cylinder(IEnumerable<PolygonalFace> faces, bool buildOnlyIfHole, bool isPositive,
-            HashSet<Flat> featureFlats = null) : base(faces)
+            HashSet<Plane> featureFlats = null) : base(faces)
         {
             if (!buildOnlyIfHole) throw new Exception("This Cylinder constructor only works when you want to find holes.");
             Type = PrimitiveSurfaceType.Cylinder;
@@ -347,14 +336,12 @@ namespace TVGL
             : base(facesAll)
         {
             Type = PrimitiveSurfaceType.Cylinder;
-            var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
+            var faces = Faces.FacesWithDistinctNormals();
             var n = faces.Count;
             var centers = new List<Vector3>();
-            Vector3 center;
-            double t1, t2;
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
+                faces[n - 1].Center, faces[n - 1].Normal, out var center, out var t1, out var t2);
             if (!center.IsNull() && !center.IsNegligible())
             {
                 centers.Add(center);
@@ -410,9 +397,8 @@ namespace TVGL
             var v2 = edge.To;
             var v3 = edge.OwnedFace.Vertices.First(v => v != v1 && v != v2);
             var v4 = edge.OtherFace.Vertices.First(v => v != v1 && v != v2);
-            Vector3 center;
             MiscFunctions.SkewedLineIntersection(edge.OwnedFace.Center, edge.OwnedFace.Normal,
-                edge.OtherFace.Center, edge.OtherFace.Normal, out center);
+                edge.OtherFace.Center, edge.OtherFace.Normal, out var center);
             /* determine is positive or negative */
             var isPositive = edge.Curvature == CurvatureType.Convex;
             /* move center to origin plane */

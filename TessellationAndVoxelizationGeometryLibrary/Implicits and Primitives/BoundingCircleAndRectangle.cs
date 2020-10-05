@@ -1,21 +1,9 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 02-12-2016
-// ***********************************************************************
-// <copyright file="BoundingBox.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using MIConvexHull;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -44,7 +32,7 @@ namespace TVGL
         public List<Vector2>[] PointsOnSides;
 
         /// <summary>
-        ///     Vector direction of length 
+        ///     Vector direction of length
         /// </summary>
         public Vector2 Direction1;
 
@@ -98,11 +86,10 @@ namespace TVGL
                 if (!areaCheck.IsPracticallySame(Area, 0.01 * Area))
                     throw new Exception("Points are ordered incorrectly");
             }
-            CenterPosition = Direction1 * (Offsets[0] + 0.5 * Length1) 
+            CenterPosition = Direction1 * (Offsets[0] + 0.5 * Length1)
                 + Direction2 * (Offsets[2] + 0.5 * Length2);
         }
     }
-
 
     /// <summary>
     ///     Public circle structure, given a center point and radius

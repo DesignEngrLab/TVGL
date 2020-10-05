@@ -111,17 +111,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns a null matrix, which means all values are set to Not-A-Number.
         /// </summary>
-        public static Matrix4x4 Null
-        {
-            get
-            {
-                return new Matrix4x4(
-                    double.NaN, double.NaN, double.NaN,
-                    double.NaN, double.NaN, double.NaN,
-                    double.NaN, double.NaN, double.NaN,
-                    double.NaN, double.NaN, double.NaN);
-            }
-        }
+        public static Matrix4x4 Null =>
+            new Matrix4x4(
+                double.NaN, double.NaN, double.NaN,
+                double.NaN, double.NaN, double.NaN,
+                double.NaN, double.NaN, double.NaN,
+                double.NaN, double.NaN, double.NaN);
+
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
@@ -260,7 +256,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             matrix.M31, matrix.M32, 0, 1)
         { }
 
-        public Matrix4x4(Vector3 xComponent, Vector3 yComponent, Vector3 zComponent, Vector3 translation) 
+        public Matrix4x4(Vector3 xComponent, Vector3 yComponent, Vector3 zComponent, Vector3 translation)
             : this(xComponent.X, xComponent.Y, xComponent.Z,
                   yComponent.X, yComponent.Y, yComponent.Z,
                   zComponent.X, zComponent.Y, zComponent.Z,
@@ -919,13 +915,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>A new Matrix that can be used to flatten geometry onto the specified plane from the specified direction.</returns>
         public static Matrix4x4 CreateShadow(Vector3 lightDirection, Plane plane)
         {
-            Plane p = Plane.Normalize(plane);
+            plane.Normalize();
 
-            double dot = p.Normal.X * lightDirection.X + p.Normal.Y * lightDirection.Y + p.Normal.Z * lightDirection.Z;
-            double a = -p.Normal.X;
-            double b = -p.Normal.Y;
-            double c = -p.Normal.Z;
-            double d = -p.D;
+            double dot = plane.Normal.X * lightDirection.X + plane.Normal.Y * lightDirection.Y + plane.Normal.Z * lightDirection.Z;
+            double a = -plane.Normal.X;
+            double b = -plane.Normal.Y;
+            double c = -plane.Normal.Z;
+            double d = -plane.DistanceToOrigin;
 
             return new Matrix4x4(
                 // first row
@@ -945,7 +941,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>A new matrix expressing the reflection.</returns>
         public static Matrix4x4 CreateReflection(Plane value)
         {
-            value = Plane.Normalize(value);
+            value.Normalize();
 
             double a = value.Normal.X;
             double b = value.Normal.Y;
@@ -959,7 +955,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 fa * a + 1.0, fb * a, fc * a, //0.0,
                 fa * b, fb * b + 1.0, fc * b, //0.0,
                 fa * c, fb * c, fc * c + 1.0, //0.0,
-                fa * value.D, fb * value.D, fc * value.D //,1.0
+                fa * value.DistanceToOrigin, fb * value.DistanceToOrigin, fc * value.DistanceToOrigin //,1.0
                 );
         }
 
@@ -1269,7 +1265,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
             translation = new Vector3(matrix.M41, matrix.M42, matrix.M43);
 
-            var pVectorBasis = new Vector3[] {
+            var pVectorBasis = new[] {
                 new Vector3(matrix.M11, matrix.M12, matrix.M13),
                 new Vector3(matrix.M21, matrix.M22, matrix.M23),
                 new Vector3(matrix.M31, matrix.M32, matrix.M33)
@@ -1326,7 +1322,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 }
             }
             #endregion
-            var canonicalBasis = new Vector3[]
+            var canonicalBasis = new[]
             {
                 new Vector3(1.0, 0.0, 0.0),
                 new Vector3(0.0, 1.0, 0.0),
@@ -1339,11 +1335,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             if (scale[b] < DecomposeEpsilon)
             {
                 int cc;
-                double fAbsX, fAbsY, fAbsZ;
-
-                fAbsX = Math.Abs(pVectorBasis[a].X);
-                fAbsY = Math.Abs(pVectorBasis[a].Y);
-                fAbsZ = Math.Abs(pVectorBasis[a].Z);
+                var fAbsX = Math.Abs(pVectorBasis[a].X);
+                var fAbsY = Math.Abs(pVectorBasis[a].Y);
+                var fAbsZ = Math.Abs(pVectorBasis[a].Z);
 
                 #region Ranking
                 if (fAbsX < fAbsY)
@@ -1469,7 +1463,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Transposes the rows and columns of a matrix.
+        /// Transposes the specified matrix. Recall that this flips the matrix 
+        /// about its diagonal (rows become columns and columns become rows).
         /// </summary>
         /// <param name="matrix">The source matrix.</param>
         /// <returns>The transposed matrix.</returns>

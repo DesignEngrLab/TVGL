@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using MIConvexHull;
+using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -20,46 +21,34 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (NaN,NaN). This is often used in place of null.
         /// </summary>
-        public static Vector2 Null
-        {
+        public static Vector2 Null =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector2(double.NaN, double.NaN);
-            }
-        }
+            new Vector2(double.NaN, double.NaN);
 
 
         /// <summary>
         /// Returns the vector (0,0).
         /// </summary>
-        public static Vector2 Zero
-        {
+        public static Vector2 Zero =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return default;
-            }
-        }
+            default;
+
         /// <summary>
         /// Returns the vector (1,1).
         /// </summary>
-        public static Vector2 One
-        {
+        public static Vector2 One =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector2(1.0, 1.0);
-            }
-        }
+            new Vector2(1.0, 1.0);
+
         /// <summary>
         /// Returns the vector (1,0).
         /// </summary>
-        public static Vector2 UnitX { get { return new Vector2(1.0, 0.0); } }
+        public static Vector2 UnitX => new Vector2(1.0, 0.0);
+
         /// <summary>
         /// Returns the vector (0,1).
         /// </summary>
-        public static Vector2 UnitY { get { return new Vector2(0.0, 1.0); } }
+        public static Vector2 UnitY => new Vector2(0.0, 1.0);
 
         /// <summary>
         /// Makes a copy of the current Vector.
@@ -71,6 +60,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         double IVertex2D.X => X;
 
         double IVertex2D.Y => Y;
+
+        [JsonIgnore]
 
         public double[] Position => new[] { X, Y };
 
@@ -185,7 +176,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         #region Public Static Methods
         /// <summary>
-        /// Returns the Euclidean distance between the two given points.
+        /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
+        /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
         /// </summary>
         /// <param name="value1">The first point.</param>
         /// <param name="value2">The second point.</param>
@@ -211,7 +203,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Returns the Euclidean distance squared between the two given points.
+        /// Returns the Euclidean distance squared between the two given points. This is useful when the actual
+        /// value of distance is not so imporant as the relative value to other distances. Taking the square-root
+        /// is expensive when called many times.
         /// </summary>
         /// <param name="value1">The first point.</param>
         /// <param name="value2">The second point.</param>
@@ -362,7 +356,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Transforms a vector normal by the given matrix.
+        /// Transforms a vector by the given matrix without the translation component.
+        /// This is often used for transforming normals, however note that proper transformations
+        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
         /// </summary>
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
@@ -382,6 +378,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 position.X * matrix.M12 + position.Y * matrix.M22);
         }
 
+        /// <summary>
+        /// Transforms a vector by the given matrix without the translation component.
+        /// This is often used for transforming normals, however note that proper transformations
+        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 TransformNoTranslate(Vector2 position, Matrix4x4 matrix)
         {

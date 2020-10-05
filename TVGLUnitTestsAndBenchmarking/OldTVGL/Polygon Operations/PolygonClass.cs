@@ -43,7 +43,7 @@ namespace OldTVGL
         /// </summary>
         public readonly double MinY;
 
-        public PolygonLight(Polygon polygon)
+        public PolygonLight(PolygonClass polygon)
         {
             Area = polygon.Area;
             Path = new List<PointLight>();
@@ -128,7 +128,7 @@ namespace OldTVGL
     /// <summary>
     /// A list of 2D points
     /// </summary>
-    public class Polygon
+    public class PolygonClass
     {
         /// <summary>
         /// The list of 2D points that make up a polygon.
@@ -153,12 +153,12 @@ namespace OldTVGL
         /// <summary>
         /// A list of the polygons inside this polygon.
         /// </summary>
-        public List<Polygon> Childern;
+        public List<PolygonClass> Childern;
 
         /// <summary>
         /// The polygon that this polygon is inside of.
         /// </summary>
-        public Polygon Parent;
+        public PolygonClass Parent;
 
         /// <summary>
         /// The index of this child in its parent's child list.
@@ -239,7 +239,7 @@ namespace OldTVGL
         /// <param name="points"></param>
         /// <param name="setLines"></param>
         /// <param name="index"></param>
-        public Polygon(IEnumerable<Point> points, bool setLines = false, int index = -1)
+        public PolygonClass(IEnumerable<Point> points, bool setLines = false, int index = -1)
         {
             Path = new List<Point>(points);
             //set index in path
@@ -262,7 +262,7 @@ namespace OldTVGL
             Length = SetLength();
             PathLines = null;
             Parent = null;
-            Childern = new List<Polygon>();
+            Childern = new List<PolygonClass>();
 
             if (setLines)
             {
@@ -270,7 +270,7 @@ namespace OldTVGL
             }
         }
 
-        public Polygon(PolygonLight poly, bool setLines = false) : this(poly.Path.Select(p => new Point(p)), setLines)
+        public PolygonClass(PolygonLight poly, bool setLines = false) : this(poly.Path.Select(p => new Point(p)), setLines)
         {
         }
 

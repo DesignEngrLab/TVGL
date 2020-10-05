@@ -66,30 +66,20 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the multiplicative identity matrix.
         /// </summary>
-        public static Matrix3x3 Identity
-        {
-            get
-            {
-                return new Matrix3x3(
-                    1, 0,
-                    0, 1,
-                    0, 0);
-            }
-        }
+        public static Matrix3x3 Identity =>
+            new Matrix3x3(
+                1, 0,
+                0, 1,
+                0, 0);
 
         /// <summary>
         /// Returns a null matrix, which means all values are set to Not-A-Number.
         /// </summary>
-        public static Matrix3x3 Null
-        {
-            get
-            {
-                return new Matrix3x3(
-                    double.NaN, double.NaN,
-                    double.NaN, double.NaN,
-                    double.NaN, double.NaN);
-            }
-        }
+        public static Matrix3x3 Null =>
+            new Matrix3x3(
+                double.NaN, double.NaN,
+                double.NaN, double.NaN,
+                double.NaN, double.NaN);
 
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
@@ -121,13 +111,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Gets or sets the translation component of this matrix.
         /// </summary>
-        public Vector2 Translation
-        {
-            get
-            {
-                return new Vector2(M31, M32);
-            }
-        }
+        public Vector2 Translation => new Vector2(M31, M32);
 
         /// <summary>
         /// Constructs a Matrix3x3 from the given components.
@@ -381,6 +365,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             }
         }
 
+        /// <summary>
+        /// Transposes the specified matrix. Recall that this flips the matrix about its diagonal (rows
+        /// become columns and columns become rows)
+        /// </summary>
+        /// <param name="m">The matrix to be transponsed.</param>
+        /// <returns>Matrix3x3.</returns>
         public static Matrix3x3 Transpose(Matrix3x3 m)
         { return new Matrix3x3(m.M11, m.M21, m.M31, m.M12, m.M22, m.M32, m.M13, m.M23, m.M33); }
 
@@ -691,9 +681,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>True if the Object is equal to this matrix; False otherwise.</returns>
         public override bool Equals(object obj)
         {
-            if (obj is Matrix3x3)
+            if (obj is Matrix3x3 matrix3X3)
             {
-                return Equals((Matrix3x3)obj);
+                return Equals(matrix3X3);
             }
 
             return false;

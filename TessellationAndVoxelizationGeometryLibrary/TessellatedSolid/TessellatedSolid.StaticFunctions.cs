@@ -1,21 +1,8 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 06-21-2015
-// ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
-using System.Linq;
-using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -35,7 +22,6 @@ namespace TVGL
             return false;
         }
 
-
         private static void RemoveReferencesToVertex(Vertex vertex)
         {
             foreach (var face in vertex.Faces)
@@ -49,6 +35,5 @@ namespace TVGL
                 if (vertex == edge.From) edge.From = null;
             }
         }
-
     }
 }

@@ -1,43 +1,57 @@
 using System;
 using Xunit;
 using TVGL.Numerics;
+using TVGL;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    public class TVGLNumericsTests
+    public static class TVGLNumericsTests
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
 
         [Fact]
-        public void Vector2Length()
+        public static void Vector2Length()
         {
             var vectLength5 = new Vector2(3, 4);
             Assert.Equal(5, vectLength5.Length(), 10);
         }
 
         [Fact]
-        public void Cross2test1()
+        public static void Cross2test1()
         {
             Assert.Equal(1, Vector2.UnitX.Cross(Vector2.UnitY), 10);
         }
 
         [Fact]
-        public void Cross2test2()
+        public static void Cross2test2()
         {
             var v1 = new Vector2(1, 2);
             var v2 = new Vector2(2, 1);
             Assert.True(v1.Cross(v2) < 0);
         }
         [Fact]
-        public void Normalize2()
+        public static void Normalize2()
         {
             var v1 = new Vector2(r100, r100);
             var v2 = v1.Normalize();
             Assert.Equal(v2.Length(), 1.0, 10);
         }
+
+
         [Fact]
-        public void Matrix3InvertSimple()
+        public static void InteriorAngle()
+        {
+            //var v1 = new Vector2(r100, r100);
+            var v1 = new Vector2(1, 0);
+            var angle = 2 * Math.PI * r.NextDouble() - Math.PI;
+            var v2 = new Vector2(Math.Cos(angle), Math.Sin(angle));
+            //var v2 = v1.Transform(Matrix3x3.CreateRotation(angle));
+            Assert.Equal(Math.PI - angle, v1.InteriorAngleBetweenVectors(v2), 10);
+        }
+
+        [Fact]
+        public static void Matrix3InvertSimple()
         {
             for (int i = 0; i < 5; i++)
             {
@@ -56,7 +70,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
         [Fact]
-        public void Matrix3InvertFull()
+        public static void Matrix3InvertFull()
         {
             for (int i = 0; i < 5; i++)
             {
@@ -75,7 +89,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
         [Fact]
-        public void Matrix4InvertSimple()
+        public static void Matrix4InvertSimple()
         {
             for (int i = 0; i < 5; i++)
             {
@@ -94,7 +108,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
         }
         [Fact]
-        public void Matrix4InvertFull()
+        public static void Matrix4InvertFull()
         {
             for (int i = 0; i < 5; i++)
             {

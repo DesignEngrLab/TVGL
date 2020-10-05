@@ -1,22 +1,11 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 06-23-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 06-23-2015
-// ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
-using TVGL.IOFunctions;
 using TVGL.TwoDimensional;
 
 namespace TVGL
@@ -34,7 +23,7 @@ namespace TVGL
     /// </remarks>
     public partial class TessellatedSolid : Solid
     {
-        public void MakeEdges()
+        private void MakeEdges()
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
@@ -63,7 +52,7 @@ namespace TVGL
             edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out var newFaces, out var moreRemainingEdges));
             remainingEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
             // well, the edgelist is definitely going to work out so, we are going to need to make
-            // sure that they are known to their vertices for the next few steps - so here we take 
+            // sure that they are known to their vertices for the next few steps - so here we take
             // a moment to stitch these to the vertices
             foreach (var tuple in edgeList)
                 tuple.Item1.DoublyLinkVertices();
@@ -73,7 +62,7 @@ namespace TVGL
             edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out var removedVertices));
             if (borderEdges.Count > 0)
             {
-                if (Errors == null) Errors = new TessellationError();
+                Errors ??= new TessellationError();
                 if (Errors.SingledSidedEdges == null)
                     Errors.SingledSidedEdges = new List<Edge>(borderEdges);
                 else Errors.SingledSidedEdges.AddRange(borderEdges);
@@ -92,8 +81,8 @@ namespace TVGL
                 SetAndGetEdgeChecksum(edge);
                 // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
                 // face has no area (collapsed to a line).
-                if (otherFace.Normal.IsNull()) otherFace.Normal = ownedFace.Normal;
-                if (ownedFace.Normal.IsNull()) ownedFace.Normal = otherFace.Normal;
+                if (otherFace.Normal.IsNull()) otherFace.AdoptNeighborsNormal(ownedFace);
+                if (ownedFace.Normal.IsNull()) ownedFace.AdoptNeighborsNormal(otherFace);
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;
@@ -101,10 +90,6 @@ namespace TVGL
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
         }
-
-
-
-
 
         /// <summary>
         ///     Makes the vertices.
@@ -127,7 +112,7 @@ namespace TVGL
                 {
                     //Get vertex from list of vertices
                     var vertex = Vertices[faceToVertexIndex[i]];
-                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
+                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points.
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices. This will catch bidirectional tolerancing (+/-)
                     var position = new Vector3(Math.Round(vertex.X, numDecimalPoints),
@@ -236,8 +221,8 @@ namespace TVGL
                 var candidateFaces = entry.Item2;
                 var numFailedTries = 0;
                 // foreach over-used edge:
-                // first, try to find the best match for each face. Basically, it is assumed that faces with the most similar normals 
-                // should be paired together. 
+                // first, try to find the best match for each face. Basically, it is assumed that faces with the most similar normals
+                // should be paired together.
                 while (candidateFaces.Count > 1 && numFailedTries < candidateFaces.Count)
                 {
                     var highestDot = -2.0;
@@ -295,15 +280,12 @@ namespace TVGL
             return newListOfGoodEdges;
         }
 
-
         private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
         {
             var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Coordinates.Subtract(edge.To.Coordinates);
             var isThisNormal = edge.Vector.Cross(otherEdgeVector);
             return face.Normal.Dot(isThisNormal) > 0;
         }
-
-
 
         private static IEnumerable<(Edge, List<PolygonalFace>)> MatchUpRemainingSingleSidedEdge(
             List<Edge> singleSidedEdges, out HashSet<Edge> borderEdges, out List<Vertex> removedVertices)
@@ -364,8 +346,7 @@ namespace TVGL
 
         internal static bool VerticesAreAdjacent(Vertex v1, Vertex v2)
         {
-            Edge commonEdge;
-            return VerticesAreAdjacent(v1, v2, out commonEdge);
+            return VerticesAreAdjacent(v1, v2, out var commonEdge);
         }
 
         internal static bool VerticesAreAdjacent(Vertex v1, Vertex v2, out Edge commonEdge)
@@ -395,7 +376,6 @@ namespace TVGL
                 f.Update();
         }
 
-
         internal static List<(List<Edge>, Vector3)> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
@@ -415,13 +395,13 @@ namespace TVGL
                 remainingEdges.RemoveAt(0);
                 do
                 {
-                    var possibleNextEdges = remainingEdges.Where(e => e.To == loop.Last().From);
+                    var possibleNextEdges = remainingEdges.Where(e => e.To == loop.Last().From).ToList();
                     if (possibleNextEdges.Any())
                     {
                         var bestNext = pickBestEdge(possibleNextEdges, loop.Last().Vector, normal);
                         if (bestNext == null) break;
                         loop.Add(bestNext);
-                        var n1 = loop[loop.Count - 1].Vector.Cross(loop[loop.Count - 2].Vector).Normalize();
+                        var n1 = loop[^1].Vector.Cross(loop[^2].Vector).Normalize();
                         if (!n1.IsNull())
                         {
                             n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
@@ -434,7 +414,7 @@ namespace TVGL
                     }
                     else
                     {
-                        possibleNextEdges = remainingEdges.Where(e => e.From == loop[0].To);
+                        possibleNextEdges = remainingEdges.Where(e => e.From == loop[0].To).ToList();
                         if (possibleNextEdges.Any())
                         {
                             var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector * -1,
@@ -501,20 +481,19 @@ namespace TVGL
                             edgeDic.Add(checksum, edge);
                         }
                     }
-                    List<List<Vertex[]>> triangleFaceList = null;
+                    List<Vertex[]> triangleFaceList;
                     try
                     {
-                        triangleFaceList = (new[] { edges.Select(e => e.To).ToArray() }).Triangulate(normal, out _, out _);
+                        triangleFaceList = edges.Select(e => e.To).Triangulate(normal).ToList();
                     }
                     catch
                     {
                         continue;
                     }
-                    var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
-                    if (triangles.Any())
+                    if (triangleFaceList.Any())
                     {
-                        Message.output("loop successfully repaired with " + triangles.Count, 5);
-                        foreach (var triangle in triangles)
+                        Message.output("loop successfully repaired with " + triangleFaceList.Count, 5);
+                        foreach (var triangle in triangleFaceList)
                         {
                             var newFace = new PolygonalFace(triangle, normal);
                             if (newFace.Area.IsNegligible() && newFace.Normal.IsNull()) continue;
@@ -560,7 +539,6 @@ namespace TVGL
             }
             return bestEdge;
         }
-
 
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {

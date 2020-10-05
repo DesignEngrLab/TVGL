@@ -113,7 +113,7 @@ namespace OldTVGL
             return new TessellatedSolid(faces);
         }
 
-        private double[,] CreateDistanceGridBruteForce(List<Polygon> layer)
+        private double[,] CreateDistanceGridBruteForce(List<PolygonClass> layer)
         {
             var grid = new double[numGridX, numGridY];
             for (int i = 0; i < numGridX; i++)

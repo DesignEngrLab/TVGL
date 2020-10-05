@@ -11,10 +11,10 @@ namespace TVGLUnitTestsAndBenchmarking
     {
         private static void Run()
         {
-            MiscFunctions.SortAlongDirection(Vector3.UnitX, new Vector3[0], out var sortedCoordinates);
-            MiscFunctions.SortAlongDirection(Vector3.UnitX, new Vertex[0], out var sortedVertices);
-            MiscFunctions.SortAlongDirection(Vector2.UnitX, new Vector2[0], out List<Vector2> sortedCoords2D);
-            MiscFunctions.SortAlongDirection(Vector2.UnitX, new Vector2[0], out List<(Vector2, double)> sortedTuples);
+            MiscFunctions.SortAlongDirection(new Vector3[0], Vector3.UnitX, out var sortedCoordinates);
+            MiscFunctions.SortAlongDirection(new Vertex[0], Vector3.UnitX, out var sortedVertices);
+            MiscFunctions.SortAlongDirection(new Vector2[0], Vector2.UnitX, out List<Vector2> sortedCoords2D);
+            MiscFunctions.SortAlongDirection(new Vector2[0], Vector2.UnitX, out List<(Vector2, double)> sortedTuples);
 
             var perimeter = MiscFunctions.Perimeter(new Vertex[0]);
           

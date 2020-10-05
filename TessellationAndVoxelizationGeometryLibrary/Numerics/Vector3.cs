@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using MIConvexHull;
+using Newtonsoft.Json;
 
 namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 {
@@ -20,37 +21,24 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (0,0,0).
         /// </summary>
-        public static Vector3 Zero
-        {
+        public static Vector3 Zero =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return default;
-            }
-        }
-        /// <summary>
-        /// Returns the vector (1,1,1).
-        /// </summary>
-        public static Vector3 One
-        {
-            // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector3(1.0, 1.0, 1.0);
-            }
-        }
+            default;
 
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
-        public static Vector3 Null
-        {
+        public static Vector3 One =>
             // COMMENTEDCHANGE [Intrinsic]
-            get
-            {
-                return new Vector3(double.NaN, double.NaN, double.NaN);
-            }
-        }
+            new Vector3(1.0, 1.0, 1.0);
+
+        /// <summary>
+        /// Returns the vector (NaN, NaN, NaN).
+        /// </summary>
+        public static Vector3 Null =>
+            // COMMENTEDCHANGE [Intrinsic]
+            new Vector3(double.NaN, double.NaN, double.NaN);
+
         public bool IsNull()
         {
             return double.IsNaN(X) || double.IsNaN(Y) || double.IsNaN(Z);
@@ -66,15 +54,17 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (1,0,0).
         /// </summary>
-        public static Vector3 UnitX { get { return new Vector3(1.0, 0.0, 0.0); } }
+        public static Vector3 UnitX => new Vector3(1.0, 0.0, 0.0);
+
         /// <summary>
         /// Returns the vector (0,1,0).
         /// </summary>
-        public static Vector3 UnitY { get { return new Vector3(0.0, 1.0, 0.0); } }
+        public static Vector3 UnitY => new Vector3(0.0, 1.0, 0.0);
+
         /// <summary>
         /// Returns the vector (0,0,1).
         /// </summary>
-        public static Vector3 UnitZ { get { return new Vector3(0.0, 0.0, 1.0); } }
+        public static Vector3 UnitZ => new Vector3(0.0, 0.0, 1.0);
 
         public static Vector3 UnitVector(CartesianDirections direction)
         {
@@ -104,6 +94,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 else return Z;
             }
         }
+
+        [JsonIgnore]
         public double[] Position => new[] { X, Y, Z };
 
         #endregion Public Static Properties
@@ -213,7 +205,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         #region Public Static Methods
         /// <summary>
-        /// Returns the Euclidean distance between the two given points.
+        /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
+        /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
         /// </summary>
         /// <param name="value1">The first point.</param>
         /// <param name="value2">The second point.</param>
@@ -240,7 +233,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Returns the Euclidean distance squared between the two given points.
+        /// Returns the Euclidean distance squared between the two given points. This is useful when the actual
+        /// value of distance is not so imporant as the relative value to other distances. Taking the square-root
+        /// is expensive when called many times.
         /// </summary>
         /// <param name="value1">The first point.</param>
         /// <param name="value2">The second point.</param>
@@ -416,7 +411,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Transforms a vector normal by the given matrix.
+        /// Transforms a vector by the given matrix without the translation component.
+        /// This is often used for transforming normals, however note that proper transformations
+        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
         /// </summary>
         /// <param name="normal">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>

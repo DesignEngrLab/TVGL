@@ -1,28 +1,15 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-26-2016
-// ***********************************************************************
-// <copyright file="Colors.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 
 namespace TVGL
 {
     /// <summary>
     ///     Enum KnownColors
     /// </summary>
-    [Obsolete("The KnownColors attribute should be replaced with call to Constants.ColorDictionary")]
     public enum KnownColors : uint
     {
         /// <summary>
@@ -819,7 +806,6 @@ namespace TVGL
             B = (byte)(argb & 0x000000ff);
         }
 
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
@@ -843,7 +829,6 @@ namespace TVGL
         /// <param name="b">The b.</param>
         public Color(float r, float g, float b)
         {
-
             A = 1;
             R = Convert(r);
             G = Convert(g);
@@ -876,7 +861,10 @@ namespace TVGL
         {
         }
 
-        public Color() { }
+        public Color()
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Color"/> class.
         /// </summary>
@@ -895,6 +883,7 @@ namespace TVGL
                 else A = 255;
             }
         }
+
         // this function is from https://stackoverflow.com/questions/17080535/hsv-to-rgb-stops-at-yellow-c-sharp
         // the initial while's and if's seem pretty amateur though
         public static Color HSVtoRGB(float hue, float saturation, float value, float alpha = 1f)
@@ -916,26 +905,31 @@ namespace TVGL
             if (h6 == 6f) { h6 = 0f; }
             int ihue = (int)(h6);
             float p = value * (1f - saturation);
-            float q = value * (1f - (saturation * (h6 - (float)ihue)));
-            float t = value * (1f - (saturation * (1f - (h6 - (float)ihue))));
+            float q = value * (1f - (saturation * (h6 - ihue)));
+            float t = value * (1f - (saturation * (1f - (h6 - ihue))));
             switch (ihue)
             {
                 case 0:
                     return new Color(alpha, value, t, p);
+
                 case 1:
                     return new Color(alpha, q, value, p);
+
                 case 2:
                     return new Color(alpha, p, value, t);
+
                 case 3:
                     return new Color(alpha, p, q, value);
+
                 case 4:
                     return new Color(alpha, t, p, value);
+
                 default:
                     return new Color(alpha, value, p, q);
             }
         }
-        #endregion Constructors
 
+        #endregion Constructors
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
@@ -970,7 +964,7 @@ namespace TVGL
         public byte G;
 
         /// <summary>
-        ///     Gets or sets the af.
+        ///     Gets or sets the opacity property of the color
         /// </summary>
         /// <value>
         ///     The Alpha channel as a float whose range is [0..1].
@@ -979,43 +973,47 @@ namespace TVGL
         [JsonIgnore]
         public float Af
         {
-            get { return Convert(A); }
-            set { A = Convert(value); }
+            get => Convert(A);
+            set => A = Convert(value);
         }
 
         /// <summary>
-        ///     Gets or sets the rf.
+        ///     Gets or sets the red property of the color
         /// </summary>
         /// <value>The rf.</value>
         [JsonIgnore]
         public float Rf
         {
-            get { return Convert(R); }
-            set { R = Convert(value); }
+            get => Convert(R);
+            set => R = Convert(value);
         }
 
         /// <summary>
-        ///     Gets or sets the gf.
+        ///     Gets or sets the green property of the color.
         /// </summary>
         /// <value>The gf.</value>
         [JsonIgnore]
         public float Gf
         {
-            get { return Convert(G); }
-            set { G = Convert(value); }
+            get => Convert(G);
+            set => G = Convert(value);
         }
 
         /// <summary>
-        ///     Gets or sets the bf.
+        ///     Gets or sets the blue property of the color.
         /// </summary>
         /// <value>The bf.</value>
         [JsonIgnore]
         public float Bf
         {
-            get { return Convert(B); }
-            set { B = Convert(value); }
+            get => Convert(B);
+            set => B = Convert(value);
         }
 
+        /// <summary>
+        /// Gets the hue as a float.
+        /// </summary>
+        /// <returns>System.Single.</returns>
         public float GetHue()
         {
             float h;
@@ -1036,6 +1034,10 @@ namespace TVGL
             return h;
         }
 
+        /// <summary>
+        /// Gets the saturation as a float.
+        /// </summary>
+        /// <returns>System.Single.</returns>
         public float GetSaturation()
         {
             var min = Math.Min(Rf, Math.Min(Gf, Bf));
@@ -1046,7 +1048,10 @@ namespace TVGL
             else return 0f;
         }
 
-
+        /// <summary>
+        /// Gets the value (as in the hue-saturation-value) of the color as a float.
+        /// </summary>
+        /// <returns>System.Single.</returns>
         public float GetValue()
         {
             return Math.Max(Rf, Math.Max(Gf, Bf));
@@ -1055,6 +1060,9 @@ namespace TVGL
         #endregion Public Properties
     }
 
+    /// <summary>
+    /// Enum ColorFamily
+    /// </summary>
     public enum ColorFamily
     {
         Red, Pink, Magenta, Blue, CyanBlue, Cyan, GreenCyan, Green, Yellow, OrangeYellow, OrangeBrown, RedOrange

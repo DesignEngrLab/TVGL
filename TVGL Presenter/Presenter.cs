@@ -25,6 +25,7 @@ using OxyPlot;
 using TVGL.Voxelization;
 using System;
 using TVGL.Numerics;
+using Polygon = TVGL.TwoDimensional.Polygon;
 
 namespace TVGL
 {
@@ -87,12 +88,19 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(IEnumerable<List<Vector2>> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            var points = polygons.Select(polygon => polygon).ToList();
+            var points = polygons.SelectMany(polygon => polygon.AllPolygons.Select(p => p.Path)).ToList();
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
             window.ShowDialog();
+        }
+
+
+        public static void ShowAndHang(Polygon polygon, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        {
+            ShowAndHang(new[] { polygon }, title, plot2DType, closeShape, marker);
         }
 
 
@@ -561,7 +569,29 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        public static void ShowAndHang(VoxelizedSolid solid, List<Polygon> polygons)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            Visual3D model = MakeModelVisual3D(solid);
+            models.Add(model);
+            window.view1.Children.Add(model);
 
+            foreach (var polygon in polygons.SelectMany(poly => poly.AllPolygons))
+            {
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                foreach (var line in polygon.Lines)
+                {
+                    lineCollection.Add(new Point3D(line.FromPoint.X, line.FromPoint.Y, 0));
+                    lineCollection.Add(new Point3D(line.ToPoint.X, line.ToPoint.Y, 0));
+                }
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Thickness=5,Color=Colors.Red  };
+                window.view1.Children.Add(lines);
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
         public static void ShowAndHang(IEnumerable<Solid> solids)
         {
             var window = new Window3DPlot();
@@ -570,7 +600,7 @@ namespace TVGL
             {
                 if (s is CrossSectionSolid)
                 {
-                    var contours = MakeLinesVisual3D(((CrossSectionSolid)s).Layer2D.Values, ((CrossSectionSolid)s).StepDistances.Values, true);
+                    var contours = MakeLinesVisual3D(((CrossSectionSolid)s).GetCrossSectionsAs3DLoops(), true);
                     models.AddRange(contours);
                     foreach (var contour in contours)
                         window.view1.Children.Add(contour);
@@ -820,18 +850,15 @@ namespace TVGL
         }
 
 
-        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<List<Vector2>>> xYPaths,
-            IEnumerable<double> zValues, bool closePaths = true)
+        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<IList<Vector3>>> xYZPaths,
+            bool closePaths = true)
         {
             var lineVisuals = new List<LinesVisual3D>();
-            var zEnumerator = zValues.GetEnumerator();
-            foreach (var layer in xYPaths)
+            foreach (var layer in xYZPaths)
             {
-                zEnumerator.MoveNext();
-                var z = zEnumerator.Current;
                 foreach (var polygon in layer)
                 {
-                    var contour = polygon.Select(point => new Point3D(point.X, point.Y, z)).ToList();
+                    var contour = polygon.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
                     //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
                     foreach (var t in contour)

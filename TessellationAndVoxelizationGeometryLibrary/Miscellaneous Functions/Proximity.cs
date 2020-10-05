@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -47,16 +45,14 @@ namespace TVGL
             // degenerate triangle edges
             if (a.Distance(b).IsNegligible())
             {
-                double t;
-                var cps = ClosestVertexOnSegmentToVertex(a, c, p, out t);
+                var cps = ClosestVertexOnSegmentToVertex(a, c, p, out var t);
                 uvw = new Vector3(1.0 - t, 0, t);
                 return cps;
 
             }
             else if (a.Distance(c).IsNegligible() || b.Distance(c).IsNegligible())
             {
-                double t;
-                var cps = ClosestVertexOnSegmentToVertex(a, b, p, out t);
+                var cps = ClosestVertexOnSegmentToVertex(a, b, p, out var t);
                 uvw = new Vector3(1.0 - t, t, 0);
                 return cps;
             }
@@ -171,7 +167,7 @@ namespace TVGL
         /// <param name="line"></param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonSegment line, Vector2 p)
+        public static Vector2 ClosestPointOnLineSegmentToPoint(this PolygonEdge line, Vector2 p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
             //the line.FromPoint

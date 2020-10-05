@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-17-2015
-//
-// Last Modified By : Matt
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="ConvexHull2D.cs" company="Design Engineering Lab">
-//     Copyright ?  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -107,7 +97,7 @@ namespace TVGL
             //I tried using the extremes (X, Y, and also tried Sum, Diff) to do a first pass at the circle
             //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
             //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
-            var pointList = (points is IList<Vector2>) ? (IList<Vector2>)points : points.ToList();
+            var pointList = points as IList<Vector2> ?? points.ToList();
             var circle = new InternalCircle(pointList[0], pointList[pointList.Count / 2]);
             var dummyPoint = new Vector2(double.NaN, double.NaN);
             var stallCounter = 0;
@@ -261,10 +251,14 @@ namespace TVGL
             Polygon closestContainingPolygon = null;
             foreach (var negativePoly in negativePolygons)
             {
-                if (!negativePoly.IsPointInsidePolygon(centerPoint, out var closestLineAbove,
-                    out _, out var onBoundary)) continue;
+                // note that this condition is true, but within the method, IsPointInsidePolygon, the enclosure
+                // return the value of the "IsPositive 
+                if (negativePoly.IsPointInsidePolygon(true, centerPoint, out var onBoundary)) continue;
                 if (onBoundary) return new BoundingCircle(0.0, centerPoint); //Null solution.
-                var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
+
+                //var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
+                var d = double.NaN; //how to correctly calculate this? the above line is not correct and is no longer a by-product
+                                    // of IsPointInsidePolygon
                 if (d < minDistance)
                 {
                     minDistance = d;
@@ -282,8 +276,7 @@ namespace TVGL
             {
                 foreach (var positivePoly in positivePolygons)
                 {
-                    if (positivePoly.IsPointInsidePolygon(centerPoint, out _,
-                        out _, out _)) return new BoundingCircle(0.0, centerPoint);
+                    if (positivePoly.IsPointInsidePolygon(true, centerPoint, out _)) return new BoundingCircle(0.0, centerPoint);
                     polygonsOfInterest.Add(positivePoly);
                 }
             }
@@ -347,7 +340,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T:IVertex3D
+        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();
@@ -361,16 +354,17 @@ namespace TVGL
 
             Cylinder minCylinder = null;
             var minCylinderVolume = double.PositiveInfinity;
+            var cvxHullVertsList = convexHullVertices as IList<T> ?? convexHullVertices.ToList();
             for (var i = 0; i < 13; i++)
             {
-
                 var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
-                    new[] { directions[i], Vector3.Null, Vector3.Null }, default(T), default(T), default(T));
-                box = Find_via_ChanTan_AABB_Approach<T>(convexHullVertices, box);
+                    new[] { directions[i], Vector3.Null, Vector3.Null }, default, default,
+                    default);
+                box = Find_via_ChanTan_AABB_Approach(cvxHullVertsList, box);
                 for (var j = 0; j < 3; j++)
                 {
                     var axis = box.Directions[j];
-                    var pointsOnFace_i = convexHullVertices.ProjectTo2DCoordinates(axis, out var backTransform);
+                    var pointsOnFace_i = cvxHullVertsList.ProjectTo2DCoordinates(axis, out var backTransform);
                     var circle = MinimumCircle(pointsOnFace_i);
                     var height = box.Dimensions[j];
                     var volume = height * circle.Area;

@@ -3,11 +3,27 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>TVGL_PresenterDebugger</RootNamespace>
     <UseWPF>true</UseWPF>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;PRESENT</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;PRESENT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\bin\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\obj\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewFaRules.csv" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Numerics\README.txt" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Properties\Resources.Designer.cs" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Properties\Resources.resx" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj.user" />
 
     
     <Compile Include="..\TVGL Presenter\Presenter.cs">
@@ -19,22 +35,29 @@
     <Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs">
       <Link>Window3DPlot.xaml.cs</Link>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv">
-      <Link>TVGL\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv</Link>
-    </None>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewFaRules.csv">
-      <Link>TVGL\Implicits and Primitives\Primitive Classification\NewFaRules.csv</Link>
-    </None>
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonOperationsTesting.cs" Link="_Testing_And_Benchmarking_\PolygonOperationsTesting.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\TestCases.cs" Link="_Testing_And_Benchmarking_\TestCases.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\Program.cs" Link="_Testing_And_Benchmarking_\Program.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.Silhouette.cs" Link="_Testing_And_Benchmarking_\ThreeDtoTwoD.Silhouette.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.XSection.cs" Link="_Testing_And_Benchmarking_\ThreeDtoTwoD.XSection.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.11.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+    <PackageReference Include="coverlet.collector" Version="1.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.12.0" />
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="OptimizedPriorityQueue" Version="4.2.0" />
     <PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
+    <PackageReference Include="Snapshooter.Xunit" Version="0.5.5" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Page Include="..\TVGL Presenter\Window2DPlot.xaml" Link="Window2DPlot.xaml">
@@ -43,5 +66,8 @@
     <Page Include="..\TVGL Presenter\Window3DPlot.xaml" Link="Window3DPlot.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="_Testing_And_Benchmarking_\" />
   </ItemGroup>
 </Project>

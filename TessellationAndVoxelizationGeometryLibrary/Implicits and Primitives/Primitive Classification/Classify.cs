@@ -1,16 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 05-25-2016
-// ***********************************************************************
-// <copyright file="Primitive_Classification.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,7 +28,7 @@ namespace TVGL
             listOfLimitsSM = Parameters.MakingListOfLimSMbeta2();
             edgeRules = Parameters.readingEdgesRules2();
             faceRules = Parameters.readingFacesRules();
-            Debug.WriteLine("Edges and faces' rules have been read from the corresonding .csv files");
+            Debug.WriteLine("Edges and faces' rules have been read from the corresponding .csv files");
         }
 
         public static List<PrimitiveSurface> ClassifyPrimitiveSurfaces(this TessellatedSolid ts, bool AddToInputSolid = true)
@@ -151,7 +142,7 @@ namespace TVGL
                 }
                 if (c) i--;
             }
-            var flats = primitives.Where(p => p is Flat).Cast<Flat>().ToList();
+            var flats = primitives.Where(p => p is Plane).Cast<Plane>().ToList();
             var cylinders = primitives.Where(p => p is Cylinder).Cast<Cylinder>().ToList();
             foreach (var cy in cylinders)
             {
@@ -262,12 +253,11 @@ namespace TVGL
                 foreach (var MCMProbs in MCMid)
                     foreach (var SMProbs in SMid)
                     {
-                        double Prob;
-                        int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out Prob);
-                        if (!e.CatProb.Keys.Contains(@group))
-                            e.CatProb.Add(@group, Prob);
-                        else if (e.     CatProb[@group] < Prob)
-                            e.CatProb[@group] = Prob;
+                        int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out var Prob);
+                        if (!e.CatProb.Keys.Contains(group))
+                            e.CatProb.Add(group, Prob);
+                        else if (e.CatProb[group] < Prob)
+                            e.CatProb[group] = Prob;
                     }
         }
 
@@ -443,7 +433,6 @@ namespace TVGL
         #region Face Classification
         private static void FaceFuzzyClassification(FaceWithScores eachFace, List<EdgeWithScores> allEdgeWithScores)
         {
-            var c = 0;
             List<Dictionary<int, double>> t = eachFace.Face.Edges.Select(e => allEdgeWithScores.First(ews => ews.Edge == e).CatProb).ToList();
             eachFace.FaceCat = new Dictionary<PrimitiveSurfaceType, double>();
             eachFace.CatToCom = new Dictionary<PrimitiveSurfaceType, int[]>();
@@ -516,7 +505,7 @@ namespace TVGL
         private static PrimitiveSurfaceType FaceClassifier(int[] bestCombination, List<List<int>> faceRules)
         {
             var intToString = new Dictionary<int, PrimitiveSurfaceType>();
-            intToString.Add(200, PrimitiveSurfaceType.Flat);
+            intToString.Add(200, PrimitiveSurfaceType.Plane);
             intToString.Add(201, PrimitiveSurfaceType.Cylinder);
             intToString.Add(202, PrimitiveSurfaceType.Sphere);
             intToString.Add(203, PrimitiveSurfaceType.Flat_to_Curve);
@@ -605,7 +594,7 @@ namespace TVGL
                     }
                 }
                 bool equals = counter == 3;
-                if (@equals)
+                if (equals)
                 {
                     for (int i = 0; i < 3; i++)
                     {
@@ -643,7 +632,7 @@ namespace TVGL
                 }
                 bool equals = counter == 3;
                 arrayOfRule.OrderBy(n => n).ToArray();
-                if (@equals)
+                if (equals)
                 {
                     var EdgesLead = new[] { faceRules[4][i], faceRules[5][i], faceRules[6][i] };
                     var SortedEL = EdgesLead.OrderBy(n => n).ToArray();
@@ -802,7 +791,7 @@ namespace TVGL
                         completeSurfaces.Add(new Sphere(topPlannedSurface.Faces.Select(f => f.Face)));
                         continue;
                     }
-                    completeSurfaces.Add(new Flat(topPlannedSurface.Faces.Select(f => f.Face)));
+                    completeSurfaces.Add(new Plane(topPlannedSurface.Faces.Select(f => f.Face)));
                     continue;
                 }
                 var topPrimitiveSurface = CreatePrimitiveSurface(topPlannedSurface);
@@ -828,14 +817,12 @@ namespace TVGL
 
             switch (surfaceType)
             {
-                case PrimitiveSurfaceType.Flat:
-                    return new Flat(faces);
+                case PrimitiveSurfaceType.Plane:
+                    return new Plane(faces);
                 case PrimitiveSurfaceType.Cylinder:
-                    Vector3 axis;
-                    double coneAngle;
-                    if (IsReallyACone(faces, out axis, out coneAngle))
+                    if (IsReallyACone(faces, out var axis, out var coneAngle))
                         return new Cone(faces, axis, coneAngle);
-                    if (IsReallyAFlat(faces)) return new Flat(faces);
+                    if (IsReallyAFlat(faces)) return new Plane(faces);
                     return new Cylinder(faces, axis);
                 case PrimitiveSurfaceType.Sphere:
                     if (IsReallyATorus(faces))
@@ -971,7 +958,7 @@ namespace TVGL
                 else if (primitiveSurface is Sphere)
                     foreach (var f in primitiveSurface.Faces)
                         f.Color = new Color(KnownColors.Blue);
-                else if (primitiveSurface is Flat)
+                else if (primitiveSurface is Plane)
                     foreach (var f in primitiveSurface.Faces)
                         f.Color = new Color(KnownColors.Green);
                 else if (primitiveSurface is DenseRegion)
@@ -984,7 +971,7 @@ namespace TVGL
             Debug.WriteLine("**************** RESULTS *******************");
             Debug.WriteLine("Number of Primitives = " + primitives.Count);
             Debug.WriteLine("Number of Primitives Before Filtering= " + primitivesBeforeFiltering);
-            Debug.WriteLine("Number of Flats = " + primitives.Count(p => p is Flat));
+            Debug.WriteLine("Number of Flats = " + primitives.Count(p => p is Plane));
             Debug.WriteLine("Number of Cones = " + primitives.Count(p => p is Cone));
             Debug.WriteLine("Number of Cylinders = " + primitives.Count(p => p is Cylinder));
             Debug.WriteLine("Number of Spheres = " + primitives.Count(p => p is Sphere));
@@ -1015,7 +1002,7 @@ namespace TVGL
         /// <summary>
         /// The flat
         /// </summary>
-        Flat = 500,
+        Plane = 500,
         /// <summary>
         /// The cylinder
         /// </summary>

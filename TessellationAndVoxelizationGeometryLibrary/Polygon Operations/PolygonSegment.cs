@@ -1,30 +1,19 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 05-26-2016
-// ***********************************************************************
-// <copyright file="SpecialClasses.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System;
-using System.Collections.Generic;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
     /// <summary>
     ///     NodeLine
     /// </summary>
-    public class PolygonSegment
+    public class PolygonEdge
+
     {
         #region Properties
+
         /// <summary>
         /// Gets the length of the line.
         /// </summary>
@@ -38,7 +27,8 @@ namespace TVGL.TwoDimensional
                 return _length;
             }
         }
-        double _length = double.NaN;
+
+        private double _length = double.NaN;
 
         /// <summary>
         /// Gets the length of the line.
@@ -53,8 +43,8 @@ namespace TVGL.TwoDimensional
                 return _vector;
             }
         }
-        Vector2 _vector = Vector2.Null;
 
+        private Vector2 _vector = Vector2.Null;
 
         public Vector2 Center
         {
@@ -65,29 +55,32 @@ namespace TVGL.TwoDimensional
                 return _center;
             }
         }
-        Vector2 _center = Vector2.Null;
+
+        private Vector2 _center = Vector2.Null;
 
         public double YIntercept
         {
             get
             {
                 if (double.IsNaN(_yIntercept))
-                    _yIntercept = YGivenX(0, out _);
+                    _yIntercept = FindYGivenX(0, out _);
                 return _yIntercept;
             }
         }
-        double _yIntercept = double.NaN;
+
+        private double _yIntercept = double.NaN;
+
         public double XIntercept
         {
             get
             {
                 if (double.IsNaN(_xIntercept))
-                    _xIntercept = XGivenY(0, out _);
+                    _xIntercept = FindXGivenY(0, out _);
                 return _xIntercept;
             }
         }
-        double _xIntercept = double.NaN;
 
+        private double _xIntercept = double.NaN;
 
         /// <summary>
         /// Gets the vertical slope.
@@ -102,7 +95,8 @@ namespace TVGL.TwoDimensional
                 return _verticalSlope;
             }
         }
-        double _verticalSlope = double.NaN;
+
+        private double _verticalSlope = double.NaN;
 
         /// <summary>
         /// Gets the horizontal slope.
@@ -117,36 +111,66 @@ namespace TVGL.TwoDimensional
                 return _horizontalSlope;
             }
         }
-        double _horizontalSlope = double.NaN;
-        #endregion
+
+        private double _horizontalSlope = double.NaN;
+
+        public double XMax { get; }
+        public double XMin { get; }
+        public double YMax { get; }
+        public double YMin { get; }
+
+        /// <summary>
+        /// Gets the index in list.
+        /// </summary>
+        /// <value>The index in list.</value>
+        public int IndexInList => ToPoint.IndexInList;
+
+        #endregion Properties
 
         #region Constructor
+
         /// <summary>
         ///     Sets to and from nodes as well as slope and intercept of line.
         /// </summary>
         /// <param name="fromNode">From node.</param>
         /// <param name="toNode">To node.</param>
-        internal PolygonSegment(Vertex2D fromNode, Vertex2D toNode)
+        internal PolygonEdge(Vertex2D fromNode, Vertex2D toNode)
         {
             FromPoint = fromNode;
             ToPoint = toNode;
+            XMax = (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
+            XMin = (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
+            YMax = (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+            YMin = (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
         }
-        #endregion
+
+        #endregion Constructor
+
         /// <summary>
         ///     Gets the Vertex2D which the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
-        internal Vertex2D ToPoint { get; }
+        public Vertex2D ToPoint { get; }
 
         /// <summary>
         ///     Gets the Vertex2D which the line is pointing away from. Set is through the constructor.
         /// </summary>
         /// <value>From node.</value>
-        internal Vertex2D FromPoint { get; }
-
-
+        public Vertex2D FromPoint { get; }
 
         #region Methods
+
+        /// <summary>
+        /// Determines whether [is adjacent to] [the specified other]. That is, do they share an endpoint or not.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        /// <returns><c>true</c> if [is adjacent to] [the specified other]; otherwise, <c>false</c>.</returns>
+        public bool IsAdjacentTo(PolygonEdge other)
+        {
+            return (FromPoint == other.ToPoint
+                || ToPoint == other.FromPoint);
+        }
+
         /// <summary>
         /// Gets the other point that makes up this line.
         /// </summary>
@@ -157,12 +181,13 @@ namespace TVGL.TwoDimensional
             if (point == FromPoint) return ToPoint;
             return point == ToPoint ? FromPoint : null;
         }
+
         /// <summary>
         ///     Reverses this instance.
         /// </summary>
-        internal PolygonSegment Reverse()
+        internal PolygonEdge Reverse()
         {
-            return new PolygonSegment(ToPoint, FromPoint);
+            return new PolygonEdge(ToPoint, FromPoint);
         }
 
         /// <summary>
@@ -170,8 +195,18 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="xval"></param>
         /// <returns></returns>
-        public double YGivenX(double xval, out bool isBetweenEndPoints)
+        public double FindYGivenX(double xval, out bool isBetweenEndPoints)
         {
+            if (xval.IsPracticallySame(FromPoint.X))
+            {
+                isBetweenEndPoints = true;
+                return FromPoint.Y;
+            }
+            if (xval.IsPracticallySame(ToPoint.X))
+            {
+                isBetweenEndPoints = true;
+                return ToPoint.Y;
+            }
             isBetweenEndPoints = (FromPoint.X < xval) != (ToPoint.X < xval);
             // if both true or both false then endpoints are on same side of point
             if (FromPoint.Y.IsPracticallySame(ToPoint.Y))
@@ -195,8 +230,18 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="yval">The y.</param>
         /// <returns>System.Double.</returns>
-        public double XGivenY(double yval, out bool isBetweenEndPoints)
+        public double FindXGivenY(double yval, out bool isBetweenEndPoints)
         {
+            if (yval.IsPracticallySame(FromPoint.Y))
+            {
+                isBetweenEndPoints = true;
+                return FromPoint.X;
+            }
+            if (yval.IsPracticallySame(ToPoint.Y))
+            {
+                isBetweenEndPoints = true;
+                return ToPoint.X;
+            }
             isBetweenEndPoints = (FromPoint.Y < yval) != (ToPoint.Y < yval);
             // if both true or both false then endpoints are on same side of point
             //If a vertical line, return an x value on that line (e.g., ToNode.X)
@@ -215,7 +260,12 @@ namespace TVGL.TwoDimensional
             }
             return HorizontalSlope * (yval - FromPoint.Y) + FromPoint.X;
         }
-        #endregion
-    }
 
+        public override string ToString()
+        {
+            return "from: " + FromPoint + " to: " + ToPoint;
+        }
+
+        #endregion Methods
+    }
 }

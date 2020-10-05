@@ -2633,7 +2633,7 @@ namespace OldTVGL
         ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
         ///     below, but does allow determination of whether a point is on the boundary.
         /// </summary>
-        public static bool IsPointInsidePolygon(Polygon polygon, Point pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
+        public static bool IsPointInsidePolygon(PolygonClass polygon, Point pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
             bool onBoundaryIsInside = true)
         {
             //This function has three layers of checks. 
@@ -2849,7 +2849,7 @@ namespace OldTVGL
         /// <returns></returns>
         //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
         // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
-        public static bool IsPolygonIntersectingPolygon(Polygon subject, Polygon clip)
+        public static bool IsPolygonIntersectingPolygon(PolygonClass subject, PolygonClass clip)
         {
             //Get the axis aligned bounding box of the path. This is super fast.
             //If the point is inside the bounding box, continue to check with more detailed methods, 

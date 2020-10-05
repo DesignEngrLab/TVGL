@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using OxyPlot.Axes;
 using StarMathLib;
 
 namespace OldTVGL
@@ -55,7 +56,7 @@ namespace OldTVGL
             //var projectedFacePolygons = positiveFaces.ToDictionary(f => f, f => GetPolygonFromFace(f, projectedPoints, true));
             //Use GetPolygonFromFace and force to be positive faces with true"
             var projectedFacePolygons2 = positiveFaces.Select(f => GetPolygonFromFace(f, projectedPoints, true)).ToList().Where(p => p.Area > minPathAreaToConsider).ToList();
-            var solution = PolygonOperations.Union(projectedFacePolygons2, false).Select(p => p.Path).ToList();
+            var solution = PolygonOperations.Union(projectedFacePolygons2, out _, false).Select(p => p.Path).ToList();
 
             //Offset by enough to account for minimum angle 
             var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;
@@ -212,7 +213,7 @@ namespace OldTVGL
           
             try //Try to merge them all at once
             {
-                solution = PolygonOperations.Union(solution, positiveEdgeFacePolygons, false, PolygonFillType.NonZero);
+                solution = PolygonOperations.Union(solution, positiveEdgeFacePolygons,out _, false, PolygonFillType.NonZero);
             }         
             catch
             {
@@ -221,7 +222,7 @@ namespace OldTVGL
                 {
                     try
                     {
-                        solution = PolygonOperations.Union(solution, face, false, PolygonFillType.NonZero);
+                        solution = PolygonOperations.Union(solution, face, out _, false, PolygonFillType.NonZero);
                     }
                     catch 
                     {
@@ -577,7 +578,7 @@ namespace OldTVGL
             //negative regions. This is undesirable, since we do not want to union a hole
             //with an overlapping region. For this reason, Union Non-Zero is used. It keeps
             //the holes in their proper orientation and does not combine them together. 
-            var nonSelfIntersectingPaths = PolygonOperations.Union(allPaths, false, PolygonFillType.NonZero);
+            var nonSelfIntersectingPaths = PolygonOperations.Union(allPaths, out _,false,  PolygonFillType.NonZero);
             var correctedSurfacePath = EliminateOverhangPolygons(nonSelfIntersectingPaths, projectedFacePolygons);
             //if (allPaths.Sum(p => p.Count) > 10) Presenter.ShowAndHang(nonSelfIntersectingPaths);
 

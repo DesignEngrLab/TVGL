@@ -1,7 +1,9 @@
 ﻿using OldClipperLib;
+using OxyPlot.Axes;
 using StarMathLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace OldTVGL
@@ -10,7 +12,7 @@ namespace OldTVGL
     using PathAsLight = List<PointLight>;
     using Paths = List<List<Point>>;
     using PathsAsLight = List<List<PointLight>>;
-    using Polygons = List<Polygon>;
+    using Polygons = List<PolygonClass>;
     using PolygonsAsLight = List<PolygonLight>;
 
     internal enum BooleanOperationType
@@ -37,10 +39,10 @@ namespace OldTVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<PolygonLight> polygons, double[] lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new Polygon(p, true)), lineReference,
+            return AllPolygonIntersectionPointsAlongLine(polygons.Select(p => new PolygonClass(p, true)), lineReference,
                 lineDirection, numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<Polygon> polygons, double[] lineReference, double lineDirection,
+        public static List<double[]> AllPolygonIntersectionPointsAlongLine(IEnumerable<PolygonClass> polygons, double[] lineReference, double lineDirection,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             throw new NotImplementedException();
@@ -48,10 +50,10 @@ namespace OldTVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonLight> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new Polygon(p, true)), startingXValue,
+            return AllPolygonIntersectionPointsAlongX(polygons.Select(p => new PolygonClass(p, true)), startingXValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<Polygon> polygons, double startingXValue,
+        public static List<double[]> AllPolygonIntersectionPointsAlongX(IEnumerable<PolygonClass> polygons, double startingXValue,
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
@@ -91,10 +93,10 @@ namespace OldTVGL
         public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonLight> polygons, double startingYValue, int numSteps, double stepSize,
               out int firstIntersectingIndex)
         {
-            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new Polygon(p, true)), startingYValue,
+            return AllPolygonIntersectionPointsAlongY(polygons.Select(p => new PolygonClass(p, true)), startingYValue,
                 numSteps, stepSize, out firstIntersectingIndex);
         }
-        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
+        public static List<double[]> AllPolygonIntersectionPointsAlongY(IEnumerable<PolygonClass> polygons, double startingYValue, int numSteps, double stepSize,
                 out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
@@ -172,15 +174,15 @@ namespace OldTVGL
 
         public static bool IsCircular(PolygonLight polygon, double confidencePercentage = Constants.HighConfidence)
         {
-            return IsCircular(new Polygon(polygon), out var _, confidencePercentage);
+            return IsCircular(new PolygonClass(polygon), out var _, confidencePercentage);
         }
 
-        public static bool IsCircular(Polygon polygon, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(PolygonClass polygon, double confidencePercentage = Constants.HighConfidence)
         {
             return IsCircular(polygon, out var _, confidencePercentage);
         }
 
-        public static bool IsCircular(Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(PolygonClass polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
             minCircle = MinimumEnclosure.MinimumCircle(polygon.Path);
@@ -239,7 +241,7 @@ namespace OldTVGL
         }
         public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<PolygonLight> paths)
         {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths.Select(p => new Polygon(p)).ToList());
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths.Select(p => new PolygonClass(p)).ToList());
         }
 
         #region Clockwise / CounterClockwise Ordering
@@ -751,31 +753,13 @@ namespace OldTVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, out ticks, null, simplifyPriorToUnion);
         }
-        public static PolygonsAsLight Union(PolygonsAsLight subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Union(PolygonsAsLight subject, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
-        }
-
-        /// <summary>
-        /// Union. Joins paths that are touching into merged larger subject.
-        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
-        }
-        public static PolygonsAsLight Union(PolygonsAsLight subject, PolygonsAsLight clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, out ticks, null, simplifyPriorToUnion);
         }
 
         /// <summary>
@@ -787,13 +771,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, IList<List<PointLight>> clip, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, new PathsAsLight { subject }, new PathsAsLight { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, out ticks, clip, simplifyPriorToUnion);
         }
-        public static PolygonsAsLight Union(PolygonLight subject, PolygonLight clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Union(PolygonsAsLight subject, PolygonsAsLight clip, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, out ticks, clip, simplifyPriorToUnion);
         }
 
         /// <summary>
@@ -805,13 +789,31 @@ namespace OldTVGL
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, List<PointLight> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Union(List<PointLight> subject, List<PointLight> clip, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new PathsAsLight { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, new PathsAsLight { subject }, out ticks, new PathsAsLight { clip }, simplifyPriorToUnion);
         }
-        public static PolygonsAsLight Union(PolygonsAsLight subject, PolygonLight clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Union(PolygonLight subject, PolygonLight clip, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new PolygonsAsLight { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, new PolygonsAsLight { subject }, out ticks, new PolygonsAsLight { clip }, simplifyPriorToUnion);
+        }
+
+        /// <summary>
+        /// Union. Joins paths that are touching into merged larger subject.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToUnion"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<PointLight>> Union(IList<List<PointLight>> subject, List<PointLight> clip, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, out ticks, new PathsAsLight { clip }, simplifyPriorToUnion);
+        }
+        public static PolygonsAsLight Union(PolygonsAsLight subject, PolygonLight clip, out long ticks, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, out ticks, new PolygonsAsLight { clip }, simplifyPriorToUnion);
         }
         #endregion
 
@@ -825,31 +827,13 @@ namespace OldTVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Difference(IList<List<PointLight>> subject, IList<List<PointLight>> clip, out long ticks, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, out ticks, clip, simplifyPriorToDifference);
         }
-        public static List<PolygonLight> Difference(IList<PolygonLight> subject, IList<PolygonLight> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<PolygonLight> Difference(IList<PolygonLight> subject, IList<PolygonLight> clip, out long ticks, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
-        }
-
-        /// <summary>
-        /// Difference. Gets the difference between two sets of polygons. 
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToDifference"></param>
-        /// <param name="polyFill"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, new PathsAsLight { clip }, simplifyPriorToDifference);
-        }
-        public static PolygonsAsLight Difference(PolygonLight subject, PolygonLight clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, out ticks, clip, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -861,13 +845,13 @@ namespace OldTVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(IList<List<PointLight>> subject, List<PointLight> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Difference(List<PointLight> subject, List<PointLight> clip, out long ticks, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, new PathsAsLight { clip }, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, out ticks, new PathsAsLight { clip }, simplifyPriorToDifference);
         }
-        public static PolygonsAsLight Difference(PolygonsAsLight subject, PolygonLight clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Difference(PolygonLight subject, PolygonLight clip, out long ticks, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, subject, new PolygonsAsLight { clip }, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new PolygonsAsLight { subject }, out ticks, new PolygonsAsLight { clip }, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -879,15 +863,33 @@ namespace OldTVGL
         /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Difference(List<PointLight> subject, IList<List<PointLight>> clip,
+        public static List<List<PointLight>> Difference(IList<List<PointLight>> subject, List<PointLight> clip, out long ticks, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, out ticks, new PathsAsLight { clip }, simplifyPriorToDifference);
+        }
+        public static PolygonsAsLight Difference(PolygonsAsLight subject, PolygonLight clip, out long ticks, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, out ticks, new PolygonsAsLight { clip }, simplifyPriorToDifference);
+        }
+
+        /// <summary>
+        /// Difference. Gets the difference between two sets of polygons. 
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToDifference"></param>
+        /// <param name="polyFill"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<PointLight>> Difference(List<PointLight> subject, IList<List<PointLight>> clip, out long ticks,
             bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, clip, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new PathsAsLight { subject }, out ticks, clip, simplifyPriorToDifference);
         }
-        public static PolygonsAsLight Difference(PolygonLight subject, PolygonsAsLight clip,
+        public static PolygonsAsLight Difference(PolygonLight subject, PolygonsAsLight clip, out long ticks,
             bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctDifference, new PolygonsAsLight { subject }, clip, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new PolygonsAsLight { subject }, out ticks, clip, simplifyPriorToDifference);
         }
         #endregion
 
@@ -900,13 +902,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Intersection(List<PointLight> subject, List<PointLight> clip, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new PathsAsLight { subject }, new PathsAsLight { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(new PathsAsLight { subject }, new PathsAsLight { clip }, out ticks, simplifyPriorToIntersection, polyFill);
         }
-        public static PolygonsAsLight Intersection(PolygonLight subject, PolygonLight clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Intersection(PolygonLight subject, PolygonLight clip, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, out ticks, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -917,13 +919,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(IList<List<PointLight>> subjects, List<PointLight> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Intersection(IList<List<PointLight>> subjects, List<PointLight> clip, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new PathsAsLight(subjects), new PathsAsLight { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(new PathsAsLight(subjects), new PathsAsLight { clip }, out ticks, simplifyPriorToIntersection, polyFill);
         }
-        public static PolygonsAsLight Intersection(PolygonsAsLight subjects, PolygonLight clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Intersection(PolygonsAsLight subjects, PolygonLight clip, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(subjects, new PolygonsAsLight { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(subjects, new PolygonsAsLight { clip }, out ticks, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -934,13 +936,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(List<PointLight> subject, IList<List<PointLight>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Intersection(List<PointLight> subject, IList<List<PointLight>> clips, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new List<List<PointLight>>() { subject }, new List<List<PointLight>>(clips), simplifyPriorToIntersection, polyFill);
+            return Intersection(new List<List<PointLight>>() { subject }, new List<List<PointLight>>(clips), out ticks, simplifyPriorToIntersection, polyFill);
         }
-        public static PolygonsAsLight Intersection(PolygonLight subject, List<PolygonLight> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Intersection(PolygonLight subject, List<PolygonLight> clips, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new PolygonsAsLight { subject }, clips, simplifyPriorToIntersection, polyFill);
+            return Intersection(new PolygonsAsLight { subject }, clips, out ticks, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -951,13 +953,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Intersection(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Intersection(IList<List<PointLight>> subject, IList<List<PointLight>> clip, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
+            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, out ticks, clip, simplifyPriorToIntersection);
         }
-        public static List<PolygonLight> Intersection(IList<PolygonLight> subject, IList<PolygonLight> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<PolygonLight> Intersection(IList<PolygonLight> subject, IList<PolygonLight> clip, out long ticks, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
+            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, out ticks, clip, simplifyPriorToIntersection);
         }
         #endregion
 
@@ -971,13 +973,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(IList<List<PointLight>> subject, IList<List<PointLight>> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Xor(IList<List<PointLight>> subject, IList<List<PointLight>> clip, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
+            return BooleanOperation(polyFill, ClipType.ctXor, subject, out ticks, clip, simplifyPriorToXor);
         }
-        public static PolygonsAsLight Xor(PolygonsAsLight subject, PolygonsAsLight clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Xor(PolygonsAsLight subject, PolygonsAsLight clip, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
+            return BooleanOperation(polyFill, ClipType.ctXor, subject, out ticks, clip, simplifyPriorToXor);
         }
 
         /// <summary>
@@ -988,13 +990,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(List<PointLight> subject, List<PointLight> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Xor(List<PointLight> subject, List<PointLight> clip, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<PointLight>>() { subject }, new List<List<PointLight>>() { clip }, simplifyPriorToXor, polyFill);
+            return Xor(new List<List<PointLight>>() { subject }, new List<List<PointLight>>() { clip }, out ticks, simplifyPriorToXor, polyFill);
         }
-        public static PolygonsAsLight Xor(PolygonLight subject, PolygonLight clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Xor(PolygonLight subject, PolygonLight clip, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, simplifyPriorToXor, polyFill);
+            return Xor(new PolygonsAsLight { subject }, new PolygonsAsLight { clip }, out ticks, simplifyPriorToXor, polyFill);
         }
 
         /// <summary>
@@ -1005,13 +1007,13 @@ namespace OldTVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(IList<List<PointLight>> subjects, List<PointLight> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Xor(IList<List<PointLight>> subjects, List<PointLight> clip, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<PointLight>>(subjects), new List<List<PointLight>>() { clip }, simplifyPriorToXor, polyFill);
+            return Xor(new List<List<PointLight>>(subjects), new List<List<PointLight>>() { clip }, out ticks, simplifyPriorToXor, polyFill);
         }
-        public static PolygonsAsLight Xor(PolygonsAsLight subjects, PolygonLight clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Xor(PolygonsAsLight subjects, PolygonLight clip, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(subjects, new PolygonsAsLight { clip }, simplifyPriorToXor, polyFill);
+            return Xor(subjects, new PolygonsAsLight { clip }, out ticks, simplifyPriorToXor, polyFill);
         }
 
         /// <summary>
@@ -1022,27 +1024,27 @@ namespace OldTVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<PointLight>> Xor(List<PointLight> subject, IList<List<PointLight>> clips, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static List<List<PointLight>> Xor(List<PointLight> subject, IList<List<PointLight>> clips, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<PointLight>>() { subject }, new List<List<PointLight>>(clips), simplifyPriorToXor, polyFill);
+            return Xor(new List<List<PointLight>>() { subject }, new List<List<PointLight>>(clips), out ticks, simplifyPriorToXor, polyFill);
         }
-        public static PolygonsAsLight Xor(PolygonLight subject, PolygonsAsLight clips, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        public static PolygonsAsLight Xor(PolygonLight subject, PolygonsAsLight clips, out long ticks, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new PolygonsAsLight { subject }, clips, simplifyPriorToXor, polyFill);
+            return Xor(new PolygonsAsLight { subject }, clips, out ticks, simplifyPriorToXor, polyFill);
         }
 
         #endregion
 
         private static PolygonsAsLight BooleanOperation(PolygonFillType fillMethod, ClipType clipType,
-            IEnumerable<PolygonLight> subject,
+            IEnumerable<PolygonLight> subject, out long ticks,
             IEnumerable<PolygonLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
             var clipPaths = clip?.Select(p => p.Path).ToList(); //Handle null clip
-            var paths = BooleanOperation(fillMethod, clipType, subject.Select(p => p.Path).ToList(),
+            var paths = BooleanOperation(fillMethod, clipType, subject.Select(p => p.Path).ToList(), out ticks,
                 clipPaths, simplifyPriorToBooleanOperation, scale);
             return paths.Select(path => new PolygonLight(path)).ToList();
         }
-        private static List<List<PointLight>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject,
+        private static List<List<PointLight>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject, out long ticks,
            IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
             //Convert the fill type from PolygonOperations wrapper to Clipper enum types
@@ -1064,7 +1066,7 @@ namespace OldTVGL
                 default:
                     throw new NotImplementedException();
             }
-            return BooleanOperation(fillType, clipType, subject, clip, simplifyPriorToBooleanOperation, scale);
+            return BooleanOperation(fillType, clipType, subject, out ticks, clip, simplifyPriorToBooleanOperation, scale);
         }
 
 
@@ -1079,7 +1081,7 @@ namespace OldTVGL
         /// <param name="fillMethod"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject,
+        private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject, out long ticks,
             IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
             //Remove any polygons that are only a line.
@@ -1098,8 +1100,9 @@ namespace OldTVGL
 
             if (!subject.Any())
             {
-                if(clip == null || !clip.Any())
+                if (clip == null || !clip.Any())
                 {
+                    ticks = 0;
                     return new List<List<PointLight>>();
                 }
                 //Use the clip as the subject if this is a union operation and the clip is not null.
@@ -1109,7 +1112,6 @@ namespace OldTVGL
                     clip = null;
                 }
             }
-           
             var clipperSolution = new List<List<IntPoint>>();
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject =
@@ -1127,7 +1129,11 @@ namespace OldTVGL
             }
 
             //Begin an evaluation
+            var stopWatch = new Stopwatch();
+            stopWatch.Restart();
             var result = clipper.Execute(clipType, clipperSolution, fillMethod, fillMethod);
+            stopWatch.Stop();
+            ticks = stopWatch.ElapsedTicks;
             if (!result) throw new Exception("Clipper Union Failed");
 
             //Convert back to points
@@ -1151,244 +1157,6 @@ namespace OldTVGL
             }
             return linesBelow;
         }
-
-        #region Top Level Boolean Operation Method
-        /// <reference>
-        /// This aglorithm is based on on the paper:
-        /// A simple algorithm for Boolean operations on polygons. Martínez, et. al. 2013. Advances in Engineering Software.
-        /// Links to paper: http://dx.doi.org/10.1016/j.advengsoft.2013.04.004 OR http://www.sciencedirect.com/science/article/pii/S0965997813000379
-        /// </reference>
-        private static List<List<Point>> BooleanOperation(IList<List<Point>> subject, IList<List<Point>> clip, BooleanOperationType booleanOperationType)
-        {
-            //1.Find intersections with vertical sweep line
-            //1.Subdivide the edges of the polygons at their intersection points.
-            //2.Select those subdivided edges that lie inside—or outside—the other polygon.
-            //3.Join the selected edges to form the contours of the result polygon and compute the child contours.
-            var unsortedSweepEvents = new List<SweepEvent>();
-
-            #region Build Sweep PathID and Order Them Lexicographically
-            //Build the sweep events and order them lexicographically (Low X to High X, then Low Y to High Y).
-            foreach (var path in subject)
-            {
-                var n = path.Count;
-                for (var i = 0; i < n; i++)
-                {
-                    var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    SweepEvent se1, se2;
-                    path[i].IndexInPath = i;
-                    path[i].InResult = false;
-                    path[i].InResultMultipleTimes = false;
-                    if (path[i].X.IsPracticallySame(path[j].X))
-                    {
-                        if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
-                        if (path[i].Y < path[j].Y)
-                        {
-                            se1 = new SweepEvent(path[i], true, true, PolygonType.Subject);
-                            se2 = new SweepEvent(path[j], false, false, PolygonType.Subject);
-                        }
-                        else
-                        {
-                            se1 = new SweepEvent(path[i], false, true, PolygonType.Subject);
-                            se2 = new SweepEvent(path[j], true, false, PolygonType.Subject);
-                        }
-                    }
-                    else if (path[i].X < path[j].X)
-                    {
-                        se1 = new SweepEvent(path[i], true, true, PolygonType.Subject);
-                        se2 = new SweepEvent(path[j], false, false, PolygonType.Subject);
-                    }
-                    else
-                    {
-                        se1 = new SweepEvent(path[i], false, true, PolygonType.Subject);
-                        se2 = new SweepEvent(path[j], true, false, PolygonType.Subject);
-                    }
-                    se1.OtherEvent = se2;
-                    se2.OtherEvent = se1;
-                    unsortedSweepEvents.Add(se1);
-                    unsortedSweepEvents.Add(se2);
-                }
-            }
-            foreach (var path in clip)
-            {
-                var n = path.Count;
-                for (var i = 0; i < n; i++)
-                {
-                    var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    SweepEvent se1, se2;
-                    path[i].IndexInPath = i;
-                    path[i].InResult = false;
-                    path[i].InResultMultipleTimes = false;
-                    if (path[i].X.IsPracticallySame(path[j].X))
-                    {
-                        if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
-                        if (path[i].Y < path[j].Y)
-                        {
-                            se1 = new SweepEvent(path[i], true, true, PolygonType.Clip);
-                            se2 = new SweepEvent(path[j], false, false, PolygonType.Clip);
-                        }
-                        else
-                        {
-                            se1 = new SweepEvent(path[i], false, true, PolygonType.Clip);
-                            se2 = new SweepEvent(path[j], true, false, PolygonType.Clip);
-                        }
-                    }
-                    else if (path[i].X < path[j].X)
-                    {
-                        se1 = new SweepEvent(path[i], true, true, PolygonType.Clip);
-                        se2 = new SweepEvent(path[j], false, false, PolygonType.Clip);
-                    }
-                    else
-                    {
-                        se1 = new SweepEvent(path[i], false, true, PolygonType.Clip);
-                        se2 = new SweepEvent(path[j], true, false, PolygonType.Clip);
-                    }
-                    se1.OtherEvent = se2;
-                    se2.OtherEvent = se1;
-                    unsortedSweepEvents.Add(se1);
-                    unsortedSweepEvents.Add(se2);
-                }
-            }
-            var orderedSweepEvents = new OrderedSweepEventList(unsortedSweepEvents);
-            #endregion
-
-            var result = new List<SweepEvent>();
-            var sweepLines = new SweepList();
-            while (orderedSweepEvents.Any())
-            {
-                var sweepEvent = orderedSweepEvents.First();
-                orderedSweepEvents.RemoveAt(0);
-                SweepEvent nextSweepEvent = null;
-                if (orderedSweepEvents.Any())
-                {
-                    nextSweepEvent = orderedSweepEvents.First();
-                }
-                if (sweepEvent.Left) //left endpoint
-                {
-
-                    //Inserting the event into the sweepLines list
-                    var index = sweepLines.Insert(sweepEvent);
-                    sweepEvent.IndexInList = index;
-                    bool goBack1; //goBack is used to processes line segments from some collinear intersections
-                    CheckAndResolveIntersection(sweepEvent, sweepLines.Next(index), ref sweepLines, ref orderedSweepEvents, out goBack1);
-                    bool goBack2;
-                    CheckAndResolveIntersection(sweepLines.Previous(index), sweepEvent, ref sweepLines, ref orderedSweepEvents, out goBack2);
-                    if (goBack1 || goBack2) continue;
-
-                    //First, we need to check if the this sweepEvent has the same Point and is collinear with the next line. 
-                    //To determine collinearity, we need to make sure we are using the same criteria as everywhere else in the code, and here-in lies the problem
-                    //1. m1 != m2 but LineLineIntersection function says collinear. 
-                    //2. m1 =! m2 && LineLineIntersection says non-collinear, but yintercept at shorter lines other.X, yeilds shorter line's other point.
-                    //Which should we use? Should we adjust tolerances? - We need to use the least precise method, which should be the last one.
-                    if (nextSweepEvent != null && nextSweepEvent.Point == sweepEvent.Point)
-                    {
-                        //If the slopes are practically the same then the lines are collinear 
-                        //If remotely similar, we need to use the intersection, which is used later on to determine collinearity. (basically, we have to be consistent).
-                        if (sweepEvent.Slope.IsPracticallySame(nextSweepEvent.Slope, 0.00001))
-                        {
-                            Point intersectionPoint;
-                            if (MiscFunctions.LineLineIntersection(sweepEvent.Point, sweepEvent.OtherEvent.Point,
-                                nextSweepEvent.Point, nextSweepEvent.OtherEvent.Point, out intersectionPoint, true) &&
-                                intersectionPoint == null)
-                            {
-                                //If they belong to the same polygon type, they are overlapping, but we still use the other polygon like normal
-                                //to determine if they are in the result.
-                                if (sweepEvent.PolygonType == nextSweepEvent.PolygonType)
-                                    throw new NotImplementedException();
-                                sweepEvent.DuplicateEvent = nextSweepEvent;
-                                nextSweepEvent.DuplicateEvent = sweepEvent;
-                                SetInformation(sweepEvent, null, booleanOperationType, true);
-                            }
-                            else
-                            {
-                                //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
-                                //Select the closest edge downward that belongs to the other polygon.
-                                SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);
-                            }
-                        }
-                        else
-                        {
-                            //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
-                            //Select the closest edge downward that belongs to the other polygon.
-                            SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);
-                        }
-                    }
-                    else
-                    {
-                        //Select the closest edge downward that belongs to the other polygon.
-                        //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
-                        SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);
-                    }
-                    //Get the previous (first directly below starting point) event in result (using the sweeplines)
-                    if (sweepEvent.InResult)
-                    {
-                        sweepEvent.PrevInResult = sweepLines.PreviousInResult(index);
-                    }
-                }
-                else //The sweep event corresponds to the right endpoint
-                {
-                    var index = sweepLines.Find(sweepEvent.OtherEvent);
-                    if (index == -1) throw new Exception("Other event not found in list. Error in implementation");
-                    var next = sweepLines.Next(index);
-                    var prev = sweepLines.Previous(index);
-                    sweepLines.RemoveAt(index);
-                    bool goBack;
-                    CheckAndResolveIntersection(prev, next, ref sweepLines, ref orderedSweepEvents, out goBack);
-                }
-                if (sweepEvent.InResult || sweepEvent.OtherEvent.InResult)
-                {
-                    if (sweepEvent.InResult && !sweepEvent.Left) throw new Exception("error in implementation");
-                    if (sweepEvent.OtherEvent.InResult && sweepEvent.Left) throw new Exception("error in implementation");
-                    if (sweepEvent.Point == sweepEvent.OtherEvent.Point) continue; //Ignore this negligible length line.
-                    result.Add(sweepEvent);
-                }
-            }
-
-            //Next stage. Find the paths
-            var hashResult = new HashSet<SweepEvent>(result);
-            var hashPoints = new HashSet<Point>();
-            for (var i = 0; i < result.Count; i++)
-            {
-                result[i].PositionInResult = i;
-                result[i].Processed = false;
-                if (!hashResult.Contains(result[i].OtherEvent)) throw new Exception("Error in implementation. Both sweep events in the pair should be in this list.");
-                var point = result[i].Point;
-                if (hashPoints.Contains(point))
-                {
-                    hashPoints.Remove(point);
-                    if (!point.InResult) point.InResult = true;
-                    else point.InResultMultipleTimes = true;
-                }
-                else hashPoints.Add(point);
-            }
-            if (hashPoints.Select(point => hashPoints.Where(otherPoint => !point.Equals(otherPoint)).Any(otherPoint => point == otherPoint)).Any(duplicateFound => !duplicateFound))
-            {
-                throw new Exception("Point appears in list an odd number of times. This means there are missing sweep events or one too many.");
-            }
-
-            var solution = new Paths();
-            var currentPathID = 0;
-            Path previousPath = null;
-            foreach (var se1 in result.Where(se1 => !se1.Processed))
-            {
-                int parentID;
-                var depth = ComputeDepth(se1, previousPath, out parentID);
-                var path = ComputePath(se1, currentPathID, depth, parentID, result);
-                if (depth % 2 != 0) //Odd
-                {
-                    path = CWNegative(path);
-                }
-                solution.Add(path);
-                //if (parent != -1) //parent path ID
-                //{
-                //    solution[parent].AddChild(currentPathID);
-                //}
-                currentPathID++;
-                previousPath = path;
-            }
-
-            return solution;
-        }
-        #endregion
 
         #region Set Information
         private static void SetInformation(SweepEvent sweepEvent, SweepEvent previous, BooleanOperationType booleanOperationType, bool isFirstOfDuplicatePair = false)

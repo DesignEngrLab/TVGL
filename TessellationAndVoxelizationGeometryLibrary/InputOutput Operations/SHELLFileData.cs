@@ -1,12 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -62,10 +57,8 @@ namespace TVGL.IOFunctions
                 var reader = new StreamReader(s);
                 var shellData = new List<ShellFileData>();
                 var shellSolid = new ShellFileData();
-                string id, unitstring;
-                ParseLine(ReadLine(reader), out id, out unitstring);
-                UnitType unit;
-                TryParseUnits(unitstring, out unit);
+                ParseLine(ReadLine(reader), out _, out var unitstring);
+                TryParseUnits(unitstring, out var unit);
                 while (!reader.EndOfStream)
                 {
                     var line = ReadLine(reader);
@@ -133,8 +126,7 @@ namespace TVGL.IOFunctions
 
         private bool ReadFaces(string line)
         {
-            double[] numbers;
-            if (!TryParseDoubleArray(line, out numbers)) return false;
+            if (!TryParseDoubleArray(line, out var numbers)) return false;
             var vertIndices = new int[3];
             for (var j = 0; j < 3; j++)
                 vertIndices[j] = (int)Math.Round(numbers[j], 0);
@@ -144,14 +136,12 @@ namespace TVGL.IOFunctions
 
         private void ReadMaterial(string line)
         {
-            float r = 0, g = 0, b = 0;
-            string id, values, shellName, colorString;
-            ParseLine(line, out id, out values);
-            ParseLine(values, out shellName, out colorString);
+            ParseLine(line, out _, out var values);
+            ParseLine(values, out var shellName, out var colorString);
             TryParseDoubleArray(colorString, out var shellColor);
-            r = (float)shellColor[0];
-            g = (float)shellColor[1];
-            b = (float)shellColor[2];
+            var r = (float)shellColor[0];
+            var g = (float)shellColor[1];
+            var b = (float)shellColor[2];
             var currentColor = new Color(r, g, b);
             Material = new ShellMaterial(shellName, currentColor);
         }

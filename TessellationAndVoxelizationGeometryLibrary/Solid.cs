@@ -1,27 +1,11 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 03-07-2015
-// ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Serialization;
-using MIConvexHull;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using TVGL.Numerics;
-using TVGL.IOFunctions;
 
 namespace TVGL
 {
@@ -47,7 +31,7 @@ namespace TVGL
         {
             get
             {
-                if (_center.IsNull())  CalculateCenter();
+                if (_center.IsNull()) CalculateCenter();
                 return _center;
             }
         }
@@ -55,6 +39,7 @@ namespace TVGL
         protected abstract void CalculateCenter();
 
         protected Vector3 _center = Vector3.Null;
+
         /// <summary>
         ///     Gets the volume.
         /// </summary>
@@ -63,7 +48,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(_volume))  CalculateVolume();
+                if (double.IsNaN(_volume)) CalculateVolume();
                 return _volume;
             }
         }
@@ -72,7 +57,6 @@ namespace TVGL
 
         protected double _volume = double.NaN;
 
-       
         /// <summary>
         ///     Gets the surface area.
         /// </summary>
@@ -81,7 +65,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(_surfaceArea))  CalculateSurfaceArea();
+                if (double.IsNaN(_surfaceArea)) CalculateSurfaceArea();
                 return _surfaceArea;
             }
         }
@@ -89,8 +73,6 @@ namespace TVGL
         protected abstract void CalculateSurfaceArea();
 
         protected double _surfaceArea = double.NaN;
-
-
 
         /// <summary>
         /// Gets or sets the inertia tensor.
@@ -110,20 +92,18 @@ namespace TVGL
 
         protected Matrix3x3 _inertiaTensor = Matrix3x3.Null;
 
-
         /// <summary>
         ///     Gets the bounds.
         /// </summary>
         /// <value>The bounds.</value>
         public Vector3[] Bounds { get; set; }
 
-        public double XMin { get => Bounds[0].X; }
-        public double XMax { get => Bounds[1].X; }
-        public double YMin { get => Bounds[0].Y; }
-        public double YMax { get => Bounds[1].Y; }
-        public double ZMin { get => Bounds[0].Z; }
-        public double ZMax { get => Bounds[1].Z; }
-
+        public double XMin => Bounds[0].X;
+        public double XMax => Bounds[1].X;
+        public double YMin => Bounds[0].Y;
+        public double YMax => Bounds[1].Y;
+        public double ZMin => Bounds[0].Z;
+        public double ZMax => Bounds[1].Z;
 
         /// <summary>
         ///     The name of solid
@@ -177,7 +157,7 @@ namespace TVGL
 
         public double SameTolerance { get; set; }
 
-        #endregion
+        #endregion Fields and Properties
 
         #region Constructor
 
@@ -196,15 +176,13 @@ namespace TVGL
             Bounds = new Vector3[2];
         }
 
-        #endregion
+        #endregion Constructor
 
         /// <summary>
         /// Transforms the specified transform matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         public abstract void Transform(Matrix4x4 transformMatrix);
-        // here's a good reference for this: http://www.cs.brandeis.edu/~cs155/Lecture_07_6.pdf
-
 
         /// <summary>
         /// Gets a new solid by transforming its vertices.
@@ -215,13 +193,8 @@ namespace TVGL
 
         public abstract Solid Copy();
 
-
         // everything else gets stored here
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;
-
-        //protected abstract void OnSerializingMethod(StreamingContext context);
-        //protected abstract void OnDeserializedMethod(StreamingContext context);
-
     }
 }

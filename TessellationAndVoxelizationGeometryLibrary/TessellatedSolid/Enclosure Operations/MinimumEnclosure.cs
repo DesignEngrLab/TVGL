@@ -1,23 +1,10 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="MinimumBoundingBox.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using MIConvexHull;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -35,6 +22,23 @@ namespace TVGL
         private const int MaxRotationsForOBB = 24;
 
         /// <summary>
+        /// Finds the minimum bounding rectangle given a set of points. Either send any set of points
+        /// OR the convex hull 2D.
+        /// Optional booleans for what information should be set in the Bounding Rectangle.
+        /// Example: If you really just need the area, you don't need the corner points or
+        /// points on side.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointsAreConvexHull">if set to <c>true</c> [points are convex hull].</param>
+        /// <param name="setCornerPoints">if set to <c>true</c> [set corner points].</param>
+        /// <param name="setPointsOnSide">if set to <c>true</c> [set points on side].</param>
+        /// <returns>BoundingRectangle.</returns>
+        public static BoundingRectangle BoundingRectangle(this Polygon polygon, bool pointsAreConvexHull = false,
+            bool setCornerPoints = true, bool setPointsOnSide = true)
+        {
+            return BoundingRectangle(polygon.Path, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
+        }
+        /// <summary>
         ///     Finds the minimum bounding rectangle given a set of points. Either send any set of points
         ///     OR the convex hull 2D.
         ///     Optional booleans for what information should be set in the Bounding Rectangle.
@@ -46,10 +50,11 @@ namespace TVGL
         /// <param name="setCornerPoints"></param>
         /// <param name="setPointsOnSide"></param>
         /// <returns>BoundingRectangle.</returns>
-        public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> polygon, bool pointsAreConvexHull = false,
+        /// 
+        public static BoundingRectangle BoundingRectangle(this IEnumerable<Vector2> points, bool pointsAreConvexHull = false,
             bool setCornerPoints = true, bool setPointsOnSide = true)
         {
-            return RotatingCalipers2DMethod(polygon, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
+            return RotatingCalipers2DMethod(points, pointsAreConvexHull, setCornerPoints, setPointsOnSide);
         }
 
         /// <summary>
@@ -86,7 +91,8 @@ namespace TVGL
             for (var i = 0; i < 13; i++)
             {
                 var box = new BoundingBox<T>(new[] { double.PositiveInfinity, 1, 1 },
-                    new[] { directions[i], Vector3.UnitY, Vector3.UnitZ }, default(T), default(T), default(T));
+                    new[] { directions[i], Vector3.UnitY, Vector3.UnitZ }, default, default,
+                    default);
                 box = Find_via_ChanTan_AABB_Approach(convexHullVertices, box);
                 if (box.Volume >= minVolume) continue;
                 minVolume = box.Volume;
@@ -126,8 +132,8 @@ namespace TVGL
             }
             return new BoundingBox<T>(minBox.SortedDimensions.Reverse().ToArray(),
                 new[] { largestDirection, midDirection, smallestDirection },
-                new T[][] {minPointsLargestDir,maxPointsLargestDir,minPointsMediumDir,maxPointsMediumDir,
-                minPointsSmallDir,maxPointsSmallDir});
+                new[] { minPointsLargestDir, maxPointsLargestDir, minPointsMediumDir, maxPointsMediumDir,
+                    minPointsSmallDir,maxPointsSmallDir });
         }
 
         #region ChanTan AABB Approach
@@ -143,10 +149,11 @@ namespace TVGL
             var failedConsecutiveRotations = 0;
             var k = 0;
             var i = 0;
+            var cvxHullVertList = convexHullVertices as IList<T> ?? convexHullVertices.ToList();
             do
             {
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
-                BoundingBox<T> newObb = FindOBBAlongDirection<T>(convexHullVertices, minOBB.Directions[i++]);
+                var newObb = FindOBBAlongDirection(cvxHullVertList, minOBB.Directions[i++]);
                 if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
                 {
                     minOBB = newObb;
@@ -221,9 +228,9 @@ namespace TVGL
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
-            bottomVertex = vertices.First(); //this is an unfortunate assignment but the compiler doesn't trust
-            topVertex = vertices.First(); // that is will get assigned in conditions below. Also, can't assign to
-                                          // null, since Vector3 is struct
+            bottomVertex = default; //this is an unfortunate assignment but the compiler doesn't trust
+            topVertex = default;  // that is will get assigned in conditions below. Also, can't assign to
+                                  //null, since Vector3 is struct
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
@@ -359,7 +366,7 @@ namespace TVGL
              */
             #region 1) Prune and Reorder the points
             var points = pointsAreConvexHull
-                ? (initialPoints is IList<Vector2>) ? (IList<Vector2>)initialPoints : initialPoints.ToList()
+                ? initialPoints as IList<Vector2> ?? initialPoints.ToList()
                 : ConvexHull2D(initialPoints).ToList();
             if (points.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
 
@@ -380,7 +387,7 @@ namespace TVGL
             #region 2) Get Extreme Points and initial angles
             var extremeIndices = new int[4];
             //Point0 = min X, (at the lowest Y value for ties)
-            while (points[extremeIndices[0]].X >= points[(extremeIndices[0] + 1) % (lastIndex + 1)].X)  extremeIndices[0]++;
+            while (points[extremeIndices[0]].X >= points[(extremeIndices[0] + 1) % (lastIndex + 1)].X) extremeIndices[0]++;
             //Point1 = min Y (at the max X value for ties. This is done in the following while-loop)
             extremeIndices[1] = extremeIndices[0];
             while (points[extremeIndices[1]].Y >= points[(extremeIndices[1] + 1) % (lastIndex + 1)].Y) extremeIndices[1]++;
@@ -600,9 +607,10 @@ namespace TVGL
         public static BoundingBox<T> FindOBBAlongDirection<T>(this IEnumerable<T> vertices, Vector3 direction) where T : IVertex3D
         {
             var direction1 = direction.Normalize();
-            var depth = GetLengthAndExtremeVertices(vertices, direction1, out var bottomVertices, out var topVertices);
+            var vertexList = vertices as IList<T> ?? vertices.ToList();
+            var depth = GetLengthAndExtremeVertices(vertexList, direction1, out var bottomVertices, out var topVertices);
 
-            var pointsDict = vertices.ProjectTo2DCoordinatesReturnDictionary(direction1, out var backTransform);
+            var pointsDict = vertexList.ProjectTo2DCoordinatesReturnDictionary(direction1, out var backTransform);
             var boundingRectangle = RotatingCalipers2DMethod(pointsDict.Keys.ToList(), false, false, true);
             //Get the Direction vectors from rotating caliper and projection.
 

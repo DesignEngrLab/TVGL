@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
@@ -12,7 +15,7 @@ namespace TVGL
     /// </summary>
     public class ContactData
     {
-        internal ContactData(IEnumerable<SolidContactData> solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Flat plane)
+        internal ContactData(IEnumerable<SolidContactData> solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Plane plane)
         {
             SolidContactData = new List<SolidContactData>(solidContactData);
             IntersectionGroups = new List<IntersectionGroup>(intersectionGroups);
@@ -46,7 +49,7 @@ namespace TVGL
         /// Gets the plane for this contact data 
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly Flat Plane;
+        public readonly Plane Plane;
     }
 
     /// <summary>
@@ -98,10 +101,10 @@ namespace TVGL
         /// Gets the vertices belonging to this solid
         /// </summary>
         /// <returns></returns>
-        public double Volume()
+        public double Volume(double tolerance)
         {
             if (_volume > 0) return _volume;
-            TessellatedSolid.CalculateVolumeAndCenter(AllFaces, out _volume, out _);
+            TessellatedSolid.CalculateVolumeAndCenter(AllFaces, tolerance, out _volume, out _);
             return _volume;
         }
 
@@ -177,7 +180,7 @@ namespace TVGL
     /// </summary>
     public class IntersectionGroup
     {
-        public readonly List<List<Vector2>> Intersection2D;
+        public readonly List<Polygon> Intersection2D;
         public readonly HashSet<GroupOfLoops> GroupOfLoops;
         public List<int> GetLoopIndices()
         {
@@ -193,10 +196,10 @@ namespace TVGL
         }
 
         public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops,
-            IEnumerable<List<Vector2>> intersection2D, int index)
+            List<Polygon> intersection2D, int index)
         {
             GroupOfLoops = new HashSet<GroupOfLoops> { posSideGroupOfLoops, negSideGroupOfLoops };
-            Intersection2D = new List<List<Vector2>>(intersection2D);
+            Intersection2D = intersection2D;
             Index = index;
         }
 
@@ -258,22 +261,20 @@ namespace TVGL
 
         public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
-        public List<List<Vector2>> CrossSection2D;
+        public Polygon CrossSection2D;
 
-        public void SetCrossSection2D(Flat plane)
+        public void SetCrossSection2D(Plane plane)
         {
-            var paths = new List<List<Vector2>>();
             var flattenTransform = MiscFunctions.TransformToXYPlane(plane.Normal, out _);
             var positivePath = PositiveLoop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
             if (positivePath.Area() < 0) positivePath.Reverse();
-            paths.Add(positivePath);
+            CrossSection2D = new Polygon(positivePath);
             foreach (var loop in NegativeLoops)
             {
                 var negativePath = loop.VertexLoop.ProjectTo2DCoordinates(flattenTransform).ToList();
                 if (negativePath.Area() > 0) negativePath.Reverse();
-                paths.Add(negativePath);
+                CrossSection2D.AddInnerPolygon(new Polygon(negativePath));
             }
-            CrossSection2D = paths.Union();
         }
 
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)

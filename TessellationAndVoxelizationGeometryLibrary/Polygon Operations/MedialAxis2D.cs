@@ -1,16 +1,17 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TVGL.Numerics;
-
 
 namespace TVGL.TwoDimensional
 {
     public static partial class PolygonOperations
     {
         /// <summary>
-        /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes. 
+        /// Creates the 2D Medial Axis from a part's Silhouette. Currently ignores holes.
         /// Best way to show is using "Presenter.ShowAndHang(silhouette, medialAxis, "", Plot2DType.Line, false);"
         /// </summary>
         /// <param name="silhouette"></param>
@@ -28,40 +29,41 @@ namespace TVGL.TwoDimensional
             var allBranches = new List<List<Vector2>>();
             foreach (var positivePolygon in silhouette.Where(p => p.Area() > 0))
             {
-                var perimeter = positivePolygon.Perimeter();
-                var sampled = PolygonOperations.Simplify(positivePolygon);
-                var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * perimeter).First();
+                var posPolygonList = positivePolygon.ToList();
+                var perimeter = posPolygonList.Perimeter();
+                var sampled = posPolygonList.Simplify();
+                var smaller = new Polygon(sampled).OffsetRound(-0.001 * perimeter).First();
 
-                //Delaunay Medial Axis             
+                //Delaunay Medial Axis
                 var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
                 var lines = new List<List<Vector2>>();
                 foreach (var triangle in delaunay.Cells)
                 {
                     var triangleCenterLineVertices = new List<Vector2>();
                     var edge1Center = 0.5 * (triangle.Vertices[0] + triangle.Vertices[1]);
-                    if (smaller.IsPointInsidePolygon(edge1Center))
+                    if (smaller.IsPointInsidePolygon(true, edge1Center, out _))
                         triangleCenterLineVertices.Add(edge1Center);
 
                     var edge2Center = 0.5 * (triangle.Vertices[1] + triangle.Vertices[2]);
-                    if (smaller.IsPointInsidePolygon(edge2Center))
+                    if (smaller.IsPointInsidePolygon(true, edge2Center, out _))
                         triangleCenterLineVertices.Add(edge2Center);
 
                     var edge3Center = 0.5 * (triangle.Vertices[2] + triangle.Vertices[0]);
-                    if (smaller.IsPointInsidePolygon(edge3Center))
+                    if (smaller.IsPointInsidePolygon(true, edge3Center, out _))
                         triangleCenterLineVertices.Add(edge3Center);
 
                     if (triangleCenterLineVertices.Any())
                     {
                         if (triangleCenterLineVertices.Count == 1)
                         {
-                            continue; // This vertex has no line associated with it. 
+                            continue; // This vertex has no line associated with it.
                                       //If the vertex should be attached to a line, it will show up again for another triangle.
                         }
                         if (triangleCenterLineVertices.Count == 3)
                         {
                             //If there are two long edges with one short, collapse the long edges to the middle
                             //of the short edge.
-                            //If 
+                            //If
                             //Order the points, such that the larger edge is not included
                             var d0 = (edge1Center - edge2Center).Length();
                             var d1 = (edge2Center - edge3Center).Length();
@@ -112,7 +114,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
 
-                //Merge all the points 
+                //Merge all the points
                 var mergerTolerance = 0.0001;
                 for (var j = 0; j < lines.Count - 1; j++)
                 {
@@ -214,7 +216,7 @@ namespace TVGL.TwoDimensional
                             if (p1 != node || branch[0] == node) continue;
                             hitNode = true;
                             //Get the branch that has this node and the prior point
-                            var p2 = branch[branch.Count - 2];
+                            var p2 = branch[^2];
                             for (var j = 0; j < branches.Count; j++)
                             {
                                 if ((branches[j][0] - p1).Length().IsNegligible(0.0001) &&
@@ -236,7 +238,7 @@ namespace TVGL.TwoDimensional
                             {
                                 if (line[1] == p0)
                                 {
-                                    //This line is the starting line for the branch. 
+                                    //This line is the starting line for the branch.
                                     continue;
                                 }
                                 branch.Add(line[1]);
@@ -248,7 +250,7 @@ namespace TVGL.TwoDimensional
                             {
                                 if (line[0] == p0)
                                 {
-                                    //This line is the starting line for the branch. 
+                                    //This line is the starting line for the branch.
                                     continue;
                                 }
                                 branch.Add(line[0]);
@@ -260,10 +262,8 @@ namespace TVGL.TwoDimensional
                     }
                     allBranches.Add(branch.ToList());
                 }
-
             }
             return allBranches;
         }
-
     }
 }

@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 04-18-2016
-// ***********************************************************************
-// <copyright file="Cone.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,11 +36,10 @@ namespace TVGL
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
             var axisRefPoints = new List<Vector3>();
-            Vector3 axisRefPoint;
             var n1 = faces[0].Normal.Cross(axis);
             var n2 = faces[^1].Normal.Cross(axis);
             MiscFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.Dot(n1),
-                n2, faces[^1].Center.Dot(n2), axis, out axisRefPoint);
+                n2, faces[^1].Center.Dot(n2), axis, out var axisRefPoint);
             if (!axisRefPoint.IsNull() && !axisRefPoint.IsNegligible())
                 axisRefPoints.Add(axisRefPoint);
             for (var i = 1; i < numFaces; i++)

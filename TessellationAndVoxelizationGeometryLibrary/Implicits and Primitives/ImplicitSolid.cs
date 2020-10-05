@@ -1,29 +1,9 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 03-07-2015
-// ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Serialization;
-using MIConvexHull;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using TVGL.IOFunctions;
 using TVGL.Numerics;
-using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -33,8 +13,9 @@ namespace TVGL
 
         public ImplicitSolid()
         {
-            Bounds = new[] { new Vector3(0.0,0.0,0.0),new Vector3(10.0,10.0,10.0)};
+            Bounds = new[] { new Vector3(0.0, 0.0, 0.0), new Vector3(10.0, 10.0, 10.0) };
         }
+
         public override Solid Copy()
         {
             throw new NotImplementedException();
@@ -49,20 +30,15 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
-        public double this[double x, double y, double z]
-        {
-            get
-            {
-                return Evaluate(x, y, z);
-            }
-        }
+
+        public double this[double x, double y, double z] => Evaluate(x, y, z);
 
         private double Evaluate(double x, double y, double z)
         {
-            var center = new Vector3(5, 5, 5 );
+            var center = new Vector3(5, 5, 5);
             var queriedPoint = new Vector3(x, y, z);
             var radius = 3.0;
-            return (queriedPoint-center).Length() - radius;
+            return (queriedPoint - center).Length() - radius;
         }
 
         public TessellatedSolid ConvertToTessellatedSolid()

@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 03-05-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="SimplifyTessellation.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,7 +29,7 @@ namespace TVGL
             var facesToAdd = new List<PolygonalFace>();
             var verticesToRemove = new List<Vertex>();
             var flats = TVGL.MiscFunctions.FindFlats(ts.Faces);
-            if (ts.Primitives == null) ts.Primitives = new List<PrimitiveSurface>();
+            ts.Primitives ??= new List<PrimitiveSurface>();
             foreach (var flat in flats)
             {
                 if (flat.InnerEdges.Count < flat.Faces.Count) continue;
@@ -52,8 +42,7 @@ namespace TVGL
                 innerVertices.RemoveWhere(v => outerEdgeHashSet.Overlaps(v.Edges));
                 verticesToRemove.AddRange(innerVertices);
                 var vertexLoops = OrganizeIntoLoop(flat.OuterEdges, flat.Normal).ToArray();
-                var triangulatedListofLists = new[] { vertexLoops }.Triangulate(flat.Normal, out _, out _);
-                var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
+                var triangulatedList = vertexLoops.Triangulate(flat.Normal);
                 var oldEdgeDictionary = flat.OuterEdges.ToDictionary(TessellatedSolid.SetAndGetEdgeChecksum);
                 Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();
                 foreach (var triangle in triangulatedList)
@@ -88,7 +77,7 @@ namespace TVGL
                             newEdgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, newFace, null, false, checksum));
                     }
                 }
-                ts.Primitives.Add(new Flat(newFaces));
+                ts.Primitives.Add(new Plane(newFaces));
             }
             ts.RemoveVertices(verticesToRemove);  //todo: check if the order of these five commands 
             ts.RemoveFaces(facesToRemove);        // matters. There may be an ordering that is more efficient
@@ -120,10 +109,10 @@ namespace TVGL
             while (edgesHashSet.Any())
             {
                 if (startVertex == currentVertex) return loop;
-                var possibleNextEdges = currentVertex.Edges.Where(e => e != currentEdge && edgesHashSet.Contains(e));
+                var possibleNextEdges = currentVertex.Edges.Where(e => e != currentEdge && edgesHashSet.Contains(e)).ToList();
                 if (!possibleNextEdges.Any()) throw new Exception();
                 var lastEdge = currentEdge;
-                currentEdge = (possibleNextEdges.Count() == 1) ? possibleNextEdges.First()
+                currentEdge = (possibleNextEdges.Count == 1) ? possibleNextEdges.First()
                     : pickBestEdge(possibleNextEdges, currentEdge.Vector, normal);
                 currentVertex = currentEdge.OtherVertex(currentVertex);
                 loop.Add(currentVertex);
@@ -325,10 +314,10 @@ namespace TVGL
             }
             removedFace1 = edge.OwnedFace;
             removedFace2 = edge.OtherFace;
-            var removedEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(keepVertex, true);
-            var removedEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(keepVertex, true);
-            var keepEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(removedVertex, true);
-            var keepEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(removedVertex, true);
+            var removedEdge1 = removedFace1?.OtherEdge(keepVertex, true);
+            var removedEdge2 = removedFace2?.OtherEdge(keepVertex, true);
+            var keepEdge1 = removedFace1?.OtherEdge(removedVertex, true);
+            var keepEdge2 = removedFace2?.OtherEdge(removedVertex, true);
             if (removedEdge1 != null && removedEdge2 != null && (keepEdge1 == null || keepEdge2 == null))
             {
                 // swap with removed.
@@ -375,13 +364,13 @@ namespace TVGL
             keepVertex.Edges.Remove(edge);
             keepVertex.Faces.Remove(removedFace1);
             keepVertex.Faces.Remove(removedFace2);
-            var farVertex = removedFace1 == null ? null : removedFace1.OtherVertex(edge, true);
+            var farVertex = removedFace1?.OtherVertex(edge, true);
             if (farVertex != null)
             {
                 farVertex.Edges.Remove(removedEdge1);
                 farVertex.Faces.Remove(removedFace1);
             }
-            farVertex = removedFace2 == null ? null : removedFace2.OtherVertex(edge, true);
+            farVertex = removedFace2?.OtherVertex(edge, true);
             if (farVertex != null)
             {
                 farVertex.Edges.Remove(removedEdge2);
