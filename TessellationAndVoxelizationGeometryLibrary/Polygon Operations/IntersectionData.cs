@@ -68,6 +68,14 @@ namespace TVGL.TwoDimensional
         /// <value><c>true</c> if [coincident vertices]; otherwise, <c>false</c>.</value>
         public bool CoincidentVertices { get; internal set; }
 
+        public bool IntersectionWillBeEmpty()
+        {
+            return Relationship != PolygonRelationship.Intersection &&
+                Relationship != PolygonRelationship.AInsideB &&
+                Relationship != PolygonRelationship.BInsideA &&
+                Relationship != PolygonRelationship.Equal;
+        }
+
 
         public IEnumerable<Polygon> AllPolygons
         {

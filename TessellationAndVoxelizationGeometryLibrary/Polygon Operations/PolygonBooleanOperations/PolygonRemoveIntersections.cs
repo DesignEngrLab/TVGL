@@ -13,13 +13,22 @@ namespace TVGL.TwoDimensional
     /// </summary>
     internal class PolygonRemoveIntersections : PolygonBooleanBase
     {
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool noHoles, double tolerance,
+        /// <summary>
+        /// Runs the specified polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="intersections">The intersections.</param>
+        /// <param name="makeHolesPositive">if set to <c>true</c> [make holes positive].</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="strayHoles">The stray holes.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool makeHolesPositive, double tolerance,
             out List<Polygon> strayHoles)
         {
             var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
-            var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
+            var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygon);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
@@ -30,7 +39,7 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
-                if (noHoles && area < 0) polyCoordinates.Reverse();
+                if (makeHolesPositive && area < 0) polyCoordinates.Reverse();
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             return newPolygons.CreateShallowPolygonTrees(true, out strayHoles);

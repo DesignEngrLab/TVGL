@@ -60,7 +60,7 @@ namespace TVGL.TwoDimensional
                 polygons.AddRange(ArrangeOuterEdgesIntoPolygon(outerEdges, dot > 0, transform, linearTolerance, areaTolerance));
             }
             //Presenter.ShowAndHang(polygons);
-            return polygons.Union(PolygonCollection.PolygonWithHoles, linearTolerance).LargestPolygon();
+            return polygons.UnionPolygons(PolygonCollection.PolygonWithHoles, linearTolerance).LargestPolygon();
         }
 
         /// <summary>
@@ -245,7 +245,7 @@ namespace TVGL.TwoDimensional
             foreach (var hole in negativePolygons)
                 AddHoleToLargerPostivePolygon(polygons, hole, linearTolerance);
             //now union this result before returning to the main loop - to, again, union with the other polygons
-            polygons = polygons.Union(PolygonCollection.PolygonWithHoles, areaTolerance);
+            polygons = polygons.UnionPolygons(PolygonCollection.PolygonWithHoles, areaTolerance);
             return polygons;
         }
 

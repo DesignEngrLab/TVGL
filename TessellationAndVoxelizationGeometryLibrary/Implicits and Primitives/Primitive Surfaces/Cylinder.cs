@@ -307,7 +307,7 @@ namespace TVGL
 
         public HashSet<Plane> SmallFlats { get; set; }
 
-        public List<Vector2> Loop2D { get; set; }
+        public Polygon Loop2D { get; set; }
 
         #endregion
 

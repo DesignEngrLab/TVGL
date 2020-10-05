@@ -22,9 +22,10 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetSquare(this Polygon polygon, double offset)
+        public static List<Polygon> OffsetSquare(this Polygon polygon, double offset,
+            double tolerance = double.NaN)
         {
-            return Offset(polygon, offset, true);
+            return Offset(polygon, offset, true, tolerance);
         }
 
         /// <summary>
@@ -33,9 +34,10 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetSquare(this IEnumerable<Polygon> polygons, double offset)
+        public static List<Polygon> OffsetSquare(this IEnumerable<Polygon> polygons, double offset,
+            double tolerance = double.NaN)
         {
-            return Offset(polygons, offset, true);
+            return Offset(polygons, offset, true, tolerance);
         }
 
         /// <summary>
@@ -44,9 +46,10 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetMiter(this Polygon polygon, double offset)
+        public static List<Polygon> OffsetMiter(this Polygon polygon, double offset,
+            double tolerance = double.NaN)
         {
-            return Offset(polygon, offset, false);
+            return Offset(polygon, offset, false, tolerance);
         }
         /// <summary>
         /// Offset the polygon with miter (sharp) corners. The resulting polygons are joined (unioned) if overlapping.
@@ -54,9 +57,10 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetMiter(this IEnumerable<Polygon> polygons, double offset)
+        public static List<Polygon> OffsetMiter(this IEnumerable<Polygon> polygons, double offset,
+            double tolerance = double.NaN)
         {
-            return Offset(polygons, offset, false);
+            return Offset(polygons, offset, false, tolerance);
         }
 
 
@@ -68,13 +72,12 @@ namespace TVGL.TwoDimensional
         /// <param name="maxCircleDeviation">The maximum circle deviation. If none is provided, then vertices are
         /// placed at every 1 degree (pi/180 radians).</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetRound(this Polygon polygon, double offset, double maxCircleDeviation = double.NaN)
+        public static List<Polygon> OffsetRound(this Polygon polygon, double offset, double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
-            var deltaAngle = double.IsNaN(maxCircleDeviation)
-                ? Constants.DefaultRoundOffsetDeltaAngle
-                : 2 * Math.Acos(1 - Math.Abs(maxCircleDeviation / offset));
-            return Offset(polygon, offset, true, deltaAngle);
+            double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
+            return Offset(polygon, offset, true, tolerance, deltaAngle);
         }
+
         /// <summary>
         /// Offset the polygon with "round" corners (in quotes since really lots of small polygon sides).
         /// The resulting polygons are joined(unioned) if overlapping.
@@ -83,50 +86,59 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <param name="maxCircleDeviation">The maximum circle deviation.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> OffsetRound(this IEnumerable<Polygon> polygons, double offset, double maxCircleDeviation = double.NaN)
+        public static List<Polygon> OffsetRound(this IEnumerable<Polygon> polygons, double offset,
+            double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
-            var deltaAngle = double.IsNaN(maxCircleDeviation)
-                ? Constants.DefaultRoundOffsetDeltaAngle
-                : 2 * Math.Acos(1 - Math.Abs(maxCircleDeviation / offset));
-            return Offset(polygons, offset, true, deltaAngle);
+            double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
+            return Offset(polygons, offset, true, tolerance, deltaAngle);
+        }
+
+        private static double DefineDeltaAngle(double offset, double tolerance, double maxCircleDeviation)
+        {
+            if (double.IsNaN(tolerance) && double.IsNaN(maxCircleDeviation))
+                return Constants.DefaultRoundOffsetDeltaAngle;
+            if (!double.IsNaN(tolerance) && double.IsNaN(maxCircleDeviation))
+                maxCircleDeviation = tolerance;
+            return 2 * Math.Acos(1 - Math.Abs(maxCircleDeviation / offset));
         }
 
 
-        private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter, double deltaAngle = double.NaN)
+        private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
+            double tolerance, double deltaAngle = double.NaN)
         {
             var allPolygons = new List<Polygon>();
             foreach (var polygon in polygons)
-                allPolygons.AddRange(polygon.Offset(offset, notMiter, deltaAngle));
-            return allPolygons.Union();
+                allPolygons.AddRange(polygon.Offset(offset, notMiter, tolerance, deltaAngle));
+            return allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
         }
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter,
-            double deltaAngle = double.NaN)
+            double tolerance, double deltaAngle = double.NaN)
         {
-           // var negativePolygons = new List<Polygon>();
+            // var negativePolygons = new List<Polygon>();
             if (polygon.MaxX - polygon.MinX < -2 * offset || polygon.MaxY - polygon.MinY < -2 * offset)
                 return new List<Polygon>();
-            return new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle))
-                  .RemoveSelfIntersections(false,out _);
-            //foreach (var hole in polygon.Holes)
-            //{
-            //    if (hole.MaxX - hole.MinX < 2 * offset || hole.MaxY - hole.MinY < 2 * offset) continue;
-            //    var holeCoords = OffsetRoutineBackwards(hole.Lines, -offset, false, deltaAngle);
-            //    var newHoles = new Polygon(holeCoords).RemoveSelfIntersections(true, out _);
-            //    foreach (var newHole in newHoles)
-            //        negativePolygons.Add(newHole);
-            //}
+            var outers = new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle))
+                  .RemoveSelfIntersections(false, out _, tolerance);
+            foreach (var hole in polygon.InnerPolygons)
+            {
+                if (hole.MaxX - hole.MinX < 2 * offset || hole.MaxY - hole.MinY < 2 * offset) continue;
+                var holeCoords = OffsetRoutineBackwards(hole.Lines, -offset, false, deltaAngle);
+                var newHoles = new Polygon(holeCoords).RemoveSelfIntersections(true, out _);
+                foreach (var newHole in newHoles)
+                    negativePolygons.Add(newHole);
+            }
 
-            //for (var i = 0; i < positivePolygons.Count; i++)
-            //{
-            //    foreach (var hole in negativePolygons)
-            //    {
-            //        var result = positivePolygons[i].Subtract(hole);
-            //        positivePolygons[i] = result[0];
-            //        for (int j = 1; j < result.Count; j++)
-            //            positivePolygons.Add(result[i]);
-            //    }
-            //}
-            //return positivePolygons;
+            for (var i = 0; i < positivePolygons.Count; i++)
+            {
+                foreach (var hole in negativePolygons)
+                {
+                    var result = positivePolygons[i].Subtract(hole);
+                    positivePolygons[i] = result[0];
+                    for (int j = 1; j < result.Count; j++)
+                        positivePolygons.Add(result[i]);
+                }
+            }
+            return positivePolygons;
         }
 
         private static List<Vector2> OffsetRoutineForward(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double deltaAngle = double.NaN)
