@@ -92,6 +92,12 @@ namespace TVGL
         public const double HighConfidence = 0.997;
 
         /// <summary>
+        /// A high confidence percentage of 99% This is used in some boolean "is" checks,
+        /// like Polygon.IsRectangular
+        /// </summary>
+        public const double MediumHighConfidence = 0.99;
+
+        /// <summary>
         /// A medium confidence percentage of 0.95 (2 sigma). This is used in some boolean "is" checks,
         /// like Polygon.IsRectangular
         /// </summary>

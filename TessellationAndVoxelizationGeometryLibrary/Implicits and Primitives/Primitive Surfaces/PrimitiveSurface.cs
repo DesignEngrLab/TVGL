@@ -339,6 +339,17 @@ namespace TVGL
             }
         }
 
+        public double[] Center()
+        {
+            if (!BoundsHaveBeenSet) SetBounds();
+            return new double[]
+            {
+                MaxX - MinX,
+                MaxY - MinY,
+                MaxZ - MinZ
+            };
+        }
+
         public void SetColor(Color color)
         {
             foreach (var face in Faces) face.Color = color;
