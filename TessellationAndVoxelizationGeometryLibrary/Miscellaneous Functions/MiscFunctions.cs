@@ -882,7 +882,7 @@ namespace TVGL
             if (absYDot > absXDot && absYDot > absZDot)
             {
                 withinTolerance = !double.IsNaN(tolerance) && absYDot.IsPracticallySame(1.0, tolerance);
-                return yDot > 0 ? CartesianDirections.XPositive : CartesianDirections.YNegative;
+                return yDot > 0 ? CartesianDirections.YPositive : CartesianDirections.YNegative;
             }
             // Z-direction
             withinTolerance = !double.IsNaN(tolerance) && absZDot.IsPracticallySame(1.0, tolerance);

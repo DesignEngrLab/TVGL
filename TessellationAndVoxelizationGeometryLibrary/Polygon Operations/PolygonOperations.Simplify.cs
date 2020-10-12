@@ -29,7 +29,7 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Simplifies the specified polygon no more than theallowable change in area fraction.
+        /// Simplifies the specified polygon no more than the allowable change in area fraction.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
@@ -43,7 +43,7 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Simplifies the specified polygons no more than theallowable change in area fraction.
+        /// Simplifies the specified polygons no more than the allowable change in area fraction.
         /// </summary>
         /// <param name="paths">The paths.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
@@ -54,7 +54,7 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Simplifies the specified polygons no more than theallowable change in area fraction.
+        /// Simplifies the specified polygons no more than the allowable change in area fraction.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -105,7 +105,7 @@ namespace TVGL.TwoDimensional
                     if (deltaArea < sign * smallestArea)
                     { //this was one tricky little bug! in order to keep this fast, we first dequeue before examining
                       // the result. if the resulting index produces more area than we need we switch to the
-                      // concave queue. That dequeueing and updating will want this last index on the queues
+                      // concave queue. That dequeuing and updating will want this last index on the queues
                       // if it is a neighbor to a new one being removing. Confusing, eh? So, we need to put it
                       // back in. Looks kludge-y but this only happens once, and it's better to do this once
                       // then add more logic to the above statements that would slow it down.

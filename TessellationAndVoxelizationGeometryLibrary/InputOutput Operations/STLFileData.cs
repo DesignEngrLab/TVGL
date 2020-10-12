@@ -107,7 +107,7 @@ namespace TVGL.IOFunctions
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count<=Constants.MaxNumberFacesDefaultFullTS,
+                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count <= Constants.MaxNumberFacesDefaultFullTS,
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null,
                                    stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
@@ -345,6 +345,7 @@ namespace TVGL.IOFunctions
                 writer.WriteLine("#  Lang : " + solids[0].Language);
             foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
                 writer.WriteLine("#  " + comment);
+            writer.Flush();
             return true;
         }
 
@@ -367,6 +368,7 @@ namespace TVGL.IOFunctions
                     writer.WriteLine("\tendfacet");
                 }
                 writer.WriteLine("endsolid " + solid.Name);
+                writer.Flush();
                 Message.output("Successfully wrote STL file to stream.", 4);
                 return true;
             }

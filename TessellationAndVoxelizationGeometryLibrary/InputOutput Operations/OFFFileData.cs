@@ -301,6 +301,7 @@ namespace TVGL.IOFunctions
                     }
                     writer.WriteLine(faceString);
                 }
+                writer.Flush();
                 Message.output("Successfully wrote OFF file to stream.", 3);
                 return true;
             }

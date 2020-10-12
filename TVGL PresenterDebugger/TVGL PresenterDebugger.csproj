@@ -38,6 +38,7 @@
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonOperationsTesting.cs" Link="_Testing_And_Benchmarking_\PolygonOperationsTesting.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\TestCases.cs" Link="_Testing_And_Benchmarking_\TestCases.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\Program.cs" Link="_Testing_And_Benchmarking_\Program.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\TessellatedSolid Functions\TSModify.cs" Link="_Testing_And_Benchmarking_\TSModify.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.Silhouette.cs" Link="_Testing_And_Benchmarking_\ThreeDtoTwoD.Silhouette.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.XSection.cs" Link="_Testing_And_Benchmarking_\ThreeDtoTwoD.XSection.cs" />
   </ItemGroup>

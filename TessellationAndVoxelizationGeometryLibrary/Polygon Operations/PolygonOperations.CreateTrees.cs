@@ -73,6 +73,7 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, out List<Polygon> strayHoles)
         {
+            Presenter.ShowAndHang(polygons);
             var branches = new List<Polygon>();
             strayHoles = new List<Polygon>();
             foreach (var polygon in polygons.OrderBy(p => Math.Abs(p.Area)))

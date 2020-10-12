@@ -102,26 +102,38 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="negativePolygons">The negative polygons.</param>
         /// <param name="identicalPolygonIsInverted">The identical polygon is inverted.</param>
-        protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons, bool identicalPolygonIsInverted)
+        protected override void HandleIdenticalPolygons(Polygon subPolygonA, List<Polygon> newPolygons,
+            bool identicalPolygonIsInverted)
         {
             if (!identicalPolygonIsInverted)
                 newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }
-
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons, IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
+        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
+            IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
         {
             using var enumerator = relationships.GetEnumerator();
             enumerator.MoveNext();
-            var rel = enumerator.Current.Item1;
-            if (rel < PolyRelInternal.AInsideB) return; // for speed sake, just return if the two are separated (<AInsideB)
-            do
+            while (enumerator.MoveNext())
             {
-                rel = enumerator.Current.Item1;
-                var otherIsPositive = enumerator.Current.Item2;
-                if ((partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0 == otherIsPositive) ||   //part of B and either 1)A is inside of it and A is positive or 2) it is inside A and A is negative
-                    (!partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0 == otherIsPositive))   //part of A and either 1) B is inside of it and B is positive or 2) it is inside B and B is negative
-                    return;
-            } while (enumerator.MoveNext());
+                var rel = enumerator.Current.Item1;
+                var isPos = enumerator.Current.Item2;
+                // these  conditions follow from the Table-Handling-Non-Contacting-Polygons-in-Intersection.png
+                if ((subPolygon.IsPositive &&
+                    ((isPos && rel < PolyRelInternal.AInsideB) || // Separeated
+                        (!partOfPolygonB && isPos && (rel & PolyRelInternal.BInsideA) != 0b0) ||  //both are positive and B is inside A
+                        (!partOfPolygonB && !isPos && (rel & PolyRelInternal.AInsideB) != 0b0) ||  //A is inside a hole of B
+                        (partOfPolygonB && isPos && (rel & PolyRelInternal.AInsideB) != 0b0) ||  // B is inside a hole of A
+                        (partOfPolygonB && !isPos && (rel & PolyRelInternal.BInsideA) != 0b0)))  // B is inside a hole of A
+                    ||
+                    (!subPolygon.IsPositive &&
+                    ((!partOfPolygonB && !isPos && (rel & PolyRelInternal.AInsideB) != 0b0) || //A and B are neg, but B encloses A
+                     (!partOfPolygonB && isPos && rel < PolyRelInternal.AInsideB) || //A is negative, B is positive but they are separate
+                     (!partOfPolygonB && isPos && (rel & PolyRelInternal.BInsideA) != 0b0) || //A is negative, B is positive but B is inside A
+                    (partOfPolygonB && !isPos && (rel & PolyRelInternal.BInsideA) != 0b0) || //A and B are neg, but A encloses B
+                     (partOfPolygonB && isPos && rel < PolyRelInternal.AInsideB) || //B is negative, A is positive but they are separate
+                     (partOfPolygonB && isPos && (rel & PolyRelInternal.AInsideB) != 0b0)))) //B is negative, A is positive but A is inside B
+                    return; // these follow the 3 "Neither (empty result) from Table-Handling-Non-Contacting-Polygons-in-Intersection.png
+            }
             newPolygons.Add(subPolygon.Copy(false, false));
         }
     }

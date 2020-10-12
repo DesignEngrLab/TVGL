@@ -440,6 +440,12 @@ namespace TVGL.TwoDimensional
             MakeLineSegments();
         }
 
+        public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
+        {
+            foreach (var innerLoop in loops.Skip(1))
+                AddInnerPolygon(new Polygon(innerLoop));
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Polygon" /> class.
         /// </summary>
@@ -504,13 +510,15 @@ namespace TVGL.TwoDimensional
             return copiedPolygon;
         }
 
-        // the following private argument-less constructor is only used in the copy function
+        // the following argument-less constructor is only used in the copy function
+        // and in deserialization
         /// <summary>
         /// Prevents a default instance of the <see cref="Polygon"/> class from being created.
         /// </summary>
-        private Polygon()
+        public Polygon()
         {
         }
+
 
         /// <summary>
         /// Determines whether this instance is convex.

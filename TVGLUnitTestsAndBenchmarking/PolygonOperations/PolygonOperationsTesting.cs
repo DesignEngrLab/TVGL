@@ -17,7 +17,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public class PolygonOperationsTesting
     {
-        static Random r = new Random();
+        static Random r = new Random(0);
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
 
@@ -162,20 +162,26 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void TestOffsetting()
         {
-            var coords1 = TestCases.MakeStarryCircularPolygon(50, 28, 8).ToList();
-            var hole1 = TestCases.MakeStarryCircularPolygon(80, 14, 5).ToList();
-            hole1.Reverse();
-            var polygon1 = new Polygon(coords1);
-            polygon1 = polygon1.Intersect(new Polygon(hole1))[0];
-            //Presenter.ShowAndHang(polygon1);
-            //var polygon1 = new Polygon(coords1, true);
-            // Presenter.ShowAndHang(polygon1);
-            // var polygons2 = polygon1.OffsetRound(2, 0.05);
-            var polygons3 = polygon1.OffsetRound(1, 0.05);
-            //polygons3.AddRange(polygons2);
-            //polygons3.Add(polygon1);
-            Presenter.ShowAndHang(polygons3);
 
+            foreach (var polys in TestCases.GetAllTwoArgumentErsatzCases())
+            {
+                var polygon1 = new Polygon(polys.Value.Item1);
+                var polygon2 = new Polygon(polys.Value.Item2);
+                var polygons = polygon1.Union(polygon2);
+                //var coords1 = TestCases.MakeStarryCircularPolygon(50, 28, 1.8).ToList();
+                //var hole1 = TestCases.MakeStarryCircularPolygon(80, 14, 1.5).ToList();
+                //hole1.Reverse();
+                //var polygon1 = new Polygon(coords1);
+                //polygon1 = polygon1.Intersect(new Polygon(hole1))[0];
+                Presenter.ShowAndHang(polygons);
+                //var polygon1 = new Polygon(coords1, true);
+                // Presenter.ShowAndHang(polygon1);
+                // var polygons2 = polygon1.OffsetRound(2, 0.05);
+                var polygons3 = polygons.OffsetRound(.25, 0.005);
+                //polygons3.AddRange(polygons2);
+                //polygons3.Add(polygon1);
+                Presenter.ShowAndHang(polygons3);
+            }
 
         }
     }

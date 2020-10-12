@@ -742,6 +742,7 @@ namespace TVGL.IOFunctions
                     if (solid.HasUniformColor)
                         writer.WriteLine(solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
                                                      solid.SolidColor.A);
+                    writer.Flush();
                 }
                 Message.output("Successfully wrote PLY file to stream.", 3);
                 return true;

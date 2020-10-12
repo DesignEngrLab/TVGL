@@ -25,7 +25,7 @@ namespace TVGL.TwoDimensional
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool makeHolesPositive, double tolerance,
             out List<Polygon> strayHoles)
         {
-            var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
+            var minAllowableArea = tolerance * tolerance; // / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygon);

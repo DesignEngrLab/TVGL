@@ -40,7 +40,7 @@ namespace TVGL.TwoDimensional
             }
             else areaTolerance = tolerance * tolerance / Constants.BaseTolerance;   // why change the input tolerance? here, we are using it as a
             // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
-            // we need to find the characteristic length that was multiplied by the basetolerance to obtain the linear tolerance.
+            // we need to find the characteristic length that was multiplied by the base tolerance to obtain the linear tolerance.
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
             delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);

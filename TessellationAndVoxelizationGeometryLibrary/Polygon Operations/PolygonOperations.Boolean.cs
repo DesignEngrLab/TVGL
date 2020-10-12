@@ -18,9 +18,7 @@ namespace TVGL.TwoDimensional
         // to be instantiated once as no data is stored in the class objects. So, this is a sort of singleton model but it's too bad we can have static classes inherit from
         // other static classes.
         private static PolygonUnion polygonUnion;
-
         private static PolygonIntersection polygonIntersection;
-        private static PolygonSubtraction polygonSubtraction;
         private static PolygonRemoveIntersections polygonRemoveIntersections;
 
         #region Union Public Methods
@@ -230,7 +228,11 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (interaction.IntersectionWillBeEmpty()) return new List<Polygon>();
+            if (interaction.IntersectionWillBeEmpty())
+            {
+                if (polygonB.IsPositive) return new List<Polygon>();
+                else return new List<Polygon> { polygonA.Copy(true, false) };
+            }
             if (interaction.Relationship == PolygonRelationship.BInsideA)
             {
                 if (polygonB.IsPositive) return new List<Polygon> { polygonB.Copy(true, false) };
@@ -270,15 +272,37 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            var result = new List<Polygon>();
-            var polygonAList = polygonsA as List<Polygon> ?? polygonsA.ToList();
+            var result = new List<Polygon>(polygonsA);
             var polygonBList = polygonsB as List<Polygon> ?? polygonsB.ToList();
             if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(polygonAList, polygonBList);
+                tolerance = GetTolerancesFromPolygons(result, polygonBList);
 
-            foreach (var polygonA in polygonAList)
-                foreach (var polygonB in polygonBList)
-                    result.AddRange(polygonA.Intersect(polygonB, outputAsCollectionType, tolerance));
+            for (int i = result.Count - 1; i >= 0; i--)
+            {
+                foreach (var polyB in polygonBList)
+                {
+                    var interaction = GetPolygonInteraction(result[i], polyB, tolerance);
+                    if (interaction.IntersectionWillBeEmpty())
+                    {
+                        result.RemoveAt(i);
+                        break;
+                    }
+                    else if (interaction.Relationship == PolygonRelationship.BInsideA)
+                    {   // remove polygon A
+                        result[i] = polyB.Copy(true, false);
+                        break; // to stop the inner loop
+                    }
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                        continue;
+                    else
+                    {
+                        var newPolygons = Intersect(result[i], polyB, interaction, outputAsCollectionType, tolerance);
+                        result.RemoveAt(i--);
+                        foreach (var newPolyA in newPolygons)
+                            result.Insert(++i, newPolyA);
+                    }
+                }
+            }
             return result;
         }
 
@@ -343,21 +367,7 @@ namespace TVGL.TwoDimensional
         {
             var polygonBInverted = polygonB.Copy(true, true);
             var relationship = GetPolygonInteraction(polygonA, polygonBInverted, tolerance);
-            return Subtract(polygonA, polygonBInverted, relationship, outputAsCollectionType, true, tolerance);
-        }
-
-        /// <summary>
-        /// Subtracts the specified polygons in b from the polygons in a.
-        /// </summary>
-        /// <param name="polygonsA">The polygons in a.</param>
-        /// <param name="polygonsB">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="tolerance">The tolerance.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> Subtract(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
-        {
-            return IntersectPolygons(polygonsA, polygonsB.Select(p => p.Copy(true, true)), outputAsCollectionType, tolerance);
+            return Intersect(polygonA, polygonBInverted, relationship, outputAsCollectionType, tolerance);
         }
 
         /// <summary>
@@ -375,47 +385,23 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            return Subtract(polygonA, polygonB, interaction, outputAsCollectionType, false, tolerance);
+            interaction = interaction.InvertPolygonInRecord(polygonB, out var invertedPolygonB);
+            return Intersect(polygonA, invertedPolygonB, interaction, outputAsCollectionType, tolerance);
         }
 
         /// <summary>
-        /// Subtracts the specified polygon b.
+        /// Subtracts the specified polygons in b from the polygons in a.
         /// </summary>
-        /// <param name="polygonA">The polygon a.</param>
-        /// <param name="polygonB">The polygon b.</param>
-        /// <param name="interaction">The interaction.</param>
+        /// <param name="polygonsA">The polygons in a.</param>
+        /// <param name="polygonsB">The polygons b.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <param name="interactionAlreadyInverted">if set to <c>true</c> [interaction already inverted].</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        /// <exception cref="ArgumentException">The minuend is already a negative polygon (i.e. hole). Consider another operation"
-        ///                 + " to accopmlish this function, like Intersect. - polygonA</exception>
-        private static List<Polygon> Subtract(this Polygon polygonA, Polygon polygonB,
-           PolygonInteractionRecord interaction, PolygonCollection outputAsCollectionType, bool interactionAlreadyInverted, double tolerance = double.NaN)
+        public static List<Polygon> Subtract(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB,
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (!polygonA.IsPositive) throw new ArgumentException("The minuend is already a negative polygon (i.e. hole). Consider another operation"
-                + " to accomplish this function, like Intersect.", nameof(polygonA));
-            if (polygonB.IsPositive == interactionAlreadyInverted) throw new ArgumentException("The subtrahend is already a negative polygon (i.e. hole). Consider another operation"
-                  + " to accomplish this function, like Intersect.", nameof(polygonB));
-            if (!interactionAlreadyInverted)
-                interaction = interaction.InvertPolygonInRecord(ref polygonB);
-            if (interaction.IntersectionWillBeEmpty())
-                return new List<Polygon> { polygonA.Copy(true, false) };
-            else if (interaction.Relationship == PolygonRelationship.BInsideA)
-            {
-                var polygonACopy = polygonA.Copy(true, false);
-                polygonACopy.AddInnerPolygon(polygonB.Copy(true, true));
-                return new List<Polygon> { polygonACopy };
-            }
-            else if (interaction.Relationship == PolygonRelationship.AInsideB)
-                return new List<Polygon>();
-            else
-            {
-                polygonSubtraction ??= new PolygonSubtraction();
-                return polygonSubtraction.Run(polygonA, polygonB, interaction, outputAsCollectionType, tolerance);
-            }
+            return IntersectPolygons(polygonsA, polygonsB.Select(p => p.Copy(true, true)), outputAsCollectionType, tolerance);
         }
-
         #endregion Subtract Public Methods
 
         #region Exclusive-OR Public Methods
@@ -467,9 +453,8 @@ namespace TVGL.TwoDimensional
             }
             else
             {
-                polygonSubtraction ??= new PolygonSubtraction();
-                var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, false, tolerance);
-                result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, false, tolerance));
+                var result = polygonA.Subtract(polygonB, interactionRecord, outputAsCollectionType, tolerance);
+                result.AddRange(polygonB.Subtract(polygonA, interactionRecord, outputAsCollectionType, tolerance));
                 return result;
             }
         }
@@ -489,7 +474,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool makeHolesPositive, out List<Polygon> strayHoles, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance)) tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
-            var intersections = polygon.GetSelfIntersections(tolerance);
+            var intersections = polygon.GetSelfIntersections(tolerance).Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
             {
                 strayHoles = null;

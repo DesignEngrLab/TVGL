@@ -241,14 +241,14 @@ namespace TVGL.TwoDimensional
             return lookupList;
         }
 
-        internal PolygonInteractionRecord InvertPolygonInRecord(ref Polygon polygon)
+        internal PolygonInteractionRecord InvertPolygonInRecord(Polygon polygon, out Polygon invertedPolygon)
         {
             var tolerance = Constants.BaseTolerance * Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY);
             bool polygonIsAInInteractions = subPolygonToInt[polygon] < numPolygonsInA;
             var visitedIntersectionPairs = new HashSet<(PolygonEdge, PolygonEdge)>();
             var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
-            polygon = polygon.Copy(true, true);
-            var allLines = polygon.AllPolygons.SelectMany(p => p.Lines).ToList();
+            invertedPolygon = polygon.Copy(true, true);
+            var allLines = invertedPolygon.AllPolygons.SelectMany(p => p.Lines).ToList();
             var newIntersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>();
             for (int i = 0; i < IntersectionData.Count; i++)
@@ -281,7 +281,7 @@ namespace TVGL.TwoDimensional
             var newSubPolygonToInt = new Dictionary<Polygon, int>();
             if (!polygonIsAInInteractions)
             {
-                using var newPolyEnumerator = polygon.AllPolygons.GetEnumerator();
+                using var newPolyEnumerator = invertedPolygon.AllPolygons.GetEnumerator();
                 foreach (var keyValuePair in subPolygonToInt)
                 {
                     if (keyValuePair.Value < numPolygonsInA)
@@ -301,7 +301,7 @@ namespace TVGL.TwoDimensional
                 if (keyValuePair.Value >= numPolygonsInA)
                     newSubPolygonToInt.Add(keyValuePair.Key, index++);
             }
-            foreach (var newpoly in polygon.AllPolygons)
+            foreach (var newpoly in invertedPolygon.AllPolygons)
                 newSubPolygonToInt.Add(newpoly, index++);
 
             var newPolygonRelations = new PolyRelInternal[numPolygonsInA * numPolygonsInB];
