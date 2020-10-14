@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Generic;
 
 namespace TVGL.TwoDimensional
@@ -108,33 +109,28 @@ namespace TVGL.TwoDimensional
             if (!identicalPolygonIsInverted)
                 newPolygons.Add(subPolygonA.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
+        protected override bool HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
         {
-            using var enumerator = relationships.GetEnumerator();
-            enumerator.MoveNext();
-            while (enumerator.MoveNext())
+            var firstPass = true;
+            var otherIsPos = false;
+            foreach (var relData in relationships)
             {
-                var rel = enumerator.Current.Item1;
-                var isPos = enumerator.Current.Item2;
-                // these  conditions follow from the Table-Handling-Non-Contacting-Polygons-in-Intersection.png
-                if ((subPolygon.IsPositive &&
-                    ((isPos && rel < PolyRelInternal.AInsideB) || // Separeated
-                        (!partOfPolygonB && isPos && (rel & PolyRelInternal.BInsideA) != 0b0) ||  //both are positive and B is inside A
-                        (!partOfPolygonB && !isPos && (rel & PolyRelInternal.AInsideB) != 0b0) ||  //A is inside a hole of B
-                        (partOfPolygonB && isPos && (rel & PolyRelInternal.AInsideB) != 0b0) ||  // B is inside a hole of A
-                        (partOfPolygonB && !isPos && (rel & PolyRelInternal.BInsideA) != 0b0)))  // B is inside a hole of A
-                    ||
-                    (!subPolygon.IsPositive &&
-                    ((!partOfPolygonB && !isPos && (rel & PolyRelInternal.AInsideB) != 0b0) || //A and B are neg, but B encloses A
-                     (!partOfPolygonB && isPos && rel < PolyRelInternal.AInsideB) || //A is negative, B is positive but they are separate
-                     (!partOfPolygonB && isPos && (rel & PolyRelInternal.BInsideA) != 0b0) || //A is negative, B is positive but B is inside A
-                    (partOfPolygonB && !isPos && (rel & PolyRelInternal.BInsideA) != 0b0) || //A and B are neg, but A encloses B
-                     (partOfPolygonB && isPos && rel < PolyRelInternal.AInsideB) || //B is negative, A is positive but they are separate
-                     (partOfPolygonB && isPos && (rel & PolyRelInternal.AInsideB) != 0b0)))) //B is negative, A is positive but A is inside B
-                    return; // these follow the 3 "Neither (empty result) from Table-Handling-Non-Contacting-Polygons-in-Intersection.png
+                var rel = relData.Item1;
+                otherIsPos = relData.Item2;
+                var isInsideOther = (!partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0) ||
+                    (partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0);
+
+                if (firstPass)
+                {
+                    if (!isInsideOther) return !otherIsPos; //separated or enclosesOther is false. only 
+                                                            // isInsideOther being true is the only way forward
+                                                            //if (!otherIsPos && isInsideOther) return false; //A is inside a hole of B
+                    firstPass = false;
+                }
+                else if (isInsideOther) return otherIsPos;
             }
-            newPolygons.Add(subPolygon.Copy(false, false));
+            return !otherIsPos;
         }
     }
 }

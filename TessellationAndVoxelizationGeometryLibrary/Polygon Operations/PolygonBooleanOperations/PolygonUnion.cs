@@ -108,34 +108,22 @@ namespace TVGL.TwoDimensional
             // a hole is effectively removed
         }
 
-        protected override void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
+        protected override bool HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB)
         {
-            using var enumerator = relationships.GetEnumerator();
-            enumerator.MoveNext();
-            while (enumerator.MoveNext())
+            foreach (var relData in relationships)
             {
-                var rel = enumerator.Current.Item1;
-                var isPos = enumerator.Current.Item2;
+                var rel = relData.Item1;
+                var otherIsPos = relData.Item2;
+                var isInsideOther = (!partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0) ||
+                    (partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0);
                 // these  conditions follow from the Table-Handling-Non-Contacting-Polygons-in-Union.png
-                if ((subPolygon.IsPositive && isPos &&   // A and B are positive
-                    ((!partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0) ||
-                    (partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0)))
-                    ||
-                    (!subPolygon.IsPositive && !isPos && // A and B are negative
-                    (!partOfPolygonB && rel < PolyRelInternal.AInsideB) ||  // they are separate
-                    (!partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0) ||
-                    (partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0))
-                    ||
-                    (subPolygon.IsPositive != isPos &&
-                    (rel < PolyRelInternal.AInsideB) || //this is two cases A and B have opposite signs and they are separated
-                    (!partOfPolygonB && subPolygon.IsPositive && (rel & PolyRelInternal.BInsideA) != 0b0) ||
-                    (!partOfPolygonB && !subPolygon.IsPositive && (rel & PolyRelInternal.AInsideB) != 0b0) ||
-                    (partOfPolygonB && subPolygon.IsPositive && (rel & PolyRelInternal.AInsideB) != 0b0) ||
-                    (partOfPolygonB && !subPolygon.IsPositive && (rel & PolyRelInternal.BInsideA) != 0b0)))
-                    return;
+                if (otherIsPos && !isInsideOther) return true; // B is positive, so keep this polygon so long as it 
+                // isn't inside the other - that is either separated or enclosing the other. You still may end up 
+                // keeping it if it is in a hole of the other.
+                if (!otherIsPos && isInsideOther) return true; //A is inside a hole of B
             }
-            newPolygons.Add(subPolygon.Copy(false, false));
+            return false;
         }
     }
 }

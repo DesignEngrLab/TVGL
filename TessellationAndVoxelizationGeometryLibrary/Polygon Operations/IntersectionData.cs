@@ -108,22 +108,22 @@ namespace TVGL.TwoDimensional
             // if already Intersection, then nothing to do (that's 8)
             if (newRel == PolyRelInternal.Separated) return;
             // if the newRel is Separated then no update as well (-7)
-
-            if ((int)newRel == (int)Relationship) return;
+            var newRelationship = (PolygonRelationship)(((int)newRel) & 248);
+            if (newRelationship == Relationship) return;
             // if they're the same then nothing to do (that's 6 more since previous conditions would have caught 2 of these
             // down to 43
-            if (newRel == PolyRelInternal.Intersection ||
-                ((newRel == PolyRelInternal.AInsideB || newRel == (PolyRelInternal.AInsideB | PolyRelInternal.InsideHole)) &&
+            if (newRelationship == PolygonRelationship.Intersection ||
+                ((newRelationship == PolygonRelationship.AInsideB || newRelationship == PolygonRelationship.AIsInsideHoleOfB) &&
                 (Relationship == PolygonRelationship.BInsideA || Relationship == PolygonRelationship.BIsInsideHoleOfA)) ||
-                ((Relationship == PolygonRelationship.AInsideB || Relationship == PolygonRelationship.AIsInsideHoleOfB) &&
-                (newRel == PolyRelInternal.BInsideA || newRel == (PolyRelInternal.BInsideA | PolyRelInternal.InsideHole))))
+                ((newRelationship == PolygonRelationship.BInsideA || newRelationship == PolygonRelationship.BIsInsideHoleOfA) &&
+                (Relationship == PolygonRelationship.AInsideB || Relationship == PolygonRelationship.AIsInsideHoleOfB)))
                 this.Relationship = PolygonRelationship.Intersection;
             // how many more pairs are these: 7 + 8....down to 28
             else if (Relationship == PolygonRelationship.Separated)
-                Relationship = (PolygonRelationship)newRel; //6 more here (i think...not included newRel is Separated or Intersection
-            else if (newRel == PolyRelInternal.Equal) return; // current Relationship would be more descriptive
+                Relationship = newRelationship; //6 more here (i think...not included newRel is Separated or Intersection
+            else if (newRelationship == PolygonRelationship.Equal) return; // current Relationship would be more descriptive
             // so finding out that a subpolygon in Equal doesn't change anything (that 5 more cases)
-            else if (newRel == PolyRelInternal.EqualButOpposite)
+            else if (newRelationship == PolygonRelationship.EqualButOpposite)
             {
                 if (Relationship == PolygonRelationship.BInsideA)
                     Relationship = PolygonRelationship.BIsInsideHoleOfA;
@@ -293,7 +293,12 @@ namespace TVGL.TwoDimensional
                     }
                 }
                 return new PolygonInteractionRecord(Relationship, newIntersections, (PolyRelInternal[])polygonRelations.Clone(), newSubPolygonToInt,
-                    numPolygonsInA, numPolygonsInB);
+                    numPolygonsInA, numPolygonsInB)
+                {
+                    CoincidentEdges = this.CoincidentEdges,
+                    CoincidentVertices = this.CoincidentVertices,
+                    EdgesCross = this.EdgesCross
+                };
             }
             var index = 0;
             foreach (var keyValuePair in subPolygonToInt)
@@ -310,7 +315,12 @@ namespace TVGL.TwoDimensional
                     newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
             return new PolygonInteractionRecord((PolygonRelationship)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship),
                 newIntersections, newPolygonRelations, newSubPolygonToInt,
-              numPolygonsInB, numPolygonsInA);
+              numPolygonsInB, numPolygonsInA)
+            {
+                CoincidentEdges = this.CoincidentEdges,
+                CoincidentVertices = this.CoincidentVertices,
+                EdgesCross = this.EdgesCross
+            };
         }
 
     }

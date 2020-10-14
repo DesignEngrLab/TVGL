@@ -85,9 +85,11 @@ namespace TVGL.TwoDimensional
                     }
                 }
             foreach (var poly in nonIntersectingASubPolygons)
-                HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), false);
+                if (HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), false))
+                    newPolygons.Add(poly.Copy(false, false));
             foreach (var poly in nonIntersectingBSubPolygons)
-                HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), true);
+               if(HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), true))
+                    newPolygons.Add(poly.Copy(false, false));
 
             switch (polygonCollection)
             {
@@ -285,7 +287,7 @@ namespace TVGL.TwoDimensional
         protected abstract bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
            PolygonEdge currentEdge, PolygonEdge startingEdge);
 
-        protected abstract void HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
+        protected abstract bool HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,
             IEnumerable<(PolyRelInternal, bool)> relationships, bool partOfPolygonB);
 
         /// <summary>

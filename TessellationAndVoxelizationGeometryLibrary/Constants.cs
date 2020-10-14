@@ -732,7 +732,7 @@ namespace TVGL
     /// <summary>
     /// Enum PolygonRelationship
     /// </summary>
-    [Flags]
+
     public enum PolygonRelationship
     {
         /// <summary>

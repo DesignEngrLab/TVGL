@@ -57,20 +57,22 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-        internal static IEnumerable<KeyValuePair<string, (Vector2[][], Vector2[][])>> GetAllSingleArgumentErsatzCases()
+        internal static IEnumerable<KeyValuePair<string, (Vector2[][], Vector2[][])>> GetAllSingleArgumentEdgeCases()
         {
-            foreach (var kvp in Ersatz)
+            foreach (var kvp in EdgeCases)
                 if (kvp.Value.Item2 == null)
                     yield return kvp;
         }
-        internal static IEnumerable<KeyValuePair<string, (Vector2[][], Vector2[][])>> GetAllTwoArgumentErsatzCases()
+        internal static IEnumerable<KeyValuePair<string, (Vector2[][], Vector2[][])>> GetAllTwoArgumentEdgeCases()
         {
-            foreach (var kvp in Ersatz)
+            foreach (var kvp in EdgeCases)
                 if (kvp.Value.Item2 != null)
                     yield return kvp;
         }
 
-        internal static Dictionary<string, (Vector2[][], Vector2[][])> Ersatz =
+        // used as a substitute, typically an inferior one, for something else
+
+        internal static Dictionary<string, (Vector2[][], Vector2[][])> EdgeCases =
             new Dictionary<string, (Vector2[][], Vector2[][])>
             {
                 { "skyline", (

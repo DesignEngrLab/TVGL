@@ -17,7 +17,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
         [STAThread]
         private static void Main(string[] args)
-        
+
         {
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
@@ -28,24 +28,22 @@ namespace TVGLUnitTestsAndBenchmarking
 
 #else
             //#endif
-            //var stats = new List<(string, int, long, long)>();
+            PolygonBooleanTester.FullComparison();
+            var stats = new List<(string, int, long, long)>();
 
-            //foreach (var testCase in TestCases.GetAllTwoArgumentErsatzCases())
-            //{
-            //    var polys = testCase.Value;
-            //    PolygonBooleanTester.SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2),
-            //        TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
-            //}
+            foreach (var testCase in TestCases.GetAllTwoArgumentEdgeCases())
+            {
+                var polys = testCase.Value;
+                PolygonBooleanTester.SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2),
+                    TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
+            }
 #endif
-PolygonOperationsTesting.TestOffsetting();
-            //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
             //PolygonOperationsTesting.TestOffsetting();
-            //PolygonOperationsTesting.DebugBoolean();
-            //PolygonOperationsTesting.TestBooleanCompare();
+            //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
+            //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
             //PolygonOperationsTesting.TestRemoveSelfIntersect();
             //PolygonOperationsTesting.DebugEdgeCases();
             //PolygonOperationsTesting.DebugOctagons();
-            //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
             //PolygonOperationsTesting.TestUnionSimple();
         }
     }

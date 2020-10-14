@@ -21,13 +21,18 @@ namespace TVGLUnitTestsAndBenchmarking
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
 
+        internal static void DebugEdgeCases()
+        {
+            foreach (var name in TestCases.EdgeCases.Keys)
+                DebugEdgeCases(name);
+        }
         internal static void DebugEdgeCases(string name)
         {
-            var coords1 = TestCases.Ersatz[name].Item1;
+            var coords1 = TestCases.EdgeCases[name].Item1;
             var polygon1 = new Polygon(coords1[0]);
             for (int i = 1; i < coords1.Length; i++)
                 polygon1.AddInnerPolygon(new Polygon(coords1[i]));
-            var coords2 = TestCases.Ersatz[name].Item2;
+            var coords2 = TestCases.EdgeCases[name].Item2;
             var polygon2 = new Polygon(coords2[0]);
             for (int i = 1; i < coords2.Length; i++)
                 polygon2.AddInnerPolygon(new Polygon(coords2[i]));
@@ -35,17 +40,17 @@ namespace TVGLUnitTestsAndBenchmarking
             // polygon1.RemoveSelfIntersections();
             //Presenter.ShowAndHang(polygon1);
 
-            DebugEdgeCases(polygon1, polygon2);
+            DebugBooleanOperations(polygon1, polygon2);
 
             //Console.ReadKey();
         }
 
-        private static void DebugEdgeCases(IEnumerable<Vector2> coordinates1, IEnumerable<Vector2> coordinates2)
+        private static void DebugBooleanOperations(IEnumerable<Vector2> coordinates1, IEnumerable<Vector2> coordinates2)
         {
-            DebugEdgeCases(new Polygon(coordinates1), new Polygon(coordinates2));
+            DebugBooleanOperations(new Polygon(coordinates1), new Polygon(coordinates2));
         }
 
-        private static void DebugEdgeCases(Polygon polygon1, Polygon polygon2)
+        private static void DebugBooleanOperations(Polygon polygon1, Polygon polygon2)
         {
             Presenter.ShowAndHang(new[] { polygon1, polygon2 });
 
@@ -72,7 +77,9 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Vector2[][] coords1, coords2;
             (coords1, coords2) = TestCases.MakeBumpyRings(12, 25, 0);
-            var result = TestCases.C2Poly(coords1).Union(TestCases.C2Poly(coords2));
+            Presenter.ShowAndHang(coords1, coords2);
+
+            var result = TestCases.C2Poly(coords1).Intersect(TestCases.C2Poly(coords2));
 
             Presenter.ShowAndHang(result);
         }
@@ -143,27 +150,27 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void TestBoundingRectangle()
         {
-            var polygon = TestCases.Ersatz["boundingRectTest3"].Item1;
-            //var polygon = TestCases.Ersatz["boundingRectTest3"].Item1;
-            //var polygon = TestCases.Ersatz["boundingRectTest3"].Item1;
+            var polygon = TestCases.EdgeCases["boundingRectTest3"].Item1;
+            //var polygon = TestCases.EdgeCases["boundingRectTest3"].Item1;
+            //var polygon = TestCases.EdgeCases["boundingRectTest3"].Item1;
             var br = polygon[0].BoundingRectangle();
             Presenter.ShowAndHang(new[] { polygon[0], br.CornerPoints });
         }
         public static void TestSlice2D()
         {
             //var polygon = PolygonTestCases.edgeCaseDictionary["sliceSimpleCase"].Item1;
-            var polygon = TestCases.Ersatz["sliceWithHole"].Item1;
+            var polygon = TestCases.EdgeCases["sliceWithHole"].Item1;
             Presenter.ShowAndHang(polygon);
             polygon.SliceAtLine(new Vector2(1, -0.1).Normalize(), 0, out var negPolys, out var posPolys, -0.3, -0.3);
 
             Presenter.ShowAndHang(negPolys);
-            Presenter.ShowAndHang(posPolys );
+            Presenter.ShowAndHang(posPolys);
         }
 
         public static void TestOffsetting()
         {
 
-            foreach (var polys in TestCases.GetAllTwoArgumentErsatzCases())
+            foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
             {
                 var polygon1 = new Polygon(polys.Value.Item1);
                 var polygon2 = new Polygon(polys.Value.Item2);

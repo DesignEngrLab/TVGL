@@ -233,7 +233,7 @@ namespace TVGL.TwoDimensional
                 if (polygonB.IsPositive) return new List<Polygon>();
                 else return new List<Polygon> { polygonA.Copy(true, false) };
             }
-            if (interaction.Relationship == PolygonRelationship.BInsideA)
+            if (interaction.Relationship == PolygonRelationship.BInsideA && !interaction.CoincidentEdges)
             {
                 if (polygonB.IsPositive) return new List<Polygon> { polygonB.Copy(true, false) };
                 else
@@ -243,7 +243,7 @@ namespace TVGL.TwoDimensional
                     return new List<Polygon> { polygonACopy };
                 }
             }
-            else if (interaction.Relationship == PolygonRelationship.AInsideB)
+            else if (interaction.Relationship == PolygonRelationship.AInsideB && !interaction.CoincidentEdges)
             {
                 if (polygonA.IsPositive) return new List<Polygon> { polygonA.Copy(true, false) };
                 else

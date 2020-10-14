@@ -56,7 +56,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-        internal void FullComparison()
+        internal static void FullComparison()
         {
             var stats = new List<(string, int, long, long)>();
             (Vector2[][], Vector2[][]) polys;
@@ -102,7 +102,7 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static void SingleCompare(List<(string, int, long, long)> stats, Polygon p1, Polygon p2, List<List<PointLight>> v1, List<List<PointLight>> v2)
         {
             var stopWatch = new Stopwatch();
-            var numIters = 10;
+            var numIters = 1;
             var operationString = "";
             List<Polygon> tvglResult = null;
             List<List<PointLight>> clipperResult = null;
@@ -179,7 +179,7 @@ namespace TVGLUnitTestsAndBenchmarking
             Vector2[][] coords1, coords2;
 
             
-             foreach (var testcase in TestCases.GetAllTwoArgumentErsatzCases())
+             foreach (var testcase in TestCases.GetAllTwoArgumentEdgeCases())
             {
                 Console.WriteLine(testcase.Key);
                 coords1 = testcase.Value.Item1;
