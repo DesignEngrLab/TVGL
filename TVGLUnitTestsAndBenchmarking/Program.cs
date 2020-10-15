@@ -38,7 +38,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
             }
 #endif
-            //PolygonOperationsTesting.TestOffsetting();
+            PolygonOperationsTesting.TestOffsetting();
             //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
             //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
             //PolygonOperationsTesting.TestRemoveSelfIntersect();

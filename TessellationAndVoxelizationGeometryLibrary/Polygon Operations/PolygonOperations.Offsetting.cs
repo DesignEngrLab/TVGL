@@ -118,8 +118,8 @@ namespace TVGL.TwoDimensional
             var bb = polygon.BoundingRectangle();
             if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
                 return new List<Polygon>();
-            var outers = new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle))
-                  .RemoveSelfIntersections(false, out _, tolerance);
+            var outer = new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, deltaAngle));
+            var outers = outer.RemoveSelfIntersections(false, out _, tolerance);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
@@ -131,17 +131,6 @@ namespace TVGL.TwoDimensional
                 inners.AddRange(newHoles);
             }
             return outers.Subtract(inners, tolerance: tolerance);
-            //for (var i = 0; i < positivePolygons.Count; i++)
-            //{
-            //    foreach (var hole in negativePolygons)
-            //    {
-            //        var result = positivePolygons[i].Subtract(hole);
-            //        positivePolygons[i] = result[0];
-            //        for (int j = 1; j < result.Count; j++)
-            //            positivePolygons.Add(result[i]);
-            //    }
-            //}
-            //return positivePolygons;
         }
 
         private static List<Vector2> OffsetRoutineForward(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double deltaAngle = double.NaN)
@@ -152,7 +141,8 @@ namespace TVGL.TwoDimensional
             var startingListSize = numPoints;
             var roundCorners = !double.IsNaN(deltaAngle);
             if (roundCorners) startingListSize += (int)(2 * Math.PI / deltaAngle);
-            var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(deltaAngle) : Matrix3x3.Null;
+            var offsetSign = Math.Sign(offset);
+            var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(offsetSign * deltaAngle) : Matrix3x3.Null;
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
             var pointsList = new List<Vector2>(startingListSize);
 
@@ -172,7 +162,9 @@ namespace TVGL.TwoDimensional
                 var cross = prevLine.Vector.Cross(nextLine.Vector);
                 // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
                 // let's start with the roundCorners
-                if (cross * offset > 0 && roundCorners)
+                if (cross.IsNegligible()) // if line is practically straight, simply offset it without all the complication below
+                    pointsList.Add(point + offset * prevUnitNormal);
+                else if (cross * offset > 0 && roundCorners)
                 {
                     var firstPoint = point + offset * prevUnitNormal;
                     pointsList.Add(firstPoint);
@@ -186,7 +178,7 @@ namespace TVGL.TwoDimensional
                     var nextPoint = firstPoint.Transform(transform);
                     // the challenge with this matrix transform is figuring out when to stop. But we know that all the new points must to on
                     // positive side of the line connectings the first and last points. This is defined by the following dot-product
-                    while (firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
+                    while (offsetSign * firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
                     {
                         pointsList.Add(nextPoint);
                         firstPoint = nextPoint;
@@ -208,13 +200,13 @@ namespace TVGL.TwoDimensional
                         point + offset * nextUnitNormal, nextLine.Vector));
                 }
                 // miter and concave connections are done the same way...
-                else if (cross.IsNegligible())
-                    pointsList.Add(point + offset * prevUnitNormal);
                 else
                 {
-                    pointsList.Add(MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
-                        prevLine.Vector,
-                        point + offset * nextUnitNormal, nextLine.Vector));
+                    var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
+                        prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
+                    if (pointsList.Count > 0 && prevLine.Vector.Dot(intersection - pointsList[^1]) < 0)
+                        pointsList.RemoveAt(pointsList.Count - 1);
+                    else pointsList.Add(intersection);
                 }
                 prevLine = nextLine;
                 prevUnitNormal = nextUnitNormal;

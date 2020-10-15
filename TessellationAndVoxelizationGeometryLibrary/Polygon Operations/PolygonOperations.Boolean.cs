@@ -282,25 +282,25 @@ namespace TVGL.TwoDimensional
                 foreach (var polyB in polygonBList)
                 {
                     var interaction = GetPolygonInteraction(result[i], polyB, tolerance);
-                    if (interaction.IntersectionWillBeEmpty())
-                    {
-                        result.RemoveAt(i);
-                        break;
-                    }
-                    else if (interaction.Relationship == PolygonRelationship.BInsideA)
-                    {   // remove polygon A
-                        result[i] = polyB.Copy(true, false);
-                        break; // to stop the inner loop
-                    }
-                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
-                        continue;
-                    else
-                    {
+                    //if (interaction.IntersectionWillBeEmpty())
+                    //{
+                    //    result.RemoveAt(i);
+                    //    break;
+                    //}
+                    //else if (interaction.Relationship == PolygonRelationship.BInsideA)
+                    //{   // remove polygon A
+                    //    result[i] = polyB.Copy(true, false);
+                    //    break; // to stop the inner loop
+                    //}
+                    //else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    //    continue;
+                    //else
+                    //{
                         var newPolygons = Intersect(result[i], polyB, interaction, outputAsCollectionType, tolerance);
                         result.RemoveAt(i--);
                         foreach (var newPolyA in newPolygons)
                             result.Insert(++i, newPolyA);
-                    }
+                    //}
                 }
             }
             return result;
