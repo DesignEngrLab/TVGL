@@ -15,7 +15,8 @@ namespace TVGL.TwoDimensional
     public class PolygonInteractionRecord
     {
         private PolygonInteractionRecord(PolygonRelationship topLevelRelationship, List<SegmentIntersection> intersections,
-             PolyRelInternal[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB)
+             PolyRelInternal[] polygonRelations, Dictionary<Polygon, int> subPolygonToInt, int numPolygonsInA, int numPolygonsInB,
+            bool isAPositive, bool isBPositive)
         {
             this.Relationship = topLevelRelationship;
             this.IntersectionData = intersections;
@@ -23,6 +24,8 @@ namespace TVGL.TwoDimensional
             this.subPolygonToInt = subPolygonToInt;
             this.numPolygonsInA = numPolygonsInA;
             this.numPolygonsInB = numPolygonsInB;
+            this.AIsPositive = isAPositive;
+            this.BIsPositive = isBPositive;
         }
         internal PolygonInteractionRecord(Polygon polygonA, Polygon polygonB)
         {
@@ -40,6 +43,8 @@ namespace TVGL.TwoDimensional
             this.polygonRelations = new PolyRelInternal[numPolygonsInA * numPolygonsInB];
             this.IntersectionData = new List<SegmentIntersection>();
             this.Relationship = PolygonRelationship.Separated;
+            this.AIsPositive = polygonA.IsPositive;
+            this.BIsPositive = polygonB.IsPositive;
         }
 
         /// <summary>
@@ -52,6 +57,8 @@ namespace TVGL.TwoDimensional
         private readonly Dictionary<Polygon, int> subPolygonToInt;
         internal readonly int numPolygonsInA;
         internal readonly int numPolygonsInB;
+        internal readonly bool AIsPositive;
+        internal readonly bool BIsPositive;
         /// <summary>
         /// Gets a value indicating whether [coincident edges].
         /// </summary>
@@ -70,10 +77,16 @@ namespace TVGL.TwoDimensional
 
         public bool IntersectionWillBeEmpty()
         {
-            return Relationship != PolygonRelationship.Intersection &&
-                Relationship != PolygonRelationship.AInsideB &&
-                Relationship != PolygonRelationship.BInsideA &&
-                Relationship != PolygonRelationship.Equal;
+            if (Relationship == PolygonRelationship.Intersection ||
+                Relationship == PolygonRelationship.Equal)
+                return false;
+            if (Relationship == PolygonRelationship.EqualButOpposite) return true;
+            if (Relationship == PolygonRelationship.Separated) return AIsPositive && BIsPositive;
+            //if either or both are negative, then the separation actually means an intersection
+            return !((AIsPositive && Relationship == PolygonRelationship.BInsideA) ||
+                (BIsPositive && Relationship == PolygonRelationship.AInsideB) ||
+                (!AIsPositive && Relationship == PolygonRelationship.BIsInsideHoleOfA) ||
+                (!BIsPositive && Relationship == PolygonRelationship.AIsInsideHoleOfB));
         }
 
 
@@ -107,7 +120,7 @@ namespace TVGL.TwoDimensional
             if (this.Relationship == PolygonRelationship.Intersection) return;
             // if already Intersection, then nothing to do (that's 8)
             if (newRel == PolyRelInternal.Separated) return;
-            // if the newRel is Separated then no update as well (-7)
+            // if the newRel is Separated then no update as well (7 more)
             var newRelationship = (PolygonRelationship)(((int)newRel) & 248);
             if (newRelationship == Relationship) return;
             // if they're the same then nothing to do (that's 6 more since previous conditions would have caught 2 of these
@@ -244,7 +257,7 @@ namespace TVGL.TwoDimensional
         internal PolygonInteractionRecord InvertPolygonInRecord(Polygon polygon, out Polygon invertedPolygon)
         {
             var tolerance = Constants.BaseTolerance * Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY);
-            bool polygonIsAInInteractions = subPolygonToInt[polygon] < numPolygonsInA;
+            bool polygonAIsInverted = subPolygonToInt[polygon] < numPolygonsInA;
             var visitedIntersectionPairs = new HashSet<(PolygonEdge, PolygonEdge)>();
             var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
             invertedPolygon = polygon.Copy(true, true);
@@ -256,16 +269,16 @@ namespace TVGL.TwoDimensional
                 var oldIntersection = IntersectionData[i];
                 var edgeA = oldIntersection.EdgeA;
                 var edgeB = oldIntersection.EdgeB;
-                var indexOfEdge = polygonIsAInInteractions ? edgeA.IndexInList : edgeB.IndexInList;
+                var indexOfEdge = polygonAIsInverted ? edgeA.IndexInList : edgeB.IndexInList;
                 var k = 0;
                 while (delimiters[k] <= indexOfEdge) k++;
                 indexOfEdge = delimiters[k - 1] + (delimiters[k] - indexOfEdge) - 1;
                 var newFlippedEdge = allLines[indexOfEdge];
                 if (oldIntersection.WhereIntersection == WhereIsIntersection.BothStarts ||
-                        (polygonIsAInInteractions && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfA) ||
-                    (!polygonIsAInInteractions && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfB))
+                        (polygonAIsInverted && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfA) ||
+                    (!polygonAIsInverted && oldIntersection.WhereIntersection == WhereIsIntersection.AtStartOfB))
                     newFlippedEdge = newFlippedEdge.ToPoint.StartLine;
-                if (polygonIsAInInteractions)
+                if (polygonAIsInverted)
                 {
                     if (visitedIntersectionPairs.Contains((newFlippedEdge, edgeB))) continue;
                     visitedIntersectionPairs.Add((newFlippedEdge, edgeB));
@@ -279,11 +292,14 @@ namespace TVGL.TwoDimensional
                 }
             }
             var newSubPolygonToInt = new Dictionary<Polygon, int>();
-            if (!polygonIsAInInteractions)
+            var isAPositive = invertedPolygon.IsPositive;
+            var isBPositive = invertedPolygon.IsPositive;
+            if (!polygonAIsInverted)
             {
                 using var newPolyEnumerator = invertedPolygon.AllPolygons.GetEnumerator();
                 foreach (var keyValuePair in subPolygonToInt)
                 {
+                    if (keyValuePair.Value == 0) isAPositive = keyValuePair.Key.IsPositive;
                     if (keyValuePair.Value < numPolygonsInA)
                         newSubPolygonToInt.Add(keyValuePair.Key, keyValuePair.Value);
                     else
@@ -293,7 +309,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
                 return new PolygonInteractionRecord(Relationship, newIntersections, (PolyRelInternal[])polygonRelations.Clone(), newSubPolygonToInt,
-                    numPolygonsInA, numPolygonsInB)
+                    numPolygonsInA, numPolygonsInB, isAPositive, isBPositive)
                 {
                     CoincidentEdges = this.CoincidentEdges,
                     CoincidentVertices = this.CoincidentVertices,
@@ -303,6 +319,7 @@ namespace TVGL.TwoDimensional
             var index = 0;
             foreach (var keyValuePair in subPolygonToInt)
             {
+                if (keyValuePair.Value == numPolygonsInA) isBPositive = keyValuePair.Key.IsPositive;
                 if (keyValuePair.Value >= numPolygonsInA)
                     newSubPolygonToInt.Add(keyValuePair.Key, index++);
             }
@@ -315,7 +332,7 @@ namespace TVGL.TwoDimensional
                     newPolygonRelations[numPolygonsInB * i + j] = Constants.SwitchAAndBPolygonRelationship(polygonRelations[numPolygonsInA * j + i]);
             return new PolygonInteractionRecord((PolygonRelationship)Constants.SwitchAAndBPolygonRelationship((PolyRelInternal)Relationship),
                 newIntersections, newPolygonRelations, newSubPolygonToInt,
-              numPolygonsInB, numPolygonsInA)
+              numPolygonsInB, numPolygonsInA, isBPositive, isAPositive)
             {
                 CoincidentEdges = this.CoincidentEdges,
                 CoincidentVertices = this.CoincidentVertices,
