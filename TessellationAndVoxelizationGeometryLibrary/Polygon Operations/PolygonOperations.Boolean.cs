@@ -130,6 +130,7 @@ namespace TVGL.TwoDimensional
             double tolerance = double.NaN)
         {
             var unionedPolygons = polygonsA.ToList();
+            if (polygonsB is null) return UnionPolygons(unionedPolygons, outputAsCollectionType, tolerance);
             var polygonBList = polygonsB as List<Polygon> ?? polygonsB.ToList();
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(unionedPolygons, polygonBList);
@@ -147,8 +148,8 @@ namespace TVGL.TwoDimensional
                     }
                     else if (interaction.Relationship == PolygonRelationship.AInsideB)
                     {                            // remove polygon A
-                        polygonBList.RemoveAt(j);
                         unionedPolygons[i] = polygonBList[j];
+                        polygonBList.RemoveAt(j);
                         break; // to stop the inner loop
                     }
                     else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)

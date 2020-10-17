@@ -368,7 +368,16 @@ namespace TVGL
             var points = pointsAreConvexHull
                 ? initialPoints as IList<Vector2> ?? initialPoints.ToList()
                 : ConvexHull2D(initialPoints).ToList();
-            if (points.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
+            if (points.Count < 3)
+            {
+                var v = points[1] - points[0];
+                v = v.Normalize();
+                var w = new Vector2(-v.Y, v.X);
+                var dist0 = v.Dot(points[0]);
+                var dist1 = v.Dot(points[1]);
+                var perpDist = w.Dot(points[0]);
+                return new BoundingRectangle(v, w, Math.Min(dist0, dist1), Math.Max(dist0, dist1), perpDist, perpDist);
+            }
 
             //Simplify the points to make sure they are the minimal convex hull
             //Only set it as the convex hull if it contains more than three points.
@@ -376,7 +385,8 @@ namespace TVGL
             if (cvxPointsSimple.Count >= 3) points = cvxPointsSimple;
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point 
              * however, we want the last point that has minX, so that we can easily get the next angle  */
-            var lastIndex = points.Count - 1;
+            var pointsCount = points.Count;
+            var lastIndex = pointsCount - 1;
             //Good picture of extreme vertices in the following link
             //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.155.5671&rep=rep1&type=pdf
             //Godfried Toussaint: Solving Geometric Problems with the Rotating Calipers
@@ -386,25 +396,37 @@ namespace TVGL
 
             #region 2) Get Extreme Points and initial angles
             var extremeIndices = new int[4];
+            var nextIndex = 1;
             //Point0 = min X, (at the lowest Y value for ties)
-            while (points[extremeIndices[0]].X >= points[(extremeIndices[0] + 1) % (lastIndex + 1)].X) extremeIndices[0]++;
+            while (points[extremeIndices[0]].X >= points[nextIndex].X)
+            {
+                extremeIndices[0] = nextIndex;
+                nextIndex++;
+                if (nextIndex == pointsCount) nextIndex = 0;
+            }
             //Point1 = min Y (at the max X value for ties. This is done in the following while-loop)
             extremeIndices[1] = extremeIndices[0];
-            while (points[extremeIndices[1]].Y >= points[(extremeIndices[1] + 1) % (lastIndex + 1)].Y) extremeIndices[1]++;
+            while (points[extremeIndices[1]].Y >= points[nextIndex].Y)
+            {
+                extremeIndices[1] = nextIndex;
+                nextIndex++;
+                if (nextIndex == pointsCount) nextIndex = 0;
+            }
             //Point2 = max X (at the max Y value for ties
             extremeIndices[2] = extremeIndices[1];
-            while (points[extremeIndices[2]].X <= points[(extremeIndices[2] + 1) % (lastIndex + 1)].X) extremeIndices[2]++;
-            //Point3 = max Y (at the min X for ties). Need to be careful of the value exceeding the index for this list.
-            // It's possible that the answer to this is 0, so that will need to checked if we get that far
-            extremeIndices[3] = extremeIndices[2];
-            while (points[extremeIndices[3]].Y <= points[(extremeIndices[3] + 1) % (lastIndex + 1)].Y)
+            while (points[extremeIndices[2]].X <= points[nextIndex].X)
             {
-                extremeIndices[3]++;
-                if (extremeIndices[3] >= lastIndex)
-                {
-                    if (points[lastIndex].Y <= points[0].Y) extremeIndices[3] = 0;
-                    break;
-                }
+                extremeIndices[2] = nextIndex;
+                nextIndex++;
+                if (nextIndex == pointsCount) nextIndex = 0;
+            }
+            //Point3 = max Y (at the min X for ties). 
+            extremeIndices[3] = extremeIndices[2];
+            while (points[extremeIndices[3]].Y <= points[nextIndex].Y)
+            {
+                extremeIndices[3] = nextIndex;
+                nextIndex++;
+                if (nextIndex == pointsCount) nextIndex = 0;
             }
             // now set up initial array of angles. there will always be four angles. One for each face of the rectangle
             var angles = new double[4];
@@ -430,49 +452,55 @@ namespace TVGL
             #endregion
 
             const double oneQuarterRotation = Math.PI / 2;
-            var bestRectangle = new BoundingRectangle { Area = double.MaxValue, Offsets = new double[4] };
-            var offsets = new double[4];
+            var bestRectangle = new BoundingRectangle(Vector2.UnitX, Vector2.UnitY, 0, 0, double.PositiveInfinity,
+                double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity);
             var bestExtremeIndices = new int[4];
             while (smallestAngle <= oneQuarterRotation)
             {
                 #region 3) find new rectangle properties and keep if the best
                 //Get unit vectors for the sides of the new rectangle and find the dimensions
                 var currentPoint = points[extremeIndices[smallestAngleIndex]];
-                var nextIndex = extremeIndices[smallestAngleIndex] == lastIndex ? 0 : extremeIndices[smallestAngleIndex] + 1;
+                nextIndex = extremeIndices[smallestAngleIndex] == lastIndex ? 0 : extremeIndices[smallestAngleIndex] + 1;
                 var nextPoint = points[nextIndex];
                 // unitVectorAlongSide is found from the smallestAngle to get a side coincident with the rectangle. This is used
                 // for the extremes in the OTHER direction. we need the normal for the side to find the distance across.
                 var unitVectorAlongSide = (nextPoint - currentPoint).Normalize();
                 // the opposite distance would start from the previous side to the current's, or +3 sides away
-                offsets[0] = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 3) % 4]]);
+                var d1Min = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 3) % 4]]);
                 // this other distance would end at the nextside to the current's, or +1 sides away
-                offsets[1] = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 1) % 4]]);
+                var d1Max = unitVectorAlongSide.Dot(points[extremeIndices[(smallestAngleIndex + 1) % 4]]);
                 // the vector used for distance across is 90-degree in the CCW direction. it points "into" the rectangle
                 var unitVectorPointInto = new Vector2(-unitVectorAlongSide.Y, unitVectorAlongSide.X);
                 // dotDistances[2] will be the min in this unitVectorPointInto dir and it corresponds to the current point
-                offsets[2] = unitVectorPointInto.Dot(currentPoint);
+                var d2Min = unitVectorPointInto.Dot(currentPoint);
                 // dotDistances[3] will be the max in this unitVectorPointInto dir which is determined for the opposite side
                 // indicate by points[extremeIndices[(smallestAngleIndex + 2) % 4]]. Note the mod-4 let's us wrap-around
-                offsets[3] = unitVectorPointInto.Dot(points[extremeIndices[(smallestAngleIndex + 2) % 4]]);
-                var length1 = offsets[1] - offsets[0];
-                var length2 = offsets[3] - offsets[2];
+                var d2Max = unitVectorPointInto.Dot(points[extremeIndices[(smallestAngleIndex + 2) % 4]]);
+                var length1 = d1Max - d1Min;
+                var length2 = d2Max - d2Min;
                 var area = length1 * length2;
 
                 //If this is an improvement, set the parameters for the best bounding rectangle.
                 if (area < bestRectangle.Area)
                 {
-                    for (int i = 0; i < 4; i++)
-                        bestRectangle.Offsets[i] = offsets[i];
-                    bestExtremeIndices[0] = extremeIndices[(smallestAngleIndex + 3) % 4];
-                    bestExtremeIndices[1] = extremeIndices[(smallestAngleIndex + 1) % 4];
-                    bestExtremeIndices[2] = extremeIndices[smallestAngleIndex];
-                    bestExtremeIndices[3] = extremeIndices[(smallestAngleIndex + 2) % 4];
-
-                    bestRectangle.Area = area;
-                    bestRectangle.Length1 = length1;
-                    bestRectangle.Length2 = length2;
-                    bestRectangle.Direction1 = unitVectorAlongSide;
-                    bestRectangle.Direction2 = unitVectorPointInto;
+                    if (setPointsOnSide)
+                    {
+                        var sidePoints = new List<Vector2>[4];
+                        bestExtremeIndices[0] = extremeIndices[(smallestAngleIndex + 3) % 4];
+                        bestExtremeIndices[1] = extremeIndices[(smallestAngleIndex + 1) % 4];
+                        bestExtremeIndices[2] = extremeIndices[smallestAngleIndex];
+                        bestExtremeIndices[3] = extremeIndices[(smallestAngleIndex + 2) % 4];
+                        for (int i = 0; i < 4; i++)
+                        {
+                            var direction = (i < 2) ? bestRectangle.Direction1 : bestRectangle.Direction2;
+                            sidePoints[i] = FindSidePoints(bestExtremeIndices[i], bestRectangle.Offsets[i], points, direction, lastIndex);
+                        }
+                        bestRectangle = new BoundingRectangle(unitVectorAlongSide, unitVectorPointInto, d1Min, d1Max, d2Min, d2Max,
+                            length1, length2, area, sidePoints);
+                    }
+                    else
+                        bestRectangle = new BoundingRectangle(unitVectorAlongSide, unitVectorPointInto, d1Min, d1Max, d2Min, d2Max,
+                            length1, length2, area);
                 }
                 #endregion
                 #region 4) Update angles
@@ -481,7 +509,7 @@ namespace TVGL
                 do
                 {
                     nextIndex = (nextIndex == lastIndex) ? 0 : nextIndex + 1;
-                } while (unitVectorPointInto.Dot(points[nextIndex]).IsPracticallySame(offsets[2]));
+                } while (unitVectorPointInto.Dot(points[nextIndex]).IsPracticallySame(d2Min));
                 //actually, we need go back one. otherwise we skip this line originally made by nextIndex
                 extremeIndices[smallestAngleIndex] = nextIndex == 0 ? lastIndex : nextIndex - 1;
                 double angle = GetAngleWithNext(extremeIndices[smallestAngleIndex], points, smallestAngleIndex, lastIndex);
@@ -495,17 +523,6 @@ namespace TVGL
                     smallestAngleIndex = i;
                 }
                 #endregion
-            }
-            if (setCornerPoints) bestRectangle.SetCornerPoints();
-            if (setPointsOnSide)
-            {
-                var sidePoints = new List<Vector2>[4];
-                for (int i = 0; i < 4; i++)
-                {
-                    var direction = (i < 2) ? bestRectangle.Direction1 : bestRectangle.Direction2;
-                    sidePoints[i] = FindSidePoints(bestExtremeIndices[i], bestRectangle.Offsets[i], points, direction, lastIndex);
-                }
-                bestRectangle.PointsOnSides = sidePoints;
             }
             return bestRectangle;
         }

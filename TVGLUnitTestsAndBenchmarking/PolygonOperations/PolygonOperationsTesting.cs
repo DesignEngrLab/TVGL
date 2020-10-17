@@ -154,7 +154,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //var polygon = TestCases.EdgeCases["boundingRectTest3"].Item1;
             //var polygon = TestCases.EdgeCases["boundingRectTest3"].Item1;
             var br = polygon[0].BoundingRectangle();
-            Presenter.ShowAndHang(new[] { polygon[0], br.CornerPoints });
+            Presenter.ShowAndHang(new[] { polygon[0], br.CornerPoints() });
         }
         public static void TestSlice2D()
         {
@@ -171,11 +171,12 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
             {
-                //var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
-                var polysValue = TestCases.EdgeCases["pinch"];
-                var polygon1 = new Polygon(polysValue.Item1);
-                var polygon2 = new Polygon(polysValue.Item2);
+                var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
+                //var polysValue = TestCases.EdgeCases["claw"];
+                var polygon1 = new Polygon(polys.Value.Item1);
+                var polygon2 = new Polygon(polys.Value.Item2);
                 var polygons = polygon1.Union(polygon2);
+                //var polygons = polygon1;
                 //var coords1 = TestCases.MakeStarryCircularPolygon(50, 28, 1.8).ToList();
                 //var hole1 = TestCases.MakeStarryCircularPolygon(80, 14, 1.5).ToList();
                 //hole1.Reverse();
@@ -184,8 +185,8 @@ namespace TVGLUnitTestsAndBenchmarking
                 Presenter.ShowAndHang(polygons);
                 //var polygon1 = new Polygon(coords1, true);
                 // Presenter.ShowAndHang(polygon1);
-                // var polygons2 = polygon1.OffsetRound(2, 0.05);
-                var polygons3 = polygons.OffsetRound(-0.1*Math.Sqrt(polygons.LargestPolygon().Area), 0.00005);
+                 //var polygons3 = polygon1.OffsetRound(88);
+                var polygons3 = polygons.OffsetRound(10.1*Math.Sqrt(polygons.LargestPolygon().Area), 0.00005);
                 //polygons3.AddRange(polygons2);
                 //polygons3.Add(polygon1);
                 Presenter.ShowAndHang(polygons3);

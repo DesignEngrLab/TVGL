@@ -75,7 +75,7 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static Dictionary<string, (Vector2[][], Vector2[][])> EdgeCases =
             new Dictionary<string, (Vector2[][], Vector2[][])>
             {
-                { "sigma", (
+                { "claw", (
                     new [] { new [] { new Vector2(0,0), new Vector2(10,10), new Vector2(2, 5), new Vector2(2, 20), new Vector2(10, 15), new Vector2(0, 25) } },
                     null)},
 

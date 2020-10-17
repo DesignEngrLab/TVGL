@@ -145,7 +145,6 @@ namespace TVGL.TwoDimensional
             var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(offsetSign * deltaAngle) : Matrix3x3.Null;
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
             var pointsList = new List<Vector2>(startingListSize);
-
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
@@ -204,9 +203,19 @@ namespace TVGL.TwoDimensional
                 {
                     var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
                         prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
-                    if (pointsList.Count > 0 && prevLine.Vector.Dot(intersection - pointsList[^1]) < 0)
-                        pointsList.RemoveAt(pointsList.Count - 1);
-                    else pointsList.Add(intersection);
+                    //if (pointsList.Count == 0)
+                    //{
+                    //    pointsList.Add(intersection);
+                    //    continue;
+                    //}
+                    if (pointsList.Count>0 && !prevLine.Vector.Dot(intersection - pointsList[^1]).IsLessThanNonNegligible())
+                        //var newLine = intersection - pointsList[^1];
+                        //if (newLine.LengthSquared().IsNegligible() \\ //) continue;
+                        //if (
+                        //    prevLine.Vector.Dot(intersection - pointsList[^1]) < 0)
+                        //    pointsList.RemoveAt(pointsList.Count - 1);
+                        //else 
+                        pointsList.Add(intersection);
                 }
                 prevLine = nextLine;
                 prevUnitNormal = nextUnitNormal;

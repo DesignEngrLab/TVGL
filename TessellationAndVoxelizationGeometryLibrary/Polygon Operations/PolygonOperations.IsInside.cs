@@ -463,6 +463,8 @@ namespace TVGL.TwoDimensional
                    Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY))) * Constants.BaseTolerance;
             }
             var interactionRecord = new PolygonInteractionRecord(polygonA, polygonB);
+            if (interactionRecord.Relationship == PolygonRelationship.Equal) return interactionRecord;
+            // this would happen when the function detcts that polygonA and polygonB are the same
             var visited = new bool[interactionRecord.numPolygonsInA * interactionRecord.numPolygonsInB];
             RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, tolerance);
             interactionRecord.DefineOverallInteractionFromFinalListOfSubInteractions();
@@ -990,29 +992,15 @@ namespace TVGL.TwoDimensional
         {
             var length = orderedPoints.Count;
             var result = new PolygonEdge[length];
-            var smallHashOfLinesOfEqualX = new HashSet<PolygonEdge>();
             var k = 0;
             for (int i = 0; i < length; i++)
             {
 
                 var point = orderedPoints[i];
-                if (point.EndLine.OtherPoint(point).X > point.X)
-                    result[k++] = point.EndLine;
-                else if (point.EndLine.OtherPoint(point).X == point.X &&
-                         !smallHashOfLinesOfEqualX.Contains(point.EndLine))
-                {
-                    result[k++] = point.EndLine;
-                    smallHashOfLinesOfEqualX.Add(point.EndLine);
-                }
-                if (point.StartLine.OtherPoint(point).X > point.X)
+                if (!point.StartLine.OtherPoint(point).X.IsLessThanNonNegligible(point.X))
                     result[k++] = point.StartLine;
-                else if (point.StartLine.OtherPoint(point).X == point.X &&
-                         !smallHashOfLinesOfEqualX.Contains(point.StartLine))
-                {
-                    result[k++] = point.StartLine;
-                    smallHashOfLinesOfEqualX.Add(point.StartLine);
-                }
-
+                if (point.EndLine.OtherPoint(point).X.IsGreaterThanNonNegligible(point.X))
+                    result[k++] = point.EndLine;
                 if (k >= length) break;
             }
             return result;

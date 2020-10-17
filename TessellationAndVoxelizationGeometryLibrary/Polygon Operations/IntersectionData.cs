@@ -34,6 +34,11 @@ namespace TVGL.TwoDimensional
             foreach (var polyA in polygonA.AllPolygons)
                 subPolygonToInt.Add(polyA, index++);
             this.numPolygonsInA = index;
+            if (polygonA == polygonB)
+            {
+                this.Relationship = PolygonRelationship.Equal;
+                return;
+            }
             if (polygonB != null)
             {
                 foreach (var polyB in polygonB.AllPolygons)
@@ -44,7 +49,7 @@ namespace TVGL.TwoDimensional
             this.IntersectionData = new List<SegmentIntersection>();
             this.Relationship = PolygonRelationship.Separated;
             this.AIsPositive = polygonA.IsPositive;
-            this.BIsPositive = polygonB.IsPositive;
+            if (polygonB != null) this.BIsPositive = polygonB.IsPositive;
         }
 
         /// <summary>

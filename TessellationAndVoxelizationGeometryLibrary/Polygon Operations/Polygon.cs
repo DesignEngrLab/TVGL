@@ -494,15 +494,13 @@ namespace TVGL.TwoDimensional
             var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
 
-            var copiedPolygon = new Polygon
+            var copiedPolygon = new Polygon(thisPath, this.index)
             {
-                index = this.index,
                 area = invert ? -this.area : this.area,
                 maxX = this.maxX,
                 maxY = this.maxY,
                 minX = this.minX,
                 minY = this.minY,
-                _path = thisPath,
                 _innerPolygons = thisInnerPolygons
             };
             copiedPolygon.MakeVertices();
