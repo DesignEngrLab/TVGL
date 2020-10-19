@@ -208,7 +208,6 @@ namespace TVGL.TwoDimensional
                                                             // the edge that concern us. We want that function to report the first one for the edge
                 }
             } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge));
-            if (newPath[^1].IsPracticallySame(newPath[0])) newPath.RemoveAt(newPath.Count - 1);
             return newPath;
         }
 

@@ -78,8 +78,12 @@ namespace TVGLUnitTestsAndBenchmarking
                 { "claw", (
                     new [] { new [] { new Vector2(0,0), new Vector2(10,10), new Vector2(2, 5), new Vector2(2, 20), new Vector2(10, 15), new Vector2(0, 25) } },
                     null)},
-
-                { "skyline", (
+                { "tinyOffsetProb", (
+                    new [] { new [] { new Vector2(79.66782032532383, 55.43041375392381),
+                        new Vector2(80.10308177750458,55.16161954594162), new Vector2(79.74617295481619,55.5026089914283),
+                        new Vector2(79.49108255907875,55.59107482211029) ,new Vector2(79.78187368483665, 55.35998048399254)} },
+                    null)},
+{ "skyline", (
                     new [] { new [] { new Vector2(0,4), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7, 4), new Vector2(7, 2), new Vector2(6,2), new Vector2(4,2), new Vector2(4,3), new Vector2(1,3), new Vector2(1,4) } },
                     new [] { new [] { new Vector2(0,3), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7,4), new Vector2(7, 3), new Vector2(6, 3), new Vector2(2, 3), new Vector2(2, 4), new Vector2(1,4), new Vector2(1, 3) } })},
                  { "cutout", (

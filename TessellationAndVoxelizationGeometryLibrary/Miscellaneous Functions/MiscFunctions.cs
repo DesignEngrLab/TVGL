@@ -912,7 +912,7 @@ namespace TVGL
         /// <param name="edge1">The edge1.</param>
         /// <param name="edge2">The edge2.</param>
         /// <returns>System.Double.</returns>
-        internal static double SmallerAngleBetweenEdges(Edge edge1, Edge edge2)
+        internal static double SmallerAngleBetweenEdges(this Edge edge1, Edge edge2)
         {
             var axis = edge1.Vector.Cross(edge2.Vector);
             var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();

@@ -171,12 +171,12 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
             {
-                var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
-                //var polysValue = TestCases.EdgeCases["claw"];
-                var polygon1 = new Polygon(polys.Value.Item1);
-                var polygon2 = new Polygon(polys.Value.Item2);
-                var polygons = polygon1.Union(polygon2);
-                //var polygons = polygon1;
+                //var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
+                var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
+                var polygon1 = new Polygon(polysValue.Item1);
+                //var polygon2 = new Polygon(polysValue.Item2);
+                //var polygons = polygon1.Union(polygon2);
+                var polygons = new List<Polygon> { polygon1 };
                 //var coords1 = TestCases.MakeStarryCircularPolygon(50, 28, 1.8).ToList();
                 //var hole1 = TestCases.MakeStarryCircularPolygon(80, 14, 1.5).ToList();
                 //hole1.Reverse();
@@ -185,11 +185,13 @@ namespace TVGLUnitTestsAndBenchmarking
                 Presenter.ShowAndHang(polygons);
                 //var polygon1 = new Polygon(coords1, true);
                 // Presenter.ShowAndHang(polygon1);
-                 //var polygons3 = polygon1.OffsetRound(88);
-                var polygons3 = polygons.OffsetRound(10.1*Math.Sqrt(polygons.LargestPolygon().Area), 0.00005);
+                //var polygons3 = polygon1.OffsetRound(88);
+                var pl3 = OldTVGL.PolygonOperations.OffsetRound(TestCases.Poly2PLs(polygon1).First(), 6.35, .00254);
+                var polygons3 = polygons.OffsetRound(6.35, 0.00254);
                 //polygons3.AddRange(polygons2);
                 //polygons3.Add(polygon1);
                 Presenter.ShowAndHang(polygons3);
+                Presenter.ShowAndHang(new []{polygons3[0], new Polygon(pl3[0].Select(v => new Vector2(v.X, v.Y))) });
             }
 
         }

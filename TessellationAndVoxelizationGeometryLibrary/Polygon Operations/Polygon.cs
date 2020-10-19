@@ -416,23 +416,12 @@ namespace TVGL.TwoDimensional
         {
             //_path = coordinates.ToList();
             _path = new List<Vector2>();
-            Vector2 prevPrevCoordinate = Vector2.Null;
             Vector2 prevCoordinate = Vector2.Null;
             foreach (var p in coordinates)
             {
                 if (p.IsPracticallySame(prevCoordinate)) continue;
-                if (!prevCoordinate.IsNull() && !prevPrevCoordinate.IsNull() &&
-                    (p - prevCoordinate).Cross(prevCoordinate - prevPrevCoordinate) == 0)
-                {
-                    prevCoordinate = p;
-                    _path[^1] = p;
-                }
-                else
-                {
-                    prevPrevCoordinate = prevCoordinate;
-                    prevCoordinate = p;
-                    _path.Add(p);
-                }
+                prevCoordinate = p;
+                _path.Add(p);
             }
             if (_path.Count > 1 && _path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
             Index = index;
