@@ -555,9 +555,10 @@ namespace TVGL
             {
                 sidePoints.Add(points[index++]);
                 if (index > lastIndex) index = 0;
-            } while (direction.Dot(points[index]).IsPracticallySame(offset, Constants.OBBTolerance));
+            } while (index != startingIndex && direction.Dot(points[index]).IsPracticallySame(offset, Constants.OBBTolerance));
+            var lastAddedIndex = index == 0 ? lastIndex : index - 1; //because of the increment (3 lines up), the lastAddedIndex is one less than index
             index = startingIndex == 0 ? lastIndex : startingIndex - 1;
-            while (direction.Dot(points[index]).IsPracticallySame(offset, Constants.OBBTolerance))
+            while (index != lastAddedIndex && direction.Dot(points[index]).IsPracticallySame(offset, Constants.OBBTolerance))
             {
                 sidePoints.Add(points[index--]);
                 if (index < 0) index = lastIndex;

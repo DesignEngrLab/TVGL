@@ -120,6 +120,8 @@ namespace TVGL.TwoDimensional
             double tolerance, double deltaAngle = double.NaN)
         {
             var bb = polygon.BoundingRectangle();
+            // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
+            // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
             if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
                 return new List<Polygon>();
             var longerLength = Math.Max(bb.Length1, bb.Length2);
@@ -133,7 +135,8 @@ namespace TVGL.TwoDimensional
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
-                if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset) continue;
+                // like the above, but a positive offset will close the hole
+                if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
                 var invertedHole = hole.Copy(false, true);
                 var newHoleData = OffsetRoutineForward(invertedHole.Lines, -offset, notMiter,
                         longerLengthSquared, tolerance, deltaAngle);

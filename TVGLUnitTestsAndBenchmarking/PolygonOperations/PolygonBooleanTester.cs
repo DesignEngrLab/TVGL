@@ -88,7 +88,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     SingleCompare(stats, poly1, poly2, TestCases.Poly2PLs(poly1), TestCases.Poly2PLs(poly2));
                 }
             }
-           
+
 
 
             System.IO.StreamWriter SaveFile = new System.IO.StreamWriter("stats.csv");
@@ -178,8 +178,8 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             Vector2[][] coords1, coords2;
 
-            
-             foreach (var testcase in TestCases.GetAllTwoArgumentEdgeCases())
+
+            foreach (var testcase in TestCases.GetAllTwoArgumentEdgeCases())
             {
                 Console.WriteLine(testcase.Key);
                 coords1 = testcase.Value.Item1;
@@ -187,35 +187,35 @@ namespace TVGLUnitTestsAndBenchmarking
                 yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
             }
 
-                       int k = 0;
-                       for (int leftCut = 1; leftCut <= 4; leftCut++)
-                       {
-                           for (int leftWidth = 5 - leftCut; leftWidth < 11 - 2 * leftCut; leftWidth++)
-                           {
-                               for (int leftHeight = 5 - leftCut; leftHeight < 11 - 2 * leftCut; leftHeight++)
-                               {
-                                   for (int rightCut = 1; rightCut <= 4; rightCut++)
-                                   {
-                                       for (int rightWidth = 5 - rightCut; rightWidth < 11 - 2 * rightCut; rightWidth++)
-                                       {
-                                           for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
-                                           {
-                                               if (k % 1 == 0)
-                                               {
-                                                   Console.WriteLine("Octogon Case: " + k);
-                                                   coords1 = new[] { TestCases.MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut).ToArray() };
-                                                   coords2 = new[] { TestCases.MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut).ToArray() };
-                                                   yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
-                                                   k++;
-                                               }
-                                           }
-                                       }
-                                   }
-                               }
-                           }
-                       }
+            int k = 0;
+            for (int leftCut = 1; leftCut <= 4; leftCut++)
+            {
+                for (int leftWidth = 5 - leftCut; leftWidth < 11 - 2 * leftCut; leftWidth++)
+                {
+                    for (int leftHeight = 5 - leftCut; leftHeight < 11 - 2 * leftCut; leftHeight++)
+                    {
+                        for (int rightCut = 1; rightCut <= 4; rightCut++)
+                        {
+                            for (int rightWidth = 5 - rightCut; rightWidth < 11 - 2 * rightCut; rightWidth++)
+                            {
+                                for (int rightHeight = 5 - rightCut; rightHeight < 11 - 2 * rightCut; rightHeight++)
+                                {
+                                    if (k % 1 == 0)
+                                    {
+                                        Console.WriteLine("Octogon Case: " + k);
+                                        coords1 = new[] { TestCases.MakeOctogonPolygon(0, 0, 2 * leftCut + leftWidth, 2 * leftCut + leftHeight, leftCut).ToArray() };
+                                        coords2 = new[] { TestCases.MakeOctogonPolygon(9 - (2 * rightCut + rightWidth), 9 - (2 * rightCut + rightHeight), 9, 9, rightCut).ToArray() };
+                                        yield return new object[] { TestCases.C2Poly(coords1), TestCases.C2Poly(coords2), TestCases.C2PLs(coords1), TestCases.C2PLs(coords2) };
+                                        k++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
-        
+
             var radius = 100;
             for (int numVerts = 10; numVerts < 20000; numVerts = (int)(1.5 * numVerts))
             {
@@ -355,6 +355,65 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     Console.WriteLine("showing clipper error...");
                     Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);
+                }
+                Console.WriteLine();
+            }
+        }
+
+
+        public static void CompareOffsetResults(List<Polygon> tvglResult, List<List<PointLight>> clipperResult, double offset)
+        {
+            var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.
+                   CreateShallowPolygonTrees(clipperResult.Select(c => new Polygon(c.Select(v => new Vector2(v.X, v.Y)))), true, out _);
+            var tolerance = Math.Sqrt(tvglResult.Sum(r => r.Area));
+            var numPolygonsTVGL = tvglResult.Sum(poly => poly.AllPolygons.Count());
+            var numPolygonsClipper = clipperShallowPolyTree.Sum(poly => poly.AllPolygons.Count());
+            var vertsTVGL = tvglResult.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
+            var vertsClipper = clipperShallowPolyTree.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
+            var areaTVGL = tvglResult.Sum(p => p.Area);
+            var areaClipper = clipperShallowPolyTree.Sum(p => p.Area);
+            var perimeterTVGL = tvglResult.Sum(p => p.Perimeter);
+            var perimeterClipper = clipperShallowPolyTree.Sum(p => p.Perimeter);
+            if (numPolygonsTVGL == numPolygonsClipper
+                && vertsTVGL == vertsClipper &&
+                 areaTVGL.IsPracticallySame(areaClipper, (areaTVGL + areaClipper) * tolerance) &&
+                 perimeterTVGL.IsPracticallySame(perimeterClipper, (perimeterTVGL + perimeterClipper) * tolerance)
+                )
+            {
+                Console.WriteLine("*****offset {0} matches", offset);
+                Console.WriteLine();
+            }
+            else
+            {
+                var showResult = false;
+                Console.WriteLine("{0} does not match", offset);
+                if (numPolygonsTVGL == numPolygonsClipper)
+                    Console.WriteLine("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
+                else Console.WriteLine("    --- polygons: TVGL={0}  : Clipper={1} ", numPolygonsTVGL, numPolygonsClipper);
+                if (vertsTVGL == vertsClipper)
+                    Console.WriteLine("+++ both have {0} vertices(s)", vertsTVGL);
+                else Console.WriteLine("    --- verts: TVGL= {0}  : Clipper={1} ", vertsTVGL, vertsClipper);
+
+                if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
+                    Console.WriteLine("+++ both have area of {0}", areaTVGL);
+                else
+                {
+                    Console.WriteLine("    --- area: TVGL= {0}  : Clipper={1} ", areaTVGL, areaClipper);
+                    showResult = true;
+                }
+                if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
+                    Console.WriteLine("+++ both have perimeter of {0}", perimeterTVGL);
+                else
+                {
+                    Console.WriteLine("    --- perimeter: TVGL={0}  : Clipper={1} ", perimeterTVGL, perimeterClipper);
+                    if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
+                        Console.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
+                    else showResult = true;
+                }
+                if (showResult)
+                {
+                    Presenter.ShowAndHang(tvglResult, "TVGLPro");
+                    Presenter.ShowAndHang(clipperShallowPolyTree, "Clipper");
                 }
                 Console.WriteLine();
             }

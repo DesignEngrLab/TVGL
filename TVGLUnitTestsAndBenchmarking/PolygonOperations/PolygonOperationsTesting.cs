@@ -169,13 +169,13 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void TestOffsetting()
         {
-            //foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
-            //{
+            foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
+            {
                 var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
                 //var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
-                var polygon1 = new Polygon(polysValue.Item1);
-                var polygon2 = new Polygon(polysValue.Item2);
-                Presenter.ShowAndHang(new []{polygon1, polygon2});
+                var polygon1 = new Polygon(polys.Value.Item1);
+                var polygon2 = new Polygon(polys.Value.Item2);
+                Presenter.ShowAndHang(new[] { polygon1, polygon2 });
                 var polygons = polygon1.Union(polygon2);
 
                 //var polygons = new List<Polygon> { polygon1 };
@@ -188,14 +188,21 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var polygon1 = new Polygon(coords1, true);
                 // Presenter.ShowAndHang(polygon1);
                 //var polygons3 = polygon1.OffsetRound(88);
-                var pl3 = OldTVGL.PolygonOperations.OffsetRound(TestCases.Poly2PLs(polygon1).First(), 6.35, .00254);
-                var polygons3 = polygons.OffsetRound(1.3, 0.00254);
+                var offsetBase = Math.Sqrt(polygons.LargestPolygon().Area);
+                var factors = new[] { -.01, 0.01, -.03, 0.03, -.1, 0.1, -.3, 0.3, -1, 1, -3, 3, -10 };
+                foreach (var factor in factors)
+                {
+                    var offset = factor * offsetBase;
+                    var pl3 = OldTVGL.PolygonOperations.OffsetRound(TestCases.Poly2PLs(polygons[0]), 1.3, .00254);
+                    var polygons3 = polygons[0].OffsetRound(1.3, 0.00254);
+                    PolygonBooleanTester.CompareOffsetResults(polygons3, pl3, offset);
+                }
+
                 //polygons3.AddRange(polygons2);
                 //polygons3.Add(polygon1);
-                Presenter.ShowAndHang(polygons3);
-                Presenter.ShowAndHang(new []{polygons3[0], new Polygon(pl3[0].Select(v => new Vector2(v.X, v.Y))) });
-            //}
-
+                //Presenter.ShowAndHang(polygons3);
+                // Presenter.ShowAndHang(new[] { polygons3[0], new Polygon(pl3[0].Select(v => new Vector2(v.X, v.Y))) });
+            }
         }
     }
 }
