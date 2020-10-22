@@ -114,11 +114,12 @@ namespace TVGL.TwoDimensional
         {
             var firstPass = true;
             var otherIsPos = false;
+            var isInsideOther = false;
             foreach (var relData in relationships)
             {
                 var rel = relData.Item1;
                 otherIsPos = relData.Item2;
-                var isInsideOther = (!partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0) ||
+                isInsideOther = (!partOfPolygonB && (rel & PolyRelInternal.AInsideB) != 0b0) ||
                     (partOfPolygonB && (rel & PolyRelInternal.BInsideA) != 0b0);
 
                 if (firstPass)
@@ -130,6 +131,7 @@ namespace TVGL.TwoDimensional
                 }
                 else if (isInsideOther) return otherIsPos;
             }
+            if (isInsideOther) return otherIsPos;
             return !otherIsPos;
         }
     }

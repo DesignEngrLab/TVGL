@@ -123,31 +123,33 @@ namespace TVGL.TwoDimensional
             if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
                 return new List<Polygon>();
             var longerLength = Math.Max(bb.Length1, bb.Length2);
-            var longerLengthSquared = 3 * offset * offset;
+            var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             if (double.IsNaN(tolerance)) tolerance = longerLength * Constants.BaseTolerance;
-            var outer = new Polygon(OffsetRoutineForward(polygon.Lines, offset, notMiter, longerLengthSquared, tolerance,
-                deltaAngle));
-            var outers = outer.RemoveSelfIntersections(false, out _, tolerance);
+            var outerData = OffsetRoutineForward(polygon.Lines, offset, notMiter, longerLengthSquared, tolerance,
+                deltaAngle);
+            var outer = new Polygon(outerData.points);
+            var outers = outer.RemoveSelfIntersections(false, out _, tolerance, outerData.knownWrongPoints);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset) continue;
                 var invertedHole = hole.Copy(false, true);
-                var newHoles = new Polygon(OffsetRoutineForward(invertedHole.Lines, -offset, notMiter,
-                        longerLengthSquared, tolerance, deltaAngle))
-                    .RemoveSelfIntersections(true, out _, tolerance);
-                inners.AddRange(newHoles);
+                var newHoleData = OffsetRoutineForward(invertedHole.Lines, -offset, notMiter,
+                        longerLengthSquared, tolerance, deltaAngle);
+                var newHoles = new Polygon(newHoleData.points);
+                inners.AddRange(newHoles.RemoveSelfIntersections(true, out _, tolerance, newHoleData.knownWrongPoints));
             }
             return outers.Subtract(inners, tolerance: tolerance);
         }
 
-        private static List<Vector2> OffsetRoutineForward(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double maxLengthSquared, double tolerance,
+        private static (List<Vector2> points, List<bool> knownWrongPoints) OffsetRoutineForward(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double maxLengthSquared, double tolerance,
             double deltaAngle = double.NaN)
         {
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var linesList = lines as IList<PolygonEdge> ?? lines.ToList();
             var numPoints = linesList.Count;
+            int numFalsesToAdd;
             var startingListSize = numPoints;
             var roundCorners = !double.IsNaN(deltaAngle);
             if (roundCorners) startingListSize += (int)(2 * Math.PI / deltaAngle);
@@ -155,6 +157,7 @@ namespace TVGL.TwoDimensional
             var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(offsetSign * deltaAngle) : Matrix3x3.Null;
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
             var pointsList = new List<Vector2>(startingListSize);
+            var wrongPoints = new List<bool>(startingListSize);
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
@@ -179,65 +182,72 @@ namespace TVGL.TwoDimensional
                         pointsList.Add(point + offset * prevUnitNormal);
                     else pointsList.Add(point);
                 }
-                else if (cross * offset > 0 && roundCorners)
+                else if (cross * offset > 0)
                 {
-                    var firstPoint = point + offset * prevUnitNormal;
-                    pointsList.Add(firstPoint);
-                    var lastPoint = point + offset * nextUnitNormal;
-                    var firstToLastVector = lastPoint - firstPoint;
-                    var firstToLastNormal = new Vector2(firstToLastVector.Y, -firstToLastVector.X);
-                    // to avoid "costly" call to Math.Sin and Math.Cos, we create the transform matrix that 1) translates to origin
-                    // 2) rotates by the angle, and 3) translates back
-                    var transform = Matrix3x3.CreateTranslation(-point) * rotMatrix *
-                                    Matrix3x3.CreateTranslation(point);
-                    var nextPoint = firstPoint.Transform(transform);
-                    // the challenge with this matrix transform is figuring out when to stop. But we know that all the new points must to on
-                    // positive side of the line connecting the first and last points. This is defined by the following dot-product
-                    while (offsetSign * firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
+                    if (roundCorners)
                     {
-                        pointsList.Add(nextPoint);
-                        firstPoint = nextPoint;
-                        nextPoint = firstPoint.Transform(transform);
+                        var firstPoint = point + offset * prevUnitNormal;
+                        pointsList.Add(firstPoint);
+                        var lastPoint = point + offset * nextUnitNormal;
+                        var firstToLastVector = lastPoint - firstPoint;
+                        var firstToLastNormal = new Vector2(firstToLastVector.Y, -firstToLastVector.X);
+                        // to avoid "costly" call to Math.Sin and Math.Cos, we create the transform matrix that 1) translates to origin
+                        // 2) rotates by the angle, and 3) translates back
+                        var transform = Matrix3x3.CreateTranslation(-point) * rotMatrix *
+                                        Matrix3x3.CreateTranslation(point);
+                        var nextPoint = firstPoint.Transform(transform);
+                        // the challenge with this matrix transform is figuring out when to stop. But we know that all the new points must to on
+                        // positive side of the line connecting the first and last points. This is defined by the following dot-product
+                        while (offsetSign * firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
+                        {
+                            pointsList.Add(nextPoint);
+                            firstPoint = nextPoint;
+                            nextPoint = firstPoint.Transform(transform);
+                        }
+                        pointsList.Add(lastPoint);
                     }
-                    pointsList.Add(lastPoint);
+                    // if the cross is positive and the offset is positive, then we will need to make extra points for the 
+                    // squaredCorners
+                    else if (notMiter)
+                    {
+                        // find these two points by calling the LineLine2DIntersection function twice. 
+                        var middleUnitVector = (prevUnitNormal + nextUnitNormal).Normalize();
+                        var middlePoint = point + offset * middleUnitVector;
+                        var middleDir = new Vector2(-middleUnitVector.Y, middleUnitVector.X);
+                        pointsList.Add(MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
+                            prevLine.Vector, middlePoint, middleDir));
+                        pointsList.Add(MiscFunctions.LineLine2DIntersection(middlePoint, middleDir,
+                            point + offset * nextUnitNormal, nextLine.Vector));
+                    }
+                    // miter and concave connections are done the same way...
+                    else
+                    {
+                        var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
+                            prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
+                        // if the corner is too shape the new point will be placed far away (near infinity). This is to rein it in
+                        var vectorToCorner = intersection - point;
+                        var vectorToCornerLengthSquared = vectorToCorner.LengthSquared();
+                        if (vectorToCornerLengthSquared > maxLengthSquared)
+                            intersection =
+                                point + vectorToCorner * Math.Sqrt(maxLengthSquared / vectorToCornerLengthSquared);
+                        pointsList.Add(intersection);
+                    }
                 }
-                // if the cross is positive and the offset is positive, then we will need to make extra points for the 
-                // squaredCorners
-                else if (cross * offset > 0 && notMiter)
-                {
-                    // find these two points by calling the LineLine2DIntersection function twice. 
-                    var middleUnitVector = (prevUnitNormal + nextUnitNormal).Normalize();
-                    var middlePoint = point + offset * middleUnitVector;
-                    var middleDir = new Vector2(-middleUnitVector.Y, middleUnitVector.X);
-                    pointsList.Add(MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
-                        prevLine.Vector, middlePoint, middleDir));
-                    pointsList.Add(MiscFunctions.LineLine2DIntersection(middlePoint, middleDir,
-                        point + offset * nextUnitNormal, nextLine.Vector));
-                }
-                // miter and concave connections are done the same way...
                 else
                 {
-                    var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
-                        prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
-                    if (pointsList.Count > 0 && offset > 0 && // this is to fix a problem when expanding a concavity outward by a lot
-                                                              // the creation of inner "holes" are not distinguishable from when there are legitimate inner holes (e.g.
-                                                              // a positive offset closes up the "claw" shape. This next condition detects then this might happen and reacts
-                                                              // by simply avoiding the addition of a new point. It doesn't work for negative because the bad loops are on 
-                                                              // the outside and the intersections are now meaningful compnoents of the returned shape
-                        prevLine.Vector.Dot(intersection - pointsList[^1]).IsLessThanNonNegligible())
-                        continue;
-                    // if the corner is too shape the new point will be placed far away (near infinity). This is to reign it in
-                    var vectorToCorner = intersection - point;
-                    var vectorToCornerLengthSquared = vectorToCorner.LengthSquared();
-                    if (vectorToCornerLengthSquared > maxLengthSquared)
-                        intersection =
-                            point + vectorToCorner * Math.Sqrt(maxLengthSquared / vectorToCornerLengthSquared);
-                    pointsList.Add(intersection);
+                    numFalsesToAdd = pointsList.Count - wrongPoints.Count;
+                    for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
+                    wrongPoints.Add(true);
+                    wrongPoints.Add(true);
+                    pointsList.Add(point + offset * prevUnitNormal);
+                    pointsList.Add(point + offset * nextUnitNormal);
                 }
                 prevLine = nextLine;
                 prevUnitNormal = nextUnitNormal;
             }
-            return pointsList;
+            numFalsesToAdd = pointsList.Count - wrongPoints.Count;
+            for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
+            return (pointsList, wrongPoints);
         }
 
         private static int AdvanceSoThatNotStartingAtSharp(double offset, IList<PolygonEdge> linesList, ref PolygonEdge prevLine, int numPoints)
@@ -254,7 +264,7 @@ namespace TVGL.TwoDimensional
                      ((offset > 0 && cross < 0) ||
                       (offset < 0 && cross > 0 && prevLine.Vector.SmallerAngleBetweenEdges(nextLine.Vector) < Math.PI / 2)));
 
-            return i-1;
+            return i - 1;
         }
         #endregion
     }

@@ -38,7 +38,7 @@ namespace TVGL.TwoDimensional
                 tolerance = Constants.BaseTolerance * minDimension;
                 areaTolerance = tolerance * minDimension;
             }
-            else areaTolerance =Math.Min(tolerance, tolerance * tolerance / Constants.BaseTolerance);   // why change the input tolerance? here, we are using it as a
+            else areaTolerance = Math.Min(tolerance, tolerance * tolerance / Constants.BaseTolerance);   // why change the input tolerance? here, we are using it as a
             // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
             // we need to find the characteristic length that was multiplied by the base tolerance to obtain the linear tolerance.
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
@@ -50,7 +50,7 @@ namespace TVGL.TwoDimensional
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
-                    startEdge, switchPolygon).ToList();
+                    startEdge, switchPolygon, out _).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(areaTolerance)) continue;
                 while (polyCoordinates[^1].IsPracticallySame(polyCoordinates[0], tolerance)) polyCoordinates.RemoveAt(0);
@@ -88,7 +88,7 @@ namespace TVGL.TwoDimensional
                 if (HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), false))
                     newPolygons.Add(poly.Copy(false, false));
             foreach (var poly in nonIntersectingBSubPolygons)
-               if(HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), true))
+                if (HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), true))
                     newPolygons.Add(poly.Copy(false, false));
 
             switch (polygonCollection)
@@ -168,9 +168,11 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
-            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon)
+            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon,
+            out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
+            includesWrongPoints = false;
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
@@ -202,6 +204,7 @@ namespace TVGL.TwoDimensional
                 // out of the loop. The intersection is identified here, but processed above
                 {
                     currentEdge = currentEdge.ToPoint.StartLine;
+                    if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) includesWrongPoints = true;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on

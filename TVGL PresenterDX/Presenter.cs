@@ -40,14 +40,14 @@ namespace TVGL
 
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
         {
-            var window = new Window3DPlot();
-            var models = new List<  Element3D>();
+            var window = new MainWindow();
+            var models = new List<Element3D>();
 
             foreach (var tessellatedSolid in tessellatedSolids)
             {
                 var model = MakeModelVisual3D(tessellatedSolid);
                 models.Add(model);
-                window.group.Children.Add(model);
+                window.  group.Children.Add(model);
             }
             // window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();

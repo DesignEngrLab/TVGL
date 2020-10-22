@@ -6,7 +6,6 @@
 
 using System;
 using System.Linq;
-using HelixToolkit.Wpf.SharpDX.Core;
 using SharpDX;
 using TVGL;
 using TVGL.Voxelization;
@@ -23,6 +22,7 @@ namespace TVGLPresenterDX
     using System.Windows.Input;
     using System.IO;
     using System.ComponentModel;
+    using HelixToolkit.SharpDX.Core;
 
     public abstract class ObservableObject : INotifyPropertyChanged
     {

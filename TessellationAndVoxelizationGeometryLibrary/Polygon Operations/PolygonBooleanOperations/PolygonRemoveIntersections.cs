@@ -23,7 +23,7 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool makeHolesPositive, double tolerance,
-            out List<Polygon> strayHoles)
+            List<bool> knownWrongPoints, out List<Polygon> strayHoles)
         {
             var minAllowableArea = tolerance * tolerance; // / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
@@ -36,7 +36,8 @@ namespace TVGL.TwoDimensional
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, switchPolygon).ToList();
+                    startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
+                if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minAllowableArea)) continue;
                 if (makeHolesPositive && area < 0) polyCoordinates.Reverse();

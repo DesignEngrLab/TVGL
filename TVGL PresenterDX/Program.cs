@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-
+using TVGL.Numerics;
 
 namespace TVGLPresenterDX
 {
@@ -104,7 +104,7 @@ namespace TVGLPresenterDX
                 TessellatedSolid ts;
                 if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
-                  TVGL.IOFunctions.IO.Open(fileStream, filename, out ts);
+                    TVGL.IOFunctions.IO.Open(fileStream, filename, out ts);
                 if (ts.Errors != null) continue;
                 Color color = new Color(KnownColors.AliceBlue);
                 ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
@@ -260,9 +260,9 @@ namespace TVGLPresenterDX
             mainWindow.ShowDialog();
         }
 
-        private static List<int[]> findIntersectingVoxelCoords(double[] startPoint, double[] endPoint)
+        private static List<int[]> findIntersectingVoxelCoords(Vector3 startPoint, Vector3 endPoint)
         {
-            var vectorNorm = endPoint.subtract(startPoint).normalize();
+            var vectorNorm = (endPoint - startPoint).Normalize();
             var intersections = new List<double[]>();
             for (var dim = 0; dim < 3; dim++)
             {
