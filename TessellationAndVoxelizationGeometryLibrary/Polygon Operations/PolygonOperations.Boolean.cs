@@ -255,24 +255,22 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            var result = new List<Polygon>();
-            var polygonAList = polygonsA as List<Polygon> ?? polygonsA.ToList();
+            var polygonAList = new List<Polygon>(polygonsA);
             var polygonBList = polygonsB as List<Polygon> ?? polygonsB.ToList();
             if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(result, polygonBList);
+                tolerance = GetTolerancesFromPolygons(polygonAList, polygonBList);
 
-            foreach (var polyA in polygonAList)
+            foreach (var polyB in polygonBList)
             {
-                if (!polyA.IsPositive) throw new ArgumentException("The input polygon in polygonsA is not positive.", nameof(polygonsA));
-                foreach (var polyB in polygonBList)
+                for (int i = polygonAList.Count - 1; i >= 0; i--)
                 {
-                    if (!polyB.IsPositive) throw new ArgumentException("The input polygon in polygonsB is not positive.", nameof(polygonsB));
-                    var interaction = GetPolygonInteraction(polyA, polyB, tolerance);
-                    if (!interaction.IntersectionWillBeEmpty())
-                        result.AddRange(Intersect(polyA, polyB, interaction, outputAsCollectionType, tolerance));
+                    var newPolygons = polygonAList[i].Intersect(polyB, outputAsCollectionType, tolerance);
+                    polygonAList.RemoveAt(i);
+                    foreach (var newPoly in newPolygons)
+                        polygonAList.Insert(i, newPoly);
                 }
             }
-            return result;
+            return polygonAList;
         }
 
 
@@ -362,11 +360,10 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            var result = new List<Polygon>();
-            var minuendsList = minuends as List<Polygon> ?? minuends.ToList();
-            var subtrahendsList = subtrahends.UnionPolygons();
+            var minuendsList = new List<Polygon>(minuends);
+            var subtrahendsList = subtrahends as List<Polygon> ?? subtrahends.ToList();
             if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(result, subtrahendsList);
+                tolerance = GetTolerancesFromPolygons(minuendsList, subtrahendsList);
 
             foreach (var polyB in subtrahendsList)
             {
@@ -451,19 +448,16 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool makeHolesPositive, out List<Polygon> strayHoles,
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool makeHolesPositive, 
             double tolerance = double.NaN, List<bool> knownWrongPoints = null)
         {
             if (double.IsNaN(tolerance)) tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
             var intersections = polygon.GetSelfIntersections(tolerance).Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
-            {
-                strayHoles = null;
                 return new List<Polygon> { polygon };
-            }
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
             // if (intersections.Any(n => (n.Relationship & PolygonRemoveIntersections.alignedIntersection) == PolygonRemoveIntersections.alignedIntersection))
-            return polygonRemoveIntersections.Run(polygon, intersections, makeHolesPositive, tolerance, knownWrongPoints, out strayHoles);
+            return polygonRemoveIntersections.Run(polygon, intersections, makeHolesPositive, tolerance, knownWrongPoints);
         }
 
         #endregion RemoveSelfIntersections Public Method

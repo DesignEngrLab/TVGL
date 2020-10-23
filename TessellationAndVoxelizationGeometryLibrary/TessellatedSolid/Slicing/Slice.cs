@@ -210,7 +210,7 @@ namespace TVGL.Boolean_Operations
                         vertices.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), j++, i));
                     allPolygons.Add(new Polygon(vertices, i));
                 }
-                var polygonsWithHoles = allPolygons.CreateShallowPolygonTrees(false, out _);
+                var polygonsWithHoles = allPolygons.CreateShallowPolygonTrees(false);
 
                 foreach (var polygon in polygonsWithHoles)
                 {
@@ -909,7 +909,7 @@ namespace TVGL.Boolean_Operations
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);
             }
-            return loops.CreateShallowPolygonTrees(false, out _);
+            return loops.CreateShallowPolygonTrees(false);
         }
 
 

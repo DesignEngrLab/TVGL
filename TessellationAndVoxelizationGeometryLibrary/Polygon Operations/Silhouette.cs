@@ -223,9 +223,13 @@ namespace TVGL.TwoDimensional
                 #endregion
                 if (polyCoordinates.Count > 2) 
                 {
+                    var newPolygons = new Polygon(polyCoordinates.Simplify(areaTolerance)).RemoveSelfIntersections(false, linearTolerance);
                     // make the coordinates into polygons. Simplify and remove self intersections. 
-                    polygons.AddRange(new Polygon(polyCoordinates.Simplify(areaTolerance)).RemoveSelfIntersections(false, out var strayNegativePolygons, linearTolerance));
-                    if (strayNegativePolygons != null) negativePolygons.AddRange(strayNegativePolygons);
+                    foreach (var newPolygon in newPolygons)
+                    {
+                        if (newPolygon.IsPositive) polygons.Add(newPolygon);
+                        else negativePolygons.Add(newPolygon);
+                    }
                 }
             }
             for (int i = polygons.Count - 1; i >= 0; i--)

@@ -97,10 +97,10 @@ namespace TVGL.TwoDimensional
                     return newPolygons;
 
                 case PolygonCollection.PolygonWithHoles:
-                    return newPolygons.CreateShallowPolygonTrees(true, out _);
+                    return newPolygons.CreateShallowPolygonTrees(true);
 
                 default:
-                    return newPolygons.CreatePolygonTree(true, out _);
+                    return newPolygons.CreatePolygonTree(true);
             }
         }
 

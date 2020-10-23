@@ -71,7 +71,7 @@ namespace TVGL.TwoDimensional
                 }
                 polygons.Add(new Polygon(coords));
             }
-            polygons = polygons.CreateShallowPolygonTrees(false, out _);
+            polygons = polygons.CreateShallowPolygonTrees(false);
             foreach (var polygon in polygons)
             {
                 foreach (var triangleIndices in polygon.TriangulateToIndices(false))
@@ -169,7 +169,7 @@ namespace TVGL.TwoDimensional
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
-            polygon = polygon.RemoveSelfIntersections(false, out _).LargestPolygon();
+            polygon = polygon.RemoveSelfIntersections(false).LargestPolygon();
             if (!FindInternalDiagonalsForMonotone(polygon, out var connections))
                 throw new ArgumentException("There are duplicate points in the polygon. Please remove before calling " +
                     "this function.", nameof(polygon));

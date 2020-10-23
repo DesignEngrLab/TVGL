@@ -127,26 +127,26 @@ namespace TVGL.TwoDimensional
             var longerLength = Math.Max(bb.Length1, bb.Length2);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             if (double.IsNaN(tolerance)) tolerance = longerLength * Constants.BaseTolerance;
-            var outerData = OffsetRoutineForward(polygon.Lines, offset, notMiter, longerLengthSquared, tolerance,
+            var outerData = MainOffsetRoutine(polygon.Lines, offset, notMiter, longerLengthSquared, tolerance,
                 deltaAngle);
             var outer = new Polygon(outerData.points);
-            var outers = outer.RemoveSelfIntersections(false, out _, tolerance, outerData.knownWrongPoints);
+            var outers = outer.RemoveSelfIntersections(false, tolerance, outerData.knownWrongPoints);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
                 if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var invertedHole = hole.Copy(false, true);
-                var newHoleData = OffsetRoutineForward(invertedHole.Lines, -offset, notMiter,
+                var newHoleData = MainOffsetRoutine(hole.Lines, offset, notMiter,
                         longerLengthSquared, tolerance, deltaAngle);
                 var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(true, out _, tolerance, newHoleData.knownWrongPoints));
+                inners.AddRange(newHoles.RemoveSelfIntersections(false, tolerance, newHoleData.knownWrongPoints).Where(p=>!p.IsPositive));
             }
-            return outers.Subtract(inners, tolerance: tolerance);
+            if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
+            return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p=>p.IsPositive).ToList();
         }
 
-        private static (List<Vector2> points, List<bool> knownWrongPoints) OffsetRoutineForward(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double maxLengthSquared, double tolerance,
+        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double maxLengthSquared, double tolerance,
             double deltaAngle = double.NaN)
         {
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound

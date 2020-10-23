@@ -93,7 +93,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var coords = TestCases.MakeRandomComplexPolygon(100, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords);
-                var polygons = polygon.RemoveSelfIntersections(true, out _);
+                var polygons = polygon.RemoveSelfIntersections(true);
                 Presenter.ShowAndHang(polygons);
                 //Presenter.ShowAndHang(polygons.Path);
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });
@@ -169,22 +169,21 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void TestOffsetting()
         {
-            foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
-            {
+            //foreach (var polys in TestCases.GetAllTwoArgumentEdgeCases())
+            //{
                 var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
                 //var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
-                var polygon1 = new Polygon(polys.Value.Item1);
-                var polygon2 = new Polygon(polys.Value.Item2);
-                Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+                var polygon1 = new Polygon(polysValue.Item1);
+                var polygon2 = new Polygon(polysValue.Item2);
+                //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
                 var polygons = polygon1.Union(polygon2);
-
                 //var polygons = new List<Polygon> { polygon1 };
                 //var coords1 = TestCases.MakeStarryCircularPolygon(50, 28, 1.8).ToList();
                 //var hole1 = TestCases.MakeStarryCircularPolygon(80, 14, 1.5).ToList();
                 //hole1.Reverse();
                 //var polygon1 = new Polygon(coords1);
                 //polygon1 = polygon1.Intersect(new Polygon(hole1))[0];
-                Presenter.ShowAndHang(polygons);
+                //Presenter.ShowAndHang(polygons);
                 //var polygon1 = new Polygon(coords1, true);
                 // Presenter.ShowAndHang(polygon1);
                 //var polygons3 = polygon1.OffsetRound(88);
@@ -193,16 +192,16 @@ namespace TVGLUnitTestsAndBenchmarking
                 foreach (var factor in factors)
                 {
                     var offset = factor * offsetBase;
-                    var pl3 = OldTVGL.PolygonOperations.OffsetRound(TestCases.Poly2PLs(polygons[0]), 1.3, .00254);
-                    var polygons3 = polygons[0].OffsetRound(1.3, 0.00254);
-                    PolygonBooleanTester.CompareOffsetResults(polygons3, pl3, offset);
-                }
+                    var pl3 = OldTVGL.PolygonOperations.OffsetRound(TestCases.Poly2PLs(polygons[0]), offset, .00254);
+                    var polygons3 = polygons[0].OffsetRound(offset, 0.00254);
+                   PolygonBooleanTester.CompareOffsetResults(polygons3, pl3, offset);
+                 }
 
                 //polygons3.AddRange(polygons2);
                 //polygons3.Add(polygon1);
                 //Presenter.ShowAndHang(polygons3);
                 // Presenter.ShowAndHang(new[] { polygons3[0], new Polygon(pl3[0].Select(v => new Vector2(v.X, v.Y))) });
-            }
+            //}
         }
     }
 }

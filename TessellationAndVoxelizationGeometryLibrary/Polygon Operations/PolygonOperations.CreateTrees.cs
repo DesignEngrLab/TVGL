@@ -36,10 +36,9 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<IEnumerable<Vector2>> paths,
-            bool vertexNegPosOrderIsGuaranteedCorrect, out List<Polygon> strayHoles)
+            bool vertexNegPosOrderIsGuaranteedCorrect)
         {
-            return CreateShallowPolygonTrees(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect,
-                out strayHoles);
+            return CreateShallowPolygonTrees(paths.Select(p => new Polygon(p)), vertexNegPosOrderIsGuaranteedCorrect);
         }
 
         /// <summary>
@@ -50,10 +49,10 @@ namespace TVGL.TwoDimensional
         /// <param name="connectingIndices">The connecting indices.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect,
-            out List<Polygon> strayHoles)
+        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect)
         {
-            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, out strayHoles);
+            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect);
+
             var polygonList = new List<Polygon>();
             foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
                 if (polygon.IsPositive) polygonList.Add(polygon);
@@ -61,6 +60,8 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygonList)
                 foreach (var hole in polygon.InnerPolygons)
                     hole.RemoveAllInnerPolygon();
+            foreach (var strayHole in polygonTrees.Where(p => !p.IsPositive))
+                polygonList.Add(strayHole);
             return polygonList;
         }
 
@@ -71,10 +72,9 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonSignIsCorrect">if set to <c>true</c> [polygon sign is correct].</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, out List<Polygon> strayHoles)
+        public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect)
         {
             var branches = new List<Polygon>();
-            strayHoles = new List<Polygon>();
             foreach (var polygon in polygons.OrderBy(p => Math.Abs(p.Area)))
             {
                 for (int i = branches.Count - 1; i >= 0; i--)
@@ -88,52 +88,19 @@ namespace TVGL.TwoDimensional
                 }
                 branches.Add(polygon);
             }
-            var polygonTrees = new List<Polygon>();
-            int j = branches.Count;
-            if (polygonSignIsCorrect)
+            foreach (var branch in branches)
             {
-                while (j-- > 0)
-                {
-                    var current = branches[j];
-                    if (!current.IsPositive)
-                    {
-                        strayHoles.Add(current);
-                        branches.RemoveAt(j);
-                        foreach (var inner in current.InnerPolygons)
-                            branches.Insert(j++, inner);
-                        current.RemoveAllInnerPolygon();
-                    }
-                    else
-                    {
-                        RecurseDownPolygonTreeCleanUp(current);
-                        polygonTrees.Add(current);
-                    }
-                }
+                if (polygonSignIsCorrect) RecurseDownPolygonTreeCleanUp(branch);
+                else RecurseDownPolygonTreeAndFlipSigns(branch);
             }
-            else
-            {
-                var negativeTopParent = new Polygon(new List<Vector2>());
-                negativeTopParent.IsPositive = false;
-                foreach (var branch in branches)
-                {
-                    RecurseDownPolygonTreeAndFlipSigns(negativeTopParent);
-                    polygonTrees.Add(branch);
-                }
-            }
-            return polygonTrees;
+            return branches;
         }
 
         private static void RecurseDownPolygonTreeCleanUp(Polygon parent)
         {
-            var childQueue = new Queue<Polygon>(parent.InnerPolygons);
             var validChildren = new List<Polygon>();
-            while (childQueue.Any())
+            foreach (var child in parent.InnerPolygons)
             {
-                var child = childQueue.Dequeue();
-                //if (child.IsPositive == parent.IsPositive) // this is not good. children should have oppositve sign than parent
-                //    foreach (var grandChild in child.Holes)
-                //        childQueue.Enqueue(grandChild);
-                //else
                 if (child.IsPositive != parent.IsPositive)
                 {
                     validChildren.Add(child);
