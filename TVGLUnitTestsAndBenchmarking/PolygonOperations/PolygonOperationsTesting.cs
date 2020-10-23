@@ -93,7 +93,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var coords = TestCases.MakeRandomComplexPolygon(100, 30).ToList();
                 Presenter.ShowAndHang(coords);
                 var polygon = new Polygon(coords);
-                var polygons = polygon.RemoveSelfIntersections(true);
+                var polygons = polygon.RemoveSelfIntersections(ResultType.BothPermitted);
                 Presenter.ShowAndHang(polygons);
                 //Presenter.ShowAndHang(polygons.Path);
                 //Presenter.ShowAndHang(new[] { coords }, new[] { polygon.Path });

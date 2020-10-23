@@ -444,11 +444,11 @@ namespace TVGL.TwoDimensional
         /// Removes the self intersections.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
-        /// <param name="makeHolesPositive">if set to <c>true</c> [make holes positive].</param>
-        /// <param name="strayHoles">The stray holes.</param>
+        /// <param name="resultType">Type of the result.</param>
         /// <param name="tolerance">The tolerance.</param>
+        /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, bool makeHolesPositive, 
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType, 
             double tolerance = double.NaN, List<bool> knownWrongPoints = null)
         {
             if (double.IsNaN(tolerance)) tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
@@ -457,7 +457,7 @@ namespace TVGL.TwoDimensional
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
             // if (intersections.Any(n => (n.Relationship & PolygonRemoveIntersections.alignedIntersection) == PolygonRemoveIntersections.alignedIntersection))
-            return polygonRemoveIntersections.Run(polygon, intersections, makeHolesPositive, tolerance, knownWrongPoints);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, tolerance, knownWrongPoints);
         }
 
         #endregion RemoveSelfIntersections Public Method

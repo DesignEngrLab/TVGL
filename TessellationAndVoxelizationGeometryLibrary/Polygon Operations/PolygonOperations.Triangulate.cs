@@ -169,7 +169,7 @@ namespace TVGL.TwoDimensional
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
-            polygon = polygon.RemoveSelfIntersections(false).LargestPolygon();
+            polygon = polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
             if (!FindInternalDiagonalsForMonotone(polygon, out var connections))
                 throw new ArgumentException("There are duplicate points in the polygon. Please remove before calling " +
                     "this function.", nameof(polygon));

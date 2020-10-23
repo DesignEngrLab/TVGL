@@ -223,7 +223,7 @@ namespace TVGL.TwoDimensional
                 #endregion
                 if (polyCoordinates.Count > 2) 
                 {
-                    var newPolygons = new Polygon(polyCoordinates.Simplify(areaTolerance)).RemoveSelfIntersections(false, linearTolerance);
+                    var newPolygons = new Polygon(polyCoordinates.Simplify(areaTolerance)).RemoveSelfIntersections(ResultType.BothPermitted, linearTolerance);
                     // make the coordinates into polygons. Simplify and remove self intersections. 
                     foreach (var newPolygon in newPolygons)
                     {

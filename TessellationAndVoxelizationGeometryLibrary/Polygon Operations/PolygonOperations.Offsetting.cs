@@ -130,7 +130,7 @@ namespace TVGL.TwoDimensional
             var outerData = MainOffsetRoutine(polygon.Lines, offset, notMiter, longerLengthSquared, tolerance,
                 deltaAngle);
             var outer = new Polygon(outerData.points);
-            var outers = outer.RemoveSelfIntersections(false, tolerance, outerData.knownWrongPoints);
+            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, tolerance, outerData.knownWrongPoints);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
@@ -140,7 +140,7 @@ namespace TVGL.TwoDimensional
                 var newHoleData = MainOffsetRoutine(hole.Lines, offset, notMiter,
                         longerLengthSquared, tolerance, deltaAngle);
                 var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(false, tolerance, newHoleData.knownWrongPoints).Where(p=>!p.IsPositive));
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints).Where(p=>!p.IsPositive));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
             return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p=>p.IsPositive).ToList();

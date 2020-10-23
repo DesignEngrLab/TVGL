@@ -528,11 +528,50 @@ namespace TVGL
         Undefined
     }
 
+    /// <summary>
+    /// Enum PolygonCollection
+    /// </summary>
     public enum PolygonCollection
     {
+        /// <summary>
+        /// The separate loops
+        /// </summary>
         SeparateLoops,
+        /// <summary>
+        /// The polygon with holes (or shallow polygon trees)
+        /// </summary>
         PolygonWithHoles,
+        /// <summary>
+        /// The polygon trees
+        /// </summary>
         PolygonTrees
+    }
+
+    /// <summary>
+    /// Enum ResultTypes
+    /// </summary>
+    public enum ResultType
+    {
+        /// <summary>
+        /// only positive ones
+        /// </summary>
+        OnlyKeepPositive = +1,
+        /// <summary>
+        /// only negative ones
+        /// </summary>
+        OnlyKeepNegative = -1,
+        /// <summary>
+        /// both positive and negative permitted
+        /// </summary>
+        BothPermitted = 0,
+        /// <summary>
+        /// The convert all to positive
+        /// </summary>
+        ConvertAllToPositive = +2,
+        /// <summary>
+        /// The convert all to negative
+        /// </summary>
+        ConvertAllToNegative = -2
     }
 
     /// <summary>

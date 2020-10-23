@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
@@ -22,7 +23,7 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, bool makeHolesPositive, double tolerance,
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType, double tolerance,
             List<bool> knownWrongPoints)
         {
             var minAllowableArea = tolerance * tolerance; // / Constants.BaseTolerance;
@@ -39,8 +40,12 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
                 if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(minAllowableArea)) continue;
-                if (makeHolesPositive && area < 0) polyCoordinates.Reverse();
+                if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
+                                                //in conjunction with the area of the sign. Only if the product is negative - do we do something 
+                {
+                    if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
+                    else polyCoordinates.Reverse();
+                }
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             return newPolygons.CreateShallowPolygonTrees(true);
