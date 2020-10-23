@@ -3,6 +3,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>TVGL_PresenterDX</RootNamespace>
     <UseWPF>true</UseWPF>
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Window3DPlot.xaml.cs" />

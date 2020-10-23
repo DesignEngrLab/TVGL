@@ -42,7 +42,7 @@ namespace TVGL
 
 
         /// <summary>
-        /// Shows the and hang.
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="title">The title.</param>
@@ -57,7 +57,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Shows the and hang.
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
         /// </summary>
         /// <param name="pointsList">The points list.</param>
         /// <param name="title">The title.</param>
@@ -73,7 +73,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Shows the and hang.
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
         /// </summary>
         /// <param name="pointsLists">The points lists.</param>
         /// <param name="title">The title.</param>
@@ -130,7 +130,7 @@ namespace TVGL
 
         #region 2D plots projecting vertices to 2D
         /// <summary>
-        /// Shows the and hang.
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -147,7 +147,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Shows the and hang.
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -513,13 +513,32 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Shows the and hang.
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         public static void ShowAndHang(TessellatedSolid tessellatedSolid)
         {
             var window = new Window3DPlot();
             window.view1.Children.Add(MakeModelVisual3D(tessellatedSolid));
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        /// <summary>
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window).
+        /// </summary>
+        /// <param name="tessellatedSolid">The tessellated solid.</param>
+        public static void ShowAndHang(IEnumerable<PolygonalFace> faces, TVGL.Color color = null)
+        {
+            var window = new Window3DPlot();
+            var sysWindowsColor = color != null ? new System.Windows.Media.Color
+            {
+                A = color.A,
+                B = color.B,
+                G = color.G,
+                R = color.R
+            } : System.Windows.Media.Colors.Blue;
+            window.view1.Children.Add(MakeModelVisual3DMultiColorFaces(faces, MaterialHelper.CreateMaterial(sysWindowsColor)));
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
@@ -641,7 +660,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Shows the and hang transparents and solids.
+        /// Shows the provided objects and "hangs" (halts code until user closes presenter window). transparents and solids.
         /// </summary>
         /// <param name="transparents">The transparents.</param>
         /// <param name="solids">The solids.</param>
@@ -891,29 +910,14 @@ namespace TVGL
                     R = ts.SolidColor.R
                 });
             if (ts.HasUniformColor)
-            {
-                var positions =
-                    ts.Faces.SelectMany(
-                        f => f.Vertices.Select(v => new Point3D(v.Coordinates[0], v.Coordinates[1], v.Coordinates[2])));
-                var normals =
-                    ts.Faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));
-                return new ModelVisual3D
-                {
-                    Content =
-                        new GeometryModel3D
-                        {
-                            Geometry = new MeshGeometry3D
-                            {
-                                Positions = new Point3DCollection(positions),
-                                // TriangleIndices = new Int32Collection(triIndices),
-                                Normals = new Vector3DCollection(normals)
-                            },
-                            Material = defaultMaterial
-                        }
-                };
-            }
+                return MakeModelVisual3DSameColorFaces(ts.Faces, defaultMaterial);
+            return MakeModelVisual3DMultiColorFaces(ts.Faces, defaultMaterial);
+        }
+
+        private static Visual3D MakeModelVisual3DMultiColorFaces(IEnumerable<PolygonalFace> faces, Material defaultMaterial)
+        {
             var result = new ModelVisual3D();
-            foreach (var f in ts.Faces)
+            foreach (var f in faces)
             {
                 var vOrder = new Point3DCollection();
                 for (var i = 0; i < 3; i++)
@@ -939,6 +943,29 @@ namespace TVGL
                 });
             }
             return result;
+        }
+
+        private static Visual3D MakeModelVisual3DSameColorFaces(IEnumerable<PolygonalFace> faces, Material defaultMaterial)
+        {
+            var positions =
+                faces.SelectMany(
+                    f => f.Vertices.Select(v => new Point3D(v.Coordinates[0], v.Coordinates[1], v.Coordinates[2])));
+            var normals =
+                faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));
+            return new ModelVisual3D
+            {
+                Content =
+                    new GeometryModel3D
+                    {
+                        Geometry = new MeshGeometry3D
+                        {
+                            Positions = new Point3DCollection(positions),
+                                // TriangleIndices = new Int32Collection(triIndices),
+                                Normals = new Vector3DCollection(normals)
+                        },
+                        Material = defaultMaterial
+                    }
+            };
         }
 
 

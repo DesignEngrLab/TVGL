@@ -504,6 +504,9 @@ namespace TVGL
                     // if you made it passed these to "continue" conditions, then this is a valid new face
                     faceChecksums.Add(checksum);
                 }
+                var faceVertices =
+                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
+
                 var color = SolidColor;
                 if (colors != null)
                 {
@@ -511,11 +514,12 @@ namespace TVGL
                     if (colors[j] != null) color = colors[j];
                     if (!SolidColor.Equals(color)) HasUniformColor = false;
                 }
-                var faceVertices =
-                    faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToArray();
-
                 if (faceVertices.Length == 3)
-                    listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices) { Color = color });
+                {
+                    var face = new PolygonalFace(faceVertices, doublyLinkToVertices);
+                    if (!HasUniformColor) face.Color = color;
+                    listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices));
+                }
                 else
                 {
                     var normal = MiscFunctions.DetermineNormalForA3DVertexPolygon(faceVertices, faceVertices.Length, out _, Vector3.Null);
@@ -523,12 +527,8 @@ namespace TVGL
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        //var v1 = vertexSet[1].Coordinates - (vertexSet[0].Coordinates);
-                        //var v2 = vertexSet[2].Coordinates - (vertexSet[0].Coordinates);
-                        var face =
-                        //= v1.Cross(v2).Dot(normal) < 0
-                        //    ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }:
-                             new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
+                        var face = new PolygonalFace(vertexSet, normal, doublyLinkToVertices);
+                        if (!HasUniformColor) face.Color = color;
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
                     }

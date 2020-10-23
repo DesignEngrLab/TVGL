@@ -17,8 +17,9 @@ using System.Linq;
 using HelixToolkit.Wpf.SharpDX;
 using TVGLPresenterDX;
 using HelixToolkit.SharpDX.Core;
+using TVGL;
 
-namespace TVGL
+namespace TVGLPresenterDX
 {
     /// <summary>
     /// The Class HelixPresenter is the only class within the TVGL Helix Presenter
@@ -47,7 +48,7 @@ namespace TVGL
             {
                 var model = MakeModelVisual3D(tessellatedSolid);
                 models.Add(model);
-                window.  group.Children.Add(model);
+                window.group.Children.Add(model);
             }
             // window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();

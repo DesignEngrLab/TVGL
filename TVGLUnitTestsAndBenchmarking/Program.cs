@@ -1,50 +1,52 @@
-using BenchmarkDotNet.Running;
-using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using TVGL;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
+using TVGL.IOFunctions;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
-        static Random r = new Random();
-        static double r1 => 2.0 * r.NextDouble() - 1.0;
-
-
         [STAThread]
         private static void Main(string[] args)
-
         {
-            //TS_Testing_Functions.TestModify();
-            //TVGL3Dto2DTests.TestSilhouette();
-            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            // 1. bubble up from the bin directories to find the TestFiles directory
+            var dir = new DirectoryInfo(".");
+            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+                dir = dir.Parent;
+            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
-#if PRESENT
+            // 2. get the file path
+            var fileName = dir.FullName + Path.DirectorySeparatorChar + "TieFighter.STL";
+            Console.WriteLine("Attempting: " + fileName);
 
+            // 3. open the file into TessellatedSolid, named "solid"
+            IO.Open(fileName, out TessellatedSolid solid);
 
-#else
-            //#endif
-            //PolygonBooleanTester.FullComparison();
-            //var stats = new List<(string, int, long, long)>();
+            // 4. show the loaded solid
+            Presenter.ShowAndHang(solid);
 
-            //foreach (var testCase in TestCases.GetAllTwoArgumentEdgeCases())
-            //{
-            //    var polys = testCase.Value;
-            //    PolygonBooleanTester.SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2),
-            //        TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
-            //}
-#endif
-            PolygonOperationsTesting.TestOffsetting();
-            //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
-            //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
-            //PolygonOperationsTesting.TestRemoveSelfIntersect();
-            //PolygonOperationsTesting.DebugEdgeCases();
-            //PolygonOperationsTesting.DebugOctagons();
-            //PolygonOperationsTesting.TestUnionSimple();
+            // 5. perform some analysis on the loaded solid
+            var firstFace = solid.Faces[0];
+            var furthestFace = FindFurthestFace(solid, firstFace);
+            
+            // 6. show the result
+            // change the solid to a transparent color and indicate the two faces by green and red
+            solid.SolidColor = new Color(100, 200, 200, 200);
+            firstFace.Color = new Color(TVGL.KnownColors.Green);
+            furthestFace.Color = new Color(TVGL.KnownColors.Red);
+            solid.HasUniformColor = false; //need to set this to false now that two faces are different
+            Presenter.ShowAndHang(solid);
+        }
+
+        private static PolygonalFace FindFurthestFace(TessellatedSolid solid, PolygonalFace firstFace)
+        {
+            /*********YOUR CODE HERE! ***********/
+            /*********YOUR CODE HERE! ***********/
+            /*********YOUR CODE HERE! ***********/
+            /*********YOUR CODE HERE! ***********/
+
+            return solid.Faces[10]; // must return a face. The 100th face is a stand-in for the real answer
         }
     }
 }
