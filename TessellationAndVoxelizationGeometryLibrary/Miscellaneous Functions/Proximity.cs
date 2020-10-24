@@ -6,11 +6,7 @@ using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
 namespace TVGL
-{
-    /// <summary>
-    /// 
-    /// </summary>
-    public static class Proximity
+{    public static class Proximity
     {
         /// <summary>
         /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).

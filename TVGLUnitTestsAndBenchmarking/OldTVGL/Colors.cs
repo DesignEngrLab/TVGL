@@ -22,7 +22,6 @@ namespace OldTVGL
     /// <summary>
     ///     Enum KnownColors
     /// </summary>
-    [Obsolete("The KnownColors attribute should be replaced with call to Constants.ColorDictionary")]
     public enum KnownColors : uint
     {
         /// <summary>

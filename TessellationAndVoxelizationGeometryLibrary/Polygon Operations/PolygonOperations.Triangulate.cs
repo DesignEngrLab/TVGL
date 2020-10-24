@@ -105,8 +105,9 @@ namespace TVGL.TwoDimensional
         {
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
-            const int maxNumberOfAttempts = 3;
-            var random = new Random(1);
+            polygon = polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
+            const int maxNumberOfAttempts = 10;
+            var random = new Random();
             var randomAngles = new double[maxNumberOfAttempts];
             for (int i = 1; i < maxNumberOfAttempts; i++)
                 randomAngles[i] = 2 * Math.PI * random.NextDouble();
@@ -148,31 +149,29 @@ namespace TVGL.TwoDimensional
 
             foreach (var randomAngle in randomAngles)
             {
-                //try
-                //{
-                var localTriangleFaceList = new List<int[]>();
-                if (randomAngle != 0)
-                    polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
-                foreach (var monoPoly in CreateXMonotonePolygons(polygon))
-                    localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-                triangleFaceList.AddRange(localTriangleFaceList);
-                return triangleFaceList;
-                //}
-                //catch (Exception exception)
-                //{
-                //    if (randomAngle != 0)
-                //        polygon.Transform(Matrix3x3.CreateRotation(-randomAngle));
-                //}
+                try
+                {
+                    var localTriangleFaceList = new List<int[]>();
+                    if (randomAngle != 0)
+                        polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
+                    foreach (var monoPoly in CreateXMonotonePolygons(polygon))
+                        localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
+                    triangleFaceList.AddRange(localTriangleFaceList);
+                    return triangleFaceList;
+                }
+                catch { }
+                finally
+                {
+                    if (randomAngle != 0)
+                        polygon.Transform(Matrix3x3.CreateRotation(-randomAngle));
+                }
             }
-            return null;
+            throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges.");
         }
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
-            polygon = polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
-            if (!FindInternalDiagonalsForMonotone(polygon, out var connections))
-                throw new ArgumentException("There are duplicate points in the polygon. Please remove before calling " +
-                    "this function.", nameof(polygon));
+            var connections = FindInternalDiagonalsForMonotone(polygon);
             foreach (var edge in polygon.Lines)
                 AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
             foreach (var edge in polygon.InnerPolygons.SelectMany(p => p.Lines))
@@ -217,39 +216,43 @@ namespace TVGL.TwoDimensional
             return bestVertex;
         }
 
-        private static bool FindInternalDiagonalsForMonotone(Polygon polygon,
-            out Dictionary<Vertex2D, List<Vertex2D>> connections)
+        private static Dictionary<Vertex2D, List<Vertex2D>> FindInternalDiagonalsForMonotone(Polygon polygon)
         {
             var orderedListsOfVertices = new List<List<Vertex2D>>();
             orderedListsOfVertices.Add(polygon.OrderedXVertices);
             foreach (var hole in polygon.InnerPolygons)
                 orderedListsOfVertices.Add(hole.OrderedXVertices);
             var sortedVertices = CombineSortedVerticesIntoOneCollection(orderedListsOfVertices);
-            connections = new Dictionary<Vertex2D, List<Vertex2D>>();
+            var connections = new Dictionary<Vertex2D, List<Vertex2D>>();
+            // the edgeDatums are the current edges in the sweep. The Vertex is the past polygon point (aka helper)
+            // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
+            // was a merge vertex.
             var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
             foreach (var vertex in sortedVertices)
             {
                 var monoChange = GetMonotonicityChange(vertex);
-                if (monoChange == MonotonicityChange.SameAsNeighbor) return false;
+                if (monoChange == MonotonicityChange.SameAsNeighbor)
+                    throw new ArgumentException("It is not possible to divide a polygon into x-monotone polygons if a" +
+                        "duplicate vertex exist in polygon.", nameof(polygon));
                 var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
                 if (monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
                     if (vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() || vertex.EndLine.Vector.X.IsGreaterThanNonNegligible() ||  //headed in the positive x direction (enclosing along the bottom)
                         (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.StartLine.Vector.Y.IsGreaterThanNonNegligible()))
-                    {
+                    {   // in the CCW direction or along the bottom
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
                         edgeDatums.Add(vertex.StartLine, (vertex, false));
                     }
-                    else // then headed in negative x direction (enclosing along the top)
+                    else // then in the CW direction along the top
                     {
-                        PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
-                        MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
-                        edgeDatums[closestDatum] = (vertex, false);
+                        var closestDatumEdge = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
+                        MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatumEdge, vertex);
+                        edgeDatums[closestDatumEdge] = (vertex, false);
                     }
                 }
-                else if (cornerCross > 0) //then either start or end
+                else if (cornerCross.IsGreaterThanNonNegligible()) //then either start or end
                 {
                     if ((vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible()) || // then start
                         (vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.Y.IsLessThanNonNegligible()))
@@ -264,28 +267,28 @@ namespace TVGL.TwoDimensional
                 {
                     if ((vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible()) || // then split
                         (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible() && vertex.StartLine.Vector.Y.IsGreaterThanNonNegligible()))
-                    {
-                        PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
-                        var helperVertex = edgeDatums[closestDatum].Item1;
+                    {   // it's a split
+                        var closestDatumEdge = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
+                        var helperVertex = edgeDatums[closestDatumEdge].Item1;
                         AddNewConnection(connections, vertex, helperVertex);
                         AddNewConnection(connections, helperVertex, vertex);
-                        edgeDatums[closestDatum] = (vertex, false);
-                        edgeDatums[vertex.StartLine] = (vertex, false);
+                        edgeDatums[closestDatumEdge] = (vertex, false);
+                        edgeDatums.Add(vertex.StartLine, (vertex, false));
                     }
                     else //then it's a merge
                     {
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
                         PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
-                        if (closestDatum != null)
-                        {
+                        //if (closestDatum != null)
+                        //{
                             MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
                             edgeDatums[closestDatum] = (vertex, true);
-                        }
+                        //}
                     }
                 }
             }
-            return true;
+            return connections;
         }
 
         private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> connections,

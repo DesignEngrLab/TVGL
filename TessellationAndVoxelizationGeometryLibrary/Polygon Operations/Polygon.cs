@@ -599,17 +599,13 @@ namespace TVGL.TwoDimensional
                     if (maxX < v.X) maxX = v.X;
                     if (maxY < v.Y) maxY = v.Y;
                 }
+                MakeVertices();
+                MakeLineSegments();
+                _orderedXVertices = null;
+                area = double.NaN;
+                pathArea = double.NaN;
+                perimeter = double.NaN;
             }
-
-            area = double.NaN;
-            perimeter = double.NaN;
-
-            MakeVertices();
-            MakeLineSegments();
-            _orderedXVertices = null;
-            area = double.NaN;
-            pathArea = double.NaN;
-            perimeter = double.NaN;
         }
 
 
@@ -643,7 +639,7 @@ namespace TVGL.TwoDimensional
         {
             if (v1.X.IsPracticallySame(v2.X))
                 return (v1.Y < v2.Y) ? -1 : 1;
-            return (v1.X.IsLessThanNonNegligible(v2.X)) ? -1 : 1;
+            return (v1.X < v2.X) ? -1 : 1;
         }
     }
 }

@@ -23,7 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             // 2. get the file path
-            var fileName = dir.FullName + Path.DirectorySeparatorChar + "poly.json";
+            var fileName = dir.FullName + Path.DirectorySeparatorChar + "bad2.json";
             TVGL.IOFunctions.IO.Open(fileName, out Polygon polygon);
             Presenter.ShowAndHang(polygon);
             var triangles = polygon.TriangulateToCoordinates();
@@ -60,6 +60,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
                     var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
                     var xsection = solid.GetCrossSection(plane);
+                    Presenter.ShowAndHang(xsection);
                     var monoPolys = new List<Polygon>();
                     var error = false;
                     var totalArea = 0.0;

@@ -33,6 +33,11 @@ namespace TVGLUnitTestsAndBenchmarking
             var polygon2 = new Polygon(polysValue.Item2);
             //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
             var polygons = polygon1.Union(polygon2);
+            var polygon = polygons.LargestPolygon();
+            Presenter.ShowAndHang(polygon);
+            polygon.Transform(Matrix3x3.CreateRotation(1));
+            Presenter.ShowAndHang(polygon);
+
             //var polygons = new List<Polygon> { polygon1 };
             //var coords1 = TestCases.MakeStarryCircularPolygon(50, 28, 1.8).ToList();
             //var hole1 = TestCases.MakeStarryCircularPolygon(80, 14, 1.5).ToList();

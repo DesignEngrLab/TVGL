@@ -80,9 +80,6 @@ namespace TVGL.IOFunctions
         public string requiredextensions { get; set; }
 
 
-        /// <param name="s">The s.</param>
-        /// <param name="filename">The filename.</param>
-        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
             var result = new List<TessellatedSolid>();

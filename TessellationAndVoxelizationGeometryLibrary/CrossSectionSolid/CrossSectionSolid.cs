@@ -161,8 +161,8 @@ namespace TVGL
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
             //if (!Layer3D.Any()) SetAllVertices();
-            var start = Layer2D.FirstOrDefault(p => p.Value.Count > 1).Key;
-            var stop = Layer2D.LastOrDefault(p => p.Value.Count > 1).Key;
+            var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
+            var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
             var increment = start < stop ? 1 : -1;
             //var direction = increment == 1 ? Direction : -1 * Direction;
             var faces = new List<PolygonalFace>();

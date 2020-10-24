@@ -179,7 +179,6 @@ namespace TVGL.TwoDimensional
 
             if (polygonRelations[0] == PolyRelInternal.Equal)
             {
-                var index = 1;
                 var matchedPolygonBIndices = new HashSet<int>();
                 var subPolysA = this.AllPolygons.Skip(1).Take(numPolygonsInA - 1).ToList();
                 var subPolysB = this.AllPolygons.Skip(numPolygonsInA + 1).ToList();

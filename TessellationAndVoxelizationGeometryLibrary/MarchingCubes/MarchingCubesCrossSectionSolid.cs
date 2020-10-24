@@ -69,7 +69,7 @@ namespace TVGL
         /// Generates the marching cubes solid
         /// </summary>
         /// <returns>TessellatedSolid.</returns>
-        internal TessellatedSolid Generate()
+        internal override TessellatedSolid Generate()
         {
             if (onLayers) return GenerateOnLayers();
             else return GenerateBetweenLayers();

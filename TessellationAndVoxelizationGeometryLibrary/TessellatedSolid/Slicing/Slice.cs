@@ -357,8 +357,11 @@ namespace TVGL.Boolean_Operations
         }
 
 
-        ///Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the 
+        /// <summary>
+        /// Divides up faces.
+        /// Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the
         /// halves of the straddle faces that are on this side.
+        /// </summary>
         private static void DivideUpFaces(TessellatedSolid ts, Plane plane, out List<Loop> loops, int isPositiveSide,
             IList<double> distancesToPlane, double planeOffset, ICollection<int> loopsToIgnore = null,
             bool undoPlaneOffset = false)

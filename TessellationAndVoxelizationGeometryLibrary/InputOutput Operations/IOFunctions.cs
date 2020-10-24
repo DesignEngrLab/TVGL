@@ -329,8 +329,6 @@ namespace TVGL.IOFunctions
 
                     case FileType.SHELL:
                         return ShellFileData.OpenSolids(s, filename)[0];
-                        break;
-
                     default:
                         var serializer = new JsonSerializer();
                         var sr = new StreamReader(s);
@@ -1159,7 +1157,7 @@ namespace TVGL.IOFunctions
                 Formatting = Formatting.Indented,
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             };
-            using var fileStream = File.OpenWrite(filename);            
+            using var fileStream = File.OpenWrite(filename);
             using var sw = new StreamWriter(fileStream);
             using var writer = new JsonTextWriter(sw);
             var jObject = JObject.FromObject(polygon, serializer);

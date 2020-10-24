@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace TVGL.TwoDimensional
@@ -286,21 +287,20 @@ namespace TVGL.TwoDimensional
             double tolerance = double.NaN)
         {
             var polygonList = polygons as List<Polygon> ?? polygons.ToList();
-            for (int i = polygonList.Count - 1; i > 0; i--)
+            for (int i = polygonList.Count - 2; i > 0; i--)
             {
-                for (int j = i - 1; j >= 0; j--)
+                var clippingPoly = polygonList[i];
+                polygonList.RemoveAt(i);
+                for (int j = polygonList.Count - 1; j >= i; j--)
                 {
-                    var interaction = GetPolygonInteraction(polygonList[i], polygonList[j], tolerance);
+                    var interaction = GetPolygonInteraction(clippingPoly, polygonList[j], tolerance);
                     if (interaction.IntersectionWillBeEmpty())
-                        return new List<Polygon>();
+                        polygonList.RemoveAt(j);
                     else
                     {
-                        var newPolygons = Intersect(polygonList[i], polygonList[j], interaction, outputAsCollectionType, tolerance);
-                        polygonList.RemoveAt(i);
-                        polygonList.RemoveAt(j);
-                        polygonList.AddRange(newPolygons);
-                        i = polygonList.Count; // to restart the outer loop
-                        break; // to stop the inner loop
+                        var newPolygons = Intersect(clippingPoly, polygonList[j], interaction, outputAsCollectionType, tolerance);
+                        foreach (var newPolygon in newPolygons)
+                            polygonList.Insert(j, newPolygon);
                     }
                 }
             }
@@ -448,7 +448,7 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType, 
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
             double tolerance = double.NaN, List<bool> knownWrongPoints = null)
         {
             if (double.IsNaN(tolerance)) tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
