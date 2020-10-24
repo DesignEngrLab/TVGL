@@ -98,7 +98,7 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Converts the 2D coordaintes into a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... }
+        /// Converts the 2D coordinates into a 1D collection of doubles. e.g. { X1, Y1, X2, Y2, ... }
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
         /// <returns>IEnumerable&lt;System.Double&gt;.</returns>

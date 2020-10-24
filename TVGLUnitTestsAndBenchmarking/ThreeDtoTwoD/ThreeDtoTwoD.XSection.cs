@@ -16,17 +16,19 @@ namespace TVGLUnitTestsAndBenchmarking
         //[Fact]
         public static void TestXSectionAndMonotoneTriangulate()
         {
-            DirectoryInfo dir;
-            if (Directory.Exists("../../../../TestFiles"))
-            {
-                //x64
-                dir = new DirectoryInfo("../../../../TestFiles");
-            }
-            else
-            {
-                //x86
-                dir = new DirectoryInfo("../../../TestFiles");
-            }
+
+            var dir = new DirectoryInfo(".");
+            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+                dir = dir.Parent;
+            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
+
+            // 2. get the file path
+            var fileName = dir.FullName + Path.DirectorySeparatorChar + "poly.json";
+            TVGL.IOFunctions.IO.Open(fileName, out Polygon polygon);
+            Presenter.ShowAndHang(polygon);
+            var triangles = polygon.TriangulateToCoordinates();
+            Presenter.ShowAndHang(triangles);
+
             //            brace.stl - holes showing up?
             // radiobox - missing holes - weird skip in outline
             // KnuckleTopOp flecks
@@ -75,7 +77,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         else
                         {
                             //Console.WriteLine("testing triangulation.");
-                            var triangles = monopoly.TriangulateToCoordinates().ToList();
+                            triangles = monopoly.TriangulateToCoordinates().ToList();
                             var triArea = triangles.Sum(tr => tr.Area());
                             if (!triArea.IsPracticallySame(monopoly.Area, monopoly.Area * Constants.BaseTolerance))
                             {

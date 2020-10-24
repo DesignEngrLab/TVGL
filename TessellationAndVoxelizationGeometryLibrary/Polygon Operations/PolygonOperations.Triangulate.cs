@@ -92,7 +92,7 @@ namespace TVGL.TwoDimensional
         {
             var triIndices = polygon.TriangulateToIndices(reIndexPolygons);
             var index2CoordsDict = polygon.AllPolygons.SelectMany(p => p.Vertices).ToDictionary(v => v.IndexInList, v => v.Coordinates);
-            return triIndices.Select(ti =>new[] { index2CoordsDict[ti[0]], index2CoordsDict[ti[1]], index2CoordsDict[ti[2]] });
+            return triIndices.Select(ti => new[] { index2CoordsDict[ti[0]], index2CoordsDict[ti[1]], index2CoordsDict[ti[2]] });
         }
 
         /// <summary>
@@ -277,8 +277,11 @@ namespace TVGL.TwoDimensional
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
                         PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
-                        MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
-                        edgeDatums[closestDatum] = (vertex, true);
+                        if (closestDatum != null)
+                        {
+                            MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
+                            edgeDatums[closestDatum] = (vertex, true);
+                        }
                     }
                 }
             }

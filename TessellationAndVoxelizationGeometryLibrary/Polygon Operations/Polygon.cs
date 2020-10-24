@@ -5,6 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -19,6 +22,7 @@ namespace TVGL.TwoDimensional
         /// The list of 2D points that make up a polygon.
         /// </summary>
         /// <value>The path.</value>
+        [JsonIgnore]
         public List<Vector2> Path
         {
             get
@@ -46,6 +50,7 @@ namespace TVGL.TwoDimensional
         /// Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
+        [JsonIgnore]
         public List<Vertex2D> Vertices => _vertices;
         /// <summary>
         /// The vertices
@@ -56,6 +61,7 @@ namespace TVGL.TwoDimensional
         /// Gets the ordered x vertices.
         /// </summary>
         /// <value>The ordered x vertices.</value>
+        [JsonIgnore]
         internal List<Vertex2D> OrderedXVertices
         {
             get
@@ -75,6 +81,7 @@ namespace TVGL.TwoDimensional
         /// Gets the list of lines that make up a polygon. This is not set by default.
         /// </summary>
         /// <value>The lines.</value>
+        [JsonIgnore]
         public List<PolygonEdge> Lines => _lines;
 
         /// <summary>
@@ -169,6 +176,7 @@ namespace TVGL.TwoDimensional
         /// Gets the inner polygons.
         /// </summary>
         /// <value>The inner polygons.</value>
+        [JsonIgnore]
         public IEnumerable<Polygon> InnerPolygons
         {
             get
@@ -182,17 +190,20 @@ namespace TVGL.TwoDimensional
         /// Gets the number of inner polygons.
         /// </summary>
         /// <value>The number of inner polygons.</value>
+        [JsonIgnore]
         public int NumberOfInnerPolygons => (_innerPolygons?.Count) ?? 0;
 
         /// <summary>
         /// The inner polygons
         /// </summary>
+        [JsonProperty("Inners")]
         List<Polygon> _innerPolygons;
 
         /// <summary>
         /// Gets all polygons.
         /// </summary>
         /// <value>All polygons.</value>
+        [JsonIgnore]
         public IEnumerable<Polygon> AllPolygons
         {
             get
@@ -212,6 +223,7 @@ namespace TVGL.TwoDimensional
         /// The index of this child in its parent's child list.
         /// </summary>
         /// <value>The index.</value>
+        [JsonProperty]
         public int Index
         {
             get => index;
@@ -231,6 +243,7 @@ namespace TVGL.TwoDimensional
         /// Gets or sets whether the path is CCW positive. This will reverse the path if it was ordered CW.
         /// </summary>
         /// <value><c>true</c> if this instance is positive; otherwise, <c>false</c>.</value>
+        [JsonIgnore]
         public bool IsPositive
         {
             get => PathArea > 0;
@@ -268,6 +281,7 @@ namespace TVGL.TwoDimensional
         /// Gets the net area of the polygon - meaning any holes will be subtracted from the total area.
         /// </summary>
         /// <value>The area.</value>
+        [JsonIgnore]
         public double Area
         {
             get
@@ -288,6 +302,7 @@ namespace TVGL.TwoDimensional
         /// Gets the area of the top polygon. This area does not include the effect of inner polygons.
         /// </summary>
         /// <value>The path area.</value>
+        [JsonIgnore]
         public double PathArea
         {
             get
@@ -308,6 +323,7 @@ namespace TVGL.TwoDimensional
         /// Gets the area of the polygon. Negative Area for holes.
         /// </summary>
         /// <value>The perimeter.</value>
+        [JsonIgnore]
         public double Perimeter
         {
             get
@@ -327,6 +343,7 @@ namespace TVGL.TwoDimensional
         /// Maxiumum X value
         /// </summary>
         /// <value>The maximum x.</value>
+        [JsonIgnore]
         public double MaxX
         {
             get
@@ -346,6 +363,7 @@ namespace TVGL.TwoDimensional
         /// Miniumum X value
         /// </summary>
         /// <value>The minimum x.</value>
+        [JsonIgnore]
         public double MinX
         {
             get
@@ -365,6 +383,7 @@ namespace TVGL.TwoDimensional
         /// Maxiumum Y value
         /// </summary>
         /// <value>The maximum y.</value>
+        [JsonIgnore]
         public double MaxY
         {
             get
@@ -394,6 +413,7 @@ namespace TVGL.TwoDimensional
         /// Gets the minimum y.
         /// </summary>
         /// <value>The minimum y.</value>
+        [JsonIgnore]
         public double MinY
         {
             get
@@ -590,6 +610,26 @@ namespace TVGL.TwoDimensional
             area = double.NaN;
             pathArea = double.NaN;
             perimeter = double.NaN;
+        }
+
+
+        [JsonExtensionData]
+        protected IDictionary<string, JToken> serializationData;
+
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
+        {
+            serializationData = new Dictionary<string, JToken>();
+            serializationData.Add("Coordinates", JToken.FromObject(Path.ConvertTo1DDoublesCollection()));
+        }
+
+        [OnDeserialized]
+        protected void OnDeserializedMethod(StreamingContext context)
+        {
+            JArray jArray = (JArray)serializationData["Coordinates"];
+            _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
+            MakeVertices();
+            MakeLineSegments();
         }
     }
 

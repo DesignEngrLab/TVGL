@@ -3,6 +3,7 @@ using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using TVGL;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
@@ -21,9 +22,11 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
-            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
+
+            // 1. bubble up from the bin directories to find the TestFiles directory
             var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
             //var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
             var polygon1 = new Polygon(polysValue.Item1);

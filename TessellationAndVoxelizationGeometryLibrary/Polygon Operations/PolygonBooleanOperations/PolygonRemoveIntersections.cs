@@ -26,7 +26,7 @@ namespace TVGL.TwoDimensional
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType, double tolerance,
             List<bool> knownWrongPoints)
         {
-            var minAllowableArea = tolerance * tolerance; // / Constants.BaseTolerance;
+            var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygon);
@@ -40,6 +40,7 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
                 if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
+                if (area.IsNegligible(minAllowableArea)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
                                                 //in conjunction with the area of the sign. Only if the product is negative - do we do something 
                 {

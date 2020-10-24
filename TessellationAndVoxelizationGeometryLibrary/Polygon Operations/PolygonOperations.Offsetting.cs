@@ -140,14 +140,14 @@ namespace TVGL.TwoDimensional
                 var newHoleData = MainOffsetRoutine(hole.Lines, offset, notMiter,
                         longerLengthSquared, tolerance, deltaAngle);
                 var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints).Where(p=>!p.IsPositive));
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints).Where(p => !p.IsPositive));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
-            return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p=>p.IsPositive).ToList();
+            return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p => p.IsPositive).ToList();
         }
 
-        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(IEnumerable<PolygonEdge> lines, double offset, bool notMiter, double maxLengthSquared, double tolerance,
-            double deltaAngle = double.NaN)
+        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(IEnumerable<PolygonEdge> lines, double offset, bool notMiter,
+            double maxLengthSquared, double tolerance, double deltaAngle = double.NaN)
         {
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var linesList = lines as IList<PolygonEdge> ?? lines.ToList();

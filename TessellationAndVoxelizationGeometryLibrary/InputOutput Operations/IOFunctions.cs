@@ -94,6 +94,12 @@ namespace TVGL.IOFunctions
             else throw new FileNotFoundException("The file was not found at: " + filename);
         }
 
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solids">The solids.</param>
+        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out TessellatedSolid[] solids)
         {
             if (File.Exists(filename))
@@ -102,6 +108,12 @@ namespace TVGL.IOFunctions
             else throw new FileNotFoundException("The file was not found at: " + filename);
         }
 
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solid">The solid.</param>
+        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out VoxelizedSolid solid)
         {
             if (File.Exists(filename))
@@ -110,6 +122,12 @@ namespace TVGL.IOFunctions
             else throw new FileNotFoundException("The file was not found at: " + filename);
         }
 
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="solid">The solid.</param>
+        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
         public static void Open(string filename, out CrossSectionSolid solid)
         {
             if (File.Exists(filename))
@@ -187,6 +205,14 @@ namespace TVGL.IOFunctions
             }
         }
 
+        /// <summary>
+        /// Opens the specified s.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="tessellatedSolids">The tessellated solids.</param>
+        /// <exception cref="Exception">Attempting to open multiple solids with a " + extension.ToString() + " file.</exception>
+        /// <exception cref="Exception">Cannot open file. Message: " + exc.Message</exception>
         public static void Open(Stream s, string filename, out TessellatedSolid[] tessellatedSolids)
         {
             try
@@ -234,6 +260,11 @@ namespace TVGL.IOFunctions
             }
         }
 
+        /// <summary>
+        /// Opens the specified s.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="solid">The solid.</param>
         public static void Open(Stream s, out VoxelizedSolid solid)
         {
             var serializer = new JsonSerializer();
@@ -250,6 +281,12 @@ namespace TVGL.IOFunctions
             solid = serializer.Deserialize<CrossSectionSolid>(reader);
         }
 
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns>Solid.</returns>
+        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
         public static Solid Open(string filename)
         {
             if (File.Exists(filename))
@@ -258,6 +295,12 @@ namespace TVGL.IOFunctions
             else throw new FileNotFoundException("The file was not found at: " + filename);
         }
 
+        /// <summary>
+        /// Opens the specified s.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <returns>Solid.</returns>
         public static Solid Open(Stream s, string filename = "")
         {
             //try
@@ -313,11 +356,12 @@ namespace TVGL.IOFunctions
             //}
         }
 
-        public static void Save(Polygon polygon, string filename)
-        {
-            throw new NotImplementedException();
-        }
-
+        /// <summary>
+        /// Opens from string.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <param name="solid">The solid.</param>
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid solid)
         {
             var stream = new MemoryStream();
@@ -331,6 +375,12 @@ namespace TVGL.IOFunctions
             Open(stream, name, out solid);
         }
 
+        /// <summary>
+        /// Opens from string.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <param name="solids">The solids.</param>
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid[] solids)
         {
             var stream = new MemoryStream();
@@ -344,6 +394,11 @@ namespace TVGL.IOFunctions
             Open(stream, name, out solids);
         }
 
+        /// <summary>
+        /// Opens from string.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="solid">The solid.</param>
         public static void OpenFromString(string data, out VoxelizedSolid solid)
         {
             var stream = new MemoryStream();
@@ -356,6 +411,11 @@ namespace TVGL.IOFunctions
             Open(stream, out solid);
         }
 
+        /// <summary>
+        /// Opens from string.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="solid">The solid.</param>
         public static void OpenFromString(string data, out CrossSectionSolid solid)
         {
             var stream = new MemoryStream();
@@ -747,27 +807,6 @@ namespace TVGL.IOFunctions
             return double.NaN;
         }
 
-        // These methods are currently not used, but it seems that encoding a doubles array as
-        // a binary char array would be better than parsing the text. There would be 1) less
-        // chance of roundoff,quicker conversions, and - in most cases- a smaller file.
-        // however, experiment in early Jan2020, did not tend to show this. but even the
-        // doubles changed value which makes me think I didn't do a good job with it.
-        // Come back to this in the future?
-        internal static string ConvertDoubleArrayToString(IEnumerable<double> doubles)
-        {
-            var byteArray = doubles.SelectMany(BitConverter.GetBytes).ToArray();
-            return System.Text.Encoding.Unicode.GetString(byteArray);
-        }
-
-        internal static double[] ConvertStringToDoubleArray(string doublesAsString)
-        {
-            var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
-            var values = new double[bytes.Length / 8];
-            for (int i = 0; i < values.Length; i++)
-                values[i] = BitConverter.ToDouble(bytes, i * 8);
-            return values;
-        }
-
         /// <summary>
         /// Tries the parse number type from string.
         /// </summary>
@@ -1103,6 +1142,70 @@ namespace TVGL.IOFunctions
             var byteArray = stream.ToArray();
             return System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length);
         }
+
+
+        /// <summary>
+        /// Saves the specified polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="filename">The filename.</param>
+        public static void Save(Polygon polygon, string filename)
+        {
+            var serializer = new JsonSerializer
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.Indented,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            };
+            using var fileStream = File.OpenWrite(filename);            
+            using var sw = new StreamWriter(fileStream);
+            using var writer = new JsonTextWriter(sw);
+            var jObject = JObject.FromObject(polygon, serializer);
+            jObject.WriteTo(writer);
+            writer.Flush();
+        }
+
+
+        /// <summary>
+        /// Opens the specified filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="polygon">The polygon.</param>
+        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        public static void Open(string filename, out Polygon polygon)
+        {
+            if (!File.Exists(filename)) throw new FileNotFoundException("The file was not found at: " + filename);
+            using var fileStream = File.OpenRead(filename);
+            using var sr = new StreamReader(fileStream);
+            using var reader = new JsonTextReader(sr);
+            var serializer = new JsonSerializer();
+            polygon = serializer.Deserialize<Polygon>(reader);
+        }
+
+
+        // These methods are currently not used, but it seems that encoding a doubles array as
+        // a binary char array would be better than parsing the text. There would be 1) less
+        // chance of roundoff,quicker conversions, and - in most cases- a smaller file.
+        // however, experiment in early Jan2020, did not tend to show this. but even the
+        // doubles changed value which makes me think I didn't do a good job with it.
+        // Come back to this in the future?
+        internal static string ConvertDoubleArrayToString(IEnumerable<double> doubles)
+        {
+            var byteArray = doubles.SelectMany(BitConverter.GetBytes).ToArray();
+            return System.Text.Encoding.Unicode.GetString(byteArray);
+        }
+
+        internal static double[] ConvertStringToDoubleArray(string doublesAsString)
+        {
+            var bytes = System.Text.Encoding.Unicode.GetBytes(doublesAsString);
+            var values = new double[bytes.Length / 8];
+            for (int i = 0; i < values.Length; i++)
+                values[i] = BitConverter.ToDouble(bytes, i * 8);
+            return values;
+        }
+
 
         /// <summary>
         /// Gets the TVGL date mark text.

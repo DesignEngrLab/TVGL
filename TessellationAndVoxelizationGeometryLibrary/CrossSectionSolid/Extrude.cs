@@ -91,28 +91,28 @@ namespace TVGL
             List<int[]> triangleIndices;
             #region First, run the triangulate polygons to define how the ends of the extruded shape will be defined
 
-            try
-            {
+            //try
+            //{
                 triangleIndices = polygon.TriangulateToIndices();
-            }
-            catch
-            {
-                try
-                {
-                    //Do some polygon functions to clean up issues and try again
-                    //This is important because the Get2DProjections may produce invalid paths and because
-                    //triangulate will try 3 times before throwing the exception to go to the catch.
-                    //Do some polygon functions to clean up issues and try again
-                    polygon = polygon.OffsetMiter(extrusionHeight / 1000)[0];
-                    polygon = polygon.OffsetMiter(-extrusionHeight / 1000)[0];
-                    triangleIndices = polygon.TriangulateToIndices();
-                }
-                catch (Exception exc)
-                {
-                    Debug.WriteLine("Tried extrusion three-times and it failed." + exc.Message);
-                    return null;
-                }
-            }
+            //}
+            //catch
+            //{
+            //    try
+            //    {
+            //        //Do some polygon functions to clean up issues and try again
+            //        //This is important because the Get2DProjections may produce invalid paths and because
+            //        //triangulate will try 3 times before throwing the exception to go to the catch.
+            //        //Do some polygon functions to clean up issues and try again
+            //        polygon = polygon.OffsetMiter(extrusionHeight / 1000)[0];
+            //        polygon = polygon.OffsetMiter(-extrusionHeight / 1000)[0];
+            //        triangleIndices = polygon.TriangulateToIndices();
+            //    }
+            //    catch (Exception exc)
+            //    {
+            //        Debug.WriteLine("Tried extrusion three-times and it failed." + exc.Message);
+            //        return new List<PolygonalFace>();
+            //    }
+            //}
             #endregion
 
             MiscFunctions.TransformToXYPlane(basePlaneNormal, out var rotateTransform);
