@@ -590,17 +590,16 @@ namespace TVGL.TwoDimensional
                 polygon.minY = double.PositiveInfinity;
                 polygon.maxX = double.NegativeInfinity;
                 polygon.maxY = double.NegativeInfinity;
-                for (var i = 0; i < polygon.Path.Count; i++)
+                foreach (var v in polygon.Vertices)
                 {
-                    var v = polygon.Path[i];
-                    polygon.Path[i] = v = v.Transform(transformMatrix);
+                    v.Transform(transformMatrix);
                     if (minX > v.X) minX = v.X;
                     if (minY > v.Y) minY = v.Y;
                     if (maxX < v.X) maxX = v.X;
                     if (maxY < v.Y) maxY = v.Y;
                 }
-                MakeVertices();
-                MakeLineSegments();
+                foreach (var edge in polygon.Lines)
+                    edge.Reset();
                 _orderedXVertices = null;
                 area = double.NaN;
                 pathArea = double.NaN;

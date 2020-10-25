@@ -86,6 +86,10 @@ namespace TVGL.TwoDimensional
             return "{" + X + "," + Y + "}";
         }
 
+        internal void Transform(Matrix3x3 matrix)
+        {
+            Coordinates = Coordinates.Transform(matrix);
+        }
         #endregion Constructor
     }
 }

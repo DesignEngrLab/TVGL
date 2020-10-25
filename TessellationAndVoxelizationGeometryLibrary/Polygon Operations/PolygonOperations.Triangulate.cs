@@ -105,12 +105,7 @@ namespace TVGL.TwoDimensional
         {
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
-            polygon = polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
-            const int maxNumberOfAttempts = 10;
-            var random = new Random();
-            var randomAngles = new double[maxNumberOfAttempts];
-            for (int i = 1; i < maxNumberOfAttempts; i++)
-                randomAngles[i] = 2 * Math.PI * random.NextDouble();
+
             int numVertices;
             if (reIndexPolygons)
             {
@@ -147,26 +142,35 @@ namespace TVGL.TwoDimensional
                 foreach (var smallInnerPolys in hole.InnerPolygons)
                     triangleFaceList.AddRange(TriangulateToIndices(smallInnerPolys, false));
 
-            foreach (var randomAngle in randomAngles)
+            const int maxNumberOfAttempts = 10;
+            var attempts = 0;
+            var random = new Random();
+            var totalAngle = 0.0;
+            var angle = 0.0;
+            var successful = false;
+            var localTriangleFaceList = new List<int[]>();
+            do
             {
                 try
                 {
-                    var localTriangleFaceList = new List<int[]>();
-                    if (randomAngle != 0)
-                        polygon.Transform(Matrix3x3.CreateRotation(randomAngle));
+                    localTriangleFaceList.Clear();
+                    if (angle != 0)
+                        polygon.Transform(Matrix3x3.CreateRotation(angle));
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-                    triangleFaceList.AddRange(localTriangleFaceList);
-                    return triangleFaceList;
+                    successful = true;
                 }
-                catch { }
-                finally
+                catch
                 {
-                    if (randomAngle != 0)
-                        polygon.Transform(Matrix3x3.CreateRotation(-randomAngle));
+                    angle = random.NextDouble() * 2 * Math.PI / maxNumberOfAttempts;
+                    totalAngle += angle;
                 }
-            }
-            throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges.");
+            } while (!successful && attempts++ < maxNumberOfAttempts);
+            if (!successful)
+                throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges or"
+                    + " check for self-intersections.");
+            triangleFaceList.AddRange(localTriangleFaceList);
+            return triangleFaceList;
         }
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
@@ -282,8 +286,8 @@ namespace TVGL.TwoDimensional
                         PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
                         //if (closestDatum != null)
                         //{
-                            MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
-                            edgeDatums[closestDatum] = (vertex, true);
+                        MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
+                        edgeDatums[closestDatum] = (vertex, true);
                         //}
                     }
                 }

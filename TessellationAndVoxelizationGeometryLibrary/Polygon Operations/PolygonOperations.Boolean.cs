@@ -145,7 +145,6 @@ namespace TVGL.TwoDimensional
                         || interaction.Relationship == PolygonRelationship.Equal)
                     {  // remove polygon B
                         polygonBList.RemoveAt(j);
-                        i--;
                     }
                     else if (interaction.Relationship == PolygonRelationship.AInsideB)
                     {                            // remove polygon A

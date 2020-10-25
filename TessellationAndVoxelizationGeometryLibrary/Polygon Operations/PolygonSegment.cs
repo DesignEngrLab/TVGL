@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -114,10 +115,10 @@ namespace TVGL.TwoDimensional
 
         private double _horizontalSlope = double.NaN;
 
-        public double XMax { get; }
-        public double XMin { get; }
-        public double YMax { get; }
-        public double YMin { get; }
+        public double XMax { get; private set; }
+        public double XMin { get; private set; }
+        public double YMax { get; private set; }
+        public double YMin { get; private set; }
 
         /// <summary>
         /// Gets the index in list.
@@ -264,6 +265,21 @@ namespace TVGL.TwoDimensional
         public override string ToString()
         {
             return "from: " + FromPoint + " to: " + ToPoint;
+        }
+
+        internal void Reset()
+        {
+            _center = Vector2.Null;
+            _horizontalSlope = double.NaN;
+            _length = double.NaN;
+            _vector = Vector2.Null;
+            _verticalSlope = double.NaN;
+            _xIntercept = double.NaN;
+            _yIntercept = double.NaN;
+            XMax = (FromPoint.X > ToPoint.X) ? FromPoint.X : ToPoint.X;
+            XMin = (FromPoint.X < ToPoint.X) ? FromPoint.X : ToPoint.X;
+            YMax = (FromPoint.Y > ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
+            YMin = (FromPoint.Y < ToPoint.Y) ? FromPoint.Y : ToPoint.Y;
         }
 
         #endregion Methods
