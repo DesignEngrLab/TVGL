@@ -241,7 +241,6 @@ namespace TVGL
                         _center += v.Coordinates;
                     _center /= 3;
                 }
-                _center = new Vector3();
                 return _center;
             }
         }
