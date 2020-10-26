@@ -57,16 +57,19 @@ namespace TVGL
             {
                 var index = layerKeyValuePair.Key;
                 var zValue = StepDistances[index];
-                var numLoops = layerKeyValuePair.Value.Count;
+                var numLoops = layerKeyValuePair.Value.Sum(poly => 1 + poly.NumberOfInnerPolygons);
                 var layer = new Vector3[numLoops][];
                 result[k++] = layer;
-                for (int j = 0; j < numLoops; j++)
-                {
-                    var loop = new Vector3[layerKeyValuePair.Value[j].Path.Count];
-                    layer[j] = loop;
-                    for (int i = 0; i < loop.Length; i++)
-                        loop[i] = (new Vector3(layerKeyValuePair.Value[j].Path[i], zValue)).Transform(TransformMatrix);
-                }
+                int j = 0;
+                foreach (var poly in layerKeyValuePair.Value)
+                    foreach (var innerPoly in poly.AllPolygons)
+                    {
+                        var loop = new Vector3[innerPoly.Path.Count];
+                        layer[j] = loop;
+                        for (int i = 0; i < loop.Length; i++)
+                            loop[j] = (new Vector3(innerPoly.Path[i], zValue)).Transform(TransformMatrix);
+                        j++;
+                    }
             }
             return result;
         }
