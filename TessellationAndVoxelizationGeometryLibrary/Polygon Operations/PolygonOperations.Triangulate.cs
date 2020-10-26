@@ -256,7 +256,7 @@ namespace TVGL.TwoDimensional
                         edgeDatums[closestDatumEdge] = (vertex, false);
                     }
                 }
-                else if (cornerCross.IsGreaterThanNonNegligible()) //then either start or end
+                else if (!cornerCross.IsLessThanNonNegligible()) //then either start or end
                 {
                     if ((vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible()) || // then start
                         (vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.Y.IsLessThanNonNegligible()))
@@ -284,11 +284,11 @@ namespace TVGL.TwoDimensional
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
                         PolygonEdge closestDatum = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
-                        //if (closestDatum != null)
-                        //{
-                        MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
-                        edgeDatums[closestDatum] = (vertex, true);
-                        //}
+                        if (closestDatum != null)
+                        {
+                            MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, closestDatum, vertex);
+                            edgeDatums[closestDatum] = (vertex, true);
+                        }
                     }
                 }
             }
@@ -298,6 +298,7 @@ namespace TVGL.TwoDimensional
         private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> connections,
             Dictionary<PolygonEdge, (Vertex2D, bool)> edgeDatums, PolygonEdge datum, Vertex2D vertex)
         {
+            if (!edgeDatums.ContainsKey(datum)) return;
             var prevLineHelperData = edgeDatums[datum];
             var helperVertex = prevLineHelperData.Item1;
             var isMergePoint = prevLineHelperData.Item2;
@@ -349,7 +350,7 @@ namespace TVGL.TwoDimensional
                 }
             }
 
-            if (closestEdge == null && numEdges > 0) return FindClosestLowerDatum(edges, point, double.NegativeInfinity);
+            //if (closestEdge == null && numEdges > 0) return FindClosestLowerDatum(edges, point, double.NegativeInfinity);
             return closestEdge;
         }
 
