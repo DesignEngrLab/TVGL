@@ -895,7 +895,8 @@ namespace TVGL.Boolean_Operations
                         if (whichEdge == firstEdgeInLoop)
                         {
                             finishedLoop = true;
-                            loops.Add(new Polygon(path));
+                            if (path.Count > 2)
+                                loops.Add(new Polygon(path));
                             break;
                         }
                         else if (unusedEdges.ContainsKey(whichEdge))
@@ -906,8 +907,10 @@ namespace TVGL.Boolean_Operations
                     }
                     if (!finishedLoop && nextEdge == null)
                     {
-                        Console.WriteLine("Incomplete loop.");
-                        loops.Add(new Polygon(path));
+                        Message.output("Incomplete loop.", 3);
+                        if (path.Count > 2)
+                            loops.Add(new Polygon(path));
+                        finishedLoop = true;
                     }
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);

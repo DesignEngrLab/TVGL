@@ -18,22 +18,11 @@ namespace TVGLUnitTestsAndBenchmarking
         //[Fact]
         public static void TestSilhouette()
         {
-            DirectoryInfo dir;
-            if (Directory.Exists("../../../../TestFiles"))
-            {
-                //x64
-                dir = new DirectoryInfo("../../../../TestFiles");
-            }
-            else
-            {
-                //x86
-                dir = new DirectoryInfo("../../../TestFiles");
-            }
-            //            brace.stl - holes showing up?
-            // radiobox - missing holes - weird skip in outline
-            // KnuckleTopOp flecks
-            // mendel_extruder - one show up blank
-            //var fileNames = dir.GetFiles("Obliq*").ToArray();
+            var dir = new DirectoryInfo(".");
+            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+                dir = dir.Parent;
+            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
+
             var fileNames = dir.GetFiles("*").ToArray();
             for (var i = 6; i < fileNames.Length - 0; i++)
             {

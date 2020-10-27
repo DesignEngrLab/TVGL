@@ -468,6 +468,7 @@ namespace TVGL.TwoDimensional
             var visited = new bool[interactionRecord.numPolygonsInA * interactionRecord.numPolygonsInB];
             RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, tolerance);
             interactionRecord.DefineOverallInteractionFromFinalListOfSubInteractions();
+            System.Diagnostics.Debug.WriteLine(interactionRecord.IntersectionData);
             return interactionRecord;
         }
         /// <summary>

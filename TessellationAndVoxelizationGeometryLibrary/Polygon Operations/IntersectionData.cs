@@ -105,6 +105,7 @@ namespace TVGL.TwoDimensional
         }
         internal PolyRelInternal GetRelationshipBetween(Polygon polygonA, Polygon polygonB)
         {
+            if (polygonRelations == null) return PolyRelInternal.Equal;
             var index = findLookupIndex(polygonA, polygonB);
             return polygonRelations[index];
         }
@@ -243,6 +244,7 @@ namespace TVGL.TwoDimensional
             // now make the lookupList. One list per vertex. If the vertex does not intersect, then it is left as null.
             // this is potentially memory intensive but speeds up the matching  when creating new polygons
             var lookupList = new List<int>[numVertices];
+            if (IntersectionData == null) return lookupList;
             for (int i = 0; i < IntersectionData.Count; i++)
             {
                 var intersection = IntersectionData[i];

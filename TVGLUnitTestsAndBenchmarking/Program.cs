@@ -22,7 +22,7 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
-            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
 
@@ -59,7 +59,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
 #else
             //#endif
-            //PolygonBooleanTester.FullComparison();
+            PolygonBooleanTester.FullComparison();
             //var stats = new List<(string, int, long, long)>();
 
             //foreach (var testCase in TestCases.GetAllTwoArgumentEdgeCases())
@@ -68,7 +68,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //    PolygonBooleanTester.SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2),
             //        TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
             //}
-            PolygonBooleanTester.TestOffsetting();
+            //PolygonBooleanTester.TestOffsetting();
 #endif
             //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
             //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");

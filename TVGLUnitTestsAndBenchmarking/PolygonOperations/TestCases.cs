@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TVGL;
+using TVGL.Boolean_Operations;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 using TVGL.Voxelization;
@@ -16,8 +17,9 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public static class TestCases
     {
+        static Random r = new Random();
+        static double r1 => 2.0 * r.NextDouble() - 1.0;
 
-        static Random r = new Random(1);
 
 
         internal static Polygon C2Poly(IEnumerable<IEnumerable<Vector2>> coordinates)
@@ -359,5 +361,55 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
 
+        internal static IEnumerable<KeyValuePair<string, (Polygon, Polygon)>> TessellatedSolidCrossSections()
+        {
+            var dir = new DirectoryInfo(".");
+            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+                dir = dir.Parent;
+            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
+            const int numTrialsPerSolid = 5;
+            var fileNames = dir.GetFiles("*").ToArray();
+            // for (var i = 0; i < 5; i++)
+            for (var i = 100; i < fileNames.Length; i++)
+            {
+                //var filename = FileNames[i];
+                var filename = fileNames[i].FullName;
+                var name = fileNames[i].Name;
+                Console.WriteLine("Attempting: " + filename);
+                TVGL.TessellatedSolid solid = null;
+                try
+                {
+                    TVGL.IOFunctions.IO.Open(filename, out solid);
+                }
+                catch
+                {
+                    Console.WriteLine("Error opening " + filename);
+                    continue;
+                }//Presenter.ShowAndHang(solid);
+                var center = 0.5 * (solid.Bounds[1] + solid.Bounds[0]);
+                var dimensions = solid.Bounds[1] - solid.Bounds[0];
+                var minDimension = Math.Min(dimensions.X, Math.Min(dimensions.Y, dimensions.Z));
+                for (int k = 0; k < numTrialsPerSolid; k++)
+                {
+                    var n1 = new Vector3(r1, r1, r1).Normalize();
+                    var bCenter = center.Dot(n1);
+                    Polygon poly1 = null;
+                    while (poly1 == null)
+                    {
+                        var offset1 = r1 * 0.5 * minDimension;
+                        var polys1 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1)).OffsetRound(offset1);
+                        if (polys1.Count > 0) poly1 = polys1.LargestPolygon();
+                    }
+                    Polygon poly2 = null;
+                    while (poly2 == null)
+                    {
+                        var offset2 = r1 * 0.5 * minDimension;
+                        var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1)).OffsetRound(offset2);
+                        if (polys2.Count > 0) poly2 = polys2.LargestPolygon();
+                    }
+                    yield return new KeyValuePair<string, (Polygon, Polygon)>(name + k, (poly1, poly2));
+                }
+            }
+        }
     }
 }

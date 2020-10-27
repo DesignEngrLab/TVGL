@@ -1047,6 +1047,9 @@ namespace OldTVGL
         private static List<List<PointLight>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject, out long ticks,
            IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
+            //Begin an evaluation
+            var stopWatch = new Stopwatch();
+            stopWatch.Restart();
             //Convert the fill type from PolygonOperations wrapper to Clipper enum types
             PolyFillType fillType;
             switch (fillMethod)
@@ -1066,7 +1069,11 @@ namespace OldTVGL
                 default:
                     throw new NotImplementedException();
             }
-            return BooleanOperation(fillType, clipType, subject, out ticks, clip, simplifyPriorToBooleanOperation, scale);
+            var solution = BooleanOperation(fillType, clipType, subject, clip, simplifyPriorToBooleanOperation, scale);
+
+            stopWatch.Stop();
+            ticks = stopWatch.ElapsedTicks;
+            return solution;
         }
 
 
@@ -1081,7 +1088,7 @@ namespace OldTVGL
         /// <param name="fillMethod"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject, out long ticks,
+        private static List<List<PointLight>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<PathAsLight> subject, 
             IEnumerable<PathAsLight> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
             //Remove any polygons that are only a line.
@@ -1102,7 +1109,6 @@ namespace OldTVGL
             {
                 if (clip == null || !clip.Any())
                 {
-                    ticks = 0;
                     return new List<List<PointLight>>();
                 }
                 //Use the clip as the subject if this is a union operation and the clip is not null.
@@ -1128,17 +1134,11 @@ namespace OldTVGL
                 clipper.AddPaths(clipperClip, PolyType.ptClip, true);
             }
 
-            //Begin an evaluation
-            var stopWatch = new Stopwatch();
-            stopWatch.Restart();
             var result = clipper.Execute(clipType, clipperSolution, fillMethod, fillMethod);
-            stopWatch.Stop();
-            ticks = stopWatch.ElapsedTicks;
             if (!result) throw new Exception("Clipper Union Failed");
 
             //Convert back to points
-            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new PointLight(point.X / scale, point.Y / scale)).ToList()).ToList();
-            return solution;
+            return clipperSolution.Select(clipperPath => clipperPath.Select(point => new PointLight(point.X / scale, point.Y / scale)).ToList()).ToList();
         }
         #endregion
 

@@ -3,6 +3,7 @@ using OldTVGL;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using TVGL;
 using TVGL.IOFunctions;
@@ -60,38 +61,51 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static void FullComparison()
         {
             var stats = new List<(string, int, long, long)>();
+            int numTVGLErrors = 0;
+            int numClipperErrors = 0;
             (Vector2[][], Vector2[][]) polys;
-            for (var n = 10; n < 500000; n = (int)(n * 1.7782794))
+            /*
+              for (var n = 10; n < 500000; n = (int)(n * 1.7782794))
+              {
+                  polys = TestCases.BenchKnown(n);
+                  SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
+              }
+              polys = TestCases.LoadWlrPolygonSet();
+              SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
+                var radius = 100;
+              for (int numVerts = 10; numVerts < 70000; numVerts = (int)(1.5 * numVerts))
+              {
+                  for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
+                  {
+                      polys = TestCases.MakeBumpyRings(numVerts, radius, delta);
+                      //Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numVerts, radius, delta);
+                      SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
+                  }
+              }
+
+              for (int numVerts = 10; numVerts < 30000; numVerts = (int)(3 * numVerts))
+              {
+                  for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
+                  {
+                      var poly1 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
+                      var poly2 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
+                      //Console.WriteLine("Chunky Square: numVerts = {0}, thick={1}", numVerts, delta);
+                      SingleCompare(stats, poly1, poly2, TestCases.Poly2PLs(poly1), TestCases.Poly2PLs(poly2));
+                  }
+              }
+              */
+            foreach (var kvp in TestCases.TessellatedSolidCrossSections())
             {
-                polys = TestCases.BenchKnown(n);
-                SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
+                var poly1 = kvp.Value.Item1;
+                var poly2 = kvp.Value.Item2;
+                //Presenter.ShowAndHang(new[] { poly1, poly2 });
+                Console.WriteLine("XSections From TS's: " + kvp.Key);
+                var errors = SingleCompare(stats, poly1, poly2, TestCases.Poly2PLs(poly1), TestCases.Poly2PLs(poly2));
+                numTVGLErrors += errors.Item1;
+                numClipperErrors += errors.Item2;
             }
-            polys = TestCases.LoadWlrPolygonSet();
-            SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
-            var radius = 100;
-            for (int numVerts = 10; numVerts < 70000; numVerts = (int)(1.5 * numVerts))
-            {
-                for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
-                {
-                    polys = TestCases.MakeBumpyRings(numVerts, radius, delta);
-                    //Console.WriteLine("Bumpy Rings:{0}, {1}, {2}", numVerts, radius, delta);
-                    SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
-                }
-            }
-
-            for (int numVerts = 10; numVerts < 30000; numVerts = (int)(3 * numVerts))
-            {
-                for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
-                {
-                    var poly1 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
-                    var poly2 = TestCases.MakeChunkySquarePolygon(numVerts, delta);
-                    //Console.WriteLine("Chunky Square: numVerts = {0}, thick={1}", numVerts, delta);
-                    SingleCompare(stats, poly1, poly2, TestCases.Poly2PLs(poly1), TestCases.Poly2PLs(poly2));
-                }
-            }
-
-
-
+            Console.WriteLine("Number of TVGL Errors = " + numTVGLErrors);
+            Console.WriteLine("Number of Clipper Errors = " + numClipperErrors);
             System.IO.StreamWriter SaveFile = new System.IO.StreamWriter("stats.csv");
             foreach (var item in stats)
             {
@@ -100,15 +114,17 @@ namespace TVGLUnitTestsAndBenchmarking
             SaveFile.Close();
         }
 
-        internal static void SingleCompare(List<(string, int, long, long)> stats, Polygon p1, Polygon p2, List<List<PointLight>> v1, List<List<PointLight>> v2)
+        internal static (int, int) SingleCompare(List<(string, int, long, long)> stats, Polygon p1, Polygon p2, List<List<PointLight>> v1, List<List<PointLight>> v2)
         {
             var stopWatch = new Stopwatch();
-            var numIters = 1;
+            var numIters = 5;
             var operationString = "";
             List<Polygon> tvglResult = null;
             List<List<PointLight>> clipperResult = null;
             long elapsedTVGL;
-            long elapsedClipper;
+            long elapsedClipper=0;
+            int numTVGLErrors = 0;
+            int numClipperErrors = 0;
             //Presenter.ShowAndHang(new[] { p1, p2 });
             var numVerts = p1.AllPolygons.Sum(p => p.Vertices.Count) + p2.AllPolygons.Sum(p => p.Vertices.Count);
             /********** Union *********/
@@ -125,7 +141,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
-            Compare(tvglResult, clipperResult, p1, p2, operationString);
+            var errors = Compare(tvglResult, clipperResult, p1, p2, operationString);
+            numTVGLErrors += errors.Item1;
+            numClipperErrors += errors.Item2;
             /********** Intersection *********/
             operationString = "Intersect";
             Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
@@ -140,7 +158,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
-            Compare(tvglResult, clipperResult, p1, p2, operationString);
+            errors = Compare(tvglResult, clipperResult, p1, p2, operationString);
+            numTVGLErrors += errors.Item1;
+            numClipperErrors += errors.Item2;
             ///********** SubtractAB *********/
 
             operationString = "SubtractAB";
@@ -156,7 +176,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
-            Compare(tvglResult, clipperResult, p1, p2, operationString);
+            errors = Compare(tvglResult, clipperResult, p1, p2, operationString);
+            numTVGLErrors += errors.Item1;
+            numClipperErrors += errors.Item2;
 
             ///********** SubtractBA *********/
             operationString = "SubtractBA";
@@ -172,7 +194,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
-            Compare(tvglResult, clipperResult, p1, p2, operationString);
+            errors = Compare(tvglResult, clipperResult, p1, p2, operationString);
+            numTVGLErrors += errors.Item1;
+            numClipperErrors += errors.Item2;
+            return (numTVGLErrors, numClipperErrors);
         }
 
         public IEnumerable<object[]> Data()
@@ -250,8 +275,9 @@ namespace TVGLUnitTestsAndBenchmarking
 
 
 
-        private static void Compare(List<Polygon> tvglResult, List<List<PointLight>> clipperResult, Polygon polygon1, Polygon polygon2, string operationString)
+        private static (int, int) Compare(List<Polygon> tvglResult, List<List<PointLight>> clipperResult, Polygon polygon1, Polygon polygon2, string operationString)
         {
+            return (0,0);
             var numVoxels = 500;
             var tolerance = 1e-3;
             var min = new Vector2(Math.Min(polygon1.MinX, polygon2.MinX),
@@ -311,6 +337,7 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 Console.WriteLine("*****{0} matches", operationString);
                 Console.WriteLine();
+                return (0, 0);
             }
             else
             {
@@ -346,18 +373,19 @@ namespace TVGLUnitTestsAndBenchmarking
                     Presenter.ShowAndHang(tvglResult, "TVGLPro");
                     Presenter.ShowAndHang(clipperShallowPolyTree, "Clipper");
                 }
-                if (tvglError)
+                if (tvglError && false)
                 {
                     Console.WriteLine("showing tvgl error...");
                     var shallowTree = tvglResult.CreateShallowPolygonTrees(true);
                     Presenter.ShowAndHang(correctVoxels, shallowTree);
                 }
-                if (clipperError)
+                if (clipperError && false)
                 {
                     Console.WriteLine("showing clipper error...");
                     Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);
                 }
                 Console.WriteLine();
+                return (tvglError ? 1 : 0, clipperError ? 1 : 0);
             }
         }
 

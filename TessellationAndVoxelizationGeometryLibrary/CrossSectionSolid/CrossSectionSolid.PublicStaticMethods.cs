@@ -67,7 +67,7 @@ namespace TVGL
                         var loop = new Vector3[innerPoly.Path.Count];
                         layer[j] = loop;
                         for (int i = 0; i < loop.Length; i++)
-                            loop[j] = (new Vector3(innerPoly.Path[i], zValue)).Transform(TransformMatrix);
+                            loop[i] = (new Vector3(innerPoly.Path[i], zValue)).Transform(TransformMatrix);
                         j++;
                     }
             }

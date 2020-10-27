@@ -118,16 +118,19 @@ namespace TVGL.TwoDimensional
             out SegmentIntersection nextStartingIntersection, out PolygonEdge currentEdge, out bool switchPolygon,
             ref int indexIntersectionStart)
         {
-            for (int i = indexIntersectionStart; i < intersections.Count; i++)
+            if (intersections != null && intersections.Count > 0)
             {
-                SegmentIntersection intersectionData = intersections[i];
-                if (ValidStartingIntersection(intersectionData, out currentEdge, out bool startAgain))
+                for (int i = indexIntersectionStart; i < intersections.Count; i++)
                 {
-                    if (startAgain) indexIntersectionStart = i;
-                    else indexIntersectionStart = i + 1;
-                    switchPolygon = SwitchAtThisIntersection(intersectionData, currentEdge == intersectionData.EdgeA);
-                    nextStartingIntersection = intersectionData;
-                    return true;
+                    SegmentIntersection intersectionData = intersections[i];
+                    if (ValidStartingIntersection(intersectionData, out currentEdge, out bool startAgain))
+                    {
+                        if (startAgain) indexIntersectionStart = i;
+                        else indexIntersectionStart = i + 1;
+                        switchPolygon = SwitchAtThisIntersection(intersectionData, currentEdge == intersectionData.EdgeA);
+                        nextStartingIntersection = intersectionData;
+                        return true;
+                    }
                 }
             }
             switchPolygon = false;
