@@ -62,12 +62,13 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <value>The ordered x vertices.</value>
         [JsonIgnore]
-        internal List<Vertex2D> OrderedXVertices
+        internal Vertex2D[] OrderedXVertices
         {
             get
             {
-                if (_orderedXVertices == null || _orderedXVertices.Count != Vertices.Count)
-                    _orderedXVertices = Vertices.OrderBy(v => v, new VertexSorter()).ToList();
+                if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
+                    _orderedXVertices = this.SortVerticesByXValue();
+                //_orderedXVertices = Vertices.OrderBy(v => v, new VertexSorter()).ToArray();
                 return _orderedXVertices;
 
             }
@@ -75,7 +76,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// The ordered x vertices
         /// </summary>
-        List<Vertex2D> _orderedXVertices;
+        Vertex2D[] _orderedXVertices;
 
         /// <summary>
         /// Gets the list of lines that make up a polygon. This is not set by default.

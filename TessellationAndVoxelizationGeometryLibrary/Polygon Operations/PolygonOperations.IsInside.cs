@@ -54,7 +54,7 @@ namespace TVGL.TwoDimensional
         /// <param name="sortedVertices">The sorted vertices.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns><c>true</c> if [is non intersecting polygon inside] [the specified sorted vertices]; otherwise, <c>false</c>.</returns>
-        internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonEdge> sortedEdges, List<Vertex2D> sortedVertices, double tolerance)
+        internal static bool? IsNonIntersectingPolygonInside(this IList<PolygonEdge> sortedEdges, Vertex2D[] sortedVertices, double tolerance)
         {
             var edgeIndex = 0;
             foreach (var vertex in sortedVertices)
@@ -989,14 +989,13 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static PolygonEdge[] GetOrderedLines(List<Vertex2D> orderedPoints)
+        private static PolygonEdge[] GetOrderedLines(Vertex2D[] orderedPoints)
         {
-            var length = orderedPoints.Count;
+            var length = orderedPoints.Length;
             var result = new PolygonEdge[length];
             var k = 0;
             for (int i = 0; i < length; i++)
             {
-
                 var point = orderedPoints[i];
                 if (!point.StartLine.OtherPoint(point).X.IsLessThanNonNegligible(point.X))
                     result[k++] = point.StartLine;

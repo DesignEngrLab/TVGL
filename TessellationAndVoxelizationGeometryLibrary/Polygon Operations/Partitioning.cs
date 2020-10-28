@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -110,15 +111,30 @@ namespace TVGL.TwoDimensional
 
         }
 
-        public static IEnumerable<MonotoneBox> PartitionIntoMonotoneBoxes(this Polygon polygon)
+        /// <summary>
+        /// Partitions the into monotone boxes.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="divideAt">The divide at.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.TwoDimensional.MonotoneBox&gt;.</returns>
+        /// <exception cref="MonotoneBox">polygon.Vertices[0], polygon.Vertices[1], MonotonicityChange.Both, MonotonicityChange.Both, true, true</exception>
+        public static IEnumerable<MonotoneBox> PartitionIntoMonotoneBoxes(this Polygon polygon, MonotonicityChange divideAt = MonotonicityChange.Both)
         {
             var numPoints = polygon.Vertices.Count;
             if (numPoints <= 1)
+            {
+                yield return
+                    new MonotoneBox(polygon.Vertices[0], polygon.Vertices[0], MonotonicityChange.Both,
+                        MonotonicityChange.Both, true, true);
                 yield break;
+            }
             if (numPoints <= 2)
+            {
                 yield return
                     new MonotoneBox(polygon.Vertices[0], polygon.Vertices[1], MonotonicityChange.Both,
                         MonotonicityChange.Both, true, true);
+                yield break;
+            }
 
             var initBoxIndex = -1;
             var initBoxMonoChange = MonotonicityChange.Neither;
@@ -128,12 +144,14 @@ namespace TVGL.TwoDimensional
             var i = 0;
             while (i % numPoints != initBoxIndex)
             {
-                var vertex = polygon.Vertices[i];
+                var vertex = polygon.Vertices[i % numPoints];
                 var monoChange = GetMonotonicityChange(vertex);
                 if (monoChange == MonotonicityChange.SameAsNeighbor)
                     throw new ArgumentException("Duplicate vertices in polygon provided to PartitionIntoMonotoneBoxes",
                         nameof(polygon));
-                if (monoChange != MonotonicityChange.Neither)
+                if (monoChange == MonotonicityChange.Both ||
+                    (monoChange == MonotonicityChange.X && (divideAt == MonotonicityChange.X || divideAt == MonotonicityChange.Both)) ||
+                    (monoChange == MonotonicityChange.Y && (divideAt == MonotonicityChange.Y || divideAt == MonotonicityChange.Both)))
                 {
                     if (initBoxIndex < 0)
                     {
@@ -141,17 +159,12 @@ namespace TVGL.TwoDimensional
                         beginBoxVertex = vertex;
                         initBoxMonoChange = beginBoxMonoChange = monoChange;
                     }
-                    if (beginBoxVertex == null)
-                    {
-                        beginBoxVertex = vertex;
-                        beginBoxMonoChange = monoChange;
-                    }
                     else
                     {
                         yield return new MonotoneBox(beginBoxVertex, vertex, beginBoxMonoChange, monoChange,
-                            vertex.X - beginBoxVertex.X >= 0,
-                            vertex.Y - beginBoxVertex.Y >= 0);
-                        beginBoxVertex = null;
+                            vertex.X >= beginBoxVertex.X, vertex.Y >= beginBoxVertex.Y);
+                        beginBoxVertex = vertex;
+                        beginBoxMonoChange = monoChange;
                     }
                 }
                 i++;
@@ -161,6 +174,34 @@ namespace TVGL.TwoDimensional
                 beginBoxMonoChange, initBoxMonoChange,
                 lastVertex.X - beginBoxVertex.X >= 0,
                 lastVertex.Y - beginBoxVertex.Y >= 0);
+        }
+
+        /// <summary>
+        /// Orders the vertices of the polygon in the x-direction.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Vertex2D[].</returns>
+        public static Vertex2D[] SortVerticesByXValue(this Polygon polygon)
+        {
+            var xStrands = new List<Vertex2D[]>();
+            foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X))
+            {
+                var newStrand = new List<Vertex2D>();
+                var vertex = monoBox.Vertex1;
+                while (vertex != monoBox.Vertex2)
+                {
+                    newStrand.Add(vertex);
+                    vertex = vertex.StartLine.ToPoint;
+                }
+                if (!monoBox.XInPositiveMonotonicity) newStrand.Reverse();
+                xStrands.Add(newStrand.ToArray());
+            }
+            var n = polygon.Vertices.Count;
+            var sortedVertices = new Vertex2D[n];
+            var i = 0;
+            foreach (var vertex in CombineSortedVerticesIntoOneCollection(xStrands))
+                sortedVertices[i++] = vertex;
+            return sortedVertices;
         }
     }
 }

@@ -222,7 +222,7 @@ namespace TVGL.TwoDimensional
 
         private static Dictionary<Vertex2D, List<Vertex2D>> FindInternalDiagonalsForMonotone(Polygon polygon)
         {
-            var orderedListsOfVertices = new List<List<Vertex2D>>();
+            var orderedListsOfVertices = new List<Vertex2D[]>();
             orderedListsOfVertices.Add(polygon.OrderedXVertices);
             foreach (var hole in polygon.InnerPolygons)
                 orderedListsOfVertices.Add(hole.OrderedXVertices);
@@ -355,7 +355,7 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static IEnumerable<Vertex2D> CombineSortedVerticesIntoOneCollection(List<List<Vertex2D>> orderedListsOfVertices)
+        private static IEnumerable<Vertex2D> CombineSortedVerticesIntoOneCollection(List<Vertex2D[]> orderedListsOfVertices)
         {
             var numLists = orderedListsOfVertices.Count;
             var currentIndices = new int[numLists];
@@ -367,7 +367,7 @@ namespace TVGL.TwoDimensional
                 for (int i = 0; i < numLists; i++)
                 {
                     var index = currentIndices[i];
-                    if (orderedListsOfVertices[i].Count <= index) continue;
+                    if (orderedListsOfVertices[i].Length <= index) continue;
                     var vertex = orderedListsOfVertices[i][index];
                     if (vertex.X.IsLessThanNonNegligible(lowestXValue) ||
                         (vertex.X.IsPracticallySame(lowestXValue) && vertex.Y < lowestYValue))

@@ -17,7 +17,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public static class TestCases
     {
-        static Random r = new Random();
+        static Random r = new Random(1);
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
 
@@ -85,7 +85,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         new Vector2(80.10308177750458,55.16161954594162), new Vector2(79.74617295481619,55.5026089914283),
                         new Vector2(79.49108255907875,55.59107482211029) ,new Vector2(79.78187368483665, 55.35998048399254)} },
                     null)},
-{ "skyline", (
+                { "skyline", (
                     new [] { new [] { new Vector2(0,4), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7, 4), new Vector2(7, 2), new Vector2(6,2), new Vector2(4,2), new Vector2(4,3), new Vector2(1,3), new Vector2(1,4) } },
                     new [] { new [] { new Vector2(0,3), new Vector2(0,0), new Vector2(8, 0), new Vector2(8, 4), new Vector2(7,4), new Vector2(7, 3), new Vector2(6, 3), new Vector2(2, 3), new Vector2(2, 4), new Vector2(1,4), new Vector2(1, 3) } })},
                  { "cutout", (
@@ -367,8 +367,8 @@ namespace TVGLUnitTestsAndBenchmarking
             while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
                 dir = dir.Parent;
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
-            const int numTrialsPerSolid = 5;
-            var fileNames = dir.GetFiles("*").ToArray();
+            const int numTrialsPerSolid = 50;
+            var fileNames = dir.GetFiles("*").OrderBy(a=>r1).ToArray();
             // for (var i = 0; i < 5; i++)
             for (var i = 100; i < fileNames.Length; i++)
             {
@@ -394,9 +394,10 @@ namespace TVGLUnitTestsAndBenchmarking
                     var n1 = new Vector3(r1, r1, r1).Normalize();
                     var bCenter = center.Dot(n1);
                     Polygon poly1 = null;
+                    double offset1 = 0.0;
                     while (poly1 == null)
                     {
-                        var offset1 = r1 * 0.5 * minDimension;
+                        offset1 = r1 * 0.5 * minDimension;
                         var polys1 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1)).OffsetRound(offset1);
                         if (polys1.Count > 0) poly1 = polys1.LargestPolygon();
                     }
@@ -404,7 +405,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     while (poly2 == null)
                     {
                         var offset2 = r1 * 0.5 * minDimension;
-                        var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1)).OffsetRound(offset2);
+                        var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 *0.5* minDimension, n1)).OffsetRound(offset1);
                         if (polys2.Count > 0) poly2 = polys2.LargestPolygon();
                     }
                     yield return new KeyValuePair<string, (Polygon, Polygon)>(name + k, (poly1, poly2));
