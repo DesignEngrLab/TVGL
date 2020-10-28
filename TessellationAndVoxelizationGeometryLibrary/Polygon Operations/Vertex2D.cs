@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -10,7 +11,7 @@ namespace TVGL.TwoDimensional
     ///     Vertex2D class used in Triangulate Polygon
     ///     Inherits position from point class
     /// </summary>
-    public class Vertex2D
+    public class Vertex2D 
     {
         #region Properties
 

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Priority_Queue;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -359,29 +360,25 @@ namespace TVGL.TwoDimensional
         {
             var numLists = orderedListsOfVertices.Count;
             var currentIndices = new int[numLists];
-            while (true)
+            var priorityQueue = new SimplePriorityQueue<int, Vertex2D>(new VertexSorter());
+            for (int j = 0; j < orderedListsOfVertices.Count; j++)
+                priorityQueue.Enqueue(j, orderedListsOfVertices[j][0]);
+            // the following code is written verbosely. I'm trusting the compiler optimization
+            // to ensure that it speed things up.
+            while (priorityQueue.Count > 0)
             {
-                var lowestXValue = double.PositiveInfinity;
-                var lowestYValue = double.PositiveInfinity;
-                var lowestEntry = -1;
-                for (int i = 0; i < numLists; i++)
-                {
-                    var index = currentIndices[i];
-                    if (orderedListsOfVertices[i].Length <= index) continue;
-                    var vertex = orderedListsOfVertices[i][index];
-                    if (vertex.X.IsLessThanNonNegligible(lowestXValue) ||
-                        (vertex.X.IsPracticallySame(lowestXValue) && vertex.Y < lowestYValue))
-                    {
-                        lowestXValue = vertex.X;
-                        lowestYValue = vertex.Y;
-                        lowestEntry = i;
-                    }
-                }
-                if (lowestEntry == -1) yield break;
-                yield return orderedListsOfVertices[lowestEntry][currentIndices[lowestEntry]];
-                currentIndices[lowestEntry]++;
+                var listWithLowestEntry = priorityQueue.Dequeue();
+                var vertexList = orderedListsOfVertices[listWithLowestEntry];
+                var indexInThatList = currentIndices[listWithLowestEntry];
+                var nextVertex = vertexList[currentIndices[listWithLowestEntry]];
+                yield return nextVertex;
+                indexInThatList++;
+                currentIndices[listWithLowestEntry] = indexInThatList;
+                if (indexInThatList < vertexList.Length)
+                    priorityQueue.Enqueue(listWithLowestEntry, vertexList[indexInThatList]);
             }
         }
+
 
         private static IEnumerable<int[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {

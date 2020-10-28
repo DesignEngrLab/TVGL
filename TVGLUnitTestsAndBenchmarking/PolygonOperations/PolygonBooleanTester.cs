@@ -65,7 +65,7 @@ namespace TVGLUnitTestsAndBenchmarking
             int numClipperErrors = 0;
             (Vector2[][], Vector2[][]) polys;
             
-              for (var n = 10; n < 500000; n = (int)(n * 3.7782794))
+              for (var n = 10; n < 5000; n = (int)(n * 3.7782794))
               {
                   polys = TestCases.BenchKnown(n);
                 var errors = SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
@@ -87,7 +87,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
               }
 
-              for (int numVerts = 10; numVerts < 30000; numVerts = (int)(3 * numVerts))
+              for (int numVerts = 10; numVerts < 3000; numVerts = (int)(3 * numVerts))
               {
                   for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
                   {
@@ -99,7 +99,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     numClipperErrors += errors.Item2;
                 }
               }
-            /*
+            
             foreach (var kvp in TestCases.TessellatedSolidCrossSections())
             {
                 var poly1 = kvp.Value.Item1;
@@ -110,7 +110,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 numTVGLErrors += errors.Item1;
                 numClipperErrors += errors.Item2;
             }
-            */
+            
             Console.WriteLine("Number of TVGL Errors = " + numTVGLErrors);
             Console.WriteLine("Number of Clipper Errors = " + numClipperErrors);
             System.IO.StreamWriter SaveFile = new System.IO.StreamWriter("stats.csv");
@@ -124,7 +124,7 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static (int, int) SingleCompare(List<(string, int, long, long)> stats, Polygon p1, Polygon p2, List<List<PointLight>> v1, List<List<PointLight>> v2)
         {
             var stopWatch = new Stopwatch();
-            var numIters = 5;
+            var numIters = 1;
             var operationString = "";
             List<Polygon> tvglResult = null;
             List<List<PointLight>> clipperResult = null;
@@ -144,7 +144,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 tvglResult = TVGLUnion(p1, p2, v1, v2);
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks;
-                clipperResult = ClipperUnion(p1, p2, v1, v2, out elapsedClipper);
+                //clipperResult = ClipperUnion(p1, p2, v1, v2, out elapsedClipper);
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
@@ -163,7 +163,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 tvglResult = TVGLIntersect(p1, p2, v1, v2);
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks;
-                clipperResult = ClipperIntersect(p1, p2, v1, v2, out elapsedClipper);
+                //clipperResult = ClipperIntersect(p1, p2, v1, v2, out elapsedClipper);
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
@@ -199,7 +199,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 tvglResult = TVGLBSubtractA(p1, p2, v1, v2);
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks;
-                clipperResult = ClipperBSubtractA(p1, p2, v1, v2, out elapsedClipper);
+                //clipperResult = ClipperBSubtractA(p1, p2, v1, v2, out elapsedClipper);
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
@@ -286,7 +286,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
         private static (int, int) Compare(List<Polygon> tvglResult, List<List<PointLight>> clipperResult, Polygon polygon1, Polygon polygon2, string operationString)
         {
-           // return (0,0);
+            return (0,0);
             var numVoxels = 500;
             var tolerance = 1e-3;
             var min = new Vector2(Math.Min(polygon1.MinX, polygon2.MinX),

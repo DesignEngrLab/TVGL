@@ -68,7 +68,6 @@ namespace TVGL.TwoDimensional
             {
                 if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
                     _orderedXVertices = this.SortVerticesByXValue();
-                //_orderedXVertices = Vertices.OrderBy(v => v, new VertexSorter()).ToArray();
                 return _orderedXVertices;
 
             }
