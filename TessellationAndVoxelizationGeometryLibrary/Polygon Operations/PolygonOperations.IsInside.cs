@@ -211,9 +211,9 @@ namespace TVGL.TwoDimensional
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
             var tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
-            var sortedLines = polygon.Lines.OrderBy(line => line.XMin).ToList();
+            var sortedLines = GetOrderedLines(polygon.OrderedXVertices);
             var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
-            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Count, sortedPoints, out onBoundary, tolerance, onBoundaryIsInside);
+            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Length, sortedPoints, out onBoundary, tolerance, onBoundaryIsInside);
         }
         internal static bool ArePointsInsidePolygonLines(IList<PolygonEdge> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
             out bool onBoundary, double tolerance, bool onBoundaryIsInside = true)
@@ -355,7 +355,7 @@ namespace TVGL.TwoDimensional
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.Vertices).OrderBy(p => p.X).ToList();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons).SortVerticesByXValue();
             var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().X;
@@ -374,7 +374,7 @@ namespace TVGL.TwoDimensional
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
                     else currentLines.Add(thisPoint.EndLine);
                     pointIndex++;
-                    if (pointIndex == sortedPoints.Count) return intersections;
+                    if (pointIndex == sortedPoints.Length) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
@@ -400,13 +400,16 @@ namespace TVGL.TwoDimensional
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons, double startingYValue, int numSteps, double stepSize,
-                out int firstIntersectingIndex)
+        public static List<double[]> AllPolygonIntersectionPointsAlongHorizontalLines(this IEnumerable<Polygon> polygons,
+            double startingYValue, int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
-                subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToList();
-            if (sortedPoints.Count == 0)
+
+            //var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
+            //    subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToList();
+            //if (sortedPoints.Count == 0)
+            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons).SortVerticesByYValue();
+            if (sortedPoints.Length == 0)
             {
                 firstIntersectingIndex = -1;
                 return intersections;
@@ -430,7 +433,7 @@ namespace TVGL.TwoDimensional
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
                     else currentLines.Add(thisPoint.EndLine);
                     pointIndex++;
-                    if (pointIndex == sortedPoints.Count) return intersections;
+                    if (pointIndex == sortedPoints.Length) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)

@@ -65,7 +65,7 @@ namespace TVGLUnitTestsAndBenchmarking
             int numClipperErrors = 0;
             (Vector2[][], Vector2[][]) polys;
             
-              for (var n = 10; n < 5000; n = (int)(n * 3.7782794))
+              for (var n = 10; n < 8000; n = (int)(n * 3.7782794))
               {
                   polys = TestCases.BenchKnown(n);
                 var errors = SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
@@ -75,7 +75,7 @@ namespace TVGLUnitTestsAndBenchmarking
               polys = TestCases.LoadWlrPolygonSet();
               SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2), TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
                 var radius = 100;
-              for (int numVerts = 10; numVerts < 70000; numVerts = (int)(3.5 * numVerts))
+              for (int numVerts = 10; numVerts < 10000; numVerts = (int)(3.5 * numVerts))
               {
                   for (int delta = 0; delta < radius / 25; delta = 1 + (2 * delta))
                   {
@@ -87,7 +87,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
               }
 
-              for (int numVerts = 10; numVerts < 3000; numVerts = (int)(3 * numVerts))
+              for (int numVerts = 10; numVerts < 5000; numVerts = (int)(3 * numVerts))
               {
                   for (int delta = 2; delta < 3; delta = (int)(1.5 * delta))
                   {
@@ -144,7 +144,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 tvglResult = TVGLUnion(p1, p2, v1, v2);
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks;
-                //clipperResult = ClipperUnion(p1, p2, v1, v2, out elapsedClipper);
+                clipperResult = ClipperUnion(p1, p2, v1, v2, out elapsedClipper);
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
@@ -163,7 +163,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 tvglResult = TVGLIntersect(p1, p2, v1, v2);
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks;
-                //clipperResult = ClipperIntersect(p1, p2, v1, v2, out elapsedClipper);
+                clipperResult = ClipperIntersect(p1, p2, v1, v2, out elapsedClipper);
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
@@ -199,7 +199,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 tvglResult = TVGLBSubtractA(p1, p2, v1, v2);
                 stopWatch.Stop();
                 elapsedTVGL = stopWatch.ElapsedTicks;
-                //clipperResult = ClipperBSubtractA(p1, p2, v1, v2, out elapsedClipper);
+                clipperResult = ClipperBSubtractA(p1, p2, v1, v2, out elapsedClipper);
                 Console.WriteLine("Time for: TVGL = {0}   ,    Clipper = {1}\n\n", elapsedTVGL, elapsedClipper);
                 stats.Add((operationString, numVerts, elapsedTVGL, elapsedClipper));
             }
@@ -286,8 +286,8 @@ namespace TVGLUnitTestsAndBenchmarking
 
         private static (int, int) Compare(List<Polygon> tvglResult, List<List<PointLight>> clipperResult, Polygon polygon1, Polygon polygon2, string operationString)
         {
-            return (0,0);
-            var numVoxels = 500;
+            //return (0,0);
+            var numVoxels = 1000;
             var tolerance = 1e-3;
             var min = new Vector2(Math.Min(polygon1.MinX, polygon2.MinX),
                 Math.Min(polygon1.MinY, polygon2.MinY));
@@ -310,10 +310,10 @@ namespace TVGLUnitTestsAndBenchmarking
             var showResult = false;
             var tvglError = false;
             var clipperError = false;
-            var tvglVResult = new VoxelizedSolid(tvglResult, 500, new[] { min, max });
+            var tvglVResult = new VoxelizedSolid(tvglResult,numVoxels, new[] { min, max });
             var clipperShallowPolyTree = TVGL.TwoDimensional.PolygonOperations.
                    CreateShallowPolygonTrees(clipperResult.Select(c => new Polygon(c.Select(v => new Vector2(v.X, v.Y)))), true);
-            var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, 500, new[] { min, max });
+            var clipperVResult = new VoxelizedSolid(clipperShallowPolyTree, numVoxels, new[] { min, max });
             if (tvglVResult.SubtractToNewSolid(correctVoxels).Count == 0 && correctVoxels.SubtractToNewSolid(tvglVResult).Count == 0)
                 Console.WriteLine("TVGL result is correct.");
             else
@@ -374,7 +374,8 @@ namespace TVGLUnitTestsAndBenchmarking
                         Console.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
                     //else showResult = true;
                 }
-                if (showResult && false)
+                showResult = false;
+                if (showResult)
                 {
                     var input = polygon1.AllPolygons.ToList();
                     input.AddRange(polygon2.AllPolygons);
@@ -382,13 +383,13 @@ namespace TVGLUnitTestsAndBenchmarking
                     Presenter.ShowAndHang(tvglResult, "TVGLPro");
                     Presenter.ShowAndHang(clipperShallowPolyTree, "Clipper");
                 }
-                if (tvglError && false)
+                if (tvglError && showResult)
                 {
                     Console.WriteLine("showing tvgl error...");
                     var shallowTree = tvglResult.CreateShallowPolygonTrees(true);
                     Presenter.ShowAndHang(correctVoxels, shallowTree);
                 }
-                if (clipperError && false)
+                if (clipperError && showResult)
                 {
                     Console.WriteLine("showing clipper error...");
                     Presenter.ShowAndHang(correctVoxels, clipperShallowPolyTree);

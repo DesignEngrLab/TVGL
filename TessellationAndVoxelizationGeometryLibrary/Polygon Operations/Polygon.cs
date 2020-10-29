@@ -628,17 +628,25 @@ namespace TVGL.TwoDimensional
         }
     }
 
-    internal class VertexSorter : IComparer<Vertex2D>
+    internal class VertexSortedByXFirst : IComparer<Vertex2D>
     {
-        public VertexSorter()
-        {
-        }
 
         public int Compare(Vertex2D v1, Vertex2D v2)
         {
             if (v1.X.IsPracticallySame(v2.X))
                 return (v1.Y < v2.Y) ? -1 : 1;
             return (v1.X < v2.X) ? -1 : 1;
+        }
+    }
+
+    internal class VertexSortedByYFirst : IComparer<Vertex2D>
+    {
+
+        public int Compare(Vertex2D v1, Vertex2D v2)
+        {
+            if (v1.Y.IsPracticallySame(v2.Y))
+                return (v1.X < v2.X) ? -1 : 1;
+            return (v1.Y < v2.Y) ? -1 : 1;
         }
     }
 }

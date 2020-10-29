@@ -588,7 +588,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHang(VoxelizedSolid solid, List<Polygon> polygons)
+        public static void ShowAndHang(VoxelizedSolid solid, IEnumerable<Polygon> polygons)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();

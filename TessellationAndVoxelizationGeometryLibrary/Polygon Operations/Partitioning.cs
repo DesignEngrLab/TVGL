@@ -86,29 +86,51 @@ namespace TVGL.TwoDimensional
             // eww, the latter in that return is problematic at it would be a knife edge. but that's not this functions job to police
             if (yPrev.IsNegligible() && yNext.IsNegligible()) // then line is horizontal
                 return (Math.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
-
+            var neighborVertex = vertex;
             // at this point, we've checked that 1) no vector is zero (return SameAsNeighbor), 2) all are nonnegligible,
             // 3) either both x's or both y's are negligible.
-            // the last case is tricky. if one is zero...here we will rely on the fact that we are sorting first by X,
-            // and then by Y. We can imagine an infinitesimal CW tilt in the polygon
             if (xPrev.IsNegligible()) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
-                // the condition before the last). it's possible that yNext is zero, but it doesn't affect the verdict
-                xChangesDir = (Math.Sign(yPrev) != Math.Sign(xNext)); // recall infinitesimal tilt. if going up and turning
-            // right (xNext is '+') then that's not a change in X or if going down and turning in the negative x dir.
-            // if going up then x-negative (like "end" point in x-Monotone polygon) or going down and turn positive
-            // (like "start" point in x-Monotone polygon).
-            if (xNext.IsNegligible())
-                xChangesDir = Math.Sign(xPrev) != Math.Sign(yNext);
+                                      // the condition before the last). it's possible that yNext is zero, but it doesn't affect the approach
+            {
+                do
+                {
+                    neighborVertex = neighborVertex.EndLine.FromPoint;
+                    xPrev = neighborVertex.EndLine.Vector.X;
+                } while (xPrev.IsNegligible());
+                xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
+            }
+            else if (xNext.IsNegligible())
+            {
+                do
+                {
+                    neighborVertex = neighborVertex.StartLine.ToPoint;
+                    xNext = neighborVertex.EndLine.Vector.X;
+                } while (xNext.IsNegligible());
+                xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
+            }
+            neighborVertex = vertex;
             if (yPrev.IsNegligible())
-                yChangesDir = Math.Sign(xPrev) == Math.Sign(yNext);
-            if (yNext.IsNegligible())
-                yChangesDir = (Math.Sign(yPrev) == Math.Sign(xNext));
+            {
+                do
+                {
+                    neighborVertex = neighborVertex.EndLine.FromPoint;
+                    yPrev = neighborVertex.EndLine.Vector.Y;
+                } while (yPrev.IsNegligible());
+                yChangesDir = (Math.Sign(yPrev) != Math.Sign(yNext));
+            }
+            else if (yNext.IsNegligible())
+            {
+                do
+                {
+                    neighborVertex = neighborVertex.StartLine.ToPoint;
+                    yNext = neighborVertex.EndLine.Vector.Y;
+                } while (yNext.IsNegligible());
+                yChangesDir = Math.Sign(yPrev) != Math.Sign(yNext);
+            }
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
             if (xChangesDir) return MonotonicityChange.X;
             if (yChangesDir) return MonotonicityChange.Y;
             return MonotonicityChange.Neither;
-
-
         }
 
         /// <summary>
@@ -196,10 +218,101 @@ namespace TVGL.TwoDimensional
                 if (!monoBox.XInPositiveMonotonicity) newStrand.Reverse();
                 xStrands.Add(newStrand.ToArray());
             }
-            var n = polygon.Vertices.Count;
-            var sortedVertices = new Vertex2D[n];
+            var numVertices = polygon.Vertices.Count;
+            var sortedVertices = new Vertex2D[numVertices];
             var i = 0;
-            foreach (var vertex in CombineSortedVerticesIntoOneCollection(xStrands))
+            foreach (var vertex in CombineXSortedVerticesIntoOneCollection(xStrands))
+                sortedVertices[i++] = vertex;
+            return sortedVertices;
+        }
+
+        /// <summary>
+        /// Orders the vertices of the polygon in the x-direction.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Vertex2D[].</returns>
+        public static Vertex2D[] SortVerticesByXValue(this IEnumerable<Polygon> polygons)
+        {
+            var xStrands = new List<Vertex2D[]>();
+            var numVertices = 0;
+            foreach (var polygon in polygons)
+            {
+                numVertices += polygon.Vertices.Count;
+                foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X))
+                {
+                    var newStrand = new List<Vertex2D>();
+                    var vertex = monoBox.Vertex1;
+                    while (vertex != monoBox.Vertex2)
+                    {
+                        newStrand.Add(vertex);
+                        vertex = vertex.StartLine.ToPoint;
+                    }
+                    if (!monoBox.YInPositiveMonotonicity) newStrand.Reverse();
+                    xStrands.Add(newStrand.ToArray());
+                }
+            }
+            var sortedVertices = new Vertex2D[numVertices];
+            var i = 0;
+            foreach (var vertex in CombineXSortedVerticesIntoOneCollection(xStrands))
+                sortedVertices[i++] = vertex;
+            return sortedVertices;
+        }
+        /// <summary>
+        /// Orders the vertices of the polygon in the x-direction.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Vertex2D[].</returns>
+        public static Vertex2D[] SortVerticesByYValue(this Polygon polygon)
+        {
+            var yStrands = new List<Vertex2D[]>();
+            foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.Y))
+            {
+                var newStrand = new List<Vertex2D>();
+                var vertex = monoBox.Vertex1;
+                while (vertex != monoBox.Vertex2)
+                {
+                    newStrand.Add(vertex);
+                    vertex = vertex.StartLine.ToPoint;
+                }
+                if (!monoBox.XInPositiveMonotonicity) newStrand.Reverse();
+                yStrands.Add(newStrand.ToArray());
+            }
+            var numVertices = polygon.Vertices.Count;
+            var sortedVertices = new Vertex2D[numVertices];
+            var i = 0;
+            foreach (var vertex in CombineYSortedVerticesIntoOneCollection(yStrands))
+                sortedVertices[i++] = vertex;
+            return sortedVertices;
+        }
+
+        /// <summary>
+        /// Orders the vertices of the polygon in the x-direction.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Vertex2D[].</returns>
+        public static Vertex2D[] SortVerticesByYValue(this IEnumerable<Polygon> polygons)
+        {
+            var yStrands = new List<Vertex2D[]>();
+            var numVertices = 0;
+            foreach (var polygon in polygons)
+            {
+                numVertices += polygon.Vertices.Count;
+                foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.Y))
+                {
+                    var newStrand = new List<Vertex2D>();
+                    var vertex = monoBox.Vertex1;
+                    while (vertex != monoBox.Vertex2)
+                    {
+                        newStrand.Add(vertex);
+                        vertex = vertex.StartLine.ToPoint;
+                    }
+                    if (!monoBox.YInPositiveMonotonicity) newStrand.Reverse();
+                    yStrands.Add(newStrand.ToArray());
+                }
+            }
+            var sortedVertices = new Vertex2D[numVertices];
+            var i = 0;
+            foreach (var vertex in CombineYSortedVerticesIntoOneCollection(yStrands))
                 sortedVertices[i++] = vertex;
             return sortedVertices;
         }

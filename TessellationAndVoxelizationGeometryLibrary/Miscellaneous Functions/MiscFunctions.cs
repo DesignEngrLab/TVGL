@@ -28,13 +28,13 @@ namespace TVGL
             out List<(Vertex, double)> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
-            //Split positive and negative numbers into seperate lists. 0 is
+            //Split positive and negative numbers into separate lists. 0 is
             //considered positive.
             //This is an O(n) preprocessing step
             var vertexDistances = GetVertexDistances(vertices, direction);
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
-            //toleranceForCombiningPoints as the "isNeglible" star math function
+            //toleranceForCombiningPoints as the "isNegligible" star math function
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
@@ -49,13 +49,13 @@ namespace TVGL
             out List<(Vector3, double)> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
-            //Split positive and negative numbers into seperate lists. 0 is
+            //Split positive and negative numbers into separate lists. 0 is
             //considered positive.
             //This is an O(n) preprocessing step
             var vertexDistances = GetVertexDistances(vertices, direction);
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
-            //toleranceForCombiningPoints as the "isNeglible" star math function
+            //toleranceForCombiningPoints as the "isNegligible" star math function
             sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 

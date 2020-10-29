@@ -227,7 +227,7 @@ namespace TVGL.TwoDimensional
             orderedListsOfVertices.Add(polygon.OrderedXVertices);
             foreach (var hole in polygon.InnerPolygons)
                 orderedListsOfVertices.Add(hole.OrderedXVertices);
-            var sortedVertices = CombineSortedVerticesIntoOneCollection(orderedListsOfVertices);
+            var sortedVertices = CombineXSortedVerticesIntoOneCollection(orderedListsOfVertices);
             var connections = new Dictionary<Vertex2D, List<Vertex2D>>();
             // the edgeDatums are the current edges in the sweep. The Vertex is the past polygon point (aka helper)
             // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
@@ -356,11 +356,36 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static IEnumerable<Vertex2D> CombineSortedVerticesIntoOneCollection(List<Vertex2D[]> orderedListsOfVertices)
+        private static IEnumerable<Vertex2D> CombineXSortedVerticesIntoOneCollection(List<Vertex2D[]> orderedListsOfVertices)
         {
             var numLists = orderedListsOfVertices.Count;
             var currentIndices = new int[numLists];
-            var priorityQueue = new SimplePriorityQueue<int, Vertex2D>(new VertexSorter());
+            var priorityQueue = new SimplePriorityQueue<int, Vertex2D>(new VertexSortedByXFirst());
+            for (int j = 0; j < orderedListsOfVertices.Count; j++)
+                priorityQueue.Enqueue(j, orderedListsOfVertices[j][0]);
+            // the following code is written verbosely. I'm trusting the compiler optimization
+            // to ensure that it speed things up.
+            while (priorityQueue.Count > 0)
+            {
+                var listWithLowestEntry = priorityQueue.Dequeue();
+                var vertexList = orderedListsOfVertices[listWithLowestEntry];
+                var indexInThatList = currentIndices[listWithLowestEntry];
+                var nextVertex = vertexList[currentIndices[listWithLowestEntry]];
+                yield return nextVertex;
+                indexInThatList++;
+                currentIndices[listWithLowestEntry] = indexInThatList;
+                if (indexInThatList < vertexList.Length)
+                    priorityQueue.Enqueue(listWithLowestEntry, vertexList[indexInThatList]);
+            }
+        }
+
+
+
+        private static IEnumerable<Vertex2D> CombineYSortedVerticesIntoOneCollection(List<Vertex2D[]> orderedListsOfVertices)
+        {
+            var numLists = orderedListsOfVertices.Count;
+            var currentIndices = new int[numLists];
+            var priorityQueue = new SimplePriorityQueue<int, Vertex2D>(new VertexSortedByYFirst());
             for (int j = 0; j < orderedListsOfVertices.Count; j++)
                 priorityQueue.Enqueue(j, orderedListsOfVertices[j][0]);
             // the following code is written verbosely. I'm trusting the compiler optimization
