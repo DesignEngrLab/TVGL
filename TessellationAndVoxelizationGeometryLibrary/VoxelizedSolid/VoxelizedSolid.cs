@@ -143,7 +143,7 @@ namespace TVGL.Voxelization
             var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, numVoxelsY,
                             VoxelSideLength, out var yStartIndex);
             var numYlines = intersections.Count;
-            for (int j = 0; j < numYlines; j++)
+            for (int j = -Math.Min(0, yStartIndex); j < numYlines; j++)
             {
                 var intersectionPoints = intersections[j];
                 var numXRangesOnThisLine = intersectionPoints.Length;
