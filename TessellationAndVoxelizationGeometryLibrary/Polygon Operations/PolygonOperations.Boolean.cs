@@ -196,6 +196,10 @@ namespace TVGL.TwoDimensional
             tolerance = Math.Min(xMax - xMin, yMax - yMin) * Constants.BaseTolerance;
             return tolerance;
         }
+        internal static double GetToleranceFromPolygon(this Polygon polygon)
+        {
+            return Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
+        }
 
         #endregion Union Public Methods
 
@@ -450,7 +454,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
             double tolerance = double.NaN, List<bool> knownWrongPoints = null)
         {
-            if (double.IsNaN(tolerance)) tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
+            if (double.IsNaN(tolerance)) tolerance = polygon.GetToleranceFromPolygon();
             var intersections = polygon.GetSelfIntersections(tolerance).Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };

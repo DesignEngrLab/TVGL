@@ -233,9 +233,10 @@ namespace TVGL.TwoDimensional
             // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
             // was a merge vertex.
             var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
+            var tolerance = polygon.GetToleranceFromPolygon();
             foreach (var vertex in sortedVertices)
             {
-                var monoChange = GetMonotonicityChange(vertex);
+                var monoChange = GetMonotonicityChange(vertex, tolerance);
                 if (monoChange == MonotonicityChange.SameAsNeighbor)
                     throw new ArgumentException("It is not possible to divide a polygon into x-monotone polygons if a" +
                         "duplicate vertex exist in polygon.", nameof(polygon));

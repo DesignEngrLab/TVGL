@@ -262,7 +262,7 @@ namespace TVGL.TwoDimensional
 
         internal PolygonInteractionRecord InvertPolygonInRecord(Polygon polygon, out Polygon invertedPolygon)
         {
-            var tolerance = Constants.BaseTolerance * Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY);
+            var tolerance = polygon.GetToleranceFromPolygon();
             bool polygonAIsInverted = subPolygonToInt[polygon] < numPolygonsInA;
             var visitedIntersectionPairs = new HashSet<(PolygonEdge, PolygonEdge)>();
             var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);

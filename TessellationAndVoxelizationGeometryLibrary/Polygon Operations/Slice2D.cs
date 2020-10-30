@@ -83,8 +83,7 @@ namespace TVGL.TwoDimensional
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
-            var tolerance = Constants.BaseTolerance * Math.Min(shallowPolygonTree.MaxX - shallowPolygonTree.MinX,
-                    shallowPolygonTree.MaxY - shallowPolygonTree.MinY);
+            var tolerance = shallowPolygonTree.GetToleranceFromPolygon();
             // like 3D slicing, it is too complicated to try and manage collinear points or line segments. it is better to just change the slice
             // distance by some small amount. This is checked and handled in the ShiftLineToAvoidCollinearPoints
             var distances = new List<double>();
@@ -209,9 +208,7 @@ namespace TVGL.TwoDimensional
         private static (double, double) ShiftLineToAvoidCollinearPoints(Polygon shallowPolygonTree,
             Vector2 lineNormalDirection, double distanceAlongDirection, double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = Constants.BaseTolerance * Math.Min(shallowPolygonTree.MaxX - shallowPolygonTree.MinX,
-                    shallowPolygonTree.MaxY - shallowPolygonTree.MinY);
+            if (double.IsNaN(tolerance)) tolerance = shallowPolygonTree.GetToleranceFromPolygon();
 
             // search through all points to see if any are collinear. If not, keep track of the closest points
             var distances = new List<double>();

@@ -119,7 +119,7 @@ namespace TVGL.TwoDimensional
         public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
-            var tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
+            var tolerance = polygon.GetToleranceFromPolygon();
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
             //This function has three layers of checks. 
@@ -210,7 +210,7 @@ namespace TVGL.TwoDimensional
         internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vertex2D> pointsInQuestion,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
-            var tolerance = Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
+            var tolerance = polygon.GetToleranceFromPolygon();
             var sortedLines = GetOrderedLines(polygon.OrderedXVertices);
             var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
             return ArePointsInsidePolygonLines(sortedLines, sortedLines.Length, sortedPoints, out onBoundary, tolerance, onBoundaryIsInside);
@@ -460,11 +460,7 @@ namespace TVGL.TwoDimensional
         public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance))
-            {
-                tolerance = Math.Min(polygonA.MaxX - polygonA.MinX,
-                   Math.Min(polygonA.MaxY - polygonA.MinY,
-                   Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY))) * Constants.BaseTolerance;
-            }
+                tolerance = Math.Min(polygonA.GetToleranceFromPolygon(), polygonB.GetToleranceFromPolygon());
             var interactionRecord = new PolygonInteractionRecord(polygonA, polygonB);
             if (interactionRecord.Relationship == PolygonRelationship.Equal) return interactionRecord;
             // this would happen when the function detcts that polygonA and polygonB are the same

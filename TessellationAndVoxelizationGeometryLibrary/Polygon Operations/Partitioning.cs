@@ -47,14 +47,14 @@ namespace TVGL.TwoDimensional
 
     public static partial class PolygonOperations
     {
-        public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex)
+        public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex, double tolerance)
         {
             var xPrev = vertex.EndLine.Vector.X;
             var yPrev = vertex.EndLine.Vector.Y;
             if (xPrev.IsNegligible() && yPrev.IsNegligible()) return MonotonicityChange.SameAsNeighbor;
             var xNext = vertex.StartLine.Vector.X;
             var yNext = vertex.StartLine.Vector.Y;
-            if (xNext.IsNegligible() && yNext.IsNegligible()) return MonotonicityChange.SameAsNeighbor;
+            if (xNext.IsNegligible(tolerance) && yNext.IsNegligible(tolerance)) return MonotonicityChange.SameAsNeighbor;
 
             /**** I wish this were enough (the next 6 lines) but it leads to problems
             var xProduct = xNext * xPrev;
@@ -66,65 +66,65 @@ namespace TVGL.TwoDimensional
             ****/
 
             // first check the cases where all four numbers are not negligible
-            var xChangesDir = (xPrev.IsLessThanNonNegligible() && xNext.IsGreaterThanNonNegligible())
-                || (xPrev.IsGreaterThanNonNegligible() && xNext.IsLessThanNonNegligible());
-            var yChangesDir = (yPrev.IsLessThanNonNegligible() && yNext.IsGreaterThanNonNegligible())
-                || (yPrev.IsGreaterThanNonNegligible() && yNext.IsLessThanNonNegligible());
+            var xChangesDir = (xPrev.IsLessThanNonNegligible(tolerance) && xNext.IsGreaterThanNonNegligible(tolerance))
+                || (xPrev.IsGreaterThanNonNegligible(tolerance) && xNext.IsLessThanNonNegligible(tolerance));
+            var yChangesDir = (yPrev.IsLessThanNonNegligible(tolerance) && yNext.IsGreaterThanNonNegligible(tolerance))
+                || (yPrev.IsGreaterThanNonNegligible(tolerance) && yNext.IsLessThanNonNegligible(tolerance));
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
-            var xSameDir = (xPrev.IsLessThanNonNegligible() && xNext.IsLessThanNonNegligible())
-                || (xPrev.IsGreaterThanNonNegligible() && xNext.IsGreaterThanNonNegligible());
+            var xSameDir = (xPrev.IsLessThanNonNegligible(tolerance) && xNext.IsLessThanNonNegligible(tolerance))
+                || (xPrev.IsGreaterThanNonNegligible(tolerance) && xNext.IsGreaterThanNonNegligible(tolerance));
             if (yChangesDir && xSameDir) return MonotonicityChange.Y;
-            var ySameDir = (yPrev.IsLessThanNonNegligible() && yNext.IsLessThanNonNegligible())
-                || (yPrev.IsGreaterThanNonNegligible() && yNext.IsGreaterThanNonNegligible());
+            var ySameDir = (yPrev.IsLessThanNonNegligible(tolerance) && yNext.IsLessThanNonNegligible(tolerance))
+                || (yPrev.IsGreaterThanNonNegligible(tolerance) && yNext.IsGreaterThanNonNegligible(tolerance));
             if (xChangesDir && ySameDir) return MonotonicityChange.X;
             if (xSameDir && ySameDir) return MonotonicityChange.Neither;
 
             // if at this point then one or more values in the vectors is zero/negligible) since the above booleans were
             // defined with this restriction
-            if (xPrev.IsNegligible() && xNext.IsNegligible()) // then line is vertical
+            if (xPrev.IsNegligible(tolerance) && xNext.IsNegligible(tolerance)) // then line is vertical
                 return (Math.Sign(yPrev) == Math.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
             // eww, the latter in that return is problematic at it would be a knife edge. but that's not this functions job to police
-            if (yPrev.IsNegligible() && yNext.IsNegligible()) // then line is horizontal
+            if (yPrev.IsNegligible(tolerance) && yNext.IsNegligible(tolerance)) // then line is horizontal
                 return (Math.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
             var neighborVertex = vertex;
             // at this point, we've checked that 1) no vector is zero (return SameAsNeighbor), 2) all are nonnegligible,
             // 3) either both x's or both y's are negligible.
-            if (xPrev.IsNegligible()) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
+            if (xPrev.IsNegligible(tolerance)) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
                                       // the condition before the last). it's possible that yNext is zero, but it doesn't affect the approach
             {
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
                     xPrev = neighborVertex.EndLine.Vector.X;
-                } while (xPrev.IsNegligible());
+                } while (xPrev.IsNegligible(tolerance));
                 xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
             }
-            else if (xNext.IsNegligible())
+            else if (xNext.IsNegligible(tolerance))
             {
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
                     xNext = neighborVertex.EndLine.Vector.X;
-                } while (xNext.IsNegligible());
+                } while (xNext.IsNegligible(tolerance));
                 xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
             }
             neighborVertex = vertex;
-            if (yPrev.IsNegligible())
+            if (yPrev.IsNegligible(tolerance))
             {
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
                     yPrev = neighborVertex.EndLine.Vector.Y;
-                } while (yPrev.IsNegligible());
+                } while (yPrev.IsNegligible(tolerance));
                 yChangesDir = (Math.Sign(yPrev) != Math.Sign(yNext));
             }
-            else if (yNext.IsNegligible())
+            else if (yNext.IsNegligible(tolerance))
             {
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
                     yNext = neighborVertex.EndLine.Vector.Y;
-                } while (yNext.IsNegligible());
+                } while (yNext.IsNegligible(tolerance));
                 yChangesDir = Math.Sign(yPrev) != Math.Sign(yNext);
             }
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
@@ -162,12 +162,12 @@ namespace TVGL.TwoDimensional
             var initBoxMonoChange = MonotonicityChange.Neither;
             Vertex2D beginBoxVertex = null;
             var beginBoxMonoChange = MonotonicityChange.Neither;
-
+            var tolerance = polygon.GetToleranceFromPolygon();
             var i = 0;
             while (i % numPoints != initBoxIndex)
             {
                 var vertex = polygon.Vertices[i % numPoints];
-                var monoChange = GetMonotonicityChange(vertex);
+                var monoChange = GetMonotonicityChange(vertex, tolerance);
                 if (monoChange == MonotonicityChange.SameAsNeighbor)
                     throw new ArgumentException("Duplicate vertices in polygon provided to PartitionIntoMonotoneBoxes",
                         nameof(polygon));
