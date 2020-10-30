@@ -49,9 +49,10 @@ namespace TVGL.TwoDimensional
         /// <param name="connectingIndices">The connecting indices.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect)
+        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect, 
+            bool alreadyOrderedInIncreasingArea=false)
         {
-            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect);
+            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, alreadyOrderedInIncreasingArea);
 
             var polygonList = new List<Polygon>();
             foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
@@ -72,10 +73,12 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonSignIsCorrect">if set to <c>true</c> [polygon sign is correct].</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect)
+        public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, 
+            bool alreadyOrderedInIncreasingArea=false)
         {
             var branches = new List<Polygon>();
-            foreach (var polygon in polygons.OrderBy(p => Math.Abs(p.Area)))
+            var orderedPolygons = alreadyOrderedInIncreasingArea ? polygons : polygons.OrderBy(p => Math.Abs(p.Area));
+            foreach (var polygon in orderedPolygons)
             {
                 for (int i = branches.Count - 1; i >= 0; i--)
                 {

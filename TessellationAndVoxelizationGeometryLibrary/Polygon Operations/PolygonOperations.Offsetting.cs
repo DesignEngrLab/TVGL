@@ -127,30 +127,31 @@ namespace TVGL.TwoDimensional
             var longerLength = Math.Max(bb.Length1, bb.Length2);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             if (double.IsNaN(tolerance)) tolerance = longerLength * Constants.BaseTolerance;
-            var outerData = MainOffsetRoutine(polygon.Lines, offset, notMiter, longerLengthSquared, tolerance,
+            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, tolerance, out var maxNumberOfPolygons,
                 deltaAngle);
             var outer = new Polygon(outerData.points);
-            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, tolerance, outerData.knownWrongPoints);
+            Presenter.ShowAndHang(outer);
+            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, tolerance, outerData.knownWrongPoints, maxNumberOfPolygons);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
                 if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var newHoleData = MainOffsetRoutine(hole.Lines, offset, notMiter,
-                        longerLengthSquared, tolerance, deltaAngle);
+                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, tolerance, out maxNumberOfPolygons, deltaAngle);
                 var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints).Where(p => !p.IsPositive));
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
             return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p => p.IsPositive).ToList();
         }
 
-        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(IEnumerable<PolygonEdge> lines, double offset, bool notMiter,
-            double maxLengthSquared, double tolerance, double deltaAngle = double.NaN)
+        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
+            double maxLengthSquared, double tolerance, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
         {
+            maxNumberOfPolygons = 1;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
-            var linesList = lines as IList<PolygonEdge> ?? lines.ToList();
+            var linesList = polygon.Lines;
             var numPoints = linesList.Count;
             int numFalsesToAdd;
             var startingListSize = numPoints;
@@ -165,12 +166,11 @@ namespace TVGL.TwoDimensional
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
             var prevLine = linesList[^1];
-            int startIndex = AdvanceSoThatNotStartingAtSharp(offset, linesList, ref prevLine, numPoints);
             var prevLineLengthReciprocal = 1.0 / prevLine.Length;
             var prevUnitNormal = new Vector2(prevLine.Vector.Y * prevLineLengthReciprocal, -prevLine.Vector.X * prevLineLengthReciprocal);
             for (int i = 0; i < numPoints; i++)
             {
-                var nextLine = linesList[(i + startIndex) % numPoints];
+                var nextLine = linesList[i];
                 var nextLineLengthReciprocal = 1.0 / nextLine.Length;
                 var nextUnitNormal = new Vector2(nextLine.Vector.Y * nextLineLengthReciprocal, -nextLine.Vector.X * nextLineLengthReciprocal);
                 // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".
@@ -187,6 +187,7 @@ namespace TVGL.TwoDimensional
                 }
                 else if (cross * offset > 0)
                 {
+                    if ((polygon.IsPositive && offset < 0) || (!polygon.IsPositive && offset > 0)) maxNumberOfPolygons++;
                     if (roundCorners)
                     {
                         var firstPoint = point + offset * prevUnitNormal;

@@ -233,7 +233,7 @@ namespace TVGL.TwoDimensional
             // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
             // was a merge vertex.
             var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
-            var tolerance = polygon.GetToleranceFromPolygon();
+            var tolerance = polygon.GetToleranceForPolygon();
             foreach (var vertex in sortedVertices)
             {
                 var monoChange = GetMonotonicityChange(vertex, tolerance);

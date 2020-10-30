@@ -23,14 +23,15 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             // 2. get the file path
-            var fileName = dir.FullName + Path.DirectorySeparatorChar + "bad5.json";
+            var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
             TVGL.IOFunctions.IO.Open(fileName, out Polygon polygon);
             Presenter.ShowAndHang(polygon);
            //polygon= polygon.Simplify(0.0081);
            // Presenter.ShowAndHang(polygon);
             var triangles = polygon.TriangulateToCoordinates();
             Presenter.ShowAndHang(triangles);
-
+            Presenter.ShowAndHang(polygon.OffsetRound(-12.7));
+            
             //            brace.stl - holes showing up?
             // radiobox - missing holes - weird skip in outline
             // KnuckleTopOp flecks
@@ -68,11 +69,12 @@ namespace TVGLUnitTestsAndBenchmarking
                     var totalArea = 0.0;
                     foreach (var monopoly in xsection.SelectMany(p => p.CreateXMonotonePolygons()))
                     {
+                        var tolerance = monopoly.GetToleranceForPolygon();
                         monoPolys.Add(monopoly);
                         totalArea += monopoly.Area;
                         var extremeVerts = monopoly.Vertices.Where(v =>
-                            v.GetMonotonicityChange() == MonotonicityChange.X ||
-                            v.GetMonotonicityChange() == MonotonicityChange.Both).ToList();
+                            v.GetMonotonicityChange(tolerance) == MonotonicityChange.X ||
+                            v.GetMonotonicityChange(tolerance) == MonotonicityChange.Both).ToList();
                         if (extremeVerts.Count != 2 ||
                             !monopoly.MinX.IsPracticallySame(Math.Min(extremeVerts[0].X, extremeVerts[1].X)) ||
                             !monopoly.MaxX.IsPracticallySame(Math.Max(extremeVerts[0].X, extremeVerts[1].X)))

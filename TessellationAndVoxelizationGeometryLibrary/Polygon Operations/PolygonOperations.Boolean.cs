@@ -196,7 +196,12 @@ namespace TVGL.TwoDimensional
             tolerance = Math.Min(xMax - xMin, yMax - yMin) * Constants.BaseTolerance;
             return tolerance;
         }
-        internal static double GetToleranceFromPolygon(this Polygon polygon)
+        /// <summary>
+        /// Gets the tolerance for polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>System.Double.</returns>
+        public static double GetToleranceForPolygon(this Polygon polygon)
         {
             return Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * Constants.BaseTolerance;
         }
@@ -450,17 +455,17 @@ namespace TVGL.TwoDimensional
         /// <param name="resultType">Type of the result.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="knownWrongPoints">The known wrong points.</param>
+        /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
-            double tolerance = double.NaN, List<bool> knownWrongPoints = null)
+            double tolerance = double.NaN, List<bool> knownWrongPoints = null, int maxNumberOfPolygons = int.MaxValue)
         {
-            if (double.IsNaN(tolerance)) tolerance = polygon.GetToleranceFromPolygon();
+            if (double.IsNaN(tolerance)) tolerance = polygon.GetToleranceForPolygon();
             var intersections = polygon.GetSelfIntersections(tolerance).Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            // if (intersections.Any(n => (n.Relationship & PolygonRemoveIntersections.alignedIntersection) == PolygonRemoveIntersections.alignedIntersection))
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType, tolerance, knownWrongPoints);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, tolerance, knownWrongPoints, maxNumberOfPolygons);
         }
 
         #endregion RemoveSelfIntersections Public Method

@@ -24,7 +24,7 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType, double tolerance,
-            List<bool> knownWrongPoints)
+            List<bool> knownWrongPoints, int maxNumberOfPolygons)
         {
             var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
@@ -49,7 +49,9 @@ namespace TVGL.TwoDimensional
                 }
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
-            return newPolygons.CreateShallowPolygonTrees(true);
+            return newPolygons.OrderByDescending(p => Math.Abs(p.Area))
+                .Take(maxNumberOfPolygons).Reverse()
+                .CreateShallowPolygonTrees(true, true);
         }
 
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge, out bool startAgain)
