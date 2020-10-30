@@ -1099,8 +1099,8 @@ namespace TVGL.Boolean_Operations
                 if (needToOffset)
                     z += Math.Min(stepSize, sortedVertices[vIndex].Z - z) / 10.0;
                 if (currentEdges.Any()) loopsAlongZ[step] = GetLoops(currentEdges.ToDictionary(ce => ce,
-                    ce => MiscFunctions.PointOnYPlaneFromIntersectingLine(z, ce.From.Coordinates,
-                        ce.To.Coordinates)), Vector3.UnitY, z);
+                    ce => MiscFunctions.PointOnZPlaneFromIntersectingLine(z, ce.From.Coordinates,
+                        ce.To.Coordinates)), Vector3.UnitZ, z);
 
                 else loopsAlongZ[step] = new List<Polygon>();
             }

@@ -38,6 +38,7 @@ namespace TVGL.TwoDimensional
 
                 return _path;
             }
+            internal set { _path = value; }
         }
 
         /// <summary>
@@ -107,7 +108,7 @@ namespace TVGL.TwoDimensional
         /// <summary>
         /// Makes the line segments.
         /// </summary>
-        private void MakeLineSegments()
+        internal void MakeLineSegments()
         {
             foreach (var polygon in AllPolygons)
             {
@@ -598,15 +599,19 @@ namespace TVGL.TwoDimensional
                     if (maxX < v.X) maxX = v.X;
                     if (maxY < v.Y) maxY = v.Y;
                 }
-                foreach (var edge in polygon.Lines)
-                    edge.Reset();
-                _orderedXVertices = null;
-                area = double.NaN;
-                pathArea = double.NaN;
-                perimeter = double.NaN;
+                polygon.Reset();
             }
         }
 
+        internal void Reset()
+        {
+            _path = null;
+            MakeLineSegments();
+            _orderedXVertices = null;
+            area = double.NaN;
+            pathArea = double.NaN;
+            perimeter = double.NaN;
+        }
 
         [JsonExtensionData]
         protected IDictionary<string, JToken> serializationData;

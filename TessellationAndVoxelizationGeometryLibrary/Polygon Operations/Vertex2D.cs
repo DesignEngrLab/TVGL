@@ -62,14 +62,14 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="currentPoint">The current point.</param>
         /// <param name="loopID">The loop identifier.</param>
-        internal Vertex2D(Vector2 currentPoint, int referenceID, int loopID)
+        public Vertex2D(Vector2 currentPoint, int referenceID, int loopID)
         {
             LoopID = loopID;
             Coordinates = currentPoint;
             IndexInList = referenceID;
         }
 
-        internal Vertex2D Copy()
+        public Vertex2D Copy()
         {
             return new Vertex2D
             {

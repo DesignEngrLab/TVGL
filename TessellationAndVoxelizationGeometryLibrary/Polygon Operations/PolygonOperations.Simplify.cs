@@ -6,6 +6,7 @@ using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -71,7 +72,7 @@ namespace TVGL.TwoDimensional
             // Here we are using the SimplePriorityQueue from BlueRaja (https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp)
             var convexCornerQueue = new SimplePriorityQueue<int, double>(new ForwardSort());
             var concaveCornerQueue = new SimplePriorityQueue<int, double>(new ReverseSort());
-            
+
             // cross-products which are kept in the same order as the corners they represent. This is solely used with the above
             // dictionary - to essentially do the reverse lookup. given a corner-index, crossProductsArray will instanly tell us the
             // cross-product. The cross-product is used as the key in the dictionary - to find corner-indices.
@@ -334,5 +335,125 @@ namespace TVGL.TwoDimensional
         }
 
         #endregion Simplify
+
+
+
+        #region Complexify
+
+        /// <summary>
+        /// Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="maxAllowableLength">Maximum length of the allowable.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static IEnumerable<Polygon> ComplexifyToNewPolygons(this IEnumerable<Polygon> polygons, double maxAllowableLength)
+        {
+            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
+            Complexify(copiedPolygons, maxAllowableLength);
+            return copiedPolygons;
+        }
+
+        /// <summary>
+        /// Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="maxAllowableLength">Maximum length of the allowable.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon ComplexifyToNewPolygon(this Polygon polygon, double maxAllowableLength)
+        {
+            var copiedPolygon = polygon.Copy(true, false);
+            Complexify(copiedPolygon, maxAllowableLength);
+            return copiedPolygon;
+        }
+
+        /// <summary>
+        /// Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="maxAllowableLength">Maximum length of the allowable.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static void Complexify(this IEnumerable<Polygon> polygons, double maxAllowableLength)
+        {
+            foreach (var polygon in polygons)
+                polygon.Complexify(maxAllowableLength);
+        }
+
+        /// <summary>
+        /// Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="maxAllowableLength">Maximum length of the allowable.</param>
+        /// <returns>Polygon.</returns>
+        public static void Complexify(this Polygon polygon, double maxAllowableLength)
+        {
+            var loopID = polygon.Index;
+            for (int i = 0; i < polygon.Lines.Count; i++)
+            {
+                var thisLine = polygon.Lines[i];
+                if (thisLine.Length > maxAllowableLength)
+                {
+                    var numNewPoints = (int)thisLine.Length / maxAllowableLength;
+                    for (int j = 0; j < numNewPoints; j++)
+                    {
+                        var fraction = j / (double)numNewPoints;
+                        var newCoordinates = fraction * thisLine.FromPoint.Coordinates + ((1 - fraction) * thisLine.ToPoint.Coordinates);
+                        polygon.Vertices.Insert(i, new Vertex2D(newCoordinates, 0, loopID));
+                    }
+                }
+            }
+            polygon.Reset();
+            foreach (var polygonHole in polygon.InnerPolygons)
+                polygonHole.Complexify(maxAllowableLength);
+        }
+
+        /// <summary>
+        /// Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static IEnumerable<Polygon> ComplexifyToNewPolygons(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        {
+            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
+            Complexify(copiedPolygons, targetNumberOfPoints);
+            return copiedPolygons;
+        }
+
+        /// <summary>
+        /// Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon ComplexifyToNewPolygon(this Polygon polygon, int targetNumberOfPoints)
+        {
+            var copiedPolygon = polygon.Copy(true, false);
+            Complexify(copiedPolygon, targetNumberOfPoints);
+            return copiedPolygon;
+        }
+        /// <summary>
+        /// Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static void Complexify(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        {
+         //   throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>Polygon.</returns>
+        public static void Complexify(this Polygon polygon, int targetNumberOfPoints)
+        {
+           // throw new NotImplementedException();
+        }
+        #endregion
     }
 }

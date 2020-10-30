@@ -175,7 +175,7 @@ namespace TVGL
         /// <param name="paths"></param>
         /// <param name="closePaths"></param>
         /// <param name="solid"></param>
-        public static void ShowVertexPaths(IEnumerable<List<double[]>> paths, bool closePaths = true, TessellatedSolid solid = null)
+        public static void ShowVertexPaths(IEnumerable<List<Vector3>> paths, bool closePaths = true, TessellatedSolid solid = null)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -189,7 +189,7 @@ namespace TVGL
 
             foreach (var path in paths)
             {
-                var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+                var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
 
                 //Now create a line collection by doubling up the points
                 var lineCollection = new List<Point3D>();
@@ -217,7 +217,7 @@ namespace TVGL
         /// </summary>
         /// <param name="segments">The segments.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowVertexPathsWithSolid(IEnumerable<double[]> segments, IEnumerable<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IEnumerable<Vector3> segments, IEnumerable<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -249,7 +249,45 @@ namespace TVGL
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowVertexPathsWithSolid(IEnumerable<List<List<double[]>>> vertexPaths, IEnumerable<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<Vector3>> vertexPaths, IEnumerable<TessellatedSolid> solids)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+
+            foreach (var tessellatedSolid in solids)
+            {
+                var model = MakeModelVisual3D(tessellatedSolid);
+                models.Add(model);
+                window.view1.Children.Add(model);
+            }
+
+            foreach (var path in vertexPaths)
+            {
+                var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
+
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                foreach (var t in contour)
+                {
+                    lineCollection.Add(t);
+                    lineCollection.Add(t);
+                }
+                lineCollection.RemoveAt(0);
+                lineCollection.Add(lineCollection.First());
+                var color = new System.Windows.Media.Color();
+                color.R = 255; //G & B default to 0 to form red
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color };
+                window.view1.Children.Add(lines);
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+        /// <summary>
+        /// Shows the vertex paths with solid.
+        /// </summary>
+        /// <param name="vertexPaths">The vertex paths.</param>
+        /// <param name="solids">The solids.</param>
+        public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertexPaths, IEnumerable<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -265,7 +303,7 @@ namespace TVGL
             {
                 foreach (var path in crossSection)
                 {
-                    var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+                    var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
 
                     //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
@@ -291,7 +329,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowVertexPathsWithSolid(IEnumerable<List<List<Vertex>>> vertexPaths, IEnumerable<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<IEnumerable<Vertex>>> vertexPaths, IEnumerable<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -331,7 +369,60 @@ namespace TVGL
         /// Shows the vertex paths.
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
-        public static void ShowVertexPaths(IEnumerable<List<List<double[]>>> vertexPaths)
+        public static void ShowVertexPaths(IEnumerable<Vector3> vertexPath)
+        {
+            var window = new Window3DPlot();
+
+            var contour = vertexPath.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
+
+            //Now create a line collection by doubling up the points
+            var lineCollection = new List<Point3D>();
+            foreach (var t in contour)
+            {
+                lineCollection.Add(t);
+                lineCollection.Add(t);
+            }
+            lineCollection.RemoveAt(0);
+            lineCollection.Add(lineCollection.First());
+            var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+            window.view1.Children.Add(lines);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        /// <summary>
+        /// Shows the vertex paths.
+        /// </summary>
+        /// <param name="vertexPaths">The vertex paths.</param>
+        public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertexPaths)
+        {
+            var window = new Window3DPlot();
+
+            foreach (var path in vertexPaths)
+            {
+                var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
+
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                foreach (var t in contour)
+                {
+                    lineCollection.Add(t);
+                    lineCollection.Add(t);
+                }
+                lineCollection.RemoveAt(0);
+                lineCollection.Add(lineCollection.First());
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+                window.view1.Children.Add(lines);
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        /// <summary>
+        /// Shows the vertex paths.
+        /// </summary>
+        /// <param name="vertexPaths">The vertex paths.</param>
+        public static void ShowVertexPaths(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertexPaths)
         {
             var window = new Window3DPlot();
 
@@ -339,7 +430,7 @@ namespace TVGL
             {
                 foreach (var path in crossSection)
                 {
-                    var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+                    var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
 
                     //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
@@ -487,8 +578,8 @@ namespace TVGL
         public static void ShowWire(TessellatedSolid tessellatedSolid, bool ShowWithSolid = true)
         {
             if (ShowWithSolid)
-                ShowVertexPathsWithSolid(tessellatedSolid.Edges.Select(e => new[]{ e.From.X, e.From.Y, e.From.Z,
-                e.To.X, e.To.Y, e.To.Z }).ToList(), new[] { tessellatedSolid });
+                ShowVertexPathsWithSolid(tessellatedSolid.Edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToList(),
+                    new[] { tessellatedSolid });
             else
                 ShowVertexPaths(tessellatedSolid.Edges.Select(e => new[]{ e.From.X, e.From.Y, e.From.Z,
                     e.To.X, e.To.Y, e.To.Z }).ToList());
@@ -605,7 +696,7 @@ namespace TVGL
                     lineCollection.Add(new Point3D(line.FromPoint.X, line.FromPoint.Y, 0));
                     lineCollection.Add(new Point3D(line.ToPoint.X, line.ToPoint.Y, 0));
                 }
-                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Thickness=5,Color=Colors.Red  };
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Thickness = 5, Color = Colors.Red };
                 window.view1.Children.Add(lines);
             }
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
@@ -827,12 +918,12 @@ namespace TVGL
         }
 
 
-        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<double[]>> paths, bool closePaths = true)
+        private static IEnumerable<LinesVisual3D> MakeLinesVisual3D(IEnumerable<IEnumerable<Vector3>> paths, bool closePaths = true)
         {
             var lineVisuals = new List<LinesVisual3D>();
             foreach (var path in paths)
             {
-                var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+                var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
                 //Now create a line collection by doubling up the points
                 var lineCollection = new List<Point3D>();
                 foreach (var t in contour)
@@ -960,8 +1051,8 @@ namespace TVGL
                         Geometry = new MeshGeometry3D
                         {
                             Positions = new Point3DCollection(positions),
-                                // TriangleIndices = new Int32Collection(triIndices),
-                                Normals = new Vector3DCollection(normals)
+                            // TriangleIndices = new Int32Collection(triIndices),
+                            Normals = new Vector3DCollection(normals)
                         },
                         Material = defaultMaterial
                     }

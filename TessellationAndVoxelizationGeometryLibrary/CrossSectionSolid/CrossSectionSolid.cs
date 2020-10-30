@@ -84,9 +84,8 @@ namespace TVGL
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
-            direction.TransformToXYPlane(out var backTransform);
-            TransformMatrix = backTransform;
-            //TransformMatrix = MiscFunctions.TransformToXYPlane(direction, out var backTransform);
+            direction.TransformToXYPlane(out var transform);
+            TransformMatrix = transform;
             this.Layer2D = Layer2D;
             if (bounds == null)
             {
@@ -131,12 +130,8 @@ namespace TVGL
             var layerDict = new Dictionary<int, IList<Polygon>>();
             for (int i = 0; i < layers.Length; i++)
                 layerDict.Add(i, layers[i]);
-            var directionVector = new double[3];
-            directionVector[intDir] = Math.Sign((int)direction);
-            var cs = new CrossSectionSolid(new Vector3(directionVector), stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
-            //var cs = new CrossSectionSolid(stepDistances, layers, bounds, ts.Units);
-            cs.TransformMatrix = Matrix4x4.Identity;
-            return cs;
+            var directionVector = Vector3.UnitVector(direction);
+            return new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
         }
 
         public void Add(List<Vertex> feature3D, Polygon feature2D, int layer)

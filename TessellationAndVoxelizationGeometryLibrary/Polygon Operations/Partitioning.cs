@@ -203,7 +203,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>Vertex2D[].</returns>
-        public static Vertex2D[] SortVerticesByXValue(this Polygon polygon)
+        internal static Vertex2D[] SortVerticesByXValue(this Polygon polygon)
         {
             var xStrands = new List<Vertex2D[]>();
             foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X))
@@ -262,7 +262,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <returns>Vertex2D[].</returns>
-        public static Vertex2D[] SortVerticesByYValue(this Polygon polygon)
+        internal static Vertex2D[] SortVerticesByYValue(this Polygon polygon)
         {
             var yStrands = new List<Vertex2D[]>();
             foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.Y))

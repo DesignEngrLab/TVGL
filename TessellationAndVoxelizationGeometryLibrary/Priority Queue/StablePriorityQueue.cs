@@ -64,7 +64,7 @@ namespace Priority_Queue
         /// Removes every node from the queue.
         /// O(n) (So, don't do this often!)
         /// </summary>
-        #if NET_VERSION_4_5
+        #if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         #endif
         public void Clear()
@@ -78,7 +78,7 @@ namespace Priority_Queue
         /// If node is or has been previously added to another queue, the result is undefined unless oldQueue.ResetNode(node) has been called
         /// O(1)
         /// </summary>
-        #if NET_VERSION_4_5
+        #if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         #endif
         public bool Contains(T node)
@@ -108,7 +108,7 @@ namespace Priority_Queue
         /// If node is or has been previously added to another queue, the result is undefined unless oldQueue.ResetNode(node) has been called
         /// O(log n)
         /// </summary>
-        #if NET_VERSION_4_5
+        #if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         #endif
         public void Enqueue(T node, float priority)
@@ -142,7 +142,7 @@ namespace Priority_Queue
         }
 
         //Performance appears to be slightly better when this is NOT inlined o_O
-        #if NET_VERSION_4_5
+        #if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         #endif
         private void CascadeUp(T node)
@@ -182,7 +182,7 @@ namespace Priority_Queue
             _nodes[node.QueueIndex] = node;
         }
 
-#if NET_VERSION_4_5
+#if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private void CascadeDown(T node)
@@ -325,7 +325,7 @@ namespace Priority_Queue
         /// Returns true if 'higher' has higher priority than 'lower', false otherwise.
         /// Note that calling HasHigherPriority(node, node) (ie. both arguments the same node) will return false
         /// </summary>
-#if NET_VERSION_4_5
+#if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         #endif
         private bool HasHigherPriority(T higher, T lower)
@@ -339,7 +339,7 @@ namespace Priority_Queue
         /// If queue is empty, result is undefined
         /// O(log n)
         /// </summary>
-#if NET_VERSION_4_5
+#if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public T Dequeue()
@@ -429,7 +429,7 @@ namespace Priority_Queue
         /// Calling this method on a node not in the queue results in undefined behavior
         /// O(log n)
         /// </summary>
-        #if NET_VERSION_4_5
+        #if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         #endif
         public void UpdatePriority(T node, float priority)
@@ -453,7 +453,7 @@ namespace Priority_Queue
             OnNodeUpdated(node);
         }
 
-#if NET_VERSION_4_5
+#if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         private void OnNodeUpdated(T node)
@@ -477,7 +477,7 @@ namespace Priority_Queue
         /// If the node is not in the queue, the result is undefined.  If unsure, check Contains() first
         /// O(log n)
         /// </summary>
-#if NET_VERSION_4_5
+#if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public void Remove(T node)
@@ -520,7 +520,7 @@ namespace Priority_Queue
         /// By default, nodes that have been previously added to one queue cannot be added to another queue.
         /// If you need to do this, please call originalQueue.ResetNode(node) before attempting to add it in the new queue
         /// </summary>
-#if NET_VERSION_4_5
+#if Standard2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
         public void ResetNode(T node)
@@ -548,7 +548,7 @@ namespace Priority_Queue
 
         public IEnumerator<T> GetEnumerator()
         {
-#if NET_VERSION_4_5 // ArraySegment does not implement IEnumerable before 4.5
+#if Standard2_1 // ArraySegment does not implement IEnumerable before 4.5
             IEnumerable<T> e = new ArraySegment<T>(_nodes, 1, _numNodes);
             return e.GetEnumerator();
 #else

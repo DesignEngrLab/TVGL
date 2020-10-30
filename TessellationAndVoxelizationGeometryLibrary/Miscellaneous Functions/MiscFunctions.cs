@@ -1658,8 +1658,8 @@ namespace TVGL
             var toFactor = (distOfPlane - point1.X) / (point2.X - point1.X);
             var fromFactor = 1 - toFactor;
 
-            return new Vector2(fromFactor * point1.Y + toFactor * point2.Y,
-                fromFactor * point1.Z + toFactor * point2.Z);
+            return new Vector2(-fromFactor * point1.Z - toFactor * point2.Z,
+                fromFactor * point1.Y + toFactor * point2.Y);
         }
 
         /// <summary>
@@ -1678,8 +1678,8 @@ namespace TVGL
             var toFactor = (distOfPlane - point1.Y) / (point2.Y - point1.Y);
             var fromFactor = 1 - toFactor;
 
-            return new Vector2(fromFactor * point1.Z + toFactor * point2.Z,
-                fromFactor * point1.X + toFactor * point2.X);
+            return new Vector2(fromFactor * point1.X + toFactor * point2.X,
+                -fromFactor * point1.Z - toFactor * point2.Z);
         }
 
         /// <summary>
