@@ -368,7 +368,7 @@ namespace TVGL.TwoDimensional
             // to ensure that it speed things up.
             while (priorityQueue.Count > 0)
             {
-                var listWithLowestEntry = priorityQueue.Dequeue();
+                var listWithLowestEntry = priorityQueue.First;
                 var vertexList = orderedListsOfVertices[listWithLowestEntry];
                 var indexInThatList = currentIndices[listWithLowestEntry];
                 var nextVertex = vertexList[currentIndices[listWithLowestEntry]];
@@ -376,7 +376,8 @@ namespace TVGL.TwoDimensional
                 indexInThatList++;
                 currentIndices[listWithLowestEntry] = indexInThatList;
                 if (indexInThatList < vertexList.Length)
-                    priorityQueue.Enqueue(listWithLowestEntry, vertexList[indexInThatList]);
+                    priorityQueue.UpdatePriority(listWithLowestEntry, vertexList[indexInThatList]);
+                else priorityQueue.Dequeue();
             }
         }
 

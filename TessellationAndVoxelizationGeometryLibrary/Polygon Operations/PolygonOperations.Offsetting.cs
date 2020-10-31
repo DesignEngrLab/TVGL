@@ -130,7 +130,6 @@ namespace TVGL.TwoDimensional
             var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, tolerance, out var maxNumberOfPolygons,
                 deltaAngle);
             var outer = new Polygon(outerData.points);
-            Presenter.ShowAndHang(outer);
             var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, tolerance, outerData.knownWrongPoints, maxNumberOfPolygons);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
