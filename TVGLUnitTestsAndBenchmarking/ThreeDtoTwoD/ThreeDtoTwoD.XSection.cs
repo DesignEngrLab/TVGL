@@ -30,7 +30,7 @@ namespace TVGLUnitTestsAndBenchmarking
            // Presenter.ShowAndHang(polygon);
             var triangles = polygon.TriangulateToCoordinates();
             Presenter.ShowAndHang(triangles);
-            Presenter.ShowAndHang(polygon.OffsetRound(-12.7));
+            Presenter.ShowAndHang(polygon.OffsetRound(-9.7));
             
             //            brace.stl - holes showing up?
             // radiobox - missing holes - weird skip in outline
@@ -63,7 +63,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
                     var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
                     var xsection = solid.GetCrossSection(plane);
-                    Presenter.ShowAndHang(xsection);
+                    //Presenter.ShowAndHang(xsection);
                     var monoPolys = new List<Polygon>();
                     var error = false;
                     var totalArea = 0.0;

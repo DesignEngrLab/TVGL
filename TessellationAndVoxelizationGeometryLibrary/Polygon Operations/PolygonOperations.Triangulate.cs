@@ -237,15 +237,12 @@ namespace TVGL.TwoDimensional
             foreach (var vertex in sortedVertices)
             {
                 var monoChange = GetMonotonicityChange(vertex, tolerance);
-                if (monoChange == MonotonicityChange.SameAsNeighbor)
-                    throw new ArgumentException("It is not possible to divide a polygon into x-monotone polygons if a" +
-                        "duplicate vertex exist in polygon.", nameof(polygon));
                 var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
-                if (monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
+                if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
-                    if (vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() || vertex.EndLine.Vector.X.IsGreaterThanNonNegligible() ||  //headed in the positive x direction (enclosing along the bottom)
-                        (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.StartLine.Vector.Y.IsGreaterThanNonNegligible()))
+                    if (vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) || vertex.EndLine.Vector.X.IsPositiveNonNegligible(tolerance) ||  //headed in the positive x direction (enclosing along the bottom)
+                        (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.StartLine.Vector.Y.IsPositiveNonNegligible(tolerance)))
                     {   // in the CCW direction or along the bottom
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
@@ -258,10 +255,10 @@ namespace TVGL.TwoDimensional
                         edgeDatums[closestDatumEdge] = (vertex, false);
                     }
                 }
-                else if (!cornerCross.IsLessThanNonNegligible()) //then either start or end
+                else if (!cornerCross.IsNegativeNonNegligible(tolerance)) //then either start or end
                 {
-                    if ((vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible()) || // then start
-                        (vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.Y.IsLessThanNonNegligible()))
+                    if ((vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegativeNonNegligible(tolerance)) || // then start
+                        (vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.Y.IsNegativeNonNegligible(tolerance)))
                         edgeDatums.Add(vertex.StartLine, (vertex, false));
                     else // then it's an end
                     {
@@ -271,8 +268,8 @@ namespace TVGL.TwoDimensional
                 }
                 else //then either split or merge
                 {
-                    if ((vertex.StartLine.Vector.X.IsGreaterThanNonNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible()) || // then split
-                        (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsLessThanNonNegligible() && vertex.StartLine.Vector.Y.IsGreaterThanNonNegligible()))
+                    if ((vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegativeNonNegligible(tolerance)) || // then split
+                       (vertex.StartLine.Vector.Y.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.Y.IsPositiveNonNegligible(tolerance)))
                     {   // it's a split
                         var closestDatumEdge = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
                         var helperVertex = edgeDatums[closestDatumEdge].Item1;

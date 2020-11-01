@@ -308,7 +308,7 @@ namespace TVGL
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
                 if (!(new List<Vector2> { line.FromPoint.Coordinates, line.ToPoint.Coordinates, centerPoint })
-                    .Area().IsLessThanNonNegligible())
+                    .Area().IsNegativeNonNegligible())
                     continue;
 
                 //Figure out how far the center point is away from the line

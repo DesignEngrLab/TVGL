@@ -96,7 +96,7 @@ namespace TVGL.Numerics
         /// <param name="y">The y.</param>
         /// <param name="optionalTolerance">The optional tolerance.</param>
         /// <returns><c>true</c> if [is greater than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
-        public static bool IsGreaterThanNonNegligible(this double x, double y = 0, double optionalTolerance = DefaultEqualityTolerance)
+        public static bool IsGreaterThanNonNegligible(this double x, double y, double optionalTolerance = DefaultEqualityTolerance)
         //public static bool IsGreaterThanNonNegligible(this double x, double y , double optionalTolerance )
         {
             return (x > y && !IsPracticallySame(x, y, optionalTolerance));
@@ -109,10 +109,34 @@ namespace TVGL.Numerics
         /// <param name="y">The y.</param>
         /// <param name="optionalTolerance">The optional tolerance.</param>
         /// <returns><c>true</c> if [is less than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
-        public static bool IsLessThanNonNegligible(this double x, double y = 0, double optionalTolerance = DefaultEqualityTolerance)
+        public static bool IsLessThanNonNegligible(this double x, double y, double optionalTolerance = DefaultEqualityTolerance)
         //public static bool IsLessThanNonNegligible(this double x, double y, double optionalTolerance)
         {
             return (x < y && !IsPracticallySame(x, y, optionalTolerance));
+        }
+
+        /// <summary>
+        /// Determines whether [is greater than zero] and not practically the same as zero.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="optionalTolerance">The optional tolerance.</param>
+        /// <returns><c>true</c> if [is greater than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
+        public static bool IsPositiveNonNegligible(this double x, double optionalTolerance = DefaultEqualityTolerance)
+        //public static bool IsGreaterThanNonNegligible(this double x, double y , double optionalTolerance )
+        {
+            return (x > 0.0 && !IsNegligible(x, optionalTolerance));
+        }
+
+        /// <summary>
+        /// Determines whether [is less than zero] and not practically the same as zero.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="optionalTolerance">The optional tolerance.</param>
+        /// <returns><c>true</c> if [is less than non negligible] [the specified y]; otherwise, <c>false</c>.</returns>
+        public static bool IsNegativeNonNegligible(this double x, double optionalTolerance = DefaultEqualityTolerance)
+        //public static bool IsLessThanNonNegligible(this double x, double y, double optionalTolerance)
+        {
+            return (x < 0.0 && !IsNegligible(x, optionalTolerance));
         }
 
 

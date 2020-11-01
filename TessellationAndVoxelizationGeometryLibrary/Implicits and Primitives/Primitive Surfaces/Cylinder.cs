@@ -155,7 +155,7 @@ namespace TVGL
                                     var edgeDot = Math.Abs(otherEdge.Vector.Normalize().Dot(previousEdge.Vector.Normalize()));
                                     if (!edgeDot.IsPracticallySame(1.0, Constants.ErrorForFaceInSurface)) continue;
                                     var distance = sign * (direction.Dot(otherEdge.OtherVertex(previousVertex).Coordinates) - previousDistance);
-                                    if (!distance.IsGreaterThanNonNegligible()) continue; //This vertex is not any further along
+                                    if (!distance.IsPositiveNonNegligible()) continue; //This vertex is not any further along
 
                                     //Choose the edge that is most along the previous edge
                                     if (edgeDot > maxDot)

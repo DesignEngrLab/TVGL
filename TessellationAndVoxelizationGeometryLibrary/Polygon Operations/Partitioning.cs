@@ -9,7 +9,7 @@ using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
-    public enum MonotonicityChange { X, Y, Both, Neither, SameAsNeighbor }
+    public enum MonotonicityChange { X, Y, Both, Neither, SameAsPrevious }
 
     public readonly struct MonotoneBox
     {
@@ -51,11 +51,18 @@ namespace TVGL.TwoDimensional
         {
             var xPrev = vertex.EndLine.Vector.X;
             var yPrev = vertex.EndLine.Vector.Y;
-            if (xPrev.IsNegligible() && yPrev.IsNegligible()) return MonotonicityChange.SameAsNeighbor;
-            var xNext = vertex.StartLine.Vector.X;
-            var yNext = vertex.StartLine.Vector.Y;
-            if (xNext.IsNegligible(tolerance) && yNext.IsNegligible(tolerance)) return MonotonicityChange.SameAsNeighbor;
+            if (xPrev.IsNegligible() && yPrev.IsNegligible()) return MonotonicityChange.SameAsPrevious;
+            double xNext, yNext;
+            var neighborVertex = vertex.StartLine.ToPoint;
+            do
+            {
+                xNext = neighborVertex.EndLine.Vector.X;
+                yNext = neighborVertex.EndLine.Vector.Y;
+                neighborVertex = neighborVertex.StartLine.ToPoint;
+            }
+            while (xNext.IsNegligible(tolerance) && yNext.IsNegligible(tolerance));
 
+            //at this point one or both of the x&y deltas are non-negligible.
             /**** I wish this were enough (the next 6 lines) but it leads to problems
             var xProduct = xNext * xPrev;
             var yProduct = yNext * yPrev;
@@ -66,29 +73,30 @@ namespace TVGL.TwoDimensional
             ****/
 
             // first check the cases where all four numbers are not negligible
-            var xChangesDir = (xPrev.IsLessThanNonNegligible(tolerance) && xNext.IsGreaterThanNonNegligible(tolerance))
-                || (xPrev.IsGreaterThanNonNegligible(tolerance) && xNext.IsLessThanNonNegligible(tolerance));
-            var yChangesDir = (yPrev.IsLessThanNonNegligible(tolerance) && yNext.IsGreaterThanNonNegligible(tolerance))
-                || (yPrev.IsGreaterThanNonNegligible(tolerance) && yNext.IsLessThanNonNegligible(tolerance));
+            var xChangesDir = (xPrev.IsNegativeNonNegligible(tolerance) && xNext.IsPositiveNonNegligible(tolerance))
+                || (xPrev.IsPositiveNonNegligible(tolerance) && xNext.IsNegativeNonNegligible(tolerance));
+            var yChangesDir = (yPrev.IsNegativeNonNegligible(tolerance) && yNext.IsPositiveNonNegligible(tolerance))
+                || (yPrev.IsPositiveNonNegligible(tolerance) && yNext.IsNegativeNonNegligible(tolerance));
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
-            var xSameDir = (xPrev.IsLessThanNonNegligible(tolerance) && xNext.IsLessThanNonNegligible(tolerance))
-                || (xPrev.IsGreaterThanNonNegligible(tolerance) && xNext.IsGreaterThanNonNegligible(tolerance));
+            var xSameDir = (xPrev.IsNegativeNonNegligible(tolerance) && xNext.IsNegativeNonNegligible(tolerance))
+                || (xPrev.IsPositiveNonNegligible(tolerance) && xNext.IsPositiveNonNegligible(tolerance));
             if (yChangesDir && xSameDir) return MonotonicityChange.Y;
-            var ySameDir = (yPrev.IsLessThanNonNegligible(tolerance) && yNext.IsLessThanNonNegligible(tolerance))
-                || (yPrev.IsGreaterThanNonNegligible(tolerance) && yNext.IsGreaterThanNonNegligible(tolerance));
+            var ySameDir = (yPrev.IsNegativeNonNegligible(tolerance) && yNext.IsNegativeNonNegligible(tolerance))
+                || (yPrev.IsPositiveNonNegligible(tolerance) && yNext.IsPositiveNonNegligible(tolerance));
             if (xChangesDir && ySameDir) return MonotonicityChange.X;
             if (xSameDir && ySameDir) return MonotonicityChange.Neither;
 
-            // if at this point then one or more values in the vectors is zero/negligible) since the above booleans were
+            // if at this point then one or more values in the vectors is zero/negligible since the above booleans were
             // defined with this restriction
             if (xPrev.IsNegligible(tolerance) && xNext.IsNegligible(tolerance)) // then line is vertical
                 return (Math.Sign(yPrev) == Math.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
             // eww, the latter in that return is problematic at it would be a knife edge. but that's not this functions job to police
             if (yPrev.IsNegligible(tolerance) && yNext.IsNegligible(tolerance)) // then line is horizontal
                 return (Math.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
-            var neighborVertex = vertex;
-            // at this point, we've checked that 1) no vector is zero (return SameAsNeighbor), 2) all are nonnegligible,
+
+            // at this point, we've checked that 1) no vector is zero, 2) all are nonnegligible,
             // 3) either both x's or both y's are negligible.
+            neighborVertex = vertex;
             if (xPrev.IsNegligible(tolerance)) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
                                       // the condition before the last). it's possible that yNext is zero, but it doesn't affect the approach
             {
@@ -168,9 +176,7 @@ namespace TVGL.TwoDimensional
             {
                 var vertex = polygon.Vertices[i % numPoints];
                 var monoChange = GetMonotonicityChange(vertex, tolerance);
-                if (monoChange == MonotonicityChange.SameAsNeighbor)
-                    throw new ArgumentException("Duplicate vertices in polygon provided to PartitionIntoMonotoneBoxes",
-                        nameof(polygon));
+                if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither) continue;
                 if (monoChange == MonotonicityChange.Both ||
                     (monoChange == MonotonicityChange.X && (divideAt == MonotonicityChange.X || divideAt == MonotonicityChange.Both)) ||
                     (monoChange == MonotonicityChange.Y && (divideAt == MonotonicityChange.Y || divideAt == MonotonicityChange.Both)))

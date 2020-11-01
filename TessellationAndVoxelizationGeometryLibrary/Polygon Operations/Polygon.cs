@@ -535,8 +535,8 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if this instance is convex; otherwise, <c>false</c>.</returns>
         public bool IsConvex()
         {
-            var tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.BaseTolerance;
-            if (!Area.IsGreaterThanNonNegligible(tolerance)) return false; //It must have an area greater than zero
+            var tolerance = this.GetToleranceForPolygon(); ;
+            if (!Area.IsPositiveNonNegligible(tolerance)) return false; //It must have an area greater than zero
             var firstLine = Lines.Last();
             foreach (var secondLine in Lines)
             {
