@@ -194,7 +194,7 @@ namespace TVGL.TwoDimensional
             minCircle = points.MinimumCircle();
 
             //Check if areas are close to the same
-            var polygonArea = points.Area();
+            var polygonArea = Math.Abs(points.Area());
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 

@@ -158,14 +158,21 @@ namespace TVGL
 
         #region Dealing with Flat Patches
 
-        internal static Vector3 DetermineNormalForA3DVertexPolygon(this IList<Vertex> vertices, int numSides,
-            out bool reverseVertexOrder,
-            Vector3 suggestedNormal)
+        /// <summary>
+        /// Determines the normal for a 3D vertex polygon.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="numSides">The number sides.</param>
+        /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
+        /// <param name="suggestedNormal">The suggested normal.</param>
+        /// <returns>Vector3.</returns>
+        public static Vector3 DetermineNormalForA3DVertexPolygon(this IList<Vertex> vertices, int numSides,
+            out bool reverseVertexOrder, Vector3 suggestedNormal)
         {
             reverseVertexOrder = false;
             var edgeVectors = new Vector3[numSides];
             List<Vector3> normals = new List<Vector3>();
-            edgeVectors[0] = vertices[0].Coordinates - vertices[numSides - 1].Coordinates;
+            edgeVectors[0] = vertices[0].Coordinates - vertices[^1].Coordinates;
             for (var i = 1; i < numSides; i++)
             {
                 edgeVectors[i] = vertices[i].Coordinates - vertices[i - 1].Coordinates;
