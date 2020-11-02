@@ -166,16 +166,32 @@ namespace TVGL
         /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
         /// <param name="suggestedNormal">The suggested normal.</param>
         /// <returns>Vector3.</returns>
-        public static Vector3 DetermineNormalForA3DVertexPolygon(this IList<Vertex> vertices, int numSides,
+        public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable<Vertex> vertices, int numSides,
             out bool reverseVertexOrder, Vector3 suggestedNormal)
         {
+            return DetermineNormalForA3DPolygon(vertices.Select(v => v.Coordinates), numSides,
+                out reverseVertexOrder, suggestedNormal);
+        }
+
+        /// <summary>
+        /// Determines the normal for a 3D vertex polygon.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="numSides">The number sides.</param>
+        /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
+        /// <param name="suggestedNormal">The suggested normal.</param>
+        /// <returns>Vector3.</returns>
+        public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable<Vector3> vertices, int numSides,
+            out bool reverseVertexOrder, Vector3 suggestedNormal)
+        {
+            var vertexList = vertices as IList<Vector3> ?? vertices.ToList();
             reverseVertexOrder = false;
             var edgeVectors = new Vector3[numSides];
             List<Vector3> normals = new List<Vector3>();
-            edgeVectors[0] = vertices[0].Coordinates - vertices[^1].Coordinates;
+            edgeVectors[0] = vertexList[0] - vertexList[^1];
             for (var i = 1; i < numSides; i++)
             {
-                edgeVectors[i] = vertices[i].Coordinates - vertices[i - 1].Coordinates;
+                edgeVectors[i] = vertexList[i] - vertexList[i - 1];
                 var tempCross = edgeVectors[i - 1].Cross(edgeVectors[i]).Normalize();
                 if (tempCross.IsNull()) continue;
                 if (!suggestedNormal.IsNull())

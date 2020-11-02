@@ -47,6 +47,7 @@ namespace TVGL.TwoDimensional
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
+                polyCoordinates = polyCoordinates.Simplify(tolerance);
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             return newPolygons.OrderByDescending(p => Math.Abs(p.Area))

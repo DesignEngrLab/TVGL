@@ -164,26 +164,31 @@ namespace TVGL.TwoDimensional
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
-            var prevLine = linesList[^1];
+            var prevLine = linesList[0];
             var prevLineLengthReciprocal = 1.0 / prevLine.Length;
             var prevUnitNormal = new Vector2(prevLine.Vector.Y * prevLineLengthReciprocal, -prevLine.Vector.X * prevLineLengthReciprocal);
-            for (int i = 0; i < numPoints; i++)
+            for (int i = 1; i <= numPoints; i++)
             {
-                var nextLine = linesList[i];
+                var nextLine = (i == numPoints) ? linesList[0] : linesList[i];
                 var nextLineLengthReciprocal = 1.0 / nextLine.Length;
                 var nextUnitNormal = new Vector2(nextLine.Vector.Y * nextLineLengthReciprocal, -nextLine.Vector.X * nextLineLengthReciprocal);
                 // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".
                 var point = nextLine.FromPoint.Coordinates;
                 var cross = prevLine.Vector.Cross(nextLine.Vector);
-                // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
-                // let's start with the roundCorners
-                if (cross.IsNegligible(tolerance))
+                var dot = prevLine.Vector.Dot(nextLine.Vector);
+                // cross/dot is the tan(angle). both dot and cross are quicker than square-root or trigonometric functions
+                // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
+                // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
+                // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
+                if ((cross * offset / dot).IsNegligible(100*tolerance))
                 {
                     if (prevUnitNormal.Dot(nextUnitNormal) > 0)
                         // if line is practically straight, and going the same direction, then simply offset it without all the complication below
                         pointsList.Add(point + offset * prevUnitNormal);
                     else pointsList.Add(point);
                 }
+                // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
+                // let's start with the roundCorners
                 else if (cross * offset > 0)
                 {
                     if ((polygon.IsPositive && offset < 0) || (!polygon.IsPositive && offset > 0)) maxNumberOfPolygons++;
@@ -251,23 +256,6 @@ namespace TVGL.TwoDimensional
             numFalsesToAdd = pointsList.Count - wrongPoints.Count;
             for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
             return (pointsList, wrongPoints);
-        }
-
-        private static int AdvanceSoThatNotStartingAtSharp(double offset, IList<PolygonEdge> linesList, ref PolygonEdge prevLine, int numPoints)
-        {
-            var i = 0;
-            double cross;
-            var nextLine = prevLine;
-            do
-            {
-                prevLine = nextLine;
-                nextLine = linesList[i];
-                cross = prevLine.Vector.Cross(nextLine.Vector);
-            } while (++i < numPoints &&
-                     ((offset > 0 && cross < 0) ||
-                      (offset < 0 && cross > 0 && prevLine.Vector.SmallerAngleBetweenEdges(nextLine.Vector) < Math.PI / 2)));
-
-            return i - 1;
         }
         #endregion
     }

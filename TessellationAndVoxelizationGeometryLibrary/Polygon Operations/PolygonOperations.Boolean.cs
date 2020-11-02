@@ -80,7 +80,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            var polygonList = polygons as List<Polygon> ?? polygons.ToList();
+            var polygonList = polygons.ToList();
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(polygonList);
             for (int i = polygonList.Count - 1; i > 0; i--)
@@ -132,11 +132,11 @@ namespace TVGL.TwoDimensional
         {
             var unionedPolygons = polygonsA.ToList();
             if (polygonsB is null) return UnionPolygons(unionedPolygons, outputAsCollectionType, tolerance);
-            var polygonBList = polygonsB as List<Polygon> ?? polygonsB.ToList();
+            var polygonBList = polygonsB.ToList();
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(unionedPolygons, polygonBList);
 
-            for (int i = unionedPolygons.Count - 1; i > 0; i--)
+            for (int i = unionedPolygons.Count - 1; i >= 0; i--)
             {
                 for (int j = polygonBList.Count - 1; j >= 0; j--)
                 {
@@ -294,7 +294,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            var polygonList = polygons as List<Polygon> ?? polygons.ToList();
+            var polygonList = polygons.ToList();
             for (int i = polygonList.Count - 2; i > 0; i--)
             {
                 var clippingPoly = polygonList[i];
@@ -368,7 +368,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            var minuendsList = new List<Polygon>(minuends);
+            var minuendsList = minuends.ToList();
             var subtrahendsList = subtrahends as List<Polygon> ?? subtrahends.ToList();
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(minuendsList, subtrahendsList);
