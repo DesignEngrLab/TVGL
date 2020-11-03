@@ -23,7 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             // 2. get the file path
-            var fileName = dir.FullName + Path.DirectorySeparatorChar + "test0.json";
+            var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
           
             TVGL.IOFunctions.IO.Open(fileName, out Polygon polygon);
              Presenter.ShowAndHang(polygon);

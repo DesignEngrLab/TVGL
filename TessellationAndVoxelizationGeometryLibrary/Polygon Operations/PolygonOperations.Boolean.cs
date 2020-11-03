@@ -168,7 +168,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            return UnionPolygons(unionedPolygons, outputAsCollectionType, tolerance);
+            return UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType, tolerance);
         }
 
         private static double GetTolerancesFromPolygons(IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB = null)
