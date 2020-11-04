@@ -198,33 +198,46 @@ namespace TVGL.TwoDimensional
             return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage);
         }
 
-        //Mirrors a shape along a given direction, such that the mid line is the same for both the original and mirror
-        public static List<List<Vector2>> Mirror(List<List<Vector2>> shape, Vector2 direction2D)
-        {
-            var mirror = new List<List<Vector2>>();
-            var points = shape.SelectMany(path => path).ToList();
 
-            MinimumEnclosure.GetLengthAndExtremePoints(points, direction2D, out var bottomPoints, out _);
+        /// <summary>
+        /// Mirrors the specified polgyon along the direction, and at same midpoint of the provide polygon.
+        /// </summary>
+        /// <param name="shape">The shape.</param>
+        /// <param name="direction2D">The direction2 d.</param>
+        /// <returns>Polygon.</returns>
+        /// <exception cref="Exception">Areas do not match after mirroring the polygons</exception>
+        public static Polygon Mirror(this Polygon shape, Vector2 direction2D)
+        {
+            var mirror = new List<Polygon>();
+            var points = new List<Vector2>();
+            foreach (var path in shape.AllPolygons)
+            {
+                foreach (var point in path.Path)
+                {
+                    points.Add(point);
+                }
+            }
+            points.GetLengthAndExtremePoints(direction2D, out var bottomPoints, out _);
             var distanceFromOriginToClosestPoint = bottomPoints[0].Dot(direction2D);
-            foreach (var polygon in shape)
+            foreach (var polygon in shape.AllPolygons)
             {
                 var newPath = new List<Vector2>();
-                foreach (var point in polygon)
+                foreach (var point in polygon.Path)
                 {
                     //Get the distance to the point along direction2D
                     //Then subtract 2X the distance along direction2D
                     var d = point.Dot(direction2D) - distanceFromOriginToClosestPoint;
-                    newPath.Add(new Vector2(point.X - direction2D.X * 2 * d, point.Y - direction2D.Y * 2 * d));
+                    newPath.Add(new Vector2(point.X - direction2D[0] * 2 * d, point.Y - direction2D[1] * 2 * d));
                 }
                 //Reverse the new path so that it retains the same CW/CCW direction of the original
                 newPath.Reverse();
-                mirror.Add(new List<Vector2>(newPath));
-                //if (!mirror.Last().Area().IsPracticallySame(polygon.Area, Constants.BaseTolerance))
-                //{
-                //   throw new Exception("Areas do not match after mirroring the polygons");
-                //} ********commenting out this check. It should be in unit testing - not slow down this method***
+                mirror.Add(new Polygon(newPath));
+                if (!mirror.Last().Area.IsPracticallySame(polygon.Area, Constants.BaseTolerance))
+                {
+                    throw new Exception("Areas do not match after mirroring the polygons");
+                }
             }
-            return mirror;
+            return mirror.CreatePolygonTree(true).First();
         }
     }
 }

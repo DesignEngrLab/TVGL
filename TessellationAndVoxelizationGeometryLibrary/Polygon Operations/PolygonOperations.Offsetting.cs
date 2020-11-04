@@ -111,38 +111,53 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
-            var allPolygons = new List<Polygon>();
-            foreach (var polygon in polygons)
-                allPolygons.AddRange(polygon.Offset(offset, notMiter, tolerance, deltaAngle));
-            return allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
+            if (CLIPPER)
+            {
+                return OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
+            }
+            else
+            {
+                var allPolygons = new List<Polygon>();
+                foreach (var polygon in polygons)
+                    allPolygons.AddRange(polygon.Offset(offset, notMiter, tolerance, deltaAngle));
+                return allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
+            }
         }
+
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
-            var bb = polygon.BoundingRectangle();
-            // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
-            // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
-            if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
-                return new List<Polygon>();
-            var longerLength = Math.Max(bb.Length1, bb.Length2);
-            var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
-            if (double.IsNaN(tolerance)) tolerance = longerLength * Constants.BaseTolerance;
-            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, tolerance, out var maxNumberOfPolygons,
-                deltaAngle);
-            var outer = new Polygon(outerData.points);
-            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, tolerance, outerData.knownWrongPoints, maxNumberOfPolygons);
-            var inners = new List<Polygon>();
-            foreach (var hole in polygon.InnerPolygons)
+            if (CLIPPER)
             {
-                bb = hole.BoundingRectangle();
-                // like the above, but a positive offset will close the hole
-                if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, tolerance, out maxNumberOfPolygons, deltaAngle);
-                var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
+                return OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
             }
-            if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
-            return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p => p.IsPositive).ToList();
+            else
+            {
+                var bb = polygon.BoundingRectangle();
+                // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
+                // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
+                if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
+                    return new List<Polygon>();
+                var longerLength = Math.Max(bb.Length1, bb.Length2);
+                var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
+                if (double.IsNaN(tolerance)) tolerance = longerLength * Constants.BaseTolerance;
+                var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, tolerance, out var maxNumberOfPolygons,
+                    deltaAngle);
+                var outer = new Polygon(outerData.points);
+                var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, tolerance, outerData.knownWrongPoints, maxNumberOfPolygons);
+                var inners = new List<Polygon>();
+                foreach (var hole in polygon.InnerPolygons)
+                {
+                    bb = hole.BoundingRectangle();
+                    // like the above, but a positive offset will close the hole
+                    if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
+                    var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, tolerance, out maxNumberOfPolygons, deltaAngle);
+                    var newHoles = new Polygon(newHoleData.points);
+                    inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
+                }
+                if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
+                return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p => p.IsPositive).ToList();
+            }
         }
 
         private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
@@ -180,7 +195,7 @@ namespace TVGL.TwoDimensional
                 // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
                 // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
                 // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if ((cross * offset / dot).IsNegligible(100*tolerance))
+                if ((cross * offset / dot).IsNegligible(100 * tolerance))
                 {
                     if (prevUnitNormal.Dot(nextUnitNormal) > 0)
                         // if line is practically straight, and going the same direction, then simply offset it without all the complication below

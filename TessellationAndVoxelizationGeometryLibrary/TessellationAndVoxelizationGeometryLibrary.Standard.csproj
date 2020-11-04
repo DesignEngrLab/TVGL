@@ -40,7 +40,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;Standard2_1</DefineConstants>
+    <DefineConstants>DEBUG;Standard2_1, CLIPPER</DefineConstants>
     <Optimize>false</Optimize>
   </PropertyGroup>
 
@@ -51,6 +51,8 @@
 
   <ItemGroup>
     <None Remove="Numerics\README.txt" />
+    <None Remove="Polygon Operations\Clipper\License.txt" />
+    <None Remove="Polygon Operations\Clipper\README" />
   </ItemGroup>
 
   <ItemGroup>

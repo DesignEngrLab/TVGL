@@ -35,8 +35,12 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
+                    new[] { polygonB });
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
             return Union(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+
         }
 
         /// <summary>
@@ -80,6 +84,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygons);
+
             var polygonList = polygons.ToList();
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(polygonList);
@@ -130,6 +137,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA, polygonsB);
+
             var unionedPolygons = polygonsA.ToList();
             if (polygonsB is null) return UnionPolygons(unionedPolygons, outputAsCollectionType, tolerance);
             var polygonBList = polygonsB.ToList();
@@ -221,6 +231,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA },
+                    new[] { polygonB });
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
             return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
         }
@@ -264,6 +277,8 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA, polygonsB);
             var polygonAList = new List<Polygon>(polygonsA);
             var polygonBList = polygonsB as List<Polygon> ?? polygonsB.ToList();
             if (double.IsNaN(tolerance))
@@ -294,6 +309,8 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons);
             var polygonList = polygons.ToList();
             for (int i = polygonList.Count - 2; i > 0; i--)
             {
@@ -330,6 +347,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
+                    new[] { subtrahend });
             var polygonBInverted = subtrahend.Copy(true, true);
             var relationship = GetPolygonInteraction(minuend, polygonBInverted, tolerance);
             return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
@@ -368,6 +388,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends,
+                    subtrahends);
             var minuendsList = minuends.ToList();
             var subtrahendsList = subtrahends as List<Polygon> ?? subtrahends.ToList();
             if (double.IsNaN(tolerance))
@@ -403,6 +426,9 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (CLIPPER)
+                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA },
+                    new[] { polygonB });
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
             return ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
         }
