@@ -122,7 +122,7 @@ namespace TVGL
         ///     Gets the vector.
         /// </summary>
         /// <value>The vector.</value>
-        public double[] UnitVector => Vector.normalize();
+        public Vector3 UnitVector => Vector.Normalize();
 
         /// <summary>
         ///     The _other face

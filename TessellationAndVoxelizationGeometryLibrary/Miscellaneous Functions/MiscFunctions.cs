@@ -770,15 +770,6 @@ namespace TVGL
             return ConvertTo3DLocations(coordinates, transform);
         }
 
-<<<<<<< HEAD
-        public static PointLight Get2DProjectionPointAsLight(double[] vertex, double[,] transform)
-        {
-            var position = Get2DProjectionPoint(vertex, transform);
-            return new PointLight(position[0], position[1]);
-        }
-
-        public static PointLight Get2DProjectionPointAsLight(Vertex vertex, double[,] transform)
-=======
         /// <summary>
         /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
         /// </summary>
@@ -788,7 +779,6 @@ namespace TVGL
         /// <param name="transform">The transform matrix.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
->>>>>>> 2ce37fb160871cb35f3cb1ec0bb55e425a183b6f
         {
             foreach (var point2D in coordinates)
                 yield return Vector3.Multiply(new Vector3(point2D, 0), transform);

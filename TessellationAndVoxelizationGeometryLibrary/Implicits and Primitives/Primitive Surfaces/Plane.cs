@@ -134,7 +134,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             DistanceToOrigin = Normal.Dot(pointOnPlane);
         }
 
-        public HashSet<Plane> GetAdjacentFlats(List<Plane> allFlats)
+        public HashSet<Plane> GetAdjacentFlats(ICollection<Plane> allFlats)
         {
             var adjacentFlats = new HashSet<Plane>(); //use a hash to avoid duplicates
             var adjacentFaces = GetAdjacentFaces();
