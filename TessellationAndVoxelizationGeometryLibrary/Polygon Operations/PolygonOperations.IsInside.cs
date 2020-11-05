@@ -103,6 +103,82 @@ namespace TVGL.TwoDimensional
             return null; //all points are on boundary, so it is unclear if it is inside
         }
 
+        /// <summary>
+        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        ///     And the polygon is not self-intersecting
+        ///     This is a newer basically the same as our other method, but is less verbose.
+        ///     Making use of W. Randolph Franklin's compact algorithm
+        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        ///     Major Assumptions: 
+        ///     1) The polygon can be convex
+        ///     2) The direction of the polygon does not matter  
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="pointInQuestion">The point in question.</param>
+        /// <param name="closestLineAbove">The closest line above.</param>
+        /// <param name="closestLineBelow">The closest line below.</param>
+        /// <param name="onBoundary">if set to <c>true</c> [on boundary].</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        /// <returns><c>true</c> if [is point inside polygon] [the specified point in question]; otherwise, <c>false</c>.</returns>
+        public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion)
+        {
+            var insideTopPolygon = IsPointInsidePolygon(polygon, pointInQuestion);
+            if (onlyTopPolygon || !insideTopPolygon) return insideTopPolygon;
+
+            //Else, it is inside the top polygon and we need to check the inner polygons
+            var smallestArea = polygon.Area;
+            var smallestEnclosingPolygon = polygon;
+            foreach(var subPolygon in polygon.AllPolygons.Skip(1))
+            {
+                if(IsPointInsidePolygon(subPolygon, pointInQuestion))
+                {
+                    var absArea = Math.Abs(subPolygon.Area);
+                    if (absArea < smallestArea)
+                    {
+                        smallestArea = absArea;
+                        smallestEnclosingPolygon = subPolygon;
+                    }
+                }
+            }
+            //The point is inside the smallest polygon. If that polygon is positive,
+            //then return true. If it is a hole, then return false.
+            return smallestEnclosingPolygon.IsPositive;
+        }
+
+        private static bool IsPointInsidePolygon(this Polygon polygon, Vector2 pointInQuestion)
+        {
+            //1) Get the axis aligned bounding box of the path. This is super fast.
+            //If the point is inside the bounding box, continue to check with more detailed methods, 
+            //Else, retrun false.
+            var p = pointInQuestion;
+            var path = polygon.Path;
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            foreach (var point in path)
+            {
+                if (point.X < xMin) xMin = point.X;
+                if (point.X > xMax) xMax = point.X;
+                if (point.Y < yMin) yMin = point.Y;
+                if (point.Y > yMax) yMax = point.Y;
+            }
+            if (p.Y < yMin || p.Y > yMax || p.X < xMin || p.X > xMax) return false;
+
+            //2) Next, see how many lines are to the left of the point, using a fixed y value.
+            //This compact, effecient 7 lines of code is from W. Randolph Franklin
+            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
+            var inside = false;
+            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            {
+                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
+                    p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                {
+                    inside = !inside;
+                }                
+            }
+            return inside;
+        }
 
         /// <summary>
         /// Determines if a point is inside a polygon. The polygon can be positive or negative. In either case,
