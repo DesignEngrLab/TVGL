@@ -1035,6 +1035,12 @@ namespace TVGL
             return points;
         }
 
+        public static PointLight Get2DProjectionPointAsLight(double[] vertex, double[,] transform)
+        {
+            var position = Get2DProjectionPoint(vertex, transform);
+            return new PointLight(position[0], position[1]);
+        }
+
         public static PointLight Get2DProjectionPointAsLight(Vertex vertex, double[,] transform)
         {
             var position = Get2DProjectionPoint(vertex, transform);

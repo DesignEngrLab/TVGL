@@ -492,6 +492,18 @@ namespace TVGL
             #endregion
         }
 
+        public static (PointLight, double) GetCircleFrom3Points(double[] p0, double[] p1, double[] p2)
+        {
+            var circle = new InternalCircle(new PointLight(p0), new PointLight(p1), new PointLight(p2));
+            return (new PointLight(circle.CenterX, circle.CenterY), Math.Sqrt(circle.SqRadius));
+        }
+
+        public static (PointLight, double)  GetCircleFrom3Points(PointLight p0, PointLight p1, PointLight p2)
+        {
+            var circle = new InternalCircle(p0, p1, p2);
+            return (new PointLight(circle.CenterX, circle.CenterY), Math.Sqrt(circle.SqRadius));
+        }
+
         /// <summary>
         ///     Class InternalCircle.
         /// </summary>

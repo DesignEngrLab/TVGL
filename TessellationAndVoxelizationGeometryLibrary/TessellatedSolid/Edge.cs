@@ -121,6 +121,12 @@ namespace TVGL
         public double[] Vector { get; internal set; }
 
         /// <summary>
+        ///     Gets the vector.
+        /// </summary>
+        /// <value>The vector.</value>
+        public double[] UnitVector => Vector.normalize();
+
+        /// <summary>
         ///     The _other face
         /// </summary>
         private PolygonalFace _otherFace;
