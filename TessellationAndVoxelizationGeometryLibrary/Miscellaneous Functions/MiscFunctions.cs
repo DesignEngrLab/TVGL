@@ -888,15 +888,15 @@ namespace TVGL
         /// <returns></returns>
         public static CartesianDirections SnapDirectionToCartesian(this Vector3 direction, out bool withinTolerance, double tolerance = double.NaN)
         {
-            var xDot = direction.Dot(Vector3.UnitX);
+            var xDot = direction[0];
             var absXDot = Math.Abs(xDot);
-            var yDot = direction.Dot(Vector3.UnitY);
+            var yDot = direction[1];
             var absYDot = Math.Abs(yDot);
-            var zDot = direction.Dot(Vector3.UnitZ);
+            var zDot = direction[2];
             var absZDot = Math.Abs(zDot);
 
             // X-direction
-            if (absXDot > absYDot && absXDot > absYDot)
+            if (absXDot > absYDot && absXDot > absZDot)
             {
                 withinTolerance = !double.IsNaN(tolerance) && absXDot.IsPracticallySame(1.0, tolerance);
                 return xDot > 0 ? CartesianDirections.XPositive : CartesianDirections.XNegative;
