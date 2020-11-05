@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="3MFFileData.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,6 +10,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 using TVGL.IOFunctions.threemfclasses;
+using TVGL.Numerics;
 using Object = TVGL.IOFunctions.threemfclasses.Object;
 
 namespace TVGL.IOFunctions
@@ -89,9 +80,6 @@ namespace TVGL.IOFunctions
         public string requiredextensions { get; set; }
 
 
-        /// <param name="s">The s.</param>
-        /// <param name="filename">The filename.</param>
-        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
             var result = new List<TessellatedSolid>();
@@ -116,36 +104,34 @@ namespace TVGL.IOFunctions
                     IgnoreProcessingInstructions = true,
                     IgnoreWhitespace = true
                 };
-                using (var reader = XmlReader.Create(s, settings))
+                using var reader = XmlReader.Create(s, settings);
+                if (reader.IsStartElement("model"))
                 {
-                    if (reader.IsStartElement("model"))
-                    {
-                        var defaultNamespace = reader["xmlns"];
-                        var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
-                        threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
-                    }
-                    threeMFData.FileName = filename;
-                    var results = new List<TessellatedSolid>();
-                    threeMFData.Name = Path.GetFileNameWithoutExtension(filename);
-                    var nameIndex =
-                        threeMFData.metadata.FindIndex(
-                            md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
-                                                 md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
-                    if (nameIndex != -1)
-                    {
-                        threeMFData.Name = threeMFData.metadata[nameIndex].Value;
-                        threeMFData.metadata.RemoveAt(nameIndex);
-                    }
-                    foreach (var item in threeMFData.build.Items)
-                    {
-                        results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
-                            item.transformMatrix,
-                            threeMFData.Name + "_"));
-                    }
-
-                    Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
-                    return results.ToArray();
+                    var defaultNamespace = reader["xmlns"];
+                    var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
+                    threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
                 }
+                threeMFData.FileName = filename;
+                var results = new List<TessellatedSolid>();
+                threeMFData.Name = Path.GetFileNameWithoutExtension(filename);
+                var nameIndex =
+                    threeMFData.metadata.FindIndex(
+                        md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
+                                             md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
+                if (nameIndex != -1)
+                {
+                    threeMFData.Name = threeMFData.metadata[nameIndex].Value;
+                    threeMFData.metadata.RemoveAt(nameIndex);
+                }
+                foreach (var item in threeMFData.build.Items)
+                {
+                    results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
+                        item.transformMatrix,
+                        threeMFData.Name + "_"));
+                }
+
+                Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
+                return results.ToArray();
             }
             catch (Exception exception)
             {
@@ -156,11 +142,11 @@ namespace TVGL.IOFunctions
         }
 
         private IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid,
-            double[,] transformMatrix, string name)
+            Matrix4x4 transformMatrix, string name)
         {
             var solid = resources.objects.First(obj => obj.id == objectid);
             var result = TessellatedSolidsFromObject(solid, name);
-            if (transformMatrix != null)
+            if (!transformMatrix.IsNull())
                 foreach (var ts in result)
                     ts.Transform(transformMatrix);
             return result;
@@ -196,7 +182,7 @@ namespace TVGL.IOFunctions
                     if (defaultColorXml != null) defaultColor = defaultColorXml.color;
                 }
             }
-            var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
+            var verts = mesh.vertices.Select(v => new Vector3(v.x, v.y, v.z)).ToList();
 
             Color[] colors = null;
             var uniformColor = true;
@@ -217,16 +203,15 @@ namespace TVGL.IOFunctions
                 }
                 if (uniformColor && baseColor.color.Equals(defaultColor)) continue;
                 uniformColor = false;
-                if (colors == null) colors = new Color[mesh.triangles.Count];
+                colors ??= new Color[mesh.triangles.Count];
                 colors[j] = baseColor.color;
             }
             if (uniformColor) colors = new[] { defaultColor };
             else
                 for (var j = 0; j < numTriangles; j++)
-                    if (colors[j] == null) colors[j] = defaultColor;
-            return new TessellatedSolid(verts,
-                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors, Units,
-                name, FileName, Comments, Language);
+                    colors[j] ??= defaultColor;
+            return new TessellatedSolid(verts, mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
+                mesh.triangles.Count <= Constants.MaxNumberFacesDefaultFullTS, colors, Units, name, FileName, Comments, Language);
         }
 
         /// <summary>
@@ -237,21 +222,18 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-            ZipArchiveEntry entry;
             Stream entryStream;
-            using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
-            {
-                entry = archive.CreateEntry("3D/3dmodel.model");
-                using (entryStream = entry.Open())
-                    SaveModel(entryStream, solids);
-                archive.CreateEntry("Metadata/thumbnail.png");
-                entry = archive.CreateEntry("_rels/.rels");
-                using (entryStream = entry.Open())
-                    SaveRelationships(entryStream);
-                entry = archive.CreateEntry("[Content_Types].xml");
-                using (entryStream = entry.Open())
-                    SaveContentTypes(entryStream);
-            }
+            using var archive = new ZipArchive(stream, ZipArchiveMode.Create);
+            var entry = archive.CreateEntry("3D/3dmodel.model");
+            using (entryStream = entry.Open())
+                SaveModel(entryStream, solids);
+            archive.CreateEntry("Metadata/thumbnail.png");
+            entry = archive.CreateEntry("_rels/.rels");
+            using (entryStream = entry.Open())
+                SaveRelationships(entryStream);
+            entry = archive.CreateEntry("[Content_Types].xml");
+            using (entryStream = entry.Open())
+                SaveContentTypes(entryStream);
             return true;
         }
 
@@ -372,11 +354,9 @@ namespace TVGL.IOFunctions
                     }
                 };
 
-            using (var writer = XmlWriter.Create(stream))
-            {
-                var serializer = new XmlSerializer(typeof(Relationship), defXMLNameSpaceRelationships);
-                serializer.Serialize(writer, rels);
-            }
+            using var writer = XmlWriter.Create(stream);
+            var serializer = new XmlSerializer(typeof(Relationship), defXMLNameSpaceRelationships);
+            serializer.Serialize(writer, rels);
         }
 
         private static void SaveContentTypes(Stream stream)
@@ -397,11 +377,9 @@ namespace TVGL.IOFunctions
             };
             var types = new Types { Defaults = defaults };
 
-            using (var writer = XmlWriter.Create(stream))
-            {
-                var serializer = new XmlSerializer(typeof(Types), defXMLNameSpaceContentTypes);
-                serializer.Serialize(writer, types);
-            }
+            using var writer = XmlWriter.Create(stream);
+            var serializer = new XmlSerializer(typeof(Types), defXMLNameSpaceContentTypes);
+            serializer.Serialize(writer, types);
         }
     }
 }

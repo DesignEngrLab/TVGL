@@ -1,67 +1,59 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Alan Grier
-// Last Modified On : 02-18-2019
-// ***********************************************************************
-// <copyright file="VoxelizedSparseDense_Constructors.cs" company="Design Engineering Lab">
-//     Copyright ©  2019
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using StarMathLib;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using TVGL.IOFunctions;
+using TVGL.Boolean_Operations;
+using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL.Voxelization
 {
-    /// <inheritdoc />
     /// <summary>
     /// Class VoxelizedSparseDense.
     /// </summary>
     public partial class VoxelizedSolid : Solid, IEnumerable<int[]>
     {
         #region Properties
+
         internal IVoxelRow[] voxels { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the dense encoding is current.
+        /// Gets the count.
         /// </summary>
-        /// <value><c>true</c> if [dense encoding is current]; otherwise, <c>false</c>.</value>
+        /// <value>The count.</value>
         public long Count { get; private set; }
+
         public int[] VoxelsPerSide => new[] { numVoxelsX, numVoxelsY, numVoxelsZ };
         public int[][] VoxelBounds { get; }
         public double VoxelSideLength { get; private set; }
-        public double[] TessToVoxSpace { get; }
-        public double[] Dimensions { get; private set; }
-        public double[] Offset => Bounds[0];
+        public Vector3 Dimensions { get; private set; }
+        public Vector3 Offset => Bounds[0];
         public int numVoxelsX { get; private set; }
         public int numVoxelsY { get; private set; }
         public int numVoxelsZ { get; private set; }
-        int zMultiplier => numVoxelsY;
+        private int zMultiplier => numVoxelsY;
         public double FractionDense { get; private set; }
-        #endregion
 
-
-
+        #endregion Properties
 
         #region Constructors
-        private VoxelizedSolid() { }
 
-        public VoxelizedSolid(VoxelizedSolid vs) : this()
+        private VoxelizedSolid()
         {
-            Bounds = new double[2][];
-            Bounds[0] = (double[])vs.Bounds[0].Clone();
-            Bounds[1] = (double[])vs.Bounds[1].Clone();
-            Dimensions = Bounds[1].subtract(Bounds[0]);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// </summary>
+        /// <param name="vs">The vs.</param>
+        internal VoxelizedSolid(VoxelizedSolid vs) : this()
+        {
+            Bounds = new[] { vs.Bounds[0], vs.Bounds[1] };
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(vs.SolidColor.A, vs.SolidColor.R, vs.SolidColor.G, vs.SolidColor.B);
             VoxelSideLength = vs.VoxelSideLength;
             numVoxelsX = vs.numVoxelsX;
@@ -74,34 +66,24 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
-
-
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="voxelsOnLongSide">The voxels on long side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<double[]> bounds = null) : this()
+        public VoxelizedSolid(TessellatedSolid ts, int voxelsOnLongSide, IReadOnlyList<Vector3> bounds = null) : this()
         {
-            Bounds = new double[2][];
             if (bounds != null)
-            {
-                Bounds[0] = (double[])bounds[0].Clone();
-                Bounds[1] = (double[])bounds[1].Clone();
-            }
+                Bounds = new[] { bounds[0], bounds[1] };
             else
-            {
-                Bounds[0] = (double[])ts.Bounds[0].Clone();
-                Bounds[1] = (double[])ts.Bounds[1].Clone();
-            }
-            Dimensions = Bounds[1].subtract(Bounds[0]);
+                Bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(ts.SolidColor.A, ts.SolidColor.R, ts.SolidColor.G, ts.SolidColor.B);
-            VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
-            var voxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
-            numVoxelsX = voxelsPerSide[0];
-            numVoxelsY = voxelsPerSide[1];
-            numVoxelsZ = voxelsPerSide[2];
+            VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
+            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
+            numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
+            numVoxelsZ = (int)Math.Ceiling(Dimensions.Z / VoxelSideLength);
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse(numVoxelsX);
@@ -109,32 +91,25 @@ namespace TVGL.Voxelization
             FractionDense = 0;
             UpdateProperties();
         }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="voxelSideLength">Length of the voxel side.</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<double[]> bounds = null) : this()
+        public VoxelizedSolid(TessellatedSolid ts, double voxelSideLength, IReadOnlyList<Vector3> bounds = null) : this()
         {
-            Bounds = new double[2][];
             if (bounds != null)
-            {
-                Bounds[0] = (double[])bounds[0].Clone();
-                Bounds[1] = (double[])bounds[1].Clone();
-            }
+                Bounds = new[] { bounds[0], bounds[1] };
             else
-            {
-                Bounds[0] = (double[])ts.Bounds[0].Clone();
-                Bounds[1] = (double[])ts.Bounds[1].Clone();
-            }
-            Dimensions = Bounds[1].subtract(Bounds[0]);
+                Bounds = new[] { ts.Bounds[0], ts.Bounds[1] };
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
             SolidColor = new Color(Constants.DefaultColor);
             VoxelSideLength = voxelSideLength;
-            var voxelsPerSide = Dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLength)).ToArray();
-            numVoxelsX = voxelsPerSide[0];
-            numVoxelsY = voxelsPerSide[1];
-            numVoxelsZ = voxelsPerSide[2];
+            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
+            numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
+            numVoxelsZ = (int)Math.Ceiling(Dimensions.Z / VoxelSideLength);
             voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
             for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
                 voxels[i] = new VoxelRowSparse();
@@ -143,21 +118,66 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="voxelsOnLongSide">The voxels on long side.</param>
+        /// <param name="bounds">The bounds.</param>
+        public VoxelizedSolid(IEnumerable<Polygon> loops, int voxelsOnLongSide, IReadOnlyList<Vector2> bounds) : this()
+        {
+            Bounds = new[] { new Vector3(bounds[0], 0), new Vector3(bounds[1], 1) };
+            Dimensions = Bounds[1].Subtract(Bounds[0]);
+            VoxelSideLength = Math.Max(Dimensions.X, Math.Max(Dimensions.Y, Dimensions.Z)) / voxelsOnLongSide;
+            numVoxelsX = (int)Math.Ceiling(Dimensions.X / VoxelSideLength);
+            numVoxelsY = (int)Math.Ceiling(Dimensions.Y / VoxelSideLength);
+            numVoxelsZ = 1;
+            voxels = new IVoxelRow[numVoxelsY * numVoxelsZ];
+            for (int i = 0; i < numVoxelsY * numVoxelsZ; i++)
+                voxels[i] = new VoxelRowSparse(numVoxelsX);
+
+            var yBegin = Bounds[0][1] + VoxelSideLength / 2;
+            var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
+                                                              //if (loops.Any())
+                                                              //{  // multiple enumeration warning so commenting out above condition. but that sound be a problem for next line
+            var intersections = loops.AllPolygonIntersectionPointsAlongHorizontalLines(yBegin, numVoxelsY,
+                            VoxelSideLength, out var yStartIndex);
+            var numYlines = intersections.Count;
+            for (int j = -Math.Min(0, yStartIndex); j < numYlines; j++)
+            {
+                var intersectionPoints = intersections[j];
+                var numXRangesOnThisLine = intersectionPoints.Length;
+                for (var m = 0; m < numXRangesOnThisLine; m += 2)
+                {
+                    var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                    var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                    if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(sp);
+                    ((VoxelRowSparse)voxels[yStartIndex + j]).indices.Add(ep);
+                }
+            }
+            //}
+            FractionDense = 0;
+            UpdateProperties();
+        }
+
         #region Fill In From Tessellation Functions
+
         private void FillInFromTessellation(TessellatedSolid ts)
         {
             var yBegin = Bounds[0][1] + VoxelSideLength / 2;
             var zBegin = Bounds[0][2] + VoxelSideLength / 2;
-            var decomp = CrossSectionSolid.GetUniformlySpacedSlices(ts,CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
+            var decomp = ts.GetUniformlySpacedCrossSections(CartesianDirections.ZPositive, zBegin, numVoxelsZ, VoxelSideLength);
             var inverseVoxelSideLength = 1 / VoxelSideLength; // since its quicker to multiple then to divide, maybe doing this once at the top will save some time
 
-            Parallel.For(0, numVoxelsZ, k =>
-            //for (var k = 0; k < numVoxelsZ; k++)
+            //Parallel.For(0, numVoxelsZ, k =>
+            for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
                 if (loops.Any())
                 {
-                    var intersections =PolygonOperations.AllPolygonIntersectionPointsAlongY(loops.Select(p=>new Polygon(p)), yBegin, numVoxelsY, VoxelSideLength, out var yStartIndex);
+                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, numVoxelsY,
+                        VoxelSideLength, out var yStartIndex);
                     var numYlines = intersections.Count;
                     for (int j = 0; j < numYlines; j++)
                     {
@@ -166,7 +186,6 @@ namespace TVGL.Voxelization
                         for (var m = 0; m < numXRangesOnThisLine; m += 2)
                         {
                             var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
-                            if (sp < 0) sp = 0;
                             var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
                             if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
                             ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(sp);
@@ -174,30 +193,38 @@ namespace TVGL.Voxelization
                         }
                     }
                 }
-            });
+            }
+            //);
         }
 
+        #endregion Fill In From Tessellation Functions
 
-        #endregion
-
-
+        /// <summary>
+        /// Creates the full block of voxels using the bounds and dimensions of an existing voxelized solid.
+        /// </summary>
+        /// <param name="vs">The vs.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public static VoxelizedSolid CreateFullBlock(VoxelizedSolid vs)
         {
             return CreateFullBlock(vs.VoxelSideLength, vs.Bounds);
         }
-        public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<double[]> bounds)
+
+        /// <summary>
+        /// Creates the full block given the dimensions and the size.
+        /// </summary>
+        /// <param name="voxelSideLength">Length of the voxel side.</param>
+        /// <param name="bounds">The bounds.</param>
+        /// <returns>VoxelizedSolid.</returns>
+        public static VoxelizedSolid CreateFullBlock(double voxelSideLength, IReadOnlyList<Vector3> bounds)
         {
             var fullBlock = new VoxelizedSolid();
-            fullBlock.Bounds = new double[2][];
-            fullBlock.Bounds[0] = (double[])bounds[0].Clone();
-            fullBlock.Bounds[1] = (double[])bounds[1].Clone();
-            fullBlock.Dimensions = fullBlock.Bounds[1].subtract(fullBlock.Bounds[0]);
+            fullBlock.Bounds = new[] { bounds[0], bounds[1] };
+            fullBlock.Dimensions = fullBlock.Bounds[1].Subtract(fullBlock.Bounds[0]);
             fullBlock.SolidColor = new Color(Constants.DefaultColor);
             fullBlock.VoxelSideLength = voxelSideLength;
-            var voxelsPerSide = fullBlock.Dimensions.Select(d => (int)Math.Ceiling(d / fullBlock.VoxelSideLength)).ToArray();
-            fullBlock.numVoxelsX = voxelsPerSide[0];
-            fullBlock.numVoxelsY = voxelsPerSide[1];
-            fullBlock.numVoxelsZ = voxelsPerSide[2];
+            fullBlock.numVoxelsX = (int)Math.Ceiling(fullBlock.Dimensions.X / fullBlock.VoxelSideLength);
+            fullBlock.numVoxelsY = (int)Math.Ceiling(fullBlock.Dimensions.Y / fullBlock.VoxelSideLength);
+            fullBlock.numVoxelsZ = (int)Math.Ceiling(fullBlock.Dimensions.Z / fullBlock.VoxelSideLength);
             fullBlock.voxels = new IVoxelRow[fullBlock.numVoxelsY * fullBlock.numVoxelsZ];
             for (int i = 0; i < fullBlock.numVoxelsY * fullBlock.numVoxelsZ; i++)
             {
@@ -210,9 +237,10 @@ namespace TVGL.Voxelization
             return fullBlock;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Conversion Methods
+
         public void UpdateToAllDense()
         {
             if (FractionDense == 1) return;
@@ -223,6 +251,7 @@ namespace TVGL.Voxelization
             }
             FractionDense = 1;
         }
+
         public void UpdateToAllSparse()
         {
             if (FractionDense == 0) return;
@@ -233,7 +262,6 @@ namespace TVGL.Voxelization
             }
             FractionDense = 0;
         }
-
 
         internal string[] GetVoxelsAsStringArrays()
         {
@@ -249,36 +277,57 @@ namespace TVGL.Voxelization
                         var rowDetails = new List<ushort>(sparseRow.indices);
                         rowDetails.Insert(0, (ushort)j);
                         rowDetails.Insert(0, (ushort)i);
-                        allRows.Add(BitConverter.ToString(rowDetails.SelectMany(u => BitConverter.GetBytes(u)).ToArray()));
+                        allRows.Add(BitConverter.ToString(rowDetails.SelectMany(BitConverter.GetBytes).ToArray()));
                     }
                 }
             }
             return allRows.ToArray();
         }
+
         public TessellatedSolid ConvertToTessellatedSolidRectilinear()
         {
             throw new NotImplementedException();
         }
+
         public TessellatedSolid ConvertToTessellatedSolidMarchingCubes(int voxelsPerTriangleSpacing)
         {
             var marchingCubes = new MarchingCubesDenseVoxels(this, voxelsPerTriangleSpacing);
             var ts = marchingCubes.Generate();
             return ts;
         }
-        #endregion
+
+        #endregion Conversion Methods
 
         #region Overrides of Solid abstract members
+
+        /// <summary>
+        /// Copies this instance. Note, that this overrides the base class, Solid. You may need to 
+        /// cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;
+        /// </summary>
+        /// <returns>Solid.</returns>
         public override Solid Copy()
         {
             UpdateToAllSparse();
             return new VoxelizedSolid(this);
         }
 
-        public override void Transform(double[,] transformMatrix)
+        /// <summary>
+        /// Transforms the solid with the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="NotImplementedException"></exception>
+        public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
         }
-        public override Solid TransformToNewSolid(double[,] transformationMatrix)
+
+        /// <summary>
+        /// Create a new version of the solid transformed by the specified transform matrix.
+        /// </summary>
+        /// <param name="transformationMatrix">The transformation matrix.</param>
+        /// <returns>Solid.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public override Solid TransformToNewSolid(Matrix4x4 transformationMatrix)
         {
             throw new NotImplementedException();
         }
@@ -288,15 +337,55 @@ namespace TVGL.Voxelization
             return new VoxelEnumerator(this);
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection of voxels, which is simply
+        /// a boolean.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
         public IEnumerator<int[]> GetEnumerator()
         {
             return new VoxelEnumerator(this);
-
         }
 
-        public override double[,] InertiaTensor { get => base.InertiaTensor; set => base.InertiaTensor = value; }
-        #endregion
+        protected override void CalculateCenter()
+        {
+            Count = 0;
+            var xTotal = 0;
+            var yTotal = 0;
+            var zTotal = 0;
+            for (int j = 0; j < numVoxelsY; j++)
+                for (int k = 0; k < numVoxelsZ; k++)
+                {
+                    var voxelRow = voxels[j + zMultiplier * k];
+                    var rowCount = voxelRow.Count;
+                    xTotal += rowCount * voxelRow.TotalXPosition();
+                    yTotal += rowCount * j;
+                    zTotal += rowCount * k;
+                    Count += rowCount;
+                }
+            _center = new Vector3  //is this right?
+            (
+                VoxelSideLength * xTotal / Count,
+                VoxelSideLength * yTotal / Count,
+                VoxelSideLength * zTotal / Count
+            );
+        }
 
+        protected override void CalculateVolume()
+        {
+            _volume = Count * Math.Pow(VoxelSideLength, 3);
+        }
 
+        protected override void CalculateSurfaceArea()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void CalculateInertiaTensor()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion Overrides of Solid abstract members
     }
 }

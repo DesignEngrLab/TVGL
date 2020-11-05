@@ -1,32 +1,22 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 05-26-2016
-// ***********************************************************************
-// <copyright file="RepairTessellation.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
 
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to repair a solid. It is 
+    ///  This portion of ModifyTessellation includes the functions to repair a solid. It is
     ///  invoked during the opening of a tessellated solid from "disk", but the repair function
     ///  may be called on its own.
     /// </summary>
     public static partial class ModifyTessellation
     {
         #region Check Model Integrity
+
         /// <summary>
         /// Checks the model integrity.
         /// </summary>
@@ -94,7 +84,9 @@ namespace TVGL
                 else Message.output("Repair did not successfully fix all the problems.", 1);
                 return CheckModelIntegrity(ts, false);
             }
+
             #region Report details
+
             if ((int)Message.Verbosity < 3) return false;
             //Note that negligible faces are not truly errors.
             Message.output("Errors found in model:");
@@ -106,8 +98,8 @@ namespace TVGL
             if (ts.Errors.OverusedEdges != null)
             {
                 Message.output("==> " + ts.Errors.OverusedEdges.Count + " overused edges.");
-                Message.output("    The number of faces per overused edge: " +
-                               ts.Errors.OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
+                Message.output("    The number of faces per overused edge: " + string.Join(',',
+                               ts.Errors.OverusedEdges.Select(p => p.Item2.Count)));
             }
             if (ts.Errors.SingledSidedEdges != null) Message.output("==> " + ts.Errors.SingledSidedEdges.Count + " single-sided edges.");
             if (ts.Errors.DegenerateFaces != null) Message.output("==> " + ts.Errors.DegenerateFaces.Count + " degenerate faces in file.");
@@ -139,11 +131,13 @@ namespace TVGL
             if (ts.Errors.FacesThatDoNotLinkBackToVertex != null)
                 Message.output("==> " + ts.Errors.FacesThatDoNotLinkBackToVertex.Count +
                                " faces that do not link back to vertices that link to them.");
-            #endregion
+
+            #endregion Report details
 
             return false;
         }
-        #endregion
+
+        #endregion Check Model Integrity
 
         #region Error Storing
 
@@ -307,7 +301,6 @@ namespace TVGL
             else ts.Errors.FacesWithTwoVertices.Add(face);
         }
 
-
         /// <summary>
         ///     Stores the face with one edge.
         /// </summary>
@@ -368,7 +361,6 @@ namespace TVGL
             else ts.Errors.DegenerateFaces.Add(faceVertexIndices);
         }
 
-
         /// <summary>
         ///     Stores the duplicate face.
         /// </summary>
@@ -381,7 +373,7 @@ namespace TVGL
             else ts.Errors.DuplicateFaces.Add(faceVertexIndices);
         }
 
-        #endregion
+        #endregion Error Storing
 
         #region Repair Functions
 
@@ -400,7 +392,7 @@ namespace TVGL
             Message.output("Some errors found. Attempting to Repair...", 2);
             var completelyRepaired = true;
             if (ts.Errors.ModelIsInsideOut)
-                completelyRepaired = TurnModelInsideOut(ts);
+                completelyRepaired = ts.TurnModelInsideOut();
             if (ts.Errors.EdgesWithBadAngle != null)
                 completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
             //Note that negligible faces are not truly errors, so they are not repaired
@@ -411,34 +403,6 @@ namespace TVGL
             }
             else Message.output("Repair did not successfully fix all the problems.", 1);
             return completelyRepaired;
-        }
-
-
-        private static bool TurnModelInsideOut(TessellatedSolid ts)
-        {
-            ts.Volume = -1 * ts.Volume;
-            ts._inertiaTensor = null;
-            foreach (var face in ts.Faces)
-            {
-                face.Normal = face.Normal.multiply(-1);
-                //var firstVertex = face.Vertices[0];
-                //face.Vertices.RemoveAt(0);
-                //face.Vertices.Insert(1, firstVertex);
-                face.Vertices.Reverse();
-                var firstEdge = face.Edges[0];
-                face.Edges.RemoveAt(0);
-                face.Edges.Insert(1, firstEdge);
-                face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
-            }
-            foreach (var edge in ts.Edges)
-            {
-                edge.Curvature = (CurvatureType)(-1 * (int)edge.Curvature);
-                edge.InternalAngle = Constants.TwoPi - edge.InternalAngle;
-                var tempFace = edge.OwnedFace;
-                edge.OwnedFace = edge.OtherFace;
-                edge.OtherFace = tempFace;
-            }
-            return true;
         }
 
         /// <summary>
@@ -457,16 +421,14 @@ namespace TVGL
                 var edgesToUpdate = new List<Edge>();
                 foreach (var edge in face.Edges)
                 {
-                    if (edge == null) ; //that's enough to know something is not right!
-                    else if (edgesWithBadAngles.Contains(edge)) edgesToUpdate.Add(edge);
+                    if (edge == null) continue; //that's enough to know something is not right!
+                    if (edgesWithBadAngles.Contains(edge)) edgesToUpdate.Add(edge);
                     else if (facesToConsider.Contains(edge.OwnedFace == face ? edge.OtherFace : edge.OwnedFace))
                         edgesToUpdate.Add(edge);
                     else break;
                 }
                 if (edgesToUpdate.Count < face.Edges.Count) continue;
-                face.Normal = face.Normal.multiply(-1);
-                face.Edges.Reverse();
-                face.Vertices.Reverse();
+                face.Invert();
                 foreach (var edge in edgesToUpdate)
                     if (!allEdgesToUpdate.Contains(edge)) allEdgesToUpdate.Add(edge);
             }
@@ -480,7 +442,6 @@ namespace TVGL
             return true;
         }
 
-
-        #endregion
+        #endregion Repair Functions
     }
 }

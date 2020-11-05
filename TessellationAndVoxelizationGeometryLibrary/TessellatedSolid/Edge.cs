@@ -1,22 +1,10 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 04-18-2016
-// ***********************************************************************
-// <copyright file="Edge.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
-using TVGL.Voxelization;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -61,14 +49,13 @@ namespace TVGL
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
                     bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
         {
-            if (edgeReference > 0)
+            if (edgeReference >= 0)
                 EdgeReference = edgeReference;
             else TessellatedSolid.SetAndGetEdgeChecksum(this);
             _ownedFace = ownedFace;
             _otherFace = otherFace;
-            if (ownedFace != null) ownedFace.AddEdge(this);
-            if (otherFace != null) otherFace.AddEdge(this);
-            DefineInternalEdgeAngle();
+            ownedFace?.AddEdge(this);
+            otherFace?.AddEdge(this);
         }
 
         /// <summary>
@@ -82,14 +69,6 @@ namespace TVGL
             From = fromVertex;
             To = toVertex;
             if (doublyLinkedVertices) DoublyLinkVertices();
-
-            Vector = new[]
-            {
-                To.Position[0] - From.Position[0],
-                To.Position[1] - From.Position[1],
-                To.Position[2] - From.Position[2]
-            };
-            Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
         }
 
         #endregion
@@ -109,16 +88,35 @@ namespace TVGL
         public Vertex To { get; internal set; }
 
         /// <summary>
-        ///     Gets the length.
+        /// Gets the length of the line.
         /// </summary>
         /// <value>The length.</value>
-        public double Length { get; internal set; }
+        public double Length
+        {
+            get
+            {
+                if (double.IsNaN(_length))
+                    _length = Vector.Length();
+                return _length;
+            }
+        }
+        double _length = double.NaN;
 
         /// <summary>
-        ///     Gets the vector.
+        /// Gets the length of the line.
         /// </summary>
-        /// <value>The vector.</value>
-        public double[] Vector { get; internal set; }
+        /// <value>The length.</value>
+        public Vector3 Vector
+        {
+            get
+            {
+                if (_vector.IsNull())
+                    _vector = To.Coordinates - From.Coordinates;
+                return _vector;
+            }
+        }
+        Vector3 _vector = Vector3.Null;
+
 
         /// <summary>
         ///     Gets the vector.
@@ -150,12 +148,11 @@ namespace TVGL
         /// <value>The owned face.</value>
         public PolygonalFace OwnedFace
         {
-            get { return _ownedFace; }
+            get => _ownedFace;
             internal set
             {
-                if (_ownedFace == value) return;
+                if (_ownedFace != null && _ownedFace == value) return;
                 _ownedFace = value;
-                DefineInternalEdgeAngle();
             }
         }
 
@@ -166,12 +163,11 @@ namespace TVGL
         /// <value>The other face.</value>
         public PolygonalFace OtherFace
         {
-            get { return _otherFace; }
+            get => _otherFace;
             internal set
             {
-                if (_otherFace == value) return;
+                if (_otherFace != null && _otherFace == value) return;
                 _otherFace = value;
-                DefineInternalEdgeAngle();
             }
         }
 
@@ -179,7 +175,48 @@ namespace TVGL
         ///     Gets the internal angle in radians.
         /// </summary>
         /// <value>The internal angle.</value>
-        public double InternalAngle { get; internal set; }
+        public double InternalAngle
+        {
+            get
+            {
+                if (double.IsNaN(_internalAngle)) DefineInternalEdgeAngle();
+                return _internalAngle;
+            }
+        }
+        double _internalAngle = double.NaN;
+
+        public override CurvatureType Curvature
+        {
+            get
+            {
+                if (_curvature == CurvatureType.Undefined) DefineInternalEdgeAngle();
+                return _curvature;
+            }
+        }
+        CurvatureType _curvature = CurvatureType.Undefined;
+
+
+        /// <summary>
+        /// Gets the normal.
+        /// </summary>
+        /// <value>The normal.</value>
+        public override Vector3 Normal
+        {
+            get
+            {
+                if (_normal.IsNull()) DetermineNormal();
+                return _normal;
+            }
+        }
+
+
+        Vector3 _normal = Vector3.Null;
+        private void DetermineNormal()
+        {
+            throw new NotImplementedException();
+        }
+
+
 
         /// <summary>
         ///     Updates the edge vector and length, if a vertex has been moved.
@@ -188,17 +225,15 @@ namespace TVGL
         public void Update(bool lengthAndAngleUnchanged = false)
         {
             //Reset the vector, since vertices may have been moved.
-            Vector = new[]
-            {
-                To.Position[0] - From.Position[0],
-                To.Position[1] - From.Position[1],
-                To.Position[2] - From.Position[2]
-            };
+            _vector = new Vector3(To.Coordinates[0] - From.Coordinates[0],
+                To.Coordinates[1] - From.Coordinates[1],
+                To.Coordinates[2] - From.Coordinates[2]
+            );
 
             if (lengthAndAngleUnchanged) return; //Done. No need to update the length or the internal edge angle
-            Length =
-                Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
-            DefineInternalEdgeAngle();
+            _length = double.NaN;
+            _internalAngle = double.NaN;
+            _curvature = CurvatureType.Undefined;
         }
 
         /// <summary>
@@ -222,113 +257,117 @@ namespace TVGL
              * for that face. */
             if (_ownedFace == _otherFace || _ownedFace == null || _otherFace == null)
             {
-                InternalAngle = double.NaN;
-                Curvature = CurvatureType.Undefined;
+                _internalAngle = double.NaN;
+                _curvature = CurvatureType.Undefined;
                 return;
             }
+            // **** the following code is commented. Instead - assume it has been constructed correctly
+            // use Repair to see if this is wrong
             // is this edge truly owned by the ownedFace? if not reverse
+            /*
             var faceToIndex = _ownedFace.Vertices.IndexOf(To);
             var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
-            var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
-            var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal, 3);
+            var nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
+            var dotOfCross = Vector.Cross(nextEdgeVector).Dot(_ownedFace.Normal);
             if (dotOfCross <= 0)
             {
-                /* then switch the direction of the edge to match the ownership.
-                 * When OwnedFace and OppositeFace were defined it was arbitrary anyway
-                 * so this is another by-product of this method */
+                // then switch the direction of the edge to match the ownership.
+                // When OwnedFace and OppositeFace were defined it was arbitrary anyway
+                // so this is another by-product of this method 
                 var temp = From;
                 From = To;
                 To = temp;
-                Vector = Vector.multiply(-1);
+                Vector = Vector * -1;
                 // it would be messed up if both faces thought they owned this edge. If this is the 
                 // case, return the edge has no angle.
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
+                nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
+                var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal);
                 if (dotOfCross2 < 0)
                 // neither faces appear to own the edge...must be something wrong
                 {
-                    InternalAngle = double.NaN;
-                    Curvature = CurvatureType.Undefined;
+                    _internalAngle = double.NaN;
+                    _curvature = CurvatureType.Undefined;
                     return;
                 }
             }
             else
             {
+       
                 // it would be messed up if both faces thought they owned this edge. If this is the 
                 // case, return the edge has no angle.
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
+                nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
+                var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal);
                 if (dotOfCross2 > 0)
                 // both faces appear to own the edge...must be something wrong
                 {
-                    InternalAngle = double.NaN;
-                    Curvature = CurvatureType.Undefined;
+                    _internalAngle = double.NaN;
+                    _curvature = CurvatureType.Undefined;
                     return;
                 }
-            }
-            var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
+            } */
+            var dot = _ownedFace.Normal.Dot(_otherFace.Normal);
             if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance))
             {
-                InternalAngle = Math.PI;
-                Curvature = CurvatureType.SaddleOrFlat;
+                _internalAngle = Math.PI;
+                _curvature = CurvatureType.SaddleOrFlat;
             }
             else if (dot < -1.0 || dot.IsPracticallySame(-1.0, Constants.BaseTolerance))
             {
                 // is it a crack or a sharp edge?
                 // in order to find out we look to the other two faces connected to each
                 // face to find out
-                var ownedNeighborAvgNormals = new double[3];
+                var ownedNeighborAvgNormals = new Vector3();
                 var numNeighbors = 0;
                 foreach (var face in _ownedFace.AdjacentFaces)
                 {
                     if (face != null && face != _otherFace)
                     {
-                        ownedNeighborAvgNormals = ownedNeighborAvgNormals.add(face.Normal, 3);
+                        ownedNeighborAvgNormals = ownedNeighborAvgNormals + face.Normal;
                         numNeighbors++;
                     }
                 }
-                ownedNeighborAvgNormals = ownedNeighborAvgNormals.divide(numNeighbors);
-                var otherNeighborAvgNormals = new double[3];
+                ownedNeighborAvgNormals = ownedNeighborAvgNormals.Divide(numNeighbors);
+                var otherNeighborAvgNormals = new Vector3();
                 numNeighbors = 0;
                 foreach (var face in _otherFace.AdjacentFaces)
                 {
                     if (face != null && face != _ownedFace)
                     {
-                        otherNeighborAvgNormals = otherNeighborAvgNormals.add(face.Normal, 3);
+                        otherNeighborAvgNormals = otherNeighborAvgNormals + face.Normal;
                         numNeighbors++;
                     }
                 }
-                otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
-                if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector, 3) < 0)
+                otherNeighborAvgNormals = otherNeighborAvgNormals.Divide(numNeighbors);
+                if (ownedNeighborAvgNormals.Cross(otherNeighborAvgNormals).Dot(Vector) < 0)
                 {
-                    InternalAngle = Constants.TwoPi;
-                    Curvature = CurvatureType.Concave;
+                    _internalAngle = Constants.TwoPi;
+                    _curvature = CurvatureType.Concave;
                 }
                 else
                 {
-                    InternalAngle = 0.0;
-                    Curvature = CurvatureType.Convex;
+                    _internalAngle = 0.0;
+                    _curvature = CurvatureType.Convex;
                 }
             }
             else
             {
-                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal).dotProduct(Vector, 3);
+                var cross = _ownedFace.Normal.Cross(_otherFace.Normal).Dot(Vector);
                 if (cross < 0)
                 {
-                    InternalAngle = Math.PI + Math.Acos(dot);
-                    Curvature = CurvatureType.Concave;
+                    _internalAngle = Math.PI + Math.Acos(dot);
+                    _curvature = CurvatureType.Concave;
                 }
                 else //(cross > 0)
                 {
-                    InternalAngle = Math.PI - Math.Acos(dot);
-                    Curvature = CurvatureType.Convex;
+                    _internalAngle = Math.PI - Math.Acos(dot);
+                   _curvature = CurvatureType.Convex;
                 }
             }
             if (InternalAngle > Constants.TwoPi) throw new Exception("not possible");
@@ -352,9 +391,9 @@ namespace TVGL
             var v0 = face1.Vertices.First(v => v.IndexInList == from);
             var v1 = face1.Vertices.First(v => v.IndexInList == to);
             var v2 = face1.Vertices.First(v => v.IndexInList != to && v.IndexInList != from);
-            var vector1 = v1.Position.subtract(v0.Position);
-            var vector2 = v2.Position.subtract(v1.Position);
-            var dot = vector1.crossProduct(vector2).dotProduct(face1.Normal);
+            var vector1 = v1.Coordinates.Subtract(v0.Coordinates);
+            var vector2 = v2.Coordinates.Subtract(v1.Coordinates);
+            var dot = vector1.Cross(vector2).Dot(face1.Normal);
             //The owned face(the face in which the from-to direction makes sense
             // - that is, produces the proper cross-product normal).
             return Math.Sign(dot) > 0 ? (face1, face2) : (face2, face1);
@@ -378,6 +417,14 @@ namespace TVGL
             return TessellatedSolid.GetEdgeChecksum(vertex1Index, vertex2Index);
         }
 
+        internal void Invert()
+        {
+            _curvature = (CurvatureType)(-1 * (int)_curvature);
+            _internalAngle = Constants.TwoPi - _internalAngle;
+            var tempFace = OwnedFace;
+            OwnedFace = OtherFace;
+            OtherFace = tempFace;
+        }
         #endregion
     }
 }

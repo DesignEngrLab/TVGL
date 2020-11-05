@@ -1,43 +1,30 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 03-05-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="RefineTessellation.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
-using StarMathLib;
-using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 
 namespace TVGL
 {
     /// <summary>
-    ///  This portion of ModifyTessellation includes the functions to refine a solid, which means 
+    ///  This portion of ModifyTessellation includes the functions to refine a solid, which means
     ///  adding more elements to it. invoked during the opening of a tessellated solid from "disk", but the repair function
     ///  may be called on its own.
     /// </summary>
     public static partial class ModifyTessellation
     {
-
-
         /// <summary>
         ///     Adjusts the position of kept vertex.
         /// </summary>
         /// <param name="vertexA">The keep vertex.</param>
         /// <param name="vertexB">The other vertex.</param>
-        internal static double[] DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
+        internal static Vector3 DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
         {
             //average positions
-            var newPosition = vertexA.Position.add(vertexB.Position, 3);
-            return newPosition.divide(2);
+            var newPosition = vertexA.Coordinates + vertexB.Coordinates;
+            return newPosition.Divide(2);
         }
 
         /// <summary>
@@ -51,19 +38,19 @@ namespace TVGL
             PolygonalFace removeFace1, PolygonalFace removeFace2)
         {
             //average positions
-            var newPosition = keepVertex.Position.add(removedVertex.Position, 3);
-            var radius = keepVertex.Position.subtract(removedVertex.Position, 3).norm2() / 2.0;
-            keepVertex.Position = newPosition.divide(2);
-            var avgNormal = removeFace1.Normal.add(removeFace2.Normal, 3).normalize(3);
+            var newPosition = keepVertex.Coordinates + removedVertex.Coordinates;
+            var radius = keepVertex.Coordinates.Distance(removedVertex.Coordinates) / 2.0;
+            keepVertex.Coordinates = newPosition.Divide(2);
+            var avgNormal = (removeFace1.Normal + removeFace2.Normal).Normalize();
             var otherVertexAvgDistanceToEdgePlane =
-                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal, 3)).Sum() /
+                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Coordinates.Dot(avgNormal)).Sum() /
                 (keepVertex.Edges.Count - 1);
-            var distanceOfEdgePlane = keepVertex.Position.dotProduct(avgNormal, 3);
+            var distanceOfEdgePlane = keepVertex.Coordinates.Dot(avgNormal);
 
             // use a sigmoid function to determine how far out to move the vertex
             var x = 0.05 * (distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane) / radius;
             var length = 2 * radius * x / Math.Sqrt(1 + x * x) - radius;
-            keepVertex.Position = keepVertex.Position.add(avgNormal.multiply(length), 3);
+            keepVertex.Coordinates = keepVertex.Coordinates + (avgNormal * length);
         }
     }
 }

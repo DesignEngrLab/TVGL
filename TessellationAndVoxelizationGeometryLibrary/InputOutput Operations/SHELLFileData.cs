@@ -1,16 +1,12 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -20,7 +16,7 @@ namespace TVGL.IOFunctions
 
         private ShellFileData()
         {
-            Vertices = new List<double[]>();
+            Vertices = new List<Vector3>();
             FaceToVertexIndices = new List<int[]>();
         }
 
@@ -33,7 +29,7 @@ namespace TVGL.IOFunctions
         private static bool startofFacets;
         private static bool endofFacets;
         private List<Color> Colors { get; set; }
-        private List<double[]> Vertices { get; }
+        private List<Vector3> Vertices { get; }
         private List<int[]> FaceToVertexIndices { get; }
         private ShellMaterial Material { get; set; }
 
@@ -61,10 +57,8 @@ namespace TVGL.IOFunctions
                 var reader = new StreamReader(s);
                 var shellData = new List<ShellFileData>();
                 var shellSolid = new ShellFileData();
-                string id, unitstring;
-                ParseLine(ReadLine(reader), out id, out unitstring);
-                UnitType unit;
-                TryParseUnits(unitstring, out unit);
+                ParseLine(ReadLine(reader), out _, out var unitstring);
+                TryParseUnits(unitstring, out var unit);
                 while (!reader.EndOfStream)
                 {
                     var line = ReadLine(reader);
@@ -113,17 +107,16 @@ namespace TVGL.IOFunctions
                 {
                     var shell = shellData[i];
                     if (shell.Vertices.Any() && shell.FaceToVertexIndices.Any())
-                        results[i] = new TessellatedSolid(shell.Vertices,
-                            shell.FaceToVertexIndices, shell.Colors, unit,
-                            shell.Name + "_" + shell.Material.materialName,
+                        results[i] = new TessellatedSolid(shell.Vertices, shell.FaceToVertexIndices, true,
+                           shell.Colors, unit, shell.Name + "_" + shell.Material.materialName,
                             filename, shell.Comments, shell.Language);
                 }
 
                 Message.output(
                         "Successfully read in SHELL file called " + filename + " in " + (DateTime.Now - now).TotalSeconds +
                         " seconds.", 4);
-                    return results;
-                }
+                return results;
+            }
             catch
             {
                 Message.output("Unable to read in SHELL file.", 1);
@@ -133,8 +126,7 @@ namespace TVGL.IOFunctions
 
         private bool ReadFaces(string line)
         {
-            double[] numbers;
-            if (!TryParseDoubleArray(line, out numbers)) return false;
+            if (!TryParseDoubleArray(line, out var numbers)) return false;
             var vertIndices = new int[3];
             for (var j = 0; j < 3; j++)
                 vertIndices[j] = (int)Math.Round(numbers[j], 0);
@@ -144,24 +136,20 @@ namespace TVGL.IOFunctions
 
         private void ReadMaterial(string line)
         {
-            float r = 0, g = 0, b = 0;
-            string id, values, shellName, colorString;
-            double[] shellColor;
-            ParseLine(line, out id, out values);
-            ParseLine(values, out shellName, out colorString);
-            TryParseDoubleArray(colorString, out shellColor);
-            r = (float)shellColor[0];
-            g = (float)shellColor[1];
-            b = (float)shellColor[2];
+            ParseLine(line, out _, out var values);
+            ParseLine(values, out var shellName, out var colorString);
+            TryParseDoubleArray(colorString, out var shellColor);
+            var r = (float)shellColor[0];
+            var g = (float)shellColor[1];
+            var b = (float)shellColor[2];
             var currentColor = new Color(r, g, b);
             Material = new ShellMaterial(shellName, currentColor);
         }
 
         private bool ReadVertices(string line)
         {
-            double[] point;
-            if (TryParseDoubleArray(line, out point))
-                Vertices.Add(point);
+            if (TryParseDoubleArray(line, out var point))
+                Vertices.Add(new Vector3(point));
             else return false;
             return true;
         }

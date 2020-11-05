@@ -9,10 +9,8 @@
 
 
 using System;
-using System.Linq;
-using HelixToolkit.Wpf.SharpDX.Core;
 using SharpDX;
-using StarMathLib;
+
 using TVGL;
 using TVGL.Voxelization;
 using Color = TVGL.Color;
@@ -22,6 +20,7 @@ namespace TVGLPresenterDX
     using System.Collections.Generic;
     using System.Linq;
     using System.Windows;
+    using HelixToolkit.SharpDX.Core;
     using HelixToolkit.Wpf.SharpDX;
     using TVGL;
 
@@ -63,7 +62,7 @@ namespace TVGLPresenterDX
                     DiffuseColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf,
                     ts.SolidColor.Af)
                 },
-                Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
+                Geometry = new MeshGeometry3D
                 {
                     Positions = new Vector3Collection(ts.Faces.SelectMany(f => f.Vertices.Select(v =>
                           new Vector3((float)v.X, (float)v.Y, (float)v.Z)))),
@@ -150,7 +149,7 @@ namespace TVGLPresenterDX
                     vs.SolidColor.Af)
                     //(float)0.75 * vs.SolidColor.Af)
                 },
-                Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
+                Geometry = new MeshGeometry3D
                 {
                     Positions = positions,
                     Indices = new IntCollection(Enumerable.Range(0, positions.Count)),

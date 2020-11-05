@@ -3,12 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using StarMathLib;
 using TVGL;
-using TVGL.Boolean_Operations;
-using TVGL.IOFunctions;
-using TVGL.Voxelization;
-
+using TVGL.Numerics;
 
 namespace TVGLPresenterDX
 {
@@ -82,7 +78,7 @@ namespace TVGLPresenterDX
         {
             //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
-            Debug.Listeners.Add(writer);
+            Trace.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir;
             try
@@ -108,7 +104,7 @@ namespace TVGLPresenterDX
                 TessellatedSolid ts;
                 if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
-                    IO.Open(fileStream, filename, out ts);
+                    TVGL.IOFunctions.IO.Open(fileStream, filename, out ts);
                 if (ts.Errors != null) continue;
                 Color color = new Color(KnownColors.AliceBlue);
                 ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
@@ -142,7 +138,7 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
-            var vs1 = new VoxelizedSolid(ts, 10);
+            var vs1 = new TVGL.Voxelization.VoxelizedSolid(ts, 10);
             Console.WriteLine("done constructing, now ...");
             PresenterShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
@@ -264,9 +260,9 @@ namespace TVGLPresenterDX
             mainWindow.ShowDialog();
         }
 
-        private static List<int[]> findIntersectingVoxelCoords(double[] startPoint, double[] endPoint)
+        private static List<int[]> findIntersectingVoxelCoords(Vector3 startPoint, Vector3 endPoint)
         {
-            var vectorNorm = endPoint.subtract(startPoint).normalize();
+            var vectorNorm = (endPoint - startPoint).Normalize();
             var intersections = new List<double[]>();
             for (var dim = 0; dim < 3; dim++)
             {

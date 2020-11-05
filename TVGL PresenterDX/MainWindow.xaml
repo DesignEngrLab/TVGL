@@ -1,19 +1,22 @@
 ﻿<Window x:Class="TVGLPresenterDX.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
+        xmlns:local="clr-namespace:TVGLPresenterDX"
+        mc:Ignorable="d"
         Title="TVGL PresenterDX" Height="350" Width="525">
-    
-  
     <Grid>
-    
+
         <hx:Viewport3DX x:Name="view1">
             <hx:AmbientLight3D />
             <!--<h:GridLinesVisual3D x:Name="GridLines" Visible="False"/>-->
-
             <hx:DirectionalLight3D Direction = "-2,-5,-2"/>
-      <hx:GroupModel3D x:Name="group"   ItemsSource="{Binding ModelGeometry}"   Transform = "{Binding ModelTransform}" />
-    </hx:Viewport3DX>
+            <hx:GroupModel3D x:Name="group"  
+                       ItemsSource="{Binding ModelGeometry}" 
+                       Transform = "{Binding ModelTransform}" />
+        </hx:Viewport3DX>
         <Menu Height="20" VerticalAlignment="Top" >
             <!--<MenuItem Header="View">
                 <MenuItem Name="ShowGridLinesMenuItem" IsCheckable="True" Header="Show Grid Lines" Unchecked="GridLines_OnUnChecked" Checked="GridLines_OnChecked"/>
@@ -82,5 +85,5 @@
                 </Grid>
             </MenuItem>-->
         </Menu>
-  </Grid>
+    </Grid>
 </Window>

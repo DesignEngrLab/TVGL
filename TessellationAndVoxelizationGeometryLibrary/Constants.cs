@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 04-18-2016
-// ***********************************************************************
-// <copyright file="Constants.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +13,7 @@ namespace TVGL
     /// </summary>
     public static class Constants
     {
+        internal const int MaxNumberFacesDefaultFullTS = 50000;
         internal const double TwoPi = 2 * Math.PI;
         internal const double HalfPi = Math.PI / 2;
         internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
@@ -31,7 +22,7 @@ namespace TVGL
         /// VertexCheckSumMultiplier is the checksum multiplier to be used for face and edge references.
         /// Since the edges connect two vertices the maximum value this can be is
         /// the square root of the max. value of a long (see above). However, during
-        /// debugging, it is nice to see the digits of the vertex indices embedded in 
+        /// debugging, it is nice to see the digits of the vertex indices embedded in
         /// check, so when debugging, this is reducing to 1 billion instead of 3 billion.
         /// This way if you are connecting vertex 1234 with 5678, you will get a checksum = 5678000001234
         /// </summary>
@@ -40,10 +31,6 @@ namespace TVGL
 #else
         public const long VertexCheckSumMultiplier = SquareRootOfLongMaxValue;
 #endif
-        /// <summary>
-        ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
-        /// </summary>
-        internal const double ConvexHullRadiusForRobustness = 0.0000001;
 
         /// <summary>
         ///     The default color
@@ -53,22 +40,17 @@ namespace TVGL
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
-        public const double BaseTolerance = 1E-9;
+        public const double BaseTolerance = 1E-11;
 
         /// <summary>
         ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
         /// </summary>
-        public const double LineSlopeTolerance = 0.0003;
-
-        /// <summary>
-        ///     The tolerance used for simplifying polygons by removing tiny lines.
-        /// </summary>
-        public const double LineLengthMinimum = 1E-7;
+        public const double SimplifyDefaultDeltaArea = 0.0003;
 
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations
         /// </summary>
-        public const double OBBAngleTolerance = 1e-5;
+        public const double OBBTolerance = 1e-5;
 
         /// <summary>
         ///     The error for face in surface
@@ -79,8 +61,9 @@ namespace TVGL
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-2;
+
         /// <summary>
-        /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in 
+        /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in
         /// a tessellated model.
         /// </summary>
         internal const double MaxAllowableEdgeSimilarityScore = 0.2;
@@ -114,11 +97,12 @@ namespace TVGL
         /// points that they affect.
         /// </summary>
         internal const int MarchingCubesBufferFactor = 5;
+
         internal const int MarchingCubesMissedFactor = 4;
 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that
-        /// produces voxels on the edges and faces of a tesselated shape.
+        /// produces voxels on the edges and faces of a tessellated shape.
         /// </summary>
         internal static readonly List<int[]> TessellationToVoxelizationIntersectionCombinations = new List<int[]>()
         {
@@ -132,10 +116,6 @@ namespace TVGL
             new []{ -1, -1, -1},
         };
 
-        public static readonly double[] X = new double[] { 1.0, 0, 0 };
-        public static readonly double[] Y = new double[] { 0, 1.0, 0 };
-        public static readonly double[] Z = new double[] { 0, 0, 1.0 };
-
         /// <summary>
         ///     Finds the index.
         /// </summary>
@@ -145,10 +125,11 @@ namespace TVGL
         /// <returns>System.Int32.</returns>
         internal static int FindIndex<T>(this IEnumerable<T> items, Predicate<T> predicate)
         {
-            var numItems = items.Count();
+            var itemsList = items as IList<T> ?? items.ToList();
+            var numItems = itemsList.Count;
             if (numItems == 0) return -1;
             var index = 0;
-            foreach (var item in items)
+            foreach (var item in itemsList)
             {
                 if (predicate(item)) return index;
                 index++;
@@ -165,8 +146,6 @@ namespace TVGL
         /// <returns>System.Int32.</returns>
         internal static int FindIndex<T>(this IEnumerable<T> items, T predicate)
         {
-            var numItems = items.Count();
-            if (numItems == 0) return -1;
             var index = 0;
             foreach (var item in items)
             {
@@ -176,24 +155,20 @@ namespace TVGL
             return -1;
         }
 
-        public static double dotProduct(this Point a, double[] b)
+        internal static PolyRelInternal SwitchAAndBPolygonRelationship(this PolyRelInternal relationship)
         {
-            return a.X * b[0] + a.Y * b[1];
+            if ((relationship & PolyRelInternal.Intersection) == PolyRelInternal.AInsideB)
+            {
+                relationship |= PolyRelInternal.BInsideA;
+                relationship &= ~PolyRelInternal.AInsideB;
+            }
+            else if ((relationship & PolyRelInternal.Intersection) == PolyRelInternal.BInsideA)
+            {
+                relationship |= PolyRelInternal.AInsideB;
+                relationship &= ~PolyRelInternal.BInsideA;
+            }
+            return relationship;
         }
-        public static double dotProduct(this double[] b, Point a)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-
-        public static double dotProduct(this PointLight a, double[] b)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-        public static double dotProduct(this double[] b, PointLight a)
-        {
-            return a.X * b[0] + a.Y * b[1];
-        }
-
 
         #region new known colors
 
@@ -225,9 +200,9 @@ namespace TVGL
                         { "Dark Sienna", new Color(60, 20, 20)},
                         { "Seal Brown", new Color(50, 20, 20) } } },
                 { ColorFamily.Pink, new Dictionary<string, Color>()
-					{
-						{ "Bubble Gum", new Color(255, 193, 204)},
-						{"Amaranth", new Color(229, 43, 80)},
+                    {
+                        { "Bubble Gum", new Color(255, 193, 204)},
+                        {"Amaranth", new Color(229, 43, 80)},
                         {"Dark Terra Cotta", new Color(204, 78, 92)},
                         {"Bazaar", new Color(152, 119, 123)},
                         {"Alizarin", new Color(227, 38, 54)},
@@ -249,7 +224,7 @@ namespace TVGL
                         {"Bright Maroon", new Color(195, 33, 72)},
                         {"Burgundy", new Color(128, 0, 32)},
                         {"Dark Scarlet", new Color(86, 3, 25) }
-					} },
+                    } },
                 { ColorFamily.Magenta, new Dictionary<string, Color>()
                     {
                         { "Lavender Blush", new Color(255, 240, 245)},
@@ -274,7 +249,7 @@ namespace TVGL
                         { "Dark Pastel Purple", new Color(150, 111, 214)},
                         { "Violet", new Color(143, 0, 255)},
                         { "Dark Lavender", new Color(115, 79, 150)},
-                        { "Purple Heart", new Color(105, 53, 156) } 
+                        { "Purple Heart", new Color(105, 53, 156) }
                     } },
                 { ColorFamily.Blue, new Dictionary<string, Color>()
                     {
@@ -485,260 +460,424 @@ namespace TVGL
                         { "Auburn", new Color(109, 53, 26) }
                     } }
             };
-        #endregion
-    }
 
+        internal const double DegreesToRadiansFactor = Math.PI / 180.0;
+        internal const double DefaultRoundOffsetDeltaAngle = Math.PI / 180.0; // which is also one degree or 360 in a circle
+
+        #endregion new known colors
+    }
 
     /// <summary>
     /// Units of a specified coordinates within the shape or set of shapes.
     /// </summary>
     public enum UnitType
-{
-    /// <summary>
-    /// the unspecified state
-    /// </summary>
-    unspecified = 0,
-    /// <summary>
-    ///     The millimeter
-    /// </summary>
-    millimeter = 11,
-
-    /// <summary>
-    ///     The micron
-    /// </summary>
-    micron = 8,
-
-
-    /// <summary>
-    ///     The centimeter
-    /// </summary>
-    centimeter = 1,
-
-    /// <summary>
-    ///     The inch
-    /// </summary>
-    inch = 4,
-
-    /// <summary>
-    ///     The foot
-    /// </summary>
-    foot = 3,
-
-    /// <summary>
-    ///     The meter
-    /// </summary>
-    meter = 6
-}
-
-
-/// <summary>
-///     Enum CurvatureType
-/// </summary>
-public enum CurvatureType
-{
-    /// <summary>
-    ///     The concave
-    /// </summary>
-    Concave = -1,
-
-    /// <summary>
-    ///     The saddle or flat
-    /// </summary>
-    SaddleOrFlat = 0,
-
-    /// <summary>
-    ///     The convex
-    /// </summary>
-    Convex = 1,
-
-    /// <summary>
-    ///     The undefined
-    /// </summary>
-    Undefined
-}
-
-/// <summary>
-///     Enum FileType
-/// </summary>
-public enum FileType
-{
-    /// <summary>
-    /// represents an unspecified state
-    /// </summary>
-    unspecified,
-    /// <summary>
-    ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
-    /// </summary>
-    // ReSharper disable once InconsistentNaming
-    STL_ASCII,
-
-    /// <summary>
-    ///     Stereolithography (STL) Binary
-    /// </summary>
-    // ReSharper disable once InconsistentNaming
-    STL_Binary,
-
-    /// <summary>
-    ///     Mobile MultiModal Framework
-    /// </summary>
-    ThreeMF,
-
-    /// <summary>
-    ///     Mobile MultiModal Framework
-    /// </summary>
-    Model3MF,
-
-    /// <summary>
-    ///     Additive Manufacturing File Format
-    /// </summary>
-    AMF,
-
-    /// <summary>
-    ///     Object File Format
-    /// </summary>
-    OFF,
-
-    /// <summary>
-    ///     Polygon File Format as ASCII
-    /// </summary>
-    PLY_ASCII,
-    /// <summary>
-    ///     Polygon File Format as Binary
-    /// </summary>
-    PLY_Binary,
-    /// <summary>
-    ///     Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
-    /// </summary>
-    SHELL,
-    /// <summary>
-    ///     A serialized version of the TessellatedSolid object
-    /// </summary>
-    TVGL
-}
-
-internal enum FormatEndiannessType
-{
-    ascii,
-    binary_little_endian,
-    binary_big_endian
-}
-/// <summary>
-///     Enum ShapeElement
-/// </summary>
-internal enum ShapeElement
-{
-    /// <summary>
-    ///     The vertex
-    /// </summary>
-    Vertex,
-    Edge,
-    Face,
-    Uniform_Color
-}
-
-/// <summary>
-///     Enum ColorElements
-/// </summary>
-internal enum ColorElements
-{
-    Red,
-    Green,
-    Blue,
-    Opacity
-}
-
-/// <summary>
-/// CartesianDirections: just the six cardinal directions for the voxelized box around the solid
-/// </summary>
-public enum CartesianDirections
-{
-    /// <summary>
-    /// <summary>
-    /// Enum VoxelDirections
-    /// </summary>
-    /// Negative X Direction
-    /// </summary>
-    /// <summary>
-    /// The x negative
-    /// </summary>
-    XNegative = -1,
-
-    /// <summary>
-    /// Negative Y Direction
-    /// <summary>
-    /// The x negative
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The y negative
-    /// </summary>
-    YNegative = -2,
-
-    /// <summary>
-    /// Negative Z Direction
-    /// <summary>
-    /// The y negative
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The z negative
-    /// </summary>
-    ZNegative = -3,
-
-    /// <summary>
-    /// Positive X Direction
-    /// <summary>
-    /// The z negative
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The x positive
-    /// </summary>
-    XPositive = 1,
-
-    /// <summary>
-    /// Positive Y Direction
-    /// <summary>
-    /// The x positive
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The y positive
-    /// </summary>
-    YPositive = 2,
-
-    /// <summary>
-    /// Positive Z Direction
-    /// <summary>
-    /// The y positive
-    /// </summary>
-    /// </summary>
-    /// <summary>
-    /// The z positive
-    /// </summary>
-    ZPositive = 3
-}
-/// <summary>
-///     A comparer for optimization that can be used for either
-///     minimization or maximization.
-/// </summary>
-internal class NoEqualSort : IComparer<double>
-{
-    /// <summary>
-    ///     Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
-    /// </summary>
-    /// <param name="x">The first object to compare.</param>
-    /// <param name="y">The second object to compare.</param>
-    /// <returns>
-    ///     A signed integer that indicates the relative values of <paramref name="x" /> and <paramref name="y" />, as
-    ///     shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
-    ///     .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
-    ///     <paramref name="y" />.
-    /// </returns>
-    public int Compare(double x, double y)
     {
-        if (x < y) return -1;
-        return 1;
+        /// <summary>
+        /// the unspecified state
+        /// </summary>
+        unspecified = 0,
+
+        /// <summary>
+        ///     The millimeter
+        /// </summary>
+        millimeter = 11,
+
+        /// <summary>
+        ///     The micron
+        /// </summary>
+        micron = 8,
+
+        /// <summary>
+        ///     The centimeter
+        /// </summary>
+        centimeter = 1,
+
+        /// <summary>
+        ///     The inch
+        /// </summary>
+        inch = 4,
+
+        /// <summary>
+        ///     The foot
+        /// </summary>
+        foot = 3,
+
+        /// <summary>
+        ///     The meter
+        /// </summary>
+        meter = 6
     }
-}
+
+    /// <summary>
+    ///     Enum CurvatureType
+    /// </summary>
+    public enum CurvatureType
+    {
+        /// <summary>
+        ///     The concave
+        /// </summary>
+        Concave = -1,
+
+        /// <summary>
+        ///     The saddle or flat
+        /// </summary>
+        SaddleOrFlat = 0,
+
+        /// <summary>
+        ///     The convex
+        /// </summary>
+        Convex = 1,
+
+        /// <summary>
+        ///     The undefined
+        /// </summary>
+        Undefined
+    }
+
+    /// <summary>
+    /// Enum PolygonCollection
+    /// </summary>
+    public enum PolygonCollection
+    {
+        /// <summary>
+        /// The separate loops
+        /// </summary>
+        SeparateLoops,
+        /// <summary>
+        /// The polygon with holes (or shallow polygon trees)
+        /// </summary>
+        PolygonWithHoles,
+        /// <summary>
+        /// The polygon trees
+        /// </summary>
+        PolygonTrees
+    }
+
+    /// <summary>
+    /// Enum ResultTypes
+    /// </summary>
+    public enum ResultType
+    {
+        /// <summary>
+        /// only positive ones
+        /// </summary>
+        OnlyKeepPositive = +1,
+        /// <summary>
+        /// only negative ones
+        /// </summary>
+        OnlyKeepNegative = -1,
+        /// <summary>
+        /// both positive and negative permitted
+        /// </summary>
+        BothPermitted = 0,
+        /// <summary>
+        /// The convert all to positive
+        /// </summary>
+        ConvertAllToPositive = +2,
+        /// <summary>
+        /// The convert all to negative
+        /// </summary>
+        ConvertAllToNegative = -2
+    }
+
+    /// <summary>
+    ///     Enum FileType
+    /// </summary>
+    public enum FileType
+    {
+        /// <summary>
+        /// represents an unspecified state
+        /// </summary>
+        unspecified,
+
+        /// <summary>
+        ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        STL_ASCII,
+
+        /// <summary>
+        ///     Stereolithography (STL) Binary
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        STL_Binary,
+
+        /// <summary>
+        ///     Mobile MultiModal Framework
+        /// </summary>
+        ThreeMF,
+
+        /// <summary>
+        ///     Mobile MultiModal Framework
+        /// </summary>
+        Model3MF,
+
+        /// <summary>
+        ///     Additive Manufacturing File Format
+        /// </summary>
+        AMF,
+
+        /// <summary>
+        ///     Object File Format
+        /// </summary>
+        OFF,
+
+        /// <summary>
+        ///     Polygon File Format as ASCII
+        /// </summary>
+        PLY_ASCII,
+
+        /// <summary>
+        ///     Polygon File Format as Binary
+        /// </summary>
+        PLY_Binary,
+
+        /// <summary>
+        ///     Shell file...I think this was created as part of collaboration with an Oregon-based EDA company
+        /// </summary>
+        SHELL,
+
+        /// <summary>
+        ///     A serialized version of the TessellatedSolid object
+        /// </summary>
+        TVGL
+    }
+
+    internal enum FormatEndiannessType
+    {
+        ascii,
+        binary_little_endian,
+        binary_big_endian
+    }
+
+    /// <summary>
+    ///     Enum ShapeElement
+    /// </summary>
+    internal enum ShapeElement
+    {
+        /// <summary>
+        ///     The vertex
+        /// </summary>
+        Vertex,
+
+        Edge,
+        Face,
+        Uniform_Color
+    }
+
+    /// <summary>
+    ///     Enum ColorElements
+    /// </summary>
+    internal enum ColorElements
+    {
+        Red,
+        Green,
+        Blue,
+        Opacity
+    }
+
+    /// <summary>
+    /// CartesianDirections: just the six cardinal directions for the voxelized box around the solid
+    /// </summary>
+    public enum CartesianDirections
+    {
+        /// <summary>
+        /// <summary>
+        /// Enum VoxelDirections
+        /// </summary>
+        /// Negative X Direction
+        /// </summary>
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        XNegative = -1,
+
+        /// <summary>
+        /// Negative Y Direction
+        /// <summary>
+        /// The x negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        YNegative = -2,
+
+        /// <summary>
+        /// Negative Z Direction
+        /// <summary>
+        /// The y negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        ZNegative = -3,
+
+        /// <summary>
+        /// Positive X Direction
+        /// <summary>
+        /// The z negative
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        XPositive = 1,
+
+        /// <summary>
+        /// Positive Y Direction
+        /// <summary>
+        /// The x positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        YPositive = 2,
+
+        /// <summary>
+        /// Positive Z Direction
+        /// <summary>
+        /// The y positive
+        /// </summary>
+        /// </summary>
+        /// <summary>
+        /// The z positive
+        /// </summary>
+        ZPositive = 3
+    }
+
+    internal enum VerticalLineReferenceType
+    {
+        Above,
+        On,
+        Below,
+        NotIntersecting
+    }
+
+    /// <summary>
+    /// Enum PolygonRelationship
+    /// </summary>
+    [Flags]
+    internal enum PolyRelInternal
+    {
+        Separated = 0,
+        EdgesCross = 1,
+        CoincidentEdges = 2,
+        CoincidentVertices = 4,
+        InsideHole = 8,
+        AInsideB = 16,
+        BInsideA = 32,
+        Intersection = AInsideB | BInsideA,
+        Equal = 64,
+        EqualButOpposite = 128
+    }
+
+    /// <summary>
+    /// Enum PolygonRelationship
+    /// </summary>
+
+    public enum PolygonRelationship
+    {
+        /// <summary>
+        /// The separated
+        /// </summary>
+        Separated = 0,
+
+        /// <summary>
+        /// a inside b
+        /// </summary>
+        AInsideB = 16,
+
+        /// <summary>
+        /// a is inside hole of b
+        /// </summary>
+        AIsInsideHoleOfB = 24,
+
+        /// <summary>
+        /// The b inside a
+        /// </summary>
+        BInsideA = 32,
+
+        /// <summary>
+        /// The b is inside hole of a
+        /// </summary>
+        BIsInsideHoleOfA = 40,
+
+        /// <summary>
+        /// The intersection
+        /// </summary>
+        Intersection = 48,
+
+        /// <summary>
+        /// The equal
+        /// </summary>
+        Equal = 64,
+
+        /// <summary>
+        /// The equal but opposite
+        /// </summary>
+        EqualButOpposite = 128
+    }
+
+    public enum SegmentRelationship
+    {
+        NoOverlap,
+        DoubleOverlap,
+        BEnclosesA,
+        AEnclosesB,
+        CrossOver_BOutsideAfter,
+        CrossOver_AOutsideAfter,
+    }
+
+    public enum CollinearityTypes
+    {
+        None,
+        BothSameDirection,
+        BothOppositeDirection,
+        After,
+        Before,
+        AAfterBBefore, // case 14
+        ABeforeBAfter
+    }
+
+    public enum WhereIsIntersection
+    {
+        Intermediate,
+        AtStartOfA,
+        AtStartOfB,
+        BothStarts
+    }
+
+    /// <summary>
+    ///     A comparer for optimization that can be used for either
+    ///     minimization or maximization.
+    /// </summary>
+    internal class NoEqualSort : IComparer<double>
+    {
+        private readonly int direction;
+
+        internal NoEqualSort(bool minimize = true)
+        {
+            direction = minimize ? -1 : 1;
+        }
+
+        /// <summary>
+        ///     Compares two objects and returns a value indicating whether one is less than, equal to, or greater than the other.
+        /// </summary>
+        /// <param name="x">The first object to compare.</param>
+        /// <param name="y">The second object to compare.</param>
+        /// <returns>
+        ///     A signed integer that indicates the relative values of <paramref name="x" /> and <paramref name="y" />, as
+        ///     shown in the following table.Value Meaning Less than zero<paramref name="x" /> is less than <paramref name="y" />
+        ///     .Zero<paramref name="x" /> equals <paramref name="y" />.Greater than zero<paramref name="x" /> is greater than
+        ///     <paramref name="y" />.
+        /// </returns>
+        public int Compare(double x, double y)
+        {
+            if (x < y) return direction;
+            return -direction;
+        }
+    }
 }

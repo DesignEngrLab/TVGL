@@ -1,23 +1,14 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="STLFileData.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -34,8 +25,8 @@ namespace TVGL.IOFunctions
         /// </summary>
         internal STLFileData()
         {
-            Normals = new List<double[]>();
-            Vertices = new List<List<double[]>>();
+            Normals = new List<Vector3>();
+            Vertices = new List<List<Vector3>>();
             Colors = new List<Color>();
         }
 
@@ -74,13 +65,13 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<List<double[]>> Vertices { get; }
+        private List<List<Vector3>> Vertices { get; }
 
         /// <summary>
         ///     Gets or sets the normals.
         /// </summary>
         /// <value>The normals.</value>
-        private List<double[]> Normals { get; }
+        private List<Vector3> Normals { get; }
 
         #endregion
 
@@ -94,11 +85,10 @@ namespace TVGL.IOFunctions
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
-            var typeString = "";
+            string typeString;
             var now = DateTime.Now;
-            List<STLFileData> stlData;
             // Try to read in BINARY format
-            if (TryReadBinary(s, filename, out stlData))
+            if (TryReadBinary(s, filename, out var stlData))
                 typeString = "binary STL";
             else
             {
@@ -117,9 +107,9 @@ namespace TVGL.IOFunctions
             for (int i = 0; i < stlData.Count; i++)
             {
                 var stlFileData = stlData[i];
-                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.HasColorSpecified ? stlFileData.Colors : null,
-                    stlFileData.Units, stlFileData.Name,
-                    filename, stlFileData.Comments, stlFileData.Language);
+                results[i] = new TessellatedSolid(stlFileData.Vertices, stlFileData.Vertices.Count <= Constants.MaxNumberFacesDefaultFullTS,
+                    stlFileData.HasColorSpecified ? stlFileData.Colors : null,
+                                   stlFileData.Units, stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language);
             }
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
@@ -148,8 +138,7 @@ namespace TVGL.IOFunctions
             {
                 var line = ReadLine(reader);
                 comments.Add(line);
-                string id, values;
-                ParseLine(line, out id, out values);
+                ParseLine(line, out var id, out var values);
                 switch (id)
                 {
                     case "#":
@@ -187,24 +176,21 @@ namespace TVGL.IOFunctions
         /// </exception>
         private void ReadFacet(StreamReader reader, string normal)
         {
-            double[] n;
-            if (!TryParseDoubleArray(NormalRegex, normal, out n))
+            if (!TryParseDoubleArray(NormalRegex, normal, out var n))
                 throw new IOException("Unexpected line.");
-            var points = new List<double[]>();
+            var points = new List<Vector3>();
             if (!ReadExpectedLine(reader, "outer loop"))
                 throw new IOException("Unexpected line.");
             while (true)
             {
                 var line = ReadLine(reader);
-                double[] point;
-                if (TryParseDoubleArray(VertexRegex, line, out point))
+                if (TryParseDoubleArray(VertexRegex, line, out var point))
                 {
-                    points.Add(point);
+                    points.Add(new Vector3(point));
                     continue;
                 }
 
-                string id, values;
-                ParseLine(line, out id, out values);
+                ParseLine(line, out var id, out var values);
 
                 if (id == "endloop")
                 {
@@ -213,7 +199,7 @@ namespace TVGL.IOFunctions
             }
             if (!ReadExpectedLine(reader, "endfacet"))
                 throw new IOException("Unexpected line.");
-            Normals.Add(n);
+            Normals.Add(new Vector3(n));
             Vertices.Add(points);
         }
 
@@ -251,7 +237,7 @@ namespace TVGL.IOFunctions
                 stlSolid1.Name = Path.GetFileNameWithoutExtension(filename);
             do
             {
-                var numFaces = ReadNumberAsInt(reader, typeof(uint),FormatEndiannessType.binary_little_endian);
+                var numFaces = ReadNumberAsInt(reader, typeof(uint), FormatEndiannessType.binary_little_endian);
                 if (length - 84 != numFaces * 50)
                     return false;
                 for (var i = 0; i < numFaces; i++)
@@ -284,17 +270,17 @@ namespace TVGL.IOFunctions
             var x1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z1 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v1 = new[] { x1, y1, z1 };
+            var v1 = new Vector3(x1, y1, z1);
 
             var x2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z2 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v2 = new[] { x2, y2, z2 };
+            var v2 = new Vector3(x2, y2, z2);
 
             var x3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var y3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var z3 = ReadNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
-            var v3 = new[] { x3, y3, z3 };
+            var v3 = new Vector3(x3, y3, z3);
 
             var attrib = Convert.ToString(ReadNumberAsInt(reader, typeof(ushort), FormatEndiannessType.binary_little_endian),
                 2).PadLeft(16, '0').ToCharArray();
@@ -329,8 +315,8 @@ namespace TVGL.IOFunctions
                     _lastColor = currentColor;
             }
             Colors.Add(_lastColor);
-            Normals.Add(n);
-            Vertices.Add(new List<double[]> { v1, v2, v3 });
+            Normals.Add(new Vector3(n));
+            Vertices.Add(new List<Vector3> { v1, v2, v3 });
         }
         #endregion
 
@@ -347,20 +333,19 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveASCII(Stream stream, IList<TessellatedSolid> solids)
         {
-            using (var writer = new StreamWriter(stream))
-            {
-                foreach (var solid in solids)
-                    if (!SaveASCII(writer, solid)) return false;
-                writer.WriteLine("#  " + TvglDateMarkText);
-                if (!string.IsNullOrWhiteSpace(solids[0].FileName))
-                    writer.WriteLine("#  Originally loaded from : " + solids[0].FileName);
-                if (solids[0].Units != UnitType.unspecified)
-                    writer.WriteLine("#  Units : " + solids[0].Units);
-                if (!string.IsNullOrWhiteSpace(solids[0].Language))
-                    writer.WriteLine("#  Lang : " + solids[0].Language);
-                foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
-                    writer.WriteLine("#  " + comment);
-            }
+            using var writer = new StreamWriter(stream);
+            foreach (var solid in solids)
+                if (!SaveASCII(writer, solid)) return false;
+            writer.WriteLine("#  " + TvglDateMarkText);
+            if (!string.IsNullOrWhiteSpace(solids[0].FileName))
+                writer.WriteLine("#  Originally loaded from : " + solids[0].FileName);
+            if (solids[0].Units != UnitType.unspecified)
+                writer.WriteLine("#  Units : " + solids[0].Units);
+            if (!string.IsNullOrWhiteSpace(solids[0].Language))
+                writer.WriteLine("#  Lang : " + solids[0].Language);
+            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
+                writer.WriteLine("#  " + comment);
+            writer.Flush();
             return true;
         }
 
@@ -383,6 +368,7 @@ namespace TVGL.IOFunctions
                     writer.WriteLine("\tendfacet");
                 }
                 writer.WriteLine("endsolid " + solid.Name);
+                writer.Flush();
                 Message.output("Successfully wrote STL file to stream.", 4);
                 return true;
             }
@@ -403,27 +389,26 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveBinary(Stream stream, IList<TessellatedSolid> solids)
         {
-            using (var writer = new BinaryWriter(stream, Encoding.UTF8))
+            using var writer = new BinaryWriter(stream, Encoding.UTF8);
+            var headerString = Path.GetFileNameWithoutExtension(solids[0].FileName);
+            if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
+            headerString += TvglDateMarkText;
+            if (solids[0].Units != UnitType.unspecified)
+                headerString += solids[0].Units.ToString();
+            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
+                headerString += " " + comment;
+            if (headerString.Length > 80) headerString = headerString.Substring(0, 80);
+            var headerBytes = Encoding.UTF8.GetBytes(headerString);
+            writer.Write(headerBytes);
+            foreach (var solid in solids)
             {
-                var headerString = Path.GetFileNameWithoutExtension(solids[0].FileName);
-                if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
-                headerString += TvglDateMarkText;
-                if (solids[0].Units != UnitType.unspecified)
-                    headerString += solids[0].Units.ToString();
-                foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
-                    headerString += " " + comment;
-                if (headerString.Length > 80) headerString = headerString.Substring(0, 80);
-                var headerBytes = Encoding.UTF8.GetBytes(headerString);
-                writer.Write(headerBytes);
-                foreach (var solid in solids)
-                {
-                    var defaultColor = new Color(Constants.DefaultColor);
-                    var defineColors = !(solid.HasUniformColor && defaultColor.Equals(solid.SolidColor));
-                    writer.Write((uint)solid.NumberOfFaces);
-                    foreach (var face in solid.Faces)
-                        WriteFacet(writer, face, defineColors, defaultColor);
-                }
+                var defaultColor = new Color(Constants.DefaultColor);
+                var defineColors = !(solid.HasUniformColor && defaultColor.Equals(solid.SolidColor));
+                writer.Write((uint)solid.NumberOfFaces);
+                foreach (var face in solid.Faces)
+                    WriteFacet(writer, face, defineColors, defaultColor);
             }
+
             return true;
         }
 

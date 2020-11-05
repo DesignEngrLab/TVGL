@@ -1,155 +1,78 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
     public partial class CrossSectionSolid : Solid
     {
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double[] startPoint, double extrudeDistance, 
-            List<PolygonLight> shape, double sameTolerance, UnitType units)
+        /// <summary>
+        /// Creates the uniform cross section solid.
+        /// </summary>
+        /// <param name="buildDirection">The build direction.</param>
+        /// <param name="distanceOfPlane">The distance of plane.</param>
+        /// <param name="extrudeThickness">The extrude thickness.</param>
+        /// <param name="shape">The shape.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <param name="units">The units.</param>
+        /// <returns>CrossSectionSolid.</returns>
+        public static CrossSectionSolid CreatePrismCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
+            IEnumerable<Polygon> shape, double sameTolerance, UnitType units)
         {
-            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var endPoint = startPoint.add(buildDirection.multiply(extrudeDistance));
-            var stepDistances = new Dictionary<int, double> { { 0, startPoint.dotProduct(buildDirection) }, { 1, endPoint.dotProduct(buildDirection) } };
-            var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, shape }, { 1, shape } };
+            var shapeList = shape as IList<Polygon> ?? shape.ToList();
+            var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
+            var layers2D = new Dictionary<int, IList<Polygon>> { { 0, shapeList }, { 1, shapeList } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
-        public static CrossSectionSolid CreateConstantCrossSectionSolid(double[] buildDirection, double extrudeDistance, List<Vertex> layer3DAtStart,  
-           double sameTolerance, UnitType units)
+
+        /// <summary>
+        /// Creates the uniform cross section solid.
+        /// </summary>
+        /// <param name="buildDirection">The build direction.</param>
+        /// <param name="distanceOfPlane">The distance of plane.</param>
+        /// <param name="extrudeThickness">The extrude thickness.</param>
+        /// <param name="shape">The shape.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <param name="units">The units.</param>
+        /// <returns>CrossSectionSolid.</returns>
+        public static CrossSectionSolid CreatePrismCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
+            Polygon shape, double sameTolerance, UnitType units)
         {
-            //Since the start point may be along a negative direction, we have to add vectors instead of adding the extrudeDistance as is.
-            var start = layer3DAtStart.First().Position.dotProduct(buildDirection);
-            var endPoint = layer3DAtStart.First().Position.add(buildDirection.multiply(extrudeDistance));
-            var stepDistances = new Dictionary<int, double> { { 0, start }, { 1, endPoint.dotProduct(buildDirection) } };
-            var shape = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(layer3DAtStart, buildDirection));
-            if (shape.Area < 0) shape = PolygonLight.Reverse(shape);
-            var layers2D = new Dictionary<int, List<PolygonLight>> { { 0, new List<PolygonLight> { shape } }, { 1, new List<PolygonLight> { shape } } };
+            var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
+            var layers2D = new Dictionary<int, IList<Polygon>> { { 0, new[] { shape } }, { 1, new[] { shape } } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
 
-        public static List<PolygonLight>[] GetUniformlySpacedSlices(TessellatedSolid ts, CartesianDirections direction, double startDistanceAlongDirection = double.NaN, int numSlices = -1,
-            double stepSize = double.NaN)
+        public Vector3[][][] GetCrossSectionsAs3DLoops()
         {
-            if (double.IsNaN(stepSize) && numSlices < 1) throw new ArgumentException("Either a valid stepSize or a number of slices greater than zero must be specified.");
-            var intDir = Math.Abs((int)direction) - 1;
-            var lengthAlongDir = ts.Bounds[1][intDir] - ts.Bounds[0][intDir];
-            stepSize = Math.Abs(stepSize);
-            if (double.IsNaN(stepSize)) stepSize = lengthAlongDir / numSlices;
-            if (numSlices < 1) numSlices = (int)(lengthAlongDir / stepSize);
-            if (double.IsNaN(startDistanceAlongDirection))
+            var result = new Vector3[Layer2D.Count][][];
+            int k = 0;
+            foreach (var layerKeyValuePair in Layer2D)
             {
-                if (direction < 0)
-                    startDistanceAlongDirection = ts.Bounds[1][intDir] - 0.5 * stepSize;
-                else startDistanceAlongDirection = ts.Bounds[0][intDir] + 0.5 * stepSize;
-            }
-            switch (direction)
-            {
-                case CartesianDirections.XPositive:
-                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize);
-                case CartesianDirections.YPositive:
-                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize);
-                case CartesianDirections.ZPositive:
-                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize);
-                case CartesianDirections.XNegative:
-                    return AllSlicesAlongX(ts, startDistanceAlongDirection, numSlices, stepSize).Reverse().ToArray();
-                case CartesianDirections.YNegative:
-                    return AllSlicesAlongY(ts, startDistanceAlongDirection, numSlices, stepSize).Reverse().ToArray();
-                default:
-                    return AllSlicesAlongZ(ts, startDistanceAlongDirection, numSlices, stepSize).Reverse().ToArray();
-            }
-        }
-
-        private static List<PolygonLight>[] AllSlicesAlongX(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static List<PolygonLight>[] AllSlicesAlongY(TessellatedSolid ts, double startDistanceAlongDirection, int numSlices, double stepSize)
-        {
-            throw new NotImplementedException();
-        }
-
-        static List<PolygonLight>[] AllSlicesAlongZ(TessellatedSolid ts, double startDistance, int numSteps, double stepSize)
-        {
-            List<PolygonLight>[] loopsAlongZ = new List<PolygonLight>[numSteps];
-            //First, sort the vertices along the given axis. Duplicate distances are not important.
-            var sortedVertices = ts.Vertices.OrderBy(v => v.Z).ToArray();
-            var currentEdges = new HashSet<Edge>();
-            var nextDistance = sortedVertices.First().Z;
-            var vIndex = 0;
-            for (int step = 0; step < numSteps; step++)
-            {
-                var z = startDistance + step * stepSize;
-                var thisVertex = sortedVertices[vIndex];
-                var needToOffset = false;
-                while (thisVertex.Z <= z)
-                {
-                    if (z.IsPracticallySame(thisVertex.Z)) needToOffset = true;
-                    foreach (var edge in thisVertex.Edges)
+                var index = layerKeyValuePair.Key;
+                var zValue = StepDistances[index];
+                var numLoops = layerKeyValuePair.Value.Sum(poly => 1 + poly.NumberOfInnerPolygons);
+                var layer = new Vector3[numLoops][];
+                result[k++] = layer;
+                int j = 0;
+                foreach (var poly in layerKeyValuePair.Value)
+                    foreach (var innerPoly in poly.AllPolygons)
                     {
-                        if (currentEdges.Contains(edge)) currentEdges.Remove(edge);
-                        else currentEdges.Add(edge);
+                        var loop = new Vector3[innerPoly.Path.Count];
+                        layer[j] = loop;
+                        for (int i = 0; i < loop.Length; i++)
+                            loop[i] = (new Vector3(innerPoly.Path[i], zValue)).Transform(TransformMatrix);
+                        j++;
                     }
-                    vIndex++;
-                    if (vIndex == sortedVertices.Length) break;
-                    thisVertex = sortedVertices[vIndex];
-                }
-                if (needToOffset)
-                    z += Math.Min(stepSize, sortedVertices[vIndex + 1].Z-z) / 10.0;
-                if (currentEdges.Any()) loopsAlongZ[step] = GetZLoops(currentEdges, z);
-                else loopsAlongZ[step] = new List<PolygonLight>();
             }
-            return loopsAlongZ;
+            return result;
         }
-
-        private static List<PolygonLight> GetZLoops(HashSet<Edge> penetratingEdges, double ZOfPlane)
-        {
-            var loops = new List<PolygonLight>();
-
-            var unusedEdges = new HashSet<Edge>(penetratingEdges);
-            while (unusedEdges.Any())
-            {
-                var loop = new List<PointLight>();
-                var firstEdgeInLoop = unusedEdges.First();
-                var finishedLoop = false;
-                var currentEdge = firstEdgeInLoop;
-                do
-                {
-                    unusedEdges.Remove(currentEdge);
-                    var intersectVertex = MiscFunctions.PointLightOnZPlaneFromIntersectingLine(ZOfPlane, currentEdge.From, currentEdge.To);
-                    loop.Add(intersectVertex);
-                    var nextFace = (currentEdge.From.Z < ZOfPlane) ? currentEdge.OtherFace : currentEdge.OwnedFace;
-                    Edge nextEdge = null;
-                    foreach (var whichEdge in nextFace.Edges)
-                    {
-                        if (currentEdge == whichEdge) continue;
-                        if (whichEdge == firstEdgeInLoop)
-                        {
-                            finishedLoop = true;
-                            loops.Add(new PolygonLight(loop));
-                            break;
-                        }
-                        else if (unusedEdges.Contains(whichEdge))
-                        {
-                            nextEdge = whichEdge;
-                            break;
-                        }
-                    }
-                    if (!finishedLoop && nextEdge == null)
-                    {
-                        Console.WriteLine("Incomplete loop.");
-                        loops.Add(new PolygonLight(loop));
-                    }
-                    else currentEdge = nextEdge;
-                } while (!finishedLoop);
-            }
-            return loops;
-        }
-
-
 
     }
 }

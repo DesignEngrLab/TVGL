@@ -16,8 +16,10 @@ using System.Collections.Generic;
 using System.Linq;
 using HelixToolkit.Wpf.SharpDX;
 using TVGLPresenterDX;
+using HelixToolkit.SharpDX.Core;
+using TVGL;
 
-namespace TVGL
+namespace TVGLPresenterDX
 {
     /// <summary>
     /// The Class HelixPresenter is the only class within the TVGL Helix Presenter
@@ -39,8 +41,8 @@ namespace TVGL
 
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
         {
-            var window = new Window3DPlot();
-            var models = new List<  Element3D>();
+            var window = new MainWindow();
+            var models = new List<Element3D>();
 
             foreach (var tessellatedSolid in tessellatedSolids)
             {
@@ -70,18 +72,18 @@ namespace TVGL
                 var positions =
                     ts.Faces.SelectMany(
                         f => f.Vertices.Select(v =>
-                            new Vector3((float)v.Position[0], (float)v.Position[1], (float)v.Position[2])));
+                            new Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2])));
                 var normals =
                     ts.Faces.SelectMany(f =>
                         f.Vertices.Select(v =>
                             new Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])));
                 return new MeshGeometryModel3D
                 {
-                    Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
+                    Geometry = new MeshGeometry3D
                     {
-                        Positions = new HelixToolkit.Wpf.SharpDX.Core.Vector3Collection(positions),
+                        Positions = new Vector3Collection(positions),
                         // TriangleIndices = new Int32Collection(triIndices),
-                        Normals = new HelixToolkit.Wpf.SharpDX.Core.Vector3Collection(normals)
+                        Normals = new Vector3Collection(normals)
                     },
                     Material = defaultMaterial
                 };

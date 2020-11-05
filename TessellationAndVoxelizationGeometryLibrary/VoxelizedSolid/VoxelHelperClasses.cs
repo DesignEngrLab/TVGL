@@ -1,6 +1,9 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace TVGL.Voxelization
 {
@@ -16,6 +19,7 @@ namespace TVGL.Voxelization
                     a1[1] == a2[1] &&
                     a1[2] == a2[2]);
         }
+
         public override int GetHashCode(int[] ax)
         {
             if (ax is null) return 0;
@@ -23,16 +27,23 @@ namespace TVGL.Voxelization
             return hCode.GetHashCode();
         }
     }
+
+    /// <summary>
+    /// Class VoxelEnumerator.
+    /// Implements the <see cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IEnumerator{System.Int32[]}" />
     internal class VoxelEnumerator : IEnumerator<int[]>
     {
-        VoxelizedSolid vs;
-        int[] currentVoxelPosition = new int[3];
-        int xIndex;
-        int yIndex;
-        int zIndex;
-        int xLim;
-        int yLim;
-        int zLim;
+        private readonly VoxelizedSolid vs;
+        private int[] currentVoxelPosition = new int[3];
+        private int xIndex;
+        private int yIndex;
+        private int zIndex;
+        private readonly int xLim;
+        private readonly int yLim;
+        private readonly int zLim;
+
         public VoxelEnumerator(VoxelizedSolid vs)
         {
             this.vs = vs;
@@ -44,7 +55,6 @@ namespace TVGL.Voxelization
         public object Current => currentVoxelPosition;
 
         int[] IEnumerator<int[]>.Current => currentVoxelPosition;
-
 
         public void Dispose()
         {

@@ -1,26 +1,16 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="AMFFileData.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using StarMathLib;
+
 using TVGL.IOFunctions.amfclasses;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -35,27 +25,32 @@ namespace TVGL.IOFunctions
 #endif
     {
         #region Constructor
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="AMFFileData" /> class.
         /// </summary>
 #if help
     internal AMFFileData()
 #else
+
         public AMFFileData()
 #endif
         {
             Objects = new List<AMF_Object>();
             Textures = new List<AMF_Texture>();
         }
-        #endregion
+
+        #endregion Constructor
 
         #region Fields and Properties
+
 #if help
         internal List<AMF_Texture> Textures { get; set; }
         internal double version { get; set; }
         internal List<AMF_Object> Objects { get; set; }
         internal List<AMF_Constellation> Constellations { get; set; }
 #else
+
         /// <summary>
         ///     Gets or sets the constellations.
         /// </summary>
@@ -82,9 +77,13 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The version.</value>
         public double version { get; set; }
+
 #endif
-        #endregion
+
+        #endregion Fields and Properties
+
         #region Open Solids
+
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -162,34 +161,29 @@ namespace TVGL.IOFunctions
                 name = amfObject.metadata[nameIndex].Value;
                 amfObject.metadata.RemoveAt(nameIndex);
             }
-            var vertices = amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList();
+            var vertices = amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsVector3).ToList();
             if (amfInstance != null &&
                 (amfInstance.deltaxSpecified || amfInstance.deltaySpecified || amfInstance.deltazSpecified
                  || amfInstance.rxSpecified || amfInstance.rySpecified || amfInstance.rzSpecified))
             {
                 var tMatrix =
-                    StarMath.RotationX(amfInstance.rx)
-                        .multiply(StarMath.RotationY(amfInstance.ry))
-                        .multiply(StarMath.RotationZ(amfInstance.rz));
-                tMatrix =
-                    StarMath.Translate(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz).multiply(tMatrix);
-                foreach (var coord in vertices)
-                {
-                    var coordWith1 = new[] { coord[0], coord[1], coord[2], 1.0 };
-                    coordWith1 = tMatrix.multiply(coordWith1);
-                    coord[0] = coordWith1[0];
-                    coord[1] = coordWith1[1];
-                    coord[2] = coordWith1[2];
-                }
+                    Matrix4x4.CreateRotationX(Constants.DegreesToRadiansFactor * amfInstance.rx)
+                    * Matrix4x4.CreateRotationY(Constants.DegreesToRadiansFactor * amfInstance.ry)
+                    * Matrix4x4.CreateRotationZ(Constants.DegreesToRadiansFactor * amfInstance.rz);
+                //do matrix multiplication go the other way?
+                tMatrix = tMatrix * Matrix4x4.CreateTranslation(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz);
+                for (int i = 0; i < vertices.Count; i++)
+                    vertices[i] = vertices[i].Transform(tMatrix);
             }
-            return new TessellatedSolid(vertices,
-                amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                colors, this.Units, name + "_" + amfObject.id, this.FileName,
+            return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
+                true, colors, this.Units, name + "_" + amfObject.id, this.FileName,
                 amfObject.metadata.Select(md => md.ToString()).ToList(), this.Language);
         }
 
-        #endregion
+        #endregion Open Solids
+
         #region Save Solids
+
         /// <summary>
         /// Saves the specified stream.
         /// </summary>
@@ -222,6 +216,7 @@ namespace TVGL.IOFunctions
                 return false;
             }
         }
+
         // this is used by the save method above
         private AMFFileData(IList<TessellatedSolid> solids) : this()
         {
@@ -300,6 +295,7 @@ namespace TVGL.IOFunctions
                 });
             }
         }
-        #endregion
+
+        #endregion Save Solids
     }
 }

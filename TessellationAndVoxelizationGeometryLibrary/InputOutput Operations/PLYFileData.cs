@@ -1,23 +1,12 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="PLYFileData.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -28,7 +17,9 @@ namespace TVGL.IOFunctions
     internal class PLYFileData : IO
     {
         #region Properties and Fields
+
         #region Color Related
+
         private bool hasColorSpecified;
 
         private List<ColorElements> uniformColorDescriptor;
@@ -42,7 +33,8 @@ namespace TVGL.IOFunctions
         private List<ColorElements> vertexColorDescriptor;
         private List<Type> vertexColorElementType;
         private List<Color> vertexColors;
-        #endregion
+
+        #endregion Color Related
 
         /// <summary>
         ///     The read in order
@@ -53,7 +45,7 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<double[]> vertices;
+        private List<Vector3> vertices;
 
         /// <summary>
         ///     Gets the face to vertex indices.
@@ -86,8 +78,10 @@ namespace TVGL.IOFunctions
 
         private FormatEndiannessType endiannessType;
 
-        #endregion
+        #endregion Properties and Fields
+
         #region Open Solids
+
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -99,7 +93,6 @@ namespace TVGL.IOFunctions
         {
             var now = DateTime.Now;
             var reader = new StreamReader(s);
-            var offSetForCharReturn = 1;
             var fileTypeString = "ASCII";
             var plyData = new PLYFileData { FileName = filename, Name = Path.GetFileNameWithoutExtension(filename) };
             var line = reader.ReadLine();
@@ -118,14 +111,13 @@ namespace TVGL.IOFunctions
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
-            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,
+            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, true, plyData.faceColors,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
 
         private void FixColors()
         {
-            if (faceColors == null)
-                faceColors = new List<Color>();
+            faceColors ??= new List<Color>();
             if (!faceColors.Any() && uniformColor != null)
                 faceColors.Add(uniformColor);
             else if (vertexColors != null)
@@ -149,7 +141,7 @@ namespace TVGL.IOFunctions
                 for (int i = 0; i < numFaces; i++)
                 {
                     if (faceColors.Count == i) faceColors.Add(null);
-                    if (faceColors[i] == null) faceColors[i] = uniformColor;
+                    faceColors[i] ??= uniformColor;
                 }
         }
 
@@ -175,18 +167,15 @@ namespace TVGL.IOFunctions
                     if (reader.EndOfStream) break;
                 } while (string.IsNullOrWhiteSpace(line));
                 line = line.Trim();
-                string id, values;
-                ParseLine(line, out id, out values);
+                ParseLine(line, out var id, out var values);
                 if (id.Equals("comment"))
                     Comments.Add(values);
                 else if (id.Equals("format"))
                     Enum.TryParse(values.Split(' ')[0], true, out endiannessType);
                 else if (id.Equals("element"))
                 {
-                    string numberString;
-                    ParseLine(values, out id, out numberString);
-                    int numberInt;
-                    var successfulParse = int.TryParse(numberString, out numberInt);
+                    ParseLine(values, out id, out var numberString);
+                    var successfulParse = int.TryParse(numberString, out var numberInt);
                     if (id.Equals("vertex"))
                     {
                         readInOrder.Add(ShapeElement.Vertex);
@@ -215,12 +204,11 @@ namespace TVGL.IOFunctions
                     switch (shapeElement)
                     {
                         #region Vertex
+
                         case ShapeElement.Vertex:
                             {
-                                string typeString, propertyString;
-                                Type type;
-                                ParseLine(values, out typeString, out propertyString);
-                                if (!TryParseNumberTypeFromString(typeString, out type))
+                                ParseLine(values, out var typeString, out var propertyString);
+                                if (!TryParseNumberTypeFromString(typeString, out var type))
                                     throw new ArgumentException("Unable to parse " + typeString + " as a type of number");
                                 vertexTypes.Add(type);
 
@@ -264,28 +252,26 @@ namespace TVGL.IOFunctions
                                         vertexColorElementType = new List<Type>();
                                     }
                                     vertexColorDescriptor.Add(colorElt);
-                                    Type colorType;
-                                    if (TryParseNumberTypeFromString(typeString, out colorType))
+                                    if (TryParseNumberTypeFromString(typeString, out var colorType))
                                         vertexColorElementType.Add(colorType);
-
                                 }
                                 break;
                             }
-                        #endregion
+
+                        #endregion Vertex
 
                         #region Face
+
                         case ShapeElement.Face:
                             {
-                                string typeString, restString;
-                                ParseLine(values, out typeString, out restString);
+                                ParseLine(values, out var typeString, out var restString);
                                 if (typeString.Equals("list"))
                                 {
                                     if (!restString.Contains("vertex_index") && !restString.Contains("vertex_indices"))
                                         throw new ArgumentException("The faces in PLY are specified in unknown manner: " +
                                                                     restString);
                                     var words = restString.Split(' ');
-                                    Type type;
-                                    if (TryParseNumberTypeFromString(words[0], out type))
+                                    if (TryParseNumberTypeFromString(words[0], out var type))
                                         vertexAmountType = type;
                                     else
                                         throw new ArgumentException("The number of vertex in the PLY face definition are of unknown type: "
@@ -328,19 +314,19 @@ namespace TVGL.IOFunctions
                                     faceColors = new List<Color>();
                                 }
                                 faceColorDescriptor.Add(colorElt);
-                                Type colorType;
-                                if (TryParseNumberTypeFromString(typeString, out colorType))
+                                if (TryParseNumberTypeFromString(typeString, out var colorType))
                                     faceColorElementType.Add(colorType);
                                 break;
                             }
-                        #endregion
+
+                        #endregion Face
 
                         #region Uniform_Color
+
                         case ShapeElement.Uniform_Color:
                             {
-                                string typeString, restString;
                                 ColorElements colorElt;
-                                ParseLine(values, out typeString, out restString);
+                                ParseLine(values, out var typeString, out var restString);
                                 if (restString.Equals("red", StringComparison.CurrentCultureIgnoreCase)
                                     || restString.Equals("r", StringComparison.CurrentCultureIgnoreCase))
                                     colorElt = ColorElements.Red;
@@ -370,13 +356,12 @@ namespace TVGL.IOFunctions
                                     uniformColorElementType = new List<Type>();
                                 }
                                 uniformColorDescriptor.Add(colorElt);
-                                Type colorType;
-                                if (TryParseNumberTypeFromString(typeString, out colorType))
+                                if (TryParseNumberTypeFromString(typeString, out var colorType))
                                     uniformColorElementType.Add(colorType);
                                 break;
                             }
 
-                        #endregion
+                        #endregion Uniform_Color
 
                         case ShapeElement.Edge:
                             Message.output("Unprocessed properties for edge elements: " + values);
@@ -397,21 +382,26 @@ namespace TVGL.IOFunctions
                     case ShapeElement.Vertex:
                         successful = ReadVertices(reader);
                         break;
+
                     case ShapeElement.Face:
                         successful = ReadFaces(reader);
                         break;
+
                     case ShapeElement.Uniform_Color:
                         successful = ReadUniformColor(reader);
                         break;
+
                     case ShapeElement.Edge:
                         successful = ReadEdges(reader);
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
                 if (!successful) throw new ArgumentOutOfRangeException("Unable to read PLY mesh. Error in " + shapeElement);
             }
         }
+
         private void ReadMesh(BinaryReader reader)
         {
             foreach (var shapeElement in readInOrder)
@@ -422,15 +412,19 @@ namespace TVGL.IOFunctions
                     case ShapeElement.Vertex:
                         successful = ReadVertices(reader);
                         break;
+
                     case ShapeElement.Face:
                         successful = ReadFaces(reader);
                         break;
+
                     case ShapeElement.Uniform_Color:
                         successful = ReadUniformColor(reader);
                         break;
+
                     case ShapeElement.Edge:
                         successful = ReadEdges(reader);
                         break;
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -461,7 +455,6 @@ namespace TVGL.IOFunctions
             return true;
         }
 
-
         /// <summary>
         ///     Reads the edges.
         /// </summary>
@@ -476,6 +469,7 @@ namespace TVGL.IOFunctions
             // feel compelled to change it. What would be worth storing in the edges? thickness? color? curves?
             return true;
         }
+
         /// <summary>
         ///     Reads the faces.
         /// </summary>
@@ -509,12 +503,15 @@ namespace TVGL.IOFunctions
                                 case ColorElements.Red:
                                     r = value;
                                     break;
+
                                 case ColorElements.Green:
                                     g = value;
                                     break;
+
                                 case ColorElements.Blue:
                                     b = value;
                                     break;
+
                                 case ColorElements.Opacity:
                                     a = value;
                                     break;
@@ -536,7 +533,7 @@ namespace TVGL.IOFunctions
         private bool ReadVertices(StreamReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
-            vertices = new List<double[]>();
+            vertices = new List<Vector3>();
             var numD = vertexTypes.Count;
             for (var i = 0; i < numVertices; i++)
             {
@@ -559,12 +556,15 @@ namespace TVGL.IOFunctions
                             case ColorElements.Red:
                                 r = value;
                                 break;
+
                             case ColorElements.Green:
                                 g = value;
                                 break;
+
                             case ColorElements.Blue:
                                 b = value;
                                 break;
+
                             case ColorElements.Opacity:
                                 a = value;
                                 break;
@@ -574,7 +574,7 @@ namespace TVGL.IOFunctions
                     }
                 }
                 if (point.Any(double.IsNaN)) return false;
-                vertices.Add(point);
+                vertices.Add(new Vector3(point));
             }
             return true;
         }
@@ -595,8 +595,6 @@ namespace TVGL.IOFunctions
                         // feel compelled to change it. What would be worth storing in the edges? thickness? color? curves?
                        */
         }
-
-
 
         private bool ReadUniformColor(BinaryReader reader)
         {
@@ -656,6 +654,7 @@ namespace TVGL.IOFunctions
             }
             return true;
         }
+
         /// <summary>
         ///     Reads the vertices.
         /// </summary>
@@ -664,7 +663,7 @@ namespace TVGL.IOFunctions
         private bool ReadVertices(BinaryReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
-            vertices = new List<double[]>();
+            vertices = new List<Vector3>();
             var numD = vertexTypes.Count;
             for (var i = 0; i < numVertices; i++)
             {
@@ -685,12 +684,15 @@ namespace TVGL.IOFunctions
                             case ColorElements.Red:
                                 r = value;
                                 break;
+
                             case ColorElements.Green:
                                 g = value;
                                 break;
+
                             case ColorElements.Blue:
                                 b = value;
                                 break;
+
                             case ColorElements.Opacity:
                                 a = value;
                                 break;
@@ -701,13 +703,15 @@ namespace TVGL.IOFunctions
                     else vertexColors.Add(null);
                 }
                 if (point.Any(double.IsNaN)) return false;
-                vertices.Add(point);
+                vertices.Add(new Vector3(point));
             }
             return true;
         }
 
-        #endregion
+        #endregion Open Solids
+
         #region Save
+
         /// <summary>
         /// Saves the specified stream.
         /// </summary>
@@ -738,6 +742,7 @@ namespace TVGL.IOFunctions
                     if (solid.HasUniformColor)
                         writer.WriteLine(solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
                                                      solid.SolidColor.A);
+                    writer.Flush();
                 }
                 Message.output("Successfully wrote PLY file to stream.", 3);
                 return true;
@@ -749,6 +754,7 @@ namespace TVGL.IOFunctions
                 return false;
             }
         }
+
         /// <summary>
         /// Saves the specified stream.
         /// </summary>
@@ -768,7 +774,7 @@ namespace TVGL.IOFunctions
                     byteArray.RemoveAll(b => b == 13);
                     // this is because the Windows StreamWriter writes both Line Feed (ASCII character #10)
                     // and Carriage Return (ASCII #13) for the ends of these lines in the header.
-                    // In order to make it compatible with PLY, the Carriage Returns (#13) need to be 
+                    // In order to make it compatible with PLY, the Carriage Returns (#13) need to be
                     // removed.
                     binaryWriter.Write(byteArray.ToArray());
                     foreach (var vertex in solid.Vertices)
@@ -863,6 +869,7 @@ namespace TVGL.IOFunctions
             }
             writer.WriteLine("end_header");
         }
-        #endregion
+
+        #endregion Save
     }
 }

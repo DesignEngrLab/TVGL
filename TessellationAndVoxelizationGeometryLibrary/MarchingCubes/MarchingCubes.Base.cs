@@ -1,7 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
-using StarMathLib;
+// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
+using System.Collections.Generic;
+using TVGL.Numerics;
 
 namespace TVGL
 {
@@ -20,6 +23,7 @@ namespace TVGL
         // where double and ValueT are numbers or bool
     {
         #region Constructor
+
         protected MarchingCubes(SolidT solid, double discretization)
         {
             this.solid = solid;
@@ -29,9 +33,9 @@ namespace TVGL
             _xMin = solid.XMin - buffer;
             _yMin = solid.YMin - buffer;
             _zMin = solid.ZMin - buffer;
-            _xMax = solid.XMax + buffer;
-            _yMax = solid.YMax + buffer;
-            _zMax = solid.ZMax + buffer;
+            var _xMax = solid.XMax + buffer;
+            var _yMax = solid.YMax + buffer;
+            var _zMax = solid.ZMax + buffer;
             numGridX = (int)Math.Ceiling((_xMax - _xMin) / discretization) + 1;
             numGridY = (int)Math.Ceiling((_yMax - _yMin) / discretization) + 1;
             numGridZ = (int)Math.Ceiling((_zMax - _zMin) / discretization) + 1;
@@ -45,55 +49,66 @@ namespace TVGL
             };
             valueDictionary = new Dictionary<long, StoredValue<ValueT>>();
             faces = new List<PolygonalFace>();
-            GridOffsetTable = new double[8][];
+            GridOffsetTable = new Vector3[8];
             for (int i = 0; i < 8; i++)
-                GridOffsetTable[i] = _unitOffsetTable[i].multiply(this.gridToCoordinateFactor);
+                GridOffsetTable[i] = _unitOffsetTable[i] * this.gridToCoordinateFactor;
         }
-        #endregion
+
+        #endregion Constructor
 
         #region Fields
-        readonly Dictionary<long, Vertex>[] vertexDictionaries;
+
+        private readonly Dictionary<long, Vertex>[] vertexDictionaries;
         protected readonly SolidT solid;
         protected readonly double gridToCoordinateFactor;
         protected readonly double coordToGridFactor;
-        protected readonly double[][] GridOffsetTable;
-        readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
+        protected readonly Vector3[] GridOffsetTable;
+        private readonly Dictionary<long, StoredValue<ValueT>> valueDictionary;
         protected readonly List<PolygonalFace> faces;
-        protected const double fractionOfGridToExpand = 1.05;
+        protected const double fractionOfGridToExpand = 0.05;
+
         #region to be assigned in inherited constructor
+
         protected int numGridX, numGridY, numGridZ;
         protected double _xMin, _yMin, _zMin;
-        protected double _xMax, _yMax, _zMax;
         protected int yMultiplier;
         protected int zMultiplier;
-        #endregion
-        #endregion
+
+        #endregion to be assigned in inherited constructor
+
+        #endregion Fields
 
         #region Abstract Methods
+
         protected abstract bool IsInside(ValueT v);
+
         protected abstract ValueT GetValueFromSolid(int x, int y, int z);
+
         protected abstract double GetOffset(StoredValue<ValueT> from, StoredValue<ValueT> to,
             int direction, int sign);
-        #endregion
+
+        #endregion Abstract Methods
 
         #region Main Methods
+
         internal virtual TessellatedSolid Generate()
         {
             for (var i = 0; i < numGridX - 1; i++)
                 for (var j = 0; j < numGridY - 1; j++)
                     for (var k = 0; k < numGridZ - 1; k++)
                         MakeFacesInCube(i, j, k);
-            var comments = new List<string>(solid.Comments);
-            comments.Add("tessellation (via marching cubes) of the voxelized solid, " + solid.Name);
-            return new TessellatedSolid(faces);
+            var comments = new List<string>(solid.Comments)
+            {
+                "tessellation (via marching cubes) of the voxelized solid, " + solid.Name
+            };
+            return new TessellatedSolid(faces, false, false);
             // vertexDictionaries.SelectMany(d => d.Values), false,
             //new[] { solid.SolidColor }, solid.Units, solid.Name + "TS", solid.FileName, comments, solid.Language);
         }
 
-
         protected long getIdentifier(int x, int y, int z)
         {
-            return (long)x + (long)(yMultiplier * y) + (long)(zMultiplier * z);
+            return x + (long)(yMultiplier * y) + zMultiplier * z;
         }
 
         protected StoredValue<ValueT> GetValue(int x, int y, int z, long identifier)
@@ -132,8 +147,8 @@ namespace TVGL
                 var thisX = xIndex + _unitOffsetTable[i][0];
                 var thisY = yIndex + _unitOffsetTable[i][1];
                 var thisZ = zIndex + _unitOffsetTable[i][2];
-                var id = getIdentifier(thisX, thisY, thisZ);
-                var v = cube[i] = GetValue(thisX, thisY, thisZ, id);
+                var id = getIdentifier((int)thisX, (int)thisY, (int)thisZ);
+                var v = cube[i] = GetValue((int)thisX, (int)thisY, (int)thisZ, id);
                 if (IsInside(v.Value))
                     cubeType |= 1 << i;
             }
@@ -143,14 +158,13 @@ namespace TVGL
             //If the cube is entirely inside or outside of the surface, then there will be no intersections
             if (edgeFlags == 0) return;
             var EdgeVertex = new Vertex[12];
-            //this loop creates or retrieves the vertices that are on the edges of the 
+            //this loop creates or retrieves the vertices that are on the edges of the
             //marching cube. These are stored in the EdgeVertexIndexTable
             for (var i = 0; i < 12; i++)
             {
                 //if there is an intersection on this edge
                 if ((edgeFlags & 1) != 0)
                 {
-
                     var direction = Math.Abs((int)directionTable[i]) - 1;
                     var sign = directionTable[i] > 0 ? 1 : -1;
                     var fromCorner = cube[EdgeCornerIndexTable[i][0]];
@@ -161,13 +175,14 @@ namespace TVGL
                         EdgeVertex[i] = vertexDictionaries[direction][id];
                     else
                     {
+                        var coord = new Vector3(
+                           _xMin + fromCorner.X * gridToCoordinateFactor,
+                            _yMin + fromCorner.Y * gridToCoordinateFactor,
+                            _zMin + fromCorner.Z * gridToCoordinateFactor);
+                        var offSetUnitVector = (direction == 0) ? Vector3.UnitX :
+                            (direction == 1) ? Vector3.UnitY : Vector3.UnitZ;
                         double offset = GetOffset(fromCorner, toCorner, direction, sign);
-                        var coord = new[] {
-                           _xMin+ fromCorner.X*gridToCoordinateFactor,
-                            _yMin+fromCorner.Y*gridToCoordinateFactor,
-                            _zMin+   fromCorner.Z*gridToCoordinateFactor
-                        };
-                        coord[direction] = coord[direction] + sign * offset;
+                        coord = coord + (offSetUnitVector * sign * offset);
                         EdgeVertex[i] = new Vertex(coord);
                         vertexDictionaries[direction].Add(id, EdgeVertex[i]);
                     }
@@ -184,33 +199,33 @@ namespace TVGL
                     var vertexIndex = FaceVertexIndicesTable[cubeType][3 * i + j];
                     faceVertices[j] = EdgeVertex[vertexIndex];
                 }
-                faces.Add(new PolygonalFace(faceVertices, true));
+                faces.Add(new PolygonalFace(faceVertices));
             }
         }
 
-
-        #endregion
+        #endregion Main Methods
 
         #region Static Tables
+
         /// <summary>
-        /// VertexOffset lists the positions, relative to vertex0, 
+        /// VertexOffset lists the positions, relative to vertex0,
         /// of each of the 8 vertices of a cube.
         /// vertexOffset[8][3]
         /// </summary>
-        protected static readonly int[][] _unitOffsetTable = new int[][]
+        protected static readonly Vector3[] _unitOffsetTable = new[]
         {
-            new[]{0, 0, 0},new[]{1, 0, 0},new[]{1, 1, 0},new[]{0, 1, 0},
-            new[]{0, 0, 1},new[]{1, 0, 1},new[]{1, 1, 1},new[]{0, 1, 1}
+            new Vector3(0, 0, 0),new Vector3(1, 0, 0),new Vector3(1, 1, 0),new Vector3(0, 1, 0),
+            new Vector3(0, 0, 1),new Vector3(1, 0, 1),new Vector3(1, 1, 1),new Vector3(0, 1, 1)
         };
 
         /// <summary>
-        /// For any edge, if one vertex is inside of the surface and the other 
+        /// For any edge, if one vertex is inside of the surface and the other
         /// is outside of the surface then the edge intersects the surface.
         /// For each of the 8 vertices of the cube can be two possible states,
         /// either inside or outside of the surface.
         /// For any cube the are 2^8=256 possible sets of vertex states.
-        /// This table lists the edges intersected by the surface for all 256 
-        /// possible vertex states. There are 12 edges.  
+        /// This table lists the edges intersected by the surface for all 256
+        /// possible vertex states. There are 12 edges.
         /// For each entry in the table, if edge #n is intersected, then bit #n is set to 1.
         /// cubeEdgeFlags[256]
         /// </summary>
@@ -235,7 +250,7 @@ namespace TVGL
         };
 
         /// <summary>
-        /// EdgeVertexIndexTable lists the index of the endpoint vertices for each 
+        /// EdgeVertexIndexTable lists the index of the endpoint vertices for each
         /// of the 12 edges of the cube.
         /// edgeConnection[12][2]
         /// </summary>
@@ -250,12 +265,13 @@ namespace TVGL
         /// EdgeDirectionTable lists the direction vector (vertexFrom-vertexTo) for each edge in the cube.
         /// edgeDirection[12][3]
         /// </summary>
-        protected static readonly double[][] EdgeDirectionTable = new double[][]
+        protected static readonly Vector3[] EdgeDirectionTable = new Vector3[]
         {
-            new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
-            new[]{1.0, 0.0, 0.0},new[]{0.0, 1.0, 0.0},new[]{-1.0, 0.0, 0.0},new[]{0.0, -1.0, 0.0},
-            new[]{0.0, 0.0, 1.0},new[]{0.0, 0.0, 1.0},new[]{ 0.0, 0.0, 1.0},new[]{0.0,  0.0, 1.0}
+            new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
+             new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
+             new Vector3(0.0, 0.0, 1.0),new Vector3(0.0, 0.0, 1.0),new Vector3( 0.0, 0.0, 1.0),new Vector3(0.0,  0.0, 1.0)
         };
+
         protected static readonly CartesianDirections[] directionTable = new CartesianDirections[]
           {
               CartesianDirections.XPositive,CartesianDirections.YPositive,CartesianDirections.XNegative,
@@ -268,7 +284,7 @@ namespace TVGL
         /// For each of the possible vertex states listed in cubeEdgeFlags there is a specific triangulation
         /// of the edge intersection points.  triangleConnectionTable lists all of them in the form of
         /// 0-5 edge triples .
-        /// For example: FaceVertexIndicesTable[3] list the 2 triangles formed when corner[0] 
+        /// For example: FaceVertexIndicesTable[3] list the 2 triangles formed when corner[0]
         /// and corner[1] are inside of the surface, but the rest of the cube is not.
         /// triangleConnectionTable[256][16]
         /// </summary>
@@ -559,7 +575,7 @@ namespace TVGL
         3, 4, 4, 5, 4, 5, 3, 4, 4, 5, 5, 2, 3, 4, 2, 1,
         2, 3, 3, 2, 3, 4, 2, 1, 3, 2, 4, 1, 2, 1, 1, 0
         };
-        #endregion
-    }
 
+        #endregion Static Tables
+    }
 }

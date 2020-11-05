@@ -1,22 +1,12 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 02-27-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 05-28-2016
-// ***********************************************************************
-// <copyright file="OFFFileData.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using StarMathLib;
+using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
@@ -33,7 +23,7 @@ namespace TVGL.IOFunctions
         /// </summary>
         private OFFFileData()
         {
-            Vertices = new List<double[]>();
+            Vertices = new List<Vector3>();
             FaceToVertexIndices = new List<int[]>();
             Colors = new List<Color>();
         }
@@ -63,7 +53,7 @@ namespace TVGL.IOFunctions
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<double[]> Vertices { get; }
+        private List<Vector3> Vertices { get; }
 
         /// <summary>
         ///     Gets the face to vertex indices.
@@ -128,9 +118,8 @@ namespace TVGL.IOFunctions
         internal static TessellatedSolid OpenSolid(Stream s, string filename)
         {
             var now = DateTime.Now;
-            OFFFileData offData;
             // Try to read in BINARY format
-            if (TryReadBinary(s, out offData))
+            if (TryReadBinary(s, out var offData))
                 Message.output("Successfully read in binary OFF file (" + (DateTime.Now - now) + ").", 3);
             else
             {
@@ -145,9 +134,9 @@ namespace TVGL.IOFunctions
                     return null;
                 }
             }
-            return new TessellatedSolid(offData.Vertices, offData.FaceToVertexIndices,
-                offData.HasColorSpecified ? offData.Colors : null,
-                InferUnitsFromComments(offData.Comments), Path.GetFileNameWithoutExtension(filename), filename, offData.Comments,
+            return new TessellatedSolid(offData.Vertices, offData.FaceToVertexIndices, true,
+                offData.HasColorSpecified ? offData.Colors : null, InferUnitsFromComments(offData.Comments),
+                Path.GetFileNameWithoutExtension(filename), filename, offData.Comments,
                 offData.Language);
         }
 
@@ -169,7 +158,6 @@ namespace TVGL.IOFunctions
             offData.ContainsTextureCoordinates = line.Contains("ST");
             offData.ContainsHomogeneousCoordinates = line.Contains("4");
 
-            double[] point;
             line = ReadLine(reader);
             while (line.StartsWith("#"))
             {
@@ -178,7 +166,7 @@ namespace TVGL.IOFunctions
                     offData.Comments.Add(line.Substring(1));
                 line = ReadLine(reader);
             }
-            if (TryParseDoubleArray(line, out point))
+            if (TryParseDoubleArray(line, out var point))
             {
                 offData.NumVertices = (int)Math.Round(point[0], 0);
                 offData.NumFaces = (int)Math.Round(point[1], 0);
@@ -200,13 +188,12 @@ namespace TVGL.IOFunctions
                 {
                     if (offData.ContainsHomogeneousCoordinates
                         && !point[3].IsNegligible())
-                        offData.Vertices.Add(new[]
-                        {
-                            point[0]/point[3],
-                            point[1]/point[3],
-                            point[2]/point[3]
-                        });
-                    else offData.Vertices.Add(point);
+                        offData.Vertices.Add(new Vector3(
+                            point[0] / point[3],
+                            point[1] / point[3],
+                            point[2] / point[3]
+                        ));
+                    else offData.Vertices.Add(new Vector3(point[0], point[1], point[2]));
                 }
                 else return false;
             }
@@ -220,8 +207,7 @@ namespace TVGL.IOFunctions
                         offData.Comments.Add(line.Substring(1));
                     line = ReadLine(reader);
                 }
-                double[] numbers;
-                if (!TryParseDoubleArray(line, out numbers)) return false;
+                if (!TryParseDoubleArray(line, out var numbers)) return false;
 
                 var numVerts = (int)Math.Round(numbers[0], 0);
                 var vertIndices = new int[numVerts];
@@ -315,6 +301,7 @@ namespace TVGL.IOFunctions
                     }
                     writer.WriteLine(faceString);
                 }
+                writer.Flush();
                 Message.output("Successfully wrote OFF file to stream.", 3);
                 return true;
             }

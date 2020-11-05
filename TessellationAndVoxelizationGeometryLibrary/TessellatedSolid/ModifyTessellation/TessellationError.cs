@@ -1,21 +1,8 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 05-26-2016
-// ***********************************************************************
-// <copyright file="TessellationError.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
-using System.Linq;
-using StarMathLib;
 
 namespace TVGL
 {
@@ -131,6 +118,7 @@ namespace TVGL
         /// </summary>
         /// <value><c>true</c> if [no errors]; otherwise, <c>false</c>.</value>
         internal bool NoErrors { get; set; }
+
         /// <summary>
         /// Gets a value indicating whether [model is inside out].
         /// </summary>
@@ -178,7 +166,7 @@ namespace TVGL
             if (FacesWithOneVertex != null) report += "FacesWithOneVertex: " + FacesWithOneVertex.Count + "\n";
             if (FacesWithTwoEdges != null) report += "FacesWithTwoEdge: " + FacesWithTwoEdges.Count + "\n";
             if (FacesWithTwoVertices != null) report += "FacesWithTwoVertices: " + FacesWithTwoVertices.Count + "\n";
-            if(ModelIsInsideOut) report += "ModelIsInsideOut: " + ModelIsInsideOut + "\n";
+            if (ModelIsInsideOut) report += "ModelIsInsideOut: " + ModelIsInsideOut + "\n";
             if (OverusedEdges != null) report += "OverusedEdges: " + OverusedEdges.Count + "\n";
             if (SingledSidedEdges != null) report += "SingledSidedEdges: " + SingledSidedEdges.Count + "\n";
             if (VertsThatDoNotLinkBackToEdge != null) report += "VertsThatDoNotLinkBackToEdge: " + VertsThatDoNotLinkBackToEdge.Count + "\n";

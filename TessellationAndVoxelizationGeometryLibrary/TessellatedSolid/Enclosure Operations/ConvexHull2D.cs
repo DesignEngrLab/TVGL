@@ -1,57 +1,35 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-17-2015
-//
-// Last Modified By : Matt
-// Last Modified On : 04-17-2015
-// ***********************************************************************
-// <copyright file="ConvexHull2D.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using MIConvexHull;
+using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
     public static partial class MinimumEnclosure
     {
         /// <summary>
-        ///     Finds the area of the convex hull region, given a set of convex hull points.
+        /// Creates the coordinates of the corresponding convex hull polygon.
         /// </summary>
-        /// <param name="convexHullPoints2D"></param>
-        /// <returns></returns>
-        public static double ConvexHull2DArea(IList<Point> convexHullPoints2D)
+        /// <param name="points">The points.</param>
+        /// <returns>List&lt;Vector2&gt;.</returns>
+        public static List<Vector2> ConvexHull2D(this IEnumerable<Vector2> points)
         {
-            //Set origin point to first point in convex hull
-            var point1 = convexHullPoints2D[0];
-            var totalArea = 0.0;
-
-            //Find area of triangle between first point and every triangle that can be formed from the first point.
-            for (var i = 1; i < convexHullPoints2D.Count - 1; i++)
-            {
-                var point2 = convexHullPoints2D[i];
-                var point3 = convexHullPoints2D[i + 1];
-                //Reference: <http://www.mathopenref.com/coordtrianglearea.html>
-                var triangleArea =
-                    Math.Abs(point1.X * (point2.Y - point3.Y) + point2.X * (point3.Y - point1.Y) +
-                             point3.X * (point1.Y - point2.Y));
-                totalArea += triangleArea;
-            }
-
-            return 0.5 * totalArea;
+            var pointList = points as IList<Vector2> ?? points.ToList();
+            return (List<Vector2>)MIConvexHull.ConvexHull.Create2D(pointList).Result;
         }
 
-        public static List<PointLight> ConvexHull2D(IList<PointLight> points) 
+        /// <summary>
+        /// Creates the convex hull polygon.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon ConvexHull2D(this Polygon polygon)
         {
-            return MIConvexHull.ConvexHull.Create2D(points).Result.ToList();
+            return new Polygon((List<Vector2>)MIConvexHull.ConvexHull.Create2D(polygon.Path).Result);
         }
     }
 }

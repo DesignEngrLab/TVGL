@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright 2015-2020 Design Engineering Lab
+// This file is a part of TVGL, Tessellation and Voxelization Geometry Library
+// https://github.com/DesignEngrLab/TVGL
+// It is licensed under MIT License (see LICENSE.txt for details)
+using System;
 using System.Linq;
 
 namespace TVGL.Voxelization
@@ -7,7 +11,7 @@ namespace TVGL.Voxelization
     /// VoxelRowDense represents the dense array of bits for this line of voxels
     /// </summary>
     /// <seealso cref="TVGL.Voxelization.IVoxelRow" />
-    internal struct VoxelRowDense : IVoxelRow
+    internal readonly struct VoxelRowDense : IVoxelRow
     {
         /// <summary>
         /// The values is the byte array where each bit corresponds to whether or not
@@ -40,9 +44,8 @@ namespace TVGL.Voxelization
         /// <param name="numBytes">The number bytes.</param>
         internal VoxelRowDense(IVoxelRow row, int length) : this(length)
         {
-            if (row is VoxelRowSparse)
+            if (row is VoxelRowSparse sparse)
             {
-                var sparse = (VoxelRowSparse)row;
                 if (sparse.indices.Any())
                     for (int i = 0; i < sparse.indices.Count; i += 2)
                         TurnOnRange(sparse.indices[i], sparse.indices[i + 1]);
@@ -227,9 +230,9 @@ namespace TVGL.Voxelization
         {
             foreach (var item in others)
             {
-                if (item is VoxelRowDense)
+                if (item is VoxelRowDense dense)
                 {
-                    var otherValues = ((VoxelRowDense)item).values;
+                    var otherValues = dense.values;
                     for (int i = 0; i < numBytes; i++)
                         values[i] &= otherValues[i];
                 }
@@ -260,9 +263,9 @@ namespace TVGL.Voxelization
         {
             foreach (var item in subtrahends)
             {
-                if (item is VoxelRowDense)
+                if (item is VoxelRowDense dense)
                 {
-                    var otherValues = ((VoxelRowDense)item).values;
+                    var otherValues = dense.values;
                     for (int i = 0; i < numBytes; i++)
                         values[i] &= (byte)~otherValues[i];
                 }
@@ -293,9 +296,9 @@ namespace TVGL.Voxelization
         {
             foreach (var item in others)
             {
-                if (item is VoxelRowDense)
+                if (item is VoxelRowDense dense)
                 {
-                    var otherValues = ((VoxelRowDense)item).values;
+                    var otherValues = dense.values;
                     for (int i = 0; i < numBytes; i++)
                         values[i] |= otherValues[i];
                 }
@@ -321,7 +324,7 @@ namespace TVGL.Voxelization
                 values[i] = 0b0;
         }
 
-        public double AverageXPosition()
+        public int TotalXPosition()
         {
             var xTotal = 0;
             var byteOffset = 0;
@@ -338,7 +341,7 @@ namespace TVGL.Voxelization
                 if (b > 127) xTotal += byteOffset;
                 byteOffset += 8;
             }
-            return xTotal / (double)Count;
+            return xTotal;
         }
     }
 }
