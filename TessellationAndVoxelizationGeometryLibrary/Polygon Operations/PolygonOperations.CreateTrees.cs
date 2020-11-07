@@ -94,7 +94,12 @@ namespace TVGL.TwoDimensional
             foreach (var branch in branches)
             {
                 if (polygonSignIsCorrect) RecurseDownPolygonTreeCleanUp(branch);
-                else RecurseDownPolygonTreeAndFlipSigns(branch);
+                else
+                {
+                    foreach (var banch in branches)
+                        branch.IsPositive = true;
+                    RecurseDownPolygonTreeAndFlipSigns(branch);
+                }
             }
             return branches;
         }
