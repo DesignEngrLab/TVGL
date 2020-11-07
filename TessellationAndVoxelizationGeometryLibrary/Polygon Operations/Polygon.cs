@@ -252,10 +252,7 @@ namespace TVGL.TwoDimensional
             set
             {
                 if (value != (PathArea > 0))
-                {
                     Reverse();
-                    pathArea = double.NaN;
-                }
             }
         }
 
@@ -266,16 +263,8 @@ namespace TVGL.TwoDimensional
         /// <param name="reverseInnerPolygons">if set to <c>true</c> [reverse inner polygons].</param>
         public void Reverse(bool reverseInnerPolygons = false)
         {
-            Path.Reverse();
-            MakeVertices();
-            MakeLineSegments();
-            if (_innerPolygons != null && reverseInnerPolygons)
-            {
-                foreach (var innerPolygon in _innerPolygons)
-                    innerPolygon.Reverse(true);
-            }
-            pathArea = -pathArea;
-            area = double.NaN;
+            _vertices.Reverse();
+            Reset();
         }
 
 
