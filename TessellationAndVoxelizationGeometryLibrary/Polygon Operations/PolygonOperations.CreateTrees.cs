@@ -49,8 +49,8 @@ namespace TVGL.TwoDimensional
         /// <param name="connectingIndices">The connecting indices.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect, 
-            bool alreadyOrderedInIncreasingArea=false)
+        public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect,
+            bool alreadyOrderedInIncreasingArea = false)
         {
             var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, alreadyOrderedInIncreasingArea);
 
@@ -73,8 +73,8 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonSignIsCorrect">if set to <c>true</c> [polygon sign is correct].</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect, 
-            bool alreadyOrderedInIncreasingArea=false)
+        public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect,
+            bool alreadyOrderedInIncreasingArea = false)
         {
             var branches = new List<Polygon>();
             var orderedPolygons = alreadyOrderedInIncreasingArea ? polygons : polygons.OrderBy(p => Math.Abs(p.Area));
