@@ -217,7 +217,7 @@ namespace TVGL.TwoDimensional
             var numberBelow = 0;
             foreach (var subPolygon in polygon.AllPolygons)
             {
-                foreach (var line in subPolygon.Lines)
+                foreach (var line in subPolygon.Edges)
                 {
                     switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, tolerance))
                     {
@@ -543,7 +543,6 @@ namespace TVGL.TwoDimensional
             var visited = new bool[interactionRecord.numPolygonsInA * interactionRecord.numPolygonsInB];
             RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, tolerance);
             interactionRecord.DefineOverallInteractionFromFinalListOfSubInteractions();
-            System.Diagnostics.Debug.WriteLine(interactionRecord.IntersectionData);
             return interactionRecord;
         }
         /// <summary>
@@ -616,6 +615,9 @@ namespace TVGL.TwoDimensional
                 subPolygonA.MinY > subPolygonB.MaxY ||
                 subPolygonA.MaxY < subPolygonB.MinY)
                 return PolyRelInternal.Separated;
+
+            subPolygonA.MakePolygonEdgesIfNonExistent();
+            subPolygonB.MakePolygonEdgesIfNonExistent();
             //Else, we need to check for intersections between all lines of the two
             // To avoid an n-squared check (all of A's lines with all of B's), we sort the lines by their XMin
             // value. Instead of directly sorting the Lines, which will have many repeat XMin values (since every
@@ -1085,7 +1087,7 @@ namespace TVGL.TwoDimensional
         {
             var intersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
-            var numLines = polygonA.Lines.Count;
+            var numLines = polygonA.Edges.Length;
             var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
             for (int i = 0; i < numLines - 1; i++)
             {

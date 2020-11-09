@@ -106,7 +106,7 @@ namespace TVGL.TwoDimensional
             var anchorpoint = distanceAlongDirection * lineNormalDirection;
             var sortedPoints = new SortedList<double, (Vector2, PolygonEdge)>();
             foreach (var polygons in shallowPolygonTree.AllPolygons)
-                foreach (var line in polygons.Lines)
+                foreach (var line in polygons.Edges)
                 {
                     if (MiscFunctions.SegmentLine2DIntersection(line.FromPoint.Coordinates, line.ToPoint.Coordinates,
                          anchorpoint, lineDir, out var intersectionPoint))

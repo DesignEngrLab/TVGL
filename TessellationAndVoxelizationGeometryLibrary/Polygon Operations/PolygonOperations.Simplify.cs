@@ -388,9 +388,9 @@ namespace TVGL.TwoDimensional
         public static void Complexify(this Polygon polygon, double maxAllowableLength)
         {
             var loopID = polygon.Index;
-            for (int i = 0; i < polygon.Lines.Count; i++)
+            for (int i = 0; i < polygon.Edges.Length; i++)
             {
-                var thisLine = polygon.Lines[i];
+                var thisLine = polygon.Edges[i];
                 if (thisLine.Length > maxAllowableLength)
                 {
                     var numNewPoints = (int)thisLine.Length / maxAllowableLength;

@@ -68,10 +68,8 @@ namespace TVGL.TwoDimensional
             get
             {
                 if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
-                    _orderedXVertices = Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
-                //_orderedXVertices = this.SortVerticesByXValue();
+                    _orderedXVertices = this.SortVerticesByXValue();
                 return _orderedXVertices;
-
             }
         }
         /// <summary>
@@ -84,12 +82,42 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <value>The lines.</value>
         [JsonIgnore]
-        public List<PolygonEdge> Lines => _lines;
+        public PolygonEdge[] Edges
+        {
+            get
+            {
+                MakePolygonEdgesIfNonExistent();
+                return _edges;
+            }
+        }
+
+        public void MakePolygonEdgesIfNonExistent()
+        {
+            if (_edges != null && _edges.Length == Vertices.Count) return;
+            foreach (var poly in AllPolygons)
+                poly.MakeThisPolygonsEdges();
+        }
+
+        private void MakeThisPolygonsEdges()
+        {
+            var numPoints = Vertices.Count;
+            _edges = new PolygonEdge[numPoints];
+            for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
+            // note this compact approach to setting i and j. 
+            {
+                var fromNode = Vertices[j];
+                var toNode = Vertices[i];
+                var polySegment = new PolygonEdge(fromNode, toNode);
+                fromNode.StartLine = polySegment;
+                toNode.EndLine = polySegment;
+                _edges[i] = polySegment;
+            }
+        }
 
         /// <summary>
         /// The lines
         /// </summary>
-        private List<PolygonEdge> _lines;
+        private PolygonEdge[] _edges;
 
         /// <summary>
         /// Makes the vertices.
@@ -106,28 +134,7 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        /// <summary>
-        /// Makes the line segments.
-        /// </summary>
-        internal void MakeLineSegments()
-        {
-            foreach (var polygon in AllPolygons)
-            {
-                var numPoints = polygon.Vertices.Count;
-                var linesArray = new PolygonEdge[numPoints];
-                for (int i = 0, j = numPoints - 1; i < numPoints; j = i++)
-                // note this compact approach to setting i and j. 
-                {
-                    var fromNode = polygon.Vertices[j];
-                    var toNode = polygon.Vertices[i];
-                    var polySegment = new PolygonEdge(fromNode, toNode);
-                    fromNode.StartLine = polySegment;
-                    toNode.EndLine = polySegment;
-                    linesArray[i] = polySegment;
-                }
-                polygon._lines = linesArray.ToList();
-            }
-        }
+
 
         /// <summary>
         /// Removes all inner polygon.
@@ -252,10 +259,7 @@ namespace TVGL.TwoDimensional
             set
             {
                 if (value != (PathArea > 0))
-                {
                     Reverse();
-                    pathArea = double.NaN;
-                }
             }
         }
 
@@ -266,16 +270,8 @@ namespace TVGL.TwoDimensional
         /// <param name="reverseInnerPolygons">if set to <c>true</c> [reverse inner polygons].</param>
         public void Reverse(bool reverseInnerPolygons = false)
         {
-            Path.Reverse();
-            MakeVertices();
-            MakeLineSegments();
-            if (_innerPolygons != null && reverseInnerPolygons)
-            {
-                foreach (var innerPolygon in _innerPolygons)
-                    innerPolygon.Reverse(true);
-            }
-            pathArea = -pathArea;
-            area = double.NaN;
+            _vertices.Reverse();
+            Reset();
         }
 
 
@@ -448,7 +444,6 @@ namespace TVGL.TwoDimensional
             if (_path.Count > 1 && _path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
             Index = index;
             MakeVertices();
-            MakeLineSegments();
         }
 
         public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
@@ -465,20 +460,6 @@ namespace TVGL.TwoDimensional
         public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
         {
             _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
-            Index = index;
-            MakeLineSegments();
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Polygon" /> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="lines">The lines.</param>
-        /// <param name="index">The index.</param>
-        public Polygon(List<Vertex2D> vertices, List<PolygonEdge> lines, int index = -1)
-        {
-            _vertices = vertices;
-            _lines = lines;
             Index = index;
         }
 
@@ -515,7 +496,6 @@ namespace TVGL.TwoDimensional
                 _innerPolygons = thisInnerPolygons
             };
             copiedPolygon.MakeVertices();
-            copiedPolygon.MakeLineSegments();
             return copiedPolygon;
         }
 
@@ -537,8 +517,8 @@ namespace TVGL.TwoDimensional
         {
             var tolerance = this.GetToleranceForPolygon(); ;
             if (!Area.IsPositiveNonNegligible(tolerance)) return false; //It must have an area greater than zero
-            var firstLine = Lines.Last();
-            foreach (var secondLine in Lines)
+            var firstLine = Edges.Last();
+            foreach (var secondLine in Edges)
             {
                 var cross = firstLine.Vector.Cross(secondLine.Vector);
                 if (secondLine.Length.IsNegligible(0.0000001)) continue; // without updating the first line             
@@ -607,7 +587,7 @@ namespace TVGL.TwoDimensional
         internal void Reset()
         {
             _path = null;
-            MakeLineSegments();
+            _edges = null;
             _orderedXVertices = null;
             area = double.NaN;
             pathArea = double.NaN;
@@ -630,7 +610,6 @@ namespace TVGL.TwoDimensional
             JArray jArray = (JArray)serializationData["Coordinates"];
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
             MakeVertices();
-            MakeLineSegments();
         }
     }
 

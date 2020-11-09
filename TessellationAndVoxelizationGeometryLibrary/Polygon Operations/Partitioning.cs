@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using TVGL.Numerics;
 
@@ -211,6 +212,8 @@ namespace TVGL.TwoDimensional
         /// <returns>Vertex2D[].</returns>
         internal static Vertex2D[] SortVerticesByXValue(this Polygon polygon)
         {
+            return polygon.Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
+
             var xStrands = new List<Vertex2D[]>();
             foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X))
             {
