@@ -186,8 +186,11 @@ namespace TVGL
         {
             var vertexList = vertices as IList<Vector3> ?? vertices.ToList();
             var areaVector = Vector3.Zero;
-            for (int i = 0, j = numSides - 1; i < numSides; j = i++)
-                areaVector += vertexList[i].Cross(vertexList[j]);
+            if (vertexList.Count == 3)
+                areaVector = (vertexList[1] - vertexList[0]).Cross(vertexList[2] - vertexList[1]);
+            else
+                for (int i = 0, j = numSides - 1; i < numSides; j = i++)
+                    areaVector += vertexList[i].Cross(vertexList[j]);
             reverseVertexOrder = !suggestedNormal.IsNull() && suggestedNormal.Dot(areaVector) < 0;
             return areaVector.Normalize();
         }

@@ -122,6 +122,7 @@ namespace TVGL.TwoDimensional
             if (numVertices == 3) return new List<int[]> { polygon.Vertices.Select(v => v.IndexInList).ToArray() };
             if (numVertices == 4)
             {
+                polygon.MakePolygonEdgesIfNonExistent();
                 var verts = polygon.Vertices.Select(v => v.IndexInList).ToList();
                 var concaveEdge = polygon.Vertices.FirstOrDefault(v => v.EndLine.Vector.Cross(v.StartLine.Vector) < 0);
                 if (concaveEdge != null)
@@ -147,7 +148,7 @@ namespace TVGL.TwoDimensional
             var attempts = 0;
             var random = new Random();
             var totalAngle = 0.0;
-            var angle = 0.0;
+            var angle = random.NextDouble() * 2 * Math.PI / maxNumberOfAttempts;
             var successful = false;
             var localTriangleFaceList = new List<int[]>();
             do
@@ -176,10 +177,11 @@ namespace TVGL.TwoDimensional
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
+            polygon.MakePolygonEdgesIfNonExistent();
             var connections = FindInternalDiagonalsForMonotone(polygon);
-            foreach (var edge in polygon.Lines)
+            foreach (var edge in polygon.Edges)
                 AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
-            foreach (var edge in polygon.InnerPolygons.SelectMany(p => p.Lines))
+            foreach (var edge in polygon.InnerPolygons.SelectMany(p => p.Edges))
                 AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
             while (connections.Any())
             {
@@ -406,6 +408,7 @@ namespace TVGL.TwoDimensional
 
         private static IEnumerable<int[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {
+            monoPoly.MakePolygonEdgesIfNonExistent();
             if (monoPoly.Vertices.Count < 3) yield break;
             if (monoPoly.Vertices.Count == 3)
                 yield return new[] { monoPoly.Vertices[0].IndexInList, monoPoly.Vertices[1].IndexInList, monoPoly.Vertices[2].IndexInList };

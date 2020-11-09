@@ -267,7 +267,7 @@ namespace TVGL.TwoDimensional
             var visitedIntersectionPairs = new HashSet<(PolygonEdge, PolygonEdge)>();
             var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
             invertedPolygon = polygon.Copy(true, true);
-            var allLines = invertedPolygon.AllPolygons.SelectMany(p => p.Lines).ToList();
+            var allLines = invertedPolygon.AllPolygons.SelectMany(p => p.Edges).ToList();
             var newIntersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int, PolygonEdge, PolygonEdge)>();
             for (int i = 0; i < IntersectionData.Count; i++)

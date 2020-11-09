@@ -165,8 +165,7 @@ namespace TVGL.TwoDimensional
         {
             maxNumberOfPolygons = 1;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
-            var linesList = polygon.Lines;
-            var numPoints = linesList.Count;
+            var numPoints = polygon.Edges.Length;
             int numFalsesToAdd;
             var startingListSize = numPoints;
             var roundCorners = !double.IsNaN(deltaAngle);
@@ -179,12 +178,12 @@ namespace TVGL.TwoDimensional
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
-            var prevLine = linesList[0];
+            var prevLine = polygon.Edges[0];
             var prevLineLengthReciprocal = 1.0 / prevLine.Length;
             var prevUnitNormal = new Vector2(prevLine.Vector.Y * prevLineLengthReciprocal, -prevLine.Vector.X * prevLineLengthReciprocal);
             for (int i = 1; i <= numPoints; i++)
             {
-                var nextLine = (i == numPoints) ? linesList[0] : linesList[i];
+                var nextLine = (i == numPoints) ? polygon.Edges[0] : polygon.Edges[i];
                 var nextLineLengthReciprocal = 1.0 / nextLine.Length;
                 var nextUnitNormal = new Vector2(nextLine.Vector.Y * nextLineLengthReciprocal, -nextLine.Vector.X * nextLineLengthReciprocal);
                 // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".

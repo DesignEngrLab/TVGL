@@ -302,7 +302,7 @@ namespace TVGL
             var shortestDistance = double.MaxValue;
             //1. For every line on the path, get the closest point on the edge to the center point. 
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
-            foreach (var line in polygon.Lines)
+            foreach (var line in polygon.Edges)
             {
                 var v1 = line.ToPoint.Coordinates - line.FromPoint.Coordinates;
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
