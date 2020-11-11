@@ -48,7 +48,7 @@ namespace TVGL
         /// <summary>
         /// This is the direction that the cross sections will be extruded along
         /// </summary>
-        public Vector3 Direction => TransformMatrix.ZBasisVector;
+        public Vector3 Direction => BackTransform.ZBasisVector;
 
         /// <summary>
         /// Gets or sets the transform matrix.
@@ -92,8 +92,8 @@ namespace TVGL
             StepDistances = stepDistances;
             Units = units;
             SameTolerance = sameTolerance;
-            direction.TransformToXYPlane(out var transform);
-            TransformMatrix = transform;
+            TransformMatrix = direction.TransformToXYPlane(out var backTransform);
+            BackTransform = backTransform;
             this.Layer2D = Layer2D;
             if (bounds == null)
             {
