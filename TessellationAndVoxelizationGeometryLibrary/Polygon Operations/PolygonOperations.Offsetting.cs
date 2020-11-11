@@ -75,7 +75,7 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance"></param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this Polygon polygon, double offset,
-            double maxCircleDeviation = double.NaN, double tolerance = double.NaN)
+            double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
             return Offset(polygon, offset, true, tolerance, deltaAngle);
@@ -91,8 +91,7 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance"></param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this IEnumerable<Polygon> polygons, double offset,
-            double maxCircleDeviation = double.NaN,
-            double tolerance = double.NaN)
+            double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
             return Offset(polygons, offset, true, tolerance, deltaAngle);

@@ -36,12 +36,12 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> OffsetViaClipper(IEnumerable<Polygon> polygons, double offset, bool notMiter, double tolerance, double deltaAngle)
         {
             var allPolygons = polygons.SelectMany(polygon => polygon.AllPolygons).ToList();
-            if (true) //double.IsNaN(tolerance) || tolerance.IsNegligible())
+            if (double.IsNaN(tolerance) || tolerance.IsNegligible())
             {
                 var totalLength = allPolygons.Sum(loop => loop.Perimeter);
                 tolerance = totalLength * 0.001;
             }
-            var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.jtRound : JoinType.jtSquare) : JoinType.jtMiter;
+            var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.jtSquare : JoinType.jtRound) : JoinType.jtMiter;
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject = allPolygons.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
 
