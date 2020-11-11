@@ -57,6 +57,13 @@ namespace TVGL
         public Matrix4x4 TransformMatrix { get; set; }
 
 
+        /// <summary>
+        /// Gets or sets the transform matrix.
+        /// </summary>
+        /// <value>The transform matrix.</value>
+        public Matrix4x4 BackTransform { get; set; }
+
+
         public int NumLayers { get; set; }
 
         [JsonConstructor]
@@ -69,7 +76,8 @@ namespace TVGL
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
             : this(stepDistances)
         {
-            TransformMatrix = direction.TransformToXYPlane(out _);
+            TransformMatrix = direction.TransformToXYPlane(out var backTransform);
+            BackTransform = backTransform;
             NumLayers = stepDistances.Count;
             if (bounds != null)
                 Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
