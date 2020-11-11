@@ -261,64 +261,13 @@ namespace TVGL
                 _curvature = CurvatureType.Undefined;
                 return;
             }
-            // **** the following code is commented. Instead - assume it has been constructed correctly
-            // use Repair to see if this is wrong
-            // is this edge truly owned by the ownedFace? if not reverse
-            /*
-            var faceToIndex = _ownedFace.Vertices.IndexOf(To);
-            var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
-            var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
-            var nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
-            var dotOfCross = Vector.Cross(nextEdgeVector).Dot(_ownedFace.Normal);
-            if (dotOfCross <= 0)
-            {
-                // then switch the direction of the edge to match the ownership.
-                // When OwnedFace and OppositeFace were defined it was arbitrary anyway
-                // so this is another by-product of this method 
-                var temp = From;
-                From = To;
-                To = temp;
-                Vector = Vector * -1;
-                // it would be messed up if both faces thought they owned this edge. If this is the 
-                // case, return the edge has no angle.
-                faceToIndex = _otherFace.Vertices.IndexOf(To);
-                faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
-                nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
-                var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal);
-                if (dotOfCross2 < 0)
-                // neither faces appear to own the edge...must be something wrong
-                {
-                    _internalAngle = double.NaN;
-                    _curvature = CurvatureType.Undefined;
-                    return;
-                }
-            }
-            else
-            {
-       
-                // it would be messed up if both faces thought they owned this edge. If this is the 
-                // case, return the edge has no angle.
-                faceToIndex = _otherFace.Vertices.IndexOf(To);
-                faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
-                nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Coordinates.Subtract(To.Coordinates);
-                var dotOfCross2 = Vector.Cross(nextEdgeVector).Dot(_otherFace.Normal);
-                if (dotOfCross2 > 0)
-                // both faces appear to own the edge...must be something wrong
-                {
-                    _internalAngle = double.NaN;
-                    _curvature = CurvatureType.Undefined;
-                    return;
-                }
-            } */
             var dot = _ownedFace.Normal.Dot(_otherFace.Normal);
-            if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance))
+            if (!dot.IsLessThanNonNegligible(1.0, Constants.BaseTolerance))
             {
                 _internalAngle = Math.PI;
                 _curvature = CurvatureType.SaddleOrFlat;
             }
-            else if (dot < -1.0 || dot.IsPracticallySame(-1.0, Constants.BaseTolerance))
+            else if (!dot.IsGreaterThanNonNegligible(-1.0, Constants.BaseTolerance))
             {
                 // is it a crack or a sharp edge?
                 // in order to find out we look to the other two faces connected to each
@@ -329,7 +278,7 @@ namespace TVGL
                 {
                     if (face != null && face != _otherFace)
                     {
-                        ownedNeighborAvgNormals = ownedNeighborAvgNormals + face.Normal;
+                        ownedNeighborAvgNormals += face.Normal;
                         numNeighbors++;
                     }
                 }
@@ -340,7 +289,7 @@ namespace TVGL
                 {
                     if (face != null && face != _ownedFace)
                     {
-                        otherNeighborAvgNormals = otherNeighborAvgNormals + face.Normal;
+                        otherNeighborAvgNormals += face.Normal;
                         numNeighbors++;
                     }
                 }

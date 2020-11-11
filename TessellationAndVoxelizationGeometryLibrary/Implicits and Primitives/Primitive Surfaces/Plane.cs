@@ -19,7 +19,8 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating a 3D Plane
     /// </summary>
-    public class Plane : PrimitiveSurface, IEquatable<Plane>
+    public class Plane : PrimitiveSurface // IEquatable<Plane> commenting this since sometimes two planes at same "location"
+        // but represent different patches
     {
         /// <summary>
         /// Tolerance used to determine whether faces should be part of this flat
@@ -164,7 +165,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Plane CreateFromVertices(Vector3 point1, Vector3 point2, Vector3 point3)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector3 a = point2 - point1;
                 Vector3 b = point3 - point1;
@@ -335,7 +336,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotCoordinate(Plane plane, Vector3 value)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector3.Dot(plane.Normal, value) + plane.DistanceToOrigin;
             }
@@ -357,7 +358,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotNormal(Plane plane, Vector3 value)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector3.Dot(plane.Normal, value);
             }
@@ -369,6 +370,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             }
         }
 
+        /*
         /// <summary>
         /// Returns a boolean indicating whether the two given Planes are equal.
         /// </summary>
@@ -398,6 +400,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
                     value1.Normal.Z != value2.Normal.Z ||
                     value1.DistanceToOrigin != value2.DistanceToOrigin);
         }
+        */
 
         /// <summary>
         /// Returns a boolean indicating whether the given Plane is equal to this Plane instance.
@@ -405,9 +408,9 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The Plane to compare this instance to.</param>
         /// <returns>True if the other Plane is equal to this instance; False otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Plane other)
+        public bool SameLocation(Plane other)
         {
-            if (true) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return this.Normal.Equals(other.Normal) && this.DistanceToOrigin == other.DistanceToOrigin;
             }
