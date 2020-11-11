@@ -147,8 +147,8 @@ namespace TVGL.TwoDimensional
             const int maxNumberOfAttempts = 10;
             var attempts = 0;
             var random = new Random();
-            var totalAngle = 0.0;
             var angle = random.NextDouble() * 2 * Math.PI / maxNumberOfAttempts;
+            var totalAngle = angle;
             var successful = false;
             var localTriangleFaceList = new List<int[]>();
             do
@@ -156,8 +156,7 @@ namespace TVGL.TwoDimensional
                 try
                 {
                     localTriangleFaceList.Clear();
-                    if (angle != 0)
-                        polygon.Transform(Matrix3x3.CreateRotation(angle));
+                    polygon.Transform(Matrix3x3.CreateRotation(angle));
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                     successful = true;
@@ -172,6 +171,7 @@ namespace TVGL.TwoDimensional
                 throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges or"
                     + " check for self-intersections.");
             triangleFaceList.AddRange(localTriangleFaceList);
+            polygon.Transform(Matrix3x3.CreateRotation(-totalAngle));
             return triangleFaceList;
         }
 
