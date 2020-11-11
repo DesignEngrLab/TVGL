@@ -370,38 +370,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             }
         }
 
-        /*
-        /// <summary>
-        /// Returns a boolean indicating whether the two given Planes are equal.
-        /// </summary>
-        /// <param name="value1">The first Plane to compare.</param>
-        /// <param name="value2">The second Plane to compare.</param>
-        /// <returns>True if the Planes are equal; False otherwise.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(Plane value1, Plane value2)
-        {
-            return (value1.Normal.X == value2.Normal.X &&
-                    value1.Normal.Y == value2.Normal.Y &&
-                    value1.Normal.Z == value2.Normal.Z &&
-                    value1.DistanceToOrigin == value2.DistanceToOrigin);
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether the two given Planes are not equal.
-        /// </summary>
-        /// <param name="value1">The first Plane to compare.</param>
-        /// <param name="value2">The second Plane to compare.</param>
-        /// <returns>True if the Planes are not equal; False if they are equal.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(Plane value1, Plane value2)
-        {
-            return (value1.Normal.X != value2.Normal.X ||
-                    value1.Normal.Y != value2.Normal.Y ||
-                    value1.Normal.Z != value2.Normal.Z ||
-                    value1.DistanceToOrigin != value2.DistanceToOrigin);
-        }
-        */
-
         /// <summary>
         /// Returns a boolean indicating whether the given Plane is equal to this Plane instance.
         /// </summary>
@@ -421,22 +389,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
                         Normal.Z == other.Normal.Z &&
                         DistanceToOrigin == other.DistanceToOrigin);
             }
-        }
-
-        /// <summary>
-        /// Returns a boolean indicating whether the given Object is equal to this Plane instance.
-        /// </summary>
-        /// <param name="obj">The Object to compare against.</param>
-        /// <returns>True if the Object is equal to this Plane; False otherwise.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool Equals(object obj)
-        {
-            if (obj is Plane planeObj)
-            {
-                return Equals(planeObj);
-            }
-
-            return false;
         }
 
         /// <summary>
