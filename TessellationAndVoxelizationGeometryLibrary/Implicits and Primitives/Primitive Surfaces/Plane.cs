@@ -67,14 +67,14 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         {
             Normal = (Faces.Count * Normal) + face.Normal;
             Normal = Vector3.Normalize(Normal);
-            var newVerts = new List<Vertex>();
+            var numNewVerts = 0;
             var newDistanceToPlane = 0.0;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
             {
-                newVerts.Add(v);
+                numNewVerts++;
                 newDistanceToPlane += v.Coordinates.Dot(Normal);
             }
-            DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + newVerts.Count);
+            DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + numNewVerts);
             base.UpdateWith(face);
         }
 

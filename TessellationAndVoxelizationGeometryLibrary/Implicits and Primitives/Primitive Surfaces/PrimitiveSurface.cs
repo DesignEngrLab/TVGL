@@ -264,7 +264,7 @@ namespace TVGL
                 {
                     //The To/From order cannot be used, since it is only correct for the face the edge belongs to.
                     //So, add whichever vertex of the edge has no already been added
-                    var currentVertex = previousVertex == currentEdge.From ? currentEdge.To : currentEdge.From;
+                    var currentVertex =currentEdge.OtherVertex(previousVertex);
                     //Check if we have wrapped around to close the loop
                     isClosed = currentVertex == startVertex;
                     if (isClosed) continue; //Break the while loop.

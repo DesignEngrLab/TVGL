@@ -66,7 +66,7 @@ namespace TVGL
             var numPrevCrossProducts = numFaces * (numFaces - 1) / 2;
             totalAxis = totalAxis + (Axis * numPrevCrossProducts);
             /**** set new Axis (by averaging in with last n values) ****/
-            Axis = totalAxis.Divide(numFaces + numPrevCrossProducts).Normalize();
+            Axis = totalAxis.Normalize();
             foreach (var v in face.Vertices)
                 if (!Vertices.Contains(v))
                     Vertices.Add(v);
@@ -107,8 +107,10 @@ namespace TVGL
             var (allLoopsClosed, edgeLoops, loops) = GetLoops(edges, true);
             if (loops.Count != 2) return false; //There must be two and only two loops.
 
-            Loop1 = new HashSet<Vertex>(loops[0]);
-            Loop2 = new HashSet<Vertex>(loops[1]);
+            Loop1 = loops[0];
+            var Loop1Hash = new HashSet<Vertex>(Loop1);
+            Loop2 = loops[1];
+            var Loop2Hash = new HashSet<Vertex>(Loop2);
             EdgeLoop1 = edgeLoops[0];
             EdgeLoop2 = edgeLoops[1];
 
@@ -136,9 +138,9 @@ namespace TVGL
                     //Positive if B is further along
                     var previousDistance = direction.Dot(B.Coordinates);
                     var sign = Math.Sign(direction.Dot(B.Coordinates) - direction.Dot(A.Coordinates));
-                    if (Loop1.Contains(A))
+                    if (Loop1Hash.Contains(A))
                     {
-                        bool reachedEnd = Loop2.Contains(B);
+                        bool reachedEnd = Loop2Hash.Contains(B);
                         if (!reachedEnd)
                         {
                             //Check if this edge needs to "extended" to reach the end of the cylinder
@@ -165,7 +167,7 @@ namespace TVGL
                                     }
                                 }
                                 if (extensionEdge == null) break; //go to the next edge
-                                if (Loop2.Contains(extensionEdge.OtherVertex(previousVertex)))
+                                if (Loop2Hash.Contains(extensionEdge.OtherVertex(previousVertex)))
                                 {
                                     reachedEnd = true;
                                     B = extensionEdge.OtherVertex(previousVertex);
@@ -237,7 +239,7 @@ namespace TVGL
         {
             Anchor = Anchor.Transform(transformMatrix);
             Axis = Axis.Transform(transformMatrix);
-
+            Axis = Axis.Normalize();
             //how to adjust the radii?
             throw new NotImplementedException();
         }
@@ -297,9 +299,9 @@ namespace TVGL
         /// <value>The volume.</value>
         public double Volume { get; }
 
-        public HashSet<Vertex> Loop1 { get; set; }
+        public List<Vertex> Loop1 { get; set; }
 
-        public HashSet<Vertex> Loop2 { get; set; }
+        public List<Vertex> Loop2 { get; set; }
 
         public List<Edge> EdgeLoop1 { get; set; }
 
