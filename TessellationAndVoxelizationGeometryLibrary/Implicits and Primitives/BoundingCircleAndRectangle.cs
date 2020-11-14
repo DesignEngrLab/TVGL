@@ -99,43 +99,4 @@ namespace TVGL
             return cornerPoints;
         }
     }
-
-    /// <summary>
-    ///     Public circle structure, given a center point and radius
-    /// </summary>
-    public struct BoundingCircle
-    {
-        /// <summary>
-        ///     Center Point of circle
-        /// </summary>
-        public Vector2 Center;
-
-        /// <summary>
-        ///     Radius of circle
-        /// </summary>
-        public double Radius;
-
-        /// <summary>
-        ///     Area of circle
-        /// </summary>
-        public double Area;
-
-        /// <summary>
-        ///     Circumference of circle
-        /// </summary>
-        public double Circumference;
-
-        /// <summary>
-        ///     Creates a circle, given a radius. Center point is optional
-        /// </summary>
-        /// <param name="radius">The radius.</param>
-        /// <param name="center">The center.</param>
-        public BoundingCircle(double radius, Vector2 center)
-        {
-            Center = center;
-            Radius = radius;
-            Area = Math.PI * radius * radius;
-            Circumference = Constants.TwoPi * radius;
-        }
-    }
 }

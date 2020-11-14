@@ -16,43 +16,16 @@ namespace TVGLUnitTestsAndBenchmarking
         //[Fact]
         public static void TestXSectionAndMonotoneTriangulate()
         {
-
             var dir = new DirectoryInfo(".");
             while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
                 dir = dir.Parent;
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
-            // 2. get the file path
-            var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-
-            TVGL.IOFunctions.IO.Open(fileName, out Polygon polygon);
-            var path = polygon.Path.ToList();
-            //polygon = polygon.OffsetRound(.254, 0.00254)[0];
-            //Presenter.ShowAndHang(polygon);
-            //Presenter.ShowAndHang(polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive, maxNumberOfPolygons: 1));
-            //polygon= polygon.Simplify(0.0081);
-            // Presenter.ShowAndHang(polygon);
-            IEnumerable<Vector2[]> triangles;
-            polygon = new Polygon(path);
-            Presenter.ShowAndHang(polygon);
-            triangles = polygon.TriangulateToCoordinates();
-            Presenter.ShowAndHang(triangles);
-            var realArea = polygon.Area;
-            var triagArea = triangles.Sum(t => t.Area());
-            Console.WriteLine("real =" + realArea + " triArea = " + triagArea);
-            //Presenter.ShowAndHang(polygon.OffsetRound(-9.7));
-
-            //            brace.stl - holes showing up?
-            // radiobox - missing holes - weird skip in outline
-            // KnuckleTopOp flecks
-            // mendel_extruder - one show up blank
-            //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("*").OrderBy(kjhgtfrden => r.NextDouble()).ToArray();
-            for (var i = 0; i < fileNames.Length - 0; i++)
+            //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
+            var fileNames = dir.GetFiles("*").OrderBy(x => r.NextDouble()).ToArray();
+            for (var i = 0; i < fileNames.Length; i++)
             {
-                //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
-                if (Path.GetExtension(filename) != ".stl") continue;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
@@ -62,7 +35,6 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
                     continue;
                 }
-                if (name.Contains("yCastin")) continue;
 
                 for (int j = 0; j < 9; j++)
                 {
@@ -79,6 +51,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     var totalArea = 0.0;
                     foreach (var monopoly in xsection.SelectMany(p => p.CreateXMonotonePolygons()))
                     {
+                        monopoly.MakePolygonEdgesIfNonExistent();
                         var tolerance = monopoly.GetToleranceForPolygon();
                         monoPolys.Add(monopoly);
                         totalArea += monopoly.Area;
@@ -92,7 +65,7 @@ namespace TVGLUnitTestsAndBenchmarking
                         else
                         {
                             //Console.WriteLine("testing triangulation.");
-                            triangles = monopoly.TriangulateToCoordinates().ToList();
+                            var triangles = monopoly.TriangulateToCoordinates().ToList();
                             var triArea = triangles.Sum(tr => tr.Area());
                             if (!triArea.IsPracticallySame(monopoly.Area, monopoly.Area * Constants.BaseTolerance))
                             {

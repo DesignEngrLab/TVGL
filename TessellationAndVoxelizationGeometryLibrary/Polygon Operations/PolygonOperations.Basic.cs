@@ -176,7 +176,7 @@ namespace TVGL.TwoDimensional
         /// <param name="confidencePercentage">The confidence percentage.</param>
         /// <returns>
         ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
-        public static bool IsCircular(this Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(this Polygon polygon, out Circle2D minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             return IsCircular(polygon.Path, out minCircle, confidencePercentage);
         }
@@ -187,7 +187,7 @@ namespace TVGL.TwoDimensional
         /// <param name="confidencePercentage">The confidence percentage.</param>
         /// <returns>
         ///   <c>true</c> if the specified polygon is circular; otherwise, <c>false</c>.</returns>
-        public static bool IsCircular(this IEnumerable<Vector2> polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        public static bool IsCircular(this IEnumerable<Vector2> polygon, out Circle2D minCircle, double confidencePercentage = Constants.HighConfidence)
         {
             var tolerancePercentage = 1.0 - confidencePercentage;
             var points = polygon as IList<Vector2> ?? polygon.ToList();

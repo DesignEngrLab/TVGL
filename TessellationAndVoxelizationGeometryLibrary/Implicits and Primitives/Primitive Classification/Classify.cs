@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using TVGL.Curves;
 using TVGL.Numerics;
 using TVGL.PrimitiveClassificationDetail;
 
@@ -16,64 +17,44 @@ namespace TVGL
     /// </summary>
     public static class PrimitiveClassification
     {
-        private static List<double> listOfLimitsABN, listOfLimitsMCM, listOfLimitsSM;
-        private static List<List<int>> edgeRules, faceRules;
-        private static double maxFaceArea;
-        private static double primitivesBeforeFiltering;
+        const int lowMedVertexCutoff = 4;
+        const int medHighVertexCutoff = 7;
+        const int highUltraVertexCutoff = 13;
 
-        private static void InitializeFuzzinessRules()
+        internal static List<EdgeWithScores> allEdgeWithScores { get; private set; }
+
+        public static List<PrimitiveSurface> ClassifyPrimitiveSurfaces(this TessellatedSolid tessellatedSolid, bool AddToInputSolid = true)
         {
-            listOfLimitsABN = Parameters.MakingListOfLimABNbeta2();
-            listOfLimitsMCM = Parameters.MakingListOfLimMCMbeta2();
-            listOfLimitsSM = Parameters.MakingListOfLimSMbeta2();
-            edgeRules = Parameters.readingEdgesRules2();
-            faceRules = Parameters.readingFacesRules();
-            Debug.WriteLine("Edges and faces' rules have been read from the corresponding .csv files");
-        }
+            if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
+                tessellatedSolid.CompleteInitiation();
+            var verticesCategorized = CategorizeVerticesByValence(tessellatedSolid.Vertices);
+            var edgeHash = tessellatedSolid.Edges.ToHashSet();
+            var circles = new List<Circle>();
+            var ellipses = new List<Ellipse>();
+            var parabolae = new List<Parabola>();
+            var hyperbolae = new List<Hyperbola>();
+            foreach (var v in verticesCategorized)
+                MakeConics(edgeHash, v, circles, ellipses, parabolae, hyperbolae);
 
-        public static List<PrimitiveSurface> ClassifyPrimitiveSurfaces(this TessellatedSolid ts, bool AddToInputSolid = true)
-        {
-            if (listOfLimitsABN == null || listOfLimitsMCM == null | listOfLimitsSM == null || edgeRules == null || faceRules == null)
-                InitializeFuzzinessRules();
-            var allFacesWithScores = new List<FaceWithScores>(ts.Faces.Select(f => new FaceWithScores(f)));
-            var allEdgeWithScores = new List<EdgeWithScores>(ts.Edges.Select(e => new EdgeWithScores(e)));
-            var unassignedFaces = new HashSet<FaceWithScores>(allFacesWithScores);
-            var unassignedEdges = new HashSet<EdgeWithScores>(allEdgeWithScores);
-            var filteredOutEdges = new HashSet<EdgeWithScores>();  // Edges of the faces in dense area where both faces of the edge are dense
-            var filteredOutFaces = new HashSet<FaceWithScores>();  // Edges of the faces in dense area where both faces of the edge are dense  
+            #region Debugging
+#if DEBUG
 
-            // Filter out faces and edges 
-            //SparseAndDenseClustering.Run(unassignedEdges, unassignedFaces, filteredOutEdges, filteredOutFaces);
-            //FilterOutBadFaces(unassignedEdges, unassignedFaces, filteredOutEdges, filteredOutFaces);
-            Debug.WriteLine("Filtering is complete.");
-            // Classify Edges
-            foreach (var e in unassignedEdges)
-                EdgeFuzzyClassification(e);
-            Debug.WriteLine("Edge classification is complete.");
 
-            // Classify Faces
-            foreach (var eachFace in unassignedFaces)
-                FaceFuzzyClassification(eachFace, allEdgeWithScores);
-            Debug.WriteLine("Face classification is complete.");
+#endif
+            #endregion
 
-            //Now, for each face, take the combination with highest probability. 
-            // UnassignedFaces.OrderByDescending(a => (a.FaceCat.Values.ToList()[0] - a.FaceCat.Values.ToList()[1]));
-            //Can this really sort like what I want??? 
-            foreach (var face in unassignedFaces)
-            {
-                face.CatToELDC = new Dictionary<PrimitiveSurfaceType, List<Edge>>();
-                foreach (var cat in face.FaceCat.Keys)
-                {
-                    EdgesLeadToDesiredFaceCatFinder(face, cat, faceRules);
-                }
-            }
+
+
+
+            var unassignedFaces = new HashSet<FaceWithScores>();
             var plannedSurfaces = new List<PlanningSurface>();
-            maxFaceArea = unassignedFaces.Max(a => a.Face.Area);
+            var maxFaceArea = unassignedFaces.Max(a => a.Face.Area);
             while (unassignedFaces.Count > 0)
             {
                 Debug.WriteLine("# unassigned faces: " + unassignedFaces.Count);
                 var topUnassignedFace = unassignedFaces.First();
                 unassignedFaces.Remove(topUnassignedFace);
+                List<FaceWithScores> allFacesWithScores = null;
                 var newSurfaces = groupFacesIntoPlanningSurfaces(topUnassignedFace, allFacesWithScores);
                 plannedSurfaces.AddRange(DecideOnOverlappingPatches(newSurfaces, unassignedFaces));
             }
@@ -82,14 +63,40 @@ namespace TVGL
             //PaintSurfaces(primitives, ts);
             //ReportStats(primitives);
             if (AddToInputSolid && primitives.Any())
-                ts.Primitives = primitives;
+                tessellatedSolid.Primitives = primitives;
             return primitives;
+        }
+
+        private static void MakeConics(HashSet<Edge> edgeHash, Vertex v, List<Circle> circles, List<Ellipse> ellipses, List<Parabola> parabolae, List<Hyperbola> hyperbolae)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static List<Vertex> CategorizeVerticesByValence(IEnumerable<Vertex> vertices)
+        //private static void CategorizeVerticesByValence(IEnumerable<Vertex> vertices, out List<Vertex> low, out List<Vertex> med, out List<Vertex> high, out List<Vertex> ultra)
+        {
+            var low = new List<Vertex>();
+            var med = new List<Vertex>();
+            var high = new List<Vertex>();
+            var ultra = new List<Vertex>();
+            foreach (var v in vertices)
+            {
+                int valence = v.Edges.Count;
+                if (valence < lowMedVertexCutoff) low.Add(v);
+                else if (valence < medHighVertexCutoff) med.Add(v);
+                else if (valence < highUltraVertexCutoff) high.Add(v);
+                else ultra.Add(v);
+            }
+            low.AddRange(med);
+            low.AddRange(high);
+            low.AddRange(ultra);
+            return low;
         }
 
         private static List<PrimitiveSurface> MinorCorrections(List<PrimitiveSurface> primitives, List<EdgeWithScores> allEdgeWithScores)
         {
             //foreach (var primitive in primitives.Where(a => a.Faces.Count == 1 && a is Sphere))
-            primitivesBeforeFiltering = primitives.Count;
+          var  primitivesBeforeFiltering = primitives.Count;
             //return primitives;
             for (var i = 0; i < primitives.Count - 1; i++)
             {
@@ -238,29 +245,6 @@ namespace TVGL
 
         #endregion
         #region Edge Classification
-        private static void EdgeFuzzyClassification(EdgeWithScores e)
-        {
-            var ABN = AbnCalculator(e);
-            var MCM = McmCalculator(e);
-            var SM = SmCalculator(e);
-            var ABNid = CatAndProbFinder(ABN, listOfLimitsABN);
-            var MCMid = CatAndProbFinder(MCM, listOfLimitsMCM);
-            var SMid = CatAndProbFinder(SM, listOfLimitsSM);
-            if (ABNid.Count == 2 && ABNid[0].SequenceEqual(ABNid[1]))
-                ABNid.RemoveAt(0);
-            e.CatProb = new Dictionary<int, double>();
-            foreach (var ABNprobs in ABNid)
-                foreach (var MCMProbs in MCMid)
-                    foreach (var SMProbs in SMid)
-                    {
-                        int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out var Prob);
-                        if (!e.CatProb.Keys.Contains(group))
-                            e.CatProb.Add(group, Prob);
-                        else if (e.CatProb[group] < Prob)
-                            e.CatProb[group] = Prob;
-                    }
-        }
-
 
         internal static double AbnCalculator(EdgeWithScores eachEdge)
         {
@@ -292,8 +276,8 @@ namespace TVGL
             var vector1 = new Vector3(cenMass1[0] - eachEdge.Edge.From.Coordinates[0],
                 cenMass1[1] - eachEdge.Edge.From.Coordinates[1],
                 cenMass1[2] - eachEdge.Edge.From.Coordinates[2]);
-            var vector2 = new Vector3(cenMass2[0] - eachEdge.Edge.From.Coordinates[0], 
-                cenMass2[1] - eachEdge.Edge.From.Coordinates[1], 
+            var vector2 = new Vector3(cenMass2[0] - eachEdge.Edge.From.Coordinates[0],
+                cenMass2[1] - eachEdge.Edge.From.Coordinates[1],
                 cenMass2[2] - eachEdge.Edge.From.Coordinates[2]);
             var distance1 = eachEdge.Edge.Vector.Normalize().Dot(vector1);
             var distance2 = eachEdge.Edge.Vector.Normalize().Dot(vector2);
@@ -431,76 +415,6 @@ namespace TVGL
 
         #endregion
         #region Face Classification
-        private static void FaceFuzzyClassification(FaceWithScores eachFace, List<EdgeWithScores> allEdgeWithScores)
-        {
-            List<Dictionary<int, double>> t = eachFace.Face.Edges.Select(e => allEdgeWithScores.First(ews => ews.Edge == e).CatProb).ToList();
-            eachFace.FaceCat = new Dictionary<PrimitiveSurfaceType, double>();
-            eachFace.CatToCom = new Dictionary<PrimitiveSurfaceType, int[]>();
-            eachFace.ComToEdge = new Dictionary<int[], Edge[]>();
-
-            if (t[0] != null)
-            {
-                for (var i = 0; i < t[0].Count; i++)
-                {
-                    if (t[1] == null) break;
-                    for (var j = 0; j < t[1].Count; j++)
-                    {
-                        if (t[2] == null) break;
-                        for (var k = 0; k < t[2].Count; k++)
-                        {
-                            var combination = new[] { t[0].ToList()[i].Key, t[1].ToList()[j].Key, t[2].ToList()[k].Key };
-
-                            var a = new double[3];
-                            a[0] = t[0].ToList()[i].Value;
-                            a[1] = t[1].ToList()[j].Value;
-                            a[2] = t[2].ToList()[k].Value;
-
-                            double totProb = 1;
-                            var co = 0;
-
-                            foreach (var ar in a.Where(p => p != 1))
-                            {
-                                totProb = totProb * (1 - ar);
-                                co++;
-                            }
-                            if (co == 0)
-                                totProb = 1;
-                            else
-                                totProb = 1 - totProb;
-
-                            //var totProb = 1-((1-t[0].ToList()[i].Value) * (1-t[1].ToList()[j].Value) * (1-t[2].ToList()[k].Value));
-                            //var combAndEdge = new Dictionary<int[], EdgeWithScores[]>();
-                            //CanCom.Add(combination, totProb);
-
-                            var edges = new[] { eachFace.Face.Edges[0], eachFace.Face.Edges[1], eachFace.Face.Edges[2] };
-                            //combAndEdge.Add(combination.OrderBy(n=>n).ToArray(),edges);
-
-                            var faceCat = FaceClassifier(combination, faceRules);
-
-                            if (!eachFace.FaceCat.ContainsKey(faceCat))
-                            {
-                                eachFace.FaceCat.Add(faceCat, totProb);
-                                eachFace.CatToCom.Add(faceCat, combination.OrderBy(n => n).ToArray());
-                                eachFace.ComToEdge.Add(combination, edges);
-                                eachFace.ComToEdge = sortingComToEdgeDic(eachFace.ComToEdge);
-                                //eachFace.ComEdge.Add(faceCat, combAndEdge);
-                            }
-                            else
-                            {
-                                if (!(eachFace.FaceCat[faceCat] < totProb)) continue;
-                                eachFace.FaceCat[faceCat] = totProb;
-                                eachFace.ComToEdge.Remove(eachFace.CatToCom[faceCat]);
-                                eachFace.CatToCom[faceCat] = combination.OrderBy(n => n).ToArray();
-                                eachFace.ComToEdge.Add(combination, edges);
-                                eachFace.ComToEdge = sortingComToEdgeDic(eachFace.ComToEdge);
-                                //eachFace.ComEdge[faceCat] = combAndEdge;
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
 
         private static PrimitiveSurfaceType FaceClassifier(int[] bestCombination, List<List<int>> faceRules)
         {
@@ -772,6 +686,7 @@ namespace TVGL
 
         #endregion
         #region Make Primitives
+        static double maxFaceArea = double.NaN; //todo fix this
         private static List<PrimitiveSurface> MakeSurfaces(List<PlanningSurface> plannedSurfaces)
         {
             var completeSurfaces = new List<PrimitiveSurface>();
@@ -904,7 +819,7 @@ namespace TVGL
                 if (!tempCross.IsNull())
                     if (tempCross.Dot(normalsOfGaussPlane[0]) >= 0)
                         normalsOfGaussPlane.Add(tempCross);
-                    else normalsOfGaussPlane.Add(-1*tempCross);
+                    else normalsOfGaussPlane.Add(-1 * tempCross);
             }
             var normalOfGaussPlane = new Vector3();
             normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current + c);
@@ -970,7 +885,6 @@ namespace TVGL
         {
             Debug.WriteLine("**************** RESULTS *******************");
             Debug.WriteLine("Number of Primitives = " + primitives.Count);
-            Debug.WriteLine("Number of Primitives Before Filtering= " + primitivesBeforeFiltering);
             Debug.WriteLine("Number of Flats = " + primitives.Count(p => p is Plane));
             Debug.WriteLine("Number of Cones = " + primitives.Count(p => p is Cone));
             Debug.WriteLine("Number of Cylinders = " + primitives.Count(p => p is Cylinder));
@@ -994,31 +908,31 @@ namespace TVGL
         /// <summary>
         /// The unknown
         /// </summary>
-        Unknown = 0,
+        Unknown ,
         /// <summary>
         /// The flat
         /// </summary>
-        Plane = 500,
+        Plane,
         /// <summary>
         /// The cylinder
         /// </summary>
-        Cylinder = 501,
+        Cylinder,
         /// <summary>
         /// The sphere
         /// </summary>
-        Sphere = 502,
+        Sphere,
         /// <summary>
         /// The flat_to_ curve
         /// </summary>
-        Flat_to_Curve = 503,
+        Flat_to_Curve ,
         /// <summary>
         /// The sharp
         /// </summary>
-        Sharp = 504,
+        Sharp,
         /// <summary>
         /// The cone
         /// </summary>
-        Cone = 1,
-        Torus = 6
+        Cone,
+        Torus
     }
 }

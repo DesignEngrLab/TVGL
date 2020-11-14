@@ -1683,7 +1683,7 @@ namespace TVGL
         /// <param name="circle"></param>
         /// <param name="radianIncrement"></param>
         /// <returns></returns>
-        public static List<Vector2> CreateCirclePath(BoundingCircle circle, double radianIncrement = Math.PI / 50.0)
+        public static List<Vector2> CreateCirclePath(Circle2D circle, double radianIncrement = Math.PI / 50.0)
         {
             return CreateCirclePath(circle.Center, circle.Radius, radianIncrement);
         }

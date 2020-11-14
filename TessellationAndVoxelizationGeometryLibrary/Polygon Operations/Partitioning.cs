@@ -48,8 +48,18 @@ namespace TVGL.TwoDimensional
 
     public static partial class PolygonOperations
     {
+        /// <summary>Gets the monotonicity change.</summary>
+        /// <param name="vertex">The vertex.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>MonotonicityChange.</returns>
+        /// <exception cref="ArgumentException">
+        /// vertex does not conenct to polygon edges. Be sure to invoke" +
+        ///           " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method. - vertex
+        /// </exception>
         public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex, double tolerance)
         {
+            if (vertex.EndLine == null) throw new ArgumentException("vertex does not connect to polygon edges. Be sure to invoke" +
+             " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method.", nameof(vertex));
             var xPrev = vertex.EndLine.Vector.X;
             var yPrev = vertex.EndLine.Vector.Y;
             if (xPrev.IsNegligible() && yPrev.IsNegligible()) return MonotonicityChange.SameAsPrevious;

@@ -61,7 +61,7 @@ namespace OldTVGL
             //var point1 = randomPoints[0];
             //var point2 = randomPoints[1];
             //var previousPoints = new HashSet<PointLight>();
-            //var circle = new InternalCircle(point1, point2);
+            //var circle = new Circle(point1, point2);
             //var stallCounter = 0;
             //var i = 0;
 
@@ -82,7 +82,7 @@ namespace OldTVGL
             //    if (previousPoints.Contains(currentPoint))
             //    {
             //        //Make a new circle from the current two-point circle and the current point
-            //        circle = new InternalCircle(circle.Point0, circle.Point1, currentPoint);
+            //        circle = new Circle(circle.Point0, circle.Point1, currentPoint);
             //        previousPoints.Remove(currentPoint);
             //        i++;
             //    }
@@ -91,7 +91,7 @@ namespace OldTVGL
             //        //Find the point in the circle furthest from new point. 
             //        circle.Furthest(currentPoint, out var furthestPoint, ref previousPoints);
             //        //Make a new circle from the furthest point and current point
-            //        circle = new InternalCircle(currentPoint, furthestPoint);
+            //        circle = new Circle(currentPoint, furthestPoint);
             //        //Add previousPoints to the front of the list
             //        foreach (var previousPoint in previousPoints)
             //        {
@@ -479,7 +479,7 @@ namespace OldTVGL
         }
 
         /// <summary>
-        ///     Class InternalCircle.
+        ///     Class Circle.
         /// </summary>
         internal class InternalCircle
         {
