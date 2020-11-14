@@ -24,18 +24,24 @@ namespace TVGLUnitTestsAndBenchmarking
 
             // 2. get the file path
             var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-          
+
             TVGL.IOFunctions.IO.Open(fileName, out Polygon polygon);
-             Presenter.ShowAndHang(polygon);
-            polygon = polygon.OffsetRound(.254, 0.00254)[0];
-            Presenter.ShowAndHang(polygon);
-            Presenter.ShowAndHang(polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive, maxNumberOfPolygons: 1));
+            var path = polygon.Path.ToList();
+            //polygon = polygon.OffsetRound(.254, 0.00254)[0];
+            //Presenter.ShowAndHang(polygon);
+            //Presenter.ShowAndHang(polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive, maxNumberOfPolygons: 1));
             //polygon= polygon.Simplify(0.0081);
-           // Presenter.ShowAndHang(polygon);
-            var triangles = polygon.TriangulateToCoordinates();
+            // Presenter.ShowAndHang(polygon);
+            IEnumerable<Vector2[]> triangles;
+            polygon = new Polygon(path);
+            Presenter.ShowAndHang(polygon);
+            triangles = polygon.TriangulateToCoordinates();
             Presenter.ShowAndHang(triangles);
-            Presenter.ShowAndHang(polygon.OffsetRound(-9.7));
-            
+            var realArea = polygon.Area;
+            var triagArea = triangles.Sum(t => t.Area());
+            Console.WriteLine("real =" + realArea + " triArea = " + triagArea);
+            //Presenter.ShowAndHang(polygon.OffsetRound(-9.7));
+
             //            brace.stl - holes showing up?
             // radiobox - missing holes - weird skip in outline
             // KnuckleTopOp flecks

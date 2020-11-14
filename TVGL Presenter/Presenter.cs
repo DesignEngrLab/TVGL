@@ -691,7 +691,7 @@ namespace TVGL
             {
                 //Now create a line collection by doubling up the points
                 var lineCollection = new List<Point3D>();
-                foreach (var line in polygon.Lines)
+                foreach (var line in polygon.Edges)
                 {
                     lineCollection.Add(new Point3D(line.FromPoint.X, line.FromPoint.Y, 0));
                     lineCollection.Add(new Point3D(line.ToPoint.X, line.ToPoint.Y, 0));

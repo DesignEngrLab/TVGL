@@ -146,32 +146,40 @@ namespace TVGL.TwoDimensional
 
             const int maxNumberOfAttempts = 10;
             var attempts = 0;
-            var random = new Random();
-            var angle = random.NextDouble() * 2 * Math.PI / maxNumberOfAttempts;
-            var totalAngle = angle;
+            var random = new Random(0);
             var successful = false;
+            var angle = random.NextDouble() * 2 * Math.PI;
             var localTriangleFaceList = new List<int[]>();
             do
             {
+                var c = Math.Cos(angle);
+                var s = Math.Sin(angle);
                 try
                 {
                     localTriangleFaceList.Clear();
-                    polygon.Transform(Matrix3x3.CreateRotation(angle));
+                    if (angle != 0)
+                    {
+                        var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
+                        polygon.Transform(rotateMatrix);
+                    }
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                     successful = true;
+                    if (angle != 0)
+                    {
+                        var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
+                        polygon.Transform(rotateMatrix);
+                    }
                 }
                 catch
                 {
-                    angle = random.NextDouble() * 2 * Math.PI / maxNumberOfAttempts;
-                    totalAngle += angle;
+                    angle = random.NextDouble() * 2 * Math.PI;
                 }
             } while (!successful && attempts++ < maxNumberOfAttempts);
             if (!successful)
                 throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges or"
                     + " check for self-intersections.");
             triangleFaceList.AddRange(localTriangleFaceList);
-            polygon.Transform(Matrix3x3.CreateRotation(-totalAngle));
             return triangleFaceList;
         }
 
@@ -411,7 +419,10 @@ namespace TVGL.TwoDimensional
             monoPoly.MakePolygonEdgesIfNonExistent();
             if (monoPoly.Vertices.Count < 3) yield break;
             if (monoPoly.Vertices.Count == 3)
+            {
                 yield return new[] { monoPoly.Vertices[0].IndexInList, monoPoly.Vertices[1].IndexInList, monoPoly.Vertices[2].IndexInList };
+                yield break;
+            }
             Vertex2D bottomVertex = monoPoly.Vertices[0]; // Q: why is this called bottom and not leftmost?
             // A: because in the loop below it becomes the vertex on the bottom branch of the polygon
             foreach (var vertex in monoPoly.Vertices.Skip(1))

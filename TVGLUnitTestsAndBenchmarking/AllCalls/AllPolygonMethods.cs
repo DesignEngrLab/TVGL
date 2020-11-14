@@ -28,7 +28,7 @@ namespace TVGLUnitTestsAndBenchmarking
             isItTrueThat = poly1.IsPositive;
             var poly3 = new Polygon(TestCases.MakeCircularPolygon(5, 5));
             var intersections=poly1.GetPolygonInteraction(poly2);
-            List<PolygonEdge> lines = poly1.Lines;
+            PolygonEdge[] lines = poly1.Edges;
             var extrema = poly1.MaxX;
             extrema = poly1.MaxY;
             extrema = poly1.MinX;

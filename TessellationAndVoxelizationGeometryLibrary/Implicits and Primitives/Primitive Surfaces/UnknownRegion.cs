@@ -11,19 +11,19 @@ namespace TVGL
     /// <summary>
     ///     Class DenseRegion.
     /// </summary>
-    public class DenseRegion : PrimitiveSurface
+    public class UnknownRegion : PrimitiveSurface
     {
         /// <summary>
-        ///     Initializes a new instance of the <see cref="DenseRegion" /> class.
+        ///     Initializes a new instance of the <see cref="UnknownRegion" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public DenseRegion(List<PolygonalFace> faces) : base(faces)
+        public UnknownRegion(List<PolygonalFace> faces) : base(faces)
         {
-            Type = PrimitiveSurfaceType.Dense;
+            Type = PrimitiveSurfaceType.Unknown;
         }
-        internal DenseRegion()
+        public UnknownRegion()
         {
-            Type = PrimitiveSurfaceType.Dense;
+            Type = PrimitiveSurfaceType.Unknown;
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override bool IsNewMemberOf(PolygonalFace face)
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            throw new NotImplementedException();
+            base.Transform(transformMatrix);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void UpdateWith(PolygonalFace face)
         {
-            throw new NotImplementedException();
+            base.UpdateWith(face);
         }
     }
 }

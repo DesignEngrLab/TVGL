@@ -65,10 +65,12 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
+            if (Faces == null) Faces = new HashSet<PolygonalFace>();
             Normal = (Faces.Count * Normal) + face.Normal;
             Normal = Vector3.Normalize(Normal);
             var numNewVerts = 0;
             var newDistanceToPlane = 0.0;
+            if (Vertices == null) Vertices = new HashSet<Vertex>();
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
             {
                 numNewVerts++;
@@ -406,10 +408,12 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
+        /*
         public override int GetHashCode()
         {
             return Normal.GetHashCode() + DistanceToOrigin.GetHashCode();
         }
+        */
 
         /// <summary>
         /// Copies the specified copy members.

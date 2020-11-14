@@ -49,7 +49,7 @@ namespace TVGL
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
                     bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
         {
-            if (edgeReference >= 0)
+            if (edgeReference > 0)
                 EdgeReference = edgeReference;
             else TessellatedSolid.SetAndGetEdgeChecksum(this);
             _ownedFace = ownedFace;
@@ -214,6 +214,17 @@ namespace TVGL
         private void DetermineNormal()
         {
             throw new NotImplementedException();
+        }
+
+        internal void UpdateWithNewFace(PolygonalFace face)
+        {
+            var v1 = face.Vertices.FindIndex(v =>v== From);
+            var v2 = face.Vertices.FindIndex(v =>v== To);
+            var step = v2 - v1;
+            if (step < 0) step += face.Vertices.Count;
+            if (step == 1) OwnedFace = face;
+            else OtherFace = face;
+            face.AddEdge(this);
         }
 
 

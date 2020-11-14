@@ -170,7 +170,13 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public abstract void Transform(Matrix4x4 transformMatrix);
+        public virtual void Transform(Matrix4x4 transformMatrix)
+        {
+            foreach (var v in Vertices)
+            {
+                v.Coordinates = v.Coordinates.Transform(transformMatrix);
+            }
+        }
 
         /// <summary>
         ///     Checks if face should be a member of this surface
@@ -188,14 +194,49 @@ namespace TVGL
             Area += face.Area;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
-            foreach (var e in face.Edges.Where(e => !InnerEdges.Contains(e)))
-            {
-                if (_outerEdges.Contains(e))
+            if (face.Edges.Count == face.Vertices.Count)
+                foreach (var e in face.Edges.Where(e => !InnerEdges.Contains(e)))
                 {
-                    _outerEdges.Remove(e);
-                    _innerEdges.Add(e);
+                    if (OuterEdges.Contains(e))
+                    {
+                        OuterEdges.Remove(e);
+                        InnerEdges.Add(e);
+                    }
+                    else OuterEdges.Add(e);
                 }
-                else _outerEdges.Add(e);
+            else
+            {
+                var faceVertexIndices = face.Vertices.SelectMany(v => new[] { v.IndexInList, v.IndexInList }).ToList();
+                var outerEdgesToRemove = new List<Edge>();
+                foreach (var outerEdge in OuterEdges)
+                {
+                    var vertexIndices = Edge.GetVertexIndices(outerEdge.EdgeReference);
+                    if (faceVertexIndices.Contains(vertexIndices.Item1) && faceVertexIndices.Contains(vertexIndices.Item2))
+                    {
+                        faceVertexIndices.Remove(vertexIndices.Item1);
+                        faceVertexIndices.Remove(vertexIndices.Item2);
+                        outerEdge.UpdateWithNewFace(face);
+                        outerEdgesToRemove.Add(outerEdge);
+                        InnerEdges.Add(outerEdge);
+                        if (faceVertexIndices.Count == 0) break;
+                    }
+                }
+                foreach (var edge in outerEdgesToRemove)
+                    OuterEdges.Remove(edge);
+                while (faceVertexIndices.Count > 0)
+                {
+                    var vIndex1 = faceVertexIndices[0];
+                    faceVertexIndices.RemoveAt(0);
+                    var vIndex2 = faceVertexIndices.First(index => index != vIndex1);
+                    faceVertexIndices.Remove(vIndex2);
+                    var v1 = face.Vertices.FindIndex(v => v.IndexInList == vIndex1);
+                    var v2 = face.Vertices.FindIndex(v => v.IndexInList == vIndex2);
+                    var step = v2 - v1;
+                    if (step < 0) step += face.Vertices.Count;
+                    if (step == 1)
+                        OuterEdges.Add(new Edge(face.Vertices[v1], face.Vertices[v2], face, null,false));
+                    else OuterEdges.Add(new Edge(face.Vertices[v2], face.Vertices[v1], face, null, false));
+                }
             }
             Faces.Add(face);
         }
@@ -215,11 +256,11 @@ namespace TVGL
 
             _innerEdges = new HashSet<Edge>();
             foreach (var i in _innerEdgeIndices)
-                _innerEdges.Add(ts.Edges[i]);
+                InnerEdges.Add(ts.Edges[i]);
 
             _outerEdges = new HashSet<Edge>();
             foreach (var i in _outerEdgeIndices)
-                _outerEdges.Add(ts.Edges[i]);
+                OuterEdges.Add(ts.Edges[i]);
             Area = Faces.Sum(f => f.Area);
         }
 
@@ -264,7 +305,7 @@ namespace TVGL
                 {
                     //The To/From order cannot be used, since it is only correct for the face the edge belongs to.
                     //So, add whichever vertex of the edge has no already been added
-                    var currentVertex =currentEdge.OtherVertex(previousVertex);
+                    var currentVertex = currentEdge.OtherVertex(previousVertex);
                     //Check if we have wrapped around to close the loop
                     isClosed = currentVertex == startVertex;
                     if (isClosed) continue; //Break the while loop.

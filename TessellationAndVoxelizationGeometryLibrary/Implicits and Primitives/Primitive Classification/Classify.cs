@@ -509,7 +509,7 @@ namespace TVGL
             intToString.Add(201, PrimitiveSurfaceType.Cylinder);
             intToString.Add(202, PrimitiveSurfaceType.Sphere);
             intToString.Add(203, PrimitiveSurfaceType.Flat_to_Curve);
-            intToString.Add(204, PrimitiveSurfaceType.Dense);
+            intToString.Add(204, PrimitiveSurfaceType.Unknown);
             intToString.Add(205, PrimitiveSurfaceType.Unknown);
             var sortedCom = bestCombination.OrderBy(n => n).ToArray();
             for (var i = 0; i < faceRules[0].Count; i++)
@@ -961,7 +961,7 @@ namespace TVGL
                 else if (primitiveSurface is Plane)
                     foreach (var f in primitiveSurface.Faces)
                         f.Color = new Color(KnownColors.Green);
-                else if (primitiveSurface is DenseRegion)
+                else if (primitiveSurface is UnknownRegion)
                     foreach (var f in primitiveSurface.Faces)
                         f.Color = new Color(KnownColors.Black);
             }
@@ -995,10 +995,6 @@ namespace TVGL
         /// The unknown
         /// </summary>
         Unknown = 0,
-        /// <summary>
-        /// The dense
-        /// </summary>
-        Dense = 123456789,
         /// <summary>
         /// The flat
         /// </summary>
