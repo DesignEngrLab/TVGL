@@ -221,7 +221,7 @@ namespace TVGL.TwoDimensional
             foreach (var vertex in nextVertices)
             {
                 if (vertex == current) continue;
-                var angle = lastVector.InteriorAngleBetweenVectors(vertex.Coordinates - current.Coordinates);
+                var angle = lastVector.SmallerAngleBetweenVectors(vertex.Coordinates - current.Coordinates);
                 if (minAngle > angle && !angle.IsNegligible())
                 {
                     minAngle = angle;

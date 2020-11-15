@@ -4,6 +4,8 @@ using System.Text;
 
 namespace TVGL.Curves
 {
+    public class StraightLine : ConicSection
+    { }
     public class Ellipse : ConicSection
     { }
     public class Parabola : ConicSection

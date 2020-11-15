@@ -20,6 +20,9 @@ namespace TVGL
         const int lowMedVertexCutoff = 4;
         const int medHighVertexCutoff = 7;
         const int highUltraVertexCutoff = 13;
+        const double errorInitialEdgePairing = 0.05;
+        const double minCircleEdgeAngle = 2.0; //this corresponds to 114.6 degrees. That seems about right. I was thinking 120 but that seemed
+                                               // on the high side
 
         internal static List<EdgeWithScores> allEdgeWithScores { get; private set; }
 
@@ -29,12 +32,13 @@ namespace TVGL
                 tessellatedSolid.CompleteInitiation();
             var verticesCategorized = CategorizeVerticesByValence(tessellatedSolid.Vertices);
             var edgeHash = tessellatedSolid.Edges.ToHashSet();
+            var straights = new List<StraightLine>();
             var circles = new List<Circle>();
             var ellipses = new List<Ellipse>();
             var parabolae = new List<Parabola>();
             var hyperbolae = new List<Hyperbola>();
             foreach (var v in verticesCategorized)
-                MakeConics(edgeHash, v, circles, ellipses, parabolae, hyperbolae);
+                MakeConics(edgeHash, v, straights, circles, ellipses, parabolae, hyperbolae);
 
             #region Debugging
 #if DEBUG
@@ -67,9 +71,59 @@ namespace TVGL
             return primitives;
         }
 
-        private static void MakeConics(HashSet<Edge> edgeHash, Vertex v, List<Circle> circles, List<Ellipse> ellipses, List<Parabola> parabolae, List<Hyperbola> hyperbolae)
+        private static void MakeConics(HashSet<Edge> edgeHash, Vertex v, List<StraightLine> straights, List<Circle> circles,
+            List<Ellipse> ellipses, List<Parabola> parabolae, List<Hyperbola> hyperbolae)
         {
-            throw new NotImplementedException();
+            var lengthDictionary = new SortedDictionary<double, Edge>(new NoEqualSort());
+            foreach (var edge in v.Edges)
+            {
+                if (edgeHash.Contains(edge)) lengthDictionary.Add(edge.Vector.LengthSquared(), edge);
+            }
+            var sortedLengths = lengthDictionary.Keys.ToList();
+            for (int i = 0; i < sortedLengths.Count - 1; i++)
+            {
+                var inEdgeLength = sortedLengths[i];
+                for (int j = i + 1; j < sortedLengths.Count; j++)
+                {
+                    var outEdgeLength = sortedLengths[j];
+                    var error = 2 * (outEdgeLength - inEdgeLength) / (inEdgeLength + outEdgeLength);
+                    if (error > errorInitialEdgePairing) break;
+                    if (ExpandToFindConicSection(v, lengthDictionary[inEdgeLength], lengthDictionary[outEdgeLength],
+                        out var edgeInSection, out var conicSection))
+                    {
+                        foreach (var edge in edgeInSection)
+                            edgeHash.Remove(edge);
+                        if (conicSection is StraightLine) straights.Add((StraightLine)conicSection);
+                        else if (conicSection is Circle) circles.Add((Circle)conicSection);
+                        else if (conicSection is Ellipse) ellipses.Add((Ellipse)conicSection);
+                        else if (conicSection is Parabola) parabolae.Add((Parabola)conicSection);
+                        else if (conicSection is Hyperbola) hyperbolae.Add((Hyperbola)conicSection);
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static bool ExpandToFindConicSection(Vertex v, Edge inEdge, Edge outEdge,  out List<Edge> edgeInSection,
+            out ConicSection conicSection)
+        {
+            var inVector = inEdge.Vector;
+            if (inEdge.From == v) inVector *= -1;
+            var outVector = outEdge.Vector;
+            if (outEdge.To == v) outVector *= -1;
+            var angle = inVector.SmallerAngleBetweenVectors(outVector) ;
+            if (angle.IsPracticallySame(Math.PI))
+             //then straightLine
+                conicSection = new StraightLine();
+            if (angle < minCircleEdgeAngle)
+            {
+                edgeInSection = null;
+                conicSection = null;
+                return false;
+            }
+            else conicSection = new Circle.DefineFromPoints(v.Coordinates, inEdge.OtherVertex(v).Coordinates,
+                outEdge.OtherVertex(v).Coordinates);
+            var cross = inVector.Cross(outVector);
         }
 
         private static List<Vertex> CategorizeVerticesByValence(IEnumerable<Vertex> vertices)
@@ -96,7 +150,7 @@ namespace TVGL
         private static List<PrimitiveSurface> MinorCorrections(List<PrimitiveSurface> primitives, List<EdgeWithScores> allEdgeWithScores)
         {
             //foreach (var primitive in primitives.Where(a => a.Faces.Count == 1 && a is Sphere))
-          var  primitivesBeforeFiltering = primitives.Count;
+            var primitivesBeforeFiltering = primitives.Count;
             //return primitives;
             for (var i = 0; i < primitives.Count - 1; i++)
             {
@@ -908,7 +962,7 @@ namespace TVGL
         /// <summary>
         /// The unknown
         /// </summary>
-        Unknown ,
+        Unknown,
         /// <summary>
         /// The flat
         /// </summary>
@@ -924,7 +978,7 @@ namespace TVGL
         /// <summary>
         /// The flat_to_ curve
         /// </summary>
-        Flat_to_Curve ,
+        Flat_to_Curve,
         /// <summary>
         /// The sharp
         /// </summary>

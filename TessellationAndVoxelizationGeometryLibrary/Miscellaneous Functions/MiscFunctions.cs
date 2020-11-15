@@ -860,136 +860,52 @@ namespace TVGL
         #region Angle between Edges/Lines
 
         /// <summary>
-        ///     Gets the smaller of the two angles between edges.
+        ///     Gets the larger angle between two vectors, assuming vector2 starts that the head of
+        ///     vector1. The vectors do not need to be normalized.
         /// </summary>
-        /// <param name="edge1">The edge1.</param>
-        /// <param name="edge2">The edge2.</param>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double SmallerAngleBetweenEdges(this Edge edge1, Edge edge2)
+        public static double LargerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            var axis = edge1.Vector.Cross(edge2.Vector);
-            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            var extAngle = ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
-            return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
+            return Math.PI + Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
         }
 
         /// <summary>
-        ///     Smallers the angle between edges.
+        ///     Gets the smaller angle between two vectors, assuming vector2 starts that the head of
+        ///     vector1. The vectors do not need to be normalized.
         /// </summary>
-        /// <param name="v0">The v0.</param>
-        /// <param name="v1">The v1.</param>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double SmallerAngleBetweenEdges(this Vector2 v0, Vector2 v1)
+        public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            var extAngle = ExteriorAngleBetweenVectors(v0, v1);
-            return (extAngle > Math.PI) ? Constants.TwoPi - extAngle : extAngle;
+            return Math.PI - Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
+        }
+
+
+        /// <summary>
+        ///     Gets the larger angle between two vectors, assuming vector2 starts that the head of
+        ///     vector1. The vectors do not need to be normalized.
+        /// </summary>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
+        /// <returns>System.Double.</returns>
+        public static double LargerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
+        {
+            return Math.PI + Math.Atan2(vector1.Cross(vector2).Length(), vector1.Dot(vector2));
         }
 
         /// <summary>
-        ///     Angles the between edges cw.
+        ///     Gets the smaller angle between two vectors, assuming vector2 starts that the head of
+        ///     vector1. The vectors do not need to be normalized.
         /// </summary>
-        /// <param name="edge1">The edge1.</param>
-        /// <param name="edge2">The edge2.</param>
-        /// <param name="axis">The axis.</param>
+        /// <param name="vector1">The v0.</param>
+        /// <param name="vector2">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(this Edge edge1, Edge edge2, Vector3 axis)
+        public static double SmallerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
         {
-            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
-        }
-
-        /// <summary>
-        ///     Angles the between edges CCW.
-        /// </summary>
-        /// <param name="edge1">The edge1.</param>
-        /// <param name="edge2">The edge2.</param>
-        /// <param name="axis">The axis.</param>
-        /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(this Edge edge1, Edge edge2, Vector3 axis)
-        {
-            var twoDEdges = (new[] { edge1.Vector, edge2.Vector }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return InteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
-        }
-
-        /// <summary>
-        ///     Angles the between edges cw.
-        /// </summary>
-        /// <param name="edge1">The edge1.</param>
-        /// <param name="edge2">The edge2.</param>
-        /// <param name="axis">The axis.</param>
-        /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(this Vector3 edge1, Vector3 edge2, Vector3 axis)
-        {
-            var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return ExteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
-        }
-
-        /// <summary>
-        ///     Angles the between edges CCW.
-        /// </summary>
-        /// <param name="edge1">The edge1.</param>
-        /// <param name="edge2">The edge2.</param>
-        /// <param name="axis">The axis.</param>
-        /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(this Vector3 edge1, Vector3 edge2, Vector3 axis)
-        {
-            var twoDEdges = (new[] { edge1, edge2 }).ProjectTo2DCoordinates(axis, out _).ToArray();
-            return InteriorAngleBetweenVectors(twoDEdges[0], twoDEdges[1]);
-        }
-
-        internal static double ExteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
-        {
-            return Constants.TwoPi - InteriorAngleBetweenVectors(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
-        }
-
-        internal static double InteriorAngleBetweenEdgesInCCWList(Vector2 a, Vector2 b, Vector2 c)
-        {
-            return InteriorAngleBetweenVectors(new Vector2(b.X - a.X, b.Y - a.Y), new Vector2(c.X - b.X, c.Y - b.Y));
-        }
-
-        public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
-        {
-            return Constants.TwoPi - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, positiveNormal);
-        }
-
-        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Vector3 positiveNormal)
-        {
-            var flattenTransform = TransformToXYPlane(positiveNormal, out _);
-            return ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, flattenTransform);
-        }
-
-        internal static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Matrix4x4 flattenTransform)
-        {
-            return Constants.TwoPi - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, flattenTransform);
-        }
-
-        internal static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, Matrix4x4 flattenTransform)
-        {
-            var points = (new List<Vertex> { a, b, c }).ProjectTo2DCoordinates(flattenTransform).ToArray();
-            return InteriorAngleBetweenVectors(new Vector2(points[1].X - points[0].X, points[1].Y - points[0].Y),
-                new Vector2(points[2].X - points[1].X, points[2].Y - points[1].Y));
-        }
-
-        /// <summary>
-        ///     Gets the exterior angle between two edges, assuming the edges are listed in CCW order.
-        /// </summary>
-        /// <param name="v0">The v0.</param>
-        /// <param name="v1">The v1.</param>
-        /// <returns>System.Double.</returns>
-        public static double ExteriorAngleBetweenVectors(this Vector2 v0, Vector2 v1)
-        {
-            return Math.PI + Math.Atan2(v0.Cross(v1), v0.Dot(v1));
-        }
-
-        /// <summary>
-        /// Gets the interior angle between two vectors, assuming the edges are listed in CCW order.
-        /// </summary>
-        /// <param name="v0">The v0.</param>
-        /// <param name="v1">The v1.</param>
-        /// <returns>System.Double.</returns>
-        public static double InteriorAngleBetweenVectors(this Vector2 v0, Vector2 v1)
-        {
-            return Math.PI - Math.Atan2(v0.Cross(v1), v0.Dot(v1));
+            return Math.PI - Math.Atan2(vector1.Cross(vector2).Length(), vector1.Dot(vector2));
         }
 
         #endregion Angle between Edges/Lines
