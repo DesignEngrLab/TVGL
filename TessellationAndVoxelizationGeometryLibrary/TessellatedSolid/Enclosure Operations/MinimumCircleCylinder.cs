@@ -99,7 +99,8 @@ namespace TVGL
             //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
             //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
             var pointList = points as IList<Vector2> ?? points.ToList();
-            var pointsOnCircle = new List<Vector2>(new[] { pointList[0], pointList[pointList.Count / 2] });
+            var pointsOnCircle = new[] { pointList[0], pointList[pointList.Count / 2] };
+            var prevPointsOnCircle = pointsOnCircle;
             var circle = GetCircleFrom2DiametricalPoints(pointsOnCircle[0], pointsOnCircle[1]);
             var dummyPoint = Vector2.Null;
             var stallCounter = 0;
@@ -144,6 +145,7 @@ namespace TVGL
                 //Find the point in the circle furthest from new point.
                 var furthestPoint = FindFurthestPoint(nextPoint, pointsOnCircle);
                 //Make a new circle from the furthest point and current point
+                pointsOnCircle = new[] { nextPoint, furthestPoint };
                 circle = GetCircleFrom2DiametricalPoints(nextPoint, furthestPoint);
                 sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
 
@@ -152,7 +154,7 @@ namespace TVGL
                 //Otherwise, the loop can get caught in a loop due to rounding error 
                 //If you wanted to use a tighter tolerance, you would need to take the square roots to get the radius.   
                 //If they are, increase the dimension and use three points in a circle
-                foreach (var point in pointsOnCircle)
+                foreach (var point in prevPointsOnCircle)
                 {
                     if (point == furthestPoint) continue;
                     var distanceSquared = (circle.Center - point).LengthSquared();
@@ -160,6 +162,7 @@ namespace TVGL
                     {
                         //Make a new circle from the current two-point circle and the current point
                         circle = GetCircleFrom3Points(nextPoint, furthestPoint, point);
+                        pointsOnCircle = new[] { nextPoint, furthestPoint, point };
                         sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
                     }
                 }
@@ -169,6 +172,7 @@ namespace TVGL
                     Debug.WriteLine("Bounding circle got smaller during this iteration");
                 }
                 priorRadius = circle.RadiusSquared;
+                prevPointsOnCircle = pointsOnCircle;
                 stallCounter++;
             }
             if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " + (Constants.BaseTolerance * circle.Radius * 2));
@@ -193,7 +197,7 @@ namespace TVGL
             return circle;
         }
 
-        private static Vector2 FindFurthestPoint(Vector2 reference, List<Vector2> pointsOnCircle)
+        private static Vector2 FindFurthestPoint(Vector2 reference, IEnumerable<Vector2> pointsOnCircle)
         {
             var furthestPoint = Vector2.Null;
             var furthestDistance = double.NegativeInfinity;
