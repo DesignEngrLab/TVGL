@@ -343,7 +343,8 @@ namespace TVGL
             var centers = new List<Vector3>();
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out var center, out var t1, out var t2);
+                faces[n - 1].Center, faces[n - 1].Normal, out var center, out _, out _,
+                out var t1, out var t2);
             if (!center.IsNull() && !center.IsNegligible())
             {
                 centers.Add(center);
@@ -353,7 +354,8 @@ namespace TVGL
             for (var i = 1; i < n; i++)
             {
                 MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
-                    faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
+                    faces[i - 1].Center, faces[i - 1].Normal, out center, out _, out _,
+                    out t1, out t2);
                 if (!center.IsNull() && !center.IsNegligible())
                 {
                     centers.Add(center);

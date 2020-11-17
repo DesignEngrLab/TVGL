@@ -1162,19 +1162,6 @@ namespace TVGL
         /// <param name="n1">The n1.</param>
         /// <param name="p2">The p2.</param>
         /// <param name="n2">The n2.</param>
-        /// <returns>System.Double.</returns>
-        internal static double SkewedLineIntersection(Vector3 p1, Vector3 n1, Vector3 p2, Vector3 n2)
-        {
-            return SkewedLineIntersection(p1, n1, p2, n2, out _, out _, out _, out _, out _);
-        }
-
-        /// <summary>
-        ///     Skeweds the line intersection.
-        /// </summary>
-        /// <param name="p1">The p1.</param>
-        /// <param name="n1">The n1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="n2">The n2.</param>
         /// <param name="center">The center.</param>
         /// <returns>System.Double.</returns>
         internal static double SkewedLineIntersection(Vector3 p1, Vector3 n1, Vector3 p2, Vector3 n2,
@@ -1199,22 +1186,6 @@ namespace TVGL
             return SkewedLineIntersection(p1, n1, p2, n2, out _, out interSect1, out interSect2, out _, out _);
         }
 
-        /// <summary>
-        ///     Skeweds the line intersection.
-        /// </summary>
-        /// <param name="p1">The p1.</param>
-        /// <param name="n1">The n1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="n2">The n2.</param>
-        /// <param name="center">The center.</param>
-        /// <param name="t1">The t1.</param>
-        /// <param name="t2">The t2.</param>
-        /// <returns>System.Double.</returns>
-        internal static double SkewedLineIntersection(Vector3 p1, Vector3 n1, Vector3 p2, Vector3 n2,
-            out Vector3 center, out double t1, out double t2)
-        {
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out _, out _, out t1, out t2);
-        }
 
         /// <summary>
         ///     Skeweds the line intersection.
@@ -1233,17 +1204,21 @@ namespace TVGL
             out Vector3 center,
             out Vector3 interSect1, out Vector3 interSect2, out double t1, out double t2)
         {
-            var a11 = n1.X * n1.X + n1.Y * n1.Y + n1.Z * n1.Z;
-            var a12 = -n1.X * n2.X - n1.Y * n2.Y - n1.Z * n2.Z;
-            var a21 = n1.X * n2.X + n1.Y * n2.Y + n1.Z * n2.Z;
-            var a22 = -n2.X * n2.X - n2.Y * n2.Y - n2.Z * n2.Z;
-            var b1 = n1.X * (p2.X - p1.X) + n1.Y * (p2.Y - p1.Y) + n1.Z * (p2.Z - p1.Z);
-            var b2 = n2.X * (p2.X - p1.X) + n2.Y * (p2.Y - p1.Y) + n2.Z * (p2.Z - p1.Z);
+            //var a11 = n1.X * n1.X + n1.Y * n1.Y + n1.Z * n1.Z;
+            var a11 = n1.LengthSquared();
+            //var a12 = -n1.X * n2.X - n1.Y * n2.Y - n1.Z * n2.Z;
+            var a12 = -n1.Dot(n2);
+            //var a21 = n1.X * n2.X + n1.Y * n2.Y + n1.Z * n2.Z;
+            var a21 = -a12;
+            //var a22 = -n2.X * n2.X - n2.Y * n2.Y - n2.Z * n2.Z;
+            var a22 = -n2.LengthSquared();
+            //var b1 = n1.X * (p2.X - p1.X) + n1.Y * (p2.Y - p1.Y) + n1.Z * (p2.Z - p1.Z);
+            var b1 = n1.Dot(p2 - p1);
+            //var b2 = n2.X * (p2.X - p1.X) + n2.Y * (p2.Y - p1.Y) + n2.Z * (p2.Z - p1.Z);
+            var b2 = n2.Dot(p2 - p1);
             //var a = new[,] { { a11, a12 }, { a21, a22 } };
             var aDetInverse = 1 / (a11 * a22 - a21 * a12);
             //var aInv = new[,] { { a22, -a12 }, {-a21,a11 } };
-            var b = new[] { b1, b2 };
-            //var t = solve(a, b);
             t1 = (a22 * b1 - a12 * b2) * aDetInverse;
             t2 = (-a21 * b1 + a11 * b2) * aDetInverse;
             interSect1 = new Vector3(p1.X + n1.X * t1, p1.Y + n1.Y * t1, p1.Z + n1.Z * t1);
@@ -1591,17 +1566,6 @@ namespace TVGL
                 path.Add(new Vector2(radius * Math.Cos(theta) + center.X, radius * Math.Sin(theta) + center.Y));
             }
             return path;
-        }
-
-        /// <summary>
-        /// Returns a the path of a circle made up of points. Increment as needed.
-        /// </summary>
-        /// <param name="circle"></param>
-        /// <param name="radianIncrement"></param>
-        /// <returns></returns>
-        public static List<Vector2> CreateCirclePath(Circle2D circle, double radianIncrement = Math.PI / 50.0)
-        {
-            return CreateCirclePath(circle.Center, circle.Radius, radianIncrement);
         }
 
         #endregion Create 2D Circle Paths

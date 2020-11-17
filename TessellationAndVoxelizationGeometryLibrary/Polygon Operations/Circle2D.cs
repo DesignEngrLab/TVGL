@@ -19,6 +19,11 @@ namespace TVGL.TwoDimensional
         public readonly double Radius;
 
         /// <summary>
+        ///     Radius of circle squared
+        /// </summary>
+        public readonly double RadiusSquared;
+
+        /// <summary>
         ///     Area of circle
         /// </summary>
         public readonly double Area;
@@ -28,17 +33,16 @@ namespace TVGL.TwoDimensional
         /// </summary>
         public readonly double Circumference;
 
-        /// <summary>
-        ///     Creates a circle, given a radius. Center point is optional
-        /// </summary>
-        /// <param name="radius">The radius.</param>
+        /// <summary>Creates a circle, given the center point and the radius Squared</summary>
         /// <param name="center">The center.</param>
-        public Circle2D(double radius, Vector2 center)
+        /// <param name="radiusSquared">The radius squared.</param>
+        public Circle2D(Vector2 center, double radiusSquared)
         {
             Center = center;
-            Radius = radius;
-            Area = Math.PI * radius * radius;
-            Circumference = Constants.TwoPi * radius;
+            RadiusSquared = radiusSquared;
+            Radius = Math.Sqrt(radiusSquared);
+            Area = Math.PI * radiusSquared;
+            Circumference = Constants.TwoPi * Radius;
         }
     }
 }

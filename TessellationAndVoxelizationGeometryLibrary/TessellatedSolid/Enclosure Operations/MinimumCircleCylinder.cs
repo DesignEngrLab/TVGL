@@ -99,35 +99,34 @@ namespace TVGL
             //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
             //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
             var pointList = points as IList<Vector2> ?? points.ToList();
-            var circle = new Circle(pointList[0], pointList[pointList.Count / 2]);
-            var dummyPoint = new Vector2(double.NaN, double.NaN);
+            var pointsOnCircle = new List<Vector2>(new[] { pointList[0], pointList[pointList.Count / 2] });
+            var circle = GetCircleFrom2DiametricalPoints(pointsOnCircle[0], pointsOnCircle[1]);
+            var dummyPoint = Vector2.Null;
             var stallCounter = 0;
             var successful = false;
             var stallLimit = pointList.Count * 1.5;
             if (stallLimit < 100) stallLimit = 100;
-            var centerX = circle.CenterX;
-            var centerY = circle.CenterY;
+            //var centerX = circle.Center.X;
+            //var centerY = circle.Center.Y;
             var sqTolerance = Math.Sqrt(Constants.BaseTolerance);
-            var sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
+            var sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
             var nextPoint = dummyPoint;
-            var priorRadius = circle.SqRadius;
+            var priorRadius = circle.RadiusSquared;
             while (!successful && stallCounter < stallLimit)
             {
                 //If stallCounter is getting big, add a bit extra to the circle radius to ensure convergence
                 if (stallCounter > stallLimit / 2)
-                    sqRadiusPlusTolerance = sqRadiusPlusTolerance + Constants.BaseTolerance * sqRadiusPlusTolerance;
+                    sqRadiusPlusTolerance += Constants.BaseTolerance * sqRadiusPlusTolerance;
                 //Add it a second time if stallCounter is even bigger
                 if (stallCounter > stallLimit * 2 / 3)
-                    sqRadiusPlusTolerance = sqRadiusPlusTolerance + Constants.BaseTolerance * sqRadiusPlusTolerance;
+                    sqRadiusPlusTolerance += Constants.BaseTolerance * sqRadiusPlusTolerance;
 
                 //Find the furthest point from the center point
                 var maxDistancePlusTolerance = sqRadiusPlusTolerance;
                 var nextPointIsSet = false;
                 foreach (var point in pointList)
                 {
-                    var dx = centerX - point.X;
-                    var dy = centerY - point.Y;
-                    var squareDistanceToPoint = dx * dx + dy * dy;
+                    var squareDistanceToPoint = (circle.Center - point).LengthSquared();
                     //If the square distance is less than or equal to the max square distance, continue.
                     if (squareDistanceToPoint < maxDistancePlusTolerance) continue;
                     //Otherwise, set this as the next point to go to.
@@ -143,53 +142,36 @@ namespace TVGL
 
                 //Create a new circle with 2 points
                 //Find the point in the circle furthest from new point.
-                circle.Furthest(nextPoint, out var furthestPoint, out var previousPoint1,
-                    out var previousPoint2, out var numPreviousPoints);
+                var furthestPoint = FindFurthestPoint(nextPoint, pointsOnCircle);
                 //Make a new circle from the furthest point and current point
-                circle = new Circle(nextPoint, furthestPoint);
-                centerX = circle.CenterX;
-                centerY = circle.CenterY;
-                sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
+                circle = GetCircleFrom2DiametricalPoints(nextPoint, furthestPoint);
+                sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
 
                 //Now check if the previous points are outside this circle.
                 //To be outside the circle, it must be further out than the specified tolerance. 
                 //Otherwise, the loop can get caught in a loop due to rounding error 
                 //If you wanted to use a tighter tolerance, you would need to take the square roots to get the radius.   
                 //If they are, increase the dimension and use three points in a circle
-                var dxP1 = centerX - previousPoint1.X;
-                var dyP1 = centerY - previousPoint1.Y;
-                var squareDistanceP1 = dxP1 * dxP1 + dyP1 * dyP1;
-                if (squareDistanceP1 > sqRadiusPlusTolerance)
+                foreach (var point in pointsOnCircle)
                 {
-                    //Make a new circle from the current two-point circle and the current point
-                    circle = new Circle(circle.Point0, circle.Point1, previousPoint1);
-                    centerX = circle.CenterX;
-                    centerY = circle.CenterY;
-                    sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
-                }
-                else if (numPreviousPoints == 2)
-                {
-                    var dxP2 = centerX - previousPoint2.X;
-                    var dyP2 = centerY - previousPoint2.Y;
-                    var squareDistanceP2 = dxP2 * dxP2 + dyP2 * dyP2;
-                    if (squareDistanceP2 > sqRadiusPlusTolerance)
+                    if (point == furthestPoint) continue;
+                    var distanceSquared = (circle.Center - point).LengthSquared();
+                    if (distanceSquared > sqRadiusPlusTolerance)
                     {
                         //Make a new circle from the current two-point circle and the current point
-                        circle = new Circle(circle.Point0, circle.Point1, previousPoint2);
-                        centerX = circle.CenterX;
-                        centerY = circle.CenterY;
-                        sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
+                        circle = GetCircleFrom3Points(nextPoint, furthestPoint, point);
+                        sqRadiusPlusTolerance = circle.RadiusSquared + sqTolerance;
                     }
                 }
 
-                if (circle.SqRadius < priorRadius)
+                if (circle.RadiusSquared < priorRadius)
                 {
                     Debug.WriteLine("Bounding circle got smaller during this iteration");
                 }
-                priorRadius = circle.SqRadius;
+                priorRadius = circle.RadiusSquared;
                 stallCounter++;
             }
-            if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " + (Constants.BaseTolerance * circle.SqRadius * 2));
+            if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " + (Constants.BaseTolerance * circle.Radius * 2));
 
             #endregion
 
@@ -208,8 +190,23 @@ namespace TVGL
 
             #endregion
 
-            var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
-            return new Circle2D(radius, new Vector2(centerX, centerY));
+            return circle;
+        }
+
+        private static Vector2 FindFurthestPoint(Vector2 reference, List<Vector2> pointsOnCircle)
+        {
+            var furthestPoint = Vector2.Null;
+            var furthestDistance = double.NegativeInfinity;
+            foreach (var p in pointsOnCircle)
+            {
+                var distanceSquared = (p - reference).LengthSquared();
+                if (furthestDistance < distanceSquared)
+                {
+                    furthestPoint = p;
+                    furthestDistance = distanceSquared;
+                }
+            }
+            return furthestPoint;
         }
 
 
@@ -255,7 +252,7 @@ namespace TVGL
                 // note that this condition is true, but within the method, IsPointInsidePolygon, the enclosure
                 // return the value of the "IsPositive 
                 if (negativePoly.IsPointInsidePolygon(true, centerPoint, out var onBoundary)) continue;
-                if (onBoundary) return new Circle2D(0.0, centerPoint); //Null solution.
+                if (onBoundary) return new Circle2D(centerPoint, 0.0); //Null solution.
 
                 //var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
                 var d = double.NaN; //how to correctly calculate this? the above line is not correct and is no longer a by-product
@@ -277,14 +274,14 @@ namespace TVGL
             {
                 foreach (var positivePoly in positivePolygons)
                 {
-                    if (positivePoly.IsPointInsidePolygon(true, centerPoint, out _)) return new Circle2D(0.0, centerPoint);
+                    if (positivePoly.IsPointInsidePolygon(true, centerPoint, out _)) return new Circle2D(centerPoint, 0.0);
                     polygonsOfInterest.Add(positivePoly);
                 }
             }
 
             //Lastly, determine how big the inner circle can be.
             var shortestDistance = double.MaxValue;
-            var smallestBoundingCircle = new Circle2D(0.0, centerPoint);
+            var smallestBoundingCircle = new Circle2D(centerPoint, 0.0);
             foreach (var polygon in polygonsOfInterest)
             {
                 var boundingCircle = MaximumInnerCircleInHole(polygon, centerPoint);
@@ -331,8 +328,8 @@ namespace TVGL
                 if (d < shortestDistance) shortestDistance = d;
             }
 
-            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new Circle2D(0.0, centerPoint); //Not inside any hole or outside any positive polygon
-            return new Circle2D(shortestDistance, centerPoint);
+            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new Circle2D(centerPoint, 0.0); //Not inside any hole or outside any positive polygon
+            return new Circle2D(centerPoint, shortestDistance);
         }
 
 
@@ -383,39 +380,43 @@ namespace TVGL
             return minCylinder;
         }
 
-        /// <summary>
-        ///     Class Bisector.
-        /// </summary>
-        internal class Bisector
+
+        public static Circle2D GetCircleFrom2DiametricalPoints(Vector2 p0, Vector2 p1)
         {
-            #region Constructor
-
-            /// <summary>
-            ///     Initializes a new instance of the <see cref="Bisector" /> class.
-            /// </summary>
-            /// <param name="point1">The point1.</param>
-            /// <param name="point2">The point2.</param>
-            internal Bisector(Vector2 point1, Vector2 point2)
-            {
-            }
-
-            #endregion
-
-            #region Properties
-
-            /// <summary>
-            ///     Gets the slope.
-            /// </summary>
-            /// <value>The slope.</value>
-            internal double Slope { get; private set; }
-
-            #endregion
+            var center = (p0 + p1) / 2;
+            return new Circle2D(center, (p0 - center).LengthSquared());
+        }
+        public static Circle2D GetCircleFrom3Points(Vector2 p0, Vector2 p1, Vector2 p2)
+        {
+            var segment1 = (p1 - p0) / 2;
+            var midPoint1 = (p0 + p1) / 2;
+            var bisector1Dir = new Vector2(-segment1.Y, segment1.X);
+            var segment2 = (p2 - p1) / 2;
+            var midPoint2 = (p1 + p2) / 2;
+            var bisector2Dir = new Vector2(-segment2.Y, segment2.X);
+            var center = MiscFunctions.LineLine2DIntersection(midPoint1, bisector1Dir, midPoint2, bisector2Dir);
+            return new Circle2D(center, (p0 - center).LengthSquared());
         }
 
-        public static (Vector2, double) GetCircleFrom3Points(Vector2 p0, Vector2 p1, Vector2 p2)
+        public static Circle GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1)
         {
-            var circle = new Circle(p0, p1, p2);
-            return (new Vector2(circle.CenterX, circle.CenterY), Math.Sqrt(circle.SqRadius));
+            var center = (p0 + p1) / 2;
+            return new Circle((p0 - center).Length(), center);
+        }
+        public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2)
+        {
+            return GetCircleFrom3Points(p0, p1, p2, (p1 - p0).Cross(p2 - p1));
+        }
+        public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 planeNormal)
+        {
+            var segment1 = (p1 - p0) / 2;
+            var midPoint1 = (p0 + p1) / 2;
+            var bisector1Dir = planeNormal.Cross(segment1).Normalize();
+            var segment2 = (p2 - p1) / 2;
+            var midPoint2 = (p1 + p2) / 2;
+            var bisector2Dir = planeNormal.Cross(segment2).Normalize();
+            MiscFunctions.SkewedLineIntersection(midPoint1, bisector1Dir, midPoint2, bisector2Dir, out var center);
+            return new Circle((p0 - center).Length(), center);
         }
 
     }

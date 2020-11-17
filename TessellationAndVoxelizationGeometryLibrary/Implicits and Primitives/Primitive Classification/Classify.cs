@@ -104,26 +104,38 @@ namespace TVGL
             }
         }
 
-        private static bool ExpandToFindConicSection(Vertex v, Edge inEdge, Edge outEdge,  out List<Edge> edgeInSection,
+        private static bool ExpandToFindConicSection(Vertex v, Edge inEdge, Edge outEdge, out List<Edge> edgeInSection,
             out ConicSection conicSection)
         {
             var inVector = inEdge.Vector;
             if (inEdge.From == v) inVector *= -1;
             var outVector = outEdge.Vector;
             if (outEdge.To == v) outVector *= -1;
-            var angle = inVector.SmallerAngleBetweenVectors(outVector) ;
-            if (angle.IsPracticallySame(Math.PI))
-             //then straightLine
-                conicSection = new StraightLine();
+            var angle = inVector.SmallerAngleBetweenVectors(outVector);
             if (angle < minCircleEdgeAngle)
-            {
+            {   // if the angle is not very obtuse then this is likely to be a sharp edge and not a smooth quadric surface
                 edgeInSection = null;
                 conicSection = null;
                 return false;
             }
-            else conicSection = new Circle.DefineFromPoints(v.Coordinates, inEdge.OtherVertex(v).Coordinates,
-                outEdge.OtherVertex(v).Coordinates);
-            var cross = inVector.Cross(outVector);
+            if (angle.IsPracticallySame(Math.PI))              //then straightLine
+                return FindEdgesInLine(v, inEdge, v, outEdge, v.Coordinates, inEdge.Vector.Normalize(), out edgeInSection, out conicSection);
+            else
+            {
+                var planeNormal = inEdge.Vector.Cross(outEdge.Vector).Normalize();
+                var planeDistance = v.Coordinates.Dot(planeNormal);
+                return FindEdgesInPlane(v, inEdge, v, outEdge, planeNormal, planeDistance, out edgeInSection, out conicSection);
+            }
+        }
+
+        private static bool FindEdgesInPlane(Vertex v1, Edge inEdge, Vertex v2, Edge outEdge, Vector3 planeNormal, double planeDistance, out List<Edge> edgeInSection, out ConicSection conicSection)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static bool FindEdgesInLine(Vertex v1, Edge inEdge, Vertex v2, Edge outEdge, Vector3 coordinates, Vector3 vector3, out List<Edge> edgeInSection, out ConicSection conicSection)
+        {
+            throw new NotImplementedException();
         }
 
         private static List<Vertex> CategorizeVerticesByValence(IEnumerable<Vertex> vertices)

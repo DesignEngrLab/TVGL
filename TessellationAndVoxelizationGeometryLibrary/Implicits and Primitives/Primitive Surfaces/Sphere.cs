@@ -22,12 +22,12 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.Dot(face.Center -Center) - 1) >
+            if (Math.Abs(face.Normal.Dot(face.Center - Center) - 1) >
                 Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
                 if (Math.Abs(v.Coordinates.Distance(Center) - Radius) >
-                    Constants.ErrorForFaceInSurface*Radius)
+                    Constants.ErrorForFaceInSurface * Radius)
                     return false;
             return true;
         }
@@ -39,17 +39,17 @@ namespace TVGL
         public override void UpdateWith(PolygonalFace face)
         {
             var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out var pointOnLine);
-            var fractionToMove = 1/Faces.Count;
+            var fractionToMove = 1 / Faces.Count;
             var moveVector = pointOnLine.Subtract(Center);
             Center =
                 Center + new Vector3(
-                    moveVector.X*fractionToMove*distance, moveVector.Y*fractionToMove*distance,
-                    moveVector.Z*fractionToMove*distance
+                    moveVector.X * fractionToMove * distance, moveVector.Y * fractionToMove * distance,
+                    moveVector.Z * fractionToMove * distance
                 );
 
 
             var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Coordinates));
-            Radius = totalOfRadii/Vertices.Count;
+            Radius = totalOfRadii / Vertices.Count;
             base.UpdateWith(face);
         }
 
@@ -80,7 +80,8 @@ namespace TVGL
             var centers = new List<Vector3>();
             var signedDistances = new List<double>();
             MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out var center, out var t1, out var t2);
+                faces[n - 1].Center, faces[n - 1].Normal, out var center, out _, out _,
+                out var t1, out var t2);
             if (!center.IsNull())
             {
                 centers.Add(center);
@@ -90,7 +91,8 @@ namespace TVGL
             for (var i = 1; i < n; i++)
             {
                 MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
-                    faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
+                    faces[i - 1].Center, faces[i - 1].Normal, out center, out _, out _,
+                    out t1, out t2);
                 if (!center.IsNull())
                 {
                     centers.Add(center);
@@ -120,7 +122,7 @@ namespace TVGL
         /// </summary>
         /// <param name="edge">The edge.</param>
         internal Sphere(Edge edge)
-            : this(new List<PolygonalFace>(new[] {edge.OwnedFace, edge.OtherFace}))
+            : this(new List<PolygonalFace>(new[] { edge.OwnedFace, edge.OtherFace }))
         {
             Type = PrimitiveSurfaceType.Sphere;
         }
@@ -142,13 +144,13 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector3 Center { get;  set; }
+        public Vector3 Center { get; set; }
 
         /// <summary>
         ///     Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
-        public double Radius { get;  set; }
+        public double Radius { get; set; }
 
         #endregion
     }
