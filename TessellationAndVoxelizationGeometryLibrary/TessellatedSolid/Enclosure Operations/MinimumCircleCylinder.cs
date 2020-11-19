@@ -402,26 +402,15 @@ namespace TVGL
             return new Circle2D(center, (p0 - center).LengthSquared());
         }
 
-        public static Circle GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1)
+        public static Circle2D GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1, Plane plane)
         {
-            var center = (p0 + p1) / 2;
-            return new Circle((p0 - center).Length(), center);
+            return GetCircleFrom2DiametricalPoints(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),
+                            p1.ConvertTo2DCoordinates(plane.AsTransformToXYPlane));
         }
-        public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2)
+        public static Circle2D GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Plane plane)
         {
-            return GetCircleFrom3Points(p0, p1, p2, (p1 - p0).Cross(p2 - p1));
+            return GetCircleFrom3Points(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),
+                p1.ConvertTo2DCoordinates(plane.AsTransformToXYPlane), p2.ConvertTo2DCoordinates(plane.AsTransformToXYPlane));
         }
-        public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 planeNormal)
-        {
-            var segment1 = (p1 - p0) / 2;
-            var midPoint1 = (p0 + p1) / 2;
-            var bisector1Dir = planeNormal.Cross(segment1).Normalize();
-            var segment2 = (p2 - p1) / 2;
-            var midPoint2 = (p1 + p2) / 2;
-            var bisector2Dir = planeNormal.Cross(segment2).Normalize();
-            MiscFunctions.SkewedLineIntersection(midPoint1, bisector1Dir, midPoint2, bisector2Dir, out var center);
-            return new Circle((p0 - center).Length(), center);
-        }
-
     }
 }

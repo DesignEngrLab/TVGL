@@ -32,13 +32,9 @@ namespace TVGL
                 tessellatedSolid.CompleteInitiation();
             var verticesCategorized = CategorizeVerticesByValence(tessellatedSolid.Vertices);
             var edgeHash = tessellatedSolid.Edges.ToHashSet();
-            var straights = new List<StraightLine>();
-            var circles = new List<Circle>();
-            var ellipses = new List<Ellipse>();
-            var parabolae = new List<Parabola>();
-            var hyperbolae = new List<Hyperbola>();
+            var conics = new List<ConicSection>();
             foreach (var v in verticesCategorized)
-                MakeConics(edgeHash, v, straights, circles, ellipses, parabolae, hyperbolae);
+                MakeConics(edgeHash, v, conics, tessellatedSolid.SameTolerance);
 
             #region Debugging
 #if DEBUG
@@ -46,9 +42,6 @@ namespace TVGL
 
 #endif
             #endregion
-
-
-
 
             var unassignedFaces = new HashSet<FaceWithScores>();
             var plannedSurfaces = new List<PlanningSurface>();
@@ -71,71 +64,115 @@ namespace TVGL
             return primitives;
         }
 
-        private static void MakeConics(HashSet<Edge> edgeHash, Vertex v, List<StraightLine> straights, List<Circle> circles,
-            List<Ellipse> ellipses, List<Parabola> parabolae, List<Hyperbola> hyperbolae)
+        private static void MakeConics(HashSet<Edge> edgeHash, Vertex v, List<ConicSection> conics, double tolerance)
         {
-            var lengthDictionary = new SortedDictionary<double, Edge>(new NoEqualSort());
+            var sortedEdgesByLength = new SortedList<double, Edge>(new NoEqualSort());
             foreach (var edge in v.Edges)
             {
-                if (edgeHash.Contains(edge)) lengthDictionary.Add(edge.Vector.LengthSquared(), edge);
+                if (edgeHash.Contains(edge)) sortedEdgesByLength.Add(edge.Vector.LengthSquared(), edge);
             }
-            var sortedLengths = lengthDictionary.Keys.ToList();
-            for (int i = 0; i < sortedLengths.Count - 1; i++)
+            for (int i = 0; i < sortedEdgesByLength.Count - 1; i++)
             {
-                var inEdgeLength = sortedLengths[i];
-                for (int j = i + 1; j < sortedLengths.Count; j++)
+                var inEdgeLength = sortedEdgesByLength.Keys[i];
+                for (int j = i + 1; j < sortedEdgesByLength.Count; j++)
                 {
-                    var outEdgeLength = sortedLengths[j];
+                    var outEdgeLength = sortedEdgesByLength.Keys[j];
                     var error = 2 * (outEdgeLength - inEdgeLength) / (inEdgeLength + outEdgeLength);
                     if (error > errorInitialEdgePairing) break;
-                    if (ExpandToFindConicSection(v, lengthDictionary[inEdgeLength], lengthDictionary[outEdgeLength],
-                        out var edgeInSection, out var conicSection))
+                    if (ExpandToFindConicSection(v, sortedEdgesByLength[inEdgeLength], sortedEdgesByLength[outEdgeLength],
+                        out var conicSection, edgeHash, tolerance))
                     {
-                        foreach (var edge in edgeInSection)
-                            edgeHash.Remove(edge);
-                        if (conicSection is StraightLine) straights.Add((StraightLine)conicSection);
-                        else if (conicSection is Circle) circles.Add((Circle)conicSection);
-                        else if (conicSection is Ellipse) ellipses.Add((Ellipse)conicSection);
-                        else if (conicSection is Parabola) parabolae.Add((Parabola)conicSection);
-                        else if (conicSection is Hyperbola) hyperbolae.Add((Hyperbola)conicSection);
+                        foreach (var edge in conicSection.EdgesAndDirection)
+                            edgeHash.Remove(edge.Item1);
+                        conics.Add(conicSection);
                         break;
                     }
                 }
             }
         }
 
-        private static bool ExpandToFindConicSection(Vertex v, Edge inEdge, Edge outEdge, out List<Edge> edgeInSection,
-            out ConicSection conicSection)
+        private static bool ExpandToFindConicSection(Vertex v, Edge inEdge, Edge outEdge, out ConicSection conicSection,
+            HashSet<Edge> edgeHash, double tolerance)
         {
             var inVector = inEdge.Vector;
-            if (inEdge.From == v) inVector *= -1;
+            var inEdgeInCorrectDirection = true;
+            if (inEdge.From == v)
+            {
+                inVector *= -1;
+                inEdgeInCorrectDirection = false;
+            }
             var outVector = outEdge.Vector;
-            if (outEdge.To == v) outVector *= -1;
+            var outEdgeInCorrectDirection = true;
+            if (outEdge.To == v)
+            {
+                outVector *= -1;
+                outEdgeInCorrectDirection = false;
+            }
             var angle = inVector.SmallerAngleBetweenVectors(outVector);
             if (angle < minCircleEdgeAngle)
             {   // if the angle is not very obtuse then this is likely to be a sharp edge and not a smooth quadric surface
-                edgeInSection = null;
                 conicSection = null;
                 return false;
             }
-            if (angle.IsPracticallySame(Math.PI))              //then straightLine
-                return FindEdgesInLine(v, inEdge, v, outEdge, v.Coordinates, inEdge.Vector.Normalize(), out edgeInSection, out conicSection);
+            if (angle.IsPracticallySame(Math.PI)) //then straightLine
+                conicSection = ConicSection.DefineForLine(v.Coordinates, inVector.Normalize());
             else
             {
-                var planeNormal = inEdge.Vector.Cross(outEdge.Vector).Normalize();
-                var planeDistance = v.Coordinates.Dot(planeNormal);
-                return FindEdgesInPlane(v, inEdge, v, outEdge, planeNormal, planeDistance, out edgeInSection, out conicSection);
+                var plane = new Plane(v.Coordinates, inVector.Cross(outVector).Normalize());
+                conicSection = ConicSection.DefineForCircle(plane,
+                    MinimumEnclosure.GetCircleFrom3Points(v.Coordinates, inEdge.OtherVertex(v).Coordinates, outEdge.OtherVertex(v).Coordinates, plane));
             }
+            conicSection.Points.Add(v.ConvertTo2DCoordinates(conicSection.Plane.AsTransformToXYPlane));
+            //conicSection.AddStart(inEdge, inEdgeInCorrectDirection);
+            //conicSection.AddStart(outEdge, outEdgeInCorrectDirection);
+            return FindEdgesInPlane(inEdge, inEdgeInCorrectDirection, outEdge, outEdgeInCorrectDirection, conicSection, edgeHash, tolerance);
         }
 
-        private static bool FindEdgesInPlane(Vertex v1, Edge inEdge, Vertex v2, Edge outEdge, Vector3 planeNormal, double planeDistance, out List<Edge> edgeInSection, out ConicSection conicSection)
+        private static bool FindEdgesInPlane(Edge inEdge, bool inEdgeInCorrectDirection, Edge outEdge,
+            bool outEdgeInCorrectDirection, ConicSection conicSection, HashSet<Edge> edgeHash, double tolerance)
         {
-            throw new NotImplementedException();
+            Vertex newInVertex = inEdge == null ? null : inEdgeInCorrectDirection ? inEdge.From : inEdge.To;
+            Vertex newOutVertex = inEdge == null ? null : outEdgeInCorrectDirection ? outEdge.To : outEdge.From;
+            if (newOutVertex == newInVertex) newOutVertex = null;
+            var inError = newInVertex == null ? double.PositiveInfinity : conicSection.CalcError(newInVertex.Coordinates);
+            var outError = newOutVertex == null ? double.PositiveInfinity : conicSection.CalcError(newOutVertex.Coordinates);
+            if (inError < outError)
+            {
+                if (inError < tolerance || conicSection.Upgrade(newInVertex.Coordinates, tolerance))
+                {
+                    conicSection.AddStart(inEdge, inEdgeInCorrectDirection);
+                    Edge bestNextEdge = FindNextBest(newInVertex, inEdge, edgeHash, conicSection, tolerance);
+                    return FindEdgesInPlane(bestNextEdge, bestNextEdge?.To == newInVertex, outEdge, outEdgeInCorrectDirection, conicSection, edgeHash, tolerance);
+                }
+            }
+            if (outError < tolerance || conicSection.Upgrade(newOutVertex.Coordinates, tolerance))
+            {
+                conicSection.AddEnd(outEdge, outEdgeInCorrectDirection);
+                Edge bestNextEdge = FindNextBest(newOutVertex, outEdge, edgeHash, conicSection, tolerance);
+                return FindEdgesInPlane(bestNextEdge, bestNextEdge?.From == newOutVertex, outEdge, outEdgeInCorrectDirection, conicSection, edgeHash, tolerance);
+            }
+            return conicSection.Points.Count > 3;
         }
 
-        private static bool FindEdgesInLine(Vertex v1, Edge inEdge, Vertex v2, Edge outEdge, Vector3 coordinates, Vector3 vector3, out List<Edge> edgeInSection, out ConicSection conicSection)
+        private static Edge FindNextBest(Vertex vertex, Edge fromEdge, HashSet<Edge> edgeHash, ConicSection conicSection, double tolerance)
         {
-            throw new NotImplementedException();
+            Edge bestEdge = null;
+            var lowestError = double.PositiveInfinity;
+            foreach (var edge in vertex.Edges)
+            {
+                if (edge == fromEdge) continue;
+                if (edgeHash.Contains(edge)) continue;
+                var edgeIsIncoming = edge.To == vertex;
+                var otherVertex = edgeIsIncoming ? edge.From : edge.To;
+                if (Math.Abs(otherVertex.Dot(conicSection.Plane.Normal) - conicSection.Plane.DistanceToOrigin) > tolerance) continue;
+                var error = conicSection.CalcError(otherVertex.Coordinates);
+                if (lowestError > error)
+                {
+                    lowestError = error;
+                    bestEdge = edge;
+                }
+            }
+            return bestEdge;
         }
 
         private static List<Vertex> CategorizeVerticesByValence(IEnumerable<Vertex> vertices)

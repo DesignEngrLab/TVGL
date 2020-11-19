@@ -20,7 +20,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
     /// A structure encapsulating a 3D Plane
     /// </summary>
     public class Plane : PrimitiveSurface // IEquatable<Plane> commenting this since sometimes two planes at same "location"
-        // but represent different patches
+                                          // but represent different patches
     {
         /// <summary>
         /// Tolerance used to determine whether faces should be part of this flat
@@ -37,6 +37,33 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public double DistanceToOrigin;
 
+
+        public Matrix4x4 AsTransformFromXYPlane
+        {
+            get
+            {
+                if (_asTransformFromXYPlane.IsNull())
+                {
+                    Normal.TransformToXYPlane(out var rotMatrix);
+                    _asTransformFromXYPlane = Matrix4x4.CreateTranslation(0, 0, DistanceToOrigin) * rotMatrix;
+                }
+                return _asTransformFromXYPlane;
+            }
+        }
+        Matrix4x4 _asTransformFromXYPlane = Matrix4x4.Null;
+        public Matrix4x4 AsTransformToXYPlane
+        {
+            get
+            {
+                if (_asTransformToXYPlane.IsNull())
+                {
+                    var rotMatrix = Normal.TransformToXYPlane(out _);
+                    _asTransformToXYPlane = rotMatrix * Matrix4x4.CreateTranslation(0, 0, -DistanceToOrigin);
+                }
+                return _asTransformFromXYPlane;
+            }
+        }
+        Matrix4x4 _asTransformToXYPlane = Matrix4x4.Null;
         /// <summary>
         /// Gets the closest point on the plane to the origin.
         /// </summary>
