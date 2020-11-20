@@ -380,6 +380,12 @@ namespace TVGL
             }
         }
 
+        public void MakeEdgesIfNonExistent()
+        {
+            if (_edges != null && _edges.Length >0) return;
+            CompleteInitiation();
+        }
+
         internal void CompleteInitiation()
         {
             MakeEdges();

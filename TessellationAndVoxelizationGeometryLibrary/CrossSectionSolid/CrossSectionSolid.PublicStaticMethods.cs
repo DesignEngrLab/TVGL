@@ -21,7 +21,7 @@ namespace TVGL
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <param name="units">The units.</param>
         /// <returns>CrossSectionSolid.</returns>
-        public static CrossSectionSolid CreatePrismCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
             IEnumerable<Polygon> shape, double sameTolerance, UnitType units)
         {
             var shapeList = shape as IList<Polygon> ?? shape.ToList();
@@ -41,13 +41,14 @@ namespace TVGL
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <param name="units">The units.</param>
         /// <returns>CrossSectionSolid.</returns>
-        public static CrossSectionSolid CreatePrismCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
+        public static CrossSectionSolid CreateConstantCrossSectionSolid(Vector3 buildDirection, double distanceOfPlane, double extrudeThickness,
             Polygon shape, double sameTolerance, UnitType units)
         {
             var stepDistances = new Dictionary<int, double> { { 0, distanceOfPlane }, { 1, distanceOfPlane + extrudeThickness } };
             var layers2D = new Dictionary<int, IList<Polygon>> { { 0, new[] { shape } }, { 1, new[] { shape } } };
             return new CrossSectionSolid(buildDirection, stepDistances, sameTolerance, layers2D, null, units);
         }
+
 
         public Vector3[][][] GetCrossSectionsAs3DLoops()
         {
