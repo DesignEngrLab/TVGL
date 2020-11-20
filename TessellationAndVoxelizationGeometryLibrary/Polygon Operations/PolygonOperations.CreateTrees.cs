@@ -80,6 +80,7 @@ namespace TVGL.TwoDimensional
             var orderedPolygons = alreadyOrderedInIncreasingArea ? polygons : polygons.OrderBy(p => Math.Abs(p.Area));
             foreach (var polygon in orderedPolygons)
             {
+                if (polygon.Vertices.Count < 3 || polygon.Area.IsNegligible()) continue;
                 for (int i = branches.Count - 1; i >= 0; i--)
                 {
                     if (polygon.HasABoundingBoxThatEncompasses(branches[i]) &&  // for speed, check the bb first
