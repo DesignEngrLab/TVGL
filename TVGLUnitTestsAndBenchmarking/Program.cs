@@ -22,7 +22,8 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
-            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            TS_Testing_Functions.TestClassify();
+            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
 

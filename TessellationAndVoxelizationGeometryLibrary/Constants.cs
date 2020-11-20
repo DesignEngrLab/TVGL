@@ -13,6 +13,7 @@ namespace TVGL
     /// </summary>
     public static class Constants
     {
+        internal const bool IsHardwareAccelerated = false;
         internal const int MaxNumberFacesDefaultFullTS = 50000;
         internal const double TwoPi = 2 * Math.PI;
         internal const double HalfPi = Math.PI / 2;

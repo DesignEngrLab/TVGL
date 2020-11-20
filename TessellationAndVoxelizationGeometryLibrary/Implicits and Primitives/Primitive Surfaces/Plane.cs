@@ -60,7 +60,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
                     var rotMatrix = Normal.TransformToXYPlane(out _);
                     _asTransformToXYPlane = rotMatrix * Matrix4x4.CreateTranslation(0, 0, -DistanceToOrigin);
                 }
-                return _asTransformFromXYPlane;
+                return _asTransformToXYPlane;
             }
         }
         Matrix4x4 _asTransformToXYPlane = Matrix4x4.Null;
@@ -194,7 +194,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Plane CreateFromVertices(Vector3 point1, Vector3 point2, Vector3 point3)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector3 a = point2 - point1;
                 Vector3 b = point3 - point1;
@@ -365,7 +365,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotCoordinate(Plane plane, Vector3 value)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector3.Dot(plane.Normal, value) + plane.DistanceToOrigin;
             }
@@ -387,7 +387,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotNormal(Plane plane, Vector3 value)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector3.Dot(plane.Normal, value);
             }
@@ -407,7 +407,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SameLocation(Plane other)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return this.Normal.Equals(other.Normal) && this.DistanceToOrigin == other.DistanceToOrigin;
             }

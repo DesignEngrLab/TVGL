@@ -21,7 +21,6 @@ using System.Threading;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
-
 using TVGL.Voxelization;
 using System;
 using TVGL.Numerics;
@@ -67,7 +66,6 @@ namespace TVGL
         public static void ShowAndHang(IEnumerable<IEnumerable<Vector2>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-
             var window = new Window2DPlot(pointsList, title, plot2DType, closeShape, marker);
             window.ShowDialog();
         }

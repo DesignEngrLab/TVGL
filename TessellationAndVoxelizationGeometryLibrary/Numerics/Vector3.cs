@@ -173,7 +173,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double Length()
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double ls = Vector3.Dot(this, this);
                 return Math.Sqrt(ls);
@@ -192,7 +192,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double LengthSquared()
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 return Vector3.Dot(this, this);
             }
@@ -214,7 +214,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Distance(Vector3 value1, Vector3 value2)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector3 difference = value1 - value2;
                 double ls = Vector3.Dot(difference, difference);
@@ -243,7 +243,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DistanceSquared(Vector3 value1, Vector3 value2)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector3 difference = value1 - value2;
                 return Vector3.Dot(difference, difference);
@@ -266,7 +266,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Normalize(Vector3 value)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double length = value.Length();
                 return value / length;
@@ -304,7 +304,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Reflect(in Vector3 vector, Vector3 normal)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 double dot = Vector3.Dot(vector, normal);
                 Vector3 temp = normal * dot * 2.0;
@@ -357,7 +357,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Lerp(Vector3 value1, Vector3 value2, double amount)
         {
-            if (false) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
+            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
             {
                 Vector3 firstInfluence = value1 * (1.0 - amount);
                 Vector3 secondInfluence = value2 * amount;

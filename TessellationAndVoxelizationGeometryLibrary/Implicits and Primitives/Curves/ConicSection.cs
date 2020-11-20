@@ -103,6 +103,7 @@ namespace TVGL.Curves
             EdgesAndDirection.Add((edge, correctDirection));
             if (Points.Count == 0)
             {
+                throw new Exception();
                 if (correctDirection) Points.Add(edge.From.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane));
                 else Points.Add(edge.To.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane));
             }
@@ -112,7 +113,7 @@ namespace TVGL.Curves
 
         internal void AddStart(Edge edge, bool correctDirection)
         {
-            EdgesAndDirection.Insert(0,(edge, correctDirection));
+            EdgesAndDirection.Insert(0, (edge, correctDirection));
             if (correctDirection) Points.Add(edge.From.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane));
             else Points.Add(edge.To.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane));
         }
@@ -132,7 +133,9 @@ namespace TVGL.Curves
         {
             var x = point.X;
             var y = point.Y;
-            return A * x * x + B * x * y + C * y * y + D * x + E * y - 1;
+            if (ConstantIsZero)
+                return Math.Abs(A * x * x + B * x * y + C * y * y + D * x + E * y);
+            return Math.Abs(A * x * x + B * x * y + C * y * y + D * x + E * y - 1);
         }
 
         internal bool Upgrade(Vector3 newPoint, double tolerance)

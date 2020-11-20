@@ -70,7 +70,4 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="_Testing_And_Benchmarking_\" />
-  </ItemGroup>
 </Project>
