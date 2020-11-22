@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="TwoDtoThreeD\" />
     <Folder Include="__snapshots__\" />
   </ItemGroup>
 

@@ -397,7 +397,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         {
             double det = m.GetDeterminant();
 
-            if (Math.Abs(det) < double.Epsilon)
+            if (det.IsNegligible())
             {
                 result = new Matrix3x3(double.NaN, double.NaN, double.NaN, double.NaN, double.NaN, double.NaN);
                 return false;
