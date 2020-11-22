@@ -236,6 +236,7 @@ namespace TVGL.Curves
         }
         private bool UpdateCircle()
         {
+            if (Points.Count < 3) return false;
             B = 0;
             // based on word file, we will solve the two simultaneous equations with substitution
             double xSqSum = 0.0, ySqSum = 0.0, xySum = 0.0, xSum = 0.0, ySum = 0.0;

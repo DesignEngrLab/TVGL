@@ -22,7 +22,7 @@ namespace TVGL
         const int highUltraVertexCutoff = 13;
         const double errorInitialEdgePairing = 0.05;
         const double minCircleEdgeAngle = 2.0;
-        const double tsToleranceMultiplier = 1000;
+        const double tsToleranceMultiplier = 10000;
         static TessellatedSolid debugSolid;
         //this corresponds to 114.6 degrees. That seems about right. I was thinking 120 but that seemed
         // on the high side
@@ -42,12 +42,12 @@ namespace TVGL
             #region Debugging
 #if PRESENT
             TVGL.Presenter.ShowVertexPathsWithSolid(conics.Select(cs => cs.Points
-                                        .Select(p => p.ConvertTo3DLocation(cs.Plane.AsTransformFromXYPlane))), new[] { debugSolid });
+                                        .Select(p => p.ConvertTo3DLocation(cs.Plane.AsTransformFromXYPlane))), new[] { debugSolid }, false);
 
 
 #endif
             #endregion
-
+            return null;
             var unassignedFaces = new HashSet<FaceWithScores>();
             var plannedSurfaces = new List<PlanningSurface>();
             var maxFaceArea = unassignedFaces.Max(a => a.Face.Area);
@@ -88,11 +88,11 @@ namespace TVGL
                         foreach (var edge in conicSection.EdgesAndDirection)
                             availableEdgeHash.Remove(edge.Item1);
                         conics.Add(conicSection);
-                        //#if PRESENT
-                        //                        TVGL.Presenter.ShowVertexPathsWithSolid(new[]{conicSection.Points
-                        //                            .Select(p => p.ConvertTo3DLocation(conicSection.Plane.AsTransformFromXYPlane)) }, new[] { debugSolid });
-                        //                        TVGL.Presenter.ShowAndHang(conicSection.Points);
-                        //#endif
+//#if PRESENT
+//                        TVGL.Presenter.ShowVertexPathsWithSolid(new[]{conicSection.Points
+//                                                    .Select(p => p.ConvertTo3DLocation(conicSection.Plane.AsTransformFromXYPlane)) }, new[] { debugSolid }, false);
+//                        //TVGL.Presenter.ShowAndHang(conicSection.Points);
+//#endif
                         break;
                     }
                 }
@@ -132,12 +132,12 @@ namespace TVGL
             }
             conicSection.Points.Add(v.ConvertTo2DCoordinates(conicSection.Plane.AsTransformToXYPlane));
             return FindEdgesInPlane(inEdge, inEdgeInCorrectDirection, outEdge, outEdgeInCorrectDirection, conicSection,
-                availableEdgeHash, new HashSet<Edge>(), tolerance);
+                availableEdgeHash, new HashSet<Vertex> { v }, tolerance);
         }
 
         private static bool FindEdgesInPlane(Edge inEdge, bool inEdgeInCorrectDirection, Edge outEdge,
             bool outEdgeInCorrectDirection, ConicSection conicSection, HashSet<Edge> availableEdgeHash,
-            HashSet<Edge> currentEdgeHash, double tolerance)
+            HashSet<Vertex> currentVertexHash, double tolerance)
         {
             Vertex newInVertex = inEdge == null ? null : inEdgeInCorrectDirection ? inEdge.From : inEdge.To;
             Vertex newOutVertex = outEdge == null ? null : outEdgeInCorrectDirection ? outEdge.To : outEdge.From;
@@ -149,41 +149,42 @@ namespace TVGL
                 if (inError < tolerance || conicSection.Upgrade(newInVertex.Coordinates, tolerance))
                 {
                     conicSection.AddStart(inEdge, inEdgeInCorrectDirection);
-                    currentEdgeHash.Add(inEdge);
+                    currentVertexHash.Add(inEdgeInCorrectDirection ? inEdge.From : inEdge.To);
                     if (sameVertex) return conicSection.Points.Count > 3;
-                    var bestNextEdge = FindNextBest(newInVertex, inEdge, availableEdgeHash, currentEdgeHash, conicSection, tolerance);
+                    var bestNextEdge = FindNextBest(newInVertex, inEdge, availableEdgeHash, currentVertexHash, conicSection, tolerance);
                     return FindEdgesInPlane(bestNextEdge, bestNextEdge?.To == newInVertex, outEdge, outEdgeInCorrectDirection,
-                        conicSection, availableEdgeHash, currentEdgeHash, tolerance);
+                        conicSection, availableEdgeHash, currentVertexHash, tolerance);
                 }
             }
             else if (outError < tolerance || (outError < double.PositiveInfinity && conicSection.Upgrade(newOutVertex.Coordinates, tolerance)))
             {
                 conicSection.AddEnd(outEdge, outEdgeInCorrectDirection);
-                currentEdgeHash.Add(outEdge);
-                var bestNextEdge = FindNextBest(newOutVertex, outEdge, availableEdgeHash, currentEdgeHash, conicSection, tolerance);
+                currentVertexHash.Add(outEdgeInCorrectDirection ? outEdge.To : outEdge.From);
+                var bestNextEdge = FindNextBest(newOutVertex, outEdge, availableEdgeHash, currentVertexHash, conicSection, tolerance);
                 return FindEdgesInPlane(inEdge, inEdgeInCorrectDirection, bestNextEdge, bestNextEdge?.From == newOutVertex,
-                    conicSection, availableEdgeHash, currentEdgeHash, tolerance);
+                    conicSection, availableEdgeHash, currentVertexHash, tolerance);
             }
             return conicSection.Points.Count > 3;
         }
 
-        private static Edge FindNextBest(Vertex vertex, Edge fromEdge, HashSet<Edge> availableEdgeHash, HashSet<Edge> currentEdgeHash,
+        private static Edge FindNextBest(Vertex vertex, Edge fromEdge, HashSet<Edge> availableEdgeHash, HashSet<Vertex> currentVertexHash,
             ConicSection conicSection, double tolerance)
         {
             Edge bestEdge = null;
-            var lowestError = double.PositiveInfinity;
+            var largestAngle = double.NegativeInfinity;
             foreach (var edge in vertex.Edges)
             {
                 if (edge == fromEdge) continue;
-                if (currentEdgeHash.Contains(edge)) continue;
                 if (!availableEdgeHash.Contains(edge)) continue;
                 var edgeIsIncoming = edge.To == vertex;
                 var otherVertex = edgeIsIncoming ? edge.From : edge.To;
+                if (currentVertexHash.Contains(otherVertex)) continue;
                 if (Math.Abs(otherVertex.Dot(conicSection.Plane.Normal) - conicSection.Plane.DistanceToOrigin) > tolerance) continue;
-                var error = conicSection.CalcError(otherVertex.Coordinates);
-                if (lowestError > error)
+                if (conicSection.CalcError(otherVertex.Coordinates) > tolerance) continue;
+                var angle = fromEdge.Vector.SmallerAngleBetweenVectors(edge.Vector);
+                if (largestAngle < angle)
                 {
-                    lowestError = error;
+                    largestAngle = angle;
                     bestEdge = edge;
                 }
             }
