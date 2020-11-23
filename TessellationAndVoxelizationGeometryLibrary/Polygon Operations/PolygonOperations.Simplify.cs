@@ -24,7 +24,18 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> Simplify(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
+        public static IEnumerable<Polygon> Simplify(this IEnumerable<Polygon> polygons)
+        {
+            return polygons.Select(poly => poly.Simplify());
+        }
+
+        /// <summary>
+        /// Simplifies the specified polygons no more than the allowable change in area fraction.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static IEnumerable<Polygon> Simplify(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
         {
             return polygons.Select(poly => poly.Simplify(allowableChangeInAreaFraction));
         }
@@ -35,7 +46,22 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon Simplify(this Polygon polygon, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
+        public static Polygon Simplify(this Polygon polygon)
+        {
+            var simplifiedPositivePolygon = new Polygon(polygon.Path.Simplify());
+            foreach (var polygonHole in polygon.InnerPolygons)
+                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.Simplify()));
+            return simplifiedPositivePolygon;
+        }
+
+
+        /// <summary>
+        /// Simplifies the specified polygon no more than the allowable change in area fraction.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon Simplify(this Polygon polygon, double allowableChangeInAreaFraction)
         {
             var simplifiedPositivePolygon = new Polygon(polygon.Path.Simplify(allowableChangeInAreaFraction));
             foreach (var polygonHole in polygon.InnerPolygons)
@@ -49,7 +75,19 @@ namespace TVGL.TwoDimensional
         /// <param name="paths">The paths.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths)
+        {
+            return paths.Select(p => Simplify(p)).ToList();
+        }
+
+
+        /// <summary>
+        /// Simplifies the specified polygons no more than the allowable change in area fraction.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction)
         {
             return paths.Select(p => Simplify(p, allowableChangeInAreaFraction)).ToList();
         }
@@ -59,9 +97,31 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction = Constants.SimplifyDefaultDeltaArea)
+        public static List<Vector2> Simplify(this IEnumerable<Vector2> path)
         {
             var polygon = path.ToList();
+            var forwardPoint = polygon[0];
+            var currentPoint = polygon[^1];
+            for (int i = polygon.Count - 1; i >= 0; i--)
+            {
+                var backwardPoint = i == 0 ? polygon[^1] : polygon[i - 1];
+                var cross = (currentPoint - backwardPoint).Cross(forwardPoint - currentPoint);
+                if (cross.IsNegligible()) polygon.RemoveAt(i);
+                else forwardPoint = currentPoint;
+                currentPoint = backwardPoint;
+            }
+            return polygon;
+        }
+
+
+        /// <summary>
+        /// Simplifies the specified polygons no more than the allowable change in area fraction.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static List<Vector2> Simplify(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction)
+        {
+            var polygon = path.Simplify();
             var numPoints = polygon.Count;
             var origArea = Math.Abs(polygon.Area());
             if (origArea.IsNegligible()) return polygon;
@@ -140,7 +200,7 @@ namespace TVGL.TwoDimensional
             return polygon.Where(v => !v.IsNull()).ToList();
         }
 
-        public static Polygon SimplifyFuzzy(this Polygon polygon, 
+        public static Polygon SimplifyFuzzy(this Polygon polygon,
             double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
@@ -155,8 +215,8 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> SimplifyFuzzy(this IEnumerable<Vector2> path, 
-        double lengthTolerance = Constants.LineLengthMinimum, 
+        public static List<Vector2> SimplifyFuzzy(this IEnumerable<Vector2> path,
+        double lengthTolerance = Constants.LineLengthMinimum,
         double slopeTolerance = Constants.LineSlopeTolerance)
         {
             if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
@@ -185,8 +245,8 @@ namespace TVGL.TwoDimensional
                     n--;
                     j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
                     k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                                        //Current stays the same.
-                                        //j moves to k, k moves forward but has the same index.
+                                     //Current stays the same.
+                                     //j moves to k, k moves forward but has the same index.
                     jX = kX;
                     jY = kY;
                     var kPoint = simplePath[k];
@@ -199,8 +259,8 @@ namespace TVGL.TwoDimensional
                     n--;
                     j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
                     k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                                        //Current and Next stay the same.
-                                        //k moves forward but has the same index.
+                                     //Current and Next stay the same.
+                                     //k moves forward but has the same index.
                     var kPoint = simplePath[k];
                     kX = kPoint.X;
                     kY = kPoint.Y;
@@ -251,7 +311,7 @@ namespace TVGL.TwoDimensional
         }
 
         private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
-        {          
+        {
             var dX = p1X - p2X;
             var dY = p1Y - p2Y;
             return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
@@ -306,9 +366,9 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
         ///                   + " is more than the total number of points in the polygon(s).</exception>
-        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> path, int targetNumberOfPoints)
+        public static List<List<Vector2>> Simplify(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
         {
-            var polygons = path.Select(p => p.ToList()).ToList();
+            var polygons = paths.Select(p => p.Simplify()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
 
@@ -566,7 +626,7 @@ namespace TVGL.TwoDimensional
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
         public static void Complexify(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
-         //   throw new NotImplementedException();
+            //   throw new NotImplementedException();
         }
 
         /// <summary>
@@ -577,7 +637,7 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         public static void Complexify(this Polygon polygon, int targetNumberOfPoints)
         {
-           // throw new NotImplementedException();
+            // throw new NotImplementedException();
         }
         #endregion
     }

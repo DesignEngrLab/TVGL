@@ -82,12 +82,14 @@ namespace TVGL.TwoDimensional
             var simplifyPriorToBooleanOperation = true;
             if (simplifyPriorToBooleanOperation)
             {
-                subject = subject.Select(p=>Simplify(p));
+                //subject = subject.Select(p=>SimplifyFuzzy(p));
+                subject = subject.Select(p => Simplify(p, 0.00003));
             }
             if (simplifyPriorToBooleanOperation)
             {
                 //If not null
-                clip = clip?.Select(p => Simplify(p));
+                //clip = clip?.Select(p => SimplifyFuzzy(p));
+                clip = clip?.Select(p => Simplify(p, 0.00003));
             }
             var subjectAll = subject.SelectMany(p => p.AllPolygons).ToList();
             if (!subject.Any())
