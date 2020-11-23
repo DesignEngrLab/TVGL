@@ -38,6 +38,7 @@
       <Link>Window3DPlot.xaml.cs</Link>
     </Compile>
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonOperationsTesting.cs" Link="_Testing_And_Benchmarking_\PolygonOperationsTesting.cs" />
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonSimplify.cs" Link="_Testing_And_Benchmarking_\PolygonSimplify.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\TestCases.cs" Link="_Testing_And_Benchmarking_\TestCases.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\Program.cs" Link="_Testing_And_Benchmarking_\Program.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\TessellatedSolid Functions\TSModify.cs" Link="_Testing_And_Benchmarking_\TSModify.cs" />

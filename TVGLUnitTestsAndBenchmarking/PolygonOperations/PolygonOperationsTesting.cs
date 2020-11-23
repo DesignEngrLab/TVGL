@@ -101,14 +101,6 @@ namespace TVGLUnitTestsAndBenchmarking
         }
 
 
-        internal static void TestSimplify()
-        {
-            IEnumerable<Vector2> polygon = TestCases.MakeStarryCircularPolygon(150000, 30, 1);
-            //Presenter.ShowAndHang(polygon);
-            polygon = polygon.Simplify(20)[0];
-            Presenter.ShowAndHang(polygon);
-        }
-
 
         //[Benchmark(Description = "from Ienumerable")]
         //[Arguments(10, 4)]
