@@ -33,6 +33,8 @@ namespace TVGL.Curves
         public double E;
         // F, the constant is at -1, or +1 when moved to the other side of the equation
         public bool ConstantIsZero;
+        public bool PositiveSideVisited;
+        public bool NegativeSideVisited;
 
         public Matrix4x4 Transform { get; private set; }
 

@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Linq;
 using TVGL.Curves;
 using TVGL.Numerics;
-using TVGL.PrimitiveClassificationDetail;
 
 namespace TVGL
 {
@@ -27,14 +26,19 @@ namespace TVGL
         //this corresponds to 114.6 degrees. That seems about right. I was thinking 120 but that seemed
         // on the high side
 
-        internal static List<EdgeWithScores> allEdgeWithScores { get; private set; }
 
         public static List<PrimitiveSurface> ClassifyPrimitiveSurfaces(this TessellatedSolid tessellatedSolid, bool AddToInputSolid = true)
         {
+#if PRESENT
             debugSolid = tessellatedSolid;
+#endif
             tessellatedSolid.MakeEdgesIfNonExistent();
+            // first "order" the vertices by the number of edges that connect. Sometime in graph theory this is referred to as degree or valence
             var verticesCategorized = CategorizeVerticesByValence(tessellatedSolid.Vertices);
+            // start with a hashset of all the edges. I believe it is more efficent to the innards of hashset to remove than to add new.
+            // so here we keep track of what is available as opposed to what has already been used.
             var availableEdgeHash = tessellatedSolid.Edges.ToHashSet();
+            #region Step 1: Find all Conics in TS
             var conics = new List<ConicSection>();
             foreach (var v in verticesCategorized)
                 MakeConics(availableEdgeHash, v, conics, tsToleranceMultiplier * tessellatedSolid.SameTolerance);
@@ -47,52 +51,138 @@ namespace TVGL
 
 #endif
             #endregion
-            return null;
-            var unassignedFaces = new HashSet<FaceWithScores>();
-            var plannedSurfaces = new List<PlanningSurface>();
-            var maxFaceArea = unassignedFaces.Max(a => a.Face.Area);
-            while (unassignedFaces.Count > 0)
+            #endregion
+
+            // like was done above with edges, here we start with all faces as available faces
+            var availableFaces = new HashSet<PolygonalFace>(tessellatedSolid.Faces);
+            var primitives = new List<PrimitiveSurface>();
+            // consider both sides of the conic as a possibilitiy for defining a primitive shape
+            var conicHash = new HashSet<ConicSection>(conics);
+            var edgesInConics = new Dictionary<Edge, ConicSection>();
+            foreach (var conic in conics)
+                foreach (var edgeAndDir in conic.EdgesAndDirection)
+                    edgesInConics.Add(edgeAndDir.Item1, conic);
+            // or should we use priority queue here
+            while (conicHash.Any())
             {
-                Debug.WriteLine("# unassigned faces: " + unassignedFaces.Count);
-                var topUnassignedFace = unassignedFaces.First();
-                unassignedFaces.Remove(topUnassignedFace);
-                List<FaceWithScores> allFacesWithScores = null;
-                var newSurfaces = groupFacesIntoPlanningSurfaces(topUnassignedFace, allFacesWithScores);
-                plannedSurfaces.AddRange(DecideOnOverlappingPatches(newSurfaces, unassignedFaces));
+                MakePrimitiveSurfaces(primitives, availableFaces, edgesInConics, conicHash);
             }
-            var primitives = MakeSurfaces(plannedSurfaces.OrderByDescending(s => s.Metric).ToList());
-            primitives = MinorCorrections(primitives, allEdgeWithScores);
-            //PaintSurfaces(primitives, ts);
-            //ReportStats(primitives);
+#if PRESENT
+            PaintSurfaces(primitives, tessellatedSolid);
+            ReportStats(primitives);
+#endif
             if (AddToInputSolid && primitives.Any())
                 tessellatedSolid.Primitives = primitives;
             return primitives;
         }
 
+        private static void MakePrimitiveSurfaces(List<PrimitiveSurface> primitiveSurfaces, HashSet<PolygonalFace> availableFaces,
+            Dictionary<Edge, ConicSection> edgesInConics, HashSet<ConicSection> conicHash)
+        {
+            var conic = conicHash.First();
+            var side = conic.PositiveSideVisited;
+            if (side) conic.PositiveSideVisited = true;
+            else conic.NegativeSideVisited = true;
+            if (conic.PositiveSideVisited && conic.NegativeSideVisited)
+                conicHash.Remove(conic);
+            var primalFaces = new List<PolygonalFace>(conic.EdgesAndDirection
+                .Select(eAD => eAD.Item2 == side ? eAD.Item1.OwnedFace : eAD.Item1.OtherFace)
+                .Where(f => availableFaces.Contains(f)));
+            if (primalFaces.Count < 3) return; // it would normally be impossible but given previous passes. perhaps one or more
+            // faces have already been incorporated?
+            var dotsWithConicPlane = primalFaces.Select(pF => Math.Abs(pF.Normal.Dot(conic.Plane.Normal))).ToList();
+            PrimitiveSurface primitiveSurface = null;
+            if (conic.ConicType == ConicSectionType.Circle && dotsWithConicPlane.Min() < 1 - Constants.SameFaceNormalDotTolerance) // must be a flat
+                primitiveSurface = new Plane(primalFaces);
+            else if (conic.ConicType == ConicSectionType.Circle && dotsWithConicPlane.Max() < Constants.SameFaceNormalDotTolerance) // must be a cylinder
+                primitiveSurface = new Cylinder(primalFaces, conic.Plane.Normal);
+            else // the faces are not all the same direction as the curve nor are the perpendicular, so cone, sphere or torus
+            {
+                Debug.WriteLine("Cone, sphere, or torus");
+            }
+            if (ExpandToFindPrimitiveSurface(conic, primitiveSurface, availableFaces, edgesInConics, conicHash, out List<ConicSection> neighborConics))
+            {
+                primitiveSurfaces.Add(primitiveSurface);
+                foreach (var face in primitiveSurface.Faces)
+                    availableFaces.Remove(face);
+                foreach (var neightbor in neighborConics)
+                    if (!conic.PositiveSideVisited && !conic.NegativeSideVisited)
+                        conicHash.Remove(neightbor);
+            }
+        }
+
+        private static bool ExpandToFindPrimitiveSurface(ConicSection startingConic, PrimitiveSurface primitiveSurface,
+            HashSet<PolygonalFace> availableFaces, Dictionary<Edge, ConicSection> edgesInConics, HashSet<ConicSection> conicHash,
+            out List<ConicSection> neighborConics)
+        {
+            var borderEdges = new HashSet<Edge>(startingConic.EdgesAndDirection.Select(eAD => eAD.Item1));
+            neighborConics = new List<ConicSection>();
+            var faceQueue = new Queue<PolygonalFace>(primitiveSurface.Faces);
+            while (faceQueue.Any())
+            {
+                var face = faceQueue.Dequeue();
+                foreach (var edge in face.Edges)
+                {
+                    if (borderEdges.Contains(edge)) continue;
+                    var faceOwnsEdge = face == edge.OwnedFace;
+                    if (edgesInConics.ContainsKey(edge))
+                    { // if edge is not in borderEdges, but it is still in here, then this is a new conic
+                        var newNeighborConic = edgesInConics[edge];
+                        neighborConics.Add(newNeighborConic);
+                        foreach (var neighborEdge in newNeighborConic.EdgesAndDirection.Select(eAD => eAD.Item1))
+                        {
+                            if (edge==neighborEdge) 
+                            borderEdges.Add(neighborEdge);
+                        }
+                        //newNeighborConic update its PositiveVisited or negative visited and remove from conicHash if both are true
+                        
+                        //add all faces to the queue that are on this side
+                    }
+                    var adjacentFace = faceOwnsEdge ? edge.OtherFace : edge.OwnedFace;
+                    if (!availableFaces.Contains(adjacentFace)) continue;
+                    if (!primitiveSurface.IsNewMemberOf(adjacentFace)) continue;
+                    primitiveSurface.UpdateWith(adjacentFace);
+                    faceQueue.Enqueue(adjacentFace);
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Makes the conics.
+        /// </summary>
+        /// <param name="availableEdgeHash">The available edge hash.</param>
+        /// <param name="v">The v.</param>
+        /// <param name="conics">The conics.</param>
+        /// <param name="tolerance">The tolerance.</param>
         private static void MakeConics(HashSet<Edge> availableEdgeHash, Vertex v, List<ConicSection> conics, double tolerance)
         {
             var sortedEdgesByLength = v.Edges.Where(e => availableEdgeHash.Contains(e)).OrderBy(e => e.Vector.LengthSquared()).ToList();
             for (int i = 0; i < sortedEdgesByLength.Count - 1; i++)
             {
                 var inEdge = sortedEdgesByLength[i];
+                if (!availableEdgeHash.Contains(inEdge)) continue; //it's necessary to check again since a previous
+                                                                    //pass in this same for loop might find another curve     
                 var inEdgeLength = inEdge.Vector.LengthSquared();
                 for (int j = i + 1; j < sortedEdgesByLength.Count; j++)
                 {
                     var outEdge = sortedEdgesByLength[j];
+                    if (!availableEdgeHash.Contains(outEdge)) continue; //it's necessary to check again since a previous
+                            //pass in this same for loop might find another curve                        
                     var outEdgeLength = outEdge.Vector.LengthSquared();
                     var error = 2 * (outEdgeLength - inEdgeLength) / (inEdgeLength + outEdgeLength);
                     if (error > errorInitialEdgePairing) break; // if the error is too large then there is no reason to check 
-                    // with remaining edges since these are sorted
+                                                                // with remaining edges since these are sorted
                     if (ExpandToFindConicSection(v, inEdge, outEdge, out var conicSection, availableEdgeHash, tolerance))
                     {
                         foreach (var edge in conicSection.EdgesAndDirection)
                             availableEdgeHash.Remove(edge.Item1);
                         conics.Add(conicSection);
-//#if PRESENT
-//                        TVGL.Presenter.ShowVertexPathsWithSolid(new[]{conicSection.Points
-//                                                    .Select(p => p.ConvertTo3DLocation(conicSection.Plane.AsTransformFromXYPlane)) }, new[] { debugSolid }, false);
-//                        //TVGL.Presenter.ShowAndHang(conicSection.Points);
-//#endif
+                        //#if PRESENT
+                        //                        TVGL.Presenter.ShowVertexPathsWithSolid(new[]{conicSection.Points
+                        //                                                    .Select(p => p.ConvertTo3DLocation(conicSection.Plane.AsTransformFromXYPlane)) }, new[] { debugSolid }, false);
+                        //                        //TVGL.Presenter.ShowAndHang(conicSection.Points);
+                        //#endif
                         break;
                     }
                 }
@@ -211,660 +301,7 @@ namespace TVGL
             low.AddRange(ultra);
             return low;
         }
-
-        private static List<PrimitiveSurface> MinorCorrections(List<PrimitiveSurface> primitives, List<EdgeWithScores> allEdgeWithScores)
-        {
-            //foreach (var primitive in primitives.Where(a => a.Faces.Count == 1 && a is Sphere))
-            var primitivesBeforeFiltering = primitives.Count;
-            //return primitives;
-            for (var i = 0; i < primitives.Count - 1; i++)
-            {
-                var c = false;
-                for (var j = i + 1; j < primitives.Count; j++)
-                {
-                    if ((primitives[i] is Cylinder /*|| primitives[i] is Cone*/) &&
-                        primitives[j].Faces.Any(f => primitives[i].IsNewMemberOf(f)))
-                    {
-                        var del = new List<PolygonalFace>();
-                        foreach (var f in primitives[j].Faces.Where(f => primitives[i].IsNewMemberOf(f)))
-                        {
-                            primitives[i].UpdateWith(f);
-                            del.Add(f);
-                        }
-                        if (del.Count == primitives[j].Faces.Count)
-                        {
-                            primitives.RemoveAt(j);
-                            j--;
-                        }
-                        else
-                            foreach (var f in del)
-                                primitives[j].Faces.Remove(f);
-                        continue;
-                    }
-                    if ((primitives[j] is Cylinder /*|| primitives[j] is Cone*/) && primitives[i].Faces.Any(f => primitives[j].IsNewMemberOf(f)))
-                    {
-                        var del = new List<PolygonalFace>();
-                        var cyl = (Cylinder)primitives[j];
-                        // if the radius of the cylinder is very high, just continue;
-                        var d = primitives[j].Faces.First().Vertices[0].Coordinates.Distance(
-                            primitives[j].Faces.First().Vertices[1].Coordinates);
-                        if (Math.Abs(1 - (cyl.Radius - d) / (cyl.Radius)) < 0.001)
-                            continue;
-                        foreach (var f in primitives[i].Faces.Where(f => primitives[j].IsNewMemberOf(f)))
-                        {
-                            primitives[j].UpdateWith(f);
-                            del.Add(f);
-                        }
-                        if (del.Count == primitives[i].Faces.Count)
-                        {
-                            primitives.RemoveAt(i);
-                            c = true;
-                            break;
-                        }
-                        else
-                            foreach (var f in del)
-                                primitives[i].Faces.Remove(f);
-                    }
-                }
-                if (c) i--;
-            }
-            var flats = primitives.Where(p => p is Plane).Cast<Plane>().ToList();
-            var cylinders = primitives.Where(p => p is Cylinder).Cast<Cylinder>().ToList();
-            foreach (var cy in cylinders)
-            {
-                var d = cy.Faces.First().Vertices[0].Coordinates.Distance(
-                    cy.Faces.First().Vertices[1].Coordinates);
-                if (Math.Abs(1 - (cy.Radius - d) / (cy.Radius)) < 0.001)
-                    continue;
-                foreach (var fl in flats)
-                {
-                    var newFaces = fl.Faces.Where(f => cy.IsNewMemberOf(f)).ToList();
-                    if (newFaces.Any())
-                    {
-                        foreach (var f in newFaces)
-                        {
-                            cy.Faces.Add(f);
-                            fl.Faces.Remove(f);
-                        }
-                    }
-                    if (fl.Faces.Count == 0) primitives.Remove(fl);
-                }
-            }
-            //foreach (var primitive in primitives.Where(a => a.Faces.Count == 1 && a is Sphere))
-            primitivesBeforeFiltering = primitives.Count;
-            for (var i = 0; i < primitives.Count; i++)
-            {
-                var primitive = primitives[i];
-
-                //if (primitive.Faces.Count == 1 && primitive.GetType() == typeof(Sphere))
-                //{
-                //    primitives.Remove(primitive);
-                //    i--;
-                //}
-
-                if (primitive.Faces.Count == 1 && primitive.GetType() == typeof(Sphere))
-                {
-                    var face = primitive.Faces.First();
-                    var neighbors = new List<PrimitiveSurface>();
-                    var catProbsOfEdges = face.Edges.Select(e => allEdgeWithScores.First(ews => ews.Edge == e).CatProb).ToList();
-                    for (int j = 0; j < face.Edges.Count; j++)
-                    {
-                        if (!catProbsOfEdges[j].ContainsKey(500) && !catProbsOfEdges[j].ContainsKey(501) &&
-                            !catProbsOfEdges[j].ContainsKey(502))
-                            continue;
-                        var edge = face.Edges[j];
-                        var child = (edge.OwnedFace == face) ? edge.OtherFace : edge.OwnedFace;
-                        // check and see which primitive has this child
-                        foreach (
-                            var otherPrimitive in
-                            primitives.Where(a => a.Faces.Contains(child) && a.GetType() != typeof(Sphere)))
-                        {
-                            neighbors.Add(otherPrimitive);
-                            break;
-                        }
-                    }
-                    if (neighbors.Count == 0)
-                    {
-                        primitives.Remove(primitive);
-                        i--;
-                        continue;
-                    }
-                    var maxArea = neighbors.Max(a => a.Area);
-                    var bestNeighbor = neighbors.Where(a => a.Area == maxArea).ToList()[0];
-                    bestNeighbor.Faces.Add(face);
-                    primitives.Remove(primitive);
-                    i--;
-                }
-            }
-
-            return primitives;
-        }
-
-        #region FilterOutBadFaces
-        private static void FilterOutBadFaces(HashSet<EdgeWithScores> unassignedEdges, HashSet<FaceWithScores> unassignedFaces,
-            HashSet<EdgeWithScores> filteredOutEdges, HashSet<FaceWithScores> filteredOutFaces)
-        {
-            var badFaces = unassignedFaces.Where(f => f.Face.Area < Parameters.Classifier_MinAreaForStartFace).ToList();
-            foreach (var badFace in badFaces)
-            {
-                filteredOutFaces.Add(badFace);
-                unassignedFaces.Remove(badFace);
-
-            }
-            var badEdges = unassignedEdges.Where(e => e.Edge.OtherFace == null || e.Edge.OwnedFace == null ||
-                                                      (unassignedFaces.All(f => f.Face != e.Edge.OwnedFace) &&
-                                                       unassignedFaces.All(f => f.Face != e.Edge.OtherFace))).ToList();
-            foreach (var badEdge in badEdges)
-            {
-                filteredOutEdges.Add(badEdge);
-                unassignedEdges.Remove(badEdge);
-            }
-        }
-
-
-        #endregion
-        #region Edge Classification
-
-        internal static double AbnCalculator(EdgeWithScores eachEdge)
-        {
-            double ABN;
-            if (eachEdge.Edge.InternalAngle <= Math.PI)
-                ABN = (Math.PI - eachEdge.Edge.InternalAngle) * 180 / Math.PI;
-            else ABN = eachEdge.Edge.InternalAngle * 180 / Math.PI;
-
-            if (ABN >= 180)
-                ABN -= 180;
-
-            if (ABN > 179.5)
-                ABN = 180 - ABN;
-
-            if (Double.IsNaN(ABN))
-            {
-                var eee = eachEdge.Edge.OwnedFace.Normal.Dot(eachEdge.Edge.OtherFace.Normal);
-                if (eee > 1)
-                    eee = 1;
-                ABN = Math.Acos(eee);
-            }
-            return ABN;
-        }
-
-        internal static double McmCalculator(EdgeWithScores eachEdge)
-        {
-            var cenMass1 = eachEdge.Edge.OwnedFace.Center;
-            var cenMass2 = eachEdge.Edge.OtherFace.Center;
-            var vector1 = new Vector3(cenMass1[0] - eachEdge.Edge.From.Coordinates[0],
-                cenMass1[1] - eachEdge.Edge.From.Coordinates[1],
-                cenMass1[2] - eachEdge.Edge.From.Coordinates[2]);
-            var vector2 = new Vector3(cenMass2[0] - eachEdge.Edge.From.Coordinates[0],
-                cenMass2[1] - eachEdge.Edge.From.Coordinates[1],
-                cenMass2[2] - eachEdge.Edge.From.Coordinates[2]);
-            var distance1 = eachEdge.Edge.Vector.Normalize().Dot(vector1);
-            var distance2 = eachEdge.Edge.Vector.Normalize().Dot(vector2);
-            //Mapped Center of Mass
-            var MCM = (Math.Abs(distance1 - distance2)) / eachEdge.Edge.Length;
-            return MCM;
-        }
-
-        internal static double SmCalculator(EdgeWithScores eachEdge)
-        {
-            var edgesOfFace1 = new List<Edge>(eachEdge.Edge.OwnedFace.Edges);
-            var edgesOfFace2 = new List<Edge>(eachEdge.Edge.OtherFace.Edges);
-            edgesOfFace1 = edgesOfFace1.OrderBy(a => a.Length).ToList();
-            edgesOfFace2 = edgesOfFace2.OrderBy(a => a.Length).ToList();
-
-            double smallArea, largeArea;
-            if (eachEdge.Edge.OwnedFace.Area >= eachEdge.Edge.OtherFace.Area)
-            {
-                largeArea = eachEdge.Edge.OwnedFace.Area;
-                smallArea = eachEdge.Edge.OtherFace.Area;
-            }
-            else
-            {
-                largeArea = eachEdge.Edge.OtherFace.Area;
-                smallArea = eachEdge.Edge.OwnedFace.Area;
-            }
-
-            var r11 = edgesOfFace1[0].Length / edgesOfFace1[1].Length;
-            var r12 = edgesOfFace1[0].Length / edgesOfFace1[2].Length;
-            var r13 = edgesOfFace1[1].Length / edgesOfFace1[2].Length;
-            var r21 = edgesOfFace2[0].Length / edgesOfFace2[1].Length;
-            var r22 = edgesOfFace2[0].Length / edgesOfFace2[2].Length;
-            var r23 = edgesOfFace2[1].Length / edgesOfFace2[2].Length;
-
-            var similarity = Math.Abs(r11 - r21) + Math.Abs(r12 - r22) + Math.Abs(r13 - r23); // cannot exceed 3
-            var areaSimilarity = 3 * Math.Abs(1 - (smallArea / largeArea));
-
-            var SM = similarity + areaSimilarity;
-            return SM;
-        }
-
-
-        private static int EdgeClassifier2(double[] ABNProbs, double[] MCMProbs, double[] SMProbs,
-            List<List<int>> rulesArray, out double prob)
-        {
-            // go to the rules and and return an int corresponding to each region.
-            // This function must be rewrited. It's crazy!!!!!!!!!
-            prob = 0;
-            var ABN = Convert.ToInt32(ABNProbs[0]);
-            var MCM = Convert.ToInt32(MCMProbs[0]);
-            var SM = Convert.ToInt32(SMProbs[0]);
-            var t = 0;
-            Boolean probabilityNotFound;
-            do
-            {
-                probabilityNotFound = false;
-                if (rulesArray[0][t] == ABN && rulesArray[1][t] == 10 && rulesArray[2][t] == 10)
-                    prob = ABNProbs[1];
-                else if (rulesArray[1][t] == MCM && rulesArray[0][t] == 10 && rulesArray[2][t] == 10)
-                    prob = MCMProbs[1];
-                else if (rulesArray[2][t] == SM && rulesArray[0][t] == 10 && rulesArray[1][t] == 10)
-                    prob = SMProbs[1];
-                else if (rulesArray[0][t] == ABN && rulesArray[1][t] == MCM && rulesArray[2][t] == 10)
-                    prob = Math.Min(ABNProbs[1], MCMProbs[1]);
-                else if (rulesArray[0][t] == ABN && rulesArray[1][t] == 10 && rulesArray[2][t] == SM)
-                    prob = Math.Min(ABNProbs[1], SMProbs[1]);
-                else if (rulesArray[0][t] == 10 && rulesArray[1][t] == MCM && rulesArray[2][t] == SM)
-                    prob = Math.Min(MCMProbs[1], SMProbs[1]);
-                else if (rulesArray[0][t] == ABN && rulesArray[1][t] == MCM && rulesArray[2][t] == SM)
-                {
-                    var m = Math.Min(ABNProbs[1], MCMProbs[1]);
-                    prob = Math.Min(m, SMProbs[1]);
-                }
-                else probabilityNotFound = true;
-            } while (probabilityNotFound && ++t < rulesArray[0].Count);
-            if (probabilityNotFound) return 0;  // t would exceed the limit, so we return 0
-            return rulesArray[3][t];
-        }
-
-        private static List<double[]> CatAndProbFinder(double metric, List<double> listOfLimits)
-        {
-            var CatAndProb = new List<double[]>();
-            //Case 1
-            if (metric <= listOfLimits[0])
-            {
-                CatAndProb.Add(new double[] { 0, 1 });
-                return CatAndProb;
-            }
-            //Case 3
-            if (metric >= listOfLimits[3] && metric <= listOfLimits[4])
-            {
-                CatAndProb.Add(new double[] { 1, 1 });
-                return CatAndProb;
-            }
-            //Case 5
-            if (metric >= listOfLimits[7])
-            {
-                CatAndProb.Add(new double[] { 2, 1 });
-                return CatAndProb;
-            }
-            //Case 2
-            if (metric > listOfLimits[0] && metric < listOfLimits[3])
-            {
-                CatAndProb = CatAndProbForCases2and4(listOfLimits[0], listOfLimits[1], listOfLimits[2], listOfLimits[3], metric, 2);
-                return CatAndProb;
-            }
-            //Case 4
-            if (metric > listOfLimits[4] && metric < listOfLimits[7])
-            {
-                CatAndProb = CatAndProbForCases2and4(listOfLimits[4], listOfLimits[5], listOfLimits[6], listOfLimits[7], metric, 4);
-                return CatAndProb;
-            }
-
-
-            return CatAndProb;
-        }
-
-        private static List<double[]> CatAndProbForCases2and4(double p1, double p2, double p3, double p4, double metric, double Case)
-        {
-            var catAndProb = new List<double[]>();
-            var prob1 = ((0 - 1) / (p2 - p1)) * (metric - p1) + 1;
-            var prob2 = ((1 - 0) / (p4 - p3)) * (metric - p3) + 1;
-            if (Case == 2)
-            {
-                catAndProb.Add(new[] { 0, prob1 });
-                catAndProb.Add(new[] { 1, prob2 });
-            }
-            if (Case == 4)
-            {
-                catAndProb.Add(new[] { 1, prob1 });
-                catAndProb.Add(new[] { 2, prob2 });
-            }
-            return catAndProb;
-        }
-
-        #endregion
-        #region Face Classification
-
-        private static PrimitiveSurfaceType FaceClassifier(int[] bestCombination, List<List<int>> faceRules)
-        {
-            var intToString = new Dictionary<int, PrimitiveSurfaceType>();
-            intToString.Add(200, PrimitiveSurfaceType.Plane);
-            intToString.Add(201, PrimitiveSurfaceType.Cylinder);
-            intToString.Add(202, PrimitiveSurfaceType.Sphere);
-            intToString.Add(203, PrimitiveSurfaceType.Flat_to_Curve);
-            intToString.Add(204, PrimitiveSurfaceType.Unknown);
-            intToString.Add(205, PrimitiveSurfaceType.Unknown);
-            var sortedCom = bestCombination.OrderBy(n => n).ToArray();
-            for (var i = 0; i < faceRules[0].Count; i++)
-            {
-                var arrayOfRule = new[] { faceRules[0][i], faceRules[1][i], faceRules[2][i] };
-                var sortedAofR = arrayOfRule.OrderBy(n => n).ToArray();
-                if (sortedCom[0] == sortedAofR[0] && sortedCom[1] == sortedAofR[1] && sortedCom[2] == sortedAofR[2])
-                    return intToString[faceRules[3][i]];
-            }
-            return PrimitiveSurfaceType.Unknown;
-        }
-
-        private static Dictionary<int[], Edge[]> sortingComToEdgeDic(Dictionary<int[], Edge[]> d)
-        {
-            var lastAdded = d.ToList()[d.Keys.Count - 1];
-            var k = lastAdded.Key;
-            var v = lastAdded.Value;
-            d.Remove(k);
-            if (k[0] > k[1])
-            {
-                var a = k[0];
-                k[0] = k[1];
-                k[1] = a;
-                var b = v[0];
-                v[0] = v[1];
-                v[1] = b;
-            }
-            if (k[1] > k[2])
-            {
-                var a = k[1];
-                k[1] = k[2];
-                k[2] = a;
-                var b = v[1];
-                v[1] = v[2];
-                v[2] = b;
-            }
-            if (k[0] > k[1])
-            {
-                var a = k[0];
-                k[0] = k[1];
-                k[1] = a;
-                var b = v[0];
-                v[0] = v[1];
-                v[1] = b;
-            }
-            d.Add(k, v);
-            return d;
-        }
-
-        #endregion
-        #region EdgesLeadToDesiredFaceCatFinder
-        private static void EdgesLeadToDesiredFaceCatFinder(FaceWithScores face, PrimitiveSurfaceType p, List<List<int>> faceRules)
-        {
-            // This function takes a face and a possible category and returns 
-            // edges which lead to that category
-            // We need to define some rules. for example, if the p is  F, with
-            // combination of F F SE, then return edges of F and F. 
-            //eltc = [faceRules[4][i],faceRules[5][i],faceRules[6][i]];
-            var edges = new List<Edge>();
-            var com = face.CatToCom[p];
-            var edgesFD = new Edge[3];
-
-            /////////////////////////////////////////////////////////////////////
-            // Checking the equality of 2 arrays: com and comb
-            foreach (var comb in face.ComToEdge.Keys)
-            {
-                var counter = 0;
-                var list = new List<int>();
-                for (var m = 0; m < 3; m++)
-                {
-                    for (var n = 0; n < 3; n++)
-                    {
-                        if (!list.Contains(n))
-                        {
-                            if (com[m] == comb[n])
-                            {
-                                counter++;
-                                list.Add(n);
-                                break;
-                            }
-                        }
-                    }
-                }
-                bool equals = counter == 3;
-                if (equals)
-                {
-                    for (int i = 0; i < 3; i++)
-                    {
-                        edgesFD[i] = face.ComToEdge[comb][i];
-                    }
-                }
-            }
-            /////////////////////////////////////////////////////////////////////
-
-            for (var i = 0; i < faceRules[0].Count; i++)
-            {
-                var arrayOfRule = new[] { faceRules[0][i], faceRules[1][i], faceRules[2][i] };
-                /*var q = from a in com
-                        join b in arrayOfRule on a equals b
-                        select a;
-                bool equals = com.Length == arrayOfRule.Length && q.Count() == com.Length;*/
-
-                // Checking the equality of 2 arrays:com and arrayOfRules
-                var counter = 0;
-                var list = new List<int>();
-                for (var m = 0; m < 3; m++)
-                {
-                    for (var n = 0; n < 3; n++)
-                    {
-                        if (!list.Contains(n))
-                        {
-                            if (com[m] == arrayOfRule[n])
-                            {
-                                counter++;
-                                list.Add(n);
-                                break;
-                            }
-                        }
-                    }
-                }
-                bool equals = counter == 3;
-                arrayOfRule.OrderBy(n => n).ToArray();
-                if (equals)
-                {
-                    var EdgesLead = new[] { faceRules[4][i], faceRules[5][i], faceRules[6][i] };
-                    var SortedEL = EdgesLead.OrderBy(n => n).ToArray();
-                    for (var t = 0; t < 3; t++)
-                    //foreach (var EL in SortedEL.Where(a => a != 1000))
-                    {
-                        if (SortedEL[t] == 1000) continue;
-                        //var index = Array.IndexOf(SortedEL, EL);
-                        edges.Add(edgesFD[t]);
-                    }
-                    break;
-                    //return edges;
-                }
-            }
-            face.CatToELDC.Add(p, edges);
-            //return null;
-        }
-        #endregion
-        #region Group Faces Into Primitives
-        private static List<PlanningSurface> groupFacesIntoPlanningSurfaces(FaceWithScores seedFace, List<FaceWithScores> allFacesWithScores)
-        {
-            // candidatePatches are where we store successful surfaces that start on the stackOfPotentialPrimitives
-            // they are collected here and returned to the main classification method
-            var candidatePatches = new List<PlanningSurface>();
-            // the outer depthfirst search builds stackOfPotentialPatches, which acts as seeds to the inner DFS.
-            // While on this stack, all surfaces ONLY have one face - which is the start to
-            // the inner DFS. Once an inner DFS ends, its successful result is added to candidatePatches.
-            var stackOfPotentialPatches = new Stack<PlanningSurface>();
-            // put possible start states on the stack starting with the seedface. But don't start with faces that
-            // are too small or have not
-            //if (seedFace.Face.Area < Parameters.Classifier_MinAreaForStartFace || seedFace.CatToCom.Count == 0)
-            //    return new List<PlanningSurface>();
-            foreach (var faceCat in seedFace.FaceCat.Keys)
-                stackOfPotentialPatches.Push(new PlanningSurface(faceCat, seedFace));
-            while (stackOfPotentialPatches.Any())
-            {
-                var primitive = stackOfPotentialPatches.Pop();
-                var type = primitive.SurfaceType;
-                if (AlreadySearchedPrimitive(primitive, candidatePatches)) continue;
-
-                // start new depth first search on this primitive
-                var innerStack = new Stack<FaceWithScores>();
-                innerStack.Push(primitive.Faces[0]);
-                while (innerStack.Any())
-                {
-                    var openBranchFace = innerStack.Pop();
-                    foreach (var eachEdge in openBranchFace.CatToELDC[type])
-                    {
-                        var child = (eachEdge.OwnedFace == openBranchFace.Face)
-                            ? allFacesWithScores.First(f => f.Face == eachEdge.OtherFace)
-                            : allFacesWithScores.First(f => f.Face == eachEdge.OwnedFace);
-                        if (primitive.Faces.Contains(child)) continue;
-                        if (child.FaceCat == null) continue; // you've moved onto a dense or bad face
-                        if (!child.CatToCom.ContainsKey(type)) continue;
-                        if (child.FaceCat.ContainsKey(type))
-                        {
-                            child.CatToCom.Remove(type);
-                            primitive.Add(child);
-                            innerStack.Push(child);
-                        }
-                        // else
-                        foreach (var surfaceType in child.FaceCat.Keys
-                            .Where(surfaceType => !stackOfPotentialPatches.Any(p => p.SurfaceType == surfaceType
-                                                                                    && p.Faces[0] == child)))
-                            stackOfPotentialPatches.Push(new PlanningSurface(surfaceType, child));
-                    }
-                }
-                candidatePatches.Add(primitive);
-            }
-            Debug.WriteLine("new patches: " + candidatePatches.Count + " -- comprised of #faces: " + candidatePatches.SelectMany(cp => cp.Faces).Distinct().Count());
-            return candidatePatches;
-        }
-
-        private static bool AlreadySearchedPrimitive(PlanningSurface newSeed, List<PlanningSurface> candidatePatches)
-        {
-            return (candidatePatches.Any(p => p.SurfaceType == newSeed.SurfaceType
-                                              && p.Faces.Contains(newSeed.Faces[0])));
-        }
-
-        #endregion
-        #region Decide In Overlapping Patches
-        private static IEnumerable<PlanningSurface> DecideOnOverlappingPatches(List<PlanningSurface> surfaces,
-            HashSet<FaceWithScores> unassignedFaces)
-        {
-            var orderedSurfaces = surfaces.OrderByDescending(s => s.Metric).ToList();
-            var completeSurfaces = new List<PlanningSurface>();
-            while (orderedSurfaces.Any())
-            {
-                var surface = orderedSurfaces[0];
-                orderedSurfaces.RemoveAt(0);
-                if (surface.Faces.Count < 1)
-                {
-                    //if (surface.Faces.Count == 1) unassignedFaces.Remove(surface.Faces[0]);
-                    continue;
-                }
-                completeSurfaces.Add(surface);
-                var otherSurfsThatShareFaces = new List<PlanningSurface>();
-                foreach (var f in surface.Faces)
-                {
-                    unassignedFaces.Remove(f);
-                    for (int j = orderedSurfaces.Count - 1; j >= 0; j--)
-                    {
-                        var otherSurface = orderedSurfaces[j];
-                        if (otherSurface.Faces.Contains(f))
-                        {
-                            otherSurfsThatShareFaces.Add(otherSurface);
-                            otherSurface.Remove(f);
-                            orderedSurfaces.RemoveAt(j);
-                        }
-                    }
-                }
-                foreach (var reducedSurface in otherSurfsThatShareFaces)
-                    ReInsert(reducedSurface, orderedSurfaces);
-            }
-            return completeSurfaces;
-        }
-
-        private static void ReInsert(PlanningSurface surface, List<PlanningSurface> orderedPrimitives)
-        {
-            int endIndex = orderedPrimitives.Count;
-            if (endIndex == 0)
-            {
-                orderedPrimitives.Add(surface);
-                return;
-            }
-            int startIndex = 0;
-            var midIndex = endIndex / 2;
-            do
-            {
-                if (surface.Metric > orderedPrimitives[midIndex].Metric)
-                    endIndex = midIndex;
-                else startIndex = midIndex;
-                midIndex = startIndex + (endIndex - startIndex) / 2;
-            } while (midIndex != endIndex && midIndex != startIndex);
-            orderedPrimitives.Insert(midIndex, surface);
-        }
-
-        #endregion
         #region Make Primitives
-        static double maxFaceArea = double.NaN; //todo fix this
-        private static List<PrimitiveSurface> MakeSurfaces(List<PlanningSurface> plannedSurfaces)
-        {
-            var completeSurfaces = new List<PrimitiveSurface>();
-
-            while (plannedSurfaces.Any())
-            {
-                Debug.WriteLine("# primitives to make: " + plannedSurfaces.Count);
-                var topPlannedSurface = plannedSurfaces[0];
-                plannedSurfaces.RemoveAt(0);
-                if (topPlannedSurface.Faces.Count < 1)
-                    continue;
-                if (topPlannedSurface.Faces.Count == 1)
-                {
-                    var face = topPlannedSurface.Faces[0].Face;
-                    if (face.Area < maxFaceArea / 9)
-                    {
-                        completeSurfaces.Add(new Sphere(topPlannedSurface.Faces.Select(f => f.Face)));
-                        continue;
-                    }
-                    completeSurfaces.Add(new Plane(topPlannedSurface.Faces.Select(f => f.Face)));
-                    continue;
-                }
-                var topPrimitiveSurface = CreatePrimitiveSurface(topPlannedSurface);
-                for (var i = plannedSurfaces.Count - 1; i >= 0; i--)
-                {
-                    if (plannedSurfaces[i].SurfaceType == topPlannedSurface.SurfaceType
-                        && plannedSurfaces[i].Faces.All(f => topPrimitiveSurface.IsNewMemberOf(f.Face)))
-                    {
-                        foreach (var face in plannedSurfaces[i].Faces)
-                            topPrimitiveSurface.UpdateWith(face.Face);
-                        plannedSurfaces.RemoveAt(i);
-                    }
-                }
-                completeSurfaces.Add(topPrimitiveSurface);
-            }
-            return completeSurfaces;
-        }
-
-        private static PrimitiveSurface CreatePrimitiveSurface(PlanningSurface topPlannedSurface)
-        {
-            var surfaceType = topPlannedSurface.SurfaceType;
-            var faces = new List<PolygonalFace>(topPlannedSurface.Faces.Select(f => f.Face));
-
-            switch (surfaceType)
-            {
-                case PrimitiveSurfaceType.Plane:
-                    return new Plane(faces);
-                case PrimitiveSurfaceType.Cylinder:
-                    if (IsReallyACone(faces, out var axis, out var coneAngle))
-                        return new Cone(faces, axis, coneAngle);
-                    if (IsReallyAFlat(faces)) return new Plane(faces);
-                    return new Cylinder(faces, axis);
-                case PrimitiveSurfaceType.Sphere:
-                    if (IsReallyATorus(faces))
-                        return new Torus(faces);
-                    return new Sphere(faces);
-                default: throw new Exception("Cannot build Create Primitive Surface of type: " + surfaceType);
-            }
-        }
 
         private static bool IsReallyAFlat(IEnumerable<PolygonalFace> faces)
         {
@@ -956,7 +393,7 @@ namespace TVGL
                 axis = normalOfGaussPlane;
             }
             coneAngle = Math.Asin(distance);
-            return (Math.Abs(distance) >= Parameters.MinConeGaussPlaneOffset);
+            return Math.Abs(distance) >= Constants.MinConeGaussPlaneOffset;
         }
 
         private static bool IsReallyATorus(IEnumerable<PolygonalFace> faces)
@@ -1017,41 +454,5 @@ namespace TVGL
         }
         #endregion
 
-    }
-
-    /// <summary>
-    /// Enum PrimitiveSurfaceType
-    /// </summary>
-    public enum PrimitiveSurfaceType
-    {
-        /// <summary>
-        /// The unknown
-        /// </summary>
-        Unknown,
-        /// <summary>
-        /// The flat
-        /// </summary>
-        Plane,
-        /// <summary>
-        /// The cylinder
-        /// </summary>
-        Cylinder,
-        /// <summary>
-        /// The sphere
-        /// </summary>
-        Sphere,
-        /// <summary>
-        /// The flat_to_ curve
-        /// </summary>
-        Flat_to_Curve,
-        /// <summary>
-        /// The sharp
-        /// </summary>
-        Sharp,
-        /// <summary>
-        /// The cone
-        /// </summary>
-        Cone,
-        Torus
     }
 }

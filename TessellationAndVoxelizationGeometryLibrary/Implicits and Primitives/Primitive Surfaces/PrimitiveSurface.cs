@@ -23,7 +23,6 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
-            Type = PrimitiveSurfaceType.Unknown;
             Faces = new HashSet<PolygonalFace>(faces);
             foreach (var face in Faces)
                 face.BelongsToPrimitive = this;
@@ -39,12 +38,6 @@ namespace TVGL
         protected PrimitiveSurface()
         {
         }
-
-        /// <summary>
-        ///     Gets the Type of primitive surface
-        /// </summary>
-        /// <value>The type.</value>
-        public PrimitiveSurfaceType Type { get; protected set; }
 
         /// <summary>
         ///     Gets the area.

@@ -58,6 +58,9 @@ namespace TVGL
         /// </summary>
         public const double ErrorForFaceInSurface = 0.002;
 
+
+        internal const double MinConeGaussPlaneOffset = 0.1; // sine of 1 degrees 0.1
+
         /// <summary>
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>

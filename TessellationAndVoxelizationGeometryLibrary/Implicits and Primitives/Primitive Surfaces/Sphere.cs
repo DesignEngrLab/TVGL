@@ -74,7 +74,6 @@ namespace TVGL
         public Sphere(IEnumerable<PolygonalFace> facesAll)
             : base(facesAll)
         {
-            Type = PrimitiveSurfaceType.Sphere;
             var faces = MiscFunctions.FacesWithDistinctNormals(Faces);
             var n = faces.Count;
             var centers = new List<Vector3>();
@@ -123,14 +122,8 @@ namespace TVGL
         /// <param name="edge">The edge.</param>
         internal Sphere(Edge edge)
             : this(new List<PolygonalFace>(new[] { edge.OwnedFace, edge.OtherFace }))
-        {
-            Type = PrimitiveSurfaceType.Sphere;
-        }
-        internal Sphere()
-        {
-            Type = PrimitiveSurfaceType.Sphere;
-        }
-
+        { }
+        internal Sphere() { }
         #endregion
 
         #region Public Properties

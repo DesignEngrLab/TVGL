@@ -324,7 +324,6 @@ namespace TVGL
             HashSet<Plane> featureFlats = null) : base(faces)
         {
             if (!buildOnlyIfHole) throw new Exception("This Cylinder constructor only works when you want to find holes.");
-            Type = PrimitiveSurfaceType.Cylinder;
             SmallFlats = featureFlats;
             IsValid = BuildIfCylinderIsHole(isPositive);
         }
@@ -337,7 +336,6 @@ namespace TVGL
         public Cylinder(IEnumerable<PolygonalFace> facesAll, Vector3 axis)
             : base(facesAll)
         {
-            Type = PrimitiveSurfaceType.Cylinder;
             var faces = Faces.FacesWithDistinctNormals();
             var n = faces.Count;
             var centers = new List<Vector3>();
@@ -392,7 +390,6 @@ namespace TVGL
         internal Cylinder(Edge edge)
             : base(new List<PolygonalFace>(new[] { edge.OwnedFace, edge.OtherFace }))
         {
-            Type = PrimitiveSurfaceType.Cylinder;
             var axis = edge.OwnedFace.Normal.Cross(edge.OtherFace.Normal);
             var length = axis.Length();
             if (length.IsNegligible()) throw new Exception("Edge used to define cylinder is flat.");
@@ -430,8 +427,7 @@ namespace TVGL
             Radius = averageRadius;
         }
 
-        internal Cylinder()
-        { Type = PrimitiveSurfaceType.Cylinder; }
+        internal Cylinder() { }
 
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, double dxOfBottomPlane,
             double dxOfTopPlane)

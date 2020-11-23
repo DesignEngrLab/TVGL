@@ -19,8 +19,7 @@ namespace TVGL
         /// </summary>
         public bool IsPositive;
 
-        internal Cone()
-        { Type = PrimitiveSurfaceType.Cone; }
+        internal Cone()        { }
         /// <summary>
         ///     Cone
         /// </summary>
@@ -30,7 +29,6 @@ namespace TVGL
         public Cone(List<PolygonalFace> facesAll, Vector3 axis, double aperture)
             : base(facesAll)
         {
-            Type = PrimitiveSurfaceType.Cone;
             Axis = axis;
             Aperture = aperture;
             var faces = MiscFunctions.FacesWithDistinctNormals(facesAll);
