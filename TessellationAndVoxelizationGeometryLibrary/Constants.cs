@@ -34,6 +34,16 @@ namespace TVGL
 #endif
 
         /// <summary>
+        ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
+        /// </summary>
+        public const double LineSlopeTolerance = 0.0003;
+
+        /// <summary>
+        ///     The tolerance used for simplifying polygons by removing tiny lines.
+        /// </summary>
+        public const double LineLengthMinimum = 1E-7;
+
+        /// <summary>
         ///     The default color
         /// </summary>
         public const KnownColors DefaultColor = KnownColors.LightGray;
