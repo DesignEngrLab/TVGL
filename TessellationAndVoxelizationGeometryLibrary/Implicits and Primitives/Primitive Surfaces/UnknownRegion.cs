@@ -17,14 +17,8 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="UnknownRegion" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public UnknownRegion(List<PolygonalFace> faces) : base(faces)
-        {
-            Type = PrimitiveSurfaceType.Unknown;
-        }
-        public UnknownRegion()
-        {
-            Type = PrimitiveSurfaceType.Unknown;
-        }
+        public UnknownRegion(List<PolygonalFace> faces) : base(faces) { }
+        public UnknownRegion() { }
 
         /// <summary>
         ///     Determines whether [is new member of] [the specified face].

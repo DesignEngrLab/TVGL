@@ -94,9 +94,6 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        internal Torus()
-        {
-            Type=PrimitiveSurfaceType.Torus;
-        }
+        internal Torus() { }
     }
 }

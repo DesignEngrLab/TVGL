@@ -35,14 +35,14 @@ namespace TVGLUnitTestsAndBenchmarking
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("piston*").ToArray();
+            var fileNames = dir.GetFiles("*").ToArray();
             for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                Presenter.ShowAndHang(solid);
+                //Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)
                 {
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());

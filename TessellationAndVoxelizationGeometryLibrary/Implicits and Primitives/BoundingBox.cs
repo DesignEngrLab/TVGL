@@ -19,6 +19,10 @@ namespace TVGL
     /// <seealso cref="TVGL.BoundingBox" />
     public class BoundingBox<T> : BoundingBox where T : IVertex3D
     {
+        public BoundingBox(double[] dimensions, Matrix4x4 transform) : base(dimensions, transform)
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox{T}"/> class.
         /// </summary>
@@ -46,7 +50,7 @@ namespace TVGL
         ///     that are on the faces of the bounding box. They are in the order of direction1-low,
         ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
         /// </summary>
-        public T[][] PointsOnFaces { get; }
+        public T[][] PointsOnFaces { get; private set; }
 
 
         /// <summary>
@@ -55,10 +59,20 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public override BoundingBox Copy()
         {
+            var copiedBB = new BoundingBox<T>(this.Dimensions, this.Transform);
             if (PointsOnFaces != null)
-                return new BoundingBox<T>(this.Dimensions, this.Directions, PointsOnFaces);
-            else return new BoundingBox(this.Dimensions, this.Transform);
+                copiedBB.PointsOnFaces = new T[][]
+                {
+                    this.PointsOnFaces[0].ToArray(),
+                    this.PointsOnFaces[1].ToArray(),
+                    this.PointsOnFaces[2].ToArray(),
+                    this.PointsOnFaces[3].ToArray(),
+                    this.PointsOnFaces[4].ToArray(),
+                    this.PointsOnFaces[5].ToArray() 
+                };
+            return copiedBB;
         }
+
         /// <summary>
         /// Moves the face outward by the provided distance (or inward if distance is negative)
         /// </summary>
