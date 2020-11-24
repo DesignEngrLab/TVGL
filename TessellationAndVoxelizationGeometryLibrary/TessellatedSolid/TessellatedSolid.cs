@@ -242,6 +242,7 @@ namespace TVGL
                 HasUniformColor = true;
             }
             var manyInputColors = (colors != null && colors.Count > 1);
+            if (manyInputColors) HasUniformColor = false;
             Faces = faces.ToArray();
             NumberOfFaces = Faces.Length;
             if (vertices == null)
@@ -929,7 +930,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public override Solid Copy()
         {
-            return new TessellatedSolid(Faces, Edges != null, true, Vertices, null, Units, Name + "_Copy",
+            return new TessellatedSolid(Faces, Edges != null, true, Vertices, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
                 FileName, Comments, Language);
         }
 
