@@ -126,13 +126,13 @@ namespace TVGL.TwoDimensional
             if (onlyTopPolygon || !insideTopPolygon) return insideTopPolygon;
 
             //Else, it is inside the top polygon and we need to check the inner polygons
-            var smallestArea = polygon.Area;
+            var smallestArea = polygon.PathArea;
             var smallestEnclosingPolygon = polygon;
             foreach(var subPolygon in polygon.AllPolygons.Skip(1))
             {
                 if(IsPointInsidePolygon(subPolygon, pointInQuestion))
                 {
-                    var absArea = Math.Abs(subPolygon.Area);
+                    var absArea = Math.Abs(subPolygon.PathArea);
                     if (absArea < smallestArea)
                     {
                         smallestArea = absArea;
