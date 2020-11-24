@@ -1,0 +1,10 @@
+diff a/TessellationAndVoxelizationGeometryLibrary/Constants.cs b/TessellationAndVoxelizationGeometryLibrary/Constants.cs	(rejected hunks)
+@@ -61,7 +61,7 @@
+         /// <summary>
+         ///     The error for face in surface
+         /// </summary>
+-        public const double ErrorForFaceInSurface = 0.002;
++        public const double ErrorForFaceInSurface = 0.03;
+ 
+ 
+         internal const double MinConeGaussPlaneOffset = 0.1; // sine of 1 degrees 0.1
