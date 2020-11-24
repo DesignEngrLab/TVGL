@@ -61,7 +61,7 @@ namespace TVGL
         /// <summary>
         ///     The error for face in surface
         /// </summary>
-        public const double ErrorForFaceInSurface = 0.002;
+        public const double ErrorForFaceInSurface = 0.03;
 
 
         internal const double MinConeGaussPlaneOffset = 0.1; // sine of 1 degrees 0.1

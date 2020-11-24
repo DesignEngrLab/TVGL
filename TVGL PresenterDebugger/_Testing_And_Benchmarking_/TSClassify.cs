@@ -36,7 +36,7 @@ namespace TVGLUnitTestsAndBenchmarking
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
             var fileNames = dir.GetFiles("*").ToArray();
-            for (var i = 0; i < fileNames.Length - 0; i++)
+            for (var i = 7; i < fileNames.Length - 0; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
@@ -49,8 +49,8 @@ namespace TVGLUnitTestsAndBenchmarking
                    // continue;
                 }
                 solid.ClassifyPrimitiveSurfaces();
-                solid.SetToOriginAndSquare(out _);
-                    Presenter.ShowAndHang(solid);  
+                //solid.SetToOriginAndSquare(out _);
+                 //   Presenter.ShowAndHang(solid);  
                 //solid.Simplify(0.3 * solid.NumberOfFaces);
               
 

@@ -69,6 +69,7 @@ namespace TVGL
             }
 #if PRESENT
             PaintSurfaces(primitives, tessellatedSolid);
+            Presenter.ShowAndHang(tessellatedSolid);
             ReportStats(primitives);
 #endif
             if (AddToInputSolid && primitives.Any())
@@ -80,7 +81,7 @@ namespace TVGL
             Dictionary<Edge, ConicSection> edgesInConics, HashSet<ConicSection> conicHash)
         {
             var conic = conicHash.First();
-            var side = conic.PositiveSideVisited;
+            var side = !conic.PositiveSideVisited;
             if (side) conic.PositiveSideVisited = true;
             else conic.NegativeSideVisited = true;
             if (conic.PositiveSideVisited && conic.NegativeSideVisited)
@@ -92,15 +93,16 @@ namespace TVGL
             // faces have already been incorporated?
             var dotsWithConicPlane = primalFaces.Select(pF => Math.Abs(pF.Normal.Dot(conic.Plane.Normal))).ToList();
             PrimitiveSurface primitiveSurface = null;
-            if (conic.ConicType == ConicSectionType.Circle && dotsWithConicPlane.Min() < 1 - Constants.SameFaceNormalDotTolerance) // must be a flat
+            if (conic.ConicType == ConicSectionType.Circle && dotsWithConicPlane.Min() > 1 - Constants.SameFaceNormalDotTolerance) // must be a flat
                 primitiveSurface = new Plane(primalFaces);
             else if (conic.ConicType == ConicSectionType.Circle && dotsWithConicPlane.Max() < Constants.SameFaceNormalDotTolerance) // must be a cylinder
                 primitiveSurface = new Cylinder(primalFaces, conic.Plane.Normal);
             else // the faces are not all the same direction as the curve nor are the perpendicular, so cone, sphere or torus
             {
                 Debug.WriteLine("Cone, sphere, or torus");
+                primitiveSurface = new Cone(primalFaces, conic.Plane.Normal,Math.Acos(dotsWithConicPlane.Average()));
             }
-            if (ExpandToFindPrimitiveSurface(conic, primitiveSurface, availableFaces, edgesInConics, conicHash, out List<ConicSection> neighborConics))
+            if (ExpandToFindPrimitiveSurface(conic, primitiveSurface, availableFaces, edgesInConics, out List<ConicSection> neighborConics))
             {
                 primitiveSurfaces.Add(primitiveSurface);
                 foreach (var face in primitiveSurface.Faces)
@@ -112,15 +114,17 @@ namespace TVGL
         }
 
         private static bool ExpandToFindPrimitiveSurface(ConicSection startingConic, PrimitiveSurface primitiveSurface,
-            HashSet<PolygonalFace> availableFaces, Dictionary<Edge, ConicSection> edgesInConics, HashSet<ConicSection> conicHash,
+            HashSet<PolygonalFace> availableFaces, Dictionary<Edge, ConicSection> edgesInConics, 
             out List<ConicSection> neighborConics)
         {
             var borderEdges = new HashSet<Edge>(startingConic.EdgesAndDirection.Select(eAD => eAD.Item1));
             neighborConics = new List<ConicSection>();
-            var faceQueue = new Queue<PolygonalFace>(primitiveSurface.Faces);
+            var faceQueue = new Queue<PolygonalFace>(primitiveSurface.Faces.SelectMany(f => f.AdjacentFaces));
             while (faceQueue.Any())
             {
                 var face = faceQueue.Dequeue();
+                if (!primitiveSurface.IsNewMemberOf(face)) continue;
+                primitiveSurface.UpdateWith(face);
                 foreach (var edge in face.Edges)
                 {
                     if (borderEdges.Contains(edge)) continue;
@@ -128,24 +132,32 @@ namespace TVGL
                     if (edgesInConics.ContainsKey(edge))
                     { // if edge is not in borderEdges, but it is still in here, then this is a new conic
                         var newNeighborConic = edgesInConics[edge];
-                        neighborConics.Add(newNeighborConic);
-                        foreach (var neighborEdge in newNeighborConic.EdgesAndDirection.Select(eAD => eAD.Item1))
+                        var onPositiveSide = newNeighborConic.EdgesAndDirection.First(eAD => eAD.Item1 == edge)
+                            .Item2 == faceOwnsEdge;
+                        if ((onPositiveSide && newNeighborConic.PositiveSideVisited) ||
+                        (!onPositiveSide && newNeighborConic.NegativeSideVisited)) continue;
+                        if (!neighborConics.Contains(newNeighborConic)) neighborConics.Add(newNeighborConic);
+                        foreach (var neighborEdgeAndDir in newNeighborConic.EdgesAndDirection)
                         {
-                            if (edge==neighborEdge) 
-                            borderEdges.Add(neighborEdge);
+                            borderEdges.Add(neighborEdgeAndDir.Item1);
+                            faceQueue.Enqueue(neighborEdgeAndDir.Item2 == onPositiveSide ?
+                                neighborEdgeAndDir.Item1.OwnedFace : neighborEdgeAndDir.Item1.OtherFace);
                         }
-                        //newNeighborConic update its PositiveVisited or negative visited and remove from conicHash if both are true
-                        
-                        //add all faces to the queue that are on this side
+                        if (onPositiveSide)
+                            newNeighborConic.PositiveSideVisited = true;
+                        else newNeighborConic.NegativeSideVisited = true;
                     }
                     var adjacentFace = faceOwnsEdge ? edge.OtherFace : edge.OwnedFace;
                     if (!availableFaces.Contains(adjacentFace)) continue;
-                    if (!primitiveSurface.IsNewMemberOf(adjacentFace)) continue;
-                    primitiveSurface.UpdateWith(adjacentFace);
                     faceQueue.Enqueue(adjacentFace);
                 }
             }
-            return false;
+            // for a contiguous patch - even with holes, the number of outer edges should not greatly exceed
+            // the number of faces. this is because the only valid cases where a single triangle can have two
+            // outeredges is at a corner.
+            //PaintSurfaces(new[] { primitiveSurface }, debugSolid);
+            //Presenter.ShowAndHang(debugSolid);
+            return primitiveSurface.OuterEdges.Count < 1.3 * primitiveSurface.Faces.Count;
         }
 
         /// <summary>
@@ -162,13 +174,13 @@ namespace TVGL
             {
                 var inEdge = sortedEdgesByLength[i];
                 if (!availableEdgeHash.Contains(inEdge)) continue; //it's necessary to check again since a previous
-                                                                    //pass in this same for loop might find another curve     
+                                                                   //pass in this same for loop might find another curve     
                 var inEdgeLength = inEdge.Vector.LengthSquared();
                 for (int j = i + 1; j < sortedEdgesByLength.Count; j++)
                 {
                     var outEdge = sortedEdgesByLength[j];
                     if (!availableEdgeHash.Contains(outEdge)) continue; //it's necessary to check again since a previous
-                            //pass in this same for loop might find another curve                        
+                                                                        //pass in this same for loop might find another curve                        
                     var outEdgeLength = outEdge.Vector.LengthSquared();
                     var error = 2 * (outEdgeLength - inEdgeLength) / (inEdgeLength + outEdgeLength);
                     if (error > errorInitialEdgePairing) break; // if the error is too large then there is no reason to check 
@@ -404,28 +416,18 @@ namespace TVGL
 
         #endregion
         #region Show Results
-        private static void PaintSurfaces(List<PrimitiveSurface> primitives, TessellatedSolid ts)
+        private static void PaintSurfaces(IEnumerable<PrimitiveSurface> primitives, TessellatedSolid ts)
         {
+            ts.HasUniformColor = false;
             foreach (var f in ts.Faces)
             {
-                f.Color = new Color(KnownColors.Yellow);
+                f.Color = new Color(KnownColors.LightGray);
             }
-            var i = 0;
             foreach (var primitiveSurface in primitives)
             {
                 if (primitiveSurface is Cylinder)
-                {
-                    i++;
-                    if (i == 5)
-                    {
-                        foreach (var f in primitiveSurface.Faces)
-                            f.Color = new Color(KnownColors.Red);
-                    }
-                }
-
-                if (primitiveSurface is Cone)
                     foreach (var f in primitiveSurface.Faces)
-                        f.Color = new Color(KnownColors.Pink);
+                        f.Color = new Color(KnownColors.Salmon);
                 else if (primitiveSurface is Sphere)
                     foreach (var f in primitiveSurface.Faces)
                         f.Color = new Color(KnownColors.Blue);
