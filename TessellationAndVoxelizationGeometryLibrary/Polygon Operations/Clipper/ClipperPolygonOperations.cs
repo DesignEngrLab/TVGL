@@ -91,7 +91,6 @@ namespace TVGL.TwoDimensional
                 //clip = clip?.Select(p => SimplifyFuzzy(p));
                 clip = clip?.Select(p => Simplify(p, 0.0000003));
             }
-            var subjectAll = subject.SelectMany(p => p.AllPolygons).ToList();
             if (!subject.Any())
             {
                 if (clip == null || !clip.Any())
@@ -105,6 +104,7 @@ namespace TVGL.TwoDimensional
                     clip = null;
                 }
             }
+            var subjectAll = subject.SelectMany(p => p.AllPolygons).ToList();
 
             var clipperSolution = new List<List<IntPoint>>();
             //Convert Points (TVGL) to IntPoints (Clipper)
