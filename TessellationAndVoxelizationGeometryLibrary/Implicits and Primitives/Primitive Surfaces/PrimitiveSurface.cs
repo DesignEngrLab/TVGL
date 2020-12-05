@@ -361,15 +361,10 @@ namespace TVGL
             }
         }
 
-        public double[] Center()
+        public Vector3 Center()
         {
             if (!BoundsHaveBeenSet) SetBounds();
-            return new double[]
-            {
-                MaxX - MinX,
-                MaxY - MinY,
-                MaxZ - MinZ
-            };
+            return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
         }
 
         public void SetColor(Color color)
