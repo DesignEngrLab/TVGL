@@ -326,7 +326,7 @@ namespace TVGL
                 var distance = stepDistanceKVP.Value;
                 layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
                 var area = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area);
-                _volume += (prevArea + area) / (distance - prevDistance);
+                _volume += (prevArea + area) * (distance - prevDistance);
                 prevArea = area;
                 prevDistance = distance;
             }
