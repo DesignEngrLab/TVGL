@@ -161,6 +161,7 @@ namespace TVGL.TwoDimensional
         /// <exception cref="MonotoneBox">polygon.Vertices[0], polygon.Vertices[1], MonotonicityChange.Both, MonotonicityChange.Both, true, true</exception>
         public static IEnumerable<MonotoneBox> PartitionIntoMonotoneBoxes(this Polygon polygon, MonotonicityChange divideAt = MonotonicityChange.Both)
         {
+            polygon.MakePolygonEdgesIfNonExistent();
             var numPoints = polygon.Vertices.Count;
             if (numPoints <= 1)
             {

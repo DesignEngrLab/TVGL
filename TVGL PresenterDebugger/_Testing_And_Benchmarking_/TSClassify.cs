@@ -35,25 +35,17 @@ namespace TVGLUnitTestsAndBenchmarking
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("*").ToArray();
-            for (var i = 7; i < fileNames.Length - 0; i++)
+            var fileNames = dir.GetFiles("*athtub*").ToArray();
+            for (var i = 0; i < fileNames.Length - 0; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                //Presenter.ShowAndHang(solid);
-                if (solid.Errors != null)
-                {
-                    Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
-                   // continue;
-                }
-                solid.ClassifyPrimitiveSurfaces();
-                //solid.SetToOriginAndSquare(out _);
-                 //   Presenter.ShowAndHang(solid);  
-                //solid.Simplify(0.3 * solid.NumberOfFaces);
-              
-
+                var voxsol = new VoxelizedSolid(solid, 1000);
+                Console.WriteLine("now presenting!");
+                Presenter.ShowAndHang(voxsol);
+                Presenter.ShowAndHang(voxsol.ConvertToTessellatedSolidMarchingCubes(5));
             }
 
         }

@@ -481,10 +481,10 @@ namespace TVGL.TwoDimensional
         {
             var intersections = new List<double[]>();
 
-            //var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
-            //    subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToList();
+            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
+                subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToArray();
             //if (sortedPoints.Count == 0)
-            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons).SortVerticesByYValue();
+            //    var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons).SortVerticesByYValue();
             if (sortedPoints.Length == 0)
             {
                 firstIntersectingIndex = -1;

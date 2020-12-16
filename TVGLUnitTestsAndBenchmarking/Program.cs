@@ -4,9 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using TVGL;
+using TVGL.IOFunctions;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
+using TVGL.Voxelization;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -20,10 +23,11 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
+            TestVoxelization();
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
-           // Polygon_Testing_Functions.TestSimplify();
-            TS_Testing_Functions.TestClassify();
+            // Polygon_Testing_Functions.TestSimplify();
+            //TS_Testing_Functions.TestClassify();
             //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
@@ -77,6 +81,34 @@ namespace TVGLUnitTestsAndBenchmarking
             //PolygonOperationsTesting.DebugEdgeCases();
             //PolygonOperationsTesting.DebugOctagons();
             //PolygonOperationsTesting.TestUnionSimple();
+        }
+
+        private static void TestVoxelization()
+        {
+            var dir = new DirectoryInfo(".");
+            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+                dir = dir.Parent;
+            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
+
+            //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
+            var fileNames = dir.GetFiles("*").OrderBy(x => r.NextDouble()).ToArray();
+            for (var i = 0; i < fileNames.Length; i++)
+            {
+                var filename = fileNames[i].FullName;
+                var name = fileNames[i].Name;
+                Console.WriteLine("Attempting: " + filename);
+                var solid = (TessellatedSolid)IO.Open(filename);
+                //Presenter.ShowAndHang(solid);
+                if (solid.Errors != null)
+                {
+                    Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
+                    continue;
+                }
+                Console.WriteLine("voxelizing...");
+                var voxsol = new VoxelizedSolid(solid, 400);
+                Console.WriteLine("now presenting " + name);
+                Presenter.ShowAndHang(voxsol);
+            }
         }
     }
 }

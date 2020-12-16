@@ -16,6 +16,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\**" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\bin\**" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\obj\**" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs.rej" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewEdgeRules.csv" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Classification\NewFaRules.csv" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Numerics\README.txt" />
