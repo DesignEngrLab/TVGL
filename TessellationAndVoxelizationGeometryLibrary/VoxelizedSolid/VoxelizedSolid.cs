@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using TVGL.Boolean_Operations;
 using TVGL.Numerics;
@@ -174,23 +175,22 @@ namespace TVGL.Voxelization
             for (var k = 0; k < numVoxelsZ; k++)
             {
                 var loops = decomp[k];
-                if (loops.Any())
+                if (loops.Count == 0) continue;
+
+                var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, numVoxelsY,
+                    VoxelSideLength, out var yStartIndex);
+                var numYlines = intersections.Count;
+                for (int j = 0; j < numYlines; j++)
                 {
-                    var intersections = PolygonOperations.AllPolygonIntersectionPointsAlongHorizontalLines(loops, yBegin, numVoxelsY,
-                        VoxelSideLength, out var yStartIndex);
-                    var numYlines = intersections.Count;
-                    for (int j = 0; j < numYlines; j++)
+                    var intersectionPoints = intersections[j];
+                    var numXRangesOnThisLine = intersectionPoints.Length;
+                    for (var m = 0; m < numXRangesOnThisLine; m += 2)
                     {
-                        var intersectionPoints = intersections[j];
-                        var numXRangesOnThisLine = intersectionPoints.Length;
-                        for (var m = 0; m < numXRangesOnThisLine; m += 2)
-                        {
-                            var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
-                            var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
-                            if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
-                            ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(sp);
-                            ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(ep);
-                        }
+                        var sp = (ushort)((intersectionPoints[m] - Bounds[0][0]) * inverseVoxelSideLength);
+                        var ep = (ushort)((intersectionPoints[m + 1] - Bounds[0][0]) * inverseVoxelSideLength);
+                        if (ep >= numVoxelsX) ep = (ushort)(numVoxelsX - 1);
+                        ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(sp);
+                        ((VoxelRowSparse)voxels[k * zMultiplier + yStartIndex + j]).indices.Add(ep);
                     }
                 }
             }

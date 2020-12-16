@@ -480,7 +480,8 @@ namespace TVGL.TwoDimensional
             double startingYValue, int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-
+            foreach (var polygon in polygons)
+                polygon.MakePolygonEdgesIfNonExistent();
             var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
                 subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToArray();
             //if (sortedPoints.Count == 0)

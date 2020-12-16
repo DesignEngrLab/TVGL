@@ -91,23 +91,45 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("*").OrderBy(x => r.NextDouble()).ToArray();
+            var fileNames = dir.GetFiles("*atht*").OrderBy(x => r.NextDouble()).ToArray();
             for (var i = 0; i < fileNames.Length; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                //Presenter.ShowAndHang(solid);
+                Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)
                 {
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
                     continue;
                 }
                 Console.WriteLine("voxelizing...");
-                var voxsol = new VoxelizedSolid(solid, 400);
+                var voxsol = new VoxelizedSolid(solid, 1000);
                 Console.WriteLine("now presenting " + name);
-                Presenter.ShowAndHang(voxsol);
+                Presenter.ShowAndHang(voxsol.ConvertToTessellatedSolidMarchingCubes(5));
+                Console.WriteLine("draft in pos y");
+                var yposVoxSol = voxsol.DraftToNewSolid(CartesianDirections.YPositive);
+                Console.WriteLine("presenting");
+                Presenter.ShowAndHang(yposVoxSol.ConvertToTessellatedSolidMarchingCubes(5));
+                
+                Console.WriteLine("draft in neg y");
+                var ynegVoxSol = voxsol.DraftToNewSolid(CartesianDirections.YNegative);
+                Console.WriteLine("presenting");
+                Presenter.ShowAndHang(ynegVoxSol.ConvertToTessellatedSolidMarchingCubes(5));
+
+                Console.WriteLine("union of y solids");
+                var yUnion = yposVoxSol.UnionToNewSolid(ynegVoxSol);
+                Console.WriteLine("presenting");
+                Presenter.ShowAndHang(yUnion.ConvertToTessellatedSolidMarchingCubes(5));
+
+                Console.WriteLine("draft in neg z");
+                var znegVoxSol = voxsol.DraftToNewSolid(CartesianDirections.ZNegative);
+                Console.WriteLine("intersecting");
+                var intersect = znegVoxSol.IntersectToNewSolid(yUnion);
+                Console.WriteLine("presenting");
+                Presenter.ShowAndHang(intersect.ConvertToTessellatedSolidMarchingCubes(5));
+
             }
         }
     }

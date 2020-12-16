@@ -1103,6 +1103,7 @@ namespace TVGL.Boolean_Operations
                         ce.To.Coordinates)), Vector3.UnitZ, z);
 
                 else loopsAlongZ[step] = new List<Polygon>();
+                //Presenter.ShowAndHang(loopsAlongZ[step]);
             }
             return loopsAlongZ;
         }
