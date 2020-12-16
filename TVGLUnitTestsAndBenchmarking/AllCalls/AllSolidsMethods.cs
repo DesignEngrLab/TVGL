@@ -20,7 +20,6 @@ namespace TVGLUnitTestsAndBenchmarking
             ts = new TessellatedSolid(new Vector3[0], new[] { new[] { 1, 2, 3 } }, true, new TVGL.Color[0]);
             ts.AddPrimitive(new Plane());
             ts.CheckModelIntegrity();
-            ts.ClassifyPrimitiveSurfaces();
             ts.Complexify();
             ts.Copy();
             ts.OrientedBoundingBox();

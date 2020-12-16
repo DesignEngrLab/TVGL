@@ -1,8 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsTCPIP;
-#if !PRESENT
-using OldTVGL;
-#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,29 +29,7 @@ namespace TVGLUnitTestsAndBenchmarking
             }
             return result;
         }
-#if !PRESENT
 
-        internal static List<List<PointLight>> C2PLs(IEnumerable<IEnumerable<Vector2>> coordinates)
-        {
-            var outerCoords = coordinates.First();
-            var outer = outerCoords.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList();
-
-            if (outerCoords.Area() < 0) outer.Reverse();
-            var result = new List<List<PointLight>>();
-            result.Add(outer);
-            foreach (var inner in coordinates.Skip(1))
-            {
-                //inner.Reverse();
-                result.Add(inner.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList());
-            }
-            return result;
-        }
-
-        internal static List<List<PointLight>> Poly2PLs(Polygon p)
-        {
-            return p.AllPolygons.Select(innerPoly => innerPoly.Path.Select(v => new OldTVGL.PointLight(v.X, v.Y)).ToList()).ToList();
-        }
-#endif
 
 
 
