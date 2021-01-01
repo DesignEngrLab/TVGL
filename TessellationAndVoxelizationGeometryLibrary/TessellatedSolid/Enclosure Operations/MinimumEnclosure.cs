@@ -227,6 +227,22 @@ namespace TVGL
             out T bottomVertex,
             out T topVertex) where T : IVertex3D
         {
+            var (minD, maxD) = GetDistanceToExtremeVertex(vertices, direction, out bottomVertex, out topVertex);
+            return maxD - minD;
+        }
+
+        /// <summary>
+        ///     Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this 
+        ///     Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="bottomVertex"></param>
+        /// <param name="topVertex"></param>
+        /// <returns>System.Double.</returns>
+        public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<T> vertices, Vector3 direction,
+            out T bottomVertex, out T topVertex) where T : IVertex3D
+        {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
             bottomVertex = default; //this is an unfortunate assignment but the compiler doesn't trust
@@ -247,8 +263,9 @@ namespace TVGL
                     maxD = distance;
                 }
             }
-            return maxD - minD;
+            return (minD, maxD);
         }
+
         /// <summary>
         ///     Given a Direction, dir, this function returns the maximum length along this Direction and one vertex 
         ///     that represents each extreme. Use this if you do not need all the vertices at the extremes.
@@ -261,6 +278,22 @@ namespace TVGL
         public static double GetLengthAndExtremeVertex(this IEnumerable<Vector3> vertices, Vector3 direction,
             out Vector3 bottomVertex,
             out Vector3 topVertex)
+        {
+            var (minD, maxD) = GetDistanceToExtremeVertex(vertices, direction, out bottomVertex, out topVertex);
+            return maxD - minD;
+        }
+
+        /// <summary>
+        ///     Given a Direction, dir, this function returns the min/max distance to the furthest vertex along this 
+        ///     Direction that represents each extreme.  Use this if you do not need all the vertices at the extremes.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="bottomVertex"></param>
+        /// <param name="topVertex"></param>
+        /// <returns>System.Double.</returns>
+        public static (double, double) GetDistanceToExtremeVertex<T>(this IEnumerable<Vector3> vertices, Vector3 direction,
+            out Vector3 bottomVertex, out Vector3 topVertex) 
         {
             var dir = direction.Normalize();
             var minD = double.PositiveInfinity;
@@ -281,7 +314,7 @@ namespace TVGL
                     maxD = distance;
                 }
             }
-            return maxD - minD;
+            return (minD, maxD);
         }
 
         /// <summary>
@@ -323,7 +356,6 @@ namespace TVGL
             }
             return maxD - minD;
         }
-
         #endregion
 
         #region 2D Rotating Calipers
