@@ -401,7 +401,7 @@ namespace TVGL
             IsClosed = isClosed;
             Area = MiscFunctions.AreaOf3DPolygon(vertexLoop, normal);
             _isPositive = !(Area < 0);
-            Perimeter = MiscFunctions.Perimeter(vertexLoop);
+            Perimeter = MiscFunctions.Length(vertexLoop);
             AdjOnsideFaceIndices = new List<int>(adjOnsideFaceIndices);
             StraddleFaceIndices = new List<int>(straddleFaceIndices);
             Index = index;

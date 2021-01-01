@@ -139,22 +139,40 @@ namespace TVGL
 
         #endregion Sort Along Direction
 
-        #region Perimeter
+        #region Length of Polyline
 
         /// <summary>
         /// Gets the Perimeter (length of a locations) of a 3D set of Vertices.
         /// </summary>
         /// <param name="polygon3D"></param>
         /// <returns></returns>
-        public static double Perimeter(this IList<Vertex> polygon3D)
+        public static double Length(this IList<Vertex> polyline, bool isClosed = true)
         {
-            double perimeter = Vector3.Distance(polygon3D.Last().Coordinates, polygon3D[0].Coordinates);
-            for (var i = 1; i < polygon3D.Count; i++)
-                perimeter += Vector3.Distance(polygon3D[i - 1].Coordinates, polygon3D[i].Coordinates);
-            return perimeter;
+            if (polyline == null || !polyline.Any()) return 0.0;
+            double length = isClosed ? Vector3.Distance(polyline.Last().Coordinates, polyline[0].Coordinates) : 0.0;
+            for (var i = 1; i < polyline.Count; i++)
+                length += Vector3.Distance(polyline[i - 1].Coordinates, polyline[i].Coordinates);
+            return length;
         }
 
-        #endregion Perimeter
+        /// <summary>
+        /// Gets the summed length of a locations of a 3D set of Vertices.
+        /// If (IsClosed), then the perimeter will include the length between
+        /// the last vertex and the first vertex. 
+        /// </summary>
+        /// <param name="polyline"></param>'  
+        /// <param name="isClosed"></param>
+        /// <returns></returns>
+        public static double Length(this IList<Vector3> polyline, bool isClosed = true)
+        {
+            if (polyline == null || !polyline.Any()) return 0.0;
+            double length = isClosed ? Vector3.Distance(polyline.Last(), polyline[0]) : 0.0;
+            for (var i = 1; i < polyline.Count; i++)
+                length += Vector3.Distance(polyline[i - 1], polyline[i]);
+            return length;
+        }
+
+        #endregion Length of Polyline
 
         #region Dealing with Flat Patches
 
@@ -466,6 +484,46 @@ namespace TVGL
         }
 
         #endregion Area of 3D Polygon
+
+        #region Get Vertices from Objects
+        /// <summary>
+        /// This function gets the vertices from a list of faces. 
+        /// </summary>
+        /// <param name="edges"></param>
+        public static HashSet<Vertex> GetVertices(this List<PolygonalFace> faces)
+        {
+            //Add the face vertices from each vertex to the hashset.
+            //Duplicates will automatically be avoided by useing a hash.
+            var vertices = new HashSet<Vertex>();
+            foreach (var face in faces)
+            {
+                //use a foreach loop instead of face.A, B, C, since those references
+                //get an item in the array instead of just enumerating over the array.
+                foreach (var vertex in face.Vertices)
+                {
+                    vertices.Add(vertex);
+                }
+            }
+            return vertices;
+        }
+
+        /// <summary>
+        /// This function gets the vertices from a list of edges. 
+        /// </summary>
+        /// <param name="edges"></param>
+        public static HashSet<Vertex> GetVertices(this List<Edge> edges)
+        {
+            //Add the to and from vertices from each vertex to the hashset.
+            //Duplicates will automatically be avoided by useing a hash.
+            var vertices = new HashSet<Vertex>();
+            foreach (var edge in edges)
+            {
+                vertices.Add(edge.From);
+                vertices.Add(edge.To);
+            }
+            return vertices;
+        }
+        #endregion Get Vertices from Objects
 
         #region Split Tesselated Solid into multiple solids if faces are disconnected
 
