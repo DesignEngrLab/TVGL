@@ -58,6 +58,31 @@ namespace TVGL.TwoDimensional
             return solution.CreateShallowPolygonTrees(true);
         }
 
+        public static List<Polygon> OffsetLineViaClipper(this IEnumerable<Vector2> polyline, double offset, double tolerance)
+        {
+            return OffsetLinesViaClipper(new[] { polyline }, offset, tolerance);
+        }
+
+        public static List<Polygon> OffsetLinesViaClipper(this IEnumerable<IEnumerable<Vector2>> polylines, double offset, double tolerance)
+        {
+            if (double.IsNaN(tolerance) || tolerance.IsNegligible()) tolerance = Constants.BaseTolerance;
+
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            var clipperSubject = polylines.Select(line => line.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+
+            //Setup Clipper
+            var clip = new ClipperOffset(2, tolerance * scale);
+            clip.AddPaths(clipperSubject, JoinType.jtSquare, EndType.etOpenSquare);
+
+            //Begin an evaluation
+            var clipperSolution = new List<List<IntPoint>>();
+            clip.Execute(clipperSolution, offset * scale);
+
+            //Convert back to points and return solution
+            var solution = clipperSolution.Select(clipperPath => new Polygon(clipperPath.Select(point => new Vector2(point.X / scale, point.Y / scale))));
+            return solution.CreateShallowPolygonTrees(true);
+        }
+
 
         #endregion
 
@@ -74,7 +99,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         private static List<Polygon> BooleanViaClipper(PolyFillType fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
-            IEnumerable<Polygon> clip = null)
+            IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
         {
             //Remove any polygons that are only a line.
             //subject = subject.Where(p => p.Count > 2);
@@ -113,7 +138,7 @@ namespace TVGL.TwoDimensional
 
             //Setup Clipper
             var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
-            clipper.AddPaths(clipperSubject, PolyType.ptSubject, true);
+            clipper.AddPaths(clipperSubject, PolyType.ptSubject, subjectIsClosed);
 
             if (clip != null)
             {
@@ -121,7 +146,7 @@ namespace TVGL.TwoDimensional
 
                 var clipperClip =
                     clipAll.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
-                clipper.AddPaths(clipperClip, PolyType.ptClip, true);
+                clipper.AddPaths(clipperClip, PolyType.ptClip, clipIsClosed);
             }
 
             //Begin an evaluation
