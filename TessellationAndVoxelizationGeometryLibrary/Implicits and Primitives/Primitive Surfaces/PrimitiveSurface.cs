@@ -225,7 +225,7 @@ namespace TVGL
                     var step = v2 - v1;
                     if (step < 0) step += face.Vertices.Count;
                     if (step == 1)
-                        OuterEdges.Add(new Edge(face.Vertices[v1], face.Vertices[v2], face, null,false));
+                        OuterEdges.Add(new Edge(face.Vertices[v1], face.Vertices[v2], face, null, false));
                     else OuterEdges.Add(new Edge(face.Vertices[v2], face.Vertices[v1], face, null, false));
                 }
             }
@@ -359,15 +359,13 @@ namespace TVGL
             }
         }
 
-        public double[] Center()
+        public Vector3 Center
         {
-            if (!BoundsHaveBeenSet) SetBounds();
-            return new double[]
+            get
             {
-                MaxX - MinX,
-                MaxY - MinY,
-                MaxZ - MinZ
-            };
+                if (!BoundsHaveBeenSet) SetBounds();
+                return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
+            }
         }
 
         public void SetColor(Color color)
