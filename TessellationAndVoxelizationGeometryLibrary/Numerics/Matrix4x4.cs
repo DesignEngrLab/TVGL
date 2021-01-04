@@ -121,14 +121,23 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
-        public bool IsIdentity()
+        public bool IsIdentity(double tolerance = double.NaN)
         {
+            if (double.IsNaN(tolerance))
+                return !IsProjectiveTransform &&
+                    M11 == 1.0 && M22 == 1.0 && M33 == 1.0 && M44 == 1.0 && // Check diagonal element first for early out.
+                    M12 == 0.0 && M13 == 0.0 && M14 == 0.0 &&
+                    M21 == 0.0 && M23 == 0.0 && M24 == 0.0 &&
+                    M31 == 0.0 && M32 == 0.0 && M34 == 0.0 &&
+                    M41 == 0.0 && M42 == 0.0 && M43 == 0.0;
             return !IsProjectiveTransform &&
-                M11 == 1.0 && M22 == 1.0 && M33 == 1.0 && M44 == 1.0 && // Check diagonal element first for early out.
-                M12 == 0.0 && M13 == 0.0 && M14 == 0.0 &&
-                M21 == 0.0 && M23 == 0.0 && M24 == 0.0 &&
-                M31 == 0.0 && M32 == 0.0 && M34 == 0.0 &&
-                M41 == 0.0 && M42 == 0.0 && M43 == 0.0;
+                M11.IsPracticallySame(1,tolerance) && M22.IsPracticallySame(1, tolerance) && 
+                M33.IsPracticallySame(1, tolerance) && M44.IsPracticallySame(1, tolerance) && // Check diagonal element first for early out.
+                M12.IsNegligible(tolerance) && M13.IsNegligible(tolerance) && M14.IsNegligible(tolerance) &&
+                M21.IsNegligible(tolerance) && M23.IsNegligible(tolerance) && M24.IsNegligible(tolerance) &&
+                M31.IsNegligible(tolerance) && M32.IsNegligible(tolerance) && M34.IsNegligible(tolerance) &&
+                M41.IsNegligible(tolerance) && M42.IsNegligible(tolerance) && M43.IsNegligible(tolerance);
+
         }
 
         /// <summary>

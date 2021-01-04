@@ -1004,8 +1004,10 @@ namespace TVGL.IOFunctions
         {
             if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(Path.GetExtension(filename));
-            filename = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename)
+            var dir = Path.GetDirectoryName(filename);
+            filename = Path.GetFileNameWithoutExtension(filename)
                 + "." + GetExtensionFromFileType(fileType);
+            if (!string.IsNullOrWhiteSpace(dir)) filename = dir + Path.DirectorySeparatorChar + filename;
             using var fileStream = File.OpenWrite(filename);
             return Save(fileStream, solid, fileType);
         }

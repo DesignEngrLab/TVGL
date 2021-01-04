@@ -31,7 +31,7 @@ namespace TVGL
         ///     (doesn't care about multiple points on a line and fewer rounding functions)
         ///     and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
-        public static Circle2D MinimumCircle(this IEnumerable<Vector2> points)
+        public static Circle MinimumCircle(this IEnumerable<Vector2> points)
         {
             #region Algorithm 1
 
@@ -39,7 +39,7 @@ namespace TVGL
             //var r = new Random();
             //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
 
-            //if (randomPoints.Count < 2) return new Circle2D(0.0, points[0]);
+            //if (randomPoints.Count < 2) return new Circle(0.0, points[0]);
             ////Get any two points in the list points.
             //var point1 = randomPoints[0];
             //var point2 = randomPoints[1];
@@ -219,7 +219,7 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static Circle2D MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
+        public static Circle MaximumInnerCircle(this IEnumerable<IEnumerable<Vector2>> paths, Vector2 centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
             return MaximumInnerCircle(polygons, centerPoint);
@@ -232,7 +232,7 @@ namespace TVGL
         ///     Else it returns a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static Circle2D MaximumInnerCircle(this List<Polygon> polygons, Vector2 centerPoint)
+        public static Circle MaximumInnerCircle(this List<Polygon> polygons, Vector2 centerPoint)
         {
             var negativePolygons = new List<Polygon>();
             var positivePolygons = new List<Polygon>();
@@ -255,7 +255,7 @@ namespace TVGL
                 // note that this condition is true, but within the method, IsPointInsidePolygon, the enclosure
                 // return the value of the "IsPositive 
                 if (negativePoly.IsPointInsidePolygon(true, centerPoint, out var onBoundary)) continue;
-                if (onBoundary) return new Circle2D(centerPoint, 0.0); //Null solution.
+                if (onBoundary) return new Circle(centerPoint, 0.0); //Null solution.
 
                 //var d = closestLineAbove.YGivenX(centerPoint.X, out _) - centerPoint.Y; //Not negligible because not on Boundary
                 var d = double.NaN; //how to correctly calculate this? the above line is not correct and is no longer a by-product
@@ -277,14 +277,14 @@ namespace TVGL
             {
                 foreach (var positivePoly in positivePolygons)
                 {
-                    if (positivePoly.IsPointInsidePolygon(true, centerPoint, out _)) return new Circle2D(centerPoint, 0.0);
+                    if (positivePoly.IsPointInsidePolygon(true, centerPoint, out _)) return new Circle(centerPoint, 0.0);
                     polygonsOfInterest.Add(positivePoly);
                 }
             }
 
             //Lastly, determine how big the inner circle can be.
             var shortestDistance = double.MaxValue;
-            var smallestBoundingCircle = new Circle2D(centerPoint, 0.0);
+            var smallestBoundingCircle = new Circle(centerPoint, 0.0);
             foreach (var polygon in polygonsOfInterest)
             {
                 var boundingCircle = MaximumInnerCircleInHole(polygon, centerPoint);
@@ -298,7 +298,7 @@ namespace TVGL
             return smallestBoundingCircle;
         }
 
-        private static Circle2D MaximumInnerCircleInHole(Polygon polygon, Vector2 centerPoint)
+        private static Circle MaximumInnerCircleInHole(Polygon polygon, Vector2 centerPoint)
         {
             var shortestDistance = double.MaxValue;
             //1. For every line on the path, get the closest point on the edge to the center point. 
@@ -331,8 +331,8 @@ namespace TVGL
                 if (d < shortestDistance) shortestDistance = d;
             }
 
-            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new Circle2D(centerPoint, 0.0); //Not inside any hole or outside any positive polygon
-            return new Circle2D(centerPoint, shortestDistance);
+            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new Circle(centerPoint, 0.0); //Not inside any hole or outside any positive polygon
+            return new Circle(centerPoint, shortestDistance);
         }
 
 
@@ -384,12 +384,12 @@ namespace TVGL
         }
 
 
-        public static Circle2D GetCircleFrom2DiametricalPoints(Vector2 p0, Vector2 p1)
+        public static Circle GetCircleFrom2DiametricalPoints(Vector2 p0, Vector2 p1)
         {
             var center = (p0 + p1) / 2;
-            return new Circle2D(center, (p0 - center).LengthSquared());
+            return new Circle(center, (p0 - center).LengthSquared());
         }
-        public static Circle2D GetCircleFrom3Points(Vector2 p0, Vector2 p1, Vector2 p2)
+        public static Circle GetCircleFrom3Points(Vector2 p0, Vector2 p1, Vector2 p2)
         {
             var segment1 = (p1 - p0) / 2;
             var midPoint1 = (p0 + p1) / 2;
@@ -398,15 +398,15 @@ namespace TVGL
             var midPoint2 = (p1 + p2) / 2;
             var bisector2Dir = new Vector2(-segment2.Y, segment2.X);
             var center = MiscFunctions.LineLine2DIntersection(midPoint1, bisector1Dir, midPoint2, bisector2Dir);
-            return new Circle2D(center, (p0 - center).LengthSquared());
+            return new Circle(center, (p0 - center).LengthSquared());
         }
 
-        public static Circle2D GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1, Plane plane)
+        public static Circle GetCircleFrom2DiametricalPoints(Vector3 p0, Vector3 p1, Plane plane)
         {
             return GetCircleFrom2DiametricalPoints(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),
                             p1.ConvertTo2DCoordinates(plane.AsTransformToXYPlane));
         }
-        public static Circle2D GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Plane plane)
+        public static Circle GetCircleFrom3Points(Vector3 p0, Vector3 p1, Vector3 p2, Plane plane)
         {
             return GetCircleFrom3Points(p0.ConvertTo2DCoordinates(plane.AsTransformToXYPlane),
                 p1.ConvertTo2DCoordinates(plane.AsTransformToXYPlane), p2.ConvertTo2DCoordinates(plane.AsTransformToXYPlane));

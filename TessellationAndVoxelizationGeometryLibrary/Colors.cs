@@ -15,12 +15,12 @@ namespace TVGL
         /// <summary>
         ///     The unknown color
         /// </summary>
-        UnknownColor = 1U,
+        //UnknownColor = 1U,
 
         /// <summary>
         ///     The transparent
         /// </summary>
-        Transparent = 16777215U,
+        //Transparent = 16777215U,
 
         /// <summary>
         ///     The black

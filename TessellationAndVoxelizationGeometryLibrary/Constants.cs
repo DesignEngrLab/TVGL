@@ -48,6 +48,10 @@ namespace TVGL
         /// </summary>
         public const KnownColors DefaultColor = KnownColors.LightGray;
 
+        internal static Random random = new Random();
+        public static List<KnownColors> KnownColorsList = Enum.GetValues(typeof(KnownColors)).Cast<KnownColors>()
+            .OrderBy(dummy=>random.Next()).ToList();
+
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
@@ -63,8 +67,6 @@ namespace TVGL
         /// </summary>
         public const double ErrorForFaceInSurface = 0.002;
 
-
-        internal const double MinConeGaussPlaneOffset = 0.1; // sine of 1 degrees 0.1
 
         /// <summary>
         ///     The tolerance for the same normal of a face when two are dot-producted.

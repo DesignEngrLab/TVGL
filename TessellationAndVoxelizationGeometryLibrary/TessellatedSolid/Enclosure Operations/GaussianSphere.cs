@@ -45,14 +45,8 @@ namespace TVGL.Enclosure_Operations
     /// and φ is the polar angle (From Z axis and φ is equal to or between 0 and 180).
     public struct GaussianSphere
     {
-        /// <summary>
-        ///     The volume of the bounding box.
-        /// </summary>
         internal List<Node> Nodes;
 
-        /// <summary>
-        ///     The Directions are the three unit vectors that describe the orientation of the box.
-        /// </summary>
         internal List<Arc> Arcs;
 
         /// <summary>
@@ -130,9 +124,6 @@ namespace TVGL.Enclosure_Operations
         }
     }
 
-    /// <summary>
-    ///     Class Vertex2D.
-    /// </summary>
     internal class Node
     {
         /// <summary>

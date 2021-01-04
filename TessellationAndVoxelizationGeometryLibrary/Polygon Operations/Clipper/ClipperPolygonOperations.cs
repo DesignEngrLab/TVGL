@@ -133,7 +133,7 @@ namespace TVGL.TwoDimensional
 
             var clipperSolution = new List<List<IntPoint>>();
             //Convert Points (TVGL) to IntPoints (Clipper)
-            var clipperSubject = 
+            var clipperSubject =
                 subjectAll.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
 
             //Setup Clipper

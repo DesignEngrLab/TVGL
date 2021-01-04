@@ -14,44 +14,6 @@ namespace TVGL
     /// </summary>
     public class Sphere : PrimitiveSurface
     {
-        /// <summary>
-        ///     Checks if the face is a member of the sphere
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <returns>Boolean.</returns>
-        public override bool IsNewMemberOf(PolygonalFace face)
-        {
-            if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.Dot(face.Center - Center) - 1) >
-                Constants.ErrorForFaceInSurface)
-                return false;
-            foreach (var v in face.Vertices)
-                if (Math.Abs(v.Coordinates.Distance(Center) - Radius) >
-                    Constants.ErrorForFaceInSurface * Radius)
-                    return false;
-            return true;
-        }
-
-        /// <summary>
-        ///     Adds face to sphere
-        /// </summary>
-        /// <param name="face">The face.</param>
-        public override void UpdateWith(PolygonalFace face)
-        {
-            var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out var pointOnLine);
-            var fractionToMove = 1 / Faces.Count;
-            var moveVector = pointOnLine.Subtract(Center);
-            Center =
-                Center + new Vector3(
-                    moveVector.X * fractionToMove * distance, moveVector.Y * fractionToMove * distance,
-                    moveVector.Z * fractionToMove * distance
-                );
-
-
-            var totalOfRadii = Vertices.Sum(v => Vector3.Distance(Center, v.Coordinates));
-            Radius = totalOfRadii / Vertices.Count;
-            base.UpdateWith(face);
-        }
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
@@ -63,6 +25,21 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        public override double CalculateError(IEnumerable<Vertex> vertices = null)
+        {
+            if (vertices == null) vertices = Vertices;
+            var numVerts = 0;
+            var radius = Radius;
+            var sqDistanceSum = 0.0;
+            foreach (var v in vertices)
+            {
+                var d = (v.Coordinates - Center).Length() - radius;
+                sqDistanceSum += d * d;
+                numVerts++;
+            }
+            return sqDistanceSum / numVerts;
+        }
+
 
 
         #region Constructor
@@ -71,58 +48,14 @@ namespace TVGL
         ///     Primitive Sphere
         /// </summary>
         /// <param name="facesAll">The faces all.</param>
-        public Sphere(IEnumerable<PolygonalFace> facesAll)
-            : base(facesAll)
+        public Sphere(Vector3 center, double radius, bool isPositive, IEnumerable<PolygonalFace> faces)
+            : base(faces)
         {
-            var faces = MiscFunctions.FacesWithDistinctNormals(Faces);
-            var n = faces.Count;
-            var centers = new List<Vector3>();
-            var signedDistances = new List<double>();
-            MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out var center, out _, out _,
-                out var t1, out var t2);
-            if (!center.IsNull())
-            {
-                centers.Add(center);
-                signedDistances.Add(t1);
-                signedDistances.Add(t2);
-            }
-            for (var i = 1; i < n; i++)
-            {
-                MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
-                    faces[i - 1].Center, faces[i - 1].Normal, out center, out _, out _,
-                    out t1, out t2);
-                if (!center.IsNull())
-                {
-                    centers.Add(center);
-                    signedDistances.Add(t1);
-                    signedDistances.Add(t2);
-                }
-            }
-            center = Vector3.Zero;
-            center = centers.Aggregate(center, (current, c) => current + c);
-            center = center.Divide(centers.Count);
-            /* determine is positive or negative */
-            var numNeg = signedDistances.Count(d => d < 0);
-            var numPos = signedDistances.Count(d => d > 0);
-            var isPositive = numNeg > numPos;
-            var radii = new List<double>();
-            foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => v.Coordinates.Distance(center)));
-            var averageRadius = radii.Average();
-
             Center = center;
             IsPositive = isPositive;
-            Radius = averageRadius;
+            Radius = radius;
         }
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Sphere" /> class.
-        /// </summary>
-        /// <param name="edge">The edge.</param>
-        internal Sphere(Edge edge)
-            : this(new List<PolygonalFace>(new[] { edge.OwnedFace, edge.OtherFace }))
-        { }
         internal Sphere() { }
         #endregion
 

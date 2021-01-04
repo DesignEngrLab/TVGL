@@ -107,7 +107,22 @@ namespace TVGL
         {
             var vertsPerFaceList = vertsPerFace as IList<List<Vector3>> ?? vertsPerFace.ToList();
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(v => v));
-            MakeVertices(vertsPerFaceList, out List<int[]> faceToVertexIndices);
+            var scaleFactor = 1.0;
+            if ((Bounds[1] - Bounds[0]).Length() < 0.1)
+            {
+                if (units == UnitType.unspecified || units == UnitType.meter)
+                {
+                    units = UnitType.millimeter;
+                    scaleFactor = 1000;
+                }
+                else if (units == UnitType.foot)
+                {
+                    units = UnitType.inch;
+                    scaleFactor = 12;
+                }
+                DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(vList => vList.Select(v=>scaleFactor*v)));
+            }
+            MakeVertices(vertsPerFaceList, scaleFactor, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
             if (createFullVersion) CompleteInitiation();
@@ -383,7 +398,7 @@ namespace TVGL
 
         public void MakeEdgesIfNonExistent()
         {
-            if (_edges != null && _edges.Length >0) return;
+            if (_edges != null && _edges.Length > 0) return;
             CompleteInitiation();
         }
 
@@ -525,7 +540,7 @@ namespace TVGL
                 {
                     var face = new PolygonalFace(faceVertices, doublyLinkToVertices);
                     if (!HasUniformColor) face.Color = color;
-                    listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices));
+                    listOfFaces.Add(face);
                 }
                 else
                 {
@@ -554,11 +569,11 @@ namespace TVGL
         /// </summary>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        private void MakeVertices(IEnumerable<List<Vector3>> vertsPerFace, out List<int[]> faceToVertexIndices)
+        private void MakeVertices(IEnumerable<List<Vector3>> vertsPerFace, double scaleFactor, out List<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
             //Gets the number of decimal places
-            while (Math.Round(SameTolerance, numDecimalPoints) == 0.0) numDecimalPoints++;
+            while (Math.Round(scaleFactor * SameTolerance, numDecimalPoints) == 0.0) numDecimalPoints++;
             /* vertexMatchingIndices will be used to speed up the linking of faces and edges to vertices
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
              * you can find each vertex in the new array of vertices. This is essentially what is built in 
@@ -575,8 +590,8 @@ namespace TVGL
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    var coordinates = t[i] = new Vector3(Math.Round(t[i].X, numDecimalPoints), Math.Round(t[i].Y, numDecimalPoints),
-                                            Math.Round(t[i].Z, numDecimalPoints));
+                    var coordinates = t[i] = new Vector3(scaleFactor * Math.Round(t[i].X, numDecimalPoints),
+                        Math.Round(scaleFactor * t[i].Y, numDecimalPoints), Math.Round(scaleFactor * t[i].Z, numDecimalPoints));
                     if (simpleCompareDict.ContainsKey(coordinates))
                         /* if it's in the dictionary, simply put the location in the locationIndices */
                         locationIndices.Add(simpleCompareDict[coordinates]);

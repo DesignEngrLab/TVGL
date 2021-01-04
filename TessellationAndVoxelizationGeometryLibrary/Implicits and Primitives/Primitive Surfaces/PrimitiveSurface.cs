@@ -39,6 +39,11 @@ namespace TVGL
         {
         }
 
+
+        public abstract double CalculateError(IEnumerable<Vertex> vertices = null);
+
+
+
         /// <summary>
         ///     Gets the area.
         /// </summary>
@@ -172,17 +177,10 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Checks if face should be a member of this surface
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
-        public abstract bool IsNewMemberOf(PolygonalFace face);
-
-        /// <summary>
         ///     Updates surface by adding face
         /// </summary>
         /// <param name="face">The face.</param>
-        public virtual void UpdateWith(PolygonalFace face)
+        public void AddFace(PolygonalFace face)
         {
             Area += face.Area;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
@@ -197,7 +195,7 @@ namespace TVGL
                     }
                     else OuterEdges.Add(e);
                 }
-            else
+            else  //basically, this is for cases where edges are not yet defined.
             {
                 var faceVertexIndices = face.Vertices.SelectMany(v => new[] { v.IndexInList, v.IndexInList }).ToList();
                 var outerEdgesToRemove = new List<Edge>();
@@ -361,10 +359,15 @@ namespace TVGL
             }
         }
 
-        public Vector3 Center()
+        public double[] Center()
         {
             if (!BoundsHaveBeenSet) SetBounds();
-            return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
+            return new double[]
+            {
+                MaxX - MinX,
+                MaxY - MinY,
+                MaxZ - MinZ
+            };
         }
 
         public void SetColor(Color color)

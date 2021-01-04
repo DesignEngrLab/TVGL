@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using StarMathLib;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -139,6 +140,21 @@ namespace TVGL
 
         #endregion Sort Along Direction
 
+        #region Perimeter
+
+        /// <summary>
+        /// Gets the Perimeter (length of a locations) of a 3D set of Vertices.
+        /// </summary>
+        /// <param name="polygon3D"></param>
+        /// <returns></returns>
+        public static double Perimeter(this IList<Vertex> polygon3D)
+        {
+            double perimeter = Vector3.Distance(polygon3D.Last().Coordinates, polygon3D[0].Coordinates);
+            for (var i = 1; i < polygon3D.Count; i++)
+                perimeter += Vector3.Distance(polygon3D[i - 1].Coordinates, polygon3D[i].Coordinates);
+            return perimeter;
+        }
+
         #region Length of Polyline
 
         /// <summary>
@@ -173,6 +189,8 @@ namespace TVGL
         }
 
         #endregion Length of Polyline
+
+        #endregion Perimeter
 
         #region Dealing with Flat Patches
 
@@ -254,12 +272,11 @@ namespace TVGL
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        public static List<Plane> FindFlats(this IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-               int minNumberOfFacesPerFlat = 2)
+        public static List<Plane> FindFlats(this IEnumerable<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+               int minNumberOfFacesPerFlat = 2, HashSet<PolygonalFace> usedFaces = null)
         {
-            //Note: This function has been optimized to run very fast for large amount of faces
             //Used hashset for "Contains" function calls
-            var usedFaces = new HashSet<PolygonalFace>();
+            if (usedFaces == null) usedFaces = new HashSet<PolygonalFace>();
             var listFlats = new List<Plane>();
 
             //Use an IEnumerable class (List) for iterating through each part, and then the
@@ -272,7 +289,7 @@ namespace TVGL
                 //Get all the faces that should be used on this flat
                 //Use a hashset so we can use the ".Contains" function
                 var flatHashSet = new HashSet<PolygonalFace> { startFace };
-                var flat = new Plane(flatHashSet) { Tolerance = tolerance };
+                var flat = new Plane(flatHashSet);
                 //Stacks are fast for "Push" and "Pop".
                 //Add all the adjecent faces from the first face to the stack for
                 //consideration in the while locations below.
@@ -288,10 +305,12 @@ namespace TVGL
                     {
                         if (adjacentFace == null) continue;
                         if (!flatHashSet.Contains(adjacentFace) && !usedFaces.Contains(adjacentFace) &&
-                            !stack.Contains(adjacentFace) && flat.IsNewMemberOf(adjacentFace))
+                            //!stack.Contains(adjacentFace) && //hmm, I think this check is a waste of time since that face
+                            //would come up from the stack and just be ruled out here by the usedFaces.Contains. Can this be commented?
+                            IsFaceNewMemberOfFlat(flat, adjacentFace, tolerance))
                         {
                             // flat.UpdateWith(adjacentFace);
-                            flatHashSet.Add(newFace);
+                            flatHashSet.Add(adjacentFace);
                             if (flatHashSet.Count >= reDefineFlat)
                             {
                                 flat = new Plane(flatHashSet);
@@ -301,14 +320,26 @@ namespace TVGL
                         }
                     }
                 }
-                flat = new Plane(flatHashSet);
                 //Criteria of whether it should be a flat should be inserted here.
-                if (flat.Faces.Count >= minNumberOfFacesPerFlat)
+                if (flatHashSet.Count >= minNumberOfFacesPerFlat)
+                {
+                    flat = new Plane(flatHashSet);
                     listFlats.Add(flat);
+                }
                 foreach (var polygonalFace in flat.Faces)
                     usedFaces.Add(polygonalFace);
             }
             return listFlats;
+        }
+
+        private static bool IsFaceNewMemberOfFlat(Plane flat, PolygonalFace face, double tolerance)
+        {
+            if (flat.Faces.Contains(face)) return false;
+            if (!face.Normal.Dot(flat.Normal).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) return false;
+            //Return true if all the vertices are within the tolerance 
+            //Note that the Dot term and distance to origin, must have the same sign, 
+            //so there is no additional need moth absolute value methods.
+            return face.Vertices.All(v => flat.Normal.Dot(v.Coordinates).IsPracticallySame(flat.DistanceToOrigin, tolerance));
         }
 
         #endregion Dealing with Flat Patches
@@ -923,7 +954,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double LargerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            return Math.PI + Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
+            return Math.PI + Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
         }
 
         /// <summary>
@@ -935,7 +966,18 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            return Math.PI - Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
+            return Math.PI - Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+        }
+
+        /// <summary>
+        ///     Gets the counter-clockwise rotated angle of vector-A from the datum vector
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)
+        {
+            return Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
         }
 
 
@@ -948,7 +990,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double LargerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
         {
-            return Math.PI + Math.Atan2(vector1.Cross(vector2).Length(), vector1.Dot(vector2));
+            return Math.PI + Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
         }
 
         /// <summary>
@@ -960,7 +1002,20 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double SmallerAngleBetweenVectors(this Vector3 vector1, Vector3 vector2)
         {
-            return Math.PI - Math.Atan2(vector1.Cross(vector2).Length(), vector1.Dot(vector2));
+            return Math.PI - Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+        }
+
+        /// <summary>
+        /// Returns the angle from 0 to 2 pi of vector-A from the datum.
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleBetweenVectorAAndDatum(this Vector3 vectorA, Vector3 datum, Vector3 unitPlaneNormal)
+        {
+            var angle = Math.Atan2(datum.Cross(vectorA).Dot(unitPlaneNormal), datum.Dot(vectorA));
+            if (angle < 0) angle += Constants.TwoPi;
+            return angle;
         }
 
         #endregion Angle between Edges/Lines
@@ -1132,11 +1187,11 @@ namespace TVGL
         public static Vector3 PointCommonToThreePlanes(Vector3 n1, double d1, Vector3 n2, double d2, Vector3 n3,
             double d3)
         {
-            var matrixOfNormals = new Matrix3x3(n1.X, n2.X, n3.X, n1.Y, n2.Y, n3.Y, n1.Z, n2.Z, n3.Z);
-            var distances = new Vector3(d1, d2, d3);
-            if (!Matrix3x3.Invert(matrixOfNormals, out var mInv))
+            var matrixOfNormals = new double[,] { { n1.X, n2.X, n3.X }, { n1.Y, n2.Y, n3.Y }, { n1.Z, n2.Z, n3.Z } };
+            var distances = new[] { d1, d2, d3 };
+            if (!matrixOfNormals.solve(distances, out var mInv))
                 return Vector3.Null;
-            return distances.Multiply(mInv);
+            return new Vector3(mInv);
         }
 
         /// <summary>
@@ -1203,11 +1258,11 @@ namespace TVGL
             /* to find the point on the line...well a point on the line, it turns out that one has three unknowns (px, py, pz)
              * and only two equations. Let's put the point on the plane going through the origin. So this plane would have a normal
              * of v (or DirectionOfLine). */
-            var a = new Matrix3x3(n1.X, n1.Y, n1.Z, n2.X, n2.Y, n2.Z, directionOfLine.X, directionOfLine.Y, directionOfLine.Z);
-            var b = new Vector3(d1, d2, 0);
-            if (!Matrix3x3.Invert(a, out var aInv))
+            var a = new[,] { { n1.X, n1.Y, n1.Z }, { n2.X, n2.Y, n2.Z }, { directionOfLine.X, directionOfLine.Y, directionOfLine.Z } };
+            var b = new[] { d1, d2, 0 };
+            if (!a.solve(b, out var aInv))
                 pointOnLine = Vector3.Null;
-            pointOnLine = b.Multiply(aInv);
+            else pointOnLine = new Vector3(aInv);
         }
 
         /// <summary>
@@ -1809,6 +1864,88 @@ namespace TVGL
                 yield return coordinate.Y;
                 yield return coordinate.Z;
             }
+        }
+
+        public static IEnumerable<(Edge edge, double angle)> OrderedEdgesAndAnglesCCWAtVertex(this Vertex vertex, Edge startingEdge = null)
+        {
+            if (startingEdge == null) startingEdge = vertex.Edges[0];
+            var edgePointsToVertex = startingEdge.To == vertex;
+            var normal = Vector3.Zero;
+            normal = vertex.Faces.Aggregate(normal, (normal, f) => normal + f.Normal);
+            normal = normal.Normalize();
+            var inPlaneStartVector = edgePointsToVertex ? -1 * startingEdge.Vector : startingEdge.Vector;
+            var edge = startingEdge;
+            PolygonalFace lastFace = null;
+            do
+            {
+                var inPlaneVector = edgePointsToVertex ? -1 * edge.Vector : edge.Vector;
+                yield return (edge, inPlaneVector.AngleBetweenVectorAAndDatum(inPlaneStartVector, normal));
+                var face = edgePointsToVertex ? edge.OtherFace : edge.OwnedFace;
+                if (face == lastFace) face = edge.OwnedFace == lastFace ? edge.OtherFace : edge.OwnedFace;
+                foreach (var e in face.Edges)
+                {
+                    if (e == edge) continue;
+                    if (e.To == vertex)
+                    {
+                        edgePointsToVertex = true;
+                        edge = e;
+                        break;
+                    }
+                    if (e.From == vertex)
+                    {
+                        edgePointsToVertex = false;
+                        edge = e;
+                        break;
+                    }
+                }
+            } while (edge != startingEdge);
+        }
+        public static IEnumerable<PolygonalFace> OrderedFacesCCWAtVertex(this Vertex vertex, PolygonalFace startingFace = null)
+        {
+            if (startingFace == null) startingFace = vertex.Faces[0];
+            var face = startingFace;
+            if (!face.Edges.Any())
+            {
+                foreach (var f in OrderedFacesCCWAtVertexNoEdges(vertex, startingFace))
+                    yield return f;
+                yield break;
+            }
+            Edge edge = null;
+            foreach (var startEdge in face.Edges.Where(e => e.To == vertex || e.From == vertex))
+            {
+                if ((startEdge.From == vertex && startEdge.OwnedFace == face) ||
+                (startEdge.To == vertex && startEdge.OtherFace == face))
+                {
+                    edge = startEdge;
+                    break;
+                }
+            }
+            do
+            {
+                yield return face;
+                var edgePointsToVertex = false;
+                foreach (var e in face.Edges)
+                {
+                    if (e == edge) continue;
+                    if (e.To == vertex)
+                    {
+                        edgePointsToVertex = true;
+                        edge = e;
+                        break;
+                    }
+                    if (e.From == vertex)
+                    {
+                        edgePointsToVertex = false;
+                        edge = e;
+                        break;
+                    }
+                }
+                face = edgePointsToVertex ? edge.OtherFace : edge.OwnedFace;
+            } while (face != startingFace);
+        }
+        private static IEnumerable<PolygonalFace> OrderedFacesCCWAtVertexNoEdges(this Vertex vertex, PolygonalFace startingFace)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -22,8 +22,13 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public Torus(IEnumerable<PolygonalFace> faces) : base(faces)
+        public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive,
+            IEnumerable<PolygonalFace> faces) : base(faces)
         {
+            Center = center;
+            Axis = axis;
+            MajorRadius = majorRadius;
+            MinorRadius = minorRadius;
         }
 
 
@@ -51,38 +56,6 @@ namespace TVGL
         /// <value>The minor radius.</value>
         public double MinorRadius { get;  set; }
 
-        /// <summary>
-        ///     Determines whether [is new member of] [the specified face].
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <returns>Boolean.</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override bool IsNewMemberOf(PolygonalFace face)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        ///     Updates the with.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override void UpdateWith(PolygonalFace face)
-        {
-            base.UpdateWith(face);
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        ///     Builds from multiple faces.
-        /// </summary>
-        /// <param name="faces">The faces.</param>
-        /// <returns>PrimitiveSurface.</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        internal static PrimitiveSurface BuildFromMultipleFaces(List<PolygonalFace> faces)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
@@ -92,6 +65,30 @@ namespace TVGL
         public override void Transform(Matrix4x4 transformMatrix)
         {
             throw new NotImplementedException();
+        }
+
+        public override double CalculateError(IEnumerable<Vertex> vertices = null)
+        {
+            if (vertices == null) vertices = Vertices;
+            var numVerts = 0;
+            var planeDist = Center.Dot(Axis);
+            var sqDistanceSum = 0.0;
+            foreach (var v in vertices)
+            {
+                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, v.Coordinates, planeDist);
+                var d = (v.Coordinates - ptOnCircle).Length() - MinorRadius;
+                sqDistanceSum += d * d;
+                numVerts++;
+            }
+            return sqDistanceSum / numVerts;
+        }
+        public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, double planeDist = double.NaN)
+        {
+            if (double.IsNaN(planeDist)) planeDist = center.Dot(axis);
+            var d = planeDist - vertexCoord.Dot(axis);
+            var ptInPlane = vertexCoord + d * axis;
+            var dirToCircle = (ptInPlane - center).Normalize();
+            return center + majorRadius * dirToCircle;
         }
 
         internal Torus() { }

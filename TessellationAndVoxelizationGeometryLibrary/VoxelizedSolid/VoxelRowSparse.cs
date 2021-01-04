@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -255,11 +256,6 @@ namespace TVGL.Voxelization
                     indices.Insert(index, (ushort)(value + 1));
                     indices.Insert(index, value);
                 }
-            }
-            if ((indices.Count & 0b1) > 0) Console.WriteLine();
-            for (int i = 1; i < indices.Count; i++)
-            {
-                if (indices[i] - indices[i - 1] <= 0) Console.WriteLine();
             }
         }
 

@@ -13,6 +13,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TVGL.Numerics;
+using StarMathLib;
 
 namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
 {
@@ -22,12 +23,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
     public class Plane : PrimitiveSurface // IEquatable<Plane> commenting this since sometimes two planes at same "location"
                                           // but represent different patches
     {
-        /// <summary>
-        /// Tolerance used to determine whether faces should be part of this flat
-        /// </summary>
-        /// <value>The tolerance.</value>
-        public double Tolerance { get; set; }
-
         /// <summary>
         /// The normal vector of the Plane.
         /// </summary>
@@ -70,42 +65,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// <value>The closest point to origin.</value>
         public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
 
-        /// <summary>
-        /// Determines whether [is new member of] [the specified face].
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
-        public override bool IsNewMemberOf(PolygonalFace face)
-        {
-            if (Tolerance.IsPracticallySame(0.0)) Tolerance = Constants.ErrorForFaceInSurface;
-            if (Faces.Contains(face)) return false;
-            if (!face.Normal.Dot(Normal).IsPracticallySame(1.0, Tolerance)) return false;
-            //Return true if all the vertices are within the tolerance 
-            //Note that the Dot term and distance to origin, must have the same sign, 
-            //so there is no additional need moth absolute value methods.
-            return face.Vertices.All(v => Normal.Dot(v.Coordinates).IsPracticallySame(DistanceToOrigin, Tolerance));
-        }
-
-        /// <summary>
-        /// Updates the with.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        public override void UpdateWith(PolygonalFace face)
-        {
-            if (Faces == null) Faces = new HashSet<PolygonalFace>();
-            Normal = (Faces.Count * Normal) + face.Normal;
-            Normal = Vector3.Normalize(Normal);
-            var numNewVerts = 0;
-            var newDistanceToPlane = 0.0;
-            if (Vertices == null) Vertices = new HashSet<Vertex>();
-            foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
-            {
-                numNewVerts++;
-                newDistanceToPlane += v.Coordinates.Dot(Normal);
-            }
-            DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + numNewVerts);
-            base.UpdateWith(face);
-        }
 
         #region Constructors
         /// <summary>
@@ -115,21 +74,99 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         public Plane(IEnumerable<PolygonalFace> faces)
             : base(faces)
         {
-            //Set the normal by weighting each face's normal with its area
-            //This makes small faces have less effect at shifting the normal
-            var normalSumX = 0.0;
-            var normalSumY = 0.0;
-            var normalSumZ = 0.0;
-            foreach (var face in Faces)
+            Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
+            DefineNormalAndDistanceFromVertices(Vertices, out var dto, out var normal);
+            if (normal.Dot(faces.First().Normal) < 0)
             {
-                var weightedNormal = face.Normal * face.Area;
-                normalSumX += weightedNormal.X;
-                normalSumY += weightedNormal.Y;
-                normalSumZ += weightedNormal.Z;
+                normal *= -1;
+                dto *= -1;
             }
-            Normal = new Vector3(normalSumX, normalSumY, normalSumZ).Normalize();
+            DistanceToOrigin = dto;
+            Normal = normal;
+        }
 
-            DistanceToOrigin = Faces.Average(f => Normal.Dot(f.Vertices[0].Coordinates));
+
+        internal static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vertex> vertices, out double distanceToPlane, out Vector3 normal)
+        {
+            return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
+        }
+        internal static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane, out Vector3 normal)
+        {
+            var pointList = vertices as IList<Vector3> ?? vertices.ToList();
+            var numVertices = pointList.Count;
+            if (numVertices < 3)
+            {
+                distanceToPlane = double.NaN;
+                normal = Vector3.Null;
+                return false;
+            }
+            if (numVertices == 3)
+            {
+                var cross = (pointList[1] - pointList[0]).Cross(pointList[2] - pointList[1]);
+                var crossLength = cross.Length();
+                if (crossLength.IsNegligible())
+                {
+                    distanceToPlane = double.NaN;
+                    normal = Vector3.Null;
+                    return false;
+                }
+                normal = cross / crossLength;
+                distanceToPlane = normal.Dot((pointList[0] + pointList[1] + pointList[2]) / 3);
+                if (distanceToPlane < 0)
+                {
+                    distanceToPlane = -distanceToPlane;
+                    normal = -normal;
+                }
+                return true;
+            }
+            double xSum = 0.0, ySum = 0.0, zSum = 0.0;
+            double xSq = 0.0;
+            double xy = 0.0, ySq = 0.0;
+            double xz = 0.0, yz = 0.0, zSq = 0.0;
+            foreach (var vertex in pointList)
+            {
+                var x = vertex.X;
+                var y = vertex.Y;
+                var z = vertex.Z;
+                xSum += x;
+                ySum += y;
+                zSum += z;
+                xSq += x * x;
+                ySq += y * y;
+                zSq += z * z;
+                xy += x * y;
+                xz += x * z;
+                yz += y * z;
+            }
+            var matrix = new double[,] { { xSq, xy, xz }, { xy, ySq, yz }, { xz, yz, zSq } };
+            var rhs = new[] { xSum, ySum, zSum };
+            if (matrix.solve(rhs, out var normalArray, true))
+            {
+                normal = (new Vector3(normalArray)).Normalize();
+                distanceToPlane = normal.Dot(new Vector3(xSum / numVertices, ySum / numVertices, zSum / numVertices));
+                if (distanceToPlane < 0)
+                {
+                    distanceToPlane = -distanceToPlane;
+                    normal = -normal;
+                }
+                return true;
+            }
+            var absoluteDiff = Vector3.Zero;
+            for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
+                absoluteDiff += new Vector3(Math.Abs(pointList[i].X - pointList[j].X), Math.Abs(pointList[i].Y - pointList[j].Y),
+                    Math.Abs(pointList[i].Z - pointList[j].Z));
+            if (absoluteDiff.X.IsNegligible()) normal = Vector3.UnitX;
+            else if (absoluteDiff.Y.IsNegligible()) normal = Vector3.UnitY;
+            else if (absoluteDiff.Z.IsNegligible()) normal = Vector3.UnitZ;
+            else
+            {
+                normal = Vector3.Null;
+                distanceToPlane = double.NaN;
+                return false;
+            }
+            distanceToPlane = pointList[0].Dot(normal);
+            return true;
+            //throw new Exception("Some how all vertices on faces passed into Plane constructor are collinear.");
         }
 
         /// <summary>
@@ -157,6 +194,11 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         {
             Normal = normal.Normalize();
             DistanceToOrigin = Normal.Dot(pointOnPlane);
+            if (DistanceToOrigin < 0)
+            {
+                DistanceToOrigin = -DistanceToOrigin;
+                Normal = -Normal;
+            }
         }
 
         public HashSet<Plane> GetAdjacentFlats(ICollection<Plane> allFlats)
@@ -455,7 +497,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             copy.MinY = MinY;
             copy.MinZ = MinZ;
             copy.Normal = Normal;
-            copy.Tolerance = Tolerance;
             if (copyMembers)
             {
                 copy.Vertices = new HashSet<Vertex>(Vertices);
@@ -464,6 +505,20 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
                 copy.OuterEdges = new HashSet<Edge>(OuterEdges);
             }
             return copy;
+        }
+
+        public override double CalculateError(IEnumerable<Vertex> vertices = null)
+        {
+            if (vertices == null) vertices = Vertices;
+            var numVerts = 0;
+            var sqDistanceSum = 0.0;
+            foreach (var v in vertices)
+            {
+                var d = v.Dot(Normal) - DistanceToOrigin;
+                sqDistanceSum += d * d;
+                numVerts++;
+            }
+            return sqDistanceSum / numVerts;
         }
     }
 }

@@ -23,18 +23,29 @@ namespace TVGL
     /// </remarks>
     public partial class TessellatedSolid : Solid
     {
-        private void MakeEdges()
+        internal void MakeEdges()
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
             var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
-
-            while (singleSidedEdges.Count > edgeList.Count) // this is real bad. the number of single side edges is more than
-                                                            // the number that were successfully matched up. This means we need to try hard to merged vertices
+            var success = true;
+            while (success && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
+            // attempt to increase tolerance to allow more matches
             {
+                var numOverDefined = overDefinedEdges.Count;
+                var numSingleSided = singleSidedEdges.Count;
+                Message.output("Repairing STL connections...(this may take several iterations).");
+                SameTolerance *= 2;
                 RestartVerticesToAvoidSingleSidedEdges();
                 edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
-                if (singleSidedEdges.Count > edgeList.Count) SameTolerance *= 2;
+                success = singleSidedEdges.Count <= numSingleSided && overDefinedEdges.Count <= numOverDefined;
+            }
+            if (!success)
+            {
+                //one step too far, back up tolerance and just use this
+                SameTolerance /= 1.4;
+                RestartVerticesToAvoidSingleSidedEdges();
+                edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
             }
 
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
@@ -96,7 +107,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices"></param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        private void RestartVerticesToAvoidSingleSidedEdges()
+        internal void RestartVerticesToAvoidSingleSidedEdges()
         {
             var faceIndices = Faces.Select(f => f.Vertices.Select(v => v.IndexInList).ToArray()).ToArray();
             var colors = Faces.Select(f => f.Color).ToArray();

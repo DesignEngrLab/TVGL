@@ -20,16 +20,6 @@ namespace TVGL
         public UnknownRegion(List<PolygonalFace> faces) : base(faces) { }
         public UnknownRegion() { }
 
-        /// <summary>
-        ///     Determines whether [is new member of] [the specified face].
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override bool IsNewMemberOf(PolygonalFace face)
-        {
-            return true;
-        }
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
@@ -41,14 +31,9 @@ namespace TVGL
             base.Transform(transformMatrix);
         }
 
-        /// <summary>
-        ///     Updates the with.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override void UpdateWith(PolygonalFace face)
+        public override double CalculateError(IEnumerable<Vertex> vertices = null)
         {
-            base.UpdateWith(face);
+            return 0.0;
         }
     }
 }

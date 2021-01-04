@@ -111,7 +111,7 @@ namespace TVGL.TwoDimensional
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType, tolerance);
-                        //Console.WriteLine("i = {0}, j = {1}", i, j);
+                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
                         polygonList.RemoveAt(i);
@@ -167,7 +167,7 @@ namespace TVGL.TwoDimensional
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
                         var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
-                        //Console.WriteLine("i = {0}, j = {1}", i, j);
+                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
                         unionedPolygons.RemoveAt(i);
