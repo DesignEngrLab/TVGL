@@ -7,7 +7,7 @@ namespace TVGL.TwoDimensional
     /// <summary>
     /// Interface I2DCurve
     /// </summary>
-    interface I2DCurve
+    public interface I2DCurve
     {
         /// <summary>
         /// Returns the squared error of new point. This should be the square of the
@@ -17,14 +17,14 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        double SquaredErrorOfNewPoint(Vector2 point);
+        public double SquaredErrorOfNewPoint(Vector2 point);
 
         /// <summary>
         /// Defines the best fit of the curve for the given points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        static bool CreateFromPoints(IEnumerable<Vector2> points, out I2DCurve curve)
+        public static bool CreateFromPoints(IEnumerable<Vector2> points, out I2DCurve curve)
         {
             throw new NotImplementedException("please implement static method in curve: static I2DCurve " +
                 "CreateFromPoints(IEnumerable<Vector2> points)");

@@ -12,8 +12,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using TVGL.Numerics;
 using StarMathLib;
+using TVGL.Numerics;
 
 namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
 {
@@ -86,11 +86,11 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         }
 
 
-        internal static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vertex> vertices, out double distanceToPlane, out Vector3 normal)
+        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vertex> vertices, out double distanceToPlane, out Vector3 normal)
         {
             return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
         }
-        internal static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane, out Vector3 normal)
+        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane, out Vector3 normal)
         {
             var pointList = vertices as IList<Vector3> ?? vertices.ToList();
             var numVertices = pointList.Count;

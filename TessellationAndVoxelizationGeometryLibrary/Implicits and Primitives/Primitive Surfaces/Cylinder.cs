@@ -60,19 +60,19 @@ namespace TVGL
         ///     Gets the anchor.
         /// </summary>
         /// <value>The anchor.</value>
-        public Vector3 Anchor { get; internal set; }
+        public Vector3 Anchor { get; set; }
 
         /// <summary>
         ///     Gets the direction.
         /// </summary>
         /// <value>The direction.</value>
-        public Vector3 Axis { get; internal set; }
+        public Vector3 Axis { get; set; }
 
         /// <summary>
         ///     Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
-        public double Radius { get; internal set; }
+        public double Radius { get; set; }
 
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace TVGL
         /// Gets the height.
         /// </summary>
         /// <value>The height.</value>
-        public double Height { get; private set; }
+        public double Height { get; set; }
 
         /// <summary>
         /// Gets the volume.

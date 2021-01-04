@@ -15,8 +15,8 @@ namespace TVGL
     {
         internal const bool IsHardwareAccelerated = false;
         internal const int MaxNumberFacesDefaultFullTS = 50000;
-        internal const double TwoPi = 2 * Math.PI;
-        internal const double HalfPi = Math.PI / 2;
+        public const double TwoPi = 2 * Math.PI;
+        public const double HalfPi = Math.PI / 2;
         internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
         internal const long CubeRootOfLongMaxValue = 2097151; //2 million
         /// <summary>
