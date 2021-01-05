@@ -293,11 +293,11 @@ namespace TVGL
             {
                 var currentEdge = edges.First();
                 edges.Remove(currentEdge);
-                var correctDirection = Faces.Contains(currentEdge.OtherFace);
+                var correctDirection = Faces.Contains(currentEdge.OwnedFace);
                 var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
+                var currentVertex = correctDirection ? currentEdge.To : currentEdge.From;
                 var border = new SurfaceBorder();
                 border.AddEnd(currentEdge, correctDirection);
-                var currentVertex = startVertex;
                 foreach (var forwardDir in new[] { true, false })
                 {
                     do
@@ -336,6 +336,9 @@ namespace TVGL
                         currentVertex = currentEdge.OtherVertex(currentVertex);
                     } while (currentEdge != null && currentVertex != startVertex);
                     border.IsClosed = currentVertex == startVertex && border.NumPoints > 2;
+#if PRESENT
+                    //TVGL.Presenter.ShowVertexPathsWithSolid(new [] {border.GetVertices().Select(v => v.Coordinates) }, new[] { debugSolid }, false);
+#endif
                     if (border.IsClosed) break;
                     var currentEdgeAndDir = border.EdgesAndDirection[0];
                     currentEdge = currentEdgeAndDir.edge;
