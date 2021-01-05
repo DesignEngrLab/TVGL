@@ -35,7 +35,7 @@ namespace TVGL.TwoDimensional
             return error * error / ((A * A + B * B + C * C) / 3);
         }
 
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out GeneralConicSection conic)
+        public static bool CreateFromPoints(IEnumerable<Vector2> points, out GeneralConicSection conic, out double error)
         {
             // based on word file, we will solve the two simultaneous equations with substitution
             double xSqSum = 0.0, ySqSum = 0.0, xySum = 0.0, xSum = 0.0, ySum = 0.0;
@@ -68,6 +68,7 @@ namespace TVGL.TwoDimensional
             if (numPoints < 5)
             {
                 conic = new GeneralConicSection();
+                error = double.PositiveInfinity;
                 return false;
             }
             var matrix = new double[,]
@@ -82,9 +83,14 @@ namespace TVGL.TwoDimensional
             if (matrix.solve(b, out var result, true))
             {
                 conic = new GeneralConicSection(result[0], result[1], result[2], result[3], result[4], true);
+                error = 0.0;
+                foreach (var p in points)
+                    error += conic.SquaredErrorOfNewPoint(p);
+                error /= numPoints;
                 return true;
             }
             conic = new GeneralConicSection();
+            error = double.PositiveInfinity;
             return false;
         }
 

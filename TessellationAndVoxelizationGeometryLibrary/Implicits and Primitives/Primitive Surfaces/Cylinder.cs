@@ -29,7 +29,7 @@ namespace TVGL
             //throw new NotImplementedException();
         }
 
-        public override double CalculateError(IEnumerable<Vertex> vertices = null)
+        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
             if (vertices == null) vertices = Vertices;
             var numVerts = 0;
@@ -37,7 +37,8 @@ namespace TVGL
             var sqDistanceSum = 0.0;
             foreach (var v in vertices)
             {
-                var d = (v.Coordinates - Anchor).Cross(Axis).Length() - radius;
+                var coords = new Vector3(v.X, v.Y, v.Z);
+                var d = (coords - Anchor).Cross(Axis).Length() - radius;
                 sqDistanceSum += d * d;
                 numVerts++;
             }
@@ -51,10 +52,6 @@ namespace TVGL
         /// </summary>
         public bool IsPositive { get; }
 
-        /// <summary>
-        ///     Did the cylinder pass the cylinder checks?
-        /// </summary>
-        public bool IsValid { get; }
 
         /// <summary>
         ///     Gets the anchor.
@@ -99,6 +96,7 @@ namespace TVGL
         /// <value>The volume.</value>
         public double Volume { get; }
 
+
         public List<Vertex> Loop1 { get; set; }
 
         public List<Vertex> Loop2 { get; set; }
@@ -106,8 +104,6 @@ namespace TVGL
         public List<Edge> EdgeLoop1 { get; set; }
 
         public List<Edge> EdgeLoop2 { get; set; }
-
-        public HashSet<Plane> SmallFlats { get; set; }
 
         public Polygon Loop2D { get; set; }
 
@@ -124,7 +120,7 @@ namespace TVGL
             HashSet<Plane> featureFlats = null) : base(faces)
         {
             if (!buildOnlyIfHole) throw new Exception("This Cylinder constructor only works when you want to find holes.");
-            SmallFlats = featureFlats;
+            //SmallFlats = featureFlats;
             //IsValid = BuildIfCylinderIsHole(isPositive);
         }
 

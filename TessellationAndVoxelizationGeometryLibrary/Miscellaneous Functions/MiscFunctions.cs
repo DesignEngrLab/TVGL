@@ -554,6 +554,7 @@ namespace TVGL
             }
             return vertices;
         }
+
         #endregion Get Vertices from Objects
 
         #region Split Tesselated Solid into multiple solids if faces are disconnected
@@ -1946,6 +1947,73 @@ namespace TVGL
         private static IEnumerable<PolygonalFace> OrderedFacesCCWAtVertexNoEdges(this Vertex vertex, PolygonalFace startingFace)
         {
             throw new NotImplementedException();
+        }
+
+        public static IEnumerable<Type> TypesImplementingI2DCurve()
+        {
+            var asm = System.Reflection.Assembly.GetAssembly(typeof(I2DCurve));
+
+            foreach (System.Reflection.TypeInfo ti in asm.DefinedTypes)
+                if (ti.ImplementedInterfaces.Contains(typeof(I2DCurve)))
+                    yield return ti;
+        }
+        public static IEnumerable<Type> TypesInheritedFromPrimitiveSurface()
+        {
+            var asm = System.Reflection.Assembly.GetAssembly(typeof(PrimitiveSurface));
+            foreach (Type type in asm.GetTypes()
+                .Where(myType => myType.IsClass && !myType.IsAbstract
+                && myType.IsSubclassOf(typeof(PrimitiveSurface))))
+                yield return type;
+        }
+
+        public static I2DCurve FindBestPlanarCurve(IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
+            out double curveResidual)
+        {
+            var pointList = points as IList<Vector3> ?? points.ToList();
+            if (Plane.DefineNormalAndDistanceFromVertices(pointList, out var distanceToPlane, out var normal))
+            {
+                var thisPlane = new Plane(distanceToPlane, normal);
+                var minResidual = double.PositiveInfinity;
+                I2DCurve bestCurve = null;
+                var point2D = pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane));
+                foreach (var curveType in MiscFunctions.TypesImplementingI2DCurve())
+                {
+                    var arguments = new object[] { point2D, null, null };
+                    if ((bool)curveType.GetMethod("CreateFromPoints").Invoke(null, arguments))
+                    {
+                        curveResidual = (double)arguments[2];
+                        if (minResidual > curveResidual)
+                        {
+                            minResidual = curveResidual;
+                            bestCurve = (I2DCurve)arguments[1];
+                        }
+                    }
+                }
+                curveResidual = minResidual;
+                plane = thisPlane;
+                planeResidual = thisPlane.CalculateError(pointList.Cast<IVertex3D>());
+                return bestCurve;
+            }
+            else
+            {
+                var lineDir = Vector3.Zero;
+                for (int i = 1; i < pointList.Count; i++)
+                    lineDir += (pointList[i] - pointList[0]);
+                normal = lineDir.Normalize().GetPerpendicularDirection();
+                var thisPlane = new Plane(pointList[0], normal);
+                if (StraightLine.CreateFromPoints(pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
+                    out var straightLine, out var error))
+                {
+                    plane = thisPlane;
+                    planeResidual = thisPlane.CalculateError(pointList.Cast<IVertex3D>());
+                    curveResidual = error;
+                    return straightLine;
+                }
+                plane = default;
+                planeResidual = double.PositiveInfinity;
+                curveResidual = double.PositiveInfinity;
+                return new StraightLine();
+            }
         }
     }
 }

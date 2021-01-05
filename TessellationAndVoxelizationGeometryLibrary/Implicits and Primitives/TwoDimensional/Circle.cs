@@ -58,14 +58,12 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out Circle circle)
+        public static bool CreateFromPoints(IEnumerable<Vector2> points, out Circle circle, out double error)
         {
             // Updates the circle using Landau's method ( https://doi.org/10.1016/0734-189X(89)90088-1 ), which
-            // seems like it would be same as the Minimum Least Squares approach (as described in the attached
-            // word file), but this is a million times more accurate. Is it just a result of dividing large numbers?
+            // seems like it would be same as the Minimum Least Squares approach, but this is a million times
+            // more accurate. Is it just a result of dividing large numbers?
             // modified from Matlab: http://freesourcecode.net/matlabprojects/62157/circle-fit-using-landau-method-in-matlab
-            // I don't know why really - trying to get access to original paper, but according to Sumith - it's the
-            // inspiration for the sphere approach.
             var n = 0;
             double Sxx = 0.0, Syy = 0.0, Sxy = 0.0, Sx = 0.0, Sy = 0.0;
             double Sxxx = 0.0, Sxxy = 0.0, Sxyy = 0.0, Syyy = 0.0;
@@ -87,6 +85,7 @@ namespace TVGL.TwoDimensional
             if (n < 3)
             {
                 circle = new Circle();
+                error = double.PositiveInfinity;
                 return false;
             }
             var a1 = 2 * ((Sx * Sx) - (n * Sxx));
@@ -99,13 +98,18 @@ namespace TVGL.TwoDimensional
             if (cross.IsNegligible())
             {
                 circle = new Circle();
+                error = double.PositiveInfinity;
                 return false;
             }
             var xc = ((c1 * b2) - (c2 * b1)) / cross; // returns the center along x
             var yc = ((a1 * c2) - (a2 * c1)) / cross; // returns the center along y
             var radiusSquared = (Sxx - 2 * Sx * xc + n * xc * xc + Syy - 2 * Sy * yc + n * yc * yc) / n; // Radius squared of circle
-
-            circle= new Circle(new Vector2(xc, yc), radiusSquared);
+            var center = new Vector2(xc, yc);
+            circle= new Circle(center, radiusSquared);
+            error = 0.0;
+            foreach (var p in points)
+                error += circle.SquaredErrorOfNewPoint(p);
+            error /= n;
             return true;
         }
 

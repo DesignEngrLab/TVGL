@@ -488,7 +488,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         {
             var copy = new Plane();
             copy.Area = Area;
-            copy.BoundsHaveBeenSet = BoundsHaveBeenSet;
             copy.DistanceToOrigin = DistanceToOrigin;
             copy.MaxX = MaxX;
             copy.MaxY = MaxY;
@@ -507,7 +506,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             return copy;
         }
 
-        public override double CalculateError(IEnumerable<Vertex> vertices = null)
+        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
             if (vertices == null) vertices = Vertices;
             var numVerts = 0;

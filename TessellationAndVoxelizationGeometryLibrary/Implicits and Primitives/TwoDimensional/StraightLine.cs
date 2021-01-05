@@ -24,7 +24,7 @@ namespace TVGL.TwoDimensional
             return cross * cross;
         }
 
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out StraightLine straightLine)
+        public static bool CreateFromPoints(IEnumerable<Vector2> points, out StraightLine straightLine, out double error)
         {
             double xCoeff;
             double yCoeff;
@@ -44,6 +44,7 @@ namespace TVGL.TwoDimensional
             if (numPoints < 2)
             {
                 straightLine = new StraightLine();
+                error = double.PositiveInfinity;
                 return false;
             }
             var denom = k * g - h * h;
@@ -74,6 +75,10 @@ namespace TVGL.TwoDimensional
                 var anchor = ConstantIsZero ? Vector2.Zero : new Vector2(0, 1 / yCoeff);
                 straightLine = new StraightLine(anchor, new Vector2(yCoeff, -xCoeff).Normalize());
             }
+            error = 0.0;
+            foreach (var p in points)
+                error += straightLine.SquaredErrorOfNewPoint(p);
+            error /= numPoints;
             return true;
         }
     }

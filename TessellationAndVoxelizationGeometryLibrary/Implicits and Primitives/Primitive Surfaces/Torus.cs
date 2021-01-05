@@ -67,7 +67,7 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public override double CalculateError(IEnumerable<Vertex> vertices = null)
+        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
             if (vertices == null) vertices = Vertices;
             var numVerts = 0;
@@ -75,8 +75,9 @@ namespace TVGL
             var sqDistanceSum = 0.0;
             foreach (var v in vertices)
             {
-                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, v.Coordinates, planeDist);
-                var d = (v.Coordinates - ptOnCircle).Length() - MinorRadius;
+                var coords = new Vector3(v.X, v.Y, v.Z);
+                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, coords, planeDist);
+                var d = (coords - ptOnCircle).Length() - MinorRadius;
                 sqDistanceSum += d * d;
                 numVerts++;
             }

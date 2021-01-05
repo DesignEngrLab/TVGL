@@ -24,7 +24,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out I2DCurve curve)
+        public static bool CreateFromPoints(IEnumerable<Vector2> points, out I2DCurve curve, out double error)
         {
             throw new NotImplementedException("please implement static method in curve: static I2DCurve " +
                 "CreateFromPoints(IEnumerable<Vector2> points)");

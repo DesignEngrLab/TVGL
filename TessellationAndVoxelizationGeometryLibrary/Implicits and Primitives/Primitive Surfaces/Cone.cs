@@ -65,7 +65,7 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public override double CalculateError(IEnumerable<Vertex> vertices = null)
+        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
             if (vertices == null) vertices = Vertices;
             var numVerts = 0;
@@ -73,8 +73,9 @@ namespace TVGL
             var sqDistanceSum = 0.0;
             foreach (var v in vertices)
             {
-                var d = (v.Coordinates - Apex).Cross(Axis).Length()
-                    - Math.Abs(aper * (v.Coordinates - Apex).Dot(Axis));
+                var coords = new Vector3(v.X, v.Y, v.Z);
+                var d = (coords - Apex).Cross(Axis).Length()
+                    - Math.Abs(aper * (coords - Apex).Dot(Axis));
                 sqDistanceSum += d * d;
                 numVerts++;
             }

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -40,7 +41,7 @@ namespace TVGL
         }
 
 
-        public abstract double CalculateError(IEnumerable<Vertex> vertices = null);
+        public abstract double CalculateError(IEnumerable<IVertex3D> vertices = null);
 
 
 
@@ -266,6 +267,17 @@ namespace TVGL
             return adjacentFaces;
         }
 
+
+        private List<SurfaceBorder> _borders;
+        public List<SurfaceBorder> Borders
+        {
+            get
+            {
+                if (_borders == null)
+                    DefineBorders();
+                return _borders;
+            }
+        }
         /// <summary>
         /// Takes in a list of edges and returns their list of loops for edges and vertices
         /// The order of the output loops are not considered (i.e., they may be "reversed"),
@@ -273,72 +285,112 @@ namespace TVGL
         /// </summary>
         /// <param name="edges"></param>
         /// <returns></returns>
-        public static (bool allLoopsClosed, List<List<Edge>> edgeLoops, List<List<Vertex>> vertexLoops) GetLoops(HashSet<Edge> outerEdges,
-            bool canModifyTheInput)
+        public void DefineBorders(double maxErrorInCurveFit = -1.0)
         {
-            //Use a boolean canModifyTheInput, so that we can save time creating a hashset if the user allows it to be mutated.
-            var edges = canModifyTheInput ? outerEdges : new HashSet<Edge>(outerEdges);
-
-            //loop through the edges to form loops
-            var allLoopsClosed = true;
-            var loops = new List<List<Vertex>>();
-            var edgeLoops = new List<List<Edge>>();
+            _borders = new List<SurfaceBorder>();
+            var edges = new HashSet<Edge>(OuterEdges);
             while (edges.Any())
             {
                 var currentEdge = edges.First();
                 edges.Remove(currentEdge);
-                var startVertex = currentEdge.From;
-                var loop = new List<Vertex> { startVertex };
-                var edgeLoop = new List<Edge> { currentEdge };
-                bool isClosed = false;
-                var previousVertex = startVertex;
-                while (!isClosed)
+                var correctDirection = Faces.Contains(currentEdge.OtherFace);
+                var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
+                var border = new SurfaceBorder();
+                border.AddEnd(currentEdge, correctDirection);
+                var currentVertex = startVertex;
+                foreach (var forwardDir in new[] { true, false })
                 {
-                    //The To/From order cannot be used, since it is only correct for the face the edge belongs to.
-                    //So, add whichever vertex of the edge has no already been added
-                    var currentVertex = currentEdge.OtherVertex(previousVertex);
-                    //Check if we have wrapped around to close the loop
-                    isClosed = currentVertex == startVertex;
-                    if (isClosed) continue; //Break the while loop.
-
-                    //Otherwise, add the new vertex and find the next edge
-                    loop.Add(currentVertex);
-                    var possibleEdges = currentVertex.Edges;
-                    Edge nextEdge = null;
-                    foreach (var edge in possibleEdges)
+                    do
                     {
-                        if (!edges.Contains(edge)) continue;
-                        edges.Remove(edge);
-                        nextEdge = edge;
-                        break;
-                    }
-                    if (nextEdge == null)
-                    {
-                        allLoopsClosed = false; //This loop does not close
-                        break;
-                    }
-                    edgeLoop.Add(nextEdge);
-                    previousVertex = currentVertex;
-                    currentEdge = nextEdge;
+                        var possibleEdges = currentVertex.Edges.Where(e => e != currentEdge && edges.Contains(e)).ToList();
+                        if (possibleEdges.Count == 0)
+                        {
+                            currentVertex = null;
+                            currentEdge = null;
+                            continue;
+                        }
+                        if (possibleEdges.Count == 1) currentEdge = possibleEdges[0];
+                        else
+                        {
+                            var forwardVector = currentEdge.Vector.Normalize();
+                            if (currentEdge.From == currentVertex) forwardVector *= -1;
+                            var bestDot = double.NegativeInfinity;
+                            Edge bestEdge = null;
+                            foreach (var e in possibleEdges)
+                            {
+                                var candidateVector = e.Vector.Normalize();
+                                if (e.To == currentVertex) candidateVector *= -1;
+                                var dot = candidateVector.Dot(forwardVector);
+                                if (bestDot < dot)
+                                {
+                                    bestDot = dot;
+                                    bestEdge = e;
+                                }
+                            }
+                            currentEdge = bestEdge;
+                        }
+                        correctDirection = (currentEdge.From == currentVertex) == forwardDir;
+                        edges.Remove(currentEdge);
+                        if (forwardDir) border.AddEnd(currentEdge, correctDirection);
+                        else border.AddBegin(currentEdge, correctDirection);
+                        currentVertex = currentEdge.OtherVertex(currentVertex);
+                    } while (currentEdge != null && currentVertex != startVertex);
+                    border.IsClosed = currentVertex == startVertex && border.NumPoints > 2;
+                    if (border.IsClosed) break;
+                    var currentEdgeAndDir = border.EdgesAndDirection[0];
+                    currentEdge = currentEdgeAndDir.edge;
+                    currentVertex = currentEdgeAndDir.dir ? currentEdge.From : currentEdge.To;
                 }
-                edgeLoops.Add(edgeLoop);
-                loops.Add(loop);
+                if (maxErrorInCurveFit > 0)
+                {
+                    var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), out var plane, out var planeResidual,
+                          out var curveResidual);
+                    if (planeResidual < maxErrorInCurveFit && curveResidual < maxErrorInCurveFit)
+                    {
+                        border.Curve = curve;
+                        border.Plane = plane;
+                    }
+                }
+                if (border.IsClosed)
+                {
+                    var axis = Vector3.Null;
+                    var anchor = Vector3.Null;
+                    if (this is Cylinder)
+                    {
+                        axis = ((Cylinder)this).Axis;
+                        anchor = ((Cylinder)this).Anchor;
+                    }
+                    else if (this is Cone)
+                    {
+                        axis = ((Cone)this).Axis;
+                        anchor = ((Cone)this).Apex;
+                    }
+                    else if (this is Torus)
+                    {
+                        axis = ((Torus)this).Axis;
+                        anchor = ((Torus)this).Center;
+                    }
+                    else continue;
+                    var transform = axis.TransformToXYPlane(out _);
+                    var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
+                    border.EncirclesAxis = polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform));
+                }
+                _borders.Add(border);
             }
-            return (allLoopsClosed, edgeLoops, loops);
         }
 
-        public bool BoundsHaveBeenSet;
-        public double MaxX;
-        public double MinX;
-        public double MaxY;
-        public double MinY;
-        public double MaxZ;
-        public double MinZ;
+        public double MaxX { get; protected set; } = double.NaN;
+        public double MinX { get; protected set; } = double.NaN;
+        public double MaxY { get; protected set; } = double.NaN;
+        public double MinY { get; protected set; } = double.NaN;
+        public double MaxZ { get; protected set; } = double.NaN;
+        public double MinZ { get; protected set; } = double.NaN;
 
         public void SetBounds(bool ignoreIfAlreadySet = true)
         {
-            if (BoundsHaveBeenSet && ignoreIfAlreadySet) return;
-            BoundsHaveBeenSet = true;
+            if (ignoreIfAlreadySet && !double.IsNaN(MaxX) && !double.IsNaN(MinX) &&
+                !double.IsNaN(MaxY) && !double.IsNaN(MinY) &&
+                !double.IsNaN(MaxZ) && !double.IsNaN(MinZ)) return;
             MaxX = double.MinValue;
             MinX = double.MaxValue;
             MaxY = double.MinValue;
@@ -363,7 +415,7 @@ namespace TVGL
         {
             get
             {
-                if (!BoundsHaveBeenSet) SetBounds();
+                SetBounds(true);
                 return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
             }
         }
