@@ -120,7 +120,7 @@ namespace TVGL
                     units = UnitType.inch;
                     scaleFactor = 12;
                 }
-                DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(vList => vList.Select(v=>scaleFactor*v)));
+                DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFaceList.SelectMany(vList => vList.Select(v => scaleFactor * v)));
             }
             MakeVertices(vertsPerFaceList, scaleFactor, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
@@ -945,8 +945,9 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public override Solid Copy()
         {
-            return new TessellatedSolid(Faces, Edges != null, true, Vertices, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
-                FileName, Comments, Language);
+            var solidAsString = IOFunctions.IO.SaveToString(this, FileType.TVGL);
+            IOFunctions.IO.OpenFromString(solidAsString, FileType.TVGL, out TessellatedSolid copy);
+            return copy;
         }
 
         #endregion

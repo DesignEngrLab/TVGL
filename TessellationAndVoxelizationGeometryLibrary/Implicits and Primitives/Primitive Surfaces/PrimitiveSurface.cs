@@ -27,7 +27,6 @@ namespace TVGL
             Faces = new HashSet<PolygonalFace>(faces);
             foreach (var face in Faces)
                 face.BelongsToPrimitive = this;
-            Area = Faces.Sum(f => f.Area);
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
@@ -49,8 +48,16 @@ namespace TVGL
         ///     Gets the area.
         /// </summary>
         /// <value>The area.</value>
-        public double Area { get; protected set; }
-
+        public double Area
+        {
+            get
+            {
+                if (double.IsNaN(_area))
+                    _area = Faces.Sum(f => f.Area);
+                return _area;
+            }
+        }
+        double _area = double.NaN;
         /// <summary>
         ///     Gets or sets the polygonal faces.
         /// </summary>
@@ -183,7 +190,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public void AddFace(PolygonalFace face)
         {
-            Area += face.Area;
+            _area = Area + face.Area;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
             if (face.Edges.Count == face.Vertices.Count)
@@ -253,7 +260,6 @@ namespace TVGL
             _outerEdges = new HashSet<Edge>();
             foreach (var i in _outerEdgeIndices)
                 OuterEdges.Add(ts.Edges[i]);
-            Area = Faces.Sum(f => f.Area);
         }
 
         public HashSet<PolygonalFace> GetAdjacentFaces()

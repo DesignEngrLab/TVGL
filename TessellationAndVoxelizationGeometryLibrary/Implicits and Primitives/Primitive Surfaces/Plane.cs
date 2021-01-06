@@ -487,7 +487,6 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         public Plane Copy(bool copyMembers = false)
         {
             var copy = new Plane();
-            copy.Area = Area;
             copy.DistanceToOrigin = DistanceToOrigin;
             copy.MaxX = MaxX;
             copy.MaxY = MaxY;
