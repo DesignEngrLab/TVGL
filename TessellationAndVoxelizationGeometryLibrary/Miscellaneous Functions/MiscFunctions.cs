@@ -1883,6 +1883,7 @@ namespace TVGL
                 yield return (edge, inPlaneVector.AngleBetweenVectorAAndDatum(inPlaneStartVector, normal));
                 var face = edgePointsToVertex ? edge.OtherFace : edge.OwnedFace;
                 if (face == lastFace) face = edge.OwnedFace == lastFace ? edge.OtherFace : edge.OwnedFace;
+                lastFace = face;
                 foreach (var e in face.Edges)
                 {
                     if (e == edge) continue;
@@ -1966,7 +1967,7 @@ namespace TVGL
                 yield return type;
         }
 
-        public static I2DCurve FindBestPlanarCurve(IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
+        public static I2DCurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
             out double curveResidual)
         {
             var pointList = points as IList<Vector3> ?? points.ToList();
