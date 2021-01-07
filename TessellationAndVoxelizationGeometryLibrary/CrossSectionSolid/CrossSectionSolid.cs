@@ -248,7 +248,7 @@ namespace TVGL
             return marchingCubesAlgorithm.Generate();
         }
 
-        public override Solid Copy()
+        public CrossSectionSolid Copy()
         {
             var solid = new CrossSectionSolid(Direction, StepDistances, SameTolerance, Bounds, Units);
             //Recreate the loops, so that the lists are not linked to the original.

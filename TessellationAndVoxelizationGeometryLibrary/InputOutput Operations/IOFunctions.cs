@@ -10,6 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using TVGL.TwoDimensional;
@@ -362,13 +363,13 @@ namespace TVGL.IOFunctions
         /// <param name="solid">The solid.</param>
         public static void OpenFromString(string data, FileType fileType, out TessellatedSolid solid)
         {
-            var stream = new MemoryStream();
-            using (var writer = new StreamWriter(stream))
-            {
-                writer.Write(data);
-                writer.Flush();
-            }
-            stream.Position = 0;
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(data));
+            //using (var reader = new StreamReader(stream))
+            //{
+            //    reader.Read(data.AsSpan());
+            //    reader.Flush();
+            //}
+            //stream.Position = 0;
             var name = "data." + GetExtensionFromFileType(fileType);
             Open(stream, name, out solid);
         }

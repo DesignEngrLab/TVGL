@@ -115,16 +115,30 @@ namespace TVGL
         }
 
 
-        public SurfaceBorder Copy(bool reverse = false)
+        public SurfaceBorder Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null)
         {
             var copy = new SurfaceBorder();
-            copy.Plane = new Plane(Plane.DistanceToOrigin, Plane.Normal);
+            if (Plane != null)
+                copy.Plane = new Plane(Plane.DistanceToOrigin, Plane.Normal);
             copy.Curve = Curve;
-            foreach (var eAndA in EdgesAndDirection)
-                if (reverse)
-                    copy.EdgesAndDirection.Insert(0, (eAndA.edge, !eAndA.dir));
-                else
-                    copy.EdgesAndDirection.Add((eAndA.edge, !eAndA.dir));
+            copy.IsClosed = IsClosed;
+            copy.EncirclesAxis = EncirclesAxis;
+            if (copiedTessellatedSolid == null)
+            {
+                foreach (var eAndA in EdgesAndDirection)
+                    if (reverse)
+                        copy.EdgesAndDirection.Insert(0, (eAndA.edge, !eAndA.dir));
+                    else
+                        copy.EdgesAndDirection.Add((eAndA.edge, eAndA.dir));
+            }
+            else
+            {
+                foreach (var eAndA in EdgesAndDirection)
+                    if (reverse)
+                        copy.EdgesAndDirection.Insert(0, (copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], !eAndA.dir));
+                    else
+                        copy.EdgesAndDirection.Add((copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], eAndA.dir));
+            }
             return copy;
         }
     }

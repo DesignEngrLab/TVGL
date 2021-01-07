@@ -58,6 +58,19 @@ namespace TVGL
         }
 
         internal Sphere() { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Sphere"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Sphere(Sphere originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
+            : base(originalToBeCopied, copiedTessellatedSolid)
+        {
+            IsPositive = originalToBeCopied.IsPositive;
+            Center = originalToBeCopied.Center;
+            Radius = originalToBeCopied.Radius;
+        }
+
         #endregion
 
         #region Public Properties

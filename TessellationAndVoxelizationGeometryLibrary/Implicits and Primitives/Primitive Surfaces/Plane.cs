@@ -297,7 +297,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>Plane.</returns>
         public Plane TransformToNewPlane(Matrix4x4 matrix)
         {
-            var copy = this.Copy(true);
+            var copy = new Plane(this);
             copy.Transform(matrix);
             return copy;
         }
@@ -329,7 +329,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>Plane.</returns>
         public Plane TransformToNewPlane(Quaternion rotation)
         {
-            var copy = this.Copy(true);
+            var copy = new Plane(this);
             copy.Transform(rotation);
             return copy;
         }
@@ -469,40 +469,14 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Returns the hash code for this instance.
+        /// Initializes a new instance of the <see cref="Plane"/> class.
         /// </summary>
-        /// <returns>The hash code.</returns>
-        /*
-        public override int GetHashCode()
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Plane(Plane originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null) 
+            : base(originalToBeCopied, copiedTessellatedSolid)
         {
-            return Normal.GetHashCode() + DistanceToOrigin.GetHashCode();
-        }
-        */
-
-        /// <summary>
-        /// Copies the specified copy members.
-        /// </summary>
-        /// <param name="copyMembers">The copy members.</param>
-        /// <returns>TVGL.Plane.</returns>
-        public Plane Copy(bool copyMembers = false)
-        {
-            var copy = new Plane();
-            copy.DistanceToOrigin = DistanceToOrigin;
-            copy.MaxX = MaxX;
-            copy.MaxY = MaxY;
-            copy.MaxZ = MaxZ;
-            copy.MinX = MinX;
-            copy.MinY = MinY;
-            copy.MinZ = MinZ;
-            copy.Normal = Normal;
-            if (copyMembers)
-            {
-                copy.Vertices = new HashSet<Vertex>(Vertices);
-                copy.Faces = new HashSet<PolygonalFace>(Faces);
-                copy.InnerEdges = new HashSet<Edge>(InnerEdges);
-                copy.OuterEdges = new HashSet<Edge>(OuterEdges);
-            }
-            return copy;
+            DistanceToOrigin = originalToBeCopied.DistanceToOrigin;
+            Normal = originalToBeCopied.Normal;
         }
 
         public override double CalculateError(IEnumerable<IVertex3D> vertices = null)

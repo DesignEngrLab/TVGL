@@ -30,14 +30,43 @@ namespace TVGL
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
-        #endregion Constructors
 
+        protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
+        {
+            _area = originalToBeCopied._area;
+            var length = originalToBeCopied.FaceIndices.Length;
+            _faceIndices = new int[length];
+            for (int i = 0; i < length; i++)
+                _faceIndices[i] = originalToBeCopied.FaceIndices[i];
+            length = originalToBeCopied.VertexIndices.Length;
+            _vertexIndices = new int[length];
+            for (int i = 0; i < length; i++)
+                _vertexIndices[i] = originalToBeCopied.VertexIndices[i];
+            length = originalToBeCopied.InnerEdgeIndices.Length;
+            _innerEdgeIndices = new int[length];
+            for (int i = 0; i < length; i++)
+                _innerEdgeIndices[i] = originalToBeCopied.InnerEdgeIndices[i];
+            length = originalToBeCopied.OuterEdgeIndices.Length;
+            _outerEdgeIndices = new int[length];
+            for (int i = 0; i < length; i++)
+                _outerEdgeIndices[i] = originalToBeCopied.OuterEdgeIndices[i];
+            if (originalToBeCopied.Borders != null && originalToBeCopied.Borders.Any())
+            {
+                _borders = new List<SurfaceBorder>();
+                foreach (var origBorder in originalToBeCopied.Borders)
+                    _borders.Add(origBorder.Copy(false, copiedTessellatedSolid));
+            }
+            if (copiedTessellatedSolid != null)
+                CompletePostSerialization(copiedTessellatedSolid);
+        }
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         protected PrimitiveSurface()
         {
         }
+
+        #endregion Constructors
 
 
         public abstract double CalculateError(IEnumerable<IVertex3D> vertices = null);
@@ -73,6 +102,7 @@ namespace TVGL
                     return Faces.Select(f => f.IndexInList).ToArray();
                 return Array.Empty<int>();
             }
+            set => _faceIndices = value;
         }
 
         /// <summary>

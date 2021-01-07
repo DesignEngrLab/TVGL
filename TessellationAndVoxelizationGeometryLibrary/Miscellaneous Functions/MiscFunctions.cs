@@ -225,6 +225,9 @@ namespace TVGL
             for (int i = 2, j = i - 1; i < numSides; j = i++)
                 areaVector += (vertexList[j] - vertexList[0]).Cross(vertexList[i] - vertexList[0]);
             reverseVertexOrder = !suggestedNormal.IsNull() && suggestedNormal.Dot(areaVector) < 0;
+
+            Plane.DefineNormalAndDistanceFromVertices(vertices, out _, out var normal);
+            if (su)
             return areaVector.Normalize();
         }
 

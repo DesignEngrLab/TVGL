@@ -225,6 +225,14 @@ namespace TVGL
 
         internal Cylinder() { }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
+        /// <param name="dxOfTopPlane">The dx of top plane.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, double dxOfBottomPlane,
             double dxOfTopPlane)
         {
@@ -236,6 +244,14 @@ namespace TVGL
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
             Volume = Math.PI * Radius * Radius * Height;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        /// <param name="faces">The faces.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive, IEnumerable<PolygonalFace> faces) : base(faces)
         {
             Axis = axis;
@@ -243,6 +259,21 @@ namespace TVGL
             Radius = radius;
             IsPositive = isPositive;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Cylinder(Cylinder originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
+            : base(originalToBeCopied, copiedTessellatedSolid)
+        {
+            Axis = originalToBeCopied.Axis;
+            Anchor = originalToBeCopied.Anchor;
+            Radius = originalToBeCopied.Radius;
+            IsPositive = originalToBeCopied.IsPositive;
+        }
+
+
+
         //public TessellatedSolid AsTessellatedSolid()
         //{
         //    var faces = new List<PolygonalFace>();

@@ -305,7 +305,7 @@ namespace TVGL.Voxelization
         /// cast it to VoxelizedSolid in your code. E.g., var copyOfVS = (VoxelizedSolid)vs.copy;
         /// </summary>
         /// <returns>Solid.</returns>
-        public override Solid Copy()
+        public VoxelizedSolid Copy()
         {
             UpdateToAllSparse();
             return new VoxelizedSolid(this);

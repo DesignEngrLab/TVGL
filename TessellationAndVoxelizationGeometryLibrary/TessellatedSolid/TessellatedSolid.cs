@@ -933,6 +933,8 @@ namespace TVGL
         {
             Primitives ??= new List<PrimitiveSurface>();
             Primitives.Add(p);
+            foreach (var face in p.Faces)
+                face.BelongsToPrimitive = p;
         }
 
         #endregion
@@ -943,10 +945,19 @@ namespace TVGL
         ///     Copies this instance.
         /// </summary>
         /// <returns>TessellatedSolid.</returns>
-        public override Solid Copy()
+        public TessellatedSolid Copy()
         {
-            var solidAsString = IOFunctions.IO.SaveToString(this, FileType.TVGL);
-            IOFunctions.IO.OpenFromString(solidAsString, FileType.TVGL, out TessellatedSolid copy);
+            var copy = new TessellatedSolid(Faces, Edges != null, true, Vertices, Faces.Select(p => p.Color).ToList(), Units, Name + "_Copy",
+                FileName, Comments, Language);
+            if (Primitives != null && Primitives.Any())
+            {
+                foreach (var surface in Primitives)
+                {
+                    var surfType = surface.GetType();
+                    var surfConstructor = surfType.GetConstructor(new[] { surfType, typeof(TessellatedSolid) });
+                    copy.AddPrimitive((PrimitiveSurface)surfConstructor.Invoke(new object[] { surface, copy }));
+                }
+            }
             return copy;
         }
 

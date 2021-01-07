@@ -191,7 +191,30 @@ namespace TVGL
         /// <returns></returns>
         public abstract Solid TransformToNewSolid(Matrix4x4 transformationMatrix);
 
-        public abstract Solid Copy();
+        protected Solid(Solid originalToBeCopied)
+        {
+            _center = originalToBeCopied._center;
+            _volume = originalToBeCopied._volume;
+            _surfaceArea = originalToBeCopied._surfaceArea;
+            _inertiaTensor = originalToBeCopied._inertiaTensor;
+            if (originalToBeCopied.Bounds != null)
+                Bounds = new[] { originalToBeCopied.Bounds[0], originalToBeCopied.Bounds[1] };
+            Name = originalToBeCopied.Name + "_copy";
+            if (originalToBeCopied.Comments != null)
+            {
+                Comments = new List<string>();
+                foreach (var comment in originalToBeCopied.Comments)
+                    Comments.Add(comment);
+            }
+            FileName = originalToBeCopied.FileName;
+            Units = originalToBeCopied.Units;
+            Language = originalToBeCopied.Language;
+            HasUniformColor = originalToBeCopied.HasUniformColor;
+            SolidColor = originalToBeCopied.SolidColor;
+            SameTolerance = originalToBeCopied.SameTolerance;
+            if (originalToBeCopied.ConvexHull != null)
+                ConvexHull = originalToBeCopied.ConvexHull;
+        }
 
         // everything else gets stored here
         [JsonExtensionData]

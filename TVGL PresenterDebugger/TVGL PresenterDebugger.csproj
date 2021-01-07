@@ -17,6 +17,8 @@
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\bin\**" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\obj\**" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Numerics\README.txt" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\License.txt" />
+    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\README" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj" />
     <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj.user" />

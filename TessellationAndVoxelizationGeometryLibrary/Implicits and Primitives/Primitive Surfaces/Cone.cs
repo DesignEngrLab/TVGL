@@ -14,11 +14,6 @@ namespace TVGL
     /// </summary>
     public class Cone : PrimitiveSurface
     {
-        /// <summary>
-        ///     Is the cone positive? (false is negative)
-        /// </summary>
-        public bool IsPositive;
-
         internal Cone() { }
         /// <summary>
         /// Cone
@@ -36,6 +31,24 @@ namespace TVGL
             Aperture = aperture;
             IsPositive = IsPositive;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cone"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Cone(Cone originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
+            : base(originalToBeCopied,  copiedTessellatedSolid )
+        {
+            IsPositive = originalToBeCopied.IsPositive;
+            Aperture = originalToBeCopied.Aperture;
+            Apex = originalToBeCopied.Apex;
+            Axis = originalToBeCopied.Axis;
+        }
+
+
+        /// <summary>
+        ///     Is the cone positive? (false is negative)
+        /// </summary>
+        public bool IsPositive;
 
         /// <summary>
         ///     Gets the aperture.

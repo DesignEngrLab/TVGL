@@ -13,11 +13,7 @@ namespace TVGL
     /// </summary>
     public class Torus : PrimitiveSurface
     {
-        /// <summary>
-        ///     Is the sphere positive? (false is negative)
-        /// </summary>
-        public bool IsPositive;
-
+        internal Torus() { }
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
@@ -31,30 +27,49 @@ namespace TVGL
             MinorRadius = minorRadius;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// </summary>
+        /// <param name="originalToBeCopied">The original to be copied.</param>
+        public Torus(Torus originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null) 
+            : base(originalToBeCopied, copiedTessellatedSolid)
+        {
+            IsPositive = originalToBeCopied.IsPositive;
+            Center = originalToBeCopied.Center;
+            Axis = originalToBeCopied.Axis;
+            MajorRadius = originalToBeCopied.MajorRadius;
+            MinorRadius = originalToBeCopied.MinorRadius;
+        }
+
+        /// <summary>
+        ///     Is the torus positive? (false is negative)
+        /// </summary>
+        public bool IsPositive;
+
 
         /// <summary>
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public Vector3 Center { get;  set; }
+        public Vector3 Center { get; set; }
 
         /// <summary>
         ///     Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
-        public Vector3 Axis { get;  set; }
+        public Vector3 Axis { get; set; }
 
         /// <summary>
         ///     Gets the major radius.
         /// </summary>
         /// <value>The major radius.</value>
-        public double MajorRadius { get;  set; }
+        public double MajorRadius { get; set; }
 
         /// <summary>
         ///     Gets the minor radius.
         /// </summary>
         /// <value>The minor radius.</value>
-        public double MinorRadius { get;  set; }
+        public double MinorRadius { get; set; }
 
 
         /// <summary>
@@ -92,6 +107,5 @@ namespace TVGL
             return center + majorRadius * dirToCircle;
         }
 
-        internal Torus() { }
     }
 }
