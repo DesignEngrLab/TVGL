@@ -51,8 +51,14 @@ namespace TVGL
         /// Gets the number points.
         /// </summary>
         /// <value>The number points.</value>
-        public int NumPoints => EdgesAndDirection.Count + 1;
-
+        public int NumPoints
+        {
+            get
+            {
+                if (IsClosed) return EdgesAndDirection.Count;
+                return EdgesAndDirection.Count + 1;
+            }
+        }
         /// <summary>
         /// Gets the first vertex.
         /// </summary>
@@ -74,12 +80,28 @@ namespace TVGL
             get
             {
                 var lastEdgeAndDir = EdgesAndDirection[^1];
-                if (lastEdgeAndDir.dir) return lastEdgeAndDir.edge.To;
+                var firstVertex = FirstVertex;
+                // the following condition uses the edge direction of course, but it also checks
+                // to see if it is closed because - if it is closed then the last and the first would
+                // be repeated. To prevent this, we quickly check that if direction is true use To
+                // unless it's closed, then use From (True-False), go through the four cases in your mind
+                // and you see that this checks out.
+                if (lastEdgeAndDir.dir != IsClosed) return lastEdgeAndDir.edge.To;
                 else return lastEdgeAndDir.edge.From;
             }
 
         }
 
+        public Polygon AsPolygon
+        {
+            get
+            {
+                if (_polygon == null)
+                    _polygon = new Polygon(GetVertices().ProjectTo2DCoordinates(Plane.Normal, out _));
+                return _polygon;
+            }
+        }
+        private Polygon _polygon;
         /// <summary>
         /// Gets the vertices.
         /// </summary>
@@ -92,9 +114,13 @@ namespace TVGL
                 if (edgeAndDir.Item2) yield return edgeAndDir.Item1.From;
                 else yield return edgeAndDir.Item1.To;
             }
-            var lastEdgeAndDir = EdgesAndDirection[^1];
-            if (lastEdgeAndDir.Item2) yield return lastEdgeAndDir.Item1.To;
-            else yield return lastEdgeAndDir.Item1.From;
+            if (!IsClosed) //only add the last one if not a closed loop since it would otherwise
+                           // repeat the first point
+            {
+                var lastEdgeAndDir = EdgesAndDirection[^1];
+                if (lastEdgeAndDir.Item2) yield return lastEdgeAndDir.Item1.To;
+                else yield return lastEdgeAndDir.Item1.From;
+            }
         }
 
         /// <summary>

@@ -309,7 +309,7 @@ namespace TVGL
         {
             get
             {
-                if (_borders == null)
+                if (_borders == null || _borders.Count == 0)
                     DefineBorders();
                 return _borders;
             }
@@ -323,6 +323,8 @@ namespace TVGL
         /// <returns></returns>
         public void DefineBorders(double maxErrorInCurveFit = -1.0)
         {
+            var currentSurfaceError = CalculateError();
+            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = currentSurfaceError;
             _borders = new List<SurfaceBorder>();
             var edges = new HashSet<Edge>(OuterEdges);
             while (edges.Any())
@@ -333,6 +335,7 @@ namespace TVGL
                 var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
                 var currentVertex = correctDirection ? currentEdge.To : currentEdge.From;
                 var border = new SurfaceBorder();
+                _borders.Add(border);
                 border.AddEnd(currentEdge, correctDirection);
                 foreach (var forwardDir in new[] { true, false })
                 {
@@ -380,16 +383,12 @@ namespace TVGL
                     currentEdge = currentEdgeAndDir.edge;
                     currentVertex = currentEdgeAndDir.dir ? currentEdge.From : currentEdge.To;
                 }
-                if (maxErrorInCurveFit > 0)
-                {
-                    var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), out var plane, out var planeResidual,
-                          out var curveResidual);
-                    if (planeResidual < maxErrorInCurveFit && curveResidual < maxErrorInCurveFit)
-                    {
-                        border.Curve = curve;
-                        border.Plane = plane;
-                    }
-                }
+                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), out var plane, out var planeResidual,
+                      out var curveResidual);
+                //if (planeResidual < maxErrorInCurveFit)
+                border.Plane = plane;
+                if (curveResidual < maxErrorInCurveFit)
+                    border.Curve = curve;
                 if (border.IsClosed)
                 {
                     var axis = Vector3.Null;
@@ -414,7 +413,6 @@ namespace TVGL
                     var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
                     border.EncirclesAxis = polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform));
                 }
-                _borders.Add(border);
             }
         }
 

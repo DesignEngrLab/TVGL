@@ -33,6 +33,16 @@ namespace TVGL
         public const long VertexCheckSumMultiplier = SquareRootOfLongMaxValue;
 #endif
 
+
+
+        /// <summary>
+        /// The minimum angle used to approximate a circle. An octagon is the largest sided polygon that any sane person would want to define
+        /// without approximating a circle, and the internal angle of an octagon is 135 degrees or 3pi/4. So,anything slightly larger can 
+        /// legitimately be modelling as a circle (or more generically as a conic curve). It sounds like the max smooth tessellation in
+        /// SolidWorks is 150-degrees (or .83*pi). So 0.8 is between these two values.
+        /// </summary>
+        public const double MinCircleAngle = 0.8 * Math.PI;  
+
         /// <summary>
         ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
         /// </summary>

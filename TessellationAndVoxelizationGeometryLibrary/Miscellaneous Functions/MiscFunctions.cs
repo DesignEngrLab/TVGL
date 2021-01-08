@@ -203,10 +203,10 @@ namespace TVGL
         /// <param name="suggestedNormal">The suggested normal.</param>
         /// <returns>Vector3.</returns>
         public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable<Vertex> vertices, int numSides,
-            out bool reverseVertexOrder, Vector3 suggestedNormal)
+            out bool reverseVertexOrder, Vector3 suggestedNormal, out double distanceToPlane)
         {
             return DetermineNormalForA3DPolygon(vertices.Select(v => v.Coordinates), numSides,
-                out reverseVertexOrder, suggestedNormal);
+                out reverseVertexOrder, suggestedNormal, out distanceToPlane);
         }
 
         /// <summary>
@@ -218,17 +218,22 @@ namespace TVGL
         /// <param name="suggestedNormal">The suggested normal.</param>
         /// <returns>Vector3.</returns>
         public static Vector3 DetermineNormalForA3DPolygon(this IEnumerable<Vector3> vertices, int numSides,
-            out bool reverseVertexOrder, Vector3 suggestedNormal)
+            out bool reverseVertexOrder, Vector3 suggestedNormal, out double distanceToPlane)
         {
             var vertexList = vertices as IList<Vector3> ?? vertices.ToList();
             var areaVector = Vector3.Zero;
             for (int i = 2, j = i - 1; i < numSides; j = i++)
                 areaVector += (vertexList[j] - vertexList[0]).Cross(vertexList[i] - vertexList[0]);
             reverseVertexOrder = !suggestedNormal.IsNull() && suggestedNormal.Dot(areaVector) < 0;
-
-            Plane.DefineNormalAndDistanceFromVertices(vertices, out _, out var normal);
-            if (su)
-            return areaVector.Normalize();
+            // to be more accurate, call another function to best fit a plane through the points
+            Plane.DefineNormalAndDistanceFromVertices(vertices, out var distance, out var normal);
+            if ((!suggestedNormal.IsNull() && suggestedNormal.Dot(normal) < 0) || (areaVector.Dot(normal) < 0))
+            {
+                normal *= -1;
+                distance *= -1;
+            }
+            distanceToPlane = distance;
+            return normal;
         }
 
         /// <summary>
@@ -276,8 +281,15 @@ namespace TVGL
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
         public static List<Plane> FindFlats(this IEnumerable<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-               int minNumberOfFacesPerFlat = 2, HashSet<PolygonalFace> usedFaces = null)
+               int minNumberOfFacesPerFlat = 2, bool ensureDistinctFlats = true, IList<PrimitiveSurface> existingPrimitives = null, HashSet<PolygonalFace> usedFaces = null)
         {
+            var outerEdgesOfOthers = new HashSet<Edge>();
+            if (existingPrimitives != null)
+                foreach (var primitive in existingPrimitives)
+                    foreach (var edge in primitive.OuterEdges)
+                        if (!outerEdgesOfOthers.Contains(edge))
+                            outerEdgesOfOthers.Add(edge);
+
             //Used hashset for "Contains" function calls
             if (usedFaces == null) usedFaces = new HashSet<PolygonalFace>();
             var listFlats = new List<Plane>();
@@ -327,7 +339,9 @@ namespace TVGL
                 if (flatHashSet.Count >= minNumberOfFacesPerFlat)
                 {
                     flat = new Plane(flatHashSet);
-                    listFlats.Add(flat);
+                    if (!ensureDistinctFlats || flat.OuterEdges.All(e => (e.InternalAngle < Constants.MinCircleAngle ||
+                    Constants.TwoPi - e.InternalAngle < Constants.MinCircleAngle) || outerEdgesOfOthers.Contains(e)))
+                        listFlats.Add(flat);
                 }
                 foreach (var polygonalFace in flat.Faces)
                     usedFaces.Add(polygonalFace);
@@ -339,10 +353,8 @@ namespace TVGL
         {
             if (flat.Faces.Contains(face)) return false;
             if (!face.Normal.Dot(flat.Normal).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) return false;
+            return flat.CalculateError(face.Vertices) < tolerance;
             //Return true if all the vertices are within the tolerance 
-            //Note that the Dot term and distance to origin, must have the same sign, 
-            //so there is no additional need moth absolute value methods.
-            return face.Vertices.All(v => flat.Normal.Dot(v.Coordinates).IsPracticallySame(flat.DistanceToOrigin, tolerance));
         }
 
         #endregion Dealing with Flat Patches

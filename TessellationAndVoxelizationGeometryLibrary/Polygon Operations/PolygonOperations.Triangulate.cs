@@ -44,9 +44,14 @@ namespace TVGL.TwoDimensional
             }
             var polygon = new Polygon(coords);
             foreach (var triangleIndices in polygon.TriangulateToIndices(false))
-                yield return new[]
-                    {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
+            {
+                if (indexToVertexDict[triangleIndices[0]] != indexToVertexDict[triangleIndices[1]]
+                    && indexToVertexDict[triangleIndices[1]] != indexToVertexDict[triangleIndices[2]]
+                    && indexToVertexDict[triangleIndices[2]] != indexToVertexDict[triangleIndices[0]])
+                    yield return new[]
+                        {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
                         indexToVertexDict[triangleIndices[2]]};
+            }
         }
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.

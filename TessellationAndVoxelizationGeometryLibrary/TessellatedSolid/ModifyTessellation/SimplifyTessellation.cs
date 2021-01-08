@@ -28,7 +28,7 @@ namespace TVGL
             var facesToRemove = new List<PolygonalFace>();
             var facesToAdd = new List<PolygonalFace>();
             var verticesToRemove = new List<Vertex>();
-            var flats = TVGL.MiscFunctions.FindFlats(ts.Faces);
+            var flats = TVGL.MiscFunctions.FindFlats(ts.Faces, minNumberOfFacesPerFlat: 3);
             ts.Primitives ??= new List<PrimitiveSurface>();
             foreach (var flat in flats)
             {

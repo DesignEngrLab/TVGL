@@ -58,7 +58,6 @@ namespace TVGL
         /// </summary>
         /// <value>The anchor.</value>
         public Vector3 Anchor { get; set; }
-
         /// <summary>
         ///     Gets the direction.
         /// </summary>
@@ -89,23 +88,6 @@ namespace TVGL
         /// </summary>
         /// <value>The height.</value>
         public double Height { get; set; }
-
-        /// <summary>
-        /// Gets the volume.
-        /// </summary>
-        /// <value>The volume.</value>
-        public double Volume { get; }
-
-
-        public List<Vertex> Loop1 { get; set; }
-
-        public List<Vertex> Loop2 { get; set; }
-
-        public List<Edge> EdgeLoop1 { get; set; }
-
-        public List<Edge> EdgeLoop2 { get; set; }
-
-        public Polygon Loop2D { get; set; }
 
         #endregion
 
@@ -242,7 +224,6 @@ namespace TVGL
             MinDistanceAlongAxis = dxOfBottomPlane;
             MaxDistanceAlongAxis = dxOfTopPlane;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
-            Volume = Math.PI * Radius * Radius * Height;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Cylinder"/> class.
