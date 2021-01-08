@@ -281,17 +281,18 @@ namespace TVGL
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
         public static List<Plane> FindFlats(this IEnumerable<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-               int minNumberOfFacesPerFlat = 2, bool ensureDistinctFlats = true, IList<PrimitiveSurface> existingPrimitives = null, HashSet<PolygonalFace> usedFaces = null)
+               int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0, bool ensureDistinctFlats = true)
         {
-            var outerEdgesOfOthers = new HashSet<Edge>();
-            if (existingPrimitives != null)
-                foreach (var primitive in existingPrimitives)
-                    foreach (var edge in primitive.OuterEdges)
-                        if (!outerEdgesOfOthers.Contains(edge))
-                            outerEdgesOfOthers.Add(edge);
+            var limitEdges = new HashSet<Edge>();
+            foreach (var face in faces)
+                foreach (var edge in face.Edges)
+                    if (limitEdges.Contains(edge))
+                        limitEdges.Remove(edge);
+                    else
+                        limitEdges.Add(edge);
 
             //Used hashset for "Contains" function calls
-            if (usedFaces == null) usedFaces = new HashSet<PolygonalFace>();
+            var usedFaces = new HashSet<PolygonalFace>();
             var listFlats = new List<Plane>();
 
             //Use an IEnumerable class (List) for iterating through each part, and then the
@@ -340,7 +341,7 @@ namespace TVGL
                 {
                     flat = new Plane(flatHashSet);
                     if (!ensureDistinctFlats || flat.OuterEdges.All(e => (e.InternalAngle < Constants.MinCircleAngle ||
-                    Constants.TwoPi - e.InternalAngle < Constants.MinCircleAngle) || outerEdgesOfOthers.Contains(e)))
+                    Constants.TwoPi - e.InternalAngle < Constants.MinCircleAngle) || limitEdges.Contains(e)) || flat.Area > minFlatArea)
                         listFlats.Add(flat);
                 }
                 foreach (var polygonalFace in flat.Faces)
