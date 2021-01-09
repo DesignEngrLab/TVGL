@@ -135,10 +135,15 @@ namespace TVGL
         }
 
         /// <summary>
-        /// MakeTriangles performs the Marching Cubes algorithm on a single cube
+        /// MakeFacesInCube is the main/difficult function in the Marching Cubes algorithm 
         /// </summary>
         protected void MakeFacesInCube(int xIndex, int yIndex, int zIndex)
         {
+            // first solve for the eight values at the vertices of the cubes. The "GetValue" function
+            // will either grab the value from the StoredValues or will invoke the "GetValueFromSolid"
+            // which is a necessary function of inherited classes. For each one of the eight that is
+            // inside the solid, the cubeType is updated to reflect this. Each of the eight bits in the
+            // byte will correspond to the "inside" or "outside" of the vertex.
             int cubeType = 0;
             var cube = new StoredValue<ValueT>[8];
             //Find which vertices are inside of the surface and which are outside
@@ -152,7 +157,8 @@ namespace TVGL
                 if (IsInside(v.Value))
                     cubeType |= 1 << i;
             }
-            //Find which edges are intersected by the surface
+            // Based upon the cubeType, the CubeEdgeFlagsTable will tell us which of the 12 edges of the cube
+            // intersect with the surface of the solid
             int edgeFlags = CubeEdgeFlagsTable[cubeType];
 
             //If the cube is entirely inside or outside of the surface, then there will be no intersections
@@ -267,9 +273,9 @@ namespace TVGL
         /// </summary>
         protected static readonly Vector3[] EdgeDirectionTable = new Vector3[]
         {
-            new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
-             new Vector3(1.0, 0.0, 0.0),new Vector3(0.0, 1.0, 0.0),new Vector3(-1.0, 0.0, 0.0),new Vector3(0.0, -1.0, 0.0),
-             new Vector3(0.0, 0.0, 1.0),new Vector3(0.0, 0.0, 1.0),new Vector3( 0.0, 0.0, 1.0),new Vector3(0.0,  0.0, 1.0)
+            Vector3.UnitX, Vector3.UnitY, -Vector3.UnitX , -Vector3.UnitY,
+            Vector3.UnitX, Vector3.UnitY, -Vector3.UnitX , -Vector3.UnitY,
+            Vector3.UnitZ,Vector3.UnitZ,Vector3.UnitZ,Vector3.UnitZ
         };
 
         protected static readonly CartesianDirections[] directionTable = new CartesianDirections[]

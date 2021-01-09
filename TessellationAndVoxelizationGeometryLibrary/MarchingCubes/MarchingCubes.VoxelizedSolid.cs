@@ -8,12 +8,16 @@ namespace TVGL
 {
     internal class MarchingCubesDenseVoxels : MarchingCubes<VoxelizedSolid, bool>
     {
+        private readonly int numVoxelsPerGrid;
         private readonly double coordToVoxelIndex;
 
         internal MarchingCubesDenseVoxels(VoxelizedSolid solid, int numVoxelsPerGrid)
             : base(solid, solid.VoxelSideLength * numVoxelsPerGrid)
 
-        { coordToVoxelIndex = 1 / solid.VoxelSideLength; }
+        {
+            this.numVoxelsPerGrid = numVoxelsPerGrid;
+            coordToVoxelIndex = 1 / solid.VoxelSideLength;
+        }
 
         protected override bool GetValueFromSolid(int x, int y, int z)
         {
@@ -38,27 +42,37 @@ namespace TVGL
         protected override double GetOffset(StoredValue<bool> from, StoredValue<bool> to,
             int direction, int sign)
         {
+            var iFrom = (int)(coordToVoxelIndex * ((_xMin + from.X * gridToCoordinateFactor) - solid.Offset.X));
+            var jFrom = (int)(coordToVoxelIndex * ((_yMin + from.Y * gridToCoordinateFactor) - solid.Offset.Y));
+            var kFrom = (int)(coordToVoxelIndex * ((_zMin + from.Z * gridToCoordinateFactor) - solid.Offset.Z));
             switch (direction)
             {
                 case 0:
-                    var maxX = to.X - from.X;
-                    for (int i = 1; i < maxX; i++)
-                        if (GetValueFromSolid((from.X + sign * i), from.Y, from.Z) != GetValueFromSolid((from.X + sign * (i - 1)), from.Y, from.Z))
-                            return gridToCoordinateFactor * (i + 0.5) / maxX;
+                    for (int i = 0; i < numVoxelsPerGrid; i++)
+                    {
+                        if (iFrom + i + 1 < 0) continue;
+                        if (iFrom + i + 1 >= solid.numVoxelsX || (iFrom + i < 0 && solid[iFrom + i + 1, jFrom, kFrom]) ||
+                        solid[iFrom + i, jFrom, kFrom] != solid[iFrom + i + 1, jFrom, kFrom])
+                            return gridToCoordinateFactor * (i - iFrom + 0.5) / numVoxelsPerGrid;
+                    }
                     break;
-
                 case 1:
-                    var maxY = to.Y - from.Y;
-                    for (int i = 1; i < maxY; i++)
-                        if (GetValueFromSolid(from.X, (from.Y + sign * i), from.Z) != GetValueFromSolid(from.X, (from.Y + sign * (i - 1)), from.Z))
-                            return gridToCoordinateFactor * (i + 0.5) / maxY;
+                    for (int j = 0; j < numVoxelsPerGrid; j++)
+                    {
+                        if (jFrom + j + 1 < 0) continue;
+                        if (jFrom + j + 1 >= solid.numVoxelsY || (jFrom + j < 0 && solid[iFrom, jFrom + j + 1, kFrom]) ||
+                         (solid[iFrom, jFrom + j, kFrom] != solid[iFrom, jFrom + j + 1, kFrom]))
+                            return gridToCoordinateFactor * (j - jFrom + 0.5) / numVoxelsPerGrid;
+                    }
                     break;
-
                 case 2:
-                    var maxZ = to.X - from.X;
-                    for (int i = 1; i < maxZ; i++)
-                        if (GetValueFromSolid(from.X, from.Y, (from.Z + sign * i)) != GetValueFromSolid(from.X, from.Y, (from.Z + sign * (i - 1))))
-                            return gridToCoordinateFactor * (i + 0.5) / maxZ;
+                    for (int k = 0; k < numVoxelsPerGrid; k++)
+                    {
+                        if (kFrom + k + 1 < 0) continue;
+                        if (kFrom + k + 1 >= solid.numVoxelsZ || (kFrom + k < 0 && solid[iFrom, jFrom, kFrom + k + 1]) ||
+                            (solid[iFrom, jFrom, kFrom + k] != solid[iFrom, jFrom, kFrom + k + 1]))
+                            return gridToCoordinateFactor * (k - kFrom + 0.5) / numVoxelsPerGrid;
+                    }
                     break;
             }
             return gridToCoordinateFactor;
