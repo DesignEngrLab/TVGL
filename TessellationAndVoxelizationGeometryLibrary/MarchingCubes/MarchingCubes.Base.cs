@@ -233,6 +233,8 @@ namespace TVGL
         /// This table lists the edges intersected by the surface for all 256
         /// possible vertex states. There are 12 edges.
         /// For each entry in the table, if edge #n is intersected, then bit #n is set to 1.
+        /// So, each entry uses the first 12 bits of the byte - hence there are 3 hexadecimcal numbers
+        /// (as each hexadecimal is 4 bits)
         /// cubeEdgeFlags[256]
         /// </summary>
         protected static readonly int[] CubeEdgeFlagsTable = new int[]
@@ -262,8 +264,8 @@ namespace TVGL
         /// </summary>
         protected static readonly int[][] EdgeCornerIndexTable = new int[][]
         {
-            new[]{0,1}, new[]{1,2}, new[]{2,3}, new[]{3,0},
-            new[]{4,5}, new[]{5,6}, new[]{6,7}, new[]{7,4},
+            new[]{0,1}, new[]{1,2}, new[]{3,2}, new[]{0,3},
+            new[]{4,5}, new[]{5,6}, new[]{7,6}, new[]{4,7},
             new[]{0,4}, new[]{1,5}, new[]{2,6}, new[]{3,7}
         };
 
@@ -273,17 +275,21 @@ namespace TVGL
         /// </summary>
         protected static readonly Vector3[] EdgeDirectionTable = new Vector3[]
         {
-            Vector3.UnitX, Vector3.UnitY, -Vector3.UnitX , -Vector3.UnitY,
-            Vector3.UnitX, Vector3.UnitY, -Vector3.UnitX , -Vector3.UnitY,
+            Vector3.UnitX, Vector3.UnitY, Vector3.UnitX , Vector3.UnitY,
+            Vector3.UnitX, Vector3.UnitY, Vector3.UnitX , Vector3.UnitY,
             Vector3.UnitZ,Vector3.UnitZ,Vector3.UnitZ,Vector3.UnitZ
         };
 
         protected static readonly CartesianDirections[] directionTable = new CartesianDirections[]
           {
-              CartesianDirections.XPositive,CartesianDirections.YPositive,CartesianDirections.XNegative,
-              CartesianDirections.YNegative, CartesianDirections.XPositive,CartesianDirections.YPositive,
-              CartesianDirections.XNegative,CartesianDirections.YNegative, CartesianDirections.ZPositive,
-              CartesianDirections.ZPositive,CartesianDirections.ZPositive,CartesianDirections.ZPositive
+              CartesianDirections.XPositive,CartesianDirections.YPositive,
+              CartesianDirections.XPositive,CartesianDirections.YPositive,
+              CartesianDirections.XPositive,CartesianDirections.YPositive,
+              //CartesianDirections.XNegative,CartesianDirections.YNegative,
+              CartesianDirections.XPositive,CartesianDirections.YPositive,
+              //CartesianDirections.XNegative,CartesianDirections.YNegative,
+              CartesianDirections.ZPositive, CartesianDirections.ZPositive,
+              CartesianDirections.ZPositive,CartesianDirections.ZPositive
           };
 
         /// <summary>
@@ -301,7 +307,7 @@ namespace TVGL
             new[]{0, 1, 9}, //2
             new[]{1, 8, 3, 9, 8, 1}, //3
             new[]{1, 2, 10},
-        new[]{0, 8, 3, 1, 2, 10},
+            new[]{0, 8, 3, 1, 2, 10},
         new[]{9, 2, 10, 0, 2, 9},
         new[]{2, 8, 3, 2, 10, 8, 10, 9, 8},
         new[]{3, 11, 2},

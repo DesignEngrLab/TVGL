@@ -137,17 +137,14 @@ namespace TVGL
             #region Make Faces on the sides
             //The normals of the faces are dependent on the whether the loops are ordered correctly from the view of the extrude direction
             //This influences which order the vertices are used to create triangles.
-            var index = 0;
-            foreach (var vectorLoop in polygon.AllPolygons)
+            for (var index = 0; index < baseVertices.Count; index++)
             {
                 var topLoop = topVertices[index];
                 var baseLoop = baseVertices[index];
-                result.Add(new PolygonalFace(new[] { topLoop[^1], baseLoop[^1], topLoop[0] }));
-                result.Add(new PolygonalFace(new[] { topLoop[0], baseLoop[^1], baseLoop[0] }));
-                for (int i = 1; i < topLoop.Count; i++)
+                for (int i = 0, j = topLoop.Count - 1; i < topLoop.Count; j = i++)
                 {
-                    result.Add(new PolygonalFace(new[] { topLoop[i - 1], baseLoop[i - 1], topLoop[i] }));
-                    result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[i - 1], baseLoop[i] }));
+                    result.Add(new PolygonalFace(new[] { topLoop[j], baseLoop[j], topLoop[i] }));
+                    result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[j], baseLoop[i] }));
                 }
             }
             #endregion

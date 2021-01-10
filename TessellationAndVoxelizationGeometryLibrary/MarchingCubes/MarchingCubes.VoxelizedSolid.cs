@@ -9,13 +9,16 @@ namespace TVGL
     internal class MarchingCubesDenseVoxels : MarchingCubes<VoxelizedSolid, bool>
     {
         private readonly int numVoxelsPerGrid;
+        private readonly double oneOverNumVoxelsPerGrid;
         private readonly double coordToVoxelIndex;
+
 
         internal MarchingCubesDenseVoxels(VoxelizedSolid solid, int numVoxelsPerGrid)
             : base(solid, solid.VoxelSideLength * numVoxelsPerGrid)
 
         {
             this.numVoxelsPerGrid = numVoxelsPerGrid;
+            this.oneOverNumVoxelsPerGrid = 1.0 / numVoxelsPerGrid;
             coordToVoxelIndex = 1 / solid.VoxelSideLength;
         }
 
@@ -50,28 +53,28 @@ namespace TVGL
                 case 0:
                     for (int i = 0; i < numVoxelsPerGrid; i++)
                     {
-                        if (iFrom + i + 1 < 0) continue;
+                        if (iFrom + i + 1 <= 0) continue;
                         if (iFrom + i + 1 >= solid.numVoxelsX || (iFrom + i < 0 && solid[iFrom + i + 1, jFrom, kFrom]) ||
                         solid[iFrom + i, jFrom, kFrom] != solid[iFrom + i + 1, jFrom, kFrom])
-                            return gridToCoordinateFactor * (i - iFrom + 0.5) / numVoxelsPerGrid;
+                            return gridToCoordinateFactor * oneOverNumVoxelsPerGrid * i;
                     }
                     break;
                 case 1:
                     for (int j = 0; j < numVoxelsPerGrid; j++)
                     {
-                        if (jFrom + j + 1 < 0) continue;
+                        if (jFrom + j + 1 <= 0) continue;
                         if (jFrom + j + 1 >= solid.numVoxelsY || (jFrom + j < 0 && solid[iFrom, jFrom + j + 1, kFrom]) ||
                          (solid[iFrom, jFrom + j, kFrom] != solid[iFrom, jFrom + j + 1, kFrom]))
-                            return gridToCoordinateFactor * (j - jFrom + 0.5) / numVoxelsPerGrid;
+                            return gridToCoordinateFactor * oneOverNumVoxelsPerGrid * j;
                     }
                     break;
                 case 2:
                     for (int k = 0; k < numVoxelsPerGrid; k++)
                     {
-                        if (kFrom + k + 1 < 0) continue;
+                        if (kFrom + k + 1 <= 0) continue;
                         if (kFrom + k + 1 >= solid.numVoxelsZ || (kFrom + k < 0 && solid[iFrom, jFrom, kFrom + k + 1]) ||
                             (solid[iFrom, jFrom, kFrom + k] != solid[iFrom, jFrom, kFrom + k + 1]))
-                            return gridToCoordinateFactor * (k - kFrom + 0.5) / numVoxelsPerGrid;
+                            return gridToCoordinateFactor * oneOverNumVoxelsPerGrid * k;
                     }
                     break;
             }

@@ -94,13 +94,19 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("Obli*").OrderBy(x => r.NextDouble()).ToArray();
+            var fileNames = dir.GetFiles("*ath*").OrderBy(x => r.NextDouble()).ToArray();
             for (var i = 0; i < fileNames.Length; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
+                var p = solid.CreateSilhouette(Vector3.UnitZ);
+                Presenter.ShowAndHang(p);
+                //var css = CrossSectionSolid.CreateConstantCrossSectionSolid(Vector3.UnitZ, 0, 20, p, solid.SameTolerance, solid.Units);
+                //Presenter.ShowAndHang(css.ConvertToTessellatedExtrusions(false, false));
+                var faces = Extrude.ExtrusionFacesFrom2DPolygons(p, Vector3.UnitZ, 0, 20);
+                Presenter.ShowAndHang(faces);
                // solid.Transform(Matrix4x4.CreateRotationY(Math.PI/2));
                 Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)
@@ -109,10 +115,10 @@ namespace TVGLUnitTestsAndBenchmarking
                     continue;
                 }
                 Console.WriteLine("voxelizing...");
-                var voxsol = new VoxelizedSolid(solid, 500);
+                var voxsol = new VoxelizedSolid(solid, 1000);
                 Console.WriteLine("now presenting " + name);
-                Presenter.ShowAndHang(voxsol);
-                Presenter.ShowAndHang(voxsol.ConvertToTessellatedSolidMarchingCubes(5));
+                //Presenter.ShowAndHang(voxsol);
+                Presenter.ShowAndHang(voxsol.ConvertToTessellatedSolidMarchingCubes(12));
                 Console.WriteLine("draft in pos y");
                 var yposVoxSol = voxsol.DraftToNewSolid(CartesianDirections.YPositive);
                 Console.WriteLine("presenting");
