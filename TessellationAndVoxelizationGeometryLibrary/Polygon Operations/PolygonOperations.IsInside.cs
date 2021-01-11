@@ -128,9 +128,9 @@ namespace TVGL.TwoDimensional
             //Else, it is inside the top polygon and we need to check the inner polygons
             var smallestArea = polygon.PathArea;
             var smallestEnclosingPolygon = polygon;
-            foreach(var subPolygon in polygon.AllPolygons.Skip(1))
+            foreach (var subPolygon in polygon.AllPolygons.Skip(1))
             {
-                if(IsPointInsidePolygon(subPolygon, pointInQuestion))
+                if (IsPointInsidePolygon(subPolygon, pointInQuestion))
                 {
                     var absArea = Math.Abs(subPolygon.PathArea);
                     if (absArea < smallestArea)
@@ -175,7 +175,7 @@ namespace TVGL.TwoDimensional
                     p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
                 {
                     inside = !inside;
-                }                
+                }
             }
             return inside;
         }
@@ -400,20 +400,70 @@ namespace TVGL.TwoDimensional
         #region Line Intersections with Polygon
 
         /// <summary>
-        /// All the polygon intersection points along line.
+        /// All the polygon intersection points along line. Note that the line is represented as 4 numbers. Think of it as a 
+        /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
+        /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="lineReference">The line reference.</param>
-        /// <param name="lineDirection">The line direction.</param>
+        /// <param name="perpendicularDistanceToLine">The line reference.</param>
+        /// <param name="lineNormalDirection">The line direction.</param>
         /// <param name="numSteps">The number steps.</param>
         /// <param name="stepSize">Size of the step.</param>
         /// <param name="firstIntersectingIndex">First index of the intersecting.</param>
         /// <returns>List&lt;Vector2&gt;.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public static List<Vector2> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons, Vector2 lineReference, double lineDirection,
-              int numSteps, double stepSize, out int firstIntersectingIndex)
+        public static List<Vector2[]> AllPolygonIntersectionPointsAlongLine(this IEnumerable<Polygon> polygons, Vector2 lineNormalDirection,
+            double perpendicularDistanceToLine, int numSteps, double stepSize, out int firstIntersectingIndex)
         {
-            throw new NotImplementedException();
+            var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
+            var lineReference = perpendicularDistanceToLine * lineNormalDirection;
+            var intersections = new List<Vector2[]>();
+            foreach (var polygon in polygons)
+                polygon.MakePolygonEdgesIfNonExistent();
+            var sortedPoints = new SortedList<double, Vertex2D>();
+            foreach (var vertex in polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(subPolygon => subPolygon.Vertices)))
+                sortedPoints.Add(vertex.Coordinates.Dot(lineDir), vertex);
+            if (sortedPoints.Count == 0)
+            {
+                firstIntersectingIndex = -1;
+                return intersections;
+            }
+            var firstDistance = sortedPoints[0].Coordinates.Dot(lineDir);
+            var lastDistance = sortedPoints.Values[^1].Coordinates.Dot(lineDir);
+            var tolerance = (lastDistance - firstDistance) * Constants.BaseTolerance;
+            var currentLines = new HashSet<PolygonEdge>();
+            var nextDistance = firstDistance;
+            firstIntersectingIndex = (int)Math.Ceiling((nextDistance - perpendicularDistanceToLine) / stepSize);
+            var pointIndex = 0;
+            for (int i = firstIntersectingIndex; i < numSteps; i++)
+            {
+                var d = perpendicularDistanceToLine + i * stepSize;
+                var thisPoint = sortedPoints.Values[pointIndex];
+                var needToOffset = false;
+                // this while loop updates the current lines. 
+                var thisPointD = thisPoint.Coordinates.Dot(lineNormalDirection);
+                while (thisPointD <= d)
+                {
+                    if (d.IsPracticallySame(thisPointD, tolerance)) needToOffset = true;
+                    if (currentLines.Contains(thisPoint.StartLine)) currentLines.Remove(thisPoint.StartLine);
+                    else currentLines.Add(thisPoint.StartLine);
+                    if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
+                    else currentLines.Add(thisPoint.EndLine);
+                    pointIndex++;
+                    if (pointIndex == sortedPoints.Count) return intersections;
+                    thisPoint = sortedPoints[pointIndex];
+                }
+                if (needToOffset)
+                    d += Math.Min(stepSize, sortedPoints[pointIndex].Y) / 10.0;
+
+                var numIntersects = currentLines.Count;
+                var intersects = new Vector2[numIntersects];
+                var index = 0;
+                foreach (var line in currentLines)
+                    intersects[index++] = MiscFunctions.LineLine2DIntersection(line.FromPoint.Coordinates, line.Vector, lineReference, lineDir);
+                intersections.Add(intersects.OrderBy(x => x.Dot(lineNormalDirection)).ToArray());
+            }
+            return intersections;
         }
 
         /// <summary>

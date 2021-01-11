@@ -13,37 +13,41 @@ namespace TVGL.TwoDimensional
     {
         [Obsolete("Use Polygons as this functions constructs them anyway.")]
         /// <summary>
-        /// Slices the polygons at the provided line.
+        /// Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a 
+        /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
+        /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
         /// </summary>
         /// <param name="shape">The shape.</param>
         /// <param name="lineNormalDirection">The line normal direction.</param>
-        /// <param name="distanceAlongDirection">The distance along direction.</param>
+        /// <param name="perpendicularDistanceToLine">The distance along direction.</param>
         /// <param name="negativeSidePolygons">The negative side polygons.</param>
         /// <param name="positiveSidePolygons">The positive side polygons.</param>
         /// <param name="offsetAtLineForNegativeSide">The offset at line for negative side.</param>
         /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
         /// <returns>Vector2[].</returns>
-        public static Vector2[] SliceAtLine(this IEnumerable<IEnumerable<Vector2>> shape, Vector2 lineNormalDirection, double distanceAlongDirection,
+        public static Vector2[] SliceAtLine(this IEnumerable<IEnumerable<Vector2>> shape, Vector2 lineNormalDirection, double perpendicularDistanceToLine,
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
             var polyTrees = CreateShallowPolygonTrees(shape, false);
-            return SliceAtLine(polyTrees, lineNormalDirection, distanceAlongDirection, out negativeSidePolygons, out positiveSidePolygons,
+            return SliceAtLine(polyTrees, lineNormalDirection, perpendicularDistanceToLine, out negativeSidePolygons, out positiveSidePolygons,
                    offsetAtLineForNegativeSide, offsetAtLineForPositiveSide);
         }
 
         /// <summary>
-        /// Slices the polygons at the provided line.
+        /// Slices the polygons at the provided line. Note that the line is represented as 4 numbers. Think of it as a 
+        /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
+        /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
         /// </summary>
         /// <param name="polyTrees">The poly trees.</param>
         /// <param name="lineNormalDirection">The line normal direction.</param>
-        /// <param name="distanceAlongDirection">The distance along direction.</param>
+        /// <param name="perpendicularDistanceToLine">The distance along direction.</param>
         /// <param name="negativeSidePolygons">The negative side polygons.</param>
         /// <param name="positiveSidePolygons">The positive side polygons.</param>
         /// <param name="offsetAtLineForNegativeSide">The offset at line for negative side.</param>
         /// <param name="offsetAtLineForPositiveSide">The offset at line for positive side.</param>
         /// <returns>Vector2[].</returns>
-        public static Vector2[] SliceAtLine(this IEnumerable<Polygon> polyTrees, Vector2 lineNormalDirection, double distanceAlongDirection,
+        public static Vector2[] SliceAtLine(this IEnumerable<Polygon> polyTrees, Vector2 lineNormalDirection, double perpendicularDistanceToLine,
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
@@ -52,7 +56,7 @@ namespace TVGL.TwoDimensional
             var intersections = new List<Vector2>();
             foreach (var shallowPolygonTree in polyTrees)
             {
-                intersections.AddRange(SliceAtLine(shallowPolygonTree, lineNormalDirection, distanceAlongDirection, out var thisNegativeSidePolys,
+                intersections.AddRange(SliceAtLine(shallowPolygonTree, lineNormalDirection, perpendicularDistanceToLine, out var thisNegativeSidePolys,
                     out var thisPositiveSidePolys, offsetAtLineForNegativeSide, offsetAtLineForPositiveSide));
                 negativeSidePolygons.AddRange(thisNegativeSidePolys);
                 positiveSidePolygons.AddRange(thisPositiveSidePolys);
@@ -63,11 +67,13 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Slices the polygon at the provided line.
+        /// Slices the polygon at the provided line. Note that the line is represented as 4 numbers. Think of it as a 
+        /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
+        /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
         /// </summary>
         /// <param name="shallowPolygonTree">The shallow polygon tree.</param>
         /// <param name="lineNormalDirection">The line normal direction.</param>
-        /// <param name="distanceAlongDirection">The distance along direction.</param>
+        /// <param name="perpendicularDistanceToLine">The distance along direction.</param>
         /// <param name="negativeSidePolygons">The negative side polygons.</param>
         /// <param name="positiveSidePolygons">The positive side polygons.</param>
         /// <param name="offsetAtLineForNegativeSide">The offset at line for negative side.</param>
@@ -79,7 +85,7 @@ namespace TVGL.TwoDimensional
         /// OffsetAtLine allows the use to offset the intersection line a given distance in a direction opposite to the
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the
         /// intersection points before the line).</remarks>
-        public static Vector2[] SliceAtLine(this Polygon shallowPolygonTree, Vector2 lineNormalDirection, double distanceAlongDirection,
+        public static Vector2[] SliceAtLine(this Polygon shallowPolygonTree, Vector2 lineNormalDirection, double perpendicularDistanceToLine,
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
@@ -93,7 +99,7 @@ namespace TVGL.TwoDimensional
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(distanceAlongDirection, tolerance, ref positiveShift, ref negativeShift);
+            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine, tolerance, ref positiveShift, ref negativeShift);
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
@@ -103,7 +109,7 @@ namespace TVGL.TwoDimensional
             //(1) Find the intersection lines and the lines to the left of the current distance
             var intersectionLines = new HashSet<PolygonEdge>();
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
-            var anchorpoint = distanceAlongDirection * lineNormalDirection;
+            var anchorpoint = perpendicularDistanceToLine * lineNormalDirection;
             var sortedPoints = new SortedList<double, (Vector2, PolygonEdge)>();
             foreach (var polygons in shallowPolygonTree.AllPolygons)
                 foreach (var line in polygons.Edges)

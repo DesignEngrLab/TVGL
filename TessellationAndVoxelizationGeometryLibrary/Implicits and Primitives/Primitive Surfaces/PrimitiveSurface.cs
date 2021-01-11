@@ -327,62 +327,9 @@ namespace TVGL
             if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = currentSurfaceError;
             _borders = new List<SurfaceBorder>();
             var edges = new HashSet<Edge>(OuterEdges);
-            while (edges.Any())
+            foreach (var border in edges.GetLoops(Faces))
             {
-                var currentEdge = edges.First();
-                edges.Remove(currentEdge);
-                var correctDirection = Faces.Contains(currentEdge.OwnedFace);
-                var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
-                var currentVertex = correctDirection ? currentEdge.To : currentEdge.From;
-                var border = new SurfaceBorder();
                 _borders.Add(border);
-                border.AddEnd(currentEdge, correctDirection);
-                foreach (var forwardDir in new[] { true, false })
-                {
-                    do
-                    {
-                        var possibleEdges = currentVertex.Edges.Where(e => e != currentEdge && edges.Contains(e)).ToList();
-                        if (possibleEdges.Count == 0)
-                        {
-                            currentVertex = null;
-                            currentEdge = null;
-                            continue;
-                        }
-                        if (possibleEdges.Count == 1) currentEdge = possibleEdges[0];
-                        else
-                        {
-                            var forwardVector = currentEdge.Vector.Normalize();
-                            if (currentEdge.From == currentVertex) forwardVector *= -1;
-                            var bestDot = double.NegativeInfinity;
-                            Edge bestEdge = null;
-                            foreach (var e in possibleEdges)
-                            {
-                                var candidateVector = e.Vector.Normalize();
-                                if (e.To == currentVertex) candidateVector *= -1;
-                                var dot = candidateVector.Dot(forwardVector);
-                                if (bestDot < dot)
-                                {
-                                    bestDot = dot;
-                                    bestEdge = e;
-                                }
-                            }
-                            currentEdge = bestEdge;
-                        }
-                        correctDirection = (currentEdge.From == currentVertex) == forwardDir;
-                        edges.Remove(currentEdge);
-                        if (forwardDir) border.AddEnd(currentEdge, correctDirection);
-                        else border.AddBegin(currentEdge, correctDirection);
-                        currentVertex = currentEdge.OtherVertex(currentVertex);
-                    } while (currentEdge != null && currentVertex != startVertex);
-                    border.IsClosed = currentVertex == startVertex && border.NumPoints > 2;
-#if PRESENT
-                    //TVGL.Presenter.ShowVertexPathsWithSolid(new [] {border.GetVertices().Select(v => v.Coordinates) }, new[] { debugSolid }, false);
-#endif
-                    if (border.IsClosed) break;
-                    var currentEdgeAndDir = border.EdgesAndDirection[0];
-                    currentEdge = currentEdgeAndDir.edge;
-                    currentVertex = currentEdgeAndDir.dir ? currentEdge.From : currentEdge.To;
-                }
                 var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), out var plane, out var planeResidual,
                       out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)

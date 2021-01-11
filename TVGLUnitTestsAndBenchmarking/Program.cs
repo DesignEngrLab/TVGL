@@ -101,11 +101,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                var p = solid.CreateSilhouette(Vector3.UnitZ);
+                var p = solid.CreateSilhouette(Vector3.UnitY);
                 Presenter.ShowAndHang(p);
                 //var css = CrossSectionSolid.CreateConstantCrossSectionSolid(Vector3.UnitZ, 0, 20, p, solid.SameTolerance, solid.Units);
                 //Presenter.ShowAndHang(css.ConvertToTessellatedExtrusions(false, false));
-                var faces = Extrude.ExtrusionFacesFrom2DPolygons(p, Vector3.UnitZ, 0, 20);
+                var faces = Extrude.ExtrusionFacesFrom2DPolygons(p, Vector3.UnitY, 0, 20);
                 Presenter.ShowAndHang(faces);
                // solid.Transform(Matrix4x4.CreateRotationY(Math.PI/2));
                 Presenter.ShowAndHang(solid);
