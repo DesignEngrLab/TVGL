@@ -29,7 +29,7 @@ namespace TVGL
             Apex = apex;
             Axis = axis;
             Aperture = aperture;
-            IsPositive = IsPositive;
+            IsPositive = isPositive;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="Cone"/> class.
