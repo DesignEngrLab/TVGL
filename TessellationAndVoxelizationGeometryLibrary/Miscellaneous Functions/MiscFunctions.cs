@@ -1204,7 +1204,7 @@ namespace TVGL
         public static Vector3 PointCommonToThreePlanes(Vector3 n1, double d1, Vector3 n2, double d2, Vector3 n3,
             double d3)
         {
-            var matrixOfNormals = new double[,] { { n1.X, n2.X, n3.X }, { n1.Y, n2.Y, n3.Y }, { n1.Z, n2.Z, n3.Z } };
+            var matrixOfNormals = new double[,] { { n1.X, n1.Y, n1.Z }, { n2.X, n2.Y, n2.Z }, { n3.X, n3.Y, n3.Z } };
             var distances = new[] { d1, d2, d3 };
             if (!matrixOfNormals.solve(distances, out var mInv))
                 return Vector3.Null;
