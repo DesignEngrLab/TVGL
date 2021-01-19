@@ -584,7 +584,7 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        internal void Reset()
+        public void Reset()
         {
             _path = null;
             _edges = null;
