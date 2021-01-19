@@ -104,7 +104,7 @@ namespace TVGL.TwoDimensional
             //Remove any polygons that are only a line.
             //subject = subject.Where(p => p.Count > 2);
             //clip = clip?.Where(p => p.Count > 2);
-            var simplifyPriorToBooleanOperation = true;
+            var simplifyPriorToBooleanOperation = false;
             if (simplifyPriorToBooleanOperation)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
