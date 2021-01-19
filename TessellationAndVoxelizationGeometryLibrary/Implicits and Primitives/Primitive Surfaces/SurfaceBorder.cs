@@ -38,6 +38,27 @@ namespace TVGL
         /// <value>The edges and direction.</value>
         public List<(Edge edge, bool dir)> EdgesAndDirection { get; }
         /// <summary>
+        /// Gets the edges 
+        /// </summary>
+        /// <value>The edges and direction.</value>
+        public HashSet<Edge> Edges 
+        { 
+            get
+            {
+                if (edges != null) return edges;
+                else
+                {
+                    edges = new HashSet<Edge>();
+                    foreach(var (edge, _) in EdgesAndDirection)
+                    {
+                        edges.Add(edge);
+                    }
+                }
+                return edges;
+            }
+        }
+        private HashSet<Edge> edges;
+        /// <summary>
         /// Gets or sets a value indicating whether [encircles axis].
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
