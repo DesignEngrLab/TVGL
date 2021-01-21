@@ -812,6 +812,8 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        const double unitCrossIsParallel = 1e-4;
+
         /// <summary>
         /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the
         /// fromPoint Inclusive, and the toPoint exclusive. Thus, if lines touch at their endpoints, it is only recorded
@@ -836,7 +838,7 @@ namespace TVGL.TwoDimensional
             var where = WhereIsIntersection.Intermediate;
 
             var lineACrossLineB = lineA.Vector.Cross(lineB.Vector); //2D cross product, determines if parallel
-            if (lineACrossLineB.IsNegligible(tolerance))
+            if (lineACrossLineB.IsNegligible(tolerance) && Math.Abs(lineACrossLineB) / (lineA.Length * lineB.Length) < unitCrossIsParallel)
                 lineACrossLineB = 0; //this avoid a problem where further inequalities ask is <0 but the value is like -1e-15
 
             //var prevA = lineA.FromPoint.EndLine;
@@ -958,40 +960,53 @@ namespace TVGL.TwoDimensional
 
 
         internal static (SegmentRelationship, CollinearityTypes) DeterminePolygonSegmentRelationship(in PolygonEdge lineA,
-            in PolygonEdge lineB, in WhereIsIntersection where, in double lineACrossLineB, in double tolerance)
+            in PolygonEdge lineB, in WhereIsIntersection where, double lineACrossLineB, in double tolerance)
         {
             // first off - handle the intermediate case right away. since it's simple and happens often
             if (where == WhereIsIntersection.Intermediate)
                 return (lineACrossLineB < 0 ? SegmentRelationship.CrossOver_BOutsideAfter : SegmentRelationship.CrossOver_AOutsideAfter, CollinearityTypes.None);
             // set up other useful vectors and cross products
             double prevACrossPrevB, lineACrossPrevB, prevACrossLineB;
-            Vector2 prevA, prevB;
+            PolygonEdge previousALine = null, previousBLine = null;
+            Vector2 previousAVector, previousBVector;
             // based on where the intersection happens, we can quicken the calculation of these
             if (where == WhereIsIntersection.AtStartOfA)
             { //then lineB and prevB are the same
-                prevA = lineA.FromPoint.EndLine.Vector;
-                prevB = lineB.Vector;
+                previousALine = lineA.FromPoint.EndLine;
+                previousBLine = lineB;
+                previousAVector = previousALine.Vector;
+                previousBVector = previousBLine.Vector;
                 lineACrossPrevB = lineACrossLineB;
-                prevACrossLineB = prevACrossPrevB = prevA.Cross(prevB);
+                prevACrossLineB = prevACrossPrevB = previousAVector.Cross(previousBVector);
             }
             else if (where == WhereIsIntersection.AtStartOfB)
             { //then lineA and prevA are the same
-                prevA = lineA.Vector;
-                prevB = lineB.FromPoint.EndLine.Vector;
+                previousALine = lineA;
+                previousBLine = lineB.FromPoint.EndLine;
+                previousAVector = previousALine.Vector;
+                previousBVector = previousBLine.Vector;
                 prevACrossLineB = lineACrossLineB;
-                lineACrossPrevB = prevACrossPrevB = prevA.Cross(prevB);
+                lineACrossPrevB = prevACrossPrevB = previousAVector.Cross(previousBVector);
             }
             else // then where == BothLinesStart
             {
-                prevA = lineA.FromPoint.EndLine.Vector;
-                prevB = lineB.FromPoint.EndLine.Vector;
-                prevACrossLineB = prevA.Cross(lineB.Vector);
-                lineACrossPrevB = lineA.Vector.Cross(prevB);
-                prevACrossPrevB = prevA.Cross(prevB);
+                previousALine = lineA.FromPoint.EndLine;
+                previousBLine = lineB.FromPoint.EndLine;
+                previousAVector = previousALine.Vector;
+                previousBVector = previousBLine.Vector;
+                prevACrossLineB = previousAVector.Cross(lineB.Vector);
+                lineACrossPrevB = lineA.Vector.Cross(previousBVector);
+                prevACrossPrevB = previousAVector.Cross(previousBVector);
             }
-            if (prevACrossPrevB.IsNegligible(tolerance)) prevACrossPrevB = 0;
-            if (lineACrossPrevB.IsNegligible(tolerance)) lineACrossPrevB = 0;
-            if (prevACrossLineB.IsNegligible(tolerance)) prevACrossLineB = 0;
+
+            if (lineACrossLineB.IsNegligible(tolerance) || Math.Abs(lineACrossLineB) / (lineA.Length * lineB.Length) < unitCrossIsParallel)
+                lineACrossLineB = 0;
+            if (prevACrossPrevB.IsNegligible(tolerance) || Math.Abs(prevACrossPrevB) / (previousALine.Length * previousBLine.Length) < unitCrossIsParallel)
+                prevACrossPrevB = 0;
+            if (lineACrossPrevB.IsNegligible(tolerance) || Math.Abs(lineACrossPrevB) / (lineA.Length * previousBLine.Length) < unitCrossIsParallel)
+                lineACrossPrevB = 0;
+            if (prevACrossLineB.IsNegligible(tolerance) || Math.Abs(prevACrossLineB) / (previousALine.Length * lineB.Length) < unitCrossIsParallel)
+                prevACrossLineB = 0;
 
 
             if (lineACrossLineB == 0 && prevACrossPrevB == 0 && lineACrossPrevB == 0 && prevACrossLineB == 0)
@@ -1004,7 +1019,7 @@ namespace TVGL.TwoDimensional
             if (lineACrossLineB == 0 && prevACrossPrevB == 0)
             {
                 var lineADotLineB = lineA.Vector.Dot(lineB.Vector);
-                var prevADotPrevB = prevA.Dot(prevB);
+                var prevADotPrevB = previousAVector.Dot(previousBVector);
                 if (lineADotLineB > 0 && prevADotPrevB > 0)
                     //case 16
                     return (SegmentRelationship.DoubleOverlap, CollinearityTypes.BothSameDirection);
@@ -1012,37 +1027,37 @@ namespace TVGL.TwoDimensional
                     // a rare version of case 5 or 6 where the lines enter and leave the point on parallel lines, but
                     // there is no collinearity! A's cross product of the corner would be the same as B's. If this corner
                     // cross is positive/convex, then no overlap. if concave, then double overlap
-                    return (prevA.Cross(lineA.Vector) > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
+                    return (previousAVector.Cross(lineA.Vector) > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
                         CollinearityTypes.None);
                 if (prevADotPrevB < 0) // then lineADotLineB would be positive, and polygons were heading
                                        // right to each other on parallel lines before joining. this is a rare case 7 or 8
-                    return (prevA.Cross(lineA.Vector) > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
+                    return (previousAVector.Cross(lineA.Vector) > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
                         CollinearityTypes.After);
                 if (lineADotLineB < 0) // then prevADotPrevB would be positive. the polygon diverges in 
                                        // opposite parallel directions. this is a rare case 9 or 10
-                    return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
+                    return (previousAVector.Cross(lineA.Vector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
                              CollinearityTypes.Before);
             }
             if (lineACrossPrevB == 0 && prevACrossLineB == 0)
             {
-                var lineADotPrevB = lineA.Vector.Dot(prevB);
-                var prevADotLineB = prevA.Dot(lineB.Vector);
+                var lineADotPrevB = lineA.Vector.Dot(previousBVector);
+                var prevADotLineB = previousAVector.Dot(lineB.Vector);
                 if (lineADotPrevB < 0 && prevADotLineB < 0)  // case 15
                     return (SegmentRelationship.NoOverlap, CollinearityTypes.BothOppositeDirection);
                 if (lineADotPrevB > 0 && prevADotLineB > 0)  // a very unusual case (although it shows up in the chunky polygon
-                    return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
+                    return (previousAVector.Cross(lineA.Vector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
                         CollinearityTypes.None);
                 if (lineADotPrevB > 0) // then prevADotLineB would be negative. 
                                        // calculate if polygon A's corner is convex or concave. if convex then case 11 (no overlap) if concave then double (case 12)
-                    return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
+                    return (previousAVector.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
                         CollinearityTypes.ABeforeBAfter);
                 if (prevADotLineB > 0) // then lineADotPrevB would be negative, 
-                    return (prevA.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
+                    return (previousAVector.Cross(lineA.Vector) >= 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
                              CollinearityTypes.AAfterBBefore);
             }
             // the remaining conditions require these (remember: positive = convex, negative = concave)
-            var aCornerCross = prevA.Cross(lineA.Vector);
-            var bCornerCross = prevB.Cross(lineB.Vector);
+            var aCornerCross = previousAVector.Cross(lineA.Vector);
+            var bCornerCross = previousBVector.Cross(lineB.Vector);
 
             // now to check if just one of these is zero
             if (lineACrossLineB == 0 && lineA.Vector.Dot(lineB.Vector) > 0)
@@ -1051,19 +1066,19 @@ namespace TVGL.TwoDimensional
                 if (aCornerCross > 0 && bCornerCross < 0) return (SegmentRelationship.BEnclosesA, CollinearityTypes.After);
                 return (prevACrossPrevB > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB, CollinearityTypes.After);
             }
-            if (prevACrossPrevB == 0 && prevA.Dot(prevB) > 0)
+            if (prevACrossPrevB == 0 && previousAVector.Dot(previousBVector) > 0)
             {   //like the previous condition if this hasn't been captured by the aboe then lineACrossLineB !=0. So this is Case 9 & 10
                 if (aCornerCross < 0 && bCornerCross > 0) return (SegmentRelationship.AEnclosesB, CollinearityTypes.Before);
                 if (aCornerCross > 0 && bCornerCross < 0) return (SegmentRelationship.BEnclosesA, CollinearityTypes.Before);
                 return (lineACrossLineB > 0 ? SegmentRelationship.AEnclosesB : SegmentRelationship.BEnclosesA, CollinearityTypes.Before);
             }
-            if (prevACrossLineB == 0 && prevA.Dot(lineB.Vector) < 0)
+            if (prevACrossLineB == 0 && previousAVector.Dot(lineB.Vector) < 0)
             {   //like the previous condition if this hasn't been captured by the above then lineACrossPrevB !=0. So this is Case 11 & 12
                 if (aCornerCross > 0 && bCornerCross > 0) return (SegmentRelationship.NoOverlap, CollinearityTypes.ABeforeBAfter);
                 if (aCornerCross < 0 && bCornerCross < 0) return (SegmentRelationship.DoubleOverlap, CollinearityTypes.ABeforeBAfter);
                 return (lineACrossPrevB > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap, CollinearityTypes.ABeforeBAfter);
             }
-            if (lineACrossPrevB == 0 && lineA.Vector.Dot(prevB) < 0)
+            if (lineACrossPrevB == 0 && lineA.Vector.Dot(previousBVector) < 0)
             {   //like the previous condition if this hasn't been captured by the above then prevACrossLineB !=0. So this is Case 13 & 14
                 if (aCornerCross > 0 && bCornerCross > 0) return (SegmentRelationship.NoOverlap, CollinearityTypes.AAfterBBefore);
                 if (aCornerCross < 0 && bCornerCross < 0) return (SegmentRelationship.DoubleOverlap, CollinearityTypes.AAfterBBefore);

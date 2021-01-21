@@ -61,12 +61,15 @@ namespace TVGL.TwoDimensional
                  tvglMaxY.IsPracticallySame(clipperMaxY, tolerance)
                 )
             {
+                /*
                 Debug.WriteLine("***** " + operationString + " matches");
                 Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
+                */
                 return false;
             }
             else
             {
+                /*
                 Debug.WriteLine(operationString + " does not match");
                 Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
                 if (numPolygonsTVGL == numPolygonsClipper)
@@ -79,18 +82,14 @@ namespace TVGL.TwoDimensional
                 if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
                     Debug.WriteLine("+++ both have area of {0}", areaTVGL);
                 else
-                {
                     Debug.WriteLine("    --- area: TVGL= {0}  : Clipper={1} ", areaTVGL, areaClipper);
-                }
                 if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
                     Debug.WriteLine("+++ both have perimeter of {0}", perimeterTVGL);
                 else
-                {
                     Debug.WriteLine("    --- perimeter: TVGL={0}  : Clipper={1} ", perimeterTVGL, perimeterClipper);
-                    if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
-                        Debug.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
-                    //else showResult = true;
-                }
+                if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
+                    Debug.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
+                */
                 return true;
             }
         }
@@ -123,17 +122,23 @@ namespace TVGL.TwoDimensional
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
                     new[] { polygonB });
             sw.Stop();
+#if PRESENT
+            Presenter.ShowAndHang(pClipper);
+#endif
             var clipTime = sw.Elapsed;
             sw.Restart();
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
             var pTVGL = Union(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
             sw.Stop();
+#if PRESENT
+            Presenter.ShowAndHang(pTVGL);
+#endif
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "Union", clipTime, tvglTime))
             {
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "A.json");
-                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "B.json");
+                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + ".A.json");
+                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + ".B.json");
             }
             return pClipper;
         }
@@ -227,7 +232,7 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygons)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + ".json");
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
             }
             return pClipper;
             //return polygonList;
@@ -302,10 +307,10 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygonsA)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + "A.json");
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart +"."+ (i++).ToString() + "A.json");
                 i = 0;
-                foreach (var poly in polygonsA)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + "B.json");
+                foreach (var poly in polygonsB)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
             }
             return pClipper;
         }
@@ -375,8 +380,8 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "Intersect", clipTime, tvglTime))
             {
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "A.json");
-                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "B.json");
+                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
+                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "." + "B.json");
             }
             return pClipper;
         }
@@ -448,10 +453,10 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygonsA)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + "A.json");
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "A.json");
                 i = 0;
                 foreach (var poly in polygonsA)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + "B.json");
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
             }
             return pClipper;
             //return polygonList;
@@ -500,7 +505,7 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygons)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + ".json");
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
             }
             return pClipper;
             //return polygonList;
@@ -536,8 +541,8 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
             {
                 var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(minuend, fileNameStart + "min.json");
-                TVGL.IOFunctions.IO.Save(subtrahend, fileNameStart + "sub.json");
+                TVGL.IOFunctions.IO.Save(minuend, fileNameStart + "." + "min.json");
+                TVGL.IOFunctions.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
             }
             return pClipper;
 
@@ -606,10 +611,10 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in minuends)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + "min.json");
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "min.json");
                 i = 0;
                 foreach (var poly in subtrahends)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + (i++).ToString() + "sub.json");
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
             }
             return pClipper;
             //return polygonList;
@@ -647,8 +652,8 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "XOR", clipTime, tvglTime))
             {
                 var fileNameStart = "xorFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "A.json");
-                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "B.json");
+                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
+                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "."+ "B.json");
             }
             return pClipper;
         }
