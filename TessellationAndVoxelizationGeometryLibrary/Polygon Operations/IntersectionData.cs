@@ -152,7 +152,13 @@ namespace TVGL.TwoDimensional
                 // BIsInsideHoleOfA, & Equal (so that's 5 additional cases) but the above two subcases are the
                 // only ways this can ever happen, right?
             }
-            // there are 12 left, all of which are either impossible or have no effect (I think). These are listed below. 
+            //R = BInsideA , Nrel = BIsInsideHoleOfA
+            else if (newRelationship == PolygonRelationship.BIsInsideHoleOfA && Relationship == PolygonRelationship.BInsideA)
+                Relationship = PolygonRelationship.BIsInsideHoleOfA;
+            //R = AInsideB , Nrel = AIsInsideHoleOfB
+            else if (newRelationship == PolygonRelationship.AIsInsideHoleOfB && Relationship == PolygonRelationship.AInsideB)
+                Relationship = PolygonRelationship.AIsInsideHoleOfB;
+            // there are 10 left, all of which are either impossible or have no effect (I think). These are listed below. 
             // The first 4 are possible and we need to be careful if the outer positive polygons match, then when we compare
             // the inner hole of A to the outer of B, we will get the first condition below, but we don't want to change the 
             // full Relationship unless we are sure it's not identical. This requires us to have one more function at the end
@@ -162,9 +168,7 @@ namespace TVGL.TwoDimensional
             //R = Equal , Nrel = BInsideA
             //R = Equal , Nrel = BIsInsideHoleOfA
             //R = AIsInsideHoleOfB , Nrel = AInsideB
-            //R = AInsideB , Nrel = AIsInsideHoleOfB
             //R = BIsInsideHoleOfA , Nrel = BInsideA
-            //R = BInsideA , Nrel = BIsInsideHoleOfA
             //R = EqualButOpposite , Nrel = AInsideB
             //R = EqualButOpposite , Nrel = AIsInsideHoleOfB
             //R = EqualButOpposite , Nrel = BInsideA
