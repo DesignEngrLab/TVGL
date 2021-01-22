@@ -52,19 +52,20 @@ namespace TVGLUnitTestsAndBenchmarking
                     polygons.Add(p);
                 }
                 if (polygons.Count < 2) continue;
-                Console.WriteLine("Attempting: " + filename);
-                var polygon1 = polygons[0];
-                var polygon2 = polygons[1];
-                Presenter.ShowAndHang(new[] { polygon1, polygon2 });
+                Debug.WriteLine("Attempting: " + filename);
+                //var polygon1 = polygons[0];
+                //var polygon2 = polygons[2];
 
+
+                Presenter.ShowAndHang(polygons);
                 //var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
                 //var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
                 //var polygon1 = new Polygon(polysValue.Item1);
                 //var polygon2 = new Polygon(polysValue.Item2);
                 //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-                polygons = polygon1.Union(polygon2);
+                polygons = polygons.UnionPolygons();
+                //polygons = polygon1.Union(polygon2);
                 continue;
-                Presenter.ShowAndHang(polygons);
                 var polygon = polygons.LargestPolygon();
                 Presenter.ShowAndHang(polygon);
                 polygon.Transform(Matrix3x3.CreateRotation(1));

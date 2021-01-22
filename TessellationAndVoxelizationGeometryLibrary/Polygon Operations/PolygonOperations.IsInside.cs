@@ -812,7 +812,7 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        const double unitCrossIsParallel = 1e-4;
+        const double unitCrossIsParallel = 1e-10;
 
         /// <summary>
         /// Determines if Two polygon line segments intersect. Because they are part of a polygon, it is decided to make the

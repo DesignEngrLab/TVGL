@@ -63,13 +63,7 @@ namespace TVGL.TwoDimensional
                 foreach (var polyB in polygonB.AllPolygons)
                 {
                     var rel = interaction.GetRelationshipBetween(polyA, polyB);
-                    if ((rel & (PolyRelInternal.EdgesCross | PolyRelInternal.CoincidentEdges
-                        | PolyRelInternal.CoincidentVertices)) != 0b0)
-                    {
-                        nonIntersectingASubPolygons.Remove(polyA);
-                        nonIntersectingBSubPolygons.Remove(polyB);
-                    }
-                    else if ((rel & PolyRelInternal.Equal) != 0b0)
+                    if ((rel & PolyRelInternal.Equal) != 0b0)
                     {
                         nonIntersectingASubPolygons.Remove(polyA);
                         nonIntersectingBSubPolygons.Remove(polyB);
@@ -80,6 +74,12 @@ namespace TVGL.TwoDimensional
                         nonIntersectingASubPolygons.Remove(polyA);
                         nonIntersectingBSubPolygons.Remove(polyB);
                         HandleIdenticalPolygons(polyA, newPolygons, true);
+                    }
+                    else if ((rel & (PolyRelInternal.EdgesCross | PolyRelInternal.CoincidentEdges
+                        | PolyRelInternal.CoincidentVertices)) != 0b0)
+                    {
+                        nonIntersectingASubPolygons.Remove(polyA);
+                        nonIntersectingBSubPolygons.Remove(polyB);
                     }
                 }
             foreach (var poly in nonIntersectingASubPolygons)
