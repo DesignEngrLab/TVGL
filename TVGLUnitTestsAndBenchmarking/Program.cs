@@ -51,13 +51,14 @@ namespace TVGLUnitTestsAndBenchmarking
                     IO.Open(item.FullName, out Polygon p);
                     polygons.Add(p);
                 }
-                if (polygons.Count < 2) continue;
+                //if (polygons.Count < 2) continue;
                 Debug.WriteLine("Attempting: " + filename);
                 //var polygon1 = polygons[0];
                 //var polygon2 = polygons[2];
 
 
                 Presenter.ShowAndHang(polygons);
+                //polygons.RemoveAt(1);
                 //var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
                 //var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
                 //var polygon1 = new Polygon(polysValue.Item1);
