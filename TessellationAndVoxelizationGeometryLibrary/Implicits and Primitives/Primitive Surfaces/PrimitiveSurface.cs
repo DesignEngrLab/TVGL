@@ -268,6 +268,7 @@ namespace TVGL
                 }
             }
             Faces.Add(face);
+            face.BelongsToPrimitive = this;
         }
 
         public void CompletePostSerialization(TessellatedSolid ts)
