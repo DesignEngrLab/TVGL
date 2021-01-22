@@ -367,7 +367,6 @@ namespace TVGL
                     {
                         border.EncirclesAxis = polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform));
                     }
-                    border.IsCircular = polygon.IsCircular(out _, Constants.MediumConfidence);
                 }
             }
         }

@@ -74,10 +74,17 @@ namespace TVGL
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool FullyConvex { get; set; }
         /// <summary>
-        /// Gets or sets a value indicating whether [border is circular].
+        /// Gets whether the [border is circular].
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
-        public bool IsCircular { get; set; }
+        public bool IsCircular
+        {
+            get
+            {
+                if (Curve == null) return false;
+                return Curve is Circle;
+            }
+        }
         /// <summary>
         /// Gets or sets a value indicating whether [border is closed].
         /// </summary>
@@ -187,7 +194,6 @@ namespace TVGL
             copy.EncirclesAxis = EncirclesAxis;
             copy.FullyConcave = FullyConcave;
             copy.FullyConvex = FullyConvex;
-            copy.IsCircular = IsCircular;
             if (copiedTessellatedSolid == null)
             {
                 foreach (var eAndA in EdgesAndDirection)

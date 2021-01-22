@@ -42,6 +42,19 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
+        /// The list of 2D points that make up a polygon and its inner polygons
+        /// </summary>
+        /// <value>The path.</value>
+        [JsonIgnore]
+        public List<List<Vector2>> AllPaths
+        {
+            get
+            {
+                return AllPolygons.Select(p => p.Path).ToList();
+            }
+        }
+
+        /// <summary>
         /// The path
         /// </summary>
         List<Vector2> _path;

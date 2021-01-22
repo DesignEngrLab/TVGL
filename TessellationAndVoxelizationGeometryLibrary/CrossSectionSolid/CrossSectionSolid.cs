@@ -103,7 +103,7 @@ namespace TVGL
                 var ymax = double.NegativeInfinity;
                 foreach (var layer in Layer2D)
                     foreach (var polygon in layer.Value)
-                        foreach (var point in polygon.Path)
+                        foreach (var point in polygon.Path)//Okay to ignore inner polygons, since this is just getting the bounds
                         {
                             if (xmin > point.X) xmin = point.X;
                             if (ymin > point.Y) ymin = point.Y;
