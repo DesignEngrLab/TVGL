@@ -53,7 +53,7 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon, out _).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(areaTolerance)) continue;
-                polyCoordinates = polyCoordinates.Simplify(tolerance);
+                polyCoordinates = polyCoordinates.Simplify(PolygonOperations.simplifyVolFraction);
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             // to handle the non-intersecting subpolygons

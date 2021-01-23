@@ -41,6 +41,7 @@ namespace TVGL.TwoDimensional
             var areaClipper = clipperResult.Sum(p => p.Area);
             var perimeterTVGL = tvglResult.Sum(p => p.Perimeter);
             var perimeterClipper = clipperResult.Sum(p => p.Perimeter);
+            /*
             if (!File.Exists(timeFiles))
             {
                 using (var newFs = File.Create(timeFiles)) { }
@@ -51,6 +52,7 @@ namespace TVGL.TwoDimensional
                 byte[] info = new UTF8Encoding(true).GetBytes(clipTime.Ticks.ToString() + "," + tvglTime.Ticks.ToString() + "\n");
                 fs.Write(info, 0, info.Length);
             }
+            */
             if (numPolygonsTVGL == numPolygonsClipper
                 && //vertsTVGL == vertsClipper &&
                  areaTVGL.IsPracticallySame(areaClipper, (areaTVGL + areaClipper) * tolerance) &&
