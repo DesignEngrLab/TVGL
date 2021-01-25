@@ -30,7 +30,7 @@ namespace TVGL.TwoDimensional
         /// <param name="normal">The normal direction.</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
-        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal)
+        public static IEnumerable<Vertex[]> Triangulate(this IEnumerable<Vertex> vertexLoop, Vector3 normal, bool forceToPositive = false)
         {
             var transform = normal.TransformToXYPlane(out _);
             var coords = new List<Vertex2D>();
@@ -43,6 +43,7 @@ namespace TVGL.TwoDimensional
                 indexToVertexDict.Add(vertex.IndexInList, vertex);
             }
             var polygon = new Polygon(coords);
+            if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
             foreach (var triangleIndices in polygon.TriangulateToIndices(false))
             {
                 if (indexToVertexDict[triangleIndices[0]] != indexToVertexDict[triangleIndices[1]]
