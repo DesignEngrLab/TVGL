@@ -44,7 +44,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Attempting: " + filename);
                 IO.Open(filename, out Polygon polygon);
                 Presenter.ShowAndHang(polygon);
-                var polygonSimple = polygon.Simplify();
+                var polygonSimple = polygon.SimplifyMinLength(100);
                 Presenter.ShowAndHang(new[] { polygon, polygonSimple });
 
 
@@ -55,8 +55,6 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static void TestSimplify2()
         {
             IEnumerable<Vector2> polygon = TestCases.MakeStarryCircularPolygon(150000, 30, 1);
-            Presenter.ShowAndHang(polygon);
-            polygon = polygon.Simplify();
             Presenter.ShowAndHang(polygon);
         }
 

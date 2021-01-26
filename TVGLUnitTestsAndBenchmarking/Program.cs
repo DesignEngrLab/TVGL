@@ -56,6 +56,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var polygon1 = polygons[0];
                 //var polygon2 = polygons[2];
 
+                //91282315972, 91362112269, 9212769213
 
                 Presenter.ShowAndHang(polygons);
                 //polygons.RemoveAt(1);
@@ -64,7 +65,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var polygon1 = new Polygon(polysValue.Item1);
                 //var polygon2 = new Polygon(polysValue.Item2);
                 //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-                polygons = polygons.UnionPolygons();
+                polygons = polygons[0].Subtract(polygons[1]);
                 //polygons = polygon1.Union(polygon2);
                 continue;
                 var polygon = polygons.LargestPolygon();

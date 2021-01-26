@@ -26,7 +26,6 @@ namespace TVGL.TwoDimensional
     public static partial class PolygonOperations
     {
         const double scale = 1000000;
-        internal const double simplifyVolFraction = 0.0000003;
         static bool CLIPPER = true;
         #region Offset
         private static List<Polygon> OffsetViaClipper(Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle)
@@ -100,7 +99,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         private static List<Polygon> BooleanViaClipper(PolyFillType fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
-            IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
+            double tolerance, IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
         {
             //Remove any polygons that are only a line.
             //subject = subject.Where(p => p.Count > 2);
@@ -109,13 +108,13 @@ namespace TVGL.TwoDimensional
             if (simplifyPriorToBooleanOperation)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                subject = subject.Select(p => Simplify(p, simplifyVolFraction));
+                subject = subject.SimplifyMinLength(tolerance);
             }
             if (simplifyPriorToBooleanOperation)
             {
                 //If not null
                 //clip = clip?.Select(p => SimplifyFuzzy(p));
-                clip = clip?.Select(p => Simplify(p, simplifyVolFraction));
+                clip = clip?.SimplifyMinLength(tolerance);
             }
             if (!subject.Any())
             {
