@@ -20,7 +20,7 @@ namespace TVGL.TwoDimensional
     {
         static Stopwatch sw = new Stopwatch();
         const string timeFiles = "times.csv";
-        const double toleranceMultiplier = 1e4;
+        const double PolygonSameTolerance = 1e-7;
 
         private static bool Compare(List<Polygon> tvglResult, List<Polygon> clipperResult, string operationString, TimeSpan clipTime, TimeSpan tvglTime)
         {
@@ -349,7 +349,7 @@ namespace TVGL.TwoDimensional
                     var height = polygon.MaxY - polygon.MinY;
                     if (minHeight > height) minHeight = height;
                 }
-            tolerance = Math.Min(minWidth, minHeight) * toleranceMultiplier * Constants.BaseTolerance;
+            tolerance = Math.Min(minWidth, minHeight) * PolygonSameTolerance;
             return tolerance;
         }
         /// <summary>
@@ -359,7 +359,7 @@ namespace TVGL.TwoDimensional
         /// <returns>System.Double.</returns>
         public static double GetToleranceForPolygon(this Polygon polygon)
         {
-            return Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * toleranceMultiplier * Constants.BaseTolerance;
+            return Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * PolygonSameTolerance;
         }
 
         #endregion Union Public Methods
