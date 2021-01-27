@@ -24,6 +24,39 @@ namespace TVGL
     /// </References>
     public static class TriangulatePolygon
     {
+        public static List<Polygon> Run(Polygon polygon)
+        {
+            var allPolygons = polygon.AllPolygons.ToList();
+            var isPositive = new bool[allPolygons.Count];
+            for (var j = 0; j < allPolygons.Count; j++) isPositive[j] = allPolygons[j].IsPositive;
+            var trianglesAsInts = Run(allPolygons.Select(p => p.Path.ToArray()).ToList(), ref isPositive, out var backToOriginalPoints, false);
+            var triangles = new List<Polygon>();
+            foreach(var tri in trianglesAsInts)
+            {
+                var poly = new Polygon(new List<Vector2>
+                {
+                    backToOriginalPoints[tri[0]],
+                    backToOriginalPoints[tri[1]],
+                    backToOriginalPoints[tri[2]] });
+                if (!poly.IsPositive) { }
+                triangles.Add(new Polygon(new List<Vector2>
+                {
+                    backToOriginalPoints[tri[0]],
+                    backToOriginalPoints[tri[1]],
+                    backToOriginalPoints[tri[2]]
+                })); 
+            }
+            return triangles;
+        }
+
+        public static List<int[]> ReturnAsIndices(Polygon polygon)
+        {
+            var allPolygons = polygon.AllPolygons.ToList();
+            var isPositive = new bool[allPolygons.Count];
+            for (var j = 0; j < allPolygons.Count; j++) isPositive[j] = allPolygons[j].IsPositive;
+            return Run(allPolygons.Select(p => p.Path.ToArray()).ToList(), ref isPositive, out var backToOriginalPoints, false);
+        }
+
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
         /// If ignoring negative space, the function will fill in holes. 
@@ -51,7 +84,7 @@ namespace TVGL
         /// or
         /// </exception>
         /// <exception cref="Exception"></exception>
-        public static List<Polygon> Run(List<Vector2[]> points2D, ref bool[] isPositive, bool ignoreNegativeSpace = false)
+        public static List<int[]> Run(List<Vector2[]> points2D, ref bool[] isPositive, out Dictionary<int, Vector2> backToOriginalPoints, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -67,7 +100,8 @@ namespace TVGL
             // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
             // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
             // 5: If isPositive == null, then 
-            var conversionDictionary = new Dictionary<Vector2, Vector2>();
+            backToOriginalPoints = new Dictionary<int, Vector2>();
+            var conversionDictionary = new Dictionary<Vector2, int>();
 
             //Check incomining lists
             if (isPositive != null && points2D.Count != isPositive.Length)
@@ -77,13 +111,13 @@ namespace TVGL
             var successful = false;
             var attempts = 1;
             //Create return variables
-            var triangleFaceList = new List<Polygon>();
+            var triangleFaceList = new List<int[]>();
             while (successful == false && attempts < 4)
             {
                 try
                 {
                     //Reset return variables
-                    triangleFaceList = new List<Polygon>();
+                    triangleFaceList = new List<int[]>();
                     var numTriangles = 0;
 
                     #region Preprocessing
@@ -106,6 +140,7 @@ namespace TVGL
                     var values = new List<double>() { 0.82348, 0.13905, 0.78932, 0.37510 };
                     var theta = values[attempts - 1];
                     var points2Dtemp = points2D;
+                    var pointID = 0;
                     points2D = new List<Vector2[]>();
                     foreach (var loop in points2Dtemp)
                     {
@@ -116,7 +151,8 @@ namespace TVGL
                             var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
                             var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
                             var newPoint = new Vector2(pointX, pointY);
-                            conversionDictionary.Add(newPoint, point);
+                            backToOriginalPoints.Add(pointID, point);
+                            conversionDictionary.Add(newPoint, pointID++);          
                             newLoop.Add(newPoint);
                             if (point.Y > pHighest)
                             {
@@ -730,15 +766,29 @@ namespace TVGL
                             newTriangles.AddRange(Triangulate(monotonePolygon2));
                         foreach(var newTriangle in newTriangles)
                         {
-                            var convertedPoints = new List<Vector2>
+                            //All triangles must be positive.
+                            //Reverse the triangle if it has a negative area
+                            var area = (newTriangle[1] - newTriangle[0]).Cross(newTriangle[0] - newTriangle[2]) / 2;
+                            if (area < 0)
                             {
-                                conversionDictionary[newTriangle[0]],
-                                conversionDictionary[newTriangle[1]],
-                                conversionDictionary[newTriangle[2]],
-                            };
-                            var poly = new Polygon(convertedPoints);
-                            triangleFaceList.Add(poly);
-                            if (!poly.IsPositive) { }
+                                var forwarPoints = new int[]
+                                {
+                                    conversionDictionary[newTriangle[0]],
+                                    conversionDictionary[newTriangle[1]],
+                                    conversionDictionary[newTriangle[2]],
+                                };
+                                triangleFaceList.Add(forwarPoints);
+                            }
+                            else
+                            {
+                                var reversePoints = new int[]
+                                {
+                                    conversionDictionary[newTriangle[2]],
+                                    conversionDictionary[newTriangle[1]],
+                                    conversionDictionary[newTriangle[0]],
+                                };
+                                triangleFaceList.Add(reversePoints);
+                            }    
                         }
                         numTriangles += newTriangles.Count;
                         #endregion

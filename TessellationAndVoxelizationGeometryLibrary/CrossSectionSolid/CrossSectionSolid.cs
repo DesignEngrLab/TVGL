@@ -32,7 +32,7 @@ namespace TVGL
         /// in the list.
         /// </summary>
         [JsonIgnore]
-        public IDictionary<int, IList<Polygon>> Layer2D;
+        public Dictionary<int, IList<Polygon>> Layer2D;
 
         // an alternate approach without using dictionaries could be pursued
         //public List<Polygon>[] Layer2D { get; }
@@ -86,7 +86,7 @@ namespace TVGL
         }
 
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance,
-            IDictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
+            Dictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances;
@@ -163,42 +163,7 @@ namespace TVGL
         /// </summary>
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
-            //if (!Layer3D.Any()) SetAllVertices();
-            var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
-            var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
-            var increment = start < stop ? 1 : -1;
-            //var direction = increment == 1 ? Direction : -1 * Direction;
             var faces = new List<PolygonalFace>();
-            //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
-            //Otherwise, extrude the first loop and all other loops forward, except the last loop.
-            //Which of these extrusion options you choose depends on how the cross sections were defined.
-            //But both methods, only result in material between the cross sections.
-            if (extrudeBack)
-            {
-                //  direction = -1 * direction;
-                start += increment;
-            }
-            else stop -= increment;
-            //for (var i = start; i * increment <= stop * increment; i += increment) //Include the last index, since we already modified start or stop
-            //{
-            //    if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
-            //    var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
-            //    var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-            //    //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-            //    var layerfaces = Layer2D[i].SelectMany(polygon => polygon.ExtrusionFacesFrom2DPolygons(Direction,
-            //        basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
-            //    faces.AddRange(layerfaces);
-            //}
-            //for (var i = start; i * increment <= stop * increment; i += increment) //Include the last index, since we already modified start or stop
-            //{
-            //    if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
-            //    var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
-            //    var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-            //    //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-            //    var layerfaces = Layer2D[i].SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons2(Direction,
-            //        basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
-            //    faces.AddRange(layerfaces.Select(p => new PolygonalFace(new Vertex(p.A), new Vertex(p.B), new Vertex(p.C))));
-            //}
             var facesAsTuples = ConvertToFaces(extrudeBack);
             foreach(var face in facesAsTuples)
             {
@@ -231,7 +196,7 @@ namespace TVGL
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-                var layerfaces = Layer2D[i].SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons2(Direction,
+                var layerfaces = Layer2D[i].SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
                 faces.AddRange(layerfaces);
             }

@@ -175,10 +175,10 @@ namespace TVGL
         /// <param name="basePlaneDistance">The base plane distance.</param>
         /// <param name="extrusionHeight">Height of the extrusion.</param>
         /// <returns>List&lt;PolygonalFace&gt;.</returns>
-        public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons2(this Polygon polygon, Vector3 basePlaneNormal,
+        public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                double basePlaneDistance, double extrusionHeight)
         {
-            var triangleIndices = polygon.TriangulateToIndices();
+            var triangleIndices = TriangulatePolygon.ReturnAsIndices(polygon);
             MiscFunctions.TransformToXYPlane(basePlaneNormal, out var rotateTransform);
             #region Make Base faces
             var int2VertexDict = new Dictionary<int, Vector3>();
