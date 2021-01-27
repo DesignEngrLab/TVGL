@@ -165,6 +165,24 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
+        /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
+        public PolygonalFace(Vertex A, Vertex B, Vertex C, bool connectVerticesBackToFace = true) : this()
+        {
+            Vertices.Add(A);
+            Vertices.Add(B);
+            Vertices.Add(C);
+            if (connectVerticesBackToFace)
+            {
+                A.Faces.Add(this);
+                B.Faces.Add(this);
+                C.Faces.Add(this);
+            }          
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
         /// <param name="suggestedNormal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
         public PolygonalFace(IEnumerable<Vertex> vertices, Vector3 suggestedNormal, bool connectVerticesBackToFace = true)
