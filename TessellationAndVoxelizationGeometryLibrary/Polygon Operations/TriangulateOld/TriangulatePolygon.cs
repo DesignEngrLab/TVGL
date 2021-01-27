@@ -4,6 +4,7 @@ using System.Linq;
 using StarMathLib;
 using System.Diagnostics;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -50,8 +51,7 @@ namespace TVGL
         /// or
         /// </exception>
         /// <exception cref="Exception"></exception>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Vector2[]>> Run(IList<Vector2[]> points2D, out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
+        public static List<Polygon> Run(List<Vector2[]> points2D, ref bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -67,7 +67,7 @@ namespace TVGL
             // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
             // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
             // 5: If isPositive == null, then 
-
+            var conversionDictionary = new Dictionary<Vector2, Vector2>();
 
             //Check incomining lists
             if (isPositive != null && points2D.Count != isPositive.Length)
@@ -77,15 +77,13 @@ namespace TVGL
             var successful = false;
             var attempts = 1;
             //Create return variables
-            var triangleFaceList = new List<List<Vector2[]>>();
-            groupsOfLoops = new List<List<int>>();
+            var triangleFaceList = new List<Polygon>();
             while (successful == false && attempts < 4)
             {
                 try
                 {
                     //Reset return variables
-                    triangleFaceList = new List<List<Vector2[]>>();
-                    groupsOfLoops = new List<List<int>>();
+                    triangleFaceList = new List<Polygon>();
                     var numTriangles = 0;
 
                     #region Preprocessing
@@ -118,6 +116,7 @@ namespace TVGL
                             var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
                             var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
                             var newPoint = new Vector2(pointX, pointY);
+                            conversionDictionary.Add(newPoint, point);
                             newLoop.Add(newPoint);
                             if (point.Y > pHighest)
                             {
@@ -729,9 +728,19 @@ namespace TVGL
                         var newTriangles = new List<Vector2[]>();
                         foreach (var monotonePolygon2 in monotonePolygons)
                             newTriangles.AddRange(Triangulate(monotonePolygon2));
-                        triangleFaceList.Add(newTriangles);
+                        foreach(var newTriangle in newTriangles)
+                        {
+                            var convertedPoints = new List<Vector2>
+                            {
+                                conversionDictionary[newTriangle[0]],
+                                conversionDictionary[newTriangle[1]],
+                                conversionDictionary[newTriangle[2]],
+                            };
+                            var poly = new Polygon(convertedPoints);
+                            triangleFaceList.Add(poly);
+                            if (!poly.IsPositive) { }
+                        }
                         numTriangles += newTriangles.Count;
-                        groupsOfLoops.Add(group);
                         #endregion
                     }
                     //Check to see if the proper number of triangles were created from this set of loops
