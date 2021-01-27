@@ -1607,14 +1607,49 @@ namespace TVGL
             return inside;
         }
 
+        /// <summary>
+        /// Gets the interior angle between two edges, assuming the edges are listed in CCW order.
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <param name="C"></param>
+        /// <returns></returns>
         private static double InteriorAngleBetweenEdgesInCCWList(Vector2 A, Vector2 B, Vector2 C)
         {
-            return MiscFunctions.SmallerAngleBetweenVectors(B - A, C - B);
+            #region Law of Cosines Approach (Commented Out)
+
+            ////This is an alternative approach to the one that is not commented out
+            ////Use law of cosines to find smaller angle between two vectors
+            //var aSq = v0[0] * v0[0] + v0[1] * v0[1];
+            //var bSq = v1[0] * v1[0] + v1[1] * v1[1];
+            //var cSq = (v0[0] + v1[0]) * (v0[0] + v1[0]) + (v0[1] + v1[1]) * (v0[1] + v1[1]);
+            //var angle = Math.Acos((aSq + bSq - cSq) / (2 * Math.Sqrt(aSq) * Math.Sqrt(bSq)));
+            ////Use cross product sign to determine if smaller angle is CCW from v0
+            //var cross = v0[0] * v1[1] - v0[1] * v1[0];
+            //if (Math.Sign(cross) < 0) angle = 2 * Math.PI - angle;
+
+            #endregion
+
+            var v0 = B - A;
+            var v1 = C - B;
+            var angleV0 = Math.Atan2(v0[1], v0[0]);
+            var angleV1 = Math.Atan2(v1[1], v1[0]);
+            var angleChange = Math.PI - (angleV1 - angleV0);
+            if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
+            if (angleChange < 0) return angleChange + 2 * Math.PI;
+            return angleChange;
         }
 
+        /// <summary>
+        /// Gets the exterior angle between two edges, assuming the edges are listed in CCW order.
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <param name="C"></param>
+        /// <returns></returns>
         private static double ExteriorAngleBetweenEdgesInCCWList(Vector2 A, Vector2 B, Vector2 C)
         {
-            return MiscFunctions.LargerAngleBetweenVectors(B - A, C - B);
+            return 2 * Math.PI - InteriorAngleBetweenEdgesInCCWList(A, B, C);
         }
     }
 
