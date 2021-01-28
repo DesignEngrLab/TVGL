@@ -46,11 +46,11 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <value>The path.</value>
         [JsonIgnore]
-        public List<List<Vector2>> AllPaths
+        public IEnumerable<List<Vector2>> AllPaths
         {
             get
             {
-                return AllPolygons.Select(p => p.Path).ToList();
+                return AllPolygons.Select(p => p.Path);
             }
         }
 
@@ -498,10 +498,11 @@ namespace TVGL.TwoDimensional
             }
             var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
-
+            var copiedArea = copyInnerPolygons ? this.area : this.pathArea;
+            if (invert) copiedArea *= -1;
             var copiedPolygon = new Polygon(thisPath, this.index)
             {
-                area = invert ? -this.area : this.area,
+                area = copiedArea,
                 maxX = this.maxX,
                 maxY = this.maxY,
                 minX = this.minX,

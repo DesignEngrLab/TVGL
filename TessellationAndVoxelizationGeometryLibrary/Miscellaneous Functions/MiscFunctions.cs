@@ -818,6 +818,35 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <param name="normalDirection">The normal direction of the new plane.</param>
+        /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        public static IEnumerable<Vector3> ConvertTo3DLocations(this Polygon coordinates, Vector3 normalDirection,
+            double distanceAlongDirection)
+        {
+            TransformToXYPlane(normalDirection, out var backTransform);
+            var transform = backTransform * Matrix4x4.CreateTranslation(normalDirection * distanceAlongDirection);
+            return ConvertTo3DLocations(coordinates, transform);
+        }
+
+        /// <summary>
+        /// Converts the 2D coordinates into 3D locations in a plane defined by normal direction and distance.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <param name="normalDirection">The normal direction of the new plane.</param>
+        /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
+        /// <param name="transform">The transform matrix.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        public static IEnumerable<Vector3> ConvertTo3DLocations(this Polygon polygon, Matrix4x4 transform)
+        {
+            foreach (var point2D in polygon.Path)
+                yield return Vector3.Multiply(new Vector3(point2D, 0), transform);
+        }
+
+        /// <summary>
         /// Converts the 3D location (e.g. Vector3) to 2D coordinate (e.g. Vector2).
         /// </summary>
         /// <param name="location3D">The location as a Vector3.</param>
@@ -963,9 +992,23 @@ namespace TVGL
         /// <param name="vectorA">The vector a.</param>
         /// <param name="datum">The datum.</param>
         /// <returns>double.</returns>
-        public static double AngleBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)
+        public static double AngleCCWBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)
         {
-            return Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
+            var angle = Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
+        }
+        /// <summary>
+        ///     Gets the counter-clockwise rotated angle of vector-A from the datum vector
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleCWBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)
+        {
+            var angle = -Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
         }
 
 

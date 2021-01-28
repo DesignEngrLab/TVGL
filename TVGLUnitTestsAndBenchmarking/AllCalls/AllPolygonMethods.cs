@@ -55,8 +55,11 @@ namespace TVGLUnitTestsAndBenchmarking
             //a.OffsetRound(5.0);
             //a.OffsetSquare(5.0);
             a.Perimeter();
-            a.Simplify();
-            a.Simplify(10);
+            a.RemoveCollinearEdges();
+            a.SimplifyMinLength(1e-3);
+            a.SimplifyMinLength(10);
+            a.SimplifyByAreaChange(1e-3);
+            a.SimplifyByAreaChange(10);
             //a.Union(b);
             //a.Xor(b);
             #endregion
@@ -73,8 +76,11 @@ namespace TVGLUnitTestsAndBenchmarking
             //c.OffsetSquare(5.0);
             c.Perimeter();
             c.ExtrusionFacesFrom2DPolygons(Vector3.UnitX, 1.0, 4.0);
-            c.Simplify();
-            c.Simplify(10);
+            a.RemoveCollinearEdges();
+            a.SimplifyMinLength(1e-3);
+            a.SimplifyMinLength(10);
+            a.SimplifyByAreaChange(1e-3);
+            a.SimplifyByAreaChange(10);
             c.SliceAtLine(Vector2.UnitX, 1.0, out var negativeSidePolys, out var positiveSidePolys);
             //c.Triangulate(out var groupOfLoops, out var isPositive);
             //c.Union(b);

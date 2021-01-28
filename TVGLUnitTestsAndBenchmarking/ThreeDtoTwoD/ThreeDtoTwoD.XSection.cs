@@ -86,11 +86,10 @@ namespace TVGLUnitTestsAndBenchmarking
 
         }
 
-        public static void TestTriangulate()
+        public static void TestTriangulate(Polygon testcase)
         {
-            //var testcase = new Polygon(TestCases.EdgeCases["hand"].Item1[0]);
-            var testcase = new Polygon(TestCases.MakeStarryCircularPolygon(13, 10, 7));
-            //testcase.Transform(Matrix3x3.CreateRotation(Math.PI));
+            if (testcase == null)
+                testcase = new Polygon(TestCases.MakeStarryCircularPolygon(13, 10, 7));
             Presenter.ShowAndHang(testcase);
             var triangles = testcase.TriangulateToCoordinates();
             Presenter.ShowAndHang(triangles);
