@@ -148,7 +148,7 @@ namespace TVGL.TwoDimensional
 
             const int maxNumberOfAttempts = 10;
             var attempts = 0;
-            var random = new Random();
+            var random = new Random(1);
             var successful = false;
             var angle = 0.0;
             var localTriangleFaceList = new List<Vertex2D[]>();
