@@ -108,13 +108,13 @@ namespace TVGL.TwoDimensional
             if (simplifyPriorToBooleanOperation)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                subject = subject.SimplifyMinLength(tolerance);
+                subject = subject.SimplifyByAreaChange(tolerance);
             }
             if (simplifyPriorToBooleanOperation)
             {
                 //If not null
                 //clip = clip?.Select(p => SimplifyFuzzy(p));
-                clip = clip?.SimplifyMinLength(tolerance);
+                clip = clip?.SimplifyByAreaChange(tolerance);
             }
             if (!subject.Any())
             {
