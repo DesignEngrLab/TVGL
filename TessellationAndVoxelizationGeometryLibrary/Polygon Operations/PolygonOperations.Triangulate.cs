@@ -152,16 +152,16 @@ namespace TVGL.TwoDimensional
 
             const int maxNumberOfAttempts = 10;
             var attempts = 0;
-            var random = new Random(0);
+            var random = new Random();
             var successful = false;
-            var angle = random.NextDouble() * 2 * Math.PI;
+            var angle = 0.0;
             var localTriangleFaceList = new List<int[]>();
             do
             {
                 var c = Math.Cos(angle);
                 var s = Math.Sin(angle);
-                try
-                {
+                //try
+                //{
                     localTriangleFaceList.Clear();
                     if (angle != 0)
                     {
@@ -170,17 +170,20 @@ namespace TVGL.TwoDimensional
                     }
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-                    successful = true;
+                    var triangleArea = 0.5 * localTriangleFaceList
+                        .Sum(tri => DoubleTriangleAreaFromIndices(tri, polygon));
+                    successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
                     if (angle != 0)
                     {
                         var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
                         polygon.Transform(rotateMatrix);
                     }
-                }
-                catch
-                {
                     angle = random.NextDouble() * 2 * Math.PI;
-                }
+                //}
+                //catch
+                //{
+                //    angle = random.NextDouble() * 2 * Math.PI;
+                //}
             } while (!successful && attempts++ < maxNumberOfAttempts);
             if (!successful)
                 throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges or"
@@ -189,14 +192,33 @@ namespace TVGL.TwoDimensional
             return triangleFaceList;
         }
 
+        private static double DoubleTriangleAreaFromIndices(int[] tri, Polygon polygon)
+        {
+            var index0 = tri[0];
+            Vertex2D v0 = null;
+            var index1 = tri[1];
+            Vertex2D v1 = null;
+            var index2 = tri[2];
+            Vertex2D v2 = null;
+            foreach (var innerPoly in polygon.AllPolygons)
+            {
+                if (index0 >= innerPoly.Vertices.Count) index0 -= innerPoly.Vertices.Count;
+                else if (v0 == null) v0 = innerPoly.Vertices[index0];
+                if (index1 >= innerPoly.Vertices.Count) index1 -= innerPoly.Vertices.Count;
+                else if (v1 == null) v1 = innerPoly.Vertices[index1];
+                if (index2 >= innerPoly.Vertices.Count) index2 -= innerPoly.Vertices.Count;
+                else if (v2 == null) v2 = innerPoly.Vertices[index2];
+            }
+            return Math.Abs((v1.Coordinates - v0.Coordinates).Cross(v2.Coordinates - v0.Coordinates));
+        }
+
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
             polygon.MakePolygonEdgesIfNonExistent();
-            var connections = FindInternalDiagonalsForMonotone(polygon);
-            foreach (var edge in polygon.Edges)
-                AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
-            foreach (var edge in polygon.InnerPolygons.SelectMany(p => p.Edges))
-                AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
+            var connections = FindConnectionsToConvertToMonotonePolygons(polygon);
+            foreach (var p in polygon.AllPolygons)
+                foreach (var edge in p.Edges)
+                    AddNewConnection(connections, edge.FromPoint, edge.ToPoint);
             while (connections.Any())
             {
                 var startingConnectionKVP = connections.First();
@@ -212,22 +234,23 @@ namespace TVGL.TwoDimensional
                     current = next;
                     nextConnections = connections[current];
                     if (nextConnections.Count == 1) next = nextConnections[0];
-                    else next = ChooseTightestLeftTurn(nextConnections, current,
-                        current.Coordinates - newVertices[^2].Coordinates);
+                    else next = ChooseTightestLeftTurn(nextConnections, current, newVertices[^2]);
                 }
                 RemoveConnection(connections, current, next);
                 yield return new Polygon(newVertices.Select(v => v.Copy()));
             }
         }
 
-        private static Vertex2D ChooseTightestLeftTurn(List<Vertex2D> nextVertices, Vertex2D current, Vector2 lastVector)
+        private static Vertex2D ChooseTightestLeftTurn(List<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
         {
+            var lastVector = previous.Coordinates - current.Coordinates;
             var minAngle = double.PositiveInfinity;
             Vertex2D bestVertex = null;
             foreach (var vertex in nextVertices)
             {
-                if (vertex == current) continue;
-                var angle = lastVector.SmallerAngleBetweenVectors(vertex.Coordinates - current.Coordinates);
+                if (vertex == current || vertex == previous) continue;
+                var currentVector = vertex.Coordinates - current.Coordinates;
+                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
                 if (minAngle > angle && !angle.IsNegligible())
                 {
                     minAngle = angle;
@@ -237,7 +260,7 @@ namespace TVGL.TwoDimensional
             return bestVertex;
         }
 
-        private static Dictionary<Vertex2D, List<Vertex2D>> FindInternalDiagonalsForMonotone(Polygon polygon)
+        private static Dictionary<Vertex2D, List<Vertex2D>> FindConnectionsToConvertToMonotonePolygons(Polygon polygon)
         {
             var orderedListsOfVertices = new List<Vertex2D[]>();
             orderedListsOfVertices.Add(polygon.OrderedXVertices);

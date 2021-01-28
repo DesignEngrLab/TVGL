@@ -992,9 +992,23 @@ namespace TVGL
         /// <param name="vectorA">The vector a.</param>
         /// <param name="datum">The datum.</param>
         /// <returns>double.</returns>
-        public static double AngleBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)
+        public static double AngleCCWBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)
         {
-            return Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
+            var angle = Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
+        }
+        /// <summary>
+        ///     Gets the counter-clockwise rotated angle of vector-A from the datum vector
+        /// </summary>
+        /// <param name="vectorA">The vector a.</param>
+        /// <param name="datum">The datum.</param>
+        /// <returns>double.</returns>
+        public static double AngleCWBetweenVectorAAndDatum(this Vector2 vectorA, Vector2 datum)
+        {
+            var angle = -Math.Atan2(datum.Cross(vectorA), datum.Dot(vectorA));
+            if (angle >= 0) return angle;
+            return Constants.TwoPi + angle;
         }
 
 

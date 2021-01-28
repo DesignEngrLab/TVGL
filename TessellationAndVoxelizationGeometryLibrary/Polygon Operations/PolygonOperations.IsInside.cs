@@ -794,15 +794,17 @@ namespace TVGL.TwoDimensional
             double tolerance)
         {
             foreach (var dupeData in possibleDuplicates)
+
+                foreach (var dupeData in possibleDuplicates)
             {
                 var duplicateIntersection = intersections[dupeData.index];
 
                 for (int i = 0; i < intersections.Count; i++)
                 {
                     if (i == dupeData.index) continue;
-                    if (((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
+                    if ((((intersections[i].EdgeA == dupeData.lineA && intersections[i].EdgeB == dupeData.lineB) ||
                         (intersections[i].EdgeA == dupeData.lineB && intersections[i].EdgeB == dupeData.lineA)) &&
-                        intersections[i].WhereIntersection != WhereIsIntersection.Intermediate &&
+                        intersections[i].WhereIntersection != WhereIsIntersection.Intermediate) ||
                        duplicateIntersection.IntersectCoordinates.IsPracticallySame(intersections[i].IntersectCoordinates, tolerance))
                     {
                         intersections.RemoveAt(dupeData.index);

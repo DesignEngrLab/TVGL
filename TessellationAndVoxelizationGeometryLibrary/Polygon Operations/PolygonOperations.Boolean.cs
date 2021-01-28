@@ -20,7 +20,7 @@ namespace TVGL.TwoDimensional
     {
         static Stopwatch sw = new Stopwatch();
         const string timeFiles = "times.csv";
-        const double PolygonSameTolerance = 1e-7;
+        const double PolygonSameTolerance = 5e-7;
 
         private static bool Compare(List<Polygon> tvglResult, List<Polygon> clipperResult, string operationString, TimeSpan clipTime, TimeSpan tvglTime)
         {

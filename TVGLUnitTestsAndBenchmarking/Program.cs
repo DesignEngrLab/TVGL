@@ -28,7 +28,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //TVGL3Dto2DTests.TestSilhouette();
             // Polygon_Testing_Functions.TestSimplify();
             //TS_Testing_Functions.TestClassify();
-            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
 
@@ -43,11 +43,11 @@ namespace TVGLUnitTestsAndBenchmarking
             {
                 var filename = fileNames[0].Name;
                 var nameSegments = filename.Split('.');
-                var preName =nameSegments[0] + "." + nameSegments[1];
+                var preName = nameSegments[0] + "." + nameSegments[1];
                 var polygons = new List<Polygon>();
                 foreach (var item in dir.GetFiles(preName + "*"))
                 {
-                    fileNames.RemoveAll(ff=>item.FullName.Equals(ff.FullName));
+                    fileNames.RemoveAll(ff => item.FullName.Equals(ff.FullName));
                     IO.Open(item.FullName, out Polygon p);
                     polygons.Add(p);
                 }
@@ -56,7 +56,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var polygon1 = polygons[0];
                 //var polygon2 = polygons[2];
 
-                //91044623843,91282315972,91362112269,91362358796    ,9212769213
+                //91282315972, 91362112269, 9212769213
 
                 Presenter.ShowAndHang(polygons);
                 //polygons.RemoveAt(1);
@@ -91,8 +91,6 @@ namespace TVGLUnitTestsAndBenchmarking
                     var polygons3 = polygons[0].OffsetRound(offset, 0.00254);
                     Presenter.ShowAndHang(polygons3);
                 }
-
-#else
             //#endif
             //PolygonBooleanTester.FullComparison();
             //var stats = new List<(string, int, long, long)>();
@@ -103,7 +101,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //    PolygonBooleanTester.SingleCompare(stats, TestCases.C2Poly(polys.Item1), TestCases.C2Poly(polys.Item2),
             //        TestCases.C2PLs(polys.Item1), TestCases.C2PLs(polys.Item2));
             //}
-#endif
+
                 //var summary = BenchmarkRunner.Run(typeof(PolygonBooleanTester).Assembly);
                 //PolygonOperationsTesting.DebugEdgeCases("nestedSquares");
                 //PolygonOperationsTesting.TestRemoveSelfIntersect();
@@ -111,6 +109,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //PolygonOperationsTesting.DebugOctagons();
                 //PolygonOperationsTesting.TestUnionSimple();
             }
+#endif
         }
 
     }
