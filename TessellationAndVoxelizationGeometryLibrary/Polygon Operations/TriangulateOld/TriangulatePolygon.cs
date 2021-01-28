@@ -31,25 +31,20 @@ namespace TVGL
             for (var j = 0; j < allPolygons.Count; j++) isPositive[j] = allPolygons[j].IsPositive;
             var trianglesAsInts = Run(allPolygons.Select(p => p.Path.ToArray()).ToList(), ref isPositive, out var backToOriginalPoints, false);
             var triangles = new List<Polygon>();
-            foreach(var tri in trianglesAsInts)
+            foreach(var (A, B, C) in trianglesAsInts)
             {
                 var poly = new Polygon(new List<Vector2>
                 {
-                    backToOriginalPoints[tri[0]],
-                    backToOriginalPoints[tri[1]],
-                    backToOriginalPoints[tri[2]] });
+                    backToOriginalPoints[A],
+                    backToOriginalPoints[B],
+                    backToOriginalPoints[C] });
                 if (!poly.IsPositive) { }
-                triangles.Add(new Polygon(new List<Vector2>
-                {
-                    backToOriginalPoints[tri[0]],
-                    backToOriginalPoints[tri[1]],
-                    backToOriginalPoints[tri[2]]
-                })); 
+                triangles.Add(poly); 
             }
             return triangles;
         }
 
-        public static List<int[]> ReturnAsIndices(Polygon polygon)
+        public static List<(int A, int B, int C)> ReturnAsIndices(Polygon polygon)
         {
             var allPolygons = polygon.AllPolygons.ToList();
             var isPositive = new bool[allPolygons.Count];
@@ -84,7 +79,7 @@ namespace TVGL
         /// or
         /// </exception>
         /// <exception cref="Exception"></exception>
-        public static List<int[]> Run(List<Vector2[]> points2D, ref bool[] isPositive, out Dictionary<int, Vector2> backToOriginalPoints, bool ignoreNegativeSpace = false)
+        public static List<(int A, int B, int C)> Run(List<Vector2[]> points2D, ref bool[] isPositive, out Dictionary<int, Vector2> backToOriginalPoints, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -111,13 +106,13 @@ namespace TVGL
             var successful = false;
             var attempts = 1;
             //Create return variables
-            var triangleFaceList = new List<int[]>();
+            var triangleFaceList = new List<(int A, int B, int C)>();
             while (successful == false && attempts < 4)
             {
                 try
                 {
                     //Reset return variables
-                    triangleFaceList = new List<int[]>();
+                    triangleFaceList = new List<(int A, int B, int C)>();
                     var numTriangles = 0;
 
                     #region Preprocessing
@@ -771,22 +766,22 @@ namespace TVGL
                             var area = (newTriangle[1] - newTriangle[0]).Cross(newTriangle[0] - newTriangle[2]) / 2;
                             if (area < 0)
                             {
-                                var forwarPoints = new int[]
-                                {
+                                var forwarPoints = 
+                                (
                                     conversionDictionary[newTriangle[0]],
                                     conversionDictionary[newTriangle[1]],
-                                    conversionDictionary[newTriangle[2]],
-                                };
+                                    conversionDictionary[newTriangle[2]]
+                                );
                                 triangleFaceList.Add(forwarPoints);
                             }
                             else
                             {
-                                var reversePoints = new int[]
-                                {
+                                var reversePoints = 
+                                (
                                     conversionDictionary[newTriangle[2]],
                                     conversionDictionary[newTriangle[1]],
-                                    conversionDictionary[newTriangle[0]],
-                                };
+                                    conversionDictionary[newTriangle[0]]
+                                );
                                 triangleFaceList.Add(reversePoints);
                             }    
                         }

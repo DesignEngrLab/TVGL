@@ -179,6 +179,12 @@ namespace TVGL
                double basePlaneDistance, double extrusionHeight)
         {
             var triangleIndices = TriangulatePolygon.ReturnAsIndices(polygon);
+            return ExtrusionFaceVectorsFrom2DPolygons(polygon, triangleIndices, basePlaneNormal, basePlaneDistance, extrusionHeight);
+        }
+
+        public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, List<(int A, int B, int C)> triangleIndices,
+            Vector3 basePlaneNormal, double basePlaneDistance, double extrusionHeight)
+        {
             MiscFunctions.TransformToXYPlane(basePlaneNormal, out var rotateTransform);
             #region Make Base faces
             var int2VertexDict = new Dictionary<int, Vector3>();
@@ -198,9 +204,9 @@ namespace TVGL
                 }
             }
             var result = new List<(Vector3 A, Vector3 B, Vector3 C)>();
-            foreach (var triangle in triangleIndices)
+            foreach (var (A, B, C) in triangleIndices)
             {
-                result.Add((int2VertexDict[triangle[2]], int2VertexDict[triangle[1]], int2VertexDict[triangle[0]]));
+                result.Add((int2VertexDict[C], int2VertexDict[B], int2VertexDict[A]));
             }
 
             #endregion
@@ -222,9 +228,9 @@ namespace TVGL
                     vertexID++;
                 }
             }
-            foreach (var triangle in triangleIndices)
+            foreach (var (A, B, C) in triangleIndices)
             {
-                result.Add((int2VertexDict[triangle[0]], int2VertexDict[triangle[1]], int2VertexDict[triangle[2]]));
+                result.Add((int2VertexDict[A], int2VertexDict[B], int2VertexDict[C]));
             }
 
             #endregion
