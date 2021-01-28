@@ -3,9 +3,11 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TVGL.Boolean_Operations;
@@ -32,7 +34,7 @@ namespace TVGL
         /// in the list.
         /// </summary>
         [JsonIgnore]
-        public Dictionary<int, IList<Polygon>> Layer2D;
+        public IDictionary<int, IList<Polygon>> Layer2D;
 
         // an alternate approach without using dictionaries could be pursued
         //public List<Polygon>[] Layer2D { get; }
@@ -86,7 +88,7 @@ namespace TVGL
         }
 
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance,
-            Dictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
+            IDictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances;
@@ -178,29 +180,29 @@ namespace TVGL
             var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
             var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
             var increment = start < stop ? 1 : -1;
-            //var direction = increment == 1 ? Direction : -1 * Direction;
-            var faces = new List<(Vector3 A, Vector3 B, Vector3 C)>();
+            var faces = new ConcurrentBag<(Vector3 A, Vector3 B, Vector3 C)>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
             //Which of these extrusion options you choose depends on how the cross sections were defined.
             //But both methods, only result in material between the cross sections.
             if (extrudeBack)
             {
-                //  direction = -1 * direction;
                 start += increment;
             }
             else stop -= increment;
-            for (var i = start; i * increment <= stop * increment; i += increment) //Include the last index, since we already modified start or stop
+            //Skip gaps in layer3D, since it may actually represents more than one solid body
+            Parallel.ForEach(Layer2D.Where(p => p.Value.Any()), layer =>
             {
-                if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
+                var i = layer.Key;
+                //Skip layers outside of the start and stop bounds. This is necessary because of the increment
+                if (i * increment < start * increment || i * increment > stop * increment) return; 
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-                //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-                var layerfaces = Layer2D[i].SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
+                var layerfaces = layer.Value.SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
-                faces.AddRange(layerfaces);
-            }
-            return faces;
+                foreach (var face in layerfaces) faces.Add(face);
+            });
+            return faces.ToList();
         }
 
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
