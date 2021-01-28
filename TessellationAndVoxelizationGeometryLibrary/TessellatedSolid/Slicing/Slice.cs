@@ -210,9 +210,7 @@ namespace TVGL.Boolean_Operations
                         vertices.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), j++, i));
                     allPolygons.Add(new Polygon(vertices, i));
                 }
-                var polygonsWithHoles = allPolygons.CreateShallowPolygonTrees(false);
-
-                foreach (var polygon in polygonsWithHoles)
+                foreach (var polygon in allPolygons.CreateShallowPolygonTrees(false))
                 {
                     var indicesOfTriangles = polygon.TriangulateToIndices();
                     var positiveLoop = loops[polygon.Index];
