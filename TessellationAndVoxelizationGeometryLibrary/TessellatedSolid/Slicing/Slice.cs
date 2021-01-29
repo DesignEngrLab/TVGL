@@ -217,7 +217,8 @@ namespace TVGL.Boolean_Operations
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<PolygonalFace>();
                     var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new PolygonalFace(
-                        triIndices.Select(vertIndex => allVertices[vertIndex]), direction, false));
+                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C],
+                        false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
                     if (k == -1) posSideGroups.Add(groupOfLoops);

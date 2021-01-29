@@ -191,18 +191,48 @@ namespace TVGL
             }
             else stop -= increment;
             //Skip gaps in layer3D, since it may actually represents more than one solid body
-            Parallel.ForEach(Layer2D.Where(p => p.Value.Any()), layer =>
+            //Parallel.ForEach(Layer2D, layer =>
+            foreach (var layer in Layer2D.Where(p => p.Value.Any()))
             {
                 var i = layer.Key;
                 //Skip layers outside of the start and stop bounds. This is necessary because of the increment
-                if (i * increment < start * increment || i * increment > stop * increment) return; 
+                if (i * increment < start * increment || i * increment > stop * increment) continue; // return; 
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 var layerfaces = layer.Value.SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
                 foreach (var face in layerfaces) faces.Add(face);
-            });
+            }
+            //);
             return faces.ToList();
+        }
+
+        /// <summary>
+        /// Returns a list of resulting polygon triangulations. Each (int A, int B, int C) represents a triangle. There is a list of 
+        /// these triangles for each polgyon in the solid.
+        /// </summary>
+        /// <param name="extrudeBack"></param>
+        /// <returns></returns>
+        public IDictionary<Polygon, List<(int A, int B, int C)>> GetTriangulationByLayer()
+        {
+            //if (!Layer3D.Any()) SetAllVertices();
+            var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
+            var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
+            var increment = start < stop ? 1 : -1;
+            start += increment;
+            var faces = new ConcurrentDictionary<Polygon, List<(int A, int B, int C)>>();      
+            //Skip gaps in layer3D, since it may actually represents more than one solid body
+            Parallel.ForEach(Layer2D.Where(p => p.Value.Any()), layer =>
+            {
+                var i = layer.Key;
+                //Skip layers outside of the start and stop bounds. This is necessary because of the increment
+                if (i * increment < start * increment || i * increment > stop * increment) return;
+                foreach(var polygon in layer.Value)
+                {
+                    faces.TryAdd(polygon, polygon.TriangulateToIndices().ToList());
+                }
+            });
+            return faces;
         }
 
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
