@@ -23,12 +23,12 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
-            TestVoxelization();
+            //TestVoxelization();
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
             // Polygon_Testing_Functions.TestSimplify();
             //TS_Testing_Functions.TestClassify();
-            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
 

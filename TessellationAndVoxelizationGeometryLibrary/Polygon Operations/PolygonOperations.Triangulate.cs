@@ -118,12 +118,18 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static List<Vertex2D[]> Triangulate(this Polygon polygon)
+        private static List<Vertex2D[]> Triangulate(this Polygon polygon)
         {
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
 
-            int numVertices = polygon.AllPolygons.Sum(p => p.Vertices.Count);
+            int numVertices;
+            var index = 0;
+            foreach (var subPolygon in polygon.AllPolygons)
+                foreach (var vertex in subPolygon.Vertices)
+                    vertex.IndexInList = index++;
+            numVertices = index;
+
             if (numVertices <= 2) return new List<Vertex2D[]>();
             if (numVertices == 3) return new List<Vertex2D[]> { polygon.Vertices.ToArray() };
             if (numVertices == 4)
@@ -148,38 +154,40 @@ namespace TVGL.TwoDimensional
 
             const int maxNumberOfAttempts = 10;
             var attempts = 0;
-            var random = new Random();
+            var random = new Random(10);
             var successful = false;
-            var angle = 0.0;
+            var copyp = polygon.Copy(true, false);
+            var angle = 0.0; //0.30042339398012013
             var localTriangleFaceList = new List<Vertex2D[]>();
             do
             {
                 var c = Math.Cos(angle);
                 var s = Math.Sin(angle);
+                localTriangleFaceList.Clear();
+                var triangleArea = double.NegativeInfinity;
+                if (angle != 0)
+                {
+                    var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
+                    polygon.Transform(rotateMatrix);
+                }
                 try
                 {
-                    localTriangleFaceList.Clear();
-                    if (angle != 0)
-                    {
-                        var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
-                        polygon.Transform(rotateMatrix);
-                    }
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-                    var triangleArea = 0.5 * localTriangleFaceList
-                        .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
-                    successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
-                    if (angle != 0)
-                    {
-                        var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
-                        polygon.Transform(rotateMatrix);
-                    }
-                    angle = random.NextDouble() * 2 * Math.PI;
+                    triangleArea = 0.5 * localTriangleFaceList
+                       .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
                 }
-                catch
+                catch { }
+                successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
+                System.Diagnostics.Debug.WriteLineIf(!successful && !double.IsNegativeInfinity(triangleArea),
+                    polygon.Area + ",   " + triangleArea);
+                if (angle != 0)
                 {
-                    angle = random.NextDouble() * 2 * Math.PI;
+                    var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
+                    polygon.Transform(rotateMatrix);
                 }
+                angle = random.NextDouble() * 2 * Math.PI;
+
             } while (!successful && attempts++ < maxNumberOfAttempts);
             if (!successful)
                 throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges or"

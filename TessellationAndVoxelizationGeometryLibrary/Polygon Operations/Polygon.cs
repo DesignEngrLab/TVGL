@@ -484,9 +484,10 @@ namespace TVGL.TwoDimensional
         /// <returns>TVGL.TwoDimensional.Polygon.</returns>
         public Polygon Copy(bool copyInnerPolygons, bool invert)
         {
-            var thisPath = _path == null ? null : new List<Vector2>(_path);
-            if (invert && thisPath != null)
+            List<Vector2> thisPath = null;
+            if (invert)
             {
+                thisPath = new List<Vector2>(Path);
                 thisPath.Reverse();
                 // now the following three lines are to aid with mapping old polygon data to new polygon data.
                 // we are simply moving the first element to the end - the polygon doesn't change but not the 
@@ -496,6 +497,7 @@ namespace TVGL.TwoDimensional
                 thisPath.RemoveAt(0);
                 thisPath.Add(front);
             }
+            else thisPath = Path;
             var thisInnerPolygons = _innerPolygons != null && copyInnerPolygons ?
                 _innerPolygons.Select(p => p.Copy(true, invert)).ToList() : null;
             var copiedArea = copyInnerPolygons ? this.area : this.pathArea;

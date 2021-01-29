@@ -64,12 +64,12 @@ namespace TVGL.TwoDimensional
             var yPrev = vertex.EndLine.Vector.Y;
             if (xPrev.IsNegligible() && yPrev.IsNegligible()) return MonotonicityChange.SameAsPrevious;
             double xNext, yNext;
-            var neighborVertex = vertex.StartLine.ToPoint;
+            var neighborVertex = vertex;
             do
             {
+                neighborVertex = neighborVertex.StartLine.ToPoint;
                 xNext = neighborVertex.EndLine.Vector.X;
                 yNext = neighborVertex.EndLine.Vector.Y;
-                neighborVertex = neighborVertex.StartLine.ToPoint;
             }
             while (xNext.IsNegligible(tolerance) && yNext.IsNegligible(tolerance));
 
