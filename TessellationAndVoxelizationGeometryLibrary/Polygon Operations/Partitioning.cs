@@ -184,9 +184,10 @@ namespace TVGL.TwoDimensional
             var beginBoxMonoChange = MonotonicityChange.Neither;
             var tolerance = polygon.GetToleranceForPolygon();
             var i = 0;
-            while (i % numPoints != initBoxIndex)
+            var vertexIndex = 0;
+            while ((vertexIndex = i++ % numPoints) != initBoxIndex)
             {
-                var vertex = polygon.Vertices[i % numPoints];
+                var vertex = polygon.Vertices[vertexIndex];
                 var monoChange = GetMonotonicityChange(vertex, tolerance);
                 if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither) continue;
                 if (monoChange == MonotonicityChange.Both ||
@@ -195,7 +196,7 @@ namespace TVGL.TwoDimensional
                 {
                     if (initBoxIndex < 0)
                     {
-                        initBoxIndex = i;
+                        initBoxIndex = vertexIndex;
                         beginBoxVertex = vertex;
                         initBoxMonoChange = beginBoxMonoChange = monoChange;
                     }
@@ -207,7 +208,6 @@ namespace TVGL.TwoDimensional
                         beginBoxMonoChange = monoChange;
                     }
                 }
-                i++;
             }
             var lastVertex = polygon.Vertices[initBoxIndex];
             yield return new MonotoneBox(beginBoxVertex, lastVertex,
@@ -225,7 +225,7 @@ namespace TVGL.TwoDimensional
         {
             return polygon.Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
 
-            var xStrands = new List<Vertex2D[]>();
+            var xStrands = new Stack<IEnumerable<Vertex2D>>();
             foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X))
             {
                 var newStrand = new List<Vertex2D>();
@@ -236,7 +236,7 @@ namespace TVGL.TwoDimensional
                     vertex = vertex.StartLine.ToPoint;
                 }
                 if (!monoBox.XInPositiveMonotonicity) newStrand.Reverse();
-                xStrands.Add(newStrand.ToArray());
+                xStrands.Push(newStrand);
             }
             var numVertices = polygon.Vertices.Count;
             var sortedVertices = new Vertex2D[numVertices];
@@ -253,9 +253,9 @@ namespace TVGL.TwoDimensional
         /// <returns>Vertex2D[].</returns>
         public static Vertex2D[] SortVerticesByXValue(this IEnumerable<Polygon> polygons)
         {
-            var xStrands = new List<Vertex2D[]>();
+            var xStrands = new Stack<IEnumerable<Vertex2D>>();
             var numVertices = 0;
-            foreach (var polygon in polygons)
+            foreach (var polygon in polygons.SelectMany(p=>p.AllPolygons))
             {
                 numVertices += polygon.Vertices.Count;
                 foreach (var monoBox in polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X))
@@ -267,10 +267,11 @@ namespace TVGL.TwoDimensional
                         newStrand.Add(vertex);
                         vertex = vertex.StartLine.ToPoint;
                     }
-                    if (!monoBox.YInPositiveMonotonicity) newStrand.Reverse();
-                    xStrands.Add(newStrand.ToArray());
+                    if (!monoBox.XInPositiveMonotonicity) newStrand.Reverse();
+                    xStrands.Push(newStrand);
                 }
             }
+            //Presenter.ShowAndHang(xStrands)
             var sortedVertices = new Vertex2D[numVertices];
             var i = 0;
             foreach (var vertex in CombineXSortedVerticesIntoOneCollection(xStrands))

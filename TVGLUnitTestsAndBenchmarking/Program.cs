@@ -1,5 +1,7 @@
+#if !PRESENT
 using BenchmarkDotNet.Running;
 using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
