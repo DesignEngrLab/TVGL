@@ -387,62 +387,6 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static IEnumerable<Vertex2D> CombineXSortedVerticesIntoOneCollection(Stack<IEnumerable<Vertex2D>> orderedListsOfVertices)
-        {
-            while (orderedListsOfVertices.Count > 1)
-            {
-                var list1 = orderedListsOfVertices.Pop();
-                var list2 = orderedListsOfVertices.Pop();
-                orderedListsOfVertices.Push(CombineTwoXSortedVertexLists(list1, list2).ToList());
-            }
-            return orderedListsOfVertices.Pop();
-        }
-
-        private static IEnumerable<Vertex2D> CombineTwoXSortedVertexLists(IEnumerable<Vertex2D> leftCollection, IEnumerable<Vertex2D> rightCollection)
-        {
-            var leftEnumerator = leftCollection.GetEnumerator();
-            var rightEnumerator = rightCollection.GetEnumerator();
-            var leftContinues = leftEnumerator.MoveNext();
-            var rightContinues = rightEnumerator.MoveNext();
-            while (leftContinues || rightContinues)
-            {
-                if (!rightContinues ||
-                    (leftContinues && leftEnumerator.Current.X <= rightEnumerator.Current.X))
-                {
-                    yield return leftEnumerator.Current;
-                    leftContinues = leftEnumerator.MoveNext();
-                }
-                else
-                {
-                    yield return rightEnumerator.Current;
-                    rightContinues = rightEnumerator.MoveNext();
-                }
-            }
-        }
-
-        private static IEnumerable<Vertex2D> CombineYSortedVerticesIntoOneCollection(List<Vertex2D[]> orderedListsOfVertices)
-        {
-            var numLists = orderedListsOfVertices.Count;
-            var currentIndices = new int[numLists];
-            var priorityQueue = new SimplePriorityQueue<int, Vertex2D>(new VertexSortedByYFirst());
-            for (int j = 0; j < orderedListsOfVertices.Count; j++)
-                priorityQueue.Enqueue(j, orderedListsOfVertices[j][0]);
-            // the following code is written verbosely. I'm trusting the compiler optimization
-            // to ensure that it speed things up.
-            while (priorityQueue.Count > 0)
-            {
-                var listWithLowestEntry = priorityQueue.Dequeue();
-                var vertexList = orderedListsOfVertices[listWithLowestEntry];
-                var indexInThatList = currentIndices[listWithLowestEntry];
-                var nextVertex = vertexList[currentIndices[listWithLowestEntry]];
-                yield return nextVertex;
-                indexInThatList++;
-                currentIndices[listWithLowestEntry] = indexInThatList;
-                if (indexInThatList < vertexList.Length)
-                    priorityQueue.Enqueue(listWithLowestEntry, vertexList[indexInThatList]);
-            }
-        }
-
 
         private static IEnumerable<Vertex2D[]> TriangulateMonotonePolygon(Polygon monoPoly)
         {

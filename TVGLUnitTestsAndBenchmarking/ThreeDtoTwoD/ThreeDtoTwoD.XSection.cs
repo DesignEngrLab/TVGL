@@ -49,13 +49,13 @@ namespace TVGLUnitTestsAndBenchmarking
                     Vertex2D[] sortedverts1 = null;
                     Vertex2D[] sortedverts2 = null;
                     //Presenter.ShowAndHang(xsection);
-                    sw.Restart();
-                    for (int k = 0; k < 1000; k++)
-                    {
-                        sortedverts1 = xsection.SortVerticesByXValue();
-                    }
-                    sw.Stop();
-                    var functionTime = sw.Elapsed;
+                    //sw.Restart();
+                    //for (int k = 0; k < 1000; k++)
+                    //{
+                    //    sortedverts1 = xsection.SortVerticesByXValue();
+                    //}
+                    //sw.Stop();
+                    //var functionTime = sw.Elapsed;
                     sw.Restart();
                     for (int k = 0; k < 1000; k++)
                     {
@@ -63,15 +63,15 @@ namespace TVGLUnitTestsAndBenchmarking
                     }
                     sw.Stop();
                     var linqTime = sw.Elapsed;
-                    Console.WriteLine(functionTime + "          " + linqTime);
-                    for (int m = 0; m < sortedverts1.Length; m++)
-                    {
-                        if (sortedverts1[m] != sortedverts2[m])
-                        {
-                            Console.WriteLine("difference at " + m);
-                            break;
-                        }
-                    }
+                    //Console.WriteLine(functionTime + "          " + linqTime);
+                    //for (int m = 0; m < sortedverts1.Length; m++)
+                    //{
+                    //    if (sortedverts1[m] != sortedverts2[m])
+                    //    {
+                    //        Console.WriteLine("difference at " + m);
+                    //        break;
+                    //    }
+                    //}
                 }
             }
             Console.ReadKey();
