@@ -27,15 +27,17 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_path == null)
+                lock (_vertices)
                 {
-                    _path = new List<Vector2>();
-                    foreach (var point in _vertices)
+                    if (_path == null)
                     {
-                        _path.Add(new Vector2(point.X, point.Y));
+                        _path = new List<Vector2>();
+                        foreach (var point in _vertices)
+                        {
+                            _path.Add(new Vector2(point.X, point.Y));
+                        }
                     }
                 }
-
                 return _path;
             }
             internal set { _path = value; }
@@ -80,8 +82,9 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
-                    _orderedXVertices = Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
+                lock (_vertices)
+                    if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
+                        _orderedXVertices = Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
                 return _orderedXVertices;
             }
         }
@@ -106,9 +109,12 @@ namespace TVGL.TwoDimensional
 
         public void MakePolygonEdgesIfNonExistent()
         {
-            if (_edges != null && _edges.Length == Vertices.Count) return;
-            foreach (var poly in AllPolygons)
-                poly.MakeThisPolygonsEdges();
+            lock (_vertices)
+            {
+                if (_edges != null && _edges.Length == Vertices.Count) return;
+                foreach (var poly in AllPolygons)
+                    poly.MakeThisPolygonsEdges();
+            }
         }
 
         private void MakeThisPolygonsEdges()
@@ -297,8 +303,9 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (double.IsNaN(area))
-                    area = PathArea + InnerPolygons.Sum(p => p.Area);
+                lock (_vertices)
+                    if (double.IsNaN(area))
+                        area = PathArea + InnerPolygons.Sum(p => p.Area);
                 return area;
             }
         }
@@ -318,7 +325,8 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (double.IsNaN(pathArea))
+                lock (_vertices)
+                    if (double.IsNaN(pathArea))
                     pathArea = Path.Area();
                 return pathArea;
             }
@@ -339,7 +347,8 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (double.IsNaN(perimeter))
+                lock (_vertices)
+                    if (double.IsNaN(perimeter))
                     perimeter = Path.Perimeter();
                 return perimeter + InnerPolygons.Sum(p => p.Perimeter);
             }
@@ -359,7 +368,8 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (double.IsInfinity(maxX))
+                lock (_vertices)
+                    if (double.IsInfinity(maxX))
                     SetBounds();
                 return maxX;
             }
@@ -379,7 +389,8 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (double.IsInfinity(minX))
+                lock (_vertices)
+                    if (double.IsInfinity(minX))
                     SetBounds();
                 return minX;
             }
@@ -399,7 +410,8 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (double.IsInfinity(maxY))
+                lock (_vertices)
+                    if (double.IsInfinity(maxY))
                     SetBounds();
                 return maxY;
             }
@@ -429,7 +441,8 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (double.IsInfinity(minY))
+                lock (_vertices)
+                    if (double.IsInfinity(minY))
                     SetBounds();
                 return minY;
             }
@@ -602,12 +615,15 @@ namespace TVGL.TwoDimensional
 
         public void Reset()
         {
-            _path = null;
-            _edges = null;
-            _orderedXVertices = null;
-            area = double.NaN;
-            pathArea = double.NaN;
-            perimeter = double.NaN;
+            lock (_vertices)
+            {
+                _path = null;
+                _edges = null;
+                _orderedXVertices = null;
+                area = double.NaN;
+                pathArea = double.NaN;
+                perimeter = double.NaN;
+            }
         }
 
         [JsonExtensionData]

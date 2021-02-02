@@ -23,12 +23,16 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("*").OrderByDescending(x => x.Length).ToArray();
-            for (var i = 1; i < 20; i++)
+            var fileNames = dir.GetFiles("errorP*").OrderByDescending(x => x.Length).ToArray();
+            for (var i = 0; i < 20; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
+                IO.Open(filename, out Polygon poly);
+                Presenter.ShowAndHang(poly);
+                continue;
+                TestTriangulate(poly);
                 var solid = (TessellatedSolid)IO.Open(filename);
                 //Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)

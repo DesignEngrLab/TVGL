@@ -167,7 +167,7 @@ namespace TVGL
         {
             var faces = new List<PolygonalFace>();
             var facesAsTuples = ConvertToFaces(extrudeBack);
-            foreach(var face in facesAsTuples)
+            foreach (var face in facesAsTuples)
             {
                 faces.Add(new PolygonalFace(new Vertex(face.A), new Vertex(face.B), new Vertex(face.C)));
             }
@@ -220,16 +220,17 @@ namespace TVGL
             var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
             var increment = start < stop ? 1 : -1;
             start += increment;
-            var faces = new ConcurrentDictionary<Polygon, List<(int A, int B, int C)>>();      
+            var faces = new ConcurrentDictionary<Polygon, List<(int A, int B, int C)>>();
             //Skip gaps in layer3D, since it may actually represents more than one solid body
             Parallel.ForEach(Layer2D.Where(p => p.Value.Any()), layer =>
             {
                 var i = layer.Key;
                 //Skip layers outside of the start and stop bounds. This is necessary because of the increment
                 if (i * increment < start * increment || i * increment > stop * increment) return;
-                foreach(var polygon in layer.Value)
+                foreach (var polygon in layer.Value)
                 {
-                    faces.TryAdd(polygon, polygon.TriangulateToIndices().ToList());
+                    lock (polygon)
+                        faces.TryAdd(polygon, polygon.TriangulateToIndices().ToList());
                 }
             });
             return faces;

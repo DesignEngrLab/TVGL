@@ -107,7 +107,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<(int A, int B, int C)> TriangulateToIndices(this Polygon polygon)
+        public static IEnumerable<(int A, int B, int C)> TriangulateToIndices(this Polygon polygon, bool handleSelfIntersects = true)
         {
             var vertexIndices = new HashSet<int>();
             var needToReIndex = false;
@@ -120,7 +120,14 @@ namespace TVGL.TwoDimensional
                 }
                 vertexIndices.Add(v.IndexInList);
             }
-            foreach (var triangle in polygon.Triangulate(needToReIndex))
+            var index = 0;
+            if (needToReIndex)
+            {
+                foreach (var subPolygon in polygon.AllPolygons)
+                    foreach (var vertex in subPolygon.Vertices)
+                        vertex.IndexInList = index++;
+            }
+            foreach (var triangle in polygon.Triangulate(handleSelfIntersects))
                 yield return (triangle[0].IndexInList, triangle[1].IndexInList, triangle[2].IndexInList);
         }
         /// <summary>
@@ -129,21 +136,17 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool reIndexVertices = false)
+        private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
         {
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
 
-            int numVertices;
-            if (reIndexVertices)
+            var numVertices = 0;
+            foreach (var subPolygon in polygon.AllPolygons)
             {
-                var index = 0;
-                foreach (var subPolygon in polygon.AllPolygons)
-                    foreach (var vertex in subPolygon.Vertices)
-                        vertex.IndexInList = index++;
-                numVertices = index;
+                numVertices += subPolygon.Vertices.Count;
+                if (numVertices > 4) break;
             }
-            else numVertices = polygon.AllPolygons.Sum(p => p.Vertices.Count);
             if (numVertices <= 2) return new List<Vertex2D[]>();
             if (numVertices == 3) return new List<Vertex2D[]> { polygon.Vertices.ToArray() };
             if (numVertices == 4)
@@ -203,8 +206,15 @@ namespace TVGL.TwoDimensional
 
             } while (!successful && attempts++ < maxNumberOfAttempts);
             if (!successful)
-                throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges or"
-                    + " check for self-intersections.");
+            {
+                if (handleSelfIntersects)
+                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
+                else
+                {
+                    IOFunctions.IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
+                    throw new Exception("Unable to triangulate polygon.");
+                }
+            }
             triangleFaceList.AddRange(localTriangleFaceList);
             return triangleFaceList;
         }
