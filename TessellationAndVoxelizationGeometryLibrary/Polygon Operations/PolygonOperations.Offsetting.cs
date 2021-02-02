@@ -78,7 +78,7 @@ namespace TVGL.TwoDimensional
             double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
-            return Offset(polygon, offset, true, tolerance, deltaAngle);
+            return Offset(polygon, offset, true, deltaAngle);
         }
 
         /// <summary>
@@ -118,17 +118,17 @@ namespace TVGL.TwoDimensional
             {
                 var allPolygons = new List<Polygon>();
                 foreach (var polygon in polygons)
-                    allPolygons.AddRange(polygon.Offset(offset, notMiter, tolerance, deltaAngle));
+                    allPolygons.AddRange(polygon.Offset(offset, notMiter, deltaAngle));
                 return allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
             }
         }
 
-        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter,
-            double tolerance, double deltaAngle = double.NaN)
+        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
+
             if (CLIPPER)
             {
-                return OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
+                return OffsetViaClipper(polygon, offset, notMiter, polygon.Tolerance, deltaAngle);
             }
             else
             {
@@ -139,23 +139,22 @@ namespace TVGL.TwoDimensional
                     return new List<Polygon>();
                 var longerLength = Math.Max(bb.Length1, bb.Length2);
                 var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
-                if (double.IsNaN(tolerance)) tolerance = longerLength * Constants.BaseTolerance;
-                var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, tolerance, out var maxNumberOfPolygons,
+                var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, polygon.Tolerance, out var maxNumberOfPolygons,
                     deltaAngle);
                 var outer = new Polygon(outerData.points);
-                var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, tolerance, outerData.knownWrongPoints, maxNumberOfPolygons);
+                var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive,  outerData.knownWrongPoints, maxNumberOfPolygons);
                 var inners = new List<Polygon>();
                 foreach (var hole in polygon.InnerPolygons)
                 {
                     bb = hole.BoundingRectangle();
                     // like the above, but a positive offset will close the hole
                     if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                    var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, tolerance, out maxNumberOfPolygons, deltaAngle);
+                    var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, polygon.Tolerance, out maxNumberOfPolygons, deltaAngle);
                     var newHoles = new Polygon(newHoleData.points);
-                    inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, tolerance, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
+                    inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative,  newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
                 }
                 if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
-                return outers.IntersectPolygons(inners, tolerance: tolerance).Where(p => p.IsPositive).ToList();
+                return outers.IntersectPolygons(inners, tolerance: polygon.Tolerance).Where(p => p.IsPositive).ToList();
             }
         }
 

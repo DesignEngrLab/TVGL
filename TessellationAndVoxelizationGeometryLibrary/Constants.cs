@@ -67,6 +67,13 @@ namespace TVGL
         /// </summary>
         public const double BaseTolerance = 1E-11;
 
+
+        /// <summary>
+        /// The tolerance multiplier (multiplied into the minimum X or Y dimension of the polygon) for 
+        /// detecting identical/repeat vertices and for intersection checks in various polygon functions.
+        /// </summary>
+        public const double PolygonSameTolerance = 5e-7;
+
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations
         /// </summary>

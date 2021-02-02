@@ -23,10 +23,10 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType, double tolerance,
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType, 
             List<bool> knownWrongPoints, int maxNumberOfPolygons)
         {
-            var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
+            var minAllowableArea = polygon.Tolerance * polygon.Tolerance / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygon);
@@ -47,7 +47,7 @@ namespace TVGL.TwoDimensional
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
-                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLength(tolerance)));
+                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLength(polygon.Tolerance)));
             }
             return newPolygons.OrderByDescending(p => Math.Abs(p.Area))
                 .Take(maxNumberOfPolygons).Reverse()

@@ -23,18 +23,14 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("errorP*").OrderByDescending(x => x.Length).ToArray();
+            var fileNames = dir.GetFiles("*").OrderByDescending(x => x.Length).ToArray();
             for (var i = 0; i < 20; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
-                IO.Open(filename, out Polygon poly);
-                Presenter.ShowAndHang(poly);
-                continue;
-                TestTriangulate(poly);
                 var solid = (TessellatedSolid)IO.Open(filename);
-                //Presenter.ShowAndHang(solid);
+                Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)
                 {
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
@@ -61,7 +57,7 @@ namespace TVGLUnitTestsAndBenchmarking
                     //sw.Stop();
                     //var functionTime = sw.Elapsed;
                     sw.Restart();
-                    for (int k = 0; k < 1000; k++)
+                    for (int k = 0; k < 1; k++)
                     {
                         sortedverts2 = xsection.SelectMany(p => p.Vertices).OrderBy(v => v.X).ToArray();
                     }

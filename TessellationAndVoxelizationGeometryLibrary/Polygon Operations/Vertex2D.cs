@@ -49,7 +49,7 @@ namespace TVGL.TwoDimensional
         ///     Gets the base class, Point of this node.
         /// </summary>
         /// <value>The point.</value>
-        public Vector2 Coordinates { get; private set; }
+        public Vector2 Coordinates { get; set; }
 
         public int IndexInList { get; internal set; }
 

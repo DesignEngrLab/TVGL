@@ -21,7 +21,6 @@ namespace TVGL.TwoDimensional
         private static PolygonUnion polygonUnion;
         private static PolygonIntersection polygonIntersection;
         private static PolygonRemoveIntersections polygonRemoveIntersections;
-        private const double PolygonSameTolerance = 5e-7;
 
         #region Union Public Methods
 
@@ -34,10 +33,9 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = Math.Min(polygonA.GetToleranceForPolygon(), polygonB.GetToleranceForPolygon());
+            var tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
             if (CLIPPER)
                 return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
                     tolerance, new[] { polygonB });
@@ -191,35 +189,9 @@ namespace TVGL.TwoDimensional
 
         private static double GetTolerancesFromPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB = null)
         {
-            double tolerance;
-            var minWidth = double.PositiveInfinity;
-            var minHeight = double.PositiveInfinity;
-            foreach (var polygon in polygonsA)
-            {
-                var width = polygon.MaxX - polygon.MinX;
-                if (minWidth > width) minWidth = width;
-                var height = polygon.MaxY - polygon.MinY;
-                if (minHeight > height) minHeight = height;
-            }
-            if (polygonsB != null)
-                foreach (var polygon in polygonsB)
-                {
-                    var width = polygon.MaxX - polygon.MinX;
-                    if (minWidth > width) minWidth = width;
-                    var height = polygon.MaxY - polygon.MinY;
-                    if (minHeight > height) minHeight = height;
-                }
-            tolerance = Math.Min(minWidth, minHeight) * PolygonSameTolerance;
-            return tolerance;
-        }
-        /// <summary>
-        /// Gets the tolerance for polygon.
-        /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <returns>System.Double.</returns>
-        public static double GetToleranceForPolygon(this Polygon polygon)
-        {
-            return Math.Min(polygon.MaxX - polygon.MinX, polygon.MaxY - polygon.MinY) * PolygonSameTolerance;
+            var polygonATolerance = polygonsA.Min(p => p.Tolerance);
+            var polygonBTolerance = polygonsB.Min(p => p.Tolerance);
+            return Math.Min(polygonATolerance, polygonBTolerance);
         }
 
         #endregion Union Public Methods
@@ -238,7 +210,7 @@ namespace TVGL.TwoDimensional
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance))
-                tolerance = Math.Min(polygonA.GetToleranceForPolygon(), polygonB.GetToleranceForPolygon());
+                tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
             if (CLIPPER)
                 return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA },
                  tolerance, new[] { polygonB });
@@ -361,7 +333,7 @@ namespace TVGL.TwoDimensional
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance))
-                tolerance = Math.Min(minuend.GetToleranceForPolygon(), subtrahend.GetToleranceForPolygon());
+                tolerance = Math.Min(minuend.Tolerance, subtrahend.Tolerance);
             if (CLIPPER)
                 return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
                    tolerance, new[] { subtrahend });
@@ -444,7 +416,7 @@ namespace TVGL.TwoDimensional
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance))
-                tolerance = Math.Min(polygonA.GetToleranceForPolygon(), polygonB.GetToleranceForPolygon());
+                tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
             if (CLIPPER)
                 return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA },
                    tolerance, new[] { polygonB });
@@ -503,14 +475,13 @@ namespace TVGL.TwoDimensional
         /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
-            double tolerance = double.NaN, List<bool> knownWrongPoints = null, int maxNumberOfPolygons = int.MaxValue)
+            List<bool> knownWrongPoints = null, int maxNumberOfPolygons = int.MaxValue)
         {
-            if (double.IsNaN(tolerance)) tolerance = polygon.GetToleranceForPolygon();
-            var intersections = polygon.GetSelfIntersections(tolerance).Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+            var intersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType, tolerance, knownWrongPoints, maxNumberOfPolygons);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, knownWrongPoints, maxNumberOfPolygons);
         }
 
         #endregion RemoveSelfIntersections Public Method

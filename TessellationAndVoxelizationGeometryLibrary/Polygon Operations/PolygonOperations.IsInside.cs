@@ -195,7 +195,6 @@ namespace TVGL.TwoDimensional
         public static bool IsPointInsidePolygon(this Polygon polygon, bool onlyTopPolygon, Vector2 pointInQuestion,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
-            var tolerance = polygon.GetToleranceForPolygon();
             var qX = pointInQuestion.X;  // for conciseness and the smallest bit of additional speed,
             var qY = pointInQuestion.Y;  // we declare these local variables.
             //This function has three layers of checks. 
@@ -208,7 +207,7 @@ namespace TVGL.TwoDimensional
                 qX > polygon.MaxX || qY > polygon.MaxY)
                 return false;
             //2) If the point in question is == a point in points, then it is inside the polygon
-            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion, tolerance)))
+            if (polygon.Path.Any(point => point.IsPracticallySame(pointInQuestion, polygon.Tolerance)))
             {
                 onBoundary = true;
                 return onBoundaryIsInside;
@@ -219,7 +218,7 @@ namespace TVGL.TwoDimensional
             {
                 foreach (var line in subPolygon.Edges)
                 {
-                    switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, tolerance))
+                    switch (DetermineLineToPointVerticalReferenceType(pointInQuestion, line, polygon.Tolerance))
                     {
                         case VerticalLineReferenceType.On:
                             onBoundary = true;
@@ -286,10 +285,9 @@ namespace TVGL.TwoDimensional
         internal static bool ArePointsInsidePolygon(this Polygon polygon, IEnumerable<Vertex2D> pointsInQuestion,
             out bool onBoundary, bool onBoundaryIsInside = true)
         {
-            var tolerance = polygon.GetToleranceForPolygon();
             var sortedLines = GetOrderedLines(polygon.OrderedXVertices);
             var sortedPoints = pointsInQuestion.OrderBy(pt => pt.X).ToList();
-            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Length, sortedPoints, out onBoundary, tolerance, onBoundaryIsInside);
+            return ArePointsInsidePolygonLines(sortedLines, sortedLines.Length, sortedPoints, out onBoundary, polygon.Tolerance, onBoundaryIsInside);
         }
         internal static bool ArePointsInsidePolygonLines(IList<PolygonEdge> sortedLines, int numSortedLines, List<Vertex2D> sortedPoints,
             out bool onBoundary, double tolerance, bool onBoundaryIsInside = true)
@@ -588,7 +586,7 @@ namespace TVGL.TwoDimensional
         public static PolygonInteractionRecord GetPolygonInteraction(this Polygon polygonA, Polygon polygonB, double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance))
-                tolerance = Math.Min(polygonA.GetToleranceForPolygon(), polygonB.GetToleranceForPolygon());
+                tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
             var interactionRecord = new PolygonInteractionRecord(polygonA, polygonB);
             if (interactionRecord.Relationship == PolygonRelationship.Equal) return interactionRecord;
             // this would happen when the function detcts that polygonA and polygonB are the same
@@ -1150,7 +1148,7 @@ namespace TVGL.TwoDimensional
             return result;
         }
 
-        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA, double tolerance)
+        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
         {
             var intersections = new List<SegmentIntersection>();
             var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
@@ -1164,10 +1162,10 @@ namespace TVGL.TwoDimensional
                     var other = orderedLines[j];
                     if (current.XMax < orderedLines[j].XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, tolerance);
+                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, polygonA.Tolerance);
                 }
             }
-            RemoveDuplicateIntersections(possibleDuplicates, intersections, tolerance);
+            RemoveDuplicateIntersections(possibleDuplicates, intersections, polygonA.Tolerance);
             return intersections;
         }
 

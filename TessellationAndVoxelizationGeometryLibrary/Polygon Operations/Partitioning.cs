@@ -182,13 +182,12 @@ namespace TVGL.TwoDimensional
             var initBoxMonoChange = MonotonicityChange.Neither;
             Vertex2D beginBoxVertex = null;
             var beginBoxMonoChange = MonotonicityChange.Neither;
-            var tolerance = polygon.GetToleranceForPolygon();
             var i = 0;
             var vertexIndex = 0;
             while ((vertexIndex = i++ % numPoints) != initBoxIndex)
             {
                 var vertex = polygon.Vertices[vertexIndex];
-                var monoChange = GetMonotonicityChange(vertex, tolerance);
+                var monoChange = GetMonotonicityChange(vertex, polygon.Tolerance);
                 if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither) continue;
                 if (monoChange == MonotonicityChange.Both ||
                     (monoChange == MonotonicityChange.X && (divideAt == MonotonicityChange.X || divideAt == MonotonicityChange.Both)) ||

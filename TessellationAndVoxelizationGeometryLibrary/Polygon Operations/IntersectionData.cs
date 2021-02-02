@@ -266,7 +266,6 @@ namespace TVGL.TwoDimensional
 
         internal PolygonInteractionRecord InvertPolygonInRecord(Polygon polygon, out Polygon invertedPolygon)
         {
-            var tolerance = polygon.GetToleranceForPolygon();
             bool polygonAIsInverted = subPolygonToInt[polygon] < numPolygonsInA;
             var visitedIntersectionPairs = new HashSet<(PolygonEdge, PolygonEdge)>();
             var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
@@ -292,13 +291,13 @@ namespace TVGL.TwoDimensional
                 {
                     if (visitedIntersectionPairs.Contains((newFlippedEdge, edgeB))) continue;
                     visitedIntersectionPairs.Add((newFlippedEdge, edgeB));
-                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, tolerance);
+                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, polygon.Tolerance);
                 }
                 else
                 {
                     if (visitedIntersectionPairs.Contains((edgeA, newFlippedEdge))) continue;
                     visitedIntersectionPairs.Add((edgeA, newFlippedEdge));
-                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, tolerance);
+                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, polygon.Tolerance);
                 }
             }
             var newSubPolygonToInt = new Dictionary<Polygon, int>();

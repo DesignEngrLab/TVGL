@@ -197,7 +197,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
             }
             //return new Polygon(result);
-            var polygons = new Polygon(result).RemoveSelfIntersections(ResultType.OnlyKeepPositive, 1e-9);
+            var polygons = new Polygon(result).RemoveSelfIntersections(ResultType.OnlyKeepPositive);
             var maxArea = polygons.Max(p => p.Area);
             var polygon = polygons.First(polygons => polygons.Area == maxArea);
             polygon.Transform(Matrix3x3.CreateRotation(1));
