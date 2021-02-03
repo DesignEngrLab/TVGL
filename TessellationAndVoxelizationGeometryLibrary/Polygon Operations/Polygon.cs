@@ -464,7 +464,7 @@ namespace TVGL.TwoDimensional
                 j = i;
             }
             if (_path[0].IsPracticallySame(_path[^1], Tolerance))
-                _path.RemoveAt(_path.Count);
+                _path.RemoveAt(_path.Count - 1);
             _vertices = new List<Vertex2D>();
             for (int i = 0; i < _path.Count; i++)
                 _vertices.Add(new Vertex2D(_path[i], i, Index));
