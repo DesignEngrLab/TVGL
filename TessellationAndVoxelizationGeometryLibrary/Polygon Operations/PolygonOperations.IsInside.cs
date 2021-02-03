@@ -373,7 +373,7 @@ namespace TVGL.TwoDimensional
             //   extra conditions are added for boundary at little to no computational expense.
             var inside = false;
             for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
-            // this novel for-loop implementation of i and j is brilliant (compact and efficient). use this in other places!!
+            // this novel for-loop implementation of i and j is brilliant (cryptic clever compact and efficient). use this in other places!!
             {
                 if (path[i].Y == path[j].Y) // line is horizontal
                 {
@@ -481,7 +481,8 @@ namespace TVGL.TwoDimensional
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons).SortVerticesByXValue();
+            var sortedPoints = polygons.SelectMany(p => p.AllPolygons).SelectMany(p => p.Vertices)
+                .OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
             var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().X;

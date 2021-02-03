@@ -1,5 +1,7 @@
+#if !PRESENT
 using BenchmarkDotNet.Running;
 using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,12 +25,12 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
-            TestVoxelization();
+            //TestVoxelization();
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
             // Polygon_Testing_Functions.TestSimplify();
             //TS_Testing_Functions.TestClassify();
-            //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
+            TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
 #if PRESENT
 

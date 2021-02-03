@@ -534,7 +534,7 @@ namespace TVGL
                 {
                     var j = i < colors.Count - 1 ? i : colors.Count - 1;
                     if (colors[j] != null) color = colors[j];
-                    if (!SolidColor.Equals(color)) HasUniformColor = false;
+                    if (SolidColor == null || !SolidColor.Equals(color)) HasUniformColor = false;
                 }
                 if (faceVertices.Length == 3)
                 {

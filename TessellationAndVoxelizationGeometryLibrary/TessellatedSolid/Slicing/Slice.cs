@@ -210,16 +210,15 @@ namespace TVGL.Boolean_Operations
                         vertices.Add(new Vertex2D(vertex.ConvertTo2DCoordinates(transform), j++, i));
                     allPolygons.Add(new Polygon(vertices, i));
                 }
-                var polygonsWithHoles = allPolygons.CreateShallowPolygonTrees(false);
-
-                foreach (var polygon in polygonsWithHoles)
+                foreach (var polygon in allPolygons.CreateShallowPolygonTrees(false))
                 {
                     var indicesOfTriangles = polygon.TriangulateToIndices();
                     var positiveLoop = loops[polygon.Index];
                     var negativeLoops = polygon.InnerPolygons.Select(p => loops[p.Index]).ToList();
                     var planeFaces = new List<PolygonalFace>();
                     var groupOfOnPlaneFaces = indicesOfTriangles.Select(triIndices => new PolygonalFace(
-                        triIndices.Select(vertIndex => allVertices[vertIndex]), direction, false));
+                        allVertices[triIndices.A], allVertices[triIndices.B], allVertices[triIndices.C],
+                        false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
                     if (k == -1) posSideGroups.Add(groupOfLoops);

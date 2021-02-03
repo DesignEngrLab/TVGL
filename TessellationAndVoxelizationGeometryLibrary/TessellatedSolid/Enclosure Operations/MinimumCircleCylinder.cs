@@ -236,10 +236,13 @@ namespace TVGL
         {
             var negativePolygons = new List<Polygon>();
             var positivePolygons = new List<Polygon>();
-            foreach (var polygon in polygons)
+            foreach (var outerPoly in polygons)
             {
-                if (polygon.IsPositive) positivePolygons.Add(polygon);
-                else negativePolygons.Add(polygon);
+                foreach(var polygon in outerPoly.AllPolygons)
+                {
+                    if (polygon.IsPositive) positivePolygons.Add(polygon);
+                    else negativePolygons.Add(polygon);
+                }
             }
             //Check the distance from every line and point of every polygon in the group. 
             //Note: this function could possible be improved by determining which polygon is closest, 

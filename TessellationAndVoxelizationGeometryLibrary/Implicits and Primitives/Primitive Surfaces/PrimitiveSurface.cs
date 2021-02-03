@@ -331,37 +331,58 @@ namespace TVGL
             foreach (var border in edges.GetLoops(Faces))
             {
                 _borders.Add(border);
-                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), out var plane, out var planeResidual,
+                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), out var bestFitPlane, out var planeResidual,
                       out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)
-                border.Plane = plane;
+                border.Plane = bestFitPlane;
+                SetBorderConvexity(border);
                 if (curveResidual < maxErrorInCurveFit)
                     border.Curve = curve;
                 if (border.IsClosed)
                 {
                     var axis = Vector3.Null;
                     var anchor = Vector3.Null;
-                    if (this is Cylinder)
+                    if (this is Cylinder cylinder)
                     {
-                        axis = ((Cylinder)this).Axis;
-                        anchor = ((Cylinder)this).Anchor;
+                        axis = cylinder.Axis;
+                        anchor = cylinder.Anchor;
                     }
-                    else if (this is Cone)
+                    else if (this is Cone cone)
                     {
-                        axis = ((Cone)this).Axis;
-                        anchor = ((Cone)this).Apex;
+                        axis = cone.Axis;
+                        anchor = cone.Apex;
                     }
-                    else if (this is Torus)
+                    else if (this is Torus torus)
                     {
-                        axis = ((Torus)this).Axis;
-                        anchor = ((Torus)this).Center;
+                        axis = torus.Axis;
+                        anchor = torus.Center;
+                    }
+                    else if( this is Plane plane)
+                    {
+                        axis = plane.Normal;
                     }
                     else continue;
                     var transform = axis.TransformToXYPlane(out _);
                     var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
-                    border.EncirclesAxis = polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform));
+                    if(anchor != Vector3.Null)
+                    {
+                        border.EncirclesAxis = polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform));
+                    }
                 }
             }
+        }
+
+        private static void SetBorderConvexity(SurfaceBorder border)
+        {
+            var concave = 0;
+            var convex = 0;
+            foreach (var (edge, _) in border.EdgesAndDirection)
+            {
+                if (edge.Curvature == CurvatureType.Concave) concave++;
+                else if (edge.Curvature == CurvatureType.Convex) convex++;
+            }
+            border.FullyConcave = concave > 0 && convex == 0;
+            border.FullyConvex = convex > 0 && concave == 0;
         }
 
         public double MaxX { get; protected set; } = double.NaN;

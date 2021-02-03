@@ -4,7 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <!--<GenerateProgramFile>false</GenerateProgramFile>
     <IsPackable>false</IsPackable>-->
-    <OutputType>Exe</OutputType>
+    <UseWPF>false</UseWPF>
+    <OutputType>WinExe</OutputType>
     <StartupObject>TVGLUnitTestsAndBenchmarking.Program</StartupObject>
   </PropertyGroup>
 
@@ -15,9 +16,8 @@
 
   <ItemGroup>
     <Compile Remove="PolygonOperations\BenchGrid.cs" />
-    <Compile Remove="PolygonOperations\BenchKnown.cs" />
-    <Compile Remove="Program - Copy.cs" />
   </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />

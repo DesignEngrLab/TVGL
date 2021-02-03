@@ -1,12 +1,14 @@
 ﻿using System;
+#if !PRESENT
 using Xunit;
+using Snapshooter.Xunit;
+using Snapshooter;
+#endif
 using TVGL.Numerics;
 using TVGL;
 using System.IO;
 using TVGL.TwoDimensional;
 using TVGL.IOFunctions;
-using Snapshooter.Xunit;
-using Snapshooter;
 using System.Linq;
 using TVGL.Boolean_Operations;
 using TVGL.Voxelization;
@@ -44,7 +46,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Attempting: " + filename);
                 IO.Open(filename, out Polygon polygon);
                 Presenter.ShowAndHang(polygon);
-                var polygonSimple = polygon.Simplify();
+                var polygonSimple = polygon.SimplifyMinLength(100);
                 Presenter.ShowAndHang(new[] { polygon, polygonSimple });
 
 
@@ -55,8 +57,6 @@ namespace TVGLUnitTestsAndBenchmarking
         internal static void TestSimplify2()
         {
             IEnumerable<Vector2> polygon = TestCases.MakeStarryCircularPolygon(150000, 30, 1);
-            Presenter.ShowAndHang(polygon);
-            polygon = polygon.Simplify();
             Presenter.ShowAndHang(polygon);
         }
 

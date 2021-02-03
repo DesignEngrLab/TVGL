@@ -75,6 +75,21 @@ namespace TVGL
             return polygons.SelectMany(polygon => Extrude.ExtrusionFacesFrom2DPolygons(polygon,
              basePlaneNormal, basePlaneDistance, extrusionHeight)).ToList();
         }
+
+        //public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
+        //        double basePlaneDistance, double extrusionHeight)
+        //{
+        //    var vectors = ExtrusionFaceVectorsFrom2DPolygons(polygon, basePlaneNormal, basePlaneDistance, extrusionHeight);
+        //    var polyFaces = new List<PolygonalFace>(vectors.Count);
+        //    var i = 0;
+        //    foreach(var (A, B, C) in vectors)
+        //    {
+        //        polyFaces.Add(new PolygonalFace(new Vertex(A), new Vertex(B), new Vertex(C)));
+        //        i++;
+        //    }
+        //    return polyFaces;
+        //}
+
         /// <summary>
         /// Create the triangular faces of an extruded solid from polygons.
         /// </summary>
@@ -85,54 +100,84 @@ namespace TVGL
         /// <returns>List&lt;PolygonalFace&gt;.</returns>
         /// 
 
-        public static List<PolygonalFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
+        public static IEnumerable<PolygonalFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                 double basePlaneDistance, double extrusionHeight)
         {
-            var triangleIndices = polygon.TriangulateToIndices();
+            foreach (var triple in ExtrusionFaceVectorsFrom2DPolygons( polygon, basePlaneNormal,
+               basePlaneDistance, extrusionHeight))
+            {
+                yield return new PolygonalFace(new Vertex(triple.A), new Vertex(triple.B),
+                    new Vertex(triple.C));
+            }
+        }
+
+
+        /// <summary>
+        /// Create the triangular faces of an extruded solid from polygons.
+        /// </summary>
+        /// <param name="paths">The paths.</param>
+        /// <param name="basePlaneNormal">The base plane normal.</param>
+        /// <param name="basePlaneDistance">The base plane distance.</param>
+        /// <param name="extrusionHeight">Height of the extrusion.</param>
+        /// <returns>List&lt;PolygonalFace&gt;.</returns>
+        public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
+               double basePlaneDistance, double extrusionHeight)
+        {
+            var triangleIndices = polygon.TriangulateToIndices().ToList();
+            return ExtrusionFaceVectorsFrom2DPolygons(polygon, triangleIndices, basePlaneNormal, basePlaneDistance, extrusionHeight);
+        }
+
+        public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, List<(int A, int B, int C)> triangleIndices,
+            Vector3 basePlaneNormal, double basePlaneDistance, double extrusionHeight)
+        {
             MiscFunctions.TransformToXYPlane(basePlaneNormal, out var rotateTransform);
             #region Make Base faces
-            var int2VertexDict = new Dictionary<int, Vertex>();
-            var baseVertices = new List<List<Vertex>>();
+            var int2VertexDict = new Dictionary<int, Vector3>();
+            var baseVertices = new List<List<Vector3>>();
             var vertexID = 0;
             foreach (var loop in polygon.AllPolygons)
             {
-                var vertexLoop = new List<Vertex>();
+                var vertexLoop = new List<Vector3>();
                 baseVertices.Add(vertexLoop);
                 foreach (var position2D in loop.Path)
                 {
                     var position3D = new Vector3(position2D, 0);
-                    var newVertex = new Vertex(position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal, vertexID);
+                    var newVertex = position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal;
                     vertexLoop.Add(newVertex);
                     int2VertexDict.Add(vertexID, newVertex);
                     vertexID++;
                 }
             }
-            var result = new List<PolygonalFace>();
-            foreach (var triangle in triangleIndices)
-                result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[2]],
-                        int2VertexDict[triangle[1]], int2VertexDict[triangle[0]] }));
+            var result = new List<(Vector3 A, Vector3 B, Vector3 C)>();
+            foreach (var (A, B, C) in triangleIndices)
+            {
+                result.Add((int2VertexDict[C], int2VertexDict[B], int2VertexDict[A]));
+            }
+
             #endregion
             #region Make Top faces
             int2VertexDict.Clear();
-            var topVertices = new List<List<Vertex>>();
+            var topVertices = new List<List<Vector3>>();
             vertexID = 0;
             basePlaneDistance += extrusionHeight;
             foreach (var loop in polygon.AllPolygons)
             {
-                var vertexLoop = new List<Vertex>();
+                var vertexLoop = new List<Vector3>();
                 topVertices.Add(vertexLoop);
                 foreach (var position2D in loop.Path)
                 {
                     var position3D = new Vector3(position2D, 0);
-                    var newVertex = new Vertex(position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal, vertexID);
+                    var newVertex = position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal;
                     vertexLoop.Add(newVertex);
                     int2VertexDict.Add(vertexID, newVertex);
                     vertexID++;
                 }
             }
-            foreach (var triangle in triangleIndices)
-                result.Add(new PolygonalFace(new[] { int2VertexDict[triangle[0]],
-                        int2VertexDict[triangle[1]], int2VertexDict[triangle[2]] }));
+            foreach (var (A, B, C) in triangleIndices)
+            {
+                result.Add((int2VertexDict[A], int2VertexDict[B], int2VertexDict[C]));
+            }
+
             #endregion
             #region Make Faces on the sides
             //The normals of the faces are dependent on the whether the loops are ordered correctly from the view of the extrude direction
@@ -143,8 +188,8 @@ namespace TVGL
                 var baseLoop = baseVertices[index];
                 for (int i = 0, j = topLoop.Count - 1; i < topLoop.Count; j = i++)
                 {
-                    result.Add(new PolygonalFace(new[] { topLoop[j], baseLoop[j], topLoop[i] }));
-                    result.Add(new PolygonalFace(new[] { topLoop[i], baseLoop[j], baseLoop[i] }));
+                    result.Add((topLoop[j], baseLoop[j], topLoop[i]));
+                    result.Add((topLoop[i], baseLoop[j], baseLoop[i]));
                 }
             }
             #endregion

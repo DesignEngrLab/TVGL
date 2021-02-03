@@ -3,9 +3,11 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TVGL.Boolean_Operations;
@@ -32,7 +34,7 @@ namespace TVGL
         /// in the list.
         /// </summary>
         [JsonIgnore]
-        public Dictionary<int, IList<Polygon>> Layer2D;
+        public IDictionary<int, IList<Polygon>> Layer2D;
 
         // an alternate approach without using dictionaries could be pursued
         //public List<Polygon>[] Layer2D { get; }
@@ -86,7 +88,7 @@ namespace TVGL
         }
 
         public CrossSectionSolid(Vector3 direction, Dictionary<int, double> stepDistances, double sameTolerance,
-            Dictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
+            IDictionary<int, IList<Polygon>> Layer2D, Vector3[] bounds = null, UnitType units = UnitType.unspecified)
         {
             NumLayers = stepDistances.Count;
             StepDistances = stepDistances;
@@ -103,7 +105,7 @@ namespace TVGL
                 var ymax = double.NegativeInfinity;
                 foreach (var layer in Layer2D)
                     foreach (var polygon in layer.Value)
-                        foreach (var point in polygon.Path)
+                        foreach (var point in polygon.Path)//Okay to ignore inner polygons, since this is just getting the bounds
                         {
                             if (xmin > point.X) xmin = point.X;
                             if (ymin > point.Y) ymin = point.Y;
@@ -163,33 +165,75 @@ namespace TVGL
         /// </summary>
         public TessellatedSolid ConvertToTessellatedExtrusions(bool extrudeBack, bool createFullVersion)
         {
+            var faces = new List<PolygonalFace>();
+            var facesAsTuples = ConvertToFaces(extrudeBack);
+            foreach (var face in facesAsTuples)
+            {
+                faces.Add(new PolygonalFace(new Vertex(face.A), new Vertex(face.B), new Vertex(face.C)));
+            }
+            return new TessellatedSolid(faces, createFullVersion, false);
+        }
+
+        public List<(Vector3 A, Vector3 B, Vector3 C)> ConvertToFaces(bool extrudeBack)
+        {
             //if (!Layer3D.Any()) SetAllVertices();
             var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
             var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
             var increment = start < stop ? 1 : -1;
-            //var direction = increment == 1 ? Direction : -1 * Direction;
-            var faces = new List<PolygonalFace>();
+            var faces = new ConcurrentBag<(Vector3 A, Vector3 B, Vector3 C)>();
             //If extruding back, then we skip the first loop, and extrude backward from the remaining loops.
             //Otherwise, extrude the first loop and all other loops forward, except the last loop.
             //Which of these extrusion options you choose depends on how the cross sections were defined.
             //But both methods, only result in material between the cross sections.
             if (extrudeBack)
             {
-                //  direction = -1 * direction;
                 start += increment;
             }
             else stop -= increment;
-            for (var i = start; i * increment <= stop * increment; i += increment) //Include the last index, since we already modified start or stop
+            //Skip gaps in layer3D, since it may actually represents more than one solid body
+            //Parallel.ForEach(Layer2D, layer =>
+            foreach (var layer in Layer2D.Where(p => p.Value.Any()))
             {
-                if (!Layer2D[i].Any()) continue; //THere can be gaps in layer3D if this actually represents more than one solid body
+                var i = layer.Key;
+                //Skip layers outside of the start and stop bounds. This is necessary because of the increment
+                if (i * increment < start * increment || i * increment > stop * increment) continue; // return; 
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-                //if (Layer2D[i].CreateShallowPolygonTrees(true, true, out var polygons, out _))
-                var layerfaces = Layer2D[i].SelectMany(polygon => polygon.ExtrusionFacesFrom2DPolygons(Direction,
+                var layerfaces = layer.Value.SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
-                faces.AddRange(layerfaces);
+                foreach (var face in layerfaces) faces.Add(face);
             }
-            return new TessellatedSolid(faces, createFullVersion, false);
+            //);
+            return faces.ToList();
+        }
+
+        /// <summary>
+        /// Returns a list of resulting polygon triangulations. Each (int A, int B, int C) represents a triangle. There is a list of 
+        /// these triangles for each polgyon in the solid.
+        /// </summary>
+        /// <param name="extrudeBack"></param>
+        /// <returns></returns>
+        public IDictionary<Polygon, List<(int A, int B, int C)>> GetTriangulationByLayer()
+        {
+            //if (!Layer3D.Any()) SetAllVertices();
+            var start = Layer2D.FirstOrDefault(p => p.Value.Count > 0).Key;
+            var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
+            var increment = start < stop ? 1 : -1;
+            start += increment;
+            var faces = new ConcurrentDictionary<Polygon, List<(int A, int B, int C)>>();
+            //Skip gaps in layer3D, since it may actually represents more than one solid body
+            Parallel.ForEach(Layer2D.Where(p => p.Value.Any()), layer =>
+            {
+                var i = layer.Key;
+                //Skip layers outside of the start and stop bounds. This is necessary because of the increment
+                if (i * increment < start * increment || i * increment > stop * increment) return;
+                foreach (var polygon in layer.Value)
+                {
+                    lock (polygon)
+                        faces.TryAdd(polygon, polygon.TriangulateToIndices().ToList());
+                }
+            });
+            return faces;
         }
 
         public TessellatedSolid ConvertToLoftedTessellatedSolid()
@@ -254,7 +298,7 @@ namespace TVGL
             //Recreate the loops, so that the lists are not linked to the original.
             foreach (var layer in Layer2D)
             {
-                solid.Layer2D.Add(layer.Key, new List<Polygon>(layer.Value));
+                solid.Layer2D.TryAdd(layer.Key, new List<Polygon>(layer.Value));
             }
             solid._volume = _volume;
             solid._center = _center;

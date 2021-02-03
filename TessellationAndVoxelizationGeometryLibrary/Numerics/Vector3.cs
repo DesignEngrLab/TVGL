@@ -125,6 +125,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
+        /// Returns a boolean indicating whether the given Object is equal to this Vector3 instance.
+        /// </summary>
+        /// <param name="obj">The Object to compare against.</param>
+        /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
+        public bool AlignedOrReverse(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        {
+            //Perform a quick check to see if they are perfectly equal or opposite
+            if (X == other.X && Y == other.Y && Z == other.Z) return true;
+            if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
+            //Else, use the tolerance to determine with the dot product
+            var dot = Math.Abs(this.Dot(other));
+            return dot.IsPracticallySame(1.0, dotTolerance);    
+        }
+
+        /// <summary>
         /// Returns a String representing this Vector3 instance.
         /// </summary>
         /// <returns>The string representation.</returns>

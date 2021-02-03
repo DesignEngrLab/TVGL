@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
@@ -22,12 +23,16 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("*").OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 0; i < fileNames.Length; i++)
+            var fileNames = dir.GetFiles("errorP*").OrderByDescending(x => x.Length).ToArray();
+            for (var i = 0; i < 20; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
+                IO.Open(filename, out Polygon poly);
+                Presenter.ShowAndHang(poly);
+                continue;
+                TestTriangulate(poly);
                 var solid = (TessellatedSolid)IO.Open(filename);
                 //Presenter.ShowAndHang(solid);
                 if (solid.Errors != null)
@@ -35,62 +40,51 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
                     continue;
                 }
-
-                for (int j = 0; j < 9; j++)
+                var sw = new Stopwatch();
+                for (int j = 1; j < 10; j++)
                 {
-                    var direction = Vector3.UnitVector((CartesianDirections)(j % 3));
-                    //var direction = new Vector3(r100, r100, r100);
-                    Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
+                    //var direction = Vector3.UnitVector((CartesianDirections)(j % 3));
+                    var direction = new Vector3(r100, r100, r100).Normalize();
+                    //Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
 
                     solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
                     var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
                     var xsection = solid.GetCrossSection(plane);
+                    Vertex2D[] sortedverts1 = null;
+                    Vertex2D[] sortedverts2 = null;
                     //Presenter.ShowAndHang(xsection);
-                    var monoPolys = new List<Polygon>();
-                    var error = false;
-                    var totalArea = 0.0;
-                    foreach (var monopoly in xsection.SelectMany(p => p.CreateXMonotonePolygons()))
+                    //sw.Restart();
+                    //for (int k = 0; k < 1000; k++)
+                    //{
+                    //    sortedverts1 = xsection.SortVerticesByXValue();
+                    //}
+                    //sw.Stop();
+                    //var functionTime = sw.Elapsed;
+                    sw.Restart();
+                    for (int k = 0; k < 1000; k++)
                     {
-                        monopoly.MakePolygonEdgesIfNonExistent();
-                        var tolerance = monopoly.GetToleranceForPolygon();
-                        monoPolys.Add(monopoly);
-                        totalArea += monopoly.Area;
-                        var extremeVerts = monopoly.Vertices.Where(v =>
-                            v.GetMonotonicityChange(tolerance) == MonotonicityChange.X ||
-                            v.GetMonotonicityChange(tolerance) == MonotonicityChange.Both).ToList();
-                        if (extremeVerts.Count != 2 ||
-                            !monopoly.MinX.IsPracticallySame(Math.Min(extremeVerts[0].X, extremeVerts[1].X)) ||
-                            !monopoly.MaxX.IsPracticallySame(Math.Max(extremeVerts[0].X, extremeVerts[1].X)))
-                            error = true;
-                        else
-                        {
-                            //Console.WriteLine("testing triangulation.");
-                            var triangles = monopoly.TriangulateToCoordinates().ToList();
-                            var triArea = triangles.Sum(tr => tr.Area());
-                            if (!triArea.IsPracticallySame(monopoly.Area, monopoly.Area * Constants.BaseTolerance))
-                            {
-                                Console.WriteLine("Error triangulation.");
-                                Presenter.ShowAndHang(triangles);
-                            }
-                        }
+                        sortedverts2 = xsection.SelectMany(p => p.Vertices).OrderBy(v => v.X).ToArray();
                     }
-
-                    if (error || !totalArea.IsPracticallySame(xsection.Sum(x => x.Area), 1e-5))
-                    {
-                        Console.WriteLine("Error in x-monotone polygon.");
-                        Presenter.ShowAndHang(xsection);
-                        Presenter.ShowAndHang(monoPolys);
-                    }
+                    sw.Stop();
+                    var linqTime = sw.Elapsed;
+                    //Console.WriteLine(functionTime + "          " + linqTime);
+                    //for (int m = 0; m < sortedverts1.Length; m++)
+                    //{
+                    //    if (sortedverts1[m] != sortedverts2[m])
+                    //    {
+                    //        Console.WriteLine("difference at " + m);
+                    //        break;
+                    //    }
+                    //}
                 }
             }
-
+            Console.ReadKey();
         }
 
-        public static void TestTriangulate()
+        public static void TestTriangulate(Polygon testcase)
         {
-            //var testcase = new Polygon(TestCases.EdgeCases["hand"].Item1[0]);
-            var testcase = new Polygon(TestCases.MakeStarryCircularPolygon(13, 10, 7));
-            //testcase.Transform(Matrix3x3.CreateRotation(Math.PI));
+            if (testcase == null)
+                testcase = new Polygon(TestCases.MakeStarryCircularPolygon(13, 10, 7));
             Presenter.ShowAndHang(testcase);
             var triangles = testcase.TriangulateToCoordinates();
             Presenter.ShowAndHang(triangles);

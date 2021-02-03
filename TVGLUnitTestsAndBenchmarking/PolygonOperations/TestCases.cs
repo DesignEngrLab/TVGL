@@ -1,4 +1,6 @@
+#if !PRESENT
 using BenchmarkDotNet.Attributes;
+#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
