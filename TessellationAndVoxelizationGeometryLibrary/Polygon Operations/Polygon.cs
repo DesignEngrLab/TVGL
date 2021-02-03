@@ -431,7 +431,7 @@ namespace TVGL.TwoDimensional
         /// Gets the tolerance for intersections and identical vertices in this polygon.
         /// </summary>
         /// <value>The tolerance.</value>
-        public double Tolerance { get; }
+        public double Tolerance { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Polygon" /> class.
@@ -455,6 +455,11 @@ namespace TVGL.TwoDimensional
                 prevCoordinate = p;
                 _path.Add(p);
             }
+            MakeVerticesFromPath();
+        }
+
+        private void MakeVerticesFromPath()
+        {
             Tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.PolygonSameTolerance;
             var j = _path.Count - 1;
             for (int i = _path.Count - 2; i >= 0; i--)
@@ -636,8 +641,8 @@ namespace TVGL.TwoDimensional
         {
             JArray jArray = (JArray)serializationData["Coordinates"];
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
-            for (int i = 0; i < _path.Count; i++)
-                _vertices.Add(new Vertex2D(_path[i], i, Index));
+            SetBounds();
+            MakeVerticesFromPath();
         }
     }
 
