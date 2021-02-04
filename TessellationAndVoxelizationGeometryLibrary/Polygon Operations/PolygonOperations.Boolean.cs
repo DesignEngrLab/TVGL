@@ -4,8 +4,12 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
+using System.Text;
+using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
@@ -14,6 +18,82 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
+        static Stopwatch sw = new Stopwatch();
+        const string timeFiles = "times.csv";
+        private static bool Compare(List<Polygon> tvglResult, List<Polygon> clipperResult, string operationString, TimeSpan clipTime, TimeSpan tvglTime)
+        {
+            lock (sw)
+            {
+                if (!File.Exists(timeFiles))
+                {
+                    using (var newFs = File.Create(timeFiles)) { }
+
+                }
+                using (var fs = File.Open(timeFiles, FileMode.Append))
+                {
+                    byte[] info = new UTF8Encoding(true).GetBytes(clipTime.Ticks.ToString() + "," + tvglTime.Ticks.ToString() + "\n");
+                    fs.Write(info, 0, info.Length);
+                }
+
+                var tolerance = 5e-2;
+                var clipperMinX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinX);
+                var clipperMinY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinY);
+                var clipperMaxX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxX);
+                var clipperMaxY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxY);
+                var tvglMinX = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Min(p => p.MinX);
+                var tvglMinY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Min(p => p.MinY);
+                var tvglMaxX = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxX);
+                var tvglMaxY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxY);
+                var numPolygonsTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(poly => poly.AllPolygons.Count());
+                var numPolygonsClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(poly => poly.AllPolygons.Count());
+                var vertsTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
+                var vertsClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
+                var areaTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(p => p.Area);
+                var areaClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(p => p.Area);
+                var perimeterTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(p => p.Perimeter);
+                var perimeterClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(p => p.Perimeter);
+                if (numPolygonsTVGL == numPolygonsClipper
+                    && //vertsTVGL == vertsClipper &&
+                     areaTVGL.IsPracticallySame(areaClipper, (areaTVGL + areaClipper) * tolerance) &&
+                     perimeterTVGL.IsPracticallySame(perimeterClipper, (perimeterTVGL + perimeterClipper) * tolerance) &&
+                     tvglMinX.IsPracticallySame(clipperMinX, tolerance) &&
+                     tvglMinY.IsPracticallySame(clipperMinY, tolerance) &&
+                     tvglMaxX.IsPracticallySame(clipperMaxX, tolerance) &&
+                     tvglMaxY.IsPracticallySame(clipperMaxY, tolerance)
+                    )
+                {
+                    Debug.WriteLine("***** " + operationString + " matches");
+                    Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
+                    return false;
+                }
+                else
+                {
+                    Debug.WriteLine(operationString + " does not match");
+                    Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
+                    if (numPolygonsTVGL == numPolygonsClipper)
+                        Debug.WriteLine("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
+                    else Debug.WriteLine("    --- polygons: TVGL={0}  : Clipper={1} ", numPolygonsTVGL, numPolygonsClipper);
+                    if (vertsTVGL == vertsClipper)
+                        Debug.WriteLine("+++ both have {0} vertices(s)", vertsTVGL);
+                    else Debug.WriteLine("    --- verts: TVGL= {0}  : Clipper={1} ", vertsTVGL, vertsClipper);
+
+                    if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
+                        Debug.WriteLine("+++ both have area of {0}", areaTVGL);
+                    else
+                        Debug.WriteLine("    --- area: TVGL= {0}  : Clipper={1} ", areaTVGL, areaClipper);
+                    if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
+                        Debug.WriteLine("+++ both have perimeter of {0}", perimeterTVGL);
+                    else
+                        Debug.WriteLine("    --- perimeter: TVGL={0}  : Clipper={1} ", perimeterTVGL, perimeterClipper);
+                    if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
+                        Debug.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
+                    return true;
+                }
+            }
+        }
+
+
+
         // while the main executing methods are provided in this file (all of which can be invoked as Extensions), the code that perform the new polygon creation
         // is provided in the following four non-Static classes. These are non-static because they all inherit from the BooleanBase class. Each of these only needs
         // to be instantiated once as no data is stored in the class objects. So, this is a sort of singleton model but it's too bad we can have static classes inherit from
@@ -36,13 +116,35 @@ namespace TVGL.TwoDimensional
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             var tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
-                    tolerance, new[] { polygonB });
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
-            return Union(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
 
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
+                  tolerance, new[] { polygonB });
+            sw.Stop();
+#if PRESENT
+            Presenter.ShowAndHang(pClipper);
+#endif
+            var clipTime = sw.Elapsed;
+            sw.Restart();
+            relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
+            var pTVGL = Union(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+            sw.Stop();
+#if PRESENT
+            Presenter.ShowAndHang(pTVGL);
+#endif
+            var tvglTime = sw.Elapsed;
+            if (Compare(pTVGL, pClipper, "Union", clipTime, tvglTime))
+            {
+#if !PRESENT
+                var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
+                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + ".A.json");
+                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + ".B.json");
+#endif
+            }
+            return pClipper;
         }
+
 
         /// <summary>
         /// Returns the list of polygons that exist in either A OR B.By providing the intersections
@@ -85,14 +187,17 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = polygons.GetTolerancesFromPolygons();
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygons, tolerance);
-
             var polygonList = polygons.ToList();
             if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(polygonList);
+                tolerance = polygons.Min(p => p.Tolerance);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonList, tolerance);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+#if PRESENT
+            Presenter.ShowAndHang(pClipper);
+#endif
+            sw.Restart();
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
                 for (int j = i - 1; j >= 0; j--)
@@ -125,7 +230,22 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            return polygonList;
+            sw.Stop();
+#if PRESENT
+            Presenter.ShowAndHang(polygonList);
+#endif
+            var tvglTime = sw.Elapsed;
+            if (Compare(polygonList, pClipper, "UnionLists", clipTime, tvglTime))
+            {
+#if !PRESENT
+                var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
+                int i = 0;
+                foreach (var poly in polygons)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
+#endif
+            }
+            return pClipper;
+            //return polygonList;
         }
 
         /// <summary>
@@ -140,18 +260,19 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = polygonsA.GetTolerancesFromPolygons(polygonsB);
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA,
-                    tolerance, polygonsB);
-
+            if (polygonsB is null)
+                return UnionPolygons(polygonsA, outputAsCollectionType, tolerance);
             var unionedPolygons = polygonsA.ToList();
-            if (polygonsB is null) return UnionPolygons(unionedPolygons, outputAsCollectionType, tolerance);
             var polygonBList = polygonsB.ToList();
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(unionedPolygons, polygonBList);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA, tolerance, polygonsB);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
 
+            sw.Restart();
+            List<Polygon> pTVGL = null;
             for (int i = unionedPolygons.Count - 1; i >= 0; i--)
             {
                 for (int j = polygonBList.Count - 1; j >= 0; j--)
@@ -184,10 +305,25 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            return UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType, tolerance);
+            pTVGL = UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType, tolerance);
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(pTVGL, pClipper, "UnionTwoLists", clipTime, tvglTime))
+            {
+#if !PRESENT
+                var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
+                int i = 0;
+                foreach (var poly in polygonsA)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "A.json");
+                i = 0;
+                foreach (var poly in polygonsB)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
+#endif
+            }
+            return pClipper;
         }
 
-        private static double GetTolerancesFromPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB = null)
+        private static double GetTolerancesFromPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB)
         {
             var polygonATolerance = polygonsA.Min(p => p.Tolerance);
             var polygonBTolerance = polygonsB.Min(p => p.Tolerance);
@@ -211,11 +347,25 @@ namespace TVGL.TwoDimensional
         {
             if (double.IsNaN(tolerance))
                 tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA },
-                 tolerance, new[] { polygonB });
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA }, tolerance,
+                    new[] { polygonB });
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+            sw.Restart();
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
-            return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+            var pTVGL = Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+
+
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(pTVGL, pClipper, "Intersect", clipTime, tvglTime))
+            {
+                var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
+                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
+                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "." + "B.json");
+            }
+            return pClipper;
         }
 
         /// <summary>
@@ -257,13 +407,17 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = polygonsA.GetTolerancesFromPolygons(polygonsB);
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA,
-                    tolerance, polygonsB);
+            if (polygonsB is null)
+                return UnionPolygons(polygonsA, outputAsCollectionType, tolerance);
             var polygonAList = new List<Polygon>(polygonsA);
-            var polygonBList = polygonsB as List<Polygon> ?? polygonsB.ToList();
+            var polygonBList = polygonsB.ToList();
+            if (double.IsNaN(tolerance))
+                tolerance = GetTolerancesFromPolygons(polygonAList, polygonBList);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA, tolerance, polygonsB);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+            sw.Restart();
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(polygonAList, polygonBList);
 
@@ -277,7 +431,21 @@ namespace TVGL.TwoDimensional
                         polygonAList.Insert(i, newPoly);
                 }
             }
-            return polygonAList;
+            //return polygonAList;
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(polygonAList, pClipper, "IntersectTwoList", clipTime, tvglTime))
+            {
+                var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
+                int i = 0;
+                foreach (var poly in polygonsA)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "A.json");
+                i = 0;
+                foreach (var poly in polygonsA)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
+            }
+            return pClipper;
+            //return polygonList;
         }
 
 
@@ -292,11 +460,14 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = polygons.GetTolerancesFromPolygons();
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons, tolerance);
             var polygonList = polygons.ToList();
+            if (double.IsNaN(tolerance))
+                tolerance = polygons.Min(p => p.Tolerance);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons, tolerance);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+            sw.Restart();
             for (int i = polygonList.Count - 2; i > 0; i--)
             {
                 var clippingPoly = polygonList[i];
@@ -314,7 +485,18 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            return polygonList;
+            //return polygonList;
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(polygonList, pClipper, "IntersectList", clipTime, tvglTime))
+            {
+                var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
+                int i = 0;
+                foreach (var poly in polygons)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
+            }
+            return pClipper;
+            //return polygonList;
         }
 
         #endregion Intersect Public Methods
@@ -334,12 +516,31 @@ namespace TVGL.TwoDimensional
         {
             if (double.IsNaN(tolerance))
                 tolerance = Math.Min(minuend.Tolerance, subtrahend.Tolerance);
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
-                   tolerance, new[] { subtrahend });
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
+                tolerance, new[] { subtrahend });
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+            sw.Restart();
             var polygonBInverted = subtrahend.Copy(true, true);
             var relationship = GetPolygonInteraction(minuend, polygonBInverted, tolerance);
-            return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
+            var pTVGL = Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
+
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
+            {
+#if PRESENT
+                Presenter.ShowAndHang(pClipper);
+                Presenter.ShowAndHang(pTVGL);
+#else
+                var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
+                TVGL.IOFunctions.IO.Save(minuend, fileNameStart + "." + "min.json");
+                TVGL.IOFunctions.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
+#endif
+            }
+            return pClipper;
+
         }
 
         /// <summary>
@@ -375,15 +576,17 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this IEnumerable<Polygon> minuends, IEnumerable<Polygon> subtrahends,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = minuends.GetTolerancesFromPolygons(subtrahends);
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends,
-                    tolerance, subtrahends);
             var minuendsList = minuends.ToList();
-            var subtrahendsList = subtrahends as List<Polygon> ?? subtrahends.ToList();
+            var subtrahendsList = subtrahends as IList<Polygon> ?? subtrahends.ToList(); //to avoid re-enumeration since it's used
+            // twice below
             if (double.IsNaN(tolerance))
                 tolerance = GetTolerancesFromPolygons(minuendsList, subtrahendsList);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends, tolerance,
+                    subtrahends);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+            sw.Restart();
 
             foreach (var polyB in subtrahendsList)
             {
@@ -395,7 +598,21 @@ namespace TVGL.TwoDimensional
                         minuendsList.Insert(i, newPoly);
                 }
             }
-            return minuendsList;
+            //return minuendsList;
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
+            {
+                var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
+                int i = 0;
+                foreach (var poly in minuends)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "min.json");
+                i = 0;
+                foreach (var poly in subtrahends)
+                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
+            }
+            return pClipper;
+            //return polygonList;
         }
 
 
@@ -417,11 +634,24 @@ namespace TVGL.TwoDimensional
         {
             if (double.IsNaN(tolerance))
                 tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
-            if (CLIPPER)
-                return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA },
-                   tolerance, new[] { polygonB });
+            sw.Restart();
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA },
+               tolerance, new[] { polygonB });
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+            sw.Restart();
             var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
-            return ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+            var pTVGL = ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(pTVGL, pClipper, "XOR", clipTime, tvglTime))
+            {
+                var fileNameStart = "xorFail" + DateTime.Now.ToOADate().ToString();
+                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
+                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "." + "B.json");
+            }
+            return pClipper;
         }
 
         /// <summary>
