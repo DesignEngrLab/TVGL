@@ -46,6 +46,7 @@ namespace TVGL.TwoDimensional
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
+            var polygonIndex = 0;
             while (GetNextStartingIntersection(interaction.IntersectionData, out var startingIntersection,
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
@@ -53,7 +54,7 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon, out _).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(areaTolerance)) continue;
-                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLength(tolerance)));
+                newPolygons.Add(new Polygon(polyCoordinates, polygonIndex++));
             }
             // to handle the non-intersecting subpolygons
             var nonIntersectingASubPolygons = new List<Polygon>(polygonA.AllPolygons);

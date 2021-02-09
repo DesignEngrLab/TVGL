@@ -133,7 +133,7 @@ namespace TVGL.TwoDimensional
             if (Compare(allPolygons, pClipper, "Offset", clipTime, tvglTime))
             {
 #if !PRESENT
-                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString();
+                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString()+"."+offset;
                 int i = 0;
                 foreach (var poly in polygons)
                     TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");

@@ -194,9 +194,7 @@ namespace TVGL.TwoDimensional
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonList, tolerance);
             sw.Stop();
             var clipTime = sw.Elapsed;
-#if PRESENT
-            Presenter.ShowAndHang(pClipper);
-#endif
+
             sw.Restart();
             for (int i = polygonList.Count - 1; i > 0; i--)
             {
@@ -231,13 +229,14 @@ namespace TVGL.TwoDimensional
                 }
             }
             sw.Stop();
-#if PRESENT
-            Presenter.ShowAndHang(polygonList);
-#endif
             var tvglTime = sw.Elapsed;
             if (Compare(polygonList, pClipper, "UnionLists", clipTime, tvglTime))
             {
-#if !PRESENT
+#if PRESENT
+            Presenter.ShowAndHang(polygons);
+            Presenter.ShowAndHang(pClipper);
+                Presenter.ShowAndHang(polygonList);
+#else
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygons)
