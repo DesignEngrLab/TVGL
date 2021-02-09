@@ -382,10 +382,7 @@ namespace TVGL.TwoDimensional
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (interaction.IntersectionWillBeEmpty())
-            {
-                if (polygonB.IsPositive) return new List<Polygon>();
-                else return new List<Polygon> { polygonA.Copy(true, false) };
-            }
+                return new List<Polygon>();
             else
             {
                 polygonIntersection ??= new PolygonIntersection();
@@ -466,6 +463,10 @@ namespace TVGL.TwoDimensional
             sw.Restart();
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons, tolerance);
             sw.Stop();
+            if (!pClipper.Any()) return pClipper;
+#if PRESENT
+            Presenter.ShowAndHang(pClipper);
+#endif
             var clipTime = sw.Elapsed;
             sw.Restart();
             for (int i = polygonList.Count - 2; i > 0; i--)
@@ -487,6 +488,9 @@ namespace TVGL.TwoDimensional
             }
             //return polygonList;
             sw.Stop();
+#if PRESENT
+            Presenter.ShowAndHang(polygonList);
+#endif
             var tvglTime = sw.Elapsed;
             if (Compare(polygonList, pClipper, "IntersectList", clipTime, tvglTime))
             {

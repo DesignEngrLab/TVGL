@@ -38,7 +38,7 @@ namespace TVGL.TwoDimensional
                 tolerance = Constants.BaseTolerance * minDimension;
                 areaTolerance = tolerance * minDimension;
             }
-            else areaTolerance = tolerance * tolerance / Constants.BaseTolerance;   // why change the input tolerance? here, we are using it as a
+            else areaTolerance = tolerance * tolerance / Constants.PolygonSameTolerance;   // why change the input tolerance? here, we are using it as a
             // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
             // we need to find the characteristic length that was multiplied by the base tolerance to obtain the linear tolerance.
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
