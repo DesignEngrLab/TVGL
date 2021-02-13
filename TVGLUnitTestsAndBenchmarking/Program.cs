@@ -36,23 +36,23 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
             var dirName = dir.FullName;
-            var fileNames = dir.GetFiles("union*.json").ToList();
+            var fileNames = dir.GetFiles("subtractFail44239.88704393519*.json").ToList();
             while (fileNames.Any())
             {
                 var filename = fileNames[0].Name;
                 var nameSegments = filename.Split('.');
                 var preName = nameSegments[0] + "." + nameSegments[1];
                 var polygons = new List<Polygon>();
-                //Polygon min = null;
-                //Polygon sub = null;
+                Polygon min = null;
+                Polygon sub = null;
                 foreach (var item in dir.GetFiles(preName + "*"))
                 {
                     fileNames.RemoveAll(ff => item.FullName.Equals(ff.FullName));
                     IO.Open(item.FullName, out Polygon p);
-                    //if (item.FullName.Contains("min.json"))
-                    //    min = p;
-                    //else sub = p;
-                    polygons.Add(p);
+                    if (item.FullName.Contains("min.json"))
+                        min = p;
+                    else sub = p;
+                    //polygons.Add(p);
                 }
                 //if (polygons.Count < 2) continue;
                 Debug.WriteLine("Attempting: " + filename);
@@ -61,15 +61,15 @@ namespace TVGLUnitTestsAndBenchmarking
 
                 //91282315972, 91362112269, 9212769213
                 //Presenter.ShowAndHang(new[] { min, sub });
-                //min.Subtract(sub);
+                min.Subtract(sub);
                 //polygons.RemoveAt(1);
                 //var polysValue = TestCases.MakeBumpyRings(50, 28, 1.8);
                 //var polysValue = TestCases.EdgeCases["tinyOffsetProb"];
                 //var polygon1 = new Polygon(polysValue.Item1);
                 //var polygon2 = new Polygon(polysValue.Item2);
-                //Presenter.ShowAndHang(new[] { polygon1, polygon2 });
-                polygons = polygons.UnionPolygons();
-                //polygons = polygon1.Union(polygon2);
+                //Presenter.ShowAndHang(polygons);
+                //polygons = polygons.UnionPolygons();
+                //polygons = polygons.UnionPolygons(new Polygon[0]);
                 continue;
                 var polygon = polygons.LargestPolygon();
                 Presenter.ShowAndHang(polygon);

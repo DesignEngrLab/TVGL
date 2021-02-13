@@ -35,7 +35,7 @@ namespace TVGL.TwoDimensional
                     fs.Write(info, 0, info.Length);
                 }
 
-                var tolerance = 5e-2;
+                var tolerance = 0.2;
                 var clipperMinX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinX);
                 var clipperMinY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinY);
                 var clipperMaxX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxX);
@@ -44,6 +44,7 @@ namespace TVGL.TwoDimensional
                 var tvglMinY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Min(p => p.MinY);
                 var tvglMaxX = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxX);
                 var tvglMaxY = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Max(p => p.MaxY);
+                var extremaTolerance = tolerance * (new[] { clipperMaxX - clipperMinX, clipperMaxY - clipperMinY, tvglMaxX - tvglMinX, tvglMaxY - tvglMinY }).Min();
                 var numPolygonsTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(poly => poly.AllPolygons.Count());
                 var numPolygonsClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(poly => poly.AllPolygons.Count());
                 var vertsTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(poly => poly.AllPolygons.Sum(innerpoly => innerpoly.Vertices.Count));
@@ -52,14 +53,14 @@ namespace TVGL.TwoDimensional
                 var areaClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(p => p.Area);
                 var perimeterTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(p => p.Perimeter);
                 var perimeterClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(p => p.Perimeter);
-                if (numPolygonsTVGL == numPolygonsClipper
-                    && //vertsTVGL == vertsClipper &&
+                if (//numPolygonsTVGL == numPolygonsClipper
+                    //&& //vertsTVGL == vertsClipper &&
                      areaTVGL.IsPracticallySame(areaClipper, (areaTVGL + areaClipper) * tolerance) &&
                      perimeterTVGL.IsPracticallySame(perimeterClipper, (perimeterTVGL + perimeterClipper) * tolerance) &&
-                     tvglMinX.IsPracticallySame(clipperMinX, tolerance) &&
-                     tvglMinY.IsPracticallySame(clipperMinY, tolerance) &&
-                     tvglMaxX.IsPracticallySame(clipperMaxX, tolerance) &&
-                     tvglMaxY.IsPracticallySame(clipperMaxY, tolerance)
+                     tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
+                     tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
+                     tvglMaxX.IsPracticallySame(clipperMaxX, extremaTolerance) &&
+                     tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
                     )
                 {
                     Debug.WriteLine("***** " + operationString + " matches");
@@ -68,6 +69,7 @@ namespace TVGL.TwoDimensional
                 }
                 else
                 {
+                    if (numPolygonsClipper == 0) return false;
                     Debug.WriteLine(operationString + " does not match");
                     Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
                     if (numPolygonsTVGL == numPolygonsClipper)
@@ -324,8 +326,8 @@ namespace TVGL.TwoDimensional
 
         private static double GetTolerancesFromPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB)
         {
-            var polygonATolerance = polygonsA.Min(p => p.Tolerance);
-            var polygonBTolerance = polygonsB.Min(p => p.Tolerance);
+            var polygonATolerance = polygonsA.Any() ? polygonsA.Min(p => p.Tolerance) : double.PositiveInfinity;
+            var polygonBTolerance = polygonsB.Any() ? polygonsB.Min(p => p.Tolerance) : double.PositiveInfinity;
             return Math.Min(polygonATolerance, polygonBTolerance);
         }
 
@@ -462,7 +464,7 @@ namespace TVGL.TwoDimensional
             sw.Restart();
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons, tolerance);
             sw.Stop();
-            if (!pClipper.Any()) return pClipper;
+            //if (!pClipper.Any()) return pClipper;
 #if PRESENT
             Presenter.ShowAndHang(pClipper);
 #endif
@@ -489,7 +491,7 @@ namespace TVGL.TwoDimensional
             sw.Stop();
 #if PRESENT
             Presenter.ShowAndHang(polygonList);
-#endif
+#else
             var tvglTime = sw.Elapsed;
             if (Compare(polygonList, pClipper, "IntersectList", clipTime, tvglTime))
             {
@@ -498,6 +500,7 @@ namespace TVGL.TwoDimensional
                 foreach (var poly in polygons)
                     TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
             }
+#endif
             return pClipper;
             //return polygonList;
         }
@@ -534,6 +537,8 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
             {
 #if PRESENT
+
+                Presenter.ShowAndHang(new[] { minuend, subtrahend });
                 Presenter.ShowAndHang(pClipper);
                 Presenter.ShowAndHang(pTVGL);
 #else

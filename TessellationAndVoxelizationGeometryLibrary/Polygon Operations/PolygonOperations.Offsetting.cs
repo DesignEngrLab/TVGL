@@ -123,7 +123,8 @@ namespace TVGL.TwoDimensional
             var allPolygons = new List<Polygon>();
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.Offset(offset, notMiter, deltaAngle));
-            allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
+            if (allPolygons.Count > 1)
+                allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
             //}
             sw.Stop();
 #if PRESENT
@@ -133,7 +134,7 @@ namespace TVGL.TwoDimensional
             if (Compare(allPolygons, pClipper, "Offset", clipTime, tvglTime))
             {
 #if !PRESENT
-                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString()+"."+offset;
+                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
                 int i = 0;
                 foreach (var poly in polygons)
                     TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
@@ -189,7 +190,7 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "Offset", clipTime, tvglTime))
             {
 #if !PRESENT
-                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString();
+                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
                 TVGL.IOFunctions.IO.Save(polygon, fileNameStart + ".0.json");
 #endif
             }

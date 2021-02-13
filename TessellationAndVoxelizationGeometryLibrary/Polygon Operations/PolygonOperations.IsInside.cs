@@ -587,11 +587,12 @@ namespace TVGL.TwoDimensional
         {
             if (double.IsNaN(tolerance))
                 tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
+            var interactionTolerance = tolerance * Constants.BaseTolerance / Constants.PolygonSameTolerance;
             var interactionRecord = new PolygonInteractionRecord(polygonA, polygonB);
             if (interactionRecord.Relationship == PolygonRelationship.Equal) return interactionRecord;
             // this would happen when the function detcts that polygonA and polygonB are the same
             var visited = new bool[interactionRecord.numPolygonsInA * interactionRecord.numPolygonsInB];
-            RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, tolerance);
+            RecursePolygonInteractions(polygonA, polygonB, interactionRecord, visited, interactionTolerance);
             interactionRecord.DefineOverallInteractionFromFinalListOfSubInteractions();
             return interactionRecord;
         }
