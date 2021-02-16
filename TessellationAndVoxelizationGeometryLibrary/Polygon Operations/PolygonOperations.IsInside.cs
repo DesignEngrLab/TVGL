@@ -919,34 +919,34 @@ namespace TVGL.TwoDimensional
                     //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
                     var oneOverdeterminnant = 1 / lineACrossLineB;
                     var t_1 = oneOverdeterminnant * (lineB.Vector.Y * fromPointVector.X - lineB.Vector.X * fromPointVector.Y);
-                    if ((!t_1.IsNegligible(tolerance) && t_1 < 0) || t_1 >= 1)
+                    if ((!t_1.IsNegligible(Constants.PolygonSameTolerance) && t_1 < 0) || t_1 >= 1)
                         return false;
                     var t_2 = oneOverdeterminnant * (lineA.Vector.Y * fromPointVector.X - lineA.Vector.X * fromPointVector.Y);
-                    if ((!t_2.IsNegligible(tolerance) && t_2 < 0) || t_2 >= 1)
+                    if ((!t_2.IsNegligible(Constants.PolygonSameTolerance) && t_2 < 0) || t_2 >= 1)
                         return false;
-                    if (t_1.IsNegligible(tolerance))
+                    if (t_1.IsNegligible(Constants.PolygonSameTolerance))
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates;
                         where = WhereIsIntersection.AtStartOfA;
-                        if (t_2.IsPracticallySame(1.0, tolerance))
+                        if (t_2.IsPracticallySame(1.0, Constants.PolygonSameTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
-                    else if (t_2.IsNegligible(tolerance))
+                    else if (t_2.IsNegligible(Constants.PolygonSameTolerance))
                     {
                         intersectionCoordinates = lineB.FromPoint.Coordinates;
                         where = WhereIsIntersection.AtStartOfB;
-                        if (t_1.IsPracticallySame(1.0, tolerance))
+                        if (t_1.IsPracticallySame(1.0, Constants.PolygonSameTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
                     }
                     else
                     {
                         intersectionCoordinates = lineA.FromPoint.Coordinates + t_1 * lineA.Vector;
                         where = WhereIsIntersection.Intermediate;
-                        if (t_1.IsPracticallySame(1.0, tolerance) && t_2.IsPracticallySame(1.0, tolerance))
+                        if (t_1.IsPracticallySame(1.0, Constants.PolygonSameTolerance) && t_2.IsPracticallySame(1.0, Constants.PolygonSameTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB.ToPoint.StartLine));
-                        else if (t_1.IsPracticallySame(1.0, tolerance))
+                        else if (t_1.IsPracticallySame(1.0, Constants.PolygonSameTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA.ToPoint.StartLine, lineB));
-                        else if (t_2.IsPracticallySame(1.0, tolerance))
+                        else if (t_2.IsPracticallySame(1.0, Constants.PolygonSameTolerance))
                             possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
                 }

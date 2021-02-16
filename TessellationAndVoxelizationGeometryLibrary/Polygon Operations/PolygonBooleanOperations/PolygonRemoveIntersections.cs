@@ -23,7 +23,7 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType, 
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
             List<bool> knownWrongPoints, int maxNumberOfPolygons)
         {
             var minAllowableArea = polygon.Tolerance * polygon.Tolerance / Constants.BaseTolerance;

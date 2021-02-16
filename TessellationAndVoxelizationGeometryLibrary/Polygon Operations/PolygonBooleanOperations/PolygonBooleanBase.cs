@@ -175,7 +175,7 @@ namespace TVGL.TwoDimensional
         {
             includesWrongPoints = false;
             var newPath = new List<Vector2>();
-            var newPathHash = new HashSet<Vector2>();
+            //var newPathHash = new HashSet<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
             do
@@ -191,13 +191,13 @@ namespace TVGL.TwoDimensional
                     intersectionData.VisitedB = true;
                 }
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
-                if (newPathHash.Contains(intersectionCoordinates)) break;
+                //if (newPathHash.Contains(intersectionCoordinates)) break;
                 // there used to be some complex conditions here (at 12 lines down before the other newPath.Add(...)
                 // to ensure that the added point wasn't the same as the last. However, for speed, we allow it
                 // and add the check in the Polygon constructor. This also reduces code since sometimes the Vector2's
                 // sent to that constructor would have duplicate points.
                 newPath.Add(intersectionCoordinates);
-                newPathHash.Add(intersectionCoordinates);
+                //newPathHash.Add(intersectionCoordinates);
                 if (switchPolygon)
                     currentEdge = (currentEdge == intersectionData.EdgeB) ? intersectionData.EdgeA : intersectionData.EdgeB;
 
@@ -210,13 +210,13 @@ namespace TVGL.TwoDimensional
                     currentEdge = currentEdge.ToPoint.StartLine;
                     if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) includesWrongPoints = true;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
-                    newPathHash.Add(currentEdge.FromPoint.Coordinates);
+                    //newPathHash.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
-//#if PRESENT
-                    //Presenter.ShowAndHang(newPath);
-//#endif
+                                                            //#if PRESENT
+                                                            //                    Presenter.ShowAndHang(newPath);
+                                                            //#endif
                 }
             } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge));
             return newPath;
