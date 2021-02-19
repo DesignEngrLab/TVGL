@@ -89,9 +89,12 @@ namespace TVGL.TwoDimensional
 
         protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
+            if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
+             (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))
+                return true;
             if (startingIntersection != currentIntersection) return false;
-            if (startingIntersection.Relationship == SegmentRelationship.DoubleOverlap &&
-                startingIntersection.CollinearityType == CollinearityTypes.None)
+            if (currentIntersection.Relationship == SegmentRelationship.NoOverlap &&
+                currentIntersection.CollinearityType == CollinearityTypes.None)
                 return currentEdge == startingEdge;
             return true;
         }

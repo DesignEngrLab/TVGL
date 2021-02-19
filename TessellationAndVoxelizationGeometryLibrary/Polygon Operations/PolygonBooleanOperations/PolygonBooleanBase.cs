@@ -175,21 +175,12 @@ namespace TVGL.TwoDimensional
         {
             includesWrongPoints = false;
             var newPath = new List<Vector2>();
-            //var newPathHash = new HashSet<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
             do
             {
-                if (currentEdge == intersectionData.EdgeA)
-                {
-                    if (intersectionData.VisitedA) break;
-                    intersectionData.VisitedA = true;
-                }
-                else
-                {
-                    if (intersectionData.VisitedB) break;
-                    intersectionData.VisitedB = true;
-                }
+                if (currentEdge == intersectionData.EdgeA) intersectionData.VisitedA = true;
+                else intersectionData.VisitedB = true;
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
                 //if (newPathHash.Contains(intersectionCoordinates)) break;
                 // there used to be some complex conditions here (at 12 lines down before the other newPath.Add(...)
@@ -214,11 +205,15 @@ namespace TVGL.TwoDimensional
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
-                                                            //#if PRESENT
-                                                            //                    Presenter.ShowAndHang(newPath);
-                                                            //#endif
+//#if PRESENT
+//                    Presenter.ShowAndHang(newPath);
+//#endif
+
                 }
             } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge));
+//#if PRESENT
+//            Presenter.ShowAndHang(newPath);
+//#endif
             return newPath;
         }
 
