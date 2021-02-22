@@ -117,20 +117,19 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Union(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            var tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
-            var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
 
             sw.Restart();
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, new[] { polygonA },
-                  tolerance, new[] { polygonB });
+                  new[] { polygonB });
             sw.Stop();
 #if PRESENT
             Presenter.ShowAndHang(pClipper);
 #endif
             var clipTime = sw.Elapsed;
             sw.Restart();
-            relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
-            var pTVGL = Union(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+            relationship = GetPolygonInteraction(polygonA, polygonB);
+            var pTVGL = Union(polygonA, polygonB, relationship, outputAsCollectionType);
             sw.Stop();
 #if PRESENT
             Presenter.ShowAndHang(pTVGL);
@@ -186,14 +185,11 @@ namespace TVGL.TwoDimensional
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
-            double tolerance = double.NaN)
+        public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             var polygonList = polygons.ToList();
-            if (double.IsNaN(tolerance))
-                tolerance = polygons.Min(p => p.Tolerance);
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonList, tolerance);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonList);
             sw.Stop();
             var clipTime = sw.Elapsed;
 
@@ -202,7 +198,7 @@ namespace TVGL.TwoDimensional
             {
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    var interaction = GetPolygonInteraction(polygonList[i], polygonList[j], tolerance);
+                    var interaction = GetPolygonInteraction(polygonList[i], polygonList[j]);
                     if (interaction.Relationship == PolygonRelationship.BInsideA
                         || interaction.Relationship == PolygonRelationship.Equal)
                     {  // remove polygon B
@@ -218,7 +214,7 @@ namespace TVGL.TwoDimensional
                     {
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
-                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType, tolerance);
+                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
                         //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
@@ -235,8 +231,8 @@ namespace TVGL.TwoDimensional
             if (Compare(polygonList, pClipper, "UnionLists", clipTime, tvglTime))
             {
 #if PRESENT
-            Presenter.ShowAndHang(polygons);
-            Presenter.ShowAndHang(pClipper);
+                Presenter.ShowAndHang(polygons);
+                Presenter.ShowAndHang(pClipper);
                 Presenter.ShowAndHang(polygonList);
 #else
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
@@ -262,13 +258,11 @@ namespace TVGL.TwoDimensional
             double tolerance = double.NaN)
         {
             if (polygonsB is null)
-                return UnionPolygons(polygonsA, outputAsCollectionType, tolerance);
+                return UnionPolygons(polygonsA, outputAsCollectionType);
             var unionedPolygons = polygonsA.ToList();
             var polygonBList = polygonsB.ToList();
-            if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(unionedPolygons, polygonBList);
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA, tolerance, polygonsB);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
 
@@ -278,7 +272,7 @@ namespace TVGL.TwoDimensional
             {
                 for (int j = polygonBList.Count - 1; j >= 0; j--)
                 {
-                    var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j], tolerance);
+                    var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j]);
                     if (interaction.Relationship == PolygonRelationship.BInsideA
                         || interaction.Relationship == PolygonRelationship.Equal)
                     {  // remove polygon B
@@ -306,7 +300,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            pTVGL = UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType, tolerance);
+            pTVGL = UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "UnionTwoLists", clipTime, tvglTime))
@@ -324,13 +318,6 @@ namespace TVGL.TwoDimensional
             return pClipper;
         }
 
-        private static double GetTolerancesFromPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB)
-        {
-            var polygonATolerance = polygonsA.Any() ? polygonsA.Min(p => p.Tolerance) : double.PositiveInfinity;
-            var polygonBTolerance = polygonsB.Any() ? polygonsB.Min(p => p.Tolerance) : double.PositiveInfinity;
-            return Math.Min(polygonATolerance, polygonBTolerance);
-        }
-
         #endregion Union Public Methods
 
         #region Intersect Public Methods
@@ -346,15 +333,13 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA }, tolerance,
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, new[] { polygonA },
                     new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
             var pTVGL = Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
 
 
@@ -402,28 +387,23 @@ namespace TVGL.TwoDimensional
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
-            double tolerance = double.NaN)
+        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (polygonsB is null)
-                return UnionPolygons(polygonsA, outputAsCollectionType, tolerance);
+                return UnionPolygons(polygonsA, outputAsCollectionType);
             var polygonAList = new List<Polygon>(polygonsA);
             var polygonBList = polygonsB.ToList();
-            if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(polygonAList, polygonBList);
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA, tolerance, polygonsB);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(polygonAList, polygonBList);
 
             foreach (var polyB in polygonBList)
             {
                 for (int i = polygonAList.Count - 1; i >= 0; i--)
                 {
-                    var newPolygons = polygonAList[i].Intersect(polyB, outputAsCollectionType, tolerance);
+                    var newPolygons = polygonAList[i].Intersect(polyB, outputAsCollectionType);
                     polygonAList.RemoveAt(i);
                     foreach (var newPoly in newPolygons)
                         polygonAList.Insert(i, newPoly);
@@ -455,14 +435,11 @@ namespace TVGL.TwoDimensional
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
-        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
-            double tolerance = double.NaN)
+        public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             var polygonList = polygons.ToList();
-            if (double.IsNaN(tolerance))
-                tolerance = polygons.Min(p => p.Tolerance);
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons, tolerance);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons);
             sw.Stop();
             //if (!pClipper.Any()) return pClipper;
 #if PRESENT
@@ -476,12 +453,12 @@ namespace TVGL.TwoDimensional
                 polygonList.RemoveAt(i);
                 for (int j = polygonList.Count - 1; j >= i; j--)
                 {
-                    var interaction = GetPolygonInteraction(clippingPoly, polygonList[j], tolerance);
+                    var interaction = GetPolygonInteraction(clippingPoly, polygonList[j]);
                     if (interaction.IntersectionWillBeEmpty())
                         polygonList.RemoveAt(j);
                     else
                     {
-                        var newPolygons = Intersect(clippingPoly, polygonList[j], interaction, outputAsCollectionType, tolerance);
+                        var newPolygons = Intersect(clippingPoly, polygonList[j], interaction, outputAsCollectionType);
                         foreach (var newPolygon in newPolygons)
                             polygonList.Insert(j, newPolygon);
                     }
@@ -520,16 +497,14 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = Math.Min(minuend.Tolerance, subtrahend.Tolerance);
             sw.Restart();
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
-                tolerance, new[] { subtrahend });
+                new[] { subtrahend });
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
             var polygonBInverted = subtrahend.Copy(true, true);
-            var relationship = GetPolygonInteraction(minuend, polygonBInverted, tolerance);
+            var relationship = GetPolygonInteraction(minuend, polygonBInverted);
             var pTVGL = Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
 
             sw.Stop();
@@ -585,18 +560,13 @@ namespace TVGL.TwoDimensional
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             var minuendsList = minuends.ToList();
-            var subtrahendsList = subtrahends as IList<Polygon> ?? subtrahends.ToList(); //to avoid re-enumeration since it's used
-            // twice below
-            if (double.IsNaN(tolerance))
-                tolerance = GetTolerancesFromPolygons(minuendsList, subtrahendsList);
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends, tolerance,
-                    subtrahends);
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends, subtrahends);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
 
-            foreach (var polyB in subtrahendsList)
+            foreach (var polyB in subtrahends)
             {
                 for (int i = minuendsList.Count - 1; i >= 0; i--)
                 {
@@ -638,18 +608,15 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB,
-            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
-            if (double.IsNaN(tolerance))
-                tolerance = Math.Min(polygonA.Tolerance, polygonB.Tolerance);
             sw.Restart();
-            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA },
-               tolerance, new[] { polygonB });
+            var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA }, new[] { polygonB });
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var relationship = GetPolygonInteraction(polygonA, polygonB, tolerance);
-            var pTVGL = ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
+            var pTVGL = ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType);
 
             sw.Stop();
             var tvglTime = sw.Elapsed;

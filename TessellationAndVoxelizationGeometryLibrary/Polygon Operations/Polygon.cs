@@ -72,6 +72,9 @@ namespace TVGL.TwoDimensional
         /// </summary>
         List<Vertex2D> _vertices;
 
+        internal int NumSigDigits { get; private set; }
+
+
         /// <summary>
         /// Gets the ordered x vertices.
         /// </summary>
@@ -428,12 +431,6 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Gets the tolerance for intersections and identical vertices in this polygon.
-        /// </summary>
-        /// <value>The tolerance.</value>
-        public double Tolerance { get; private set; }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="Polygon" /> class.
         /// Assumes path is closed and not self-intersecting.
         /// </summary>
@@ -460,19 +457,34 @@ namespace TVGL.TwoDimensional
 
         private void MakeVerticesFromPath()
         {
-            Tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.PolygonSameTolerance;
-            var j = _path.Count - 1;
-            for (int i = _path.Count - 2; i >= 0; i--)
+            var tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.PolygonSameTolerance;
+            NumSigDigits = 0;
+            while (tolerance < 1)
             {
-                if (_path[i].IsPracticallySame(_path[j], Tolerance))
-                    _path.RemoveAt(i);
-                j = i;
+                NumSigDigits++;
+                tolerance *= 10;
             }
-            if (_path[0].IsPracticallySame(_path[^1], Tolerance))
-                _path.RemoveAt(_path.Count - 1);
             _vertices = new List<Vertex2D>();
-            for (int i = 0; i < _path.Count; i++)
-                _vertices.Add(new Vertex2D(_path[i], i, Index));
+            var prevX = Math.Round(_path[0].X, NumSigDigits);
+            var prevY = Math.Round(_path[0].Y, NumSigDigits);
+
+            for (int i = _path.Count - 1; i >= 0; i--)
+            {
+                var x = Math.Round(_path[i].X, NumSigDigits);
+                var y = Math.Round(_path[i].Y, NumSigDigits);
+                if (x != prevX || y != prevY)
+                {
+                    var coord = new Vector2(x, y);
+                    _path[i] = coord;
+                    _vertices.Add(new Vertex2D(coord, i, Index));
+                    prevX = x;
+                    prevY = y;
+                }
+                else
+
+                    _path.RemoveAt(i);
+            }
+            _vertices.Reverse();
         }
 
         public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
@@ -490,8 +502,31 @@ namespace TVGL.TwoDimensional
         {
             _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
             SetBounds();
-            Tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.PolygonSameTolerance;
             Index = index;
+
+            var tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.PolygonSameTolerance;
+            NumSigDigits = 0;
+            while (tolerance < 1)
+            {
+                NumSigDigits++;
+                tolerance *= 10;
+            }
+            var prevX = Math.Round(_vertices[0].X, NumSigDigits);
+            var prevY = Math.Round(_vertices[0].Y, NumSigDigits);
+
+            for (int i = _vertices.Count - 1; i >= 0; i--)
+            {
+                var x = Math.Round(_vertices[i].X, NumSigDigits);
+                var y = Math.Round(_vertices[i].Y, NumSigDigits);
+                if (x != prevX || y != prevY)
+                {
+                    _vertices[i].Coordinates = new Vector2(x, y);
+                    prevX = x;
+                    prevY = y;
+                }
+                else
+                    _vertices.RemoveAt(i);
+            }
         }
 
         /// <summary>

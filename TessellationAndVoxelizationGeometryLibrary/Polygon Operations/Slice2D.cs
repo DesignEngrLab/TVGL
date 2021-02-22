@@ -98,7 +98,7 @@ namespace TVGL.TwoDimensional
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine, shallowPolygonTree.Tolerance, ref positiveShift, ref negativeShift);
+            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine,Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
@@ -221,7 +221,7 @@ namespace TVGL.TwoDimensional
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(distanceAlongDirection, shallowPolygonTree.Tolerance, ref positiveShift, ref negativeShift);
+            distances.SetPositiveAndNegativeShifts(distanceAlongDirection, Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
             return (positiveShift, negativeShift);
         }
     }

@@ -291,13 +291,13 @@ namespace TVGL.TwoDimensional
                 {
                     if (visitedIntersectionPairs.Contains((newFlippedEdge, edgeB))) continue;
                     visitedIntersectionPairs.Add((newFlippedEdge, edgeB));
-                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, polygon.Tolerance);
+                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates);
                 }
                 else
                 {
                     if (visitedIntersectionPairs.Contains((edgeA, newFlippedEdge))) continue;
                     visitedIntersectionPairs.Add((edgeA, newFlippedEdge));
-                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, polygon.Tolerance);
+                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates);
                 }
             }
             var newSubPolygonToInt = new Dictionary<Polygon, int>();

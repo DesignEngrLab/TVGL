@@ -111,7 +111,7 @@ namespace TVGL.TwoDimensional
             double tolerance, double deltaAngle = double.NaN)
         {
             sw.Restart();
-            var pClipper = OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
+            var pClipper = OffsetViaClipper(polygons, offset, notMiter, deltaAngle);
             sw.Stop();
 #if PRESENT
             Presenter.ShowAndHang(pClipper);
@@ -124,7 +124,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.Offset(offset, notMiter, deltaAngle));
             if (allPolygons.Count > 1)
-                allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
+                allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
             //}
             sw.Stop();
 #if PRESENT
@@ -148,7 +148,7 @@ namespace TVGL.TwoDimensional
             sw.Restart();
             //if (CLIPPER)
             //{
-            var pClipper = OffsetViaClipper(polygon, offset, notMiter, polygon.Tolerance, deltaAngle);
+            var pClipper = OffsetViaClipper(polygon, offset, notMiter, deltaAngle);
             //}
             sw.Stop();
 #if PRESENT
@@ -165,22 +165,22 @@ namespace TVGL.TwoDimensional
                 return new List<Polygon>();
             var longerLength = Math.Max(bb.Length1, bb.Length2);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
-            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, polygon.Tolerance, out var maxNumberOfPolygons,
+            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, out var maxNumberOfPolygons,
                 deltaAngle);
             var outer = new Polygon(outerData.points);
-            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints, maxNumberOfPolygons);
+            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
                 if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, polygon.Tolerance, out maxNumberOfPolygons, deltaAngle);
+                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, out maxNumberOfPolygons, deltaAngle);
                 var newHoles = new Polygon(newHoleData.points);
                 inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
-            var pTVGL = outers.IntersectPolygons(inners, tolerance: polygon.Tolerance).Where(p => p.IsPositive).ToList();
+            var pTVGL = outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
             //}
             sw.Stop();
 #if PRESENT
@@ -198,8 +198,9 @@ namespace TVGL.TwoDimensional
         }
 
         private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
-            double maxLengthSquared, double tolerance, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
+            double maxLengthSquared, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
         {
+            var tolerance = Math.Pow(10, -polygon.NumSigDigits);
             maxNumberOfPolygons = 1;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var numPoints = polygon.Edges.Length;
