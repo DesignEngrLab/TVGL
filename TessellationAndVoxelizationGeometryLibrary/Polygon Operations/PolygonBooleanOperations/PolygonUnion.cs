@@ -84,7 +84,7 @@ namespace TVGL.TwoDimensional
                 intersectionData.Relationship == SegmentRelationship.AEnclosesB;
         }
 
-        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
+        protected override bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
              (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))

@@ -55,12 +55,13 @@ namespace TVGL.TwoDimensional
                 var perimeterClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(p => p.Perimeter);
                 if (//numPolygonsTVGL == numPolygonsClipper
                     //&& //vertsTVGL == vertsClipper &&
-                     areaTVGL.IsPracticallySame(areaClipper, (areaTVGL + areaClipper) * tolerance) &&
-                     perimeterTVGL.IsPracticallySame(perimeterClipper, (perimeterTVGL + perimeterClipper) * tolerance) &&
-                     tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
-                     tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
-                     tvglMaxX.IsPracticallySame(clipperMaxX, extremaTolerance) &&
-                     tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
+                     areaTVGL.IsPracticallySame(areaClipper, (areaTVGL + areaClipper) * tolerance) 
+                     //&&
+                     //perimeterTVGL.IsPracticallySame(perimeterClipper, (perimeterTVGL + perimeterClipper) * tolerance) &&
+                     //tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
+                     //tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
+                     //tvglMaxX.IsPracticallySame(clipperMaxX, extremaTolerance) &&
+                     //tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
                     )
                 {
                     Debug.WriteLine("***** " + operationString + " matches");

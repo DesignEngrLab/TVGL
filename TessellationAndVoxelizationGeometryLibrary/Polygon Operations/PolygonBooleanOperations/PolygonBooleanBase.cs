@@ -173,6 +173,7 @@ namespace TVGL.TwoDimensional
             out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
+            bool? completed;
             includesWrongPoints = false;
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
@@ -208,12 +209,12 @@ namespace TVGL.TwoDimensional
 //#if PRESENT
 //                    Presenter.ShowAndHang(newPath);
 //#endif
-
                 }
-            } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge));
-//#if PRESENT
-//            Presenter.ShowAndHang(newPath);
-//#endif
+            } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
+            //#if PRESENT
+            //            Presenter.ShowAndHang(newPath);
+            //#endif
+            if (completed == null) newPath.Clear();
             return newPath;
         }
 
@@ -289,7 +290,7 @@ namespace TVGL.TwoDimensional
 
         protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA);
 
-        protected abstract bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
+        protected abstract bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
            PolygonEdge currentEdge, PolygonEdge startingEdge);
 
         protected abstract bool HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,

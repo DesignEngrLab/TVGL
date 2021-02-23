@@ -36,10 +36,20 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
             var dirName = dir.FullName;
-            var fileNames = dir.GetFiles("subtractFail44239.88704393519*.json").ToList();
+            // subtractFail44239.88708194444 - negative loop!!
+            // subtractFail44239.905172569444 - simple logic error
+            // subtractFail44239.90608998843
+            //subtractFail44239.90573585648
+            // subtractFail44239.91205680556 - clipper wrong
+            //subtractFail44239.91177162037
+            //subtractFail44239.90619650463
+            //subtractFail44239.90612273148 - not sure
+            //subtractFail44239.90704165509
+            //var fileNames = dir.GetFiles("subtractFail44239.917279988425*.json").ToList();
+            var fileNames = dir.GetFiles("subtra*.json").ToList();
             while (fileNames.Any())
             {
-                var filename = fileNames[0].Name;
+                var filename = fileNames[r.Next(fileNames.Count)].Name;
                 var nameSegments = filename.Split('.');
                 var preName = nameSegments[0] + "." + nameSegments[1];
                 var polygons = new List<Polygon>();

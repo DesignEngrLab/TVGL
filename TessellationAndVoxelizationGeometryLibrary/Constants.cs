@@ -51,7 +51,7 @@ namespace TVGL
         /// <summary>
         ///     The tolerance used for simplifying polygons by removing tiny lines.
         /// </summary>
-        public const double LineLengthMinimum = 1E-7;
+        public const double LineLengthMinimum = 1E-9;
 
         /// <summary>
         ///     The default color
