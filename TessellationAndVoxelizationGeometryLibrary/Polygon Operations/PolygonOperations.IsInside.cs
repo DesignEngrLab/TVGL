@@ -679,22 +679,34 @@ namespace TVGL.TwoDimensional
             var bIndex = 0;
             while (aIndex < aLines.Length && bIndex < bLines.Length) // this while loop increments both B lines and A lines
             {
-                if (aLines[aIndex].XMin < bLines[bIndex].XMin) // if the next A-line is lower compare it to all B-lines
+                var aXMin = needToRoundA ? Math.Round(aLines[aIndex].XMin, numSigDigs) : aLines[aIndex].XMin;
+                var bXMin = needToRoundB ? Math.Round(bLines[bIndex].XMin, numSigDigs) : bLines[bIndex].XMin;
+                if (aXMin < bXMin) // if the next A-line is lower compare it to all B-lines
                 {
                     var aLine = aLines[aIndex++];
+                    var aXMax = needToRoundA ? Math.Round(aLine.XMax, numSigDigs) : aLine.XMax;
                     var localBIndex = bIndex; //the localBIndex is incremented in the following loop, but we
                                               //need to come back to the main bIndex above
-                    while (localBIndex < bLines.Length && aLine.XMax >= bLines[localBIndex].XMin)
+                    while (aXMax >= bXMin)
+                    {
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
                         AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates, numSigDigs, needToRoundA, needToRoundB);
+                        if (localBIndex < bLines.Length) break;
+                        bXMin = needToRoundB ? Math.Round(bLines[localBIndex].XMin, numSigDigs) : bLines[localBIndex].XMin;
+                    }
                 }
                 else
                 {
                     var bLine = bLines[bIndex++];
+                    var bXMax = needToRoundB ? Math.Round(bLine.XMax, numSigDigs) : bLine.XMax;
                     var localAIndex = aIndex;
-                    while (localAIndex < aLines.Length && bLine.XMax >= aLines[localAIndex].XMin)
+                    while (bXMax >= aXMin)
+                    {
                         AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates, numSigDigs, needToRoundA, needToRoundB);
+                        if (localAIndex < aLines.Length) break;
+                        aXMin = needToRoundA ? Math.Round(aLines[localAIndex].XMin, numSigDigs) : aLines[localAIndex].XMin;
+                    }
                 }
             }
 
@@ -723,15 +735,12 @@ namespace TVGL.TwoDimensional
                 relationship |= PolyRelInternal.CoincidentEdges;
             if (intersections.Any(intersection => intersection.WhereIntersection != WhereIsIntersection.Intermediate))
                 relationship |= PolyRelInternal.CoincidentVertices;
-
-            var isEqual = true;
+            var equalTolerance = Math.Pow(10, -numSigDigs);
+            var isEqual = subPolygonA.Area.IsPracticallySame(subPolygonB.Area, equalTolerance);
             foreach (var intersect in intersections)
             {
-                if (intersect.Relationship != SegmentRelationship.DoubleOverlap || intersect.CollinearityType != CollinearityTypes.BothSameDirection)
-                {
-                    isEqual = false;
-                    break;
-                }
+                if (!isEqual) break;
+                isEqual = (intersect.Relationship != SegmentRelationship.DoubleOverlap || intersect.CollinearityType != CollinearityTypes.BothSameDirection);
             }
             if (isEqual)
                 return relationship | PolyRelInternal.Equal;
@@ -745,8 +754,13 @@ namespace TVGL.TwoDimensional
                 }
             }
             if (isOpposite)
-                return relationship | PolyRelInternal.EqualButOpposite;
-
+            {
+                if (subPolygonA.Area.IsPracticallySame(-subPolygonB.Area, equalTolerance) && subPolygonA.MinX.IsPracticallySame(subPolygonB.MinX, equalTolerance)
+                    && subPolygonA.MinY.IsPracticallySame(subPolygonB.MinY, equalTolerance) && subPolygonA.MaxX.IsPracticallySame(subPolygonB.MaxX, equalTolerance)
+                    && subPolygonA.MaxY.IsPracticallySame(subPolygonB.MaxY, equalTolerance))
+                    return relationship | PolyRelInternal.EqualButOpposite;
+                return relationship;
+            }
 
             if (intersections.Any(intersection => intersection.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
             intersection.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
@@ -932,14 +946,20 @@ namespace TVGL.TwoDimensional
                     var t_2 = oneOverdeterminnant * (aVector.Y * fromPointVector.X - aVector.X * fromPointVector.Y);
                     if (t_2 < 0 || t_2 >= 1)
                         return false;
-                    if (t_1.IsNegligible(Constants.PolygonSameTolerance))
+                    var aIntersection = new Vector2(
+                            Math.Round(aFrom.X + t_1 * aVector.X, numSigDigs),
+                            Math.Round(aFrom.Y + t_1 * aVector.Y, numSigDigs));
+                    var bIntersection = new Vector2(
+                            Math.Round(bFrom.X + t_2 * bVector.X, numSigDigs),
+                            Math.Round(bFrom.Y + t_2 * bVector.Y, numSigDigs));
+                    if (aIntersection == aFrom)
                     {
                         intersectionCoordinates = aFrom;
                         where = WhereIsIntersection.AtStartOfA;
                         if (aFrom == bTo)
                             possibleDuplicates.Insert(0, (intersections.Count, lineA, lineB.ToPoint.StartLine));
                     }
-                    else if (t_2.IsNegligible(Constants.PolygonSameTolerance))
+                    else if (bIntersection == bFrom)
                     {
                         intersectionCoordinates = bFrom;
                         where = WhereIsIntersection.AtStartOfB;
