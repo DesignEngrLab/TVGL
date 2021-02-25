@@ -10,7 +10,6 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using TVGL.Boolean_Operations;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -68,6 +67,8 @@ namespace TVGL
 
         public int NumLayers { get; set; }
 
+
+        #region Constructors
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
@@ -119,32 +120,14 @@ namespace TVGL
             }
             else Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
         }
+        #endregion
 
-        public static CrossSectionSolid CreateFromTessellatedSolid(TessellatedSolid ts, CartesianDirections direction, int numberOfLayers)
-        {
-            var intDir = Math.Abs((int)direction) - 1;
-            var max = intDir == 0 ? ts.Bounds[1].X : intDir == 1 ? ts.Bounds[1].Y : ts.Bounds[1].Z;
-            var min = intDir == 0 ? ts.Bounds[0].X : intDir == 1 ? ts.Bounds[0].Y : ts.Bounds[0].Z;
-            var lengthAlongDir = max - min;
-            var stepSize = lengthAlongDir / numberOfLayers;
-            var stepDistances = new Dictionary<int, double>();
-            //var stepDistances = new double[numberOfLayers];
-            stepDistances.Add(0, min + 0.5 * stepSize);
-            //stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
-            for (int i = 1; i < numberOfLayers; i++)
-                stepDistances.Add(i, stepDistances[i - 1] + stepSize);
-            //stepDistances[i] = stepDistances[i - 1] + stepSize;
-            var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
-
-            var layers = ts.GetUniformlySpacedCrossSections(direction, stepDistances[0], numberOfLayers, stepSize);
-            var layerDict = new Dictionary<int, IList<Polygon>>();
-            for (int i = 0; i < layers.Length; i++)
-                layerDict.Add(i, layers[i]);
-            var directionVector = Vector3.UnitVector(direction);
-            return new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
-        }
-
-        public void Add(List<Vertex> feature3D, Polygon feature2D, int layer)
+        /// <summary>
+        /// Adds the specified feature2 d.
+        /// </summary>
+        /// <param name="feature2D">The feature2 d.</param>
+        /// <param name="layer">The layer.</param>
+        public void Add(Polygon feature2D, int layer)
         {
             if (!Layer2D.ContainsKey(layer))
                 Layer2D[layer] = new List<Polygon>();
@@ -191,19 +174,19 @@ namespace TVGL
             }
             else stop -= increment;
             //Skip gaps in layer3D, since it may actually represents more than one solid body
-            //Parallel.ForEach(Layer2D, layer =>
-            foreach (var layer in Layer2D.Where(p => p.Value.Any()))
+            Parallel.ForEach(Layer2D, layer =>
+            //foreach (var layer in Layer2D.Where(p => p.Value.Any()))
             {
                 var i = layer.Key;
                 //Skip layers outside of the start and stop bounds. This is necessary because of the increment
-                if (i * increment < start * increment || i * increment > stop * increment) continue; // return; 
+                if (i * increment < start * increment || i * increment > stop * increment) return; 
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 var layerfaces = layer.Value.SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
                 foreach (var face in layerfaces) faces.Add(face);
             }
-            //);
+            );
             return faces.ToList();
         }
 
