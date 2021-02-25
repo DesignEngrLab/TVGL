@@ -55,7 +55,8 @@ namespace TVGL.TwoDimensional
                 var perimeterClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(p => p.Perimeter);
                 if (//numPolygonsTVGL == numPolygonsClipper
                     //&& //vertsTVGL == vertsClipper &&
-                     areaTVGL.IsPracticallySame(areaClipper, Math.Max(1e-6,(areaTVGL + areaClipper) * tolerance) )
+                    !Math.Abs(areaTVGL).IsGreaterThanNonNegligible(areaClipper, Math.Max(1e-6, (areaTVGL + areaClipper) * tolerance))
+                     //areaTVGL.IsPracticallySame(areaClipper, Math.Max(1e-6,(areaTVGL + areaClipper) * tolerance) )
                      //&&
                      //perimeterTVGL.IsPracticallySame(perimeterClipper, (perimeterTVGL + perimeterClipper) * tolerance) &&
                      //tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
@@ -582,7 +583,7 @@ namespace TVGL.TwoDimensional
             var tvglTime = sw.Elapsed;
             if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
             {
-                var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
+                var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in minuends)
                     TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "min.json");

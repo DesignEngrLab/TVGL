@@ -845,11 +845,13 @@ namespace TVGL.TwoDimensional
                 : lineA.FromPoint.Coordinates;
             var aTo = needToRoundA ? new Vector2(Math.Round(lineA.ToPoint.X, numSigDigs), Math.Round(lineA.ToPoint.Y, numSigDigs))
                 : lineA.ToPoint.Coordinates;
+            if (needToRoundA && aTo == aFrom) return false;
             var aVector = aTo - aFrom;
             var bFrom = needToRoundB ? new Vector2(Math.Round(lineB.FromPoint.X, numSigDigs), Math.Round(lineB.FromPoint.Y, numSigDigs))
                 : lineB.FromPoint.Coordinates;
             var bTo = needToRoundB ? new Vector2(Math.Round(lineB.ToPoint.X, numSigDigs), Math.Round(lineB.ToPoint.Y, numSigDigs))
                 : lineB.ToPoint.Coordinates;
+            if (needToRoundB && bTo == bFrom) return false;
             var bVector = bTo - bFrom;
             #endregion
 

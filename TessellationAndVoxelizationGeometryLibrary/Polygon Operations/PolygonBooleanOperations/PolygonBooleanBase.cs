@@ -31,7 +31,7 @@ namespace TVGL.TwoDimensional
             double minimumArea = double.NaN)
         {
             if (double.IsNaN(minimumArea))
-                minimumArea = Math.Abs(polygonA.PathArea + polygonB.PathArea)
+                minimumArea = (Math.Abs(polygonA.PathArea) + Math.Abs(polygonB.PathArea))
                     * Math.Pow(10, -(Math.Max(polygonA.NumSigDigits, polygonB.NumSigDigits)));
 
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
@@ -199,9 +199,9 @@ namespace TVGL.TwoDimensional
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
-                                                            //#if PRESENT
-                                                            //                    Presenter.ShowAndHang(newPath);
-                                                            //#endif
+//#if PRESENT
+//                    Presenter.ShowAndHang(newPath);
+//#endif
                 }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
