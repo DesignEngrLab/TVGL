@@ -692,7 +692,7 @@ namespace TVGL.TwoDimensional
                         // the real savings comes from the second condition in the while loop. We do not need to check bLines
                         // that have higher XMin than the current aLine's xMax. In this way, the number of comparisons is greatly limited
                         AddIntersectionBetweenLines(aLine, bLines[localBIndex++], intersections, possibleDuplicates, numSigDigs, needToRoundA, needToRoundB);
-                        if (localBIndex < bLines.Length) break;
+                        if (localBIndex >= bLines.Length) break;
                         bXMin = needToRoundB ? Math.Round(bLines[localBIndex].XMin, numSigDigs) : bLines[localBIndex].XMin;
                     }
                 }
@@ -704,7 +704,7 @@ namespace TVGL.TwoDimensional
                     while (bXMax >= aXMin)
                     {
                         AddIntersectionBetweenLines(aLines[localAIndex++], bLine, intersections, possibleDuplicates, numSigDigs, needToRoundA, needToRoundB);
-                        if (localAIndex < aLines.Length) break;
+                        if (localAIndex >= aLines.Length) break;
                         aXMin = needToRoundA ? Math.Round(aLines[localAIndex].XMin, numSigDigs) : aLines[localAIndex].XMin;
                     }
                 }
