@@ -27,9 +27,6 @@ namespace TVGL.TwoDimensional
             var unvisitedFaces = tessellatedSolid.Faces.ToHashSet();
             if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
                 tessellatedSolid.CompleteInitiation();
-            var tolerance = tessellatedSolid.SameTolerance;
-            // areaTolerance is used for the dot-product angle because dot is in units of length-squared
-            // but in rare cases the number may be quite large. so we set the max to 0.002 or 89.9 degrees - nearly orthogonal
             var transform = direction.TransformToXYPlane(out _);
             var polygons = new List<Polygon>();
 
@@ -42,7 +39,7 @@ namespace TVGL.TwoDimensional
                     // get a face that does not have a dot product orthogonal to the direction
                     // notice that IsNegligible is used with the dotTolerance specified above
                     dot = face.Normal.Dot(direction);
-                    if (!dot.IsNegligible(Constants.SameFaceNormalDotTolerance))  // && !face.Area.IsNegligible(areaTolerance))
+                    if (!dot.IsNegligible(Constants.SameFaceNormalDotTolerance))  
                     {
                         startingFace = face;
                         break;
@@ -108,8 +105,6 @@ namespace TVGL.TwoDimensional
         /// <param name="outerEdges">The outer edges.</param>
         /// <param name="isPositive">if set to <c>true</c> [positive].</param>
         /// <param name="transform">The transform.</param>
-        /// <param name="tolerance">The linear tolerance.</param>
-        /// <param name="areaTolerance">The area tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool isPositive, Matrix4x4 transform)
         {

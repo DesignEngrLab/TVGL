@@ -28,19 +28,12 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection,
-            double tolerance = double.NaN)
+            double minimumArea = double.NaN)
         {
-            double areaTolerance;
-            if (double.IsNaN(tolerance))
-            {
-                var minDimension = Math.Min(polygonA.MaxX - polygonA.MinX, Math.Min(polygonA.MaxY - polygonA.MinY,
-                    Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY)));
-                tolerance = Constants.BaseTolerance * minDimension;
-                areaTolerance = tolerance * minDimension;
-            }
-            else areaTolerance = tolerance * tolerance / Constants.PolygonSameTolerance;   // why change the input tolerance? here, we are using it as a
-            // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
-            // we need to find the characteristic length that was multiplied by the base tolerance to obtain the linear tolerance.
+            if (double.IsNaN(minimumArea))
+                minimumArea = Math.Abs(polygonA.PathArea + polygonB.PathArea)
+                    * Math.Pow(10, -(Math.Max(polygonA.NumSigDigits, polygonB.NumSigDigits)));
+
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
             delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
@@ -53,7 +46,7 @@ namespace TVGL.TwoDimensional
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
                     startEdge, switchPolygon, out _).ToList();
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(areaTolerance)) continue;
+                if (area.IsNegligible(minimumArea)) continue;
                 newPolygons.Add(new Polygon(polyCoordinates, polygonIndex++));
             }
             // to handle the non-intersecting subpolygons
@@ -206,9 +199,9 @@ namespace TVGL.TwoDimensional
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
-//#if PRESENT
-//                    Presenter.ShowAndHang(newPath);
-//#endif
+                                                            //#if PRESENT
+                                                            //                    Presenter.ShowAndHang(newPath);
+                                                            //#endif
                 }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT

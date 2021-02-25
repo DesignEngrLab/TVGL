@@ -457,9 +457,9 @@ namespace TVGL.TwoDimensional
 
         private void MakeVerticesFromPath()
         {
-            var tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.PolygonSameTolerance;
+            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
             NumSigDigits = 0;
-            while (tolerance < 1)
+            while (tolerance < 1 && NumSigDigits < 15)
             {
                 NumSigDigits++;
                 tolerance *= 10;
@@ -504,9 +504,9 @@ namespace TVGL.TwoDimensional
             SetBounds();
             Index = index;
 
-            var tolerance = Math.Min(MaxX - MinX, MaxY - MinY) * Constants.PolygonSameTolerance;
+            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
             NumSigDigits = 0;
-            while (tolerance < 1)
+            while (tolerance < 1 && NumSigDigits < 15)
             {
                 NumSigDigits++;
                 tolerance *= 10;

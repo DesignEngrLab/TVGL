@@ -1021,8 +1021,8 @@ namespace TVGL.TwoDimensional
                 if (needToRoundB)
                 {
                     previousBVector = new Vector2(
-                        Math.Round(previousBLine.ToPoint.X, numSigDigs) - Math.Round(previousBLine.FromPoint.X, numSigDigs),
-                        Math.Round(previousBLine.ToPoint.Y, numSigDigs) - Math.Round(previousBLine.FromPoint.Y, numSigDigs)
+                        Math.Round(previousBLine.ToPoint.X - previousBLine.FromPoint.X, numSigDigs),
+                        Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
                         );
                 }
                 else previousBVector = previousBLine.Vector;
@@ -1035,8 +1035,8 @@ namespace TVGL.TwoDimensional
                 if (needToRoundA)
                 {
                     previousAVector = new Vector2(
-                        Math.Round(previousALine.ToPoint.X, numSigDigs) - Math.Round(previousALine.FromPoint.X, numSigDigs),
-                        Math.Round(previousALine.ToPoint.Y, numSigDigs) - Math.Round(previousALine.FromPoint.Y, numSigDigs)
+                        Math.Round(previousALine.ToPoint.X - previousALine.FromPoint.X, numSigDigs),
+                        Math.Round(previousALine.ToPoint.Y - previousALine.FromPoint.Y, numSigDigs)
                         );
                 }
                 else previousAVector = previousALine.Vector;
@@ -1044,9 +1044,13 @@ namespace TVGL.TwoDimensional
                 if (needToRoundB)
                 {
                     previousBVector = new Vector2(
-                        Math.Round(previousBLine.ToPoint.X, numSigDigs) - Math.Round(previousBLine.FromPoint.X, numSigDigs),
-                        Math.Round(previousBLine.ToPoint.Y, numSigDigs) - Math.Round(previousBLine.FromPoint.Y, numSigDigs)
+                        Math.Round(previousBLine.ToPoint.X - previousBLine.FromPoint.X, numSigDigs),
+                        Math.Round(previousBLine.ToPoint.Y - previousBLine.FromPoint.Y, numSigDigs)
                         );
+                    //previousBVector = new Vector2(
+                    //    Math.Round(previousBLine.ToPoint.X, numSigDigs) - Math.Round(previousBLine.FromPoint.X, numSigDigs),
+                    //    Math.Round(previousBLine.ToPoint.Y, numSigDigs) - Math.Round(previousBLine.FromPoint.Y, numSigDigs)
+                    //    );
                 }
                 else previousBVector = previousBLine.Vector;
                 prevACrossLineB = previousAVector.Cross(bVector);
