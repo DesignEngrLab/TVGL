@@ -27,6 +27,7 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
+        [JsonIgnore]
         public Vector3 Center
         {
             get
@@ -44,6 +45,7 @@ namespace TVGL
         ///     Gets the volume.
         /// </summary>
         /// <value>The volume.</value>
+        [JsonIgnore]
         public double Volume
         {
             get
@@ -61,6 +63,7 @@ namespace TVGL
         ///     Gets the surface area.
         /// </summary>
         /// <value>The surface area.</value>
+        [JsonIgnore]
         public double SurfaceArea
         {
             get
@@ -152,7 +155,8 @@ namespace TVGL
         /// <summary>
         ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
-        [JsonProperty(ItemTypeNameHandling = TypeNameHandling.Auto, TypeNameHandling = TypeNameHandling.Auto)]
+        //[JsonProperty(ItemTypeNameHandling = TypeNameHandling.Auto, TypeNameHandling = TypeNameHandling.Auto)]
+        [JsonIgnore]
         public List<PrimitiveSurface> Primitives { get; set; }
 
         public double SameTolerance { get; set; }
