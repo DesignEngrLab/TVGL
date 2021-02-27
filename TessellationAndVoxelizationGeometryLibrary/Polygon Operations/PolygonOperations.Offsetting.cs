@@ -110,30 +110,35 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
+#if CLIPPER
+            return OffsetViaClipper(polygons, offset, notMiter, deltaAngle);
+#elif !COMPARE
+            var allPolygons = new List<Polygon>();
+            foreach (var polygon in polygons)
+                allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
+            if (allPolygons.Count > 1)
+                allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
+#else
             sw.Restart();
             var pClipper = OffsetViaClipper(polygons, offset, notMiter, deltaAngle);
             sw.Stop();
-#if PRESENT
-            Presenter.ShowAndHang(pClipper);
-#endif
             var clipTime = sw.Elapsed;
             sw.Restart();
-            //else
-            //{
+
             var allPolygons = new List<Polygon>();
             foreach (var polygon in polygons)
-                allPolygons.AddRange(polygon.Offset(offset, notMiter, deltaAngle));
+                allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
             if (allPolygons.Count > 1)
                 allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
-            //}
             sw.Stop();
-#if PRESENT
-            Presenter.ShowAndHang(allPolygons);
-#endif
             var tvglTime = sw.Elapsed;
             if (Compare(allPolygons, pClipper, "Offset", clipTime, tvglTime))
             {
-#if !PRESENT
+#if PRESENT
+            Presenter.ShowAndHang(polygons);
+            Presenter.ShowAndHang(pClipper);
+            Presenter.ShowAndHang(allPolygons);
+#else
                 var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
                 int i = 0;
                 foreach (var poly in polygons)
@@ -141,23 +146,71 @@ namespace TVGL.TwoDimensional
 #endif
             }
             return pClipper;
+#endif
         }
+
+        private static List<Polygon> OffsetJust(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
+        {
+            var bb = polygon.BoundingRectangle();
+            // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
+            // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
+            if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
+                return new List<Polygon>();
+            var longerLength = Math.Max(bb.Length1, bb.Length2);
+            var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
+            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, out var maxNumberOfPolygons,
+                deltaAngle);
+            var outer = new Polygon(outerData.points);
+            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
+            var inners = new List<Polygon>();
+            foreach (var hole in polygon.InnerPolygons)
+            {
+                bb = hole.BoundingRectangle();
+                // like the above, but a positive offset will close the hole
+                if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
+                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, out maxNumberOfPolygons, deltaAngle);
+                var newHoles = new Polygon(newHoleData.points);
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
+            }
+            if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
+            return outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
+        }
+
 
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
+#if CLIPPER
+return OffsetViaClipper(polygon, offset, notMiter, deltaAngle);
+#elif !COMPARE
+            var bb = polygon.BoundingRectangle();
+            // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
+            // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
+            if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
+                return new List<Polygon>();
+            var longerLength = Math.Max(bb.Length1, bb.Length2);
+            var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
+            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, out var maxNumberOfPolygons,
+                deltaAngle);
+            var outer = new Polygon(outerData.points);
+            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
+            var inners = new List<Polygon>();
+            foreach (var hole in polygon.InnerPolygons)
+            {
+                bb = hole.BoundingRectangle();
+                // like the above, but a positive offset will close the hole
+                if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
+                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, out maxNumberOfPolygons, deltaAngle);
+                var newHoles = new Polygon(newHoleData.points);
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
+            }
+            if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
+            return outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
+#else
             sw.Restart();
-            //if (CLIPPER)
-            //{
             var pClipper = OffsetViaClipper(polygon, offset, notMiter, deltaAngle);
-            //}
             sw.Stop();
-#if PRESENT
-            Presenter.ShowAndHang(pClipper);
-#endif
             var clipTime = sw.Elapsed;
             sw.Restart();
-            //else
-            //{
             var bb = polygon.BoundingRectangle();
             // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
             // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
@@ -181,20 +234,21 @@ namespace TVGL.TwoDimensional
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
             var pTVGL = outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
-            //}
             sw.Stop();
-#if PRESENT
-            Presenter.ShowAndHang(pTVGL);
-#endif
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "Offset", clipTime, tvglTime))
             {
-#if !PRESENT
+#if PRESENT
+            Presenter.ShowAndHang(polygon);
+            Presenter.ShowAndHang(pClipper);
+            Presenter.ShowAndHang(pTVGL);
+#else
                 var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
                 TVGL.IOFunctions.IO.Save(polygon, fileNameStart + ".0.json");
 #endif
             }
             return pClipper;
+#endif
         }
 
         private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
