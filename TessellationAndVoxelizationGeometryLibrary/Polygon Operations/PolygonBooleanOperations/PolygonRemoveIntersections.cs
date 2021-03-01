@@ -61,7 +61,8 @@ namespace TVGL.TwoDimensional
                 currentEdge = null;
                 return false;
             }
-            if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
+            if (intersectionData.Relationship == SegmentRelationship.NoOverlap
+                || intersectionData.Relationship == SegmentRelationship.Abutting)
             {
                 currentEdge = null;
                 return false;

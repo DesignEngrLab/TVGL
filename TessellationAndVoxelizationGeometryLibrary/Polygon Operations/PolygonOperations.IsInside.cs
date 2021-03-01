@@ -736,18 +736,19 @@ namespace TVGL.TwoDimensional
             if (intersections.Any(intersection => intersection.WhereIntersection != WhereIsIntersection.Intermediate))
                 relationship |= PolyRelInternal.CoincidentVertices;
             var equalTolerance = Math.Pow(10, -numSigDigs);
-            var isEqual = subPolygonA.Area.IsPracticallySame(subPolygonB.Area, equalTolerance);
+            var isEqual = subPolygonA.PathArea.IsPracticallySame(subPolygonB.PathArea, equalTolerance);
             foreach (var intersect in intersections)
             {
                 if (!isEqual) break;
-                isEqual = (intersect.Relationship != SegmentRelationship.DoubleOverlap || intersect.CollinearityType != CollinearityTypes.BothSameDirection);
+                isEqual = !(intersect.Relationship != SegmentRelationship.DoubleOverlap || intersect.CollinearityType != CollinearityTypes.BothSameDirection);
             }
             if (isEqual)
                 return relationship | PolyRelInternal.Equal;
             var isOpposite = true;
             foreach (var intersect in intersections)
             {
-                if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.CollinearityType != CollinearityTypes.BothOppositeDirection)
+                if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.Relationship != SegmentRelationship.Abutting || 
+                    intersect.CollinearityType != CollinearityTypes.BothOppositeDirection)
                 {
                     isOpposite = false;
                     break;
@@ -1074,7 +1075,7 @@ namespace TVGL.TwoDimensional
             {
                 if (aVector.Dot(bVector) > 0)
                     return (SegmentRelationship.DoubleOverlap, CollinearityTypes.BothSameDirection);
-                return (SegmentRelationship.NoOverlap, CollinearityTypes.BothOppositeDirection);
+                return (SegmentRelationship.Abutting, CollinearityTypes.BothOppositeDirection);
             }
             // most restrictive is when both lines are parallel
             if (lineACrossLineB == 0 && prevACrossPrevB == 0)
@@ -1085,11 +1086,16 @@ namespace TVGL.TwoDimensional
                     //case 16
                     return (SegmentRelationship.DoubleOverlap, CollinearityTypes.BothSameDirection);
                 if (lineADotLineB < 0 && prevADotPrevB < 0 && lineACrossPrevB != 0)
-                    // a rare version of case 5 or 6 where the lines enter and leave the point on parallel lines, but
-                    // there is no collinearity! A's cross product of the corner would be the same as B's. If this corner
-                    // cross is positive/convex, then no overlap. if concave, then double overlap
-                    return (previousAVector.Cross(aVector) > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
+                // a rare version of case 5 or 6 where the lines enter and leave the point on parallel lines, but
+                // there is no collinearity! A's cross product of the corner would be the same as B's. If this corner
+                // cross is positive/convex, then no overlap. if concave, then double overlap
+                {
+                    var cross = previousAVector.Cross(aVector);
+                    if (cross.IsNegligible())
+                        return (SegmentRelationship.Abutting, CollinearityTypes.BothOppositeDirection);
+                    return (cross > 0 ? SegmentRelationship.NoOverlap : SegmentRelationship.DoubleOverlap,
                         CollinearityTypes.None);
+                }
                 if (prevADotPrevB < 0) // then lineADotLineB would be positive, and polygons were heading
                                        // right to each other on parallel lines before joining. this is a rare case 7 or 8
                     return (previousAVector.Cross(aVector) > 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
@@ -1104,7 +1110,7 @@ namespace TVGL.TwoDimensional
                 var lineADotPrevB = aVector.Dot(previousBVector);
                 var prevADotLineB = previousAVector.Dot(bVector);
                 if (lineADotPrevB < 0 && prevADotLineB < 0)  // case 15
-                    return (SegmentRelationship.NoOverlap, CollinearityTypes.BothOppositeDirection);
+                    return (SegmentRelationship.Abutting, CollinearityTypes.BothOppositeDirection);
                 if (lineADotPrevB > 0 && prevADotLineB > 0)  // a very unusual case (although it shows up in the chunky polygon
                     return (previousAVector.Cross(aVector) >= 0 ? SegmentRelationship.BEnclosesA : SegmentRelationship.AEnclosesB,
                         CollinearityTypes.None);

@@ -32,21 +32,18 @@ namespace TVGLUnitTestsAndBenchmarking
 
             // 1. bubble up from the bin directories to find the TestFiles directory
             var dir = new DirectoryInfo(".");
-            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "repos"))
                 dir = dir.Parent;
-            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
+            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "repos\\medemaMVP\\MedemaUI\\bin\\Debug\\netcoreapp3.1");
             var dirName = dir.FullName;
-            // subtractFail44239.88708194444 - negative loop!!
-            // subtractFail44239.905172569444 - simple logic error
-            // subtractFail44239.90608998843
-            //subtractFail44239.90573585648
-            // subtractFail44239.91205680556 - clipper wrong
-            //subtractFail44239.91177162037
-            //subtractFail44239.90619650463
-            //subtractFail44239.90612273148 - not sure
-            //subtractFail44239.90704165509
-            //var fileNames = dir.GetFiles("subtractFail44239.917279988425*.json").ToList();
-            var fileNames = dir.GetFiles("subtra*.json").ToList();
+            //subtractFail44254.55676414352
+            // subtractFail44254.53607401621.sub.json
+            //subtractFail44254.55658121528
+            // subtractFail44254.5640559838
+            //subtractFail44254.57326221065
+            // subtractFail44254.56914480324
+            //subtractFail44254.57365136574
+            var fileNames = dir.GetFiles("subtractFail44254.57369567129*.json").ToList();
             while (fileNames.Any())
             {
                 var filename = fileNames[r.Next(fileNames.Count)].Name;
@@ -78,7 +75,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var polygon1 = new Polygon(polysValue.Item1);
                 //var polygon2 = new Polygon(polysValue.Item2);
                 //Presenter.ShowAndHang(polygons);
-                //polygons = polygons.UnionPolygons();
+                //polygons = polygons.IntersectPolygons();
                 //polygons = polygons.UnionPolygons(new Polygon[0]);
                 continue;
                 var polygon = polygons.LargestPolygon();

@@ -110,14 +110,15 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
-#if CLIPPER
+#if !CLIPPER
             return OffsetViaClipper(polygons, offset, notMiter, deltaAngle);
 #elif !COMPARE
             var allPolygons = new List<Polygon>();
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
             if (allPolygons.Count > 1)
-                allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
+                return allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
+            return allPolygons;
 #else
             sw.Restart();
             var pClipper = OffsetViaClipper(polygons, offset, notMiter, deltaAngle);

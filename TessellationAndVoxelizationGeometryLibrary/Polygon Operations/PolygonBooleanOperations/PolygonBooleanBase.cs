@@ -47,7 +47,7 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon, out _).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minimumArea)) continue;
-                newPolygons.Add(new Polygon(polyCoordinates, polygonIndex++));
+                newPolygons.Add(new Polygon(polyCoordinates.RemoveCollinearEdgesDestructiveList(), polygonIndex++));
             }
             // to handle the non-intersecting subpolygons
             var nonIntersectingASubPolygons = new List<Polygon>(polygonA.AllPolygons);

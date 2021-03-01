@@ -67,13 +67,13 @@ namespace TVGL.TwoDimensional
                 currentEdge = intersectionData.EdgeA;
                 return true;
             }
+            // Double_Overlap or Abutting
             currentEdge = null;
             return false;
         }
 
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
-            if (intersectionData.Relationship == SegmentRelationship.NoOverlap) return true;
             if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB) ||
                 (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.BEnclosesA))
                 return false;

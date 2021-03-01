@@ -72,7 +72,7 @@ namespace TVGL
         /// The tolerance multiplier (multiplied into the minimum X or Y dimension of the polygon) for 
         /// detecting identical/repeat vertices and for intersection checks in various polygon functions.
         /// </summary>
-        public const double PolygonSameTolerance = 1e-9;
+        public const double PolygonSameTolerance = 1e-7;
 
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations
@@ -852,6 +852,7 @@ namespace TVGL
     public enum SegmentRelationship
     {
         NoOverlap,
+        Abutting,
         DoubleOverlap,
         BEnclosesA,
         AEnclosesB,

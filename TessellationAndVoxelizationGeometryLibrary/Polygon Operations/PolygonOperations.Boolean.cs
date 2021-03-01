@@ -33,11 +33,12 @@ namespace TVGL.TwoDimensional
                 }
                 using (var fs = File.Open(timeFiles, FileMode.Append))
                 {
-                    byte[] info = new UTF8Encoding(true).GetBytes(operationString + "," + clipTime.Ticks.ToString() + "," + tvglTime.Ticks.ToString() + "\n");
+                    byte[] info = new UTF8Encoding(true).GetBytes(operationString + "," + clipTime.Ticks.ToString() + "," + tvglTime.Ticks.ToString() +
+                        "," + clipperResult.Sum(p => p.Vertices.Count) + "," + tvglResult.Sum(p => p.Vertices.Count) + "\n");
                     fs.Write(info, 0, info.Length);
                 }
 
-                var tolerance = 0.2;
+                var tolerance = 0.05;
                 var clipperMinX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinX);
                 var clipperMinY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinY);
                 var clipperMaxX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxX);
@@ -56,14 +57,14 @@ namespace TVGL.TwoDimensional
                 var perimeterTVGL = tvglResult == null || !tvglResult.Any() ? 0 : tvglResult.Sum(p => p.Perimeter);
                 var perimeterClipper = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Sum(p => p.Perimeter);
                 if (
-                    ((double)Math.Abs(numPolygonsTVGL - numPolygonsClipper) / (numPolygonsTVGL + numPolygonsClipper + tolerance)).IsNegligible(tolerance) &&
-                    ((double)Math.Abs(vertsTVGL - vertsClipper) / (vertsTVGL + vertsClipper + tolerance)).IsNegligible(tolerance) &&
-                    (Math.Abs(areaTVGL - areaClipper) / (areaTVGL + areaClipper + tolerance)).IsNegligible(tolerance) &&
-                    (Math.Abs(perimeterTVGL - perimeterClipper) / Math.Abs(perimeterTVGL + perimeterClipper + tolerance)).IsNegligible(tolerance) &&
-                    tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
-                    tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
-                    tvglMaxX.IsPracticallySame(clipperMaxX, extremaTolerance) &&
-                    tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
+                    //((double)Math.Abs(numPolygonsTVGL - numPolygonsClipper) / (numPolygonsTVGL + numPolygonsClipper + tolerance)).IsNegligible(tolerance) &&
+                    //((double)Math.Abs(vertsTVGL - vertsClipper) / (vertsTVGL + vertsClipper + tolerance)).IsNegligible(tolerance) &&
+                    (Math.Abs(areaTVGL - areaClipper) / (areaTVGL + areaClipper + tolerance)).IsNegligible(tolerance)  //&&
+                    //(Math.Abs(perimeterTVGL - perimeterClipper) / Math.Abs(perimeterTVGL + perimeterClipper + tolerance)).IsNegligible(tolerance) &&
+                    //tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
+                    //tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
+                    //tvglMaxX.IsPracticallySame(clipperMaxX, extremaTolerance) &&
+                    //tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
                     )
                 {
                     Debug.WriteLine("***** " + operationString + " matches");
@@ -72,23 +73,25 @@ namespace TVGL.TwoDimensional
                 }
                 else
                 {
-                    if (numPolygonsClipper == 0) return false;
+                    //if (numPolygonsClipper == 0) return false;
                     Debug.WriteLine(operationString + " does not match");
                     Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
-                    if (numPolygonsTVGL == numPolygonsClipper)
-                        Debug.WriteLine("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
-                    else Debug.WriteLine("    --- polygons: TVGL={0}  : Clipper={1} ", numPolygonsTVGL, numPolygonsClipper);
-                    if (vertsTVGL == vertsClipper)
-                        Debug.WriteLine("+++ both have {0} vertices(s)", vertsTVGL);
-                    else Debug.WriteLine("    --- verts: TVGL= {0}  : Clipper={1} ", vertsTVGL, vertsClipper);
+                    //if (numPolygonsTVGL == numPolygonsClipper)
+                    //    Debug.WriteLine("+++ both have {0} polygon(s)", numPolygonsTVGL, numPolygonsClipper);
+                    //else 
+                        Debug.WriteLine("    --- polygons: TVGL={0}  : Clipper={1} ", numPolygonsTVGL, numPolygonsClipper);
+                    //if (vertsTVGL == vertsClipper)
+                    //    Debug.WriteLine("+++ both have {0} vertices(s)", vertsTVGL);
+                    //else
+                        Debug.WriteLine("    --- verts: TVGL= {0}  : Clipper={1} ", vertsTVGL, vertsClipper);
 
-                    if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
-                        Debug.WriteLine("+++ both have area of {0}", areaTVGL);
-                    else
+                    //if (areaTVGL.IsPracticallySame(areaClipper, tolerance))
+                    //    Debug.WriteLine("+++ both have area of {0}", areaTVGL);
+                    //else
                         Debug.WriteLine("    --- area: TVGL= {0}  : Clipper={1} ", areaTVGL, areaClipper);
-                    if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
-                        Debug.WriteLine("+++ both have perimeter of {0}", perimeterTVGL);
-                    else
+                    //if (perimeterTVGL.IsPracticallySame(perimeterClipper, tolerance))
+                    //    Debug.WriteLine("+++ both have perimeter of {0}", perimeterTVGL);
+                    //else
                         Debug.WriteLine("    --- perimeter: TVGL={0}  : Clipper={1} ", perimeterTVGL, perimeterClipper);
                     if (perimeterClipper - perimeterTVGL > 0 && Math.Round(perimeterClipper - perimeterTVGL) % 2 == 0)
                         Debug.WriteLine("<><><><><><><> clipper is connecting separate poly's :", (int)(perimeterClipper - perimeterTVGL) / 2);
@@ -150,9 +153,9 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "Union", clipTime, tvglTime))
             {
 #if PRESENT
-            Presenter.ShowAndHang(new[]{polygonA, polygonB});
-            Presenter.ShowAndHang(pClipper);
-            Presenter.ShowAndHang(pTVGL);
+                Presenter.ShowAndHang(new[] { polygonA, polygonB });
+                Presenter.ShowAndHang(pClipper);
+                Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + ".A.json");
@@ -406,9 +409,11 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "UnionTwoLists", clipTime, tvglTime))
             {
 #if PRESENT
-                Presenter.ShowAndHang(polygons);
+                var all = polygonsA.ToList();
+                all.AddRange(polygonsB);
+                Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(polygonList);
+                Presenter.ShowAndHang(unionedPolygons);
 #else
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
@@ -469,9 +474,9 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "Intersect", clipTime, tvglTime))
             {
 #if PRESENT
-                Presenter.ShowAndHang(polygons);
+                Presenter.ShowAndHang(new[] { polygonA, polygonB });
                 Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(polygonList);
+                Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
@@ -529,20 +534,14 @@ namespace TVGL.TwoDimensional
 #elif !COMPARE
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
-            var polygonAList = new List<Polygon>(polygonsA);
-            var polygonBList = polygonsB.ToList();
 
-            foreach (var polyB in polygonBList)
+            var result = polygonsA.ToList();
+            foreach (var polygon in polygonsB)
             {
-                for (int i = polygonAList.Count - 1; i >= 0; i--)
-                {
-                    var newPolygons = polygonAList[i].Intersect(polyB, outputAsCollectionType);
-                    polygonAList.RemoveAt(i);
-                    foreach (var newPoly in newPolygons)
-                        polygonAList.Insert(i, newPoly);
-                }
+                if (!result.Any()) break;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList();
             }
-            return polygonAList;
+            return result;
 #else
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
@@ -570,9 +569,11 @@ namespace TVGL.TwoDimensional
             if (Compare(polygonAList, pClipper, "IntersectTwoList", clipTime, tvglTime))
             {
 #if PRESENT
-                Presenter.ShowAndHang(polygons);
+                var all = polygonsA.ToList();
+                all.AddRange(polygonsB);
+                Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(polygonList);
+                Presenter.ShowAndHang(polygonAList);
 #else
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
@@ -604,25 +605,15 @@ namespace TVGL.TwoDimensional
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons);
 #elif !COMPARE
-            var polygonList = polygons.ToList();
-            for (int i = polygonList.Count - 2; i > 0; i--)
+            var result = new List<Polygon>();
+            if (!polygons.Any()) return result;
+            else result.Add(polygons.First());
+            foreach (var polygon in polygons.Skip(1))
             {
-                var clippingPoly = polygonList[i];
-                polygonList.RemoveAt(i);
-                for (int j = polygonList.Count - 1; j >= i; j--)
-                {
-                    var interaction = GetPolygonInteraction(clippingPoly, polygonList[j]);
-                    if (interaction.IntersectionWillBeEmpty())
-                        polygonList.RemoveAt(j);
-                    else
-                    {
-                        var newPolygons = Intersect(clippingPoly, polygonList[j], interaction, outputAsCollectionType);
-                        foreach (var newPolygon in newPolygons)
-                            polygonList.Insert(j, newPolygon);
-                    }
-                }
+                if (!result.Any()) break;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList();
             }
-            return polygonList;
+            return result;
 #else
             var polygonList = polygons.ToList();
             sw.Restart();
@@ -630,23 +621,15 @@ namespace TVGL.TwoDimensional
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            for (int i = polygonList.Count - 2; i > 0; i--)
+            var result = new List<Polygon>();
+            if (!polygons.Any()) return result;
+            else result.Add(polygons.First());
+            foreach (var polygon in polygons.Skip(1))
             {
-                var clippingPoly = polygonList[i];
-                polygonList.RemoveAt(i);
-                for (int j = polygonList.Count - 1; j >= i; j--)
-                {
-                    var interaction = GetPolygonInteraction(clippingPoly, polygonList[j]);
-                    if (interaction.IntersectionWillBeEmpty())
-                        polygonList.RemoveAt(j);
-                    else
-                    {
-                        var newPolygons = Intersect(clippingPoly, polygonList[j], interaction, outputAsCollectionType);
-                        foreach (var newPolygon in newPolygons)
-                            polygonList.Insert(j, newPolygon);
-                    }
-                }
+                if (!result.Any()) break;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList() ;
             }
+            return result;
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(polygonList, pClipper, "IntersectList", clipTime, tvglTime))
@@ -803,8 +786,9 @@ foreach (var polyB in subtrahends)
             if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
             {
 #if PRESENT
-
-                Presenter.ShowAndHang(new[] { minuends, subtrahends });
+                var all = minuends.ToList();
+                all.AddRange(subtrahends);
+                Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
                 Presenter.ShowAndHang(minuendsList);
 #else
@@ -873,7 +857,7 @@ foreach (var polyB in subtrahends)
                 TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
                 TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "." + "B.json");
 #endif
-                }
+            }
             return pClipper;
 #endif
         }

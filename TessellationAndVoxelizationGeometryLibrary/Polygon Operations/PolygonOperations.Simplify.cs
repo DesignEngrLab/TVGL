@@ -73,6 +73,26 @@ namespace TVGL.TwoDimensional
             return polygon;
         }
 
+        /// <summary>
+        /// Simplifies the specified polygons by removing vertices that have collinear edges.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static List<Vector2> RemoveCollinearEdgesDestructiveList(this List<Vector2> path)
+        {
+            var forwardPoint = path[0];
+            var currentPoint = path[^1];
+            for (int i = path.Count - 1; i >= 0; i--)
+            {
+                var backwardPoint = i == 0 ? path[^1] : path[i - 1];
+                var cross = (currentPoint - backwardPoint).Cross(forwardPoint - currentPoint);
+                if (cross.IsNegligible()) path.RemoveAt(i);
+                else forwardPoint = currentPoint;
+                currentPoint = backwardPoint;
+            }
+            return path;
+        }
+
         #endregion
 
         #region SimplifyMinLength
