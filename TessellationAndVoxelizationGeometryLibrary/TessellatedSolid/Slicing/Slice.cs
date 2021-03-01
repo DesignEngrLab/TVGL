@@ -793,8 +793,7 @@ namespace TVGL.Boolean_Operations
             var planeDistance = plane.DistanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
 
             var transform = direction.TransformToXYPlane(out _);
-            if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
-                tessellatedSolid.CompleteInitiation();
+            tessellatedSolid.MakeEdgesIfNonExistent();
             var currentEdges = new Dictionary<Edge, Vector2>();
             foreach (var edge in tessellatedSolid.Edges)
             {
@@ -936,8 +935,7 @@ namespace TVGL.Boolean_Operations
             var planeDistance = distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
 
             var transform = direction.TransformToXYPlane(out _);
-            if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
-                tessellatedSolid.CompleteInitiation();
+            tessellatedSolid.MakeEdgesIfNonExistent();
             var currentEdges = new HashSet<Edge>();
             foreach (var edge in tessellatedSolid.Edges)
             {

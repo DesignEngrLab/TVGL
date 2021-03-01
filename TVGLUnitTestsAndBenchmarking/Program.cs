@@ -43,7 +43,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //subtractFail44254.57326221065
             // subtractFail44254.56914480324
             //subtractFail44254.57365136574
-            var fileNames = dir.GetFiles("subtractFail44254.57369567129*.json").ToList();
+            var fileNames = dir.GetFiles("subtract*.json").ToList();
             while (fileNames.Any())
             {
                 var filename = fileNames[r.Next(fileNames.Count)].Name;

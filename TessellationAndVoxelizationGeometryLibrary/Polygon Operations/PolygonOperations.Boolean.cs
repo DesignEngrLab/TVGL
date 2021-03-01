@@ -38,7 +38,7 @@ namespace TVGL.TwoDimensional
                     fs.Write(info, 0, info.Length);
                 }
 
-                var tolerance = 0.05;
+                var tolerance = 0.2;
                 var clipperMinX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinX);
                 var clipperMinY = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Min(p => p.MinY);
                 var clipperMaxX = clipperResult == null || !clipperResult.Any() ? 0 : clipperResult.Max(p => p.MaxX);
@@ -60,6 +60,7 @@ namespace TVGL.TwoDimensional
                     //((double)Math.Abs(numPolygonsTVGL - numPolygonsClipper) / (numPolygonsTVGL + numPolygonsClipper + tolerance)).IsNegligible(tolerance) &&
                     //((double)Math.Abs(vertsTVGL - vertsClipper) / (vertsTVGL + vertsClipper + tolerance)).IsNegligible(tolerance) &&
                     (Math.Abs(areaTVGL - areaClipper) / (areaTVGL + areaClipper + tolerance)).IsNegligible(tolerance)  //&&
+                    || (areaTVGL<0.15 && areaClipper<0.15)
                     //(Math.Abs(perimeterTVGL - perimeterClipper) / Math.Abs(perimeterTVGL + perimeterClipper + tolerance)).IsNegligible(tolerance) &&
                     //tvglMinX.IsPracticallySame(clipperMinX, extremaTolerance) &&
                     //tvglMinY.IsPracticallySame(clipperMinY, extremaTolerance) &&
@@ -67,8 +68,8 @@ namespace TVGL.TwoDimensional
                     //tvglMaxY.IsPracticallySame(clipperMaxY, extremaTolerance)
                     )
                 {
-                    Debug.WriteLine("***** " + operationString + " matches");
-                    Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
+                    //Debug.WriteLine("***** " + operationString + " matches");
+                    //Debug.WriteLine("clipper time = {0}; tvgl time = {1}", clipTime, tvglTime);
                     return false;
                 }
                 else

@@ -82,7 +82,7 @@ namespace TVGL.TwoDimensional
             return true;
         }
 
-        protected override bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
+        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
             PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             return startingIntersection == currentIntersection && currentEdge == startingEdge;

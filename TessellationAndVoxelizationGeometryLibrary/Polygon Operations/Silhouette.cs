@@ -25,8 +25,7 @@ namespace TVGL.TwoDimensional
         {
             direction = direction.Normalize();
             var unvisitedFaces = tessellatedSolid.Faces.ToHashSet();
-            if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
-                tessellatedSolid.CompleteInitiation();
+            tessellatedSolid.MakeEdgesIfNonExistent();
             var transform = direction.TransformToXYPlane(out _);
             var polygons = new List<Polygon>();
 

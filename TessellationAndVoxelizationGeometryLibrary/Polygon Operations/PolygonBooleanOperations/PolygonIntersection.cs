@@ -83,9 +83,9 @@ namespace TVGL.TwoDimensional
             return true;
         }
 
-        protected override bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
+        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
-            if (currentIntersection.Relationship == SegmentRelationship.NoOverlap) return null;
+            //if (currentIntersection.Relationship == SegmentRelationship.NoOverlap) return null;
             // can't reach a NoOverlap in Intersection, but this happens sometimes when following a collinear edge
             if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
              (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))

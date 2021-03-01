@@ -23,31 +23,33 @@ namespace TVGL
     /// </remarks>
     public partial class TessellatedSolid : Solid
     {
-        internal void MakeEdges()
+        internal void MakeEdges(bool fromSTL = false)
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
             var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
-            var success = true;
-            while (success && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
-            // attempt to increase tolerance to allow more matches
+            if (fromSTL)
             {
-                var numOverDefined = overDefinedEdges.Count;
-                var numSingleSided = singleSidedEdges.Count;
-                Message.output("Repairing STL connections...(this may take several iterations).");
-                SameTolerance *= 2;
-                RestartVerticesToAvoidSingleSidedEdges();
-                edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
-                success = singleSidedEdges.Count <= numSingleSided && overDefinedEdges.Count <= numOverDefined;
+                var success = true;
+                while (success && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
+                // attempt to increase tolerance to allow more matches
+                {
+                    var numOverDefined = overDefinedEdges.Count;
+                    var numSingleSided = singleSidedEdges.Count;
+                    Message.output("Repairing STL connections...(this may take several iterations).");
+                    SameTolerance *= 2;
+                    RestartVerticesToAvoidSingleSidedEdges();
+                    edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
+                    success = singleSidedEdges.Count <= numSingleSided && overDefinedEdges.Count <= numOverDefined;
+                }
+                if (!success)
+                {
+                    //one step too far, back up tolerance and just use this
+                    SameTolerance /= 1.4;
+                    RestartVerticesToAvoidSingleSidedEdges();
+                    edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
+                }
             }
-            if (!success)
-            {
-                //one step too far, back up tolerance and just use this
-                SameTolerance /= 1.4;
-                RestartVerticesToAvoidSingleSidedEdges();
-                edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
-            }
-
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
             // moreSingleSidedEdges
