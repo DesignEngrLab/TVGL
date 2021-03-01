@@ -110,7 +110,7 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
-#if !CLIPPER
+#if CLIPPER
             return OffsetViaClipper(polygons, offset, notMiter, deltaAngle);
 #elif !COMPARE
             var allPolygons = new List<Polygon>();
