@@ -31,13 +31,14 @@ namespace TVGL
             if (fromSTL)
             {
                 var success = true;
-                while (success && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
+                var numAttempts = 6;
+                while (numAttempts-- > 0 && success && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
                 // attempt to increase tolerance to allow more matches
                 {
                     var numOverDefined = overDefinedEdges.Count;
                     var numSingleSided = singleSidedEdges.Count;
                     Message.output("Repairing STL connections...(this may take several iterations).");
-                    SameTolerance *= 2;
+                    SameTolerance *= 1.78; // it takes four to get to 10
                     RestartVerticesToAvoidSingleSidedEdges();
                     edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
                     success = singleSidedEdges.Count <= numSingleSided && overDefinedEdges.Count <= numOverDefined;
@@ -45,7 +46,7 @@ namespace TVGL
                 if (!success)
                 {
                     //one step too far, back up tolerance and just use this
-                    SameTolerance /= 1.4;
+                    SameTolerance /= 1.78;
                     RestartVerticesToAvoidSingleSidedEdges();
                     edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
                 }
@@ -55,24 +56,27 @@ namespace TVGL
             // moreSingleSidedEdges
             if (overDefinedEdges.Any())
             {
+                Message.output("Edges in Tessellation with 3 or more faces (attempting to fix).", 2);
                 edgeList.AddRange(TeaseApartOverUsedEdges(overDefinedEdges, out var moreSingleSidedEdges));
                 singleSidedEdges.AddRange(moreSingleSidedEdges);
             }
-            // #3 often the singleSided Edges make loops that we can triangulate. If they are not in loops
+            // #3 the remainingEdges may be close enough that they should have been matched together
+            // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
+            // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
+            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges, out var remainingEdges, out var removedVertices));
+            //often the singleSided Edges make loops that we can triangulate. If they are not in loops
             // then we spit back the remainingEdges.
-            var loops = OrganizeIntoLoops(singleSidedEdges, out var remainingEdges);
+            var loops = OrganizeIntoLoops(remainingEdges, out var borderEdges);
             // well, even if they were in loops - sometimes we can't triangulate - yet moreRemainingEdges
             edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out var newFaces, out var moreRemainingEdges));
-            remainingEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
+            borderEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
+
             // well, the edgelist is definitely going to work out so, we are going to need to make
             // sure that they are known to their vertices for the next few steps - so here we take
             // a moment to stitch these to the vertices
             foreach (var tuple in edgeList)
                 tuple.Item1.DoublyLinkVertices();
-            // finally, the remainingEdges may be close enough that they should have been matched together
-            // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
-            // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out var borderEdges, out var removedVertices));
+            // finally, 
             if (borderEdges.Count > 0)
             {
                 Errors ??= new TessellationError();
@@ -304,12 +308,11 @@ namespace TVGL
             List<Edge> singleSidedEdges, out HashSet<Edge> borderEdges, out List<Vertex> removedVertices)
         {
             borderEdges = new HashSet<Edge>(singleSidedEdges);
-            var removedVerticesHash = new HashSet<Vertex>();
-            removedVertices = new List<Vertex>();
-            var keptVerticesHash = new HashSet<Vertex>();
-            var keptVerticesList = new List<Vertex>();
-            // now do a pairwise check with all entries in the partly defined edges
+
+            // First, do a pairwise check with all entries in the partly defined edges
             var numRemaining = singleSidedEdges.Count;
+            Message.output(numRemaining + " Single-Sided Edges in Tessellation (attempting to fix).", 2);
+
             var scoresAndPairs = new SortedDictionary<double, int[]>(new NoEqualSort());
             for (var i = 0; i < numRemaining; i++)
                 for (var j = i + 1; j < numRemaining; j++)
@@ -318,78 +321,80 @@ namespace TVGL
                     if (score <= Constants.MaxAllowableEdgeSimilarityScore)
                         scoresAndPairs.Add(score, new[] { i, j });
                 }
-            // basically, we go through from best match to worst until the MaxAllowableEdgeSimilarityScore is exceeded.
+
+            // Second, for each successful match, we have to decide what edge to keep and what vertices
+            // to merge. we'll put pairs 
+            var removedToKept = new Dictionary<Vertex, Vertex>();
+            var keptToRemoved = new Dictionary<Vertex, List<Vertex>>();
             var completedEdges = new List<(Edge, List<PolygonalFace>)>();
-            var alreadyMatchedIndices = new HashSet<int>();
             foreach (var score in scoresAndPairs)
             {
-                if (alreadyMatchedIndices.Contains(score.Value[0]) || alreadyMatchedIndices.Contains(score.Value[1]))
+                var edge1 = singleSidedEdges[score.Value[0]];
+                var edge2 = singleSidedEdges[score.Value[1]];
+                if (!borderEdges.Contains(edge1) || !borderEdges.Contains(edge2))
                     continue;
-                alreadyMatchedIndices.Add(score.Value[0]);
-                alreadyMatchedIndices.Add(score.Value[1]);
-                var keepEdge = singleSidedEdges[score.Value[0]];
-                var removeEdge = singleSidedEdges[score.Value[1]];
-                if (VerticesAreAdjacent(keepEdge.From, removeEdge.To) ||
-                    VerticesAreAdjacent(keepEdge.To, removeEdge.From))
-                    continue;
-                borderEdges.Remove(keepEdge);
-                borderEdges.Remove(removeEdge);
-                completedEdges.Add((keepEdge, new List<PolygonalFace> { keepEdge.OwnedFace, removeEdge.OwnedFace }));
-                keepEdge.DoublyLinkVertices();
-                keptVerticesList.Add(keepEdge.From);
-                removedVertices.Add(removeEdge.To);
-                keptVerticesList.Add(keepEdge.To);
-                removedVertices.Add(removeEdge.From);
-                if (!keptVerticesHash.Contains(keepEdge.From)) keptVerticesHash.Add(keepEdge.From);
-                if (!keptVerticesHash.Contains(keepEdge.To)) keptVerticesHash.Add(keepEdge.To);
-            }
-            for (var i = keptVerticesList.Count - 1; i >= 0; i--)
-            {
-                var vertexToRemove = removedVertices[i];
-                if (keptVerticesHash.Contains(vertexToRemove) || removedVerticesHash.Contains(vertexToRemove))
-                    removedVertices.RemoveAt(i);
+                borderEdges.Remove(edge1);
+                borderEdges.Remove(edge2);
+                var sameDir = edge1.Vector.Dot(edge2.Vector) > 0;
+                Edge keepEdge, removeEdge;
+                if (keptToRemoved.ContainsKey(edge1.From) || keptToRemoved.ContainsKey(edge1.To))
+                {
+                    keepEdge = edge1;
+                    removeEdge = edge2;
+                }
+                else if (keptToRemoved.ContainsKey(edge2.From) || keptToRemoved.ContainsKey(edge2.To) ||
+                    removedToKept.ContainsKey(edge1.From) || removedToKept.ContainsKey(edge1.To))
+                {
+                    keepEdge = edge2;
+                    removeEdge = edge1;
+                }
                 else
                 {
-                    removedVerticesHash.Add(vertexToRemove);
-                    CombineVerticesOfEdge(keptVerticesList[i], vertexToRemove);
+                    keepEdge = edge1;
+                    removeEdge = edge2;
                 }
+                completedEdges.Add((keepEdge, new List<PolygonalFace> { keepEdge.OwnedFace, removeEdge.OwnedFace }));
+                var keepVertex = keepEdge.From;
+                var removeVertex = sameDir ? removeEdge.From : removeEdge.To;
+                MergeEdgeVertices(removedToKept, keptToRemoved, keepVertex, removeVertex);
+                keepVertex = keepEdge.To;
+                removeVertex = sameDir ? removeEdge.To : removeEdge.From;
+                MergeEdgeVertices(removedToKept, keptToRemoved, keepVertex, removeVertex);
             }
+            removedVertices = removedToKept.Keys.ToList();
             return completedEdges;
         }
 
-        internal static bool VerticesAreAdjacent(Vertex v1, Vertex v2)
+        private static void MergeEdgeVertices(Dictionary<Vertex, Vertex> removedToKept, Dictionary<Vertex, List<Vertex>> keptToRemoved,
+            Vertex keepVertex, Vertex removeVertex)
         {
-            return VerticesAreAdjacent(v1, v2, out var commonEdge);
-        }
-
-        internal static bool VerticesAreAdjacent(Vertex v1, Vertex v2, out Edge commonEdge)
-        {
-            commonEdge = v1.Edges.Find(e => v2.Edges.Contains(e));
-            return commonEdge != null;
-        }
-
-        private static void CombineVerticesOfEdge(Vertex keepVertex, Vertex removedVertex)
-        {
-            foreach (var face in removedVertex.Faces)
+            while (removedToKept.ContainsKey(keepVertex))
+                keepVertex = removedToKept[keepVertex];
+            while (removedToKept.ContainsKey(removeVertex))
+                removeVertex = removedToKept[removeVertex];
+            if (removeVertex == keepVertex) return;
+            foreach (var face in removeVertex.Faces)
             {
                 keepVertex.Faces.Add(face);
-                var index = face.Vertices.IndexOf(removedVertex);
+                var index = face.Vertices.IndexOf(removeVertex);
                 face.Vertices[index] = keepVertex;
+                foreach (var edge in face.Edges)
+                {
+                    if (edge == null) continue;
+                    if (edge.From == removeVertex) edge.From = keepVertex;
+                    else if (edge.To == removeVertex) edge.To = keepVertex;
+                }
             }
-            foreach (var edge in removedVertex.Edges)
-            {
-                if (edge.From == removedVertex) edge.From = keepVertex;
-                else if (edge.To == removedVertex) edge.To = keepVertex;
-                keepVertex.Edges.Add(edge);
-            }
-            keepVertex.Coordinates = ModifyTessellation.DetermineIntermediateVertexPosition(keepVertex, removedVertex);
-            foreach (var e in keepVertex.Edges)
-                e.Update();
+            keepVertex.Coordinates = ModifyTessellation.DetermineIntermediateVertexPosition(keepVertex, removeVertex);
             foreach (var f in keepVertex.Faces)
                 f.Update();
+            removedToKept.Add(removeVertex, keepVertex);
+            if (!keptToRemoved.ContainsKey(keepVertex)) keptToRemoved.Add(keepVertex, new List<Vertex> { removeVertex });
+            else keptToRemoved[keepVertex].Add(removeVertex);
         }
 
-        internal static List<(List<Edge>, Vector3)> OrganizeIntoLoops(List<Edge> singleSidedEdges,
+
+        internal static List<(List<Edge>, Vector3)> OrganizeIntoLoops(IEnumerable<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
             var listOfLoops = new List<(List<Edge>, Vector3)>();
@@ -472,6 +477,7 @@ namespace TVGL
             remainingEdges = new List<Edge>();
             foreach (var tuple in loops)
             {
+                Message.output("Patching hole in tessellation (" + loops.Count + " loops in total).", 2);
                 var edges = tuple.Item1;
                 var normal = tuple.Item2;
                 //if a simple triangle, create a new face from vertices
@@ -497,7 +503,7 @@ namespace TVGL
                     List<Vertex[]> triangleFaceList;
                     try
                     {
-                        triangleFaceList = edges.Select(e => e.To).Triangulate(normal).ToList();
+                        triangleFaceList = edges.Select(e => e.To).Triangulate(normal, true).ToList();
                     }
                     catch
                     {
@@ -555,7 +561,7 @@ namespace TVGL
 
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {
-            var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
+            var score = 2 * Math.Abs(e1.Length - e2.Length) / (e1.Length + e2.Length);
             score += 1 - Math.Abs(e1.Vector.Normalize().Dot(e2.Vector.Normalize()));
             score += Math.Min(e2.From.Coordinates.Distance(e1.To.Coordinates)
                               + e2.To.Coordinates.Distance(e1.From.Coordinates),

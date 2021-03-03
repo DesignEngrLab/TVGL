@@ -588,15 +588,11 @@ namespace TVGL.TwoDimensional
             foreach (var secondLine in Edges)
             {
                 var cross = firstLine.Vector.Cross(secondLine.Vector);
-                if (secondLine.Length.IsNegligible(0.0000001)) continue; // without updating the first line             
+                if (secondLine.Length.IsNegligible(Constants.PolygonSameTolerance)) continue; // without updating the first line             
                 if (cross < 0)
-                {
                     return false;
-                }
-
                 firstLine = secondLine;
             }
-
             return true;
         }
 

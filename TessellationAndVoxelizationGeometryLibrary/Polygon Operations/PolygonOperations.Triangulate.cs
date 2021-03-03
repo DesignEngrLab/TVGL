@@ -138,6 +138,13 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
         {
+            if (polygon.Area.IsNegligible() || polygon.IsConvex())
+            {
+                var triangleList = new List<Vertex2D[]>();
+                for (int i = 2; i < polygon.Vertices.Count; i++)
+                    triangleList.Add(new[] { polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i] });
+                return triangleList;
+            }
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
 
