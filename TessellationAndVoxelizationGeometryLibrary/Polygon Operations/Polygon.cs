@@ -80,8 +80,9 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
-                    _orderedXVertices = this.SortVerticesByXValue();
+                lock (_vertices)
+                    if (_orderedXVertices == null || _orderedXVertices.Length != Vertices.Count)
+                        _orderedXVertices = Vertices.OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
                 return _orderedXVertices;
             }
         }

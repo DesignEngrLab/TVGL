@@ -232,6 +232,8 @@ namespace TVGL
                 normal *= -1;
                 distance *= -1;
             }
+            if (normal.IsNull() && !suggestedNormal.IsNull())
+                normal = suggestedNormal;
             distanceToPlane = distance;
             return normal;
         }
