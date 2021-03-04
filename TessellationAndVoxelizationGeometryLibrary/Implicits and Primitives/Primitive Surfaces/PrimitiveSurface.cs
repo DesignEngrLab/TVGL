@@ -81,7 +81,7 @@ namespace TVGL
         {
             get
             {
-                if (double.IsNaN(_area))
+                if (double.IsNaN(_area) && Faces != null)
                     _area = Faces.Sum(f => f.Area);
                 return _area;
             }
@@ -357,14 +357,14 @@ namespace TVGL
                         axis = torus.Axis;
                         anchor = torus.Center;
                     }
-                    else if( this is Plane plane)
+                    else if (this is Plane plane)
                     {
                         axis = plane.Normal;
                     }
                     else continue;
                     var transform = axis.TransformToXYPlane(out _);
                     var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
-                    if(anchor != Vector3.Null)
+                    if (anchor != Vector3.Null)
                     {
                         border.EncirclesAxis = polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform));
                     }

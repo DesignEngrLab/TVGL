@@ -42,6 +42,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 Debug.WriteLine("Attempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid ts);
                 Presenter.ShowAndHang(ts);
+                var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
+                Presenter.ShowAndHang(css);
+                IO.Save(css, "test.CSSolid");
             }
             #endif
         }
