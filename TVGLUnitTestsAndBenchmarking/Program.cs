@@ -43,7 +43,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 IO.Open(fileName.FullName, out TessellatedSolid ts);
                 Presenter.ShowAndHang(ts);
             }
-#endif
+            #endif
         }
 
     }
