@@ -684,7 +684,6 @@ namespace TVGL.TwoDimensional
             area = double.NaN;
             pathArea = double.NaN;
             perimeter = double.NaN;
-            _numVertices = -1;
             _centroid = Vector2.Null;
         }
 

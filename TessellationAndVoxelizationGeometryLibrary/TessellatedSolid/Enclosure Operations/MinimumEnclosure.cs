@@ -414,7 +414,7 @@ namespace TVGL
 
             //Simplify the points to make sure they are the minimal convex hull
             //Only set it as the convex hull if it contains more than three points.
-            var cvxPointsSimple = points.RemoveCollinearEdges();
+            var cvxPointsSimple = points.RemoveCollinearEdgesToNewList();
             if (cvxPointsSimple.Count >= 3) points = cvxPointsSimple;
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point 
              * however, we want the last point that has minX, so that we can easily get the next angle  */

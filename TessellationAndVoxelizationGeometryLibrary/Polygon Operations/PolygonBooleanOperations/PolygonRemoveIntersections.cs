@@ -46,7 +46,7 @@ namespace TVGL.TwoDimensional
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
-                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLength(Math.Pow(10, -polygon.NumSigDigits))));
+                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLengthToNewList(Math.Pow(10, -polygon.NumSigDigits))));
             }
             return newPolygons.OrderByDescending(p => Math.Abs(p.Area))
                 .Take(maxNumberOfPolygons).Reverse()

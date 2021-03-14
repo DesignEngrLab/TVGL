@@ -16,7 +16,6 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
-        #region Simplify
         #region RemoveCollinearEdges
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
@@ -24,9 +23,35 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> RemoveCollinearEdges(this IEnumerable<Polygon> polygons)
+        public static Polygon RemoveCollinearEdgesToNewPolygon(this Polygon polygon)
         {
-            return polygons.Select(poly => poly.RemoveCollinearEdges());
+            var copiedPolygon = polygon.Copy(true, false);
+            RemoveCollinearEdges(copiedPolygon);
+            return copiedPolygon;
+        }
+        /// <summary>
+        /// Simplifies the specified polygons by removing vertices that have collinear edges.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static IEnumerable<Polygon> RemoveCollinearEdgesToNewPolygons(this IEnumerable<Polygon> polygons)
+        {
+            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
+            RemoveCollinearEdges(copiedPolygons);
+            return copiedPolygons;
+        }
+
+        /// <summary>
+        /// Simplifies the specified polygons by removing vertices that have collinear edges.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static void RemoveCollinearEdges(this IEnumerable<Polygon> polygons)
+        {
+            foreach (var polygon in polygons)
+                polygon.RemoveCollinearEdges();
         }
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
@@ -34,12 +59,17 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon RemoveCollinearEdges(this Polygon polygon)
+        public static void RemoveCollinearEdges(this Polygon polygon)
         {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.RemoveCollinearEdges());
+            polygon.MakePolygonEdgesIfNonExistent();
+            foreach (var vertex in polygon.Vertices)
+            {
+                if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible())
+                    vertex.DeleteVertex();
+            }
+            polygon.RecreateVertices();
             foreach (var polygonHole in polygon.InnerPolygons)
-                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.RemoveCollinearEdges()));
-            return simplifiedPositivePolygon;
+                polygonHole.RemoveCollinearEdges();
         }
 
         /// <summary>        
@@ -47,9 +77,9 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="paths">The paths.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<List<Vector2>> RemoveCollinearEdges(this IEnumerable<IEnumerable<Vector2>> paths)
+        public static IEnumerable<IList<Vector2>> RemoveCollinearEdgesToNewLists(this IEnumerable<IEnumerable<Vector2>> paths)
         {
-            return paths.Select(p => RemoveCollinearEdges(p));
+            return paths.Select(p => RemoveCollinearEdgesToNewList(p));
         }
 
         /// <summary>
@@ -57,9 +87,9 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> RemoveCollinearEdges(this IEnumerable<Vector2> path)
+        public static IList<Vector2> RemoveCollinearEdgesToNewList(this IEnumerable<Vector2> path)
         {
-            var polygon = path.ToList();
+            var polygon = path as IList<Vector2> ?? path.ToList();
             var forwardPoint = polygon[0];
             var currentPoint = polygon[^1];
             for (int i = polygon.Count - 1; i >= 0; i--)
@@ -78,7 +108,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> RemoveCollinearEdgesDestructiveList(this List<Vector2> path)
+        public static IList<Vector2> RemoveCollinearEdgesDestructiveList(this IList<Vector2> path)
         {
             var forwardPoint = path[0];
             var currentPoint = path[^1];
@@ -96,6 +126,7 @@ namespace TVGL.TwoDimensional
         #endregion
 
         #region SimplifyMinLength
+        #region SimplifyMinLength - min allowable length
         /// <summary>
         /// Simplifies the specified polygons so that no edge is less than the minimum allowable length.
         /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
@@ -103,9 +134,11 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> SimplifyMinLength(this IEnumerable<Polygon> polygons, double minAllowableLength)
+        public static IEnumerable<Polygon> SimplifyMinLengthToNewPolygons(this IEnumerable<Polygon> polygons, double minAllowableLength)
         {
-            return polygons.Select(poly => poly.SimplifyMinLength(minAllowableLength));
+            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
+            SimplifyMinLength(copiedPolygons, minAllowableLength);
+            return copiedPolygons;
         }
 
         /// <summary>
@@ -115,12 +148,64 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="minAllowableLength">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon SimplifyMinLength(this Polygon polygon, double minAllowableLength)
+        public static Polygon SimplifyMinLengthToNewPolygon(this Polygon polygon, double minAllowableLength)
         {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyMinLength(minAllowableLength));
-            foreach (var polygonHole in polygon.InnerPolygons)
-                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyMinLength(minAllowableLength)));
-            return simplifiedPositivePolygon;
+            var copiedPolygon = polygon.Copy(true, false);
+            SimplifyMinLength(copiedPolygon, minAllowableLength);
+            return copiedPolygon;
+        }
+        /// <summary>
+        /// Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+        /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static void SimplifyMinLength(this IEnumerable<Polygon> polygons, double minAllowableLength)
+        {
+            foreach (var poly in polygons)
+                poly.SimplifyMinLength(minAllowableLength);
+        }
+
+        /// <summary>
+        /// Simplifies the specified polygons so that no edge is less than the minimum allowable length.
+        /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="minAllowableLength">The allowable change in area fraction.</param>
+        /// <returns>Polygon.</returns>
+        public static void SimplifyMinLength(this Polygon polygon, double minAllowableLength)
+        {
+            polygon.MakePolygonEdgesIfNonExistent();
+            var edgeLengthQueue = new SimplePriorityQueue<PolygonEdge, double>(new ForwardSort());
+            foreach (var edge in polygon.Edges)
+                edgeLengthQueue.Enqueue(edge, edge.Length);
+            while (edgeLengthQueue.Any())
+            {
+                var edge = edgeLengthQueue.Dequeue();
+                if (edge.Length > minAllowableLength) break;  //check that it is below the minAllowableLength
+                                                              // let's delete the vertex that is adjacent with the next shorter line
+                var center = edge.Center;
+                Vertex2D deleteVertex, keepVertex;
+                PolygonEdge otherEdge;
+                if (edge.FromPoint.EndLine.Length < edge.ToPoint.StartLine.Length)
+                {
+                    deleteVertex = edge.FromPoint;
+                    keepVertex = edge.ToPoint;
+                    otherEdge = edge.FromPoint.EndLine;
+                }
+                else
+                {
+                    keepVertex = edge.FromPoint;
+                    deleteVertex = edge.ToPoint;
+                    otherEdge = edge.ToPoint.StartLine;
+                }
+                keepVertex.Coordinates = center;
+                var newEdge = deleteVertex.DeleteVertex();
+                edgeLengthQueue.Remove(otherEdge);
+                edgeLengthQueue.Enqueue(newEdge, newEdge.Length);
+            }
+            RecreateVertices(polygon);
         }
 
         /// <summary>
@@ -130,9 +215,9 @@ namespace TVGL.TwoDimensional
         /// <param name="paths">The paths.</param>
         /// <param name="minAllowableLength">The allowable change in area fraction.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<IEnumerable<Vector2>> SimplifyMinLength(this IEnumerable<IEnumerable<Vector2>> paths, double minAllowableLength)
+        public static IEnumerable<IEnumerable<Vector2>> SimplifyMinLengthToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, double minAllowableLength)
         {
-            return paths.Select(p => SimplifyMinLength(p, minAllowableLength));
+            return paths.Select(p => SimplifyMinLengthToNewList(p, minAllowableLength));
         }
 
         /// <summary>
@@ -141,10 +226,10 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static IEnumerable<Vector2> SimplifyMinLength(this IEnumerable<Vector2> path, double minAllowableLength)
+        public static IEnumerable<Vector2> SimplifyMinLengthToNewList(this IEnumerable<Vector2> path, double minAllowableLength)
         {
             // first remove collinear points
-            var polygon = path.RemoveCollinearEdges();
+            var polygon = path.RemoveCollinearEdgesToNewList();
             var numPoints = polygon.Count;
 
             #region build initial list of edge lengths
@@ -183,8 +268,34 @@ namespace TVGL.TwoDimensional
             return polygon.Where(v => !v.IsNull()); //return only the vertices that have not been set to null.
             // note that this one time reduction of the polygon at the end is much more efficient than removing and updating the polygon between each vertex removal
         }
+        #endregion
 
+        #region SimplifyMinLength - target number of points
+        /// <summary>
+        /// Simplifies the specified polygons to the target number of points using the minimal length change approach.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon SimplifyMinLengthToNewPolygon(this Polygon polygon, int targetNumberOfPoints)
+        {
+            var copiedPolygon = polygon.Copy(true, false);
+            SimplifyMinLength(new[] { copiedPolygon }, targetNumberOfPoints);
+            return copiedPolygon;
+        }
 
+        /// <summary>
+        /// Simplifies the specified polygon to the target number of points using the minimal length change approach.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static IEnumerable<Polygon> SimplifyMinLengthToNewPolygons(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        {
+            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
+            SimplifyMinLength(copiedPolygons, targetNumberOfPoints);
+            return copiedPolygons;
+        }
         /// <summary>
         /// Simplifies the specified polygons so that no edge is less than the minimum allowable length.
         /// In this method vertices are not simply deleted but a new one is created at midPoint of deleted edge.
@@ -192,10 +303,9 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon SimplifyMinLength(this Polygon polygon, int targetNumberOfPoints)
+        public static void SimplifyMinLength(this Polygon polygon, int targetNumberOfPoints)
         {
-            var simplifiedPaths = polygon.AllPolygons.Select(poly => poly.Path).SimplifyMinLength(targetNumberOfPoints);
-            return CreateShallowPolygonTreesOrderedListsAndVertices(simplifiedPaths).First();
+            SimplifyMinLength(new[] { polygon }, targetNumberOfPoints);
         }
 
         /// <summary>
@@ -205,10 +315,47 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> SimplifyMinLength(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        public static void SimplifyMinLength(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
-            var simplifiedPaths = polygons.SelectMany(poly => poly.AllPolygons.Select(p => p.Path)).SimplifyMinLength(targetNumberOfPoints);
-            return CreateShallowPolygonTreesOrderedListsAndVertices(simplifiedPaths);
+            // first remove collinear points and set up lists
+            var allPolygons = polygons.SelectMany(p => p.AllPolygons).ToList();
+            allPolygons.RemoveCollinearEdges();
+            var numPoints = allPolygons.Select(p => p.Vertices.Count).ToList();
+            var numToRemove = numPoints.Sum() - targetNumberOfPoints;
+            if (numToRemove <= 0) return;
+            var edgeLengthQueue = new SimplePriorityQueue<PolygonEdge, double>(new ForwardSort());
+            foreach (var polygon in allPolygons)
+            {
+                polygon.MakePolygonEdgesIfNonExistent();
+                foreach (var edge in polygon.Edges)
+                    edgeLengthQueue.Enqueue(edge, edge.Length);
+            }
+
+            while (numToRemove-- > 0)
+            {
+                var edge = edgeLengthQueue.Dequeue();
+                var center = edge.Center;
+                Vertex2D deleteVertex, keepVertex;
+                PolygonEdge otherEdge;
+                if (edge.FromPoint.EndLine.Length < edge.ToPoint.StartLine.Length)
+                {
+                    deleteVertex = edge.FromPoint;
+                    keepVertex = edge.ToPoint;
+                    otherEdge = edge.FromPoint.EndLine;
+                }
+                else
+                {
+                    keepVertex = edge.FromPoint;
+                    deleteVertex = edge.ToPoint;
+                    otherEdge = edge.ToPoint.StartLine;
+                }
+                keepVertex.Coordinates = center;
+                var newEdge = deleteVertex.DeleteVertex();
+                edgeLengthQueue.Remove(otherEdge);
+                edgeLengthQueue.Enqueue(newEdge, newEdge.Length);
+            }
+            foreach (var polygon in allPolygons)
+                RecreateVertices(polygon);
         }
 
         /// <summary>
@@ -230,10 +377,10 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
         ///                   + " is more than the total number of points in the polygon(s).</exception>
-        public static IEnumerable<List<Vector2>> SimplifyMinLength(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
+        public static IEnumerable<IList<Vector2>> SimplifyMinLength(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
-            var polygons = paths.Select(p => p.RemoveCollinearEdges()).ToList();
+            var polygons = paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0)
@@ -289,22 +436,51 @@ namespace TVGL.TwoDimensional
                     yield return resultPolygon;
             }
         }
-
-
-
-
+        #endregion
         #endregion
 
         #region SimplifyByAreaChange
+
+        #region Simplify by Area Change - min allowable Change In Area Fraction
+        /// <summary>
+        /// Simplifies the specified polygon no more than the allowable change in area fraction.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>Polygon.</returns>
+        public static Polygon SimplifyByAreaChangeToNewPolygon(this Polygon polygon, double allowableChangeInAreaFraction)
+        {
+            var copiedPolygon = polygon.Copy(true, false);
+            SimplifyByAreaChange(copiedPolygon, allowableChangeInAreaFraction);
+            return copiedPolygon;
+        }
+
+        /// <summary>
+        /// Simplifies the specified polygon no more than the allowable change in area fraction.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static IEnumerable<Polygon> SimplifyByAreaChangeToNewPolygons(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
+        {
+            foreach (var polygon in polygons)
+            {
+                var copiedPolygon = polygon.Copy(true, false);
+                SimplifyByAreaChange(copiedPolygon, allowableChangeInAreaFraction);
+                yield return copiedPolygon;
+            }
+        }
+
         /// <summary>
         /// Simplifies the specified polygons no more than the allowable change in area fraction.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> SimplifyByAreaChange(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
+        public static void SimplifyByAreaChange(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
         {
-            return polygons.Select(poly => poly.SimplifyByAreaChange(allowableChangeInAreaFraction));
+            foreach (var polygon in polygons)
+                polygon.SimplifyByAreaChange(allowableChangeInAreaFraction);
         }
 
         /// <summary>
@@ -313,13 +489,51 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction)
+        public static void SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction)
         {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyByAreaChange(allowableChangeInAreaFraction));
-            foreach (var polygonHole in polygon.InnerPolygons)
-                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyByAreaChange(allowableChangeInAreaFraction)));
-            return simplifiedPositivePolygon;
+            polygon.RemoveCollinearEdges();
+            var origArea = Math.Abs(polygon.Area);
+            if (origArea.IsNegligible()) return;
+
+            // build initial list of cross products
+
+            // queue is sorted on the cross-product at the polygon corner (requiring knowledge of the previous and next points)
+            // Here we are using the SimplePriorityQueue from BlueRaja (https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp)
+            var convexCornerQueue = new SimplePriorityQueue<Vertex2D, double>(new ForwardSort());
+            var concaveCornerQueue = new SimplePriorityQueue<Vertex2D, double>(new ReverseSort());
+            foreach (var vertex in polygon.Vertices)
+            {
+                var cross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
+                if (cross > 0) convexCornerQueue.Enqueue(vertex, cross);
+                else concaveCornerQueue.Enqueue(vertex, cross);
+            }
+
+            // after much thought, the idea to split up into positive and negative sorted lists is so that we don't over remove vertices
+            // by bouncing back and forth between convex and concave while staying with the target deltaArea. So, we do as many convex corners
+            // before reaching a reduction of deltaArea - followed by a reduction of concave edges so that no more than deltaArea is re-added
+            for (int sign = 1; sign >= -1; sign -= 2)
+            {
+                var deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
+                                                                              // that happens when we change cross-product to area of a triangle
+                var relevantSortedList = (sign == 1) ? convexCornerQueue : concaveCornerQueue;
+                // first we remove any convex corners that would reduce the area
+                while (relevantSortedList.Count > 0)
+                {
+                    var vertex = relevantSortedList.First();
+                    var smallestArea = relevantSortedList.GetPriority(vertex);
+                    if (deltaArea < sign * smallestArea) break;
+                    relevantSortedList.Dequeue();
+                    deltaArea -= sign * smallestArea;
+                    var nextVertex = vertex.StartLine.ToPoint;
+                    var prevVertex = vertex.EndLine.FromPoint;
+                    vertex.DeleteVertex();
+                    UpdateCrossProductInQueues(prevVertex, convexCornerQueue, concaveCornerQueue);
+                    UpdateCrossProductInQueues(nextVertex, convexCornerQueue, concaveCornerQueue);
+                }
+            }
+            RecreateVertices(polygon);
         }
+
 
         /// <summary>
         /// Simplifies the specified polygons no more than the allowable change in area fraction.
@@ -327,9 +541,9 @@ namespace TVGL.TwoDimensional
         /// <param name="paths">The paths.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<IEnumerable<Vector2>> SimplifyByAreaChange(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction)
+        public static IEnumerable<IEnumerable<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, double allowableChangeInAreaFraction)
         {
-            return paths.Select(p => SimplifyByAreaChange(p, allowableChangeInAreaFraction));
+            return paths.Select(p => SimplifyByAreaChangeToNewList(p, allowableChangeInAreaFraction));
         }
 
         /// <summary>
@@ -337,9 +551,9 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static IEnumerable<Vector2> SimplifyByAreaChange(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction)
+        public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction)
         {
-            var polygon = path.RemoveCollinearEdges();
+            var polygon = path.RemoveCollinearEdgesToNewList();
             var numPoints = polygon.Count;
             var origArea = Math.Abs(polygon.Area());
             if (origArea.IsNegligible()) return polygon;
@@ -417,7 +631,9 @@ namespace TVGL.TwoDimensional
             }
             return polygon.Where(v => !v.IsNull());
         }
+        #endregion 
 
+        #region Simplify by Area Change - Target Number of Points
 
 
         /// <summary>
@@ -426,10 +642,11 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon SimplifyByAreaChange(this Polygon polygon, int targetNumberOfPoints)
+        public static Polygon SimplifyByAreaChangeToNewPolygon(this Polygon polygon, int targetNumberOfPoints)
         {
-            var simplifiedPaths = polygon.AllPolygons.Select(poly => poly.Path).SimplifyByAreaChange(targetNumberOfPoints);
-            return CreateShallowPolygonTreesOrderedListsAndVertices(simplifiedPaths).First();
+            var copiedPolygon = polygon.Copy(true, false);
+            SimplifyByAreaChange(new[] { copiedPolygon }, targetNumberOfPoints);
+            return copiedPolygon;
         }
 
         /// <summary>
@@ -438,10 +655,58 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> SimplifyByAreaChange(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        public static IEnumerable<Polygon> SimplifyByAreaChangeToNewPolygons(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
-            var simplifiedPaths = polygons.SelectMany(poly => poly.AllPolygons.Select(p => p.Path)).SimplifyByAreaChange(targetNumberOfPoints);
-            return CreateShallowPolygonTreesOrderedListsAndVertices(simplifiedPaths);
+            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
+            SimplifyByAreaChange(copiedPolygons, targetNumberOfPoints);
+            return copiedPolygons;
+        }
+
+        /// <summary>
+        /// Simplifies the specified polygon to the target number of points using the minimal area change approach.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>Polygon.</returns>
+        public static void SimplifyByAreaChange(this Polygon polygon, int targetNumberOfPoints)
+        {
+            SimplifyByAreaChange(new[] { polygon }, targetNumberOfPoints);
+        }
+
+        /// <summary>
+        /// Simplifies the specified polygon to the target number of points using the minimal area change approach.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static void SimplifyByAreaChange(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        {
+            // first remove collinear points and set up lists
+            var allPolygons = polygons.SelectMany(p => p.AllPolygons).ToList();
+            allPolygons.RemoveCollinearEdges();
+            var numPoints = allPolygons.Select(p => p.Vertices.Count).ToList();
+            var numToRemove = numPoints.Sum() - targetNumberOfPoints;
+            if (numToRemove <= 0) return;
+
+            // build initial list of cross products
+            var cornerQueue = new SimplePriorityQueue<Vertex2D, double>(new AbsoluteValueSort());
+            for (int j = 0; j < allPolygons.Count; j++)
+                for (int i = 0; i < numPoints[j]; i++)
+                {
+                    var vertex = allPolygons[j].Vertices[i];
+                    cornerQueue.Enqueue(vertex, vertex.EndLine.Vector.Cross(vertex.StartLine.Vector));
+                }
+            while (numToRemove-- > 0)
+            {
+                var vertex = cornerQueue.Dequeue();
+                var nextVertex = vertex.StartLine.ToPoint;
+                var prevVertex = vertex.EndLine.FromPoint;
+                vertex.DeleteVertex();
+                cornerQueue.UpdatePriority(prevVertex, prevVertex.EndLine.Vector.Cross(prevVertex.StartLine.Vector));
+                cornerQueue.UpdatePriority(nextVertex, nextVertex.EndLine.Vector.Cross(nextVertex.StartLine.Vector));
+            }
+            foreach (var polygon in allPolygons)
+                RecreateVertices(polygon);
         }
 
         /// <summary>
@@ -450,8 +715,8 @@ namespace TVGL.TwoDimensional
         /// <param name="path">The path.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<Vector2> SimplifyByAreaChange(this IEnumerable<Vector2> path, int targetNumberOfPoints)
-        { return SimplifyByAreaChange(new[] { path }, targetNumberOfPoints).First(); }
+        public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, int targetNumberOfPoints)
+        { return SimplifyByAreaChangeToNewLists(new[] { path }, targetNumberOfPoints).First(); }
 
         /// <summary>
         /// Simplifies the specified polygon to the target number of points using the minimal area change approach.
@@ -461,10 +726,10 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
         /// <exception cref="ArgumentOutOfRangeException">targetNumberOfPoints - The number of points to remove in PolygonOperations.Simplify"
         ///                   + " is more than the total number of points in the polygon(s).</exception>
-        public static IEnumerable<List<Vector2>> SimplifyByAreaChange(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
+        public static IEnumerable<IList<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
-            var polygons = paths.Select(p => p.RemoveCollinearEdges()).ToList();
+            var polygons = paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0)
@@ -527,228 +792,11 @@ namespace TVGL.TwoDimensional
                     yield return resultPolygon;
             }
         }
-
-
-
         #endregion
-
-
-        public static Polygon SimplifyFuzzy(this Polygon polygon,
-            double lengthTolerance = Constants.LineLengthMinimum,
-            double slopeTolerance = Constants.LineSlopeTolerance)
-        {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyFuzzy(lengthTolerance, slopeTolerance));
-            foreach (var polygonHole in polygon.InnerPolygons)
-                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyFuzzy(lengthTolerance, slopeTolerance)));
-            return simplifiedPositivePolygon;
-        }
-
-        /// <summary>
-        /// Simplifies the specified polygons by reducing the number of points in the polygon
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public static List<Vector2> SimplifyFuzzy(this IEnumerable<Vector2> path,
-        double lengthTolerance = Constants.LineLengthMinimum,
-        double slopeTolerance = Constants.LineSlopeTolerance)
-        {
-            if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
-            var squareLengthTolerance = lengthTolerance * lengthTolerance;
-            var simplePath = new List<Vector2>(path);
-            var n = simplePath.Count;
-            if (n < 4) return simplePath;
-
-            //Remove negligible length lines and combine collinear lines.
-            var i = 0;
-            var j = 1;
-            var k = 2;
-            var iX = simplePath[i].X;
-            var iY = simplePath[i].Y;
-            var jX = simplePath[j].X;
-            var jY = simplePath[j].Y;
-            var kX = simplePath[k].X;
-            var kY = simplePath[k].Y;
-            while (i < n)
-            {
-                //We only check line I-J in the first iteration, since later we
-                //check line J-K instead.
-                if (i == 0 && NegligibleLine(iX, iY, jX, jY, squareLengthTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                                     //Current stays the same.
-                                     //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                else if (NegligibleLine(jX, jY, kX, kY, squareLengthTolerance))
-                {
-                    continue;
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                                     //Current and Next stay the same.
-                                     //k moves forward but has the same index.
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                //Use an even looser tolerance to determine if slopes are equal.
-                else if (LineSlopesEqual(iX, iY, jX, jY, kX, kY, slopeTolerance))
-                {
-                    simplePath.RemoveAt(j);
-                    n--;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-
-                    //Current stays the same.
-                    //j moves to k, k moves forward but has the same index.
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-                else
-                {
-                    //Everything moves forward
-                    i++;
-                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
-                    iX = jX;
-                    iY = jY;
-                    jX = kX;
-                    jY = kY;
-                    var kPoint = simplePath[k];
-                    kX = kPoint.X;
-                    kY = kPoint.Y;
-                }
-            }
-
-            var area1 = Area(path);
-            var area2 = Area(simplePath);
-
-            //If the simplification destroys a polygon, do not simplify it.
-            if (area2.IsNegligible() ||
-                !area1.IsPracticallySame(area2, Math.Abs(area1 * (1 - Constants.HighConfidence))))
-            {
-                return path.ToList();
-            }
-
-            return simplePath;
-        }
-
-        private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
-        {
-            var dX = p1X - p2X;
-            var dY = p1Y - p2Y;
-            return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
-        }
-
-        private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y,
-            double tolerance = Constants.LineSlopeTolerance)
-        {
-            var value = (p1Y - p2Y) * (p2X - p3X) - (p1X - p2X) * (p2Y - p3Y);
-            return value.IsNegligible(tolerance);
-        }
-
-        private static int FindValidNeighborIndex(int index, bool forward, IList<Vector2> polygon, int numPoints)
-        {
-            int increment = forward ? 1 : -1;
-            var hitLimit = false;
-            do
-            {
-                index += increment;
-                if (index < 0)
-                {
-                    index = numPoints - 1;
-                    if (hitLimit)
-                    {
-                        index = -1;
-                        break;
-                    }
-                    hitLimit = true;
-                }
-                else if (index == numPoints)
-                {
-                    index = 0;
-                    if (hitLimit)
-                    {
-                        index = -1;
-                        break;
-                    }
-                    hitLimit = true;
-                }
-            }
-            while (polygon[index].IsNull());
-            return index;
-        }
-
-        private static void AddCrossProductToOneOfTheLists(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
-            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
-            double[] crossProducts, int index)
-        {
-            var cross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
-            crossProducts[index] = cross;
-            if (cross < 0) concaveCornerQueue.Enqueue(index, cross);
-            else convexCornerQueue.Enqueue(index, cross);
-        }
-
-        private static void UpdateCrossProductInQueues(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
-            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
-            double[] crossProducts, int index)
-        {
-            var oldCross = crossProducts[index];
-            var newCross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
-            crossProducts[index] = newCross;
-            if (newCross < 0)
-            {
-                if (oldCross < 0)
-                    concaveCornerQueue.UpdatePriority(index, newCross);
-                else //then it used to be positive and needs to be removed from the convexCornerQueue
-                {
-                    convexCornerQueue.Remove(index);
-                    concaveCornerQueue.Enqueue(index, newCross);
-                }
-            }
-            // else newCross is positive and should be on the convexCornerQueue
-            else if (oldCross >= 0)
-                convexCornerQueue.UpdatePriority(index, newCross);
-            else //then it used to be negative and needs to be removed from the concaveCornerQueue
-            {
-                concaveCornerQueue.Remove(index);
-                convexCornerQueue.Enqueue(index, newCross);
-            }
-        }
-
-        private static void AddCrossProductToQueue(Vector2 fromPoint, Vector2 currentPoint,
-            Vector2 nextPoint, SimplePriorityQueue<int, double> cornerQueue,
-            double[] crossProducts, int index)
-        {
-            var cross = Math.Abs((currentPoint - fromPoint).Cross(nextPoint - currentPoint));
-            crossProducts[index] = cross;
-            cornerQueue.Enqueue(index, cross);
-        }
-
-        private static void UpdateCrossProductInQueue(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
-            SimplePriorityQueue<int, double> cornerQueue, double[] crossProducts, int index)
-        {
-            var newCross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
-            crossProducts[index] = newCross;
-            cornerQueue.UpdatePriority(index, newCross);
-        }
-
-        #endregion Simplify
-
-
+        #endregion Simplify by area change
 
         #region Complexify
-
+        #region Complexify - max allowable length
         /// <summary>
         /// Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.
         /// </summary>
@@ -815,9 +863,11 @@ namespace TVGL.TwoDimensional
             foreach (var polygonHole in polygon.InnerPolygons)
                 polygonHole.Complexify(maxAllowableLength);
         }
+        #endregion 
 
+        #region Complexify - target number of points
         /// <summary>
-        /// Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.
+        /// Complexifies the specified polygons so that the sum of edges equal the target number.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
@@ -831,7 +881,7 @@ namespace TVGL.TwoDimensional
         }
 
         /// <summary>
-        /// Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.
+        /// Complexifies the specified polygon so that the sum of edges equal the target number.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
@@ -843,26 +893,205 @@ namespace TVGL.TwoDimensional
             return copiedPolygon;
         }
         /// <summary>
-        /// Complexifies the specified polygons so that no edge is longer than the maxAllowableLength.
-        /// </summary>
-        /// <param name="polygons">The polygons.</param>
-        /// <param name="targetNumberOfPoints">The target number of points.</param>
-        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static void Complexify(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
-        {
-            //   throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Complexifies the specified polygon so that no edge is longer than the maxAllowableLength.
+        /// Complexifies the specified polygon so that the sum of edges equal the target number.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="targetNumberOfPoints">The target number of points.</param>
         /// <returns>Polygon.</returns>
         public static void Complexify(this Polygon polygon, int targetNumberOfPoints)
         {
-            // throw new NotImplementedException();
+            Complexify(new[] { polygon }, targetNumberOfPoints);
         }
+        /// <summary>
+        /// Complexifies the specified polygons so that the sum of edges equal the target number.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="targetNumberOfPoints">The target number of points.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        public static void Complexify(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
+        {
+            var allPolygons = polygons.SelectMany(p => p.AllPolygons).ToList();
+            var numToAdd = targetNumberOfPoints - allPolygons.Sum(p => p.Vertices.Count);
+            if (numToAdd <= 0) return;
+
+            // build initial list of cross products
+            var edgeLengthPQ = new SimplePriorityQueue<PolygonEdge, double>(new ReverseSort());
+            var index = 0;
+            for (int j = 0; j < allPolygons.Count; j++)
+            {
+                var polygon = allPolygons[j];
+                polygon.MakePolygonEdgesIfNonExistent();
+                foreach (var edge in polygon.Edges)
+                    edgeLengthPQ.Enqueue(edge, edge.Length);
+            }
+            while (numToAdd-- > 0)
+            {
+                var edge = edgeLengthPQ.Dequeue();
+                var edgeTo = edge.ToPoint;
+                var newVertex = new Vertex2D(edge.Center, edgeTo.IndexInList, edgeTo.LoopID);
+                var newEdge = new PolygonEdge(newVertex, edgeTo);
+                edgeLengthPQ.Enqueue(newEdge, newEdge.Length);
+                newVertex.StartLine = edgeTo.EndLine = newEdge;
+                var edgeFrom = edge.FromPoint;
+                newEdge = new PolygonEdge(edgeFrom, newVertex);
+                edgeFrom.StartLine = newVertex.EndLine = newEdge;
+                edgeLengthPQ.Enqueue(newEdge, newEdge.Length);
+            }
+            foreach (var polygon in allPolygons)
+                RecreateVertices(polygon);
+        }
+        #endregion
+        #endregion
+
+        #region helper functions
+        private static int FindValidNeighborIndex(int index, bool forward, IList<Vector2> polygon, int numPoints)
+        {
+            int increment = forward ? 1 : -1;
+            var hitLimit = false;
+            do
+            {
+                index += increment;
+                if (index < 0)
+                {
+                    index = numPoints - 1;
+                    if (hitLimit)
+                    {
+                        index = -1;
+                        break;
+                    }
+                    hitLimit = true;
+                }
+                else if (index == numPoints)
+                {
+                    index = 0;
+                    if (hitLimit)
+                    {
+                        index = -1;
+                        break;
+                    }
+                    hitLimit = true;
+                }
+            }
+            while (polygon[index].IsNull());
+            return index;
+        }
+
+        private static void AddCrossProductToOneOfTheLists(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
+            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
+            double[] crossProducts, int index)
+        {
+            var cross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
+            crossProducts[index] = cross;
+            if (cross < 0) concaveCornerQueue.Enqueue(index, cross);
+            else convexCornerQueue.Enqueue(index, cross);
+        }
+
+        private static void UpdateCrossProductInQueues(Vertex2D vertex, SimplePriorityQueue<Vertex2D, double> convexCornerQueue,
+            SimplePriorityQueue<Vertex2D, double> concaveCornerQueue)
+        {
+            var newCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
+            var wasInConvex = convexCornerQueue.Contains(vertex);
+            if (newCross < 0)
+            {
+                if (wasInConvex) //then it used to be positive and needs to be removed from the convexCornerQueue
+                {
+                    convexCornerQueue.Remove(vertex);
+                    concaveCornerQueue.Enqueue(vertex, newCross);
+                }
+                else
+                    concaveCornerQueue.UpdatePriority(vertex, newCross);
+            }
+            // else newCross is positive and should be on the convexCornerQueue
+            else if (wasInConvex)
+                convexCornerQueue.UpdatePriority(vertex, newCross);
+            else //then it used to be negative and needs to be removed from the concaveCornerQueue
+            {
+                concaveCornerQueue.Remove(vertex);
+                convexCornerQueue.Enqueue(vertex, newCross);
+            }
+        }
+
+        private static void UpdateCrossProductInQueues(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
+            SimplePriorityQueue<int, double> convexCornerQueue, SimplePriorityQueue<int, double> concaveCornerQueue,
+            double[] crossProducts, int index)
+        {
+            var oldCross = crossProducts[index];
+            var newCross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
+            crossProducts[index] = newCross;
+            if (newCross < 0)
+            {
+                if (oldCross < 0)
+                    concaveCornerQueue.UpdatePriority(index, newCross);
+                else //then it used to be positive and needs to be removed from the convexCornerQueue
+                {
+                    convexCornerQueue.Remove(index);
+                    concaveCornerQueue.Enqueue(index, newCross);
+                }
+            }
+            // else newCross is positive and should be on the convexCornerQueue
+            else if (oldCross >= 0)
+                convexCornerQueue.UpdatePriority(index, newCross);
+            else //then it used to be negative and needs to be removed from the concaveCornerQueue
+            {
+                concaveCornerQueue.Remove(index);
+                convexCornerQueue.Enqueue(index, newCross);
+            }
+        }
+
+        private static void AddCrossProductToQueue(Vector2 fromPoint, Vector2 currentPoint,
+            Vector2 nextPoint, SimplePriorityQueue<int, double> cornerQueue,
+            double[] crossProducts, int index)
+        {
+            var cross = Math.Abs((currentPoint - fromPoint).Cross(nextPoint - currentPoint));
+            crossProducts[index] = cross;
+            cornerQueue.Enqueue(index, cross);
+        }
+
+        private static void UpdateCrossProductInQueue(Vector2 fromPoint, Vector2 currentPoint, Vector2 nextPoint,
+            SimplePriorityQueue<int, double> cornerQueue, double[] crossProducts, int index)
+        {
+            var newCross = (currentPoint - fromPoint).Cross(nextPoint - currentPoint);
+            crossProducts[index] = newCross;
+            cornerQueue.UpdatePriority(index, newCross);
+        }
+
+        private static PolygonEdge DeleteVertex(this Vertex2D vertexToDelete)
+        {
+            var edgeTo = vertexToDelete.StartLine.ToPoint;
+            var edgeFrom = vertexToDelete.EndLine.FromPoint;
+            var newEdge = new PolygonEdge(edgeFrom, edgeTo);
+            edgeFrom.StartLine = newEdge;
+            edgeTo.EndLine = newEdge;
+            vertexToDelete.StartLine = null;
+            vertexToDelete.EndLine = null;
+            return newEdge;
+        }
+        private static void RecreateVertices(this Polygon polygon, bool topOnly = true)
+        {
+            var index = 0;
+            while (polygon.Vertices[index].EndLine == null || polygon.Vertices[index].StartLine == null)
+                index++;
+            var firstVertex = polygon.Vertices[index];
+            var current = firstVertex;
+            polygon.Vertices.Clear();
+            //polygon.Edges.Clear();
+            index = 0;
+            do
+            {
+                current.IndexInList = index++;
+                current.LoopID = polygon.Index;
+                polygon.Vertices.Add(current);
+                current = current.StartLine.ToPoint;
+            } while (current != firstVertex);
+            polygon.Reset();
+            if (!topOnly)
+            {
+                foreach (var innerP in polygon.InnerPolygons)
+                    RecreateVertices(innerP);
+            }
+        }
+
+
         #endregion
     }
 }

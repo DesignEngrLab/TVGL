@@ -125,12 +125,12 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                polygonA = polygonA.SimplifyByAreaChange(areaSimplificationFraction);
+                polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                 {
                     //If not null
                     //clip = clip?.Select(p => SimplifyFuzzy(p));
-                    polygonB = polygonB?.SimplifyByAreaChange(areaSimplificationFraction);
+                    polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 }
             }
 #if CLIPPER
@@ -210,7 +210,7 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                polygons = polygons.SimplifyByAreaChange(areaSimplificationFraction);
+                polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             var polygonList = polygons.ToList();
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonList);
@@ -321,9 +321,9 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                polygonsA = polygonsA.SimplifyByAreaChange(areaSimplificationFraction);
+                polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
-                    polygonsB = polygonsB?.SimplifyByAreaChange(areaSimplificationFraction);
+                    polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygonsA, polygonsB);
@@ -447,12 +447,12 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                polygonA = polygonA.SimplifyByAreaChange(areaSimplificationFraction);
+                polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                 {
                     //If not null
                     //clip = clip?.Select(p => SimplifyFuzzy(p));
-                    polygonB = polygonB?.SimplifyByAreaChange(areaSimplificationFraction);
+                    polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 }
             }
 #if CLIPPER
@@ -526,9 +526,9 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                polygonsA = polygonsA.SimplifyByAreaChange(areaSimplificationFraction);
+                polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
-                    polygonsB = polygonsB?.SimplifyByAreaChange(areaSimplificationFraction);
+                    polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygonsA, polygonsB);
@@ -602,7 +602,7 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                polygons = polygons.SimplifyByAreaChange(areaSimplificationFraction);
+                polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons);
 #elif !COMPARE
@@ -668,9 +668,9 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                minuend = minuend.SimplifyByAreaChange(areaSimplificationFraction);
+                minuend = minuend.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (subtrahend != null)
-                    subtrahend = subtrahend?.SimplifyByAreaChange(areaSimplificationFraction);
+                    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, new[] { minuend },
@@ -745,9 +745,9 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                minuends = minuends.SimplifyByAreaChange(areaSimplificationFraction);
+                minuends = minuends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (subtrahends != null)
-                    subtrahends = subtrahends.SimplifyByAreaChange(areaSimplificationFraction);
+                    subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctDifference, minuends, subtrahends);
@@ -826,9 +826,9 @@ foreach (var polyB in subtrahends)
             if (areaSimplificationFraction > 0)
             {
                 //subject = subject.Select(p=>SimplifyFuzzy(p));
-                polygonA = polygonA.SimplifyByAreaChange(areaSimplificationFraction);
+                polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
-                    polygonB = polygonB?.SimplifyByAreaChange(areaSimplificationFraction);
+                    polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctXor, new[] { polygonA }, new[] { polygonB });
