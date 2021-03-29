@@ -125,7 +125,7 @@ namespace TVGL
             MakeVertices(vertsPerFaceList, scaleFactor, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
-            if (createFullVersion) CompleteInitiation();
+            if (createFullVersion) CompleteInitiation(true);
         }
 
         /// <summary>
@@ -402,9 +402,9 @@ namespace TVGL
             CompleteInitiation();
         }
 
-        internal void CompleteInitiation()
+        internal void CompleteInitiation(bool fromSTL = false)
         {
-            MakeEdges();
+            MakeEdges(fromSTL);
             CalculateVolume();
             this.CheckModelIntegrity();
             ConvexHull = new TVGLConvexHull(this);

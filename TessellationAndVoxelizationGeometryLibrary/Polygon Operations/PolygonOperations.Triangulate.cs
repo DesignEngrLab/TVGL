@@ -46,12 +46,12 @@ namespace TVGL.TwoDimensional
             if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
             foreach (var triangleIndices in polygon.TriangulateToIndices())
             {
-                if (indexToVertexDict[triangleIndices[0]] != indexToVertexDict[triangleIndices[1]]
-                    && indexToVertexDict[triangleIndices[1]] != indexToVertexDict[triangleIndices[2]]
-                    && indexToVertexDict[triangleIndices[2]] != indexToVertexDict[triangleIndices[0]])
+                if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]
+                    && indexToVertexDict[triangleIndices.B] != indexToVertexDict[triangleIndices.C]
+                    && indexToVertexDict[triangleIndices.C] != indexToVertexDict[triangleIndices.A])
                     yield return new[]
-                        {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
-                        indexToVertexDict[triangleIndices[2]]};
+                        {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+                        indexToVertexDict[triangleIndices.C]};
             }
         }
         /// <summary>
@@ -83,8 +83,8 @@ namespace TVGL.TwoDimensional
             {
                 foreach (var triangleIndices in polygon.TriangulateToIndices())
                     yield return new[]
-                        {indexToVertexDict[triangleIndices[0]], indexToVertexDict[triangleIndices[1]],
-                        indexToVertexDict[triangleIndices[2]]};
+                        {indexToVertexDict[triangleIndices.A], indexToVertexDict[triangleIndices.B],
+                        indexToVertexDict[triangleIndices.C]};
             }
         }
 
@@ -107,10 +107,28 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static IEnumerable<int[]> TriangulateToIndices(this Polygon polygon)
+        public static IEnumerable<(int A, int B, int C)> TriangulateToIndices(this Polygon polygon, bool handleSelfIntersects = true)
         {
-            foreach (var triangle in polygon.Triangulate())
-                yield return new[] { triangle[0].IndexInList, triangle[1].IndexInList, triangle[2].IndexInList };
+            var vertexIndices = new HashSet<int>();
+            var needToReIndex = false;
+            foreach (var v in polygon.AllPolygons.SelectMany(p => p.Vertices))
+            {
+                if (vertexIndices.Contains(v.IndexInList))
+                {
+                    needToReIndex = true;
+                    break;
+                }
+                vertexIndices.Add(v.IndexInList);
+            }
+            var index = 0;
+            if (needToReIndex)
+            {
+                foreach (var subPolygon in polygon.AllPolygons)
+                    foreach (var vertex in subPolygon.Vertices)
+                        vertex.IndexInList = index++;
+            }
+            foreach (var triangle in polygon.Triangulate(handleSelfIntersects))
+                yield return (triangle[0].IndexInList, triangle[1].IndexInList, triangle[2].IndexInList);
         }
         /// <summary>
         /// Triangulates the specified polygons which may include holes. 
@@ -118,12 +136,24 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="reIndexPolygons">if set to <c>true</c> [re index polygons].</param>
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
-        public static List<Vertex2D[]> Triangulate(this Polygon polygon)
+        private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
         {
+            if (polygon.Area.IsNegligible() || polygon.IsConvex())
+            {
+                var triangleList = new List<Vertex2D[]>();
+                for (int i = 2; i < polygon.Vertices.Count; i++)
+                    triangleList.Add(new[] { polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i] });
+                return triangleList;
+            }
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
 
-            int numVertices = polygon.AllPolygons.Sum(p => p.Vertices.Count);
+            var numVertices = 0;
+            foreach (var subPolygon in polygon.AllPolygons)
+            {
+                numVertices += subPolygon.Vertices.Count;
+                if (numVertices > 4) break;
+            }
             if (numVertices <= 2) return new List<Vertex2D[]>();
             if (numVertices == 3) return new List<Vertex2D[]> { polygon.Vertices.ToArray() };
             if (numVertices == 4)
@@ -156,34 +186,42 @@ namespace TVGL.TwoDimensional
             {
                 var c = Math.Cos(angle);
                 var s = Math.Sin(angle);
+                localTriangleFaceList.Clear();
+                var triangleArea = double.NegativeInfinity;
+                if (angle != 0)
+                {
+                    var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
+                    polygon.Transform(rotateMatrix);
+                }
                 try
                 {
-                    localTriangleFaceList.Clear();
-                    if (angle != 0)
-                    {
-                        var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
-                        polygon.Transform(rotateMatrix);
-                    }
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
-                    var triangleArea = 0.5 * localTriangleFaceList
-                        .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
-                    successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
-                    if (angle != 0)
-                    {
-                        var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
-                        polygon.Transform(rotateMatrix);
-                    }
-                    angle = random.NextDouble() * 2 * Math.PI;
+                    triangleArea = 0.5 * localTriangleFaceList
+                       .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
                 }
-                catch
+                catch { }
+                successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
+                System.Diagnostics.Debug.WriteLineIf(!successful && !double.IsNegativeInfinity(triangleArea),
+                    polygon.Area + ",   " + triangleArea);
+                if (angle != 0)
                 {
-                    angle = random.NextDouble() * 2 * Math.PI;
+                    var rotateMatrix = new Matrix3x3(c, -s, s, c, 0, 0);
+                    polygon.Transform(rotateMatrix);
                 }
+                angle = random.NextDouble() * 2 * Math.PI;
+
             } while (!successful && attempts++ < maxNumberOfAttempts);
             if (!successful)
-                throw new Exception("Unable to triangulate polygon. Consider simplifying to remove negligible edges or"
-                    + " check for self-intersections.");
+            {
+                if (handleSelfIntersects)
+                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
+                else
+                {
+                    IOFunctions.IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
+                    throw new Exception("Unable to triangulate polygon.");
+                }
+            }
             triangleFaceList.AddRange(localTriangleFaceList);
             return triangleFaceList;
         }
@@ -239,26 +277,21 @@ namespace TVGL.TwoDimensional
 
         private static Dictionary<Vertex2D, List<Vertex2D>> FindConnectionsToConvertToMonotonePolygons(Polygon polygon)
         {
-            var orderedListsOfVertices = new List<Vertex2D[]>();
-            orderedListsOfVertices.Add(polygon.OrderedXVertices);
-            foreach (var hole in polygon.InnerPolygons)
-                orderedListsOfVertices.Add(hole.OrderedXVertices);
-            var sortedVertices = CombineXSortedVerticesIntoOneCollection(orderedListsOfVertices);
+            var sortedVertices = polygon.AllPolygons.SelectMany(p => p.Vertices).OrderBy(v => v, new VertexSortedByXFirst());
             var connections = new Dictionary<Vertex2D, List<Vertex2D>>();
             // the edgeDatums are the current edges in the sweep. The Vertex is the past polygon point (aka helper)
             // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
             // was a merge vertex.
             var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
-            var tolerance = polygon.GetToleranceForPolygon();
             foreach (var vertex in sortedVertices)
             {
-                var monoChange = GetMonotonicityChange(vertex, tolerance);
+                var monoChange = GetMonotonicityChange(vertex);
                 var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
                 if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
-                    if (vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) || vertex.EndLine.Vector.X.IsPositiveNonNegligible(tolerance) ||  //headed in the positive x direction (enclosing along the bottom)
-                        (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.StartLine.Vector.Y.IsPositiveNonNegligible(tolerance)))
+                    if (vertex.StartLine.Vector.X > 0 || vertex.EndLine.Vector.X > 0 ||  //headed in the positive x direction (enclosing along the bottom)
+                        (vertex.StartLine.Vector.X == 0 && vertex.EndLine.Vector.X == 0 && vertex.StartLine.Vector.Y > 0))
                     {   // in the CCW direction or along the bottom
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
@@ -271,10 +304,10 @@ namespace TVGL.TwoDimensional
                         edgeDatums[closestDatumEdge] = (vertex, false);
                     }
                 }
-                else if (!cornerCross.IsNegativeNonNegligible(tolerance)) //then either start or end
+                else if (cornerCross >= 0) //then either start or end
                 {
-                    if ((vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegativeNonNegligible(tolerance)) || // then start
-                        (vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.Y.IsNegativeNonNegligible(tolerance)))
+                    if (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X < 0 || // then start
+                        (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X == 0 && vertex.EndLine.Vector.Y < 0))
                         edgeDatums.Add(vertex.StartLine, (vertex, false));
                     else // then it's an end
                     {
@@ -284,8 +317,8 @@ namespace TVGL.TwoDimensional
                 }
                 else //then either split or merge
                 {
-                    if ((vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegativeNonNegligible(tolerance)) || // then split
-                       (vertex.StartLine.Vector.Y.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.Y.IsPositiveNonNegligible(tolerance)))
+                    if (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X < 0 || // then split
+                       (vertex.StartLine.Vector.Y > 0 && vertex.EndLine.Vector.Y > 0))
                     {   // it's a split
                         var closestDatumEdge = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
                         var helperVertex = edgeDatums[closestDatumEdge].Item1;
@@ -369,55 +402,6 @@ namespace TVGL.TwoDimensional
             return closestEdge;
         }
 
-
-        private static IEnumerable<Vertex2D> CombineXSortedVerticesIntoOneCollection(List<Vertex2D[]> orderedListsOfVertices)
-        {
-            var numLists = orderedListsOfVertices.Count;
-            var currentIndices = new int[numLists];
-            var priorityQueue = new SimplePriorityQueue<int, Vertex2D>(new VertexSortedByXFirst());
-            for (int j = 0; j < orderedListsOfVertices.Count; j++)
-                priorityQueue.Enqueue(j, orderedListsOfVertices[j][0]);
-            // the following code is written verbosely. I'm trusting the compiler optimization
-            // to ensure that it speed things up.
-            while (priorityQueue.Count > 0)
-            {
-                var listWithLowestEntry = priorityQueue.First;
-                var vertexList = orderedListsOfVertices[listWithLowestEntry];
-                var indexInThatList = currentIndices[listWithLowestEntry];
-                var nextVertex = vertexList[currentIndices[listWithLowestEntry]];
-                yield return nextVertex;
-                indexInThatList++;
-                currentIndices[listWithLowestEntry] = indexInThatList;
-                if (indexInThatList < vertexList.Length)
-                    priorityQueue.UpdatePriority(listWithLowestEntry, vertexList[indexInThatList]);
-                else priorityQueue.Dequeue();
-            }
-        }
-
-
-
-        private static IEnumerable<Vertex2D> CombineYSortedVerticesIntoOneCollection(List<Vertex2D[]> orderedListsOfVertices)
-        {
-            var numLists = orderedListsOfVertices.Count;
-            var currentIndices = new int[numLists];
-            var priorityQueue = new SimplePriorityQueue<int, Vertex2D>(new VertexSortedByYFirst());
-            for (int j = 0; j < orderedListsOfVertices.Count; j++)
-                priorityQueue.Enqueue(j, orderedListsOfVertices[j][0]);
-            // the following code is written verbosely. I'm trusting the compiler optimization
-            // to ensure that it speed things up.
-            while (priorityQueue.Count > 0)
-            {
-                var listWithLowestEntry = priorityQueue.Dequeue();
-                var vertexList = orderedListsOfVertices[listWithLowestEntry];
-                var indexInThatList = currentIndices[listWithLowestEntry];
-                var nextVertex = vertexList[currentIndices[listWithLowestEntry]];
-                yield return nextVertex;
-                indexInThatList++;
-                currentIndices[listWithLowestEntry] = indexInThatList;
-                if (indexInThatList < vertexList.Length)
-                    priorityQueue.Enqueue(listWithLowestEntry, vertexList[indexInThatList]);
-            }
-        }
 
 
         private static IEnumerable<Vertex2D[]> TriangulateMonotonePolygon(Polygon monoPoly)

@@ -481,7 +481,8 @@ namespace TVGL.TwoDimensional
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons).SortVerticesByXValue();
+            var sortedPoints = polygons.SelectMany(p => p.AllPolygons).SelectMany(p => p.Vertices)
+                .OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
             var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().X;
