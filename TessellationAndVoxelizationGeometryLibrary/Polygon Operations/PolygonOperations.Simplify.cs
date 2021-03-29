@@ -282,9 +282,9 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> SimplifyByAreaChange(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction)
+        public static IEnumerable<Polygon> SimplifyByAreaChange(this IEnumerable<Polygon> polygons, double allowableChangeInAreaFraction, bool onlyRemoveConcave = false)
         {
-            return polygons.Select(poly => poly.SimplifyByAreaChange(allowableChangeInAreaFraction));
+            return polygons.Select(poly => poly.SimplifyByAreaChange(allowableChangeInAreaFraction, onlyRemoveConcave));
         }
 
         /// <summary>
@@ -293,11 +293,11 @@ namespace TVGL.TwoDimensional
         /// <param name="polygon">The polygon.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>Polygon.</returns>
-        public static Polygon SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction)
+        public static Polygon SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction, bool onlyRemoveConcave = false)
         {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyByAreaChange(allowableChangeInAreaFraction));
+            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyByAreaChange(allowableChangeInAreaFraction, onlyRemoveConcave));
             foreach (var polygonHole in polygon.InnerPolygons)
-                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyByAreaChange(allowableChangeInAreaFraction)));
+                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyByAreaChange(allowableChangeInAreaFraction, onlyRemoveConcave)));
             return simplifiedPositivePolygon;
         }
 
@@ -317,12 +317,15 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static IEnumerable<Vector2> SimplifyByAreaChange(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction)
+        public static IEnumerable<Vector2> SimplifyByAreaChange(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction, bool onlyRemoveConcave = false)
         {
             var polygon = path.RemoveCollinearEdges();
             var numPoints = polygon.Count;
             var origArea = Math.Abs(polygon.Area());
             if (origArea.IsNegligible()) return polygon;
+            //multiplied by 2 in order to reduce all the divide by 2
+            // that happens when we change cross-product to area of a triangle
+            var deltaArea = onlyRemoveConcave ? 2 * allowableChangeInAreaFraction : 2 * allowableChangeInAreaFraction  * origArea; 
 
             #region build initial list of cross products
 
@@ -351,10 +354,10 @@ namespace TVGL.TwoDimensional
             // after much thought, the idea to split up into positive and negative sorted lists is so that we don't over remove vertices
             // by bouncing back and forth between convex and concave while staying with the target deltaArea. So, we do as many convex corners
             // before reaching a reduction of deltaArea - followed by a reduction of concave edges so that no more than deltaArea is re-added
-            for (int sign = 1; sign >= -1; sign -= 2)
+            var startSign = onlyRemoveConcave ? -1 : 1;
+            for (int sign = startSign; sign >= -1; sign -= 2)
             {
-                var deltaArea = 2 * allowableChangeInAreaFraction * origArea; //multiplied by 2 in order to reduce all the divide by 2
-                                                                              // that happens when we change cross-product to area of a triangle
+               
                 var relevantSortedList = (sign == 1) ? convexCornerQueue : concaveCornerQueue;
                 // first we remove any convex corners that would reduce the area
                 while (relevantSortedList.Count > 0)
