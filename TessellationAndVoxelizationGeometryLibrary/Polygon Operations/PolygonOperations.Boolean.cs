@@ -85,12 +85,19 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
-            double tolerance = double.NaN)
+            double tolerance = double.NaN, bool unknownPolygonDirections = false)
         {
             if (double.IsNaN(tolerance))
                 tolerance = polygons.GetTolerancesFromPolygons();
             if (CLIPPER)
+            {
+                if (unknownPolygonDirections)
+                {
+                    return BooleanViaClipper(ClipperLib.PolyFillType.pftEvenOdd, ClipperLib.ClipType.ctUnion, polygons, tolerance);
+                }
                 return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygons, tolerance);
+            }
+               
 
             var polygonList = polygons.ToList();
             if (double.IsNaN(tolerance))
