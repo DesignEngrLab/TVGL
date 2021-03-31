@@ -481,8 +481,18 @@ namespace TVGL.TwoDimensional
               int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            var sortedPoints = polygons.SelectMany(p => p.AllPolygons).SelectMany(p => p.Vertices)
-                .OrderBy(v => v, new VertexSortedByXFirst()).ToArray();
+            var sortedPoints = new List<Vertex2D>();
+            var comparer = new VertexSortedByXFirst();
+            foreach (var polygon in polygons.SelectMany(p=>p.AllPolygons))
+            {
+                polygon.MakePolygonEdgesIfNonExistent();
+                sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.OrderedXVertices, comparer).ToList();
+            }
+            if (sortedPoints.Count == 0)
+            {
+                firstIntersectingIndex = -1;
+                return intersections;
+            }
             var tolerance = (sortedPoints[^1].X - sortedPoints[0].X) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = sortedPoints.First().X;
@@ -501,7 +511,7 @@ namespace TVGL.TwoDimensional
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
                     else currentLines.Add(thisPoint.EndLine);
                     pointIndex++;
-                    if (pointIndex == sortedPoints.Length) return intersections;
+                    if (pointIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
@@ -531,13 +541,14 @@ namespace TVGL.TwoDimensional
             double startingYValue, int numSteps, double stepSize, out int firstIntersectingIndex)
         {
             var intersections = new List<double[]>();
-            foreach (var polygon in polygons)
+            var sortedPoints = new List<Vertex2D>();
+            var comparer = new VertexSortedByYFirst();
+            foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
+            {
                 polygon.MakePolygonEdgesIfNonExistent();
-            var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(
-                subPolygon => subPolygon.Vertices)).OrderBy(p => p.Y).ToArray();
-            //if (sortedPoints.Count == 0)
-            //    var sortedPoints = polygons.SelectMany(polygon => polygon.AllPolygons).SortVerticesByYValue();
-            if (sortedPoints.Length == 0)
+                sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.Vertices.OrderBy(x=>x,comparer), comparer).ToList();
+            }
+            if (sortedPoints.Count == 0)
             {
                 firstIntersectingIndex = -1;
                 return intersections;
@@ -561,7 +572,7 @@ namespace TVGL.TwoDimensional
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
                     else currentLines.Add(thisPoint.EndLine);
                     pointIndex++;
-                    if (pointIndex == sortedPoints.Length) return intersections;
+                    if (pointIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
