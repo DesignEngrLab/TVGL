@@ -103,7 +103,7 @@ namespace TVGL
         public static IEnumerable<PolygonalFace> ExtrusionFacesFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                 double basePlaneDistance, double extrusionHeight)
         {
-            foreach (var triple in ExtrusionFaceVectorsFrom2DPolygons( polygon, basePlaneNormal,
+            foreach (var triple in ExtrusionFaceVectorsFrom2DPolygons(polygon, basePlaneNormal,
                basePlaneDistance, extrusionHeight))
             {
                 yield return new PolygonalFace(new Vertex(triple.A), new Vertex(triple.B),
