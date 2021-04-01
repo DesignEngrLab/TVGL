@@ -325,7 +325,7 @@ namespace TVGL.TwoDimensional
             if (origArea.IsNegligible()) return polygon;
             //multiplied by 2 in order to reduce all the divide by 2
             // that happens when we change cross-product to area of a triangle
-            var deltaArea = onlyRemoveConcave ? 2 * allowableChangeInAreaFraction : 2 * allowableChangeInAreaFraction  * origArea; 
+            var deltaArea = 2 * allowableChangeInAreaFraction  * origArea; 
 
             #region build initial list of cross products
 
