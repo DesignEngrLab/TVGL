@@ -22,29 +22,30 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("*").OrderBy(x => r.NextDouble()).ToArray();
+            var fileNames = dir.GetFiles("*.json").OrderBy(x => r.NextDouble()).ToArray();
             for (var i = 0; i < fileNames.Length; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
-                var solid = (TessellatedSolid)IO.Open(filename);
-                //Presenter.ShowAndHang(solid);
-                if (solid.Errors != null)
-                {
-                    Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
-                    continue;
-                }
+                IO.Open(filename, out Polygon polygon);
+                Presenter.ShowAndHang(polygon);
+                var xsection = new List<Polygon> { polygon };
+                //if (solid.Errors != null)
+                //{
+                //    Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
+                //    continue;
+                //}
 
-                for (int j = 0; j < 9; j++)
-                {
-                    var direction = Vector3.UnitVector((CartesianDirections)(j % 3));
-                    //var direction = new Vector3(r100, r100, r100);
-                    Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
+                //for (int j = 0; j < 9; j++)
+                //{
+                //    var direction = Vector3.UnitVector((CartesianDirections)(j % 3));
+                //    //var direction = new Vector3(r100, r100, r100);
+                //    Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
 
-                    solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
-                    var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
-                    var xsection = solid.GetCrossSection(plane);
+                //    solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
+                //    var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
+                //    var xsection = solid.GetCrossSection(plane);
                     //Presenter.ShowAndHang(xsection);
                     var monoPolys = new List<Polygon>();
                     var error = false;
@@ -56,8 +57,8 @@ namespace TVGLUnitTestsAndBenchmarking
                         monoPolys.Add(monopoly);
                         totalArea += monopoly.Area;
                         var extremeVerts = monopoly.Vertices.Where(v =>
-                            v.GetMonotonicityChange(tolerance) == MonotonicityChange.X ||
-                            v.GetMonotonicityChange(tolerance) == MonotonicityChange.Both).ToList();
+                            v.GetMonotonicityChange() == MonotonicityChange.X ||
+                            v.GetMonotonicityChange() == MonotonicityChange.Both).ToList();
                         if (extremeVerts.Count != 2 ||
                             !monopoly.MinX.IsPracticallySame(Math.Min(extremeVerts[0].X, extremeVerts[1].X)) ||
                             !monopoly.MaxX.IsPracticallySame(Math.Max(extremeVerts[0].X, extremeVerts[1].X)))
@@ -84,7 +85,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
             }
 
-        }
+       // }
 
         public static void TestTriangulate(Polygon testcase)
         {

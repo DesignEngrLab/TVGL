@@ -280,7 +280,7 @@ namespace TVGL.TwoDimensional
             var sortedVertices = new List<Vertex2D>();
             var comparer = new VertexSortedByXFirst();
             foreach (var p in polygon.AllPolygons)
-                sortedVertices = CombineSortedVertexLists(sortedVertices, polygon.OrderedXVertices, comparer).ToList();
+                sortedVertices = CombineSortedVertexLists(sortedVertices, p.OrderedXVertices, comparer).ToList();
             var connections = new Dictionary<Vertex2D, List<Vertex2D>>();
             // the edgeDatums are the current edges in the sweep. The Vertex is the past polygon point (aka helper)
             // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
