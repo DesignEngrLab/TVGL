@@ -60,6 +60,7 @@ namespace TVGL.TwoDimensional
         public static List<Vector2> RemoveCollinearEdges(this IEnumerable<Vector2> path)
         {
             var polygon = path.ToList();
+            if (polygon.Count == 0) return polygon;
             var forwardPoint = polygon[0];
             var currentPoint = polygon[^1];
             for (int i = polygon.Count - 1; i >= 0; i--)
