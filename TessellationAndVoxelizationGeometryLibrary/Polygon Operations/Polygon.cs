@@ -649,6 +649,27 @@ namespace TVGL.TwoDimensional
             return (v1.Y < v2.Y) ? -1 : 1;
         }
     }
+
+    internal class VertexSortedByDirection : IComparer<Vertex2D>
+    {
+        private readonly Vector2 sweepDirection;
+        private readonly Vector2 alongDirection;
+
+        internal VertexSortedByDirection(Vector2 sweepDirection)
+        {
+            this.sweepDirection = sweepDirection;
+            alongDirection = new Vector2(-sweepDirection.Y, sweepDirection.X);
+
+        }
+        public int Compare(Vertex2D v1, Vertex2D v2)
+        {
+            var d1 = v1.Coordinates.Dot(sweepDirection);
+            var d2 = v2.Coordinates.Dot(sweepDirection);
+            if (d1.IsPracticallySame(d2))
+                return (v1.Coordinates.Dot(alongDirection) < v2.Coordinates.Dot(alongDirection)) ? -1 : 1;
+            return (d1 < d2) ? -1 : 1;
+        }
+    }
 }
 
 

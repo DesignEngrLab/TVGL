@@ -463,7 +463,7 @@ namespace TVGL.TwoDimensional
                 var index = 0;
                 foreach (var line in currentLines)
                     intersects[index++] = MiscFunctions.LineLine2DIntersection(line.FromPoint.Coordinates, line.Vector, lineReference, lineDir);
-                intersections.Add(intersects.OrderBy(x => x.Dot(lineNormalDirection)).ToArray());
+                intersections.Add(intersects.OrderBy(x => x.Dot(lineDir)).ToArray());
             }
             return intersections;
         }
