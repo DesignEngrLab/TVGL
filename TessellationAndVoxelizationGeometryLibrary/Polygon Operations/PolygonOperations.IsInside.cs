@@ -400,9 +400,9 @@ namespace TVGL.TwoDimensional
         #region Line Intersections with Polygon
 
         /// <summary>
-        /// All the polygon intersection points along line. Note that the line is represented as 4 numbers. Think of it as a 
-        /// plane cutting through this 2D plane. Instead of the line direction, we receive the normal to the line, the lineNormalDirection.
-        /// Instead of an anchor point on the line, all we need is the perpendicular distance to the line.
+        /// All the polygon intersection points along line. The line is swept in it's normal direction. This normal or swept direction
+        /// is provided instead of the usual line direction so as to be clear about the direction of the sweep. Additionally, the 
+        /// perpendicular distance from the origin to the line (meeting at a right angle is provided to indicate where the increments start from.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="perpendicularDistanceToLine">The line reference.</param>
@@ -418,18 +418,20 @@ namespace TVGL.TwoDimensional
             var lineDir = new Vector2(-lineNormalDirection.Y, lineNormalDirection.X);
             var lineReference = perpendicularDistanceToLine * lineNormalDirection;
             var intersections = new List<Vector2[]>();
-            foreach (var polygon in polygons)
+            var sortedPoints = new List<Vertex2D>();
+            var comparer = new VertexSortedByDirection(lineNormalDirection);
+            foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
+            {
                 polygon.MakePolygonEdgesIfNonExistent();
-            var sortedPoints = new SortedList<double, Vertex2D>();
-            foreach (var vertex in polygons.SelectMany(polygon => polygon.AllPolygons.SelectMany(subPolygon => subPolygon.Vertices)))
-                sortedPoints.Add(vertex.Coordinates.Dot(lineDir), vertex);
+                sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.Vertices.OrderBy(x => x, comparer), comparer).ToList();
+            }
             if (sortedPoints.Count == 0)
             {
                 firstIntersectingIndex = -1;
                 return intersections;
             }
-            var firstDistance = sortedPoints[0].Coordinates.Dot(lineDir);
-            var lastDistance = sortedPoints.Values[^1].Coordinates.Dot(lineDir);
+            var firstDistance = sortedPoints[0].Coordinates.Dot(lineNormalDirection);
+            var lastDistance = sortedPoints[^1].Coordinates.Dot(lineNormalDirection);
             var tolerance = (lastDistance - firstDistance) * Constants.BaseTolerance;
             var currentLines = new HashSet<PolygonEdge>();
             var nextDistance = firstDistance;
@@ -438,7 +440,7 @@ namespace TVGL.TwoDimensional
             for (int i = firstIntersectingIndex; i < numSteps; i++)
             {
                 var d = perpendicularDistanceToLine + i * stepSize;
-                var thisPoint = sortedPoints.Values[pointIndex];
+                var thisPoint = sortedPoints[pointIndex];
                 var needToOffset = false;
                 // this while loop updates the current lines. 
                 var thisPointD = thisPoint.Coordinates.Dot(lineNormalDirection);
@@ -454,7 +456,7 @@ namespace TVGL.TwoDimensional
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
-                    d += Math.Min(stepSize, sortedPoints[pointIndex].Y) / 10.0;
+                    d += Math.Min(stepSize, sortedPoints[pointIndex].Coordinates.Dot(lineNormalDirection) - d) / 10.0;
 
                 var numIntersects = currentLines.Count;
                 var intersects = new Vector2[numIntersects];
@@ -483,7 +485,7 @@ namespace TVGL.TwoDimensional
             var intersections = new List<double[]>();
             var sortedPoints = new List<Vertex2D>();
             var comparer = new VertexSortedByXFirst();
-            foreach (var polygon in polygons.SelectMany(p=>p.AllPolygons))
+            foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
             {
                 polygon.MakePolygonEdgesIfNonExistent();
                 sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.OrderedXVertices, comparer).ToList();
@@ -515,7 +517,7 @@ namespace TVGL.TwoDimensional
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
-                    x += Math.Min(stepSize, sortedPoints[pointIndex + 1].X) / 10.0;
+                    x += Math.Min(stepSize, sortedPoints[pointIndex + 1].X - x) / 10.0;
                 var numIntersects = currentLines.Count;
                 var intersects = new double[numIntersects];
                 var index = 0;
@@ -546,7 +548,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons.SelectMany(p => p.AllPolygons))
             {
                 polygon.MakePolygonEdgesIfNonExistent();
-                sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.Vertices.OrderBy(x=>x,comparer), comparer).ToList();
+                sortedPoints = CombineSortedVertexLists(sortedPoints, polygon.Vertices.OrderBy(x => x, comparer), comparer).ToList();
             }
             if (sortedPoints.Count == 0)
             {
@@ -576,7 +578,7 @@ namespace TVGL.TwoDimensional
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)
-                    y += Math.Min(stepSize, sortedPoints[pointIndex].Y) / 10.0;
+                    y += Math.Min(stepSize, sortedPoints[pointIndex].Y - y) / 10.0;
 
                 var numIntersects = currentLines.Count;
                 var intersects = new double[numIntersects];
