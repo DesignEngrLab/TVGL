@@ -436,6 +436,36 @@ namespace TVGL.TwoDimensional
             }
         }
 
+        public Vector2 Centroid
+        {
+            get
+            {
+                if (_centroid.IsNull())
+                    CalculateCentroid();
+                return _centroid;
+            }
+        }
+        private Vector2 _centroid = Vector2.Null;
+
+        private void CalculateCentroid()
+        {
+            var xCenter = 0.0;
+            var yCenter = 0.0;
+            foreach (var p in AllPolygons)
+            {
+                for (int i = 0, j = Vertices.Count - 1; i < Vertices.Count; j = i++)
+                {
+                    var pj = Vertices[j];
+                    var pi = Vertices[i];
+                    var a = pj.X * pi.Y - pi.X * pj.Y;
+                    xCenter += (pj.X + pi.X) * a;
+                    yCenter += (pj.Y + pi.Y) * a;
+                }
+            }
+            _centroid = new Vector2(xCenter, yCenter) / (6 * Area);
+        }
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Polygon" /> class.
         /// Assumes path is closed and not self-intersecting.
