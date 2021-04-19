@@ -447,8 +447,8 @@ namespace TVGL
                 if (zMax < v.Z) zMax = v.Z;
             }
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
-            var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
-            SameTolerance = shortestDimension * Constants.BaseTolerance;
+            var averageDimension = 0.333 * ((XMax - XMin) + (YMax - YMin) + (ZMax - ZMin));
+            SameTolerance = averageDimension * Constants.BaseTolerance;
         }
 
         /// <summary>

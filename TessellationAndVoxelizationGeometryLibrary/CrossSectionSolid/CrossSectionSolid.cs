@@ -10,7 +10,6 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using TVGL.Boolean_Operations;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -68,6 +67,8 @@ namespace TVGL
 
         public int NumLayers { get; set; }
 
+
+        #region Constructors
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
@@ -119,32 +120,14 @@ namespace TVGL
             }
             else Bounds = new[] { bounds[0].Copy(), bounds[1].Copy() };
         }
+        #endregion
 
-        public static CrossSectionSolid CreateFromTessellatedSolid(TessellatedSolid ts, CartesianDirections direction, int numberOfLayers)
-        {
-            var intDir = Math.Abs((int)direction) - 1;
-            var max = intDir == 0 ? ts.Bounds[1].X : intDir == 1 ? ts.Bounds[1].Y : ts.Bounds[1].Z;
-            var min = intDir == 0 ? ts.Bounds[0].X : intDir == 1 ? ts.Bounds[0].Y : ts.Bounds[0].Z;
-            var lengthAlongDir = max - min;
-            var stepSize = lengthAlongDir / numberOfLayers;
-            var stepDistances = new Dictionary<int, double>();
-            //var stepDistances = new double[numberOfLayers];
-            stepDistances.Add(0, min + 0.5 * stepSize);
-            //stepDistances[0] = ts.Bounds[0][intDir] + 0.5 * stepSize;
-            for (int i = 1; i < numberOfLayers; i++)
-                stepDistances.Add(i, stepDistances[i - 1] + stepSize);
-            //stepDistances[i] = stepDistances[i - 1] + stepSize;
-            var bounds = new[] { ts.Bounds[0].Copy(), ts.Bounds[1].Copy() };
-
-            var layers = ts.GetUniformlySpacedCrossSections(direction, stepDistances[0], numberOfLayers, stepSize);
-            var layerDict = new Dictionary<int, IList<Polygon>>();
-            for (int i = 0; i < layers.Length; i++)
-                layerDict.Add(i, layers[i]);
-            var directionVector = Vector3.UnitVector(direction);
-            return new CrossSectionSolid(directionVector, stepDistances, ts.SameTolerance, layerDict, bounds, ts.Units);
-        }
-
-        public void Add(List<Vertex> feature3D, Polygon feature2D, int layer)
+        /// <summary>
+        /// Adds the specified feature2 d.
+        /// </summary>
+        /// <param name="feature2D">The feature2 d.</param>
+        /// <param name="layer">The layer.</param>
+        public void Add(Polygon feature2D, int layer)
         {
             if (!Layer2D.ContainsKey(layer))
                 Layer2D[layer] = new List<Polygon>();
@@ -167,7 +150,7 @@ namespace TVGL
         {
             var faces = new List<PolygonalFace>();
             var facesAsTuples = ConvertToFaces(extrudeBack);
-            foreach(var face in facesAsTuples)
+            foreach (var face in facesAsTuples)
             {
                 faces.Add(new PolygonalFace(new Vertex(face.A), new Vertex(face.B), new Vertex(face.C)));
             }
@@ -191,17 +174,19 @@ namespace TVGL
             }
             else stop -= increment;
             //Skip gaps in layer3D, since it may actually represents more than one solid body
-            Parallel.ForEach(Layer2D.Where(p => p.Value.Any()), layer =>
+            Parallel.ForEach(Layer2D, layer =>
+            //foreach (var layer in Layer2D.Where(p => p.Value.Any()))
             {
                 var i = layer.Key;
                 //Skip layers outside of the start and stop bounds. This is necessary because of the increment
-                if (i * increment < start * increment || i * increment > stop * increment) return; 
+                if (i * increment < start * increment || i * increment > stop * increment) return;
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 var layerfaces = layer.Value.SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
                 foreach (var face in layerfaces) faces.Add(face);
-            });
+            }
+            );
             return faces.ToList();
         }
 
@@ -218,16 +203,17 @@ namespace TVGL
             var stop = Layer2D.LastOrDefault(p => p.Value.Count > 0).Key;
             var increment = start < stop ? 1 : -1;
             start += increment;
-            var faces = new ConcurrentDictionary<Polygon, List<(int A, int B, int C)>>();      
+            var faces = new ConcurrentDictionary<Polygon, List<(int A, int B, int C)>>();
             //Skip gaps in layer3D, since it may actually represents more than one solid body
             Parallel.ForEach(Layer2D.Where(p => p.Value.Any()), layer =>
             {
                 var i = layer.Key;
                 //Skip layers outside of the start and stop bounds. This is necessary because of the increment
                 if (i * increment < start * increment || i * increment > stop * increment) return;
-                foreach(var polygon in layer.Value)
+                foreach (var polygon in layer.Value)
                 {
-                    faces.TryAdd(polygon, TriangulatePolygon.ReturnAsIndices(polygon));
+                    lock (polygon)
+                        faces.TryAdd(polygon, polygon.TriangulateToIndices().ToList());
                 }
             });
             return faces;
@@ -351,7 +337,28 @@ namespace TVGL
 
         protected override void CalculateCenter()
         {
-            throw new NotImplementedException();
+            var xCenter = 0.0;
+            var yCenter = 0.0;
+            var zCenter = 0.0;
+            var totalArea = 0.0;
+            foreach (var stepDistanceKVP in StepDistances)  // skip the first, this is shown above.
+            {
+                var index = stepDistanceKVP.Key;
+                var distance = stepDistanceKVP.Value;
+                if (!Layer2D.ContainsKey(index)) continue;
+                var layer2D = Layer2D[index];
+                if (layer2D == null || layer2D.Count == 0) continue;
+                foreach (var polygon in layer2D)
+                {
+                    Vector2 c = polygon.Centroid;
+                    var area = polygon.Area;
+                    totalArea += area;
+                    xCenter += area * c.X;
+                    yCenter += area * c.Y;
+                    zCenter += area * distance;
+                }
+            }
+            _center = (new Vector3(xCenter, yCenter, zCenter) / totalArea).Transform(BackTransform);
         }
 
         protected override void CalculateVolume()
@@ -379,12 +386,39 @@ namespace TVGL
 
         protected override void CalculateSurfaceArea()
         {
-            throw new NotImplementedException();
+            // this is probably not correct. I simply took the code for CalculateVolume and changed
+            // polygon area to polygon perimeter.
+            var area = 0.0;
+            var index = StepDistances.Keys.First();
+            var prevDistance = StepDistances.Values.First();
+            var layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+            var prevPerimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
+            foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
+            {
+                index = stepDistanceKVP.Key;
+                var distance = stepDistanceKVP.Value;
+                layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+                var perimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
+                area += (prevPerimeter + perimeter) * (distance - prevDistance);
+                prevPerimeter = perimeter;
+                prevDistance = distance;
+            }
+            area *= 0.5;
+            //
+            if (area < 0) area = -area;
         }
 
         protected override void CalculateInertiaTensor()
         {
             throw new NotImplementedException();
+        }
+
+        public int GetTotalPolygonVertices()
+        {
+            return Layer2D
+                .Sum(layer => layer.Value
+                .Sum(outerP => outerP.AllPolygons
+                .Sum(p => p.Vertices.Count)));
         }
     }
 }
