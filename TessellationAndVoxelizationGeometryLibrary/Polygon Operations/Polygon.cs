@@ -515,8 +515,8 @@ namespace TVGL.TwoDimensional
         /// <returns>TVGL.TwoDimensional.Polygon.</returns>
         public Polygon Copy(bool copyInnerPolygons, bool invert)
         {
-            var thisPath = _path == null ? null : new List<Vector2>(_path);
-            if (invert && thisPath != null)
+            var thisPath = new List<Vector2>(Path);
+            if (invert)
             {
                 thisPath.Reverse();
                 // now the following three lines are to aid with mapping old polygon data to new polygon data.

@@ -331,10 +331,12 @@ namespace TVGL
             foreach (var border in edges.GetLoops(Faces))
             {
                 _borders.Add(border);
-                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), out var bestFitPlane, out var planeResidual,
-                      out var curveResidual);
+                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), 
+                    out var bestFitPlane, out var planeResidual, out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)
                 border.Plane = bestFitPlane;
+                border.PlaneError = planeResidual;
+                border.CurveError = curveResidual;
                 SetBorderConvexity(border);
                 if (curveResidual < maxErrorInCurveFit)
                     border.Curve = curve;
