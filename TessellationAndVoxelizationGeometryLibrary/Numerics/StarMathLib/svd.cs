@@ -16,7 +16,7 @@ using TVGL.Numerics;
 
 namespace StarMathLib
 {
-    public static partial class StarMath
+    internal static partial class StarMath
     {
         /// <summary>
         ///     The maximum svd iter
@@ -27,7 +27,7 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The matrix in question, A can be rectangular m-by-n.</param>
         /// <returns>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</returns>
-        public static double[] SingularValueDecomposition(this double[,] A)
+        internal static double[] SingularValueDecomposition(this double[,] A)
         {
             double[,] U, V;
             return SingularValueDecomposition(false, A, out U, out V);
@@ -40,7 +40,7 @@ namespace StarMathLib
         /// <param name="U">The m-by-m uitary matrix that pre-multiplies the singular values.</param>
         /// <param name="V">The n-by-n conjugate transpose matrix of V that post-multiplies the singular values.</param>
         /// <returns>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</returns>
-        public static double[] SingularValueDecomposition(this double[,] A, out double[,] U, out double[,] V)
+        internal static double[] SingularValueDecomposition(this double[,] A, out double[,] U, out double[,] V)
         {
             return SingularValueDecomposition(true, A, out U, out V);
         }
@@ -50,7 +50,7 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">The matrix in question, A can be rectangular m-by-n.</param>
         /// <returns>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</returns>
-        public static double[] SingularValueDecomposition(this int[,] A)
+        internal static double[] SingularValueDecomposition(this int[,] A)
         {
             double[,] U, V;
             var B = new double[A.GetLength(0), A.GetLength(1)];
@@ -67,7 +67,7 @@ namespace StarMathLib
         /// <param name="U">The m-by-m uitary matrix that pre-multiplies the singular values.</param>
         /// <param name="V">The n-by-n conjugate transpose matrix of V that post-multiplies the singular values.</param>
         /// <returns>The singular values of A in ascending value, often indicated as sigma (provided as a vector).</returns>
-        public static double[] SingularValueDecomposition(this int[,] A, out double[,] U, out double[,] V)
+        internal static double[] SingularValueDecomposition(this int[,] A, out double[,] U, out double[,] V)
         {
             var B = new double[A.GetLength(0), A.GetLength(1)];
             for (var i = 0; i < A.GetLength(0); i++)

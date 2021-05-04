@@ -18,7 +18,7 @@ using TVGL.Numerics;
 
 namespace StarMathLib
 {
-    public static partial class StarMath
+    internal static partial class StarMath
     {
         #region Matrix Inversion
         /// <summary>
@@ -28,7 +28,7 @@ namespace StarMathLib
         /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
         /// <returns>The inverted matrix, A^-1.</returns>
         /// <exception cref="System.ArithmeticException">Matrix cannnot be inverted. Can only invert sqare matrices.</exception>
-        public static double[,] inverse(this double[,] A) // need bool IsSymmetric to switch to Cholesky
+        internal static double[,] inverse(this double[,] A) // need bool IsSymmetric to switch to Cholesky
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
@@ -46,7 +46,7 @@ namespace StarMathLib
         /// <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
         /// <returns>The inverted matrix, A^-1.</returns>
         /// <exception cref="ArithmeticException">Matrix cannnot be inverted. Can only invert sqare matrices.</exception>
-        public static double[,] inverse(this int[,] A)
+        internal static double[,] inverse(this int[,] A)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
@@ -147,7 +147,7 @@ namespace StarMathLib
         /// <param name="permute">The permute.</param>
         /// <exception cref="System.ArithmeticException">Matrix cannot be inverted. Can only invert sqyare matrices.</exception>
         /// <exception cref="ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
-        public static void LUDecomposition(double[,] A, out double[,] L, out double[,] U, out int[] permute)
+        internal static void LUDecomposition(double[,] A, out double[,] L, out double[,] U, out int[] permute)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
@@ -293,7 +293,7 @@ namespace StarMathLib
         /// <param name="permute">The permute.</param>
         /// <exception cref="System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         /// <exception cref="ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
-        public static void LUDecomposition(int[,] A, out double[,] L, out double[,] U, out int[] permute)
+        internal static void LUDecomposition(int[,] A, out double[,] L, out double[,] U, out int[] permute)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
@@ -387,7 +387,7 @@ namespace StarMathLib
         /// <returns>System.Double[].</returns>
         /// <exception cref="System.ArithmeticException">Matrix cannot be inverted. Can only invert square matrices.</exception>
         /// <exception cref="ArithmeticException">Matrix cannot be inverted. Can only invert square matrices.</exception>
-        public static bool CholeskyDecomposition(double[,] A, out double[,] LUMatrix, bool NoSeparateDiagonal = false)
+        internal static bool CholeskyDecomposition(double[,] A, out double[,] LUMatrix, bool NoSeparateDiagonal = false)
         {
             LUMatrix = (double[,])A.Clone();
             var length = A.GetLength(0);
@@ -434,7 +434,7 @@ namespace StarMathLib
         /// <returns>The transpose of A.</returns>
         /// <exception cref="ArithmeticException">The matrix, A, is null.</exception>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
-        public static double[,] transpose(this double[,] A)
+        internal static double[,] transpose(this double[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var numRows = A.GetLength(1);
@@ -454,7 +454,7 @@ namespace StarMathLib
         /// <returns>The transpose of A.</returns>
         /// <exception cref="ArithmeticException">The matrix, A, is null.</exception>
         /// <exception cref="System.ArithmeticException">The matrix, A, is null.</exception>
-        public static int[,] transpose(this int[,] A)
+        internal static int[,] transpose(this int[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var numRows = A.GetLength(1);
@@ -483,7 +483,7 @@ namespace StarMathLib
         /// <exception cref="ArithmeticException">The matrix, A, is null.
         /// or
         /// The determinant is only possible for square matrices.</exception>
-        public static double determinant(this double[,] A)
+        internal static double determinant(this double[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var length = A.GetLength(0);
@@ -533,7 +533,7 @@ namespace StarMathLib
         /// <exception cref="ArithmeticException">The matrix, A, is null.
         /// or
         /// The determinant is only possible for square matrices.</exception>
-        public static int determinant(this int[,] A)
+        internal static int determinant(this int[,] A)
         {
             if (A == null) throw new ArithmeticException("The matrix, A, is null.");
             var length = A.GetLength(0);

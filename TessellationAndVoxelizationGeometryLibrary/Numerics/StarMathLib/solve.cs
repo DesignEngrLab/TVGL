@@ -13,11 +13,10 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace StarMathLib
 {
-    public static partial class StarMath
+    internal static partial class StarMath
     {
         /// <summary>
         /// Solves the specified A matrix.
@@ -30,7 +29,7 @@ namespace StarMathLib
         /// <exception cref="System.ArithmeticException">Matrix, A, must be square.
         /// or
         /// Matrix, A, must be have the same number of rows as the vector, b.</exception>
-        public static bool solve(this double[,] A, IList<double> b, out double[] answer,
+        internal static bool solve(this double[,] A, IList<double> b, out double[] answer,
             Boolean IsASymmetric = false)
         {
             var length = A.GetLength(0);
