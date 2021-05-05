@@ -24,7 +24,7 @@ using TVGL.Numerics;
 
 namespace StarMathLib
 {
-    internal static partial class StarMath
+    public static partial class StarMath
     {
         /// <summary>
         ///     Gets the eigenvalues for matrix, A.
@@ -34,7 +34,7 @@ namespace StarMathLib
         ///     The eigenvalues as two arrays of same length/order as A
         ///     (the first is the real component, the second is the imaginary component).
         /// </returns>
-        internal static double[][] GetEigenValues(this double[,] A)
+        public static double[][] GetEigenValues(this double[,] A)
         {
             return GetEigenValuesAndVectors(A, out _);
         }
@@ -45,7 +45,7 @@ namespace StarMathLib
         /// <param name="A">the matrix in question, A.</param>
         /// <param name="eigenVectors">The eigenvectors as an array of arrays/vectors.</param>
         /// <returns></returns>
-        internal static double[][] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
+        public static double[][] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
