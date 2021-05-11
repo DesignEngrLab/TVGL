@@ -729,7 +729,7 @@ namespace TVGL
             {
                 var numDecimalPoints = 0;
                 var simpleCompareDict = new HashSet<Vector2>();
-                while (numDecimalPoints <= 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
+                while (numDecimalPoints < 15 && Math.Round(toleranceForCombiningPoints, numDecimalPoints).IsPracticallySame(0.0))
                     numDecimalPoints++;
                 foreach (var location in locations)
                 {
