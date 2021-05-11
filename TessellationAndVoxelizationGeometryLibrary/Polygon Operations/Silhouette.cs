@@ -25,11 +25,7 @@ namespace TVGL.TwoDimensional
         {
             direction = direction.Normalize();
             var unvisitedFaces = tessellatedSolid.Faces.ToHashSet();
-            if (tessellatedSolid.Faces[0].Edges == null || tessellatedSolid.Faces[0].Edges.Count == 0)
-                tessellatedSolid.CompleteInitiation();
-            var tolerance = tessellatedSolid.SameTolerance;
-            // areaTolerance is used for the dot-product angle because dot is in units of length-squared
-            // but in rare cases the number may be quite large. so we set the max to 0.002 or 89.9 degrees - nearly orthogonal
+            tessellatedSolid.MakeEdgesIfNonExistent();
             var transform = direction.TransformToXYPlane(out _);
             var polygons = new List<Polygon>();
 
@@ -42,7 +38,7 @@ namespace TVGL.TwoDimensional
                     // get a face that does not have a dot product orthogonal to the direction
                     // notice that IsNegligible is used with the dotTolerance specified above
                     dot = face.Normal.Dot(direction);
-                    if (!dot.IsNegligible(Constants.SameFaceNormalDotTolerance))  // && !face.Area.IsNegligible(areaTolerance))
+                    if (!dot.IsNegligible(Constants.SameFaceNormalDotTolerance))  
                     {
                         startingFace = face;
                         break;
@@ -55,10 +51,10 @@ namespace TVGL.TwoDimensional
                 // first we get the list of outerEdges of the patch of faces ("GetOuterEdgesOfContiguousPatch") in the same sense as the
                 // startingFace with the direction (that's the easy part), then we arrange those outerEdges into polygons in the 
                 // function in "ArrangeOuterEdgesIntoPolygon".
-                polygons.AddRange(ArrangeOuterEdgesIntoPolygon(outerEdges, dot > 0, transform, tolerance));
+                polygons.AddRange(ArrangeOuterEdgesIntoPolygon(outerEdges, dot > 0, transform));
             }
             //Presenter.ShowAndHang(polygons);
-            return polygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance).LargestPolygon();
+            return polygons.UnionPolygons(PolygonCollection.PolygonWithHoles).LargestPolygon();
         }
 
         /// <summary>
@@ -108,11 +104,8 @@ namespace TVGL.TwoDimensional
         /// <param name="outerEdges">The outer edges.</param>
         /// <param name="isPositive">if set to <c>true</c> [positive].</param>
         /// <param name="transform">The transform.</param>
-        /// <param name="tolerance">The linear tolerance.</param>
-        /// <param name="areaTolerance">The area tolerance.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool isPositive, Matrix4x4 transform,
-             double tolerance)
+        private static List<Polygon> ArrangeOuterEdgesIntoPolygon(Dictionary<Edge, bool> outerEdges, bool isPositive, Matrix4x4 transform)
         {
             var polygons = new List<Polygon>();
             var negativePolygons = new List<Polygon>();
@@ -205,7 +198,7 @@ namespace TVGL.TwoDimensional
                 // it.
                 const double closeTheLoopAreaFraction = 0.25;
                 if (!successfulLoop)
-                {  
+                {
                     var center = polyCoordinates.Aggregate((result, coord) => result + coord) / polyCoordinates.Count;
                     var area = 0.0;
                     for (int i = 1; i < polyCoordinates.Count; i++)
@@ -219,9 +212,12 @@ namespace TVGL.TwoDimensional
                     }
                 }
                 #endregion
-                if (polyCoordinates.Count > 2) 
+                if (polyCoordinates.Count > 2)
                 {
-                    var newPolygons = new Polygon(polyCoordinates.SimplifyMinLength(tolerance)).RemoveSelfIntersections(ResultType.BothPermitted, tolerance);
+                    var xDim = polyCoordinates.Max(c => c.X) - polyCoordinates.Min(c => c.X);
+                    var yDim = polyCoordinates.Max(c => c.Y) - polyCoordinates.Min(c => c.Y);
+                    var tolerance = Math.Min(xDim, yDim) * Constants.PolygonSameTolerance;
+                    var newPolygons = new Polygon(polyCoordinates.SimplifyMinLengthToNewList(tolerance)).RemoveSelfIntersections(ResultType.BothPermitted);
                     // make the coordinates into polygons. Simplify and remove self intersections. 
                     foreach (var newPolygon in newPolygons)
                     {
@@ -230,7 +226,7 @@ namespace TVGL.TwoDimensional
                     }
                 }
             }
-            var areaTolerance = tolerance * tolerance / Constants.BaseTolerance;
+            var areaTolerance = polygons.Sum(p=>p.Area) * Constants.BaseTolerance;
             for (int i = polygons.Count - 1; i >= 0; i--)
             {   // before we return, we cycle over the generated polygons and remove any that are too small as well as separate
                 // out other negative polygons
@@ -246,9 +242,9 @@ namespace TVGL.TwoDimensional
             // each hole is properly nested in a positive polygon - even if it is not from that same polygon, then we can move to union the set of them. The small function
             // "AddHoleToLargerPostivePolygon" places negatives in a positive
             foreach (var hole in negativePolygons)
-                AddHoleToLargerPostivePolygon(polygons, hole, tolerance);
+                AddHoleToLargerPostivePolygon(polygons, hole);
             //now union this result before returning to the main loop - to, again, union with the other polygons
-            polygons = polygons.UnionPolygons(PolygonCollection.PolygonWithHoles, tolerance);
+            polygons = polygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
             return polygons;
         }
 
@@ -259,13 +255,13 @@ namespace TVGL.TwoDimensional
         /// <param name="positivePolygons">The positive polygons.</param>
         /// <param name="hole">The hole.</param>
         /// <param name="tolerance">The tolerance.</param>
-        private static void AddHoleToLargerPostivePolygon(List<Polygon> positivePolygons, Polygon hole, double tolerance)
+        private static void AddHoleToLargerPostivePolygon(List<Polygon> positivePolygons, Polygon hole)
         {
             Polygon enclosingPolygon = null;
             foreach (var poly in positivePolygons)
             {
                 if (!poly.HasABoundingBoxThatEncompasses(hole)) continue;
-                var interaction = poly.GetPolygonInteraction(hole, tolerance);
+                var interaction = poly.GetPolygonInteraction(hole);
                 if (interaction.Relationship == PolygonRelationship.BInsideA &&
                     interaction.GetRelationships(hole).Skip(1).All(r => r.Item1 == PolyRelInternal.Separated))
                 {

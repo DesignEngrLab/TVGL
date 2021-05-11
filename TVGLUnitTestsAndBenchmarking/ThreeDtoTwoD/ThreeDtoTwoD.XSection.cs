@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
@@ -22,70 +23,20 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("*.json").OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 0; i < fileNames.Length; i++)
+            var fileNames = dir.GetFiles("nam*").OrderByDescending(x => x.Length).ToArray();
+            for (var i = 0; i < 20; i++)
             {
                 var filename = fileNames[i].FullName;
                 var name = fileNames[i].Name;
                 Console.WriteLine("Attempting: " + filename);
                 IO.Open(filename, out Polygon polygon);
                 Presenter.ShowAndHang(polygon);
-                var xsection = new List<Polygon> { polygon };
-                //if (solid.Errors != null)
-                //{
-                //    Console.WriteLine("    ===>" + filename + " has errors: " + solid.Errors.ToString());
-                //    continue;
-                //}
-
-                //for (int j = 0; j < 9; j++)
-                //{
-                //    var direction = Vector3.UnitVector((CartesianDirections)(j % 3));
-                //    //var direction = new Vector3(r100, r100, r100);
-                //    Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
-
-                //    solid.Vertices.GetLengthAndExtremeVertex(direction, out var btmVertex, out var topVertex);
-                //    var plane = new Plane(btmVertex.Coordinates.Lerp(topVertex.Coordinates, r.NextDouble()), direction);
-                //    var xsection = solid.GetCrossSection(plane);
-                    //Presenter.ShowAndHang(xsection);
-                    var monoPolys = new List<Polygon>();
-                    var error = false;
-                    var totalArea = 0.0;
-                    foreach (var monopoly in xsection.SelectMany(p => p.CreateXMonotonePolygons()))
-                    {
-                        monopoly.MakePolygonEdgesIfNonExistent();
-                        var tolerance = monopoly.GetToleranceForPolygon();
-                        monoPolys.Add(monopoly);
-                        totalArea += monopoly.Area;
-                        var extremeVerts = monopoly.Vertices.Where(v =>
-                            v.GetMonotonicityChange() == MonotonicityChange.X ||
-                            v.GetMonotonicityChange() == MonotonicityChange.Both).ToList();
-                        if (extremeVerts.Count != 2 ||
-                            !monopoly.MinX.IsPracticallySame(Math.Min(extremeVerts[0].X, extremeVerts[1].X)) ||
-                            !monopoly.MaxX.IsPracticallySame(Math.Max(extremeVerts[0].X, extremeVerts[1].X)))
-                            error = true;
-                        else
-                        {
-                            //Console.WriteLine("testing triangulation.");
-                            var triangles = monopoly.TriangulateToCoordinates().ToList();
-                            var triArea = triangles.Sum(tr => tr.Area());
-                            if (!triArea.IsPracticallySame(monopoly.Area, monopoly.Area * Constants.BaseTolerance))
-                            {
-                                Console.WriteLine("Error triangulation.");
-                                Presenter.ShowAndHang(triangles);
-                            }
-                        }
-                    }
-
-                    if (error || !totalArea.IsPracticallySame(xsection.Sum(x => x.Area), 1e-5))
-                    {
-                        Console.WriteLine("Error in x-monotone polygon.");
-                        Presenter.ShowAndHang(xsection);
-                        Presenter.ShowAndHang(monoPolys);
-                    }
-                }
+                polygon = polygon.SimplifyMinLength(0.01);
+                //polygon = polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
+                Presenter.ShowAndHang(polygon);
             }
-
-       // }
+            Console.ReadKey();
+        }
 
         public static void TestTriangulate(Polygon testcase)
         {

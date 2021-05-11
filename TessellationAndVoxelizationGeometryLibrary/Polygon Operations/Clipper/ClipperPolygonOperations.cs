@@ -26,21 +26,18 @@ namespace TVGL.TwoDimensional
     public static partial class PolygonOperations
     {
         const double scale = 1000000;
-        static bool CLIPPER = true;
         #region Offset
-        private static List<Polygon> OffsetViaClipper(Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle)
+        private static List<Polygon> OffsetViaClipper(Polygon polygon, double offset, bool notMiter, double deltaAngle)
         {
-            return OffsetViaClipper(new[] { polygon }, offset, notMiter, tolerance, deltaAngle);
+            return OffsetViaClipper(new[] { polygon }, offset, notMiter, deltaAngle);
         }
 
-        private static List<Polygon> OffsetViaClipper(IEnumerable<Polygon> polygons, double offset, bool notMiter, double tolerance, double deltaAngle)
+        private static List<Polygon> OffsetViaClipper(IEnumerable<Polygon> polygons, double offset, bool notMiter, double deltaAngle)
         {
             var allPolygons = polygons.SelectMany(polygon => polygon.AllPolygons).ToList();
-            if (double.IsNaN(tolerance) || tolerance.IsNegligible())
-            {
-                var totalLength = allPolygons.Sum(loop => loop.Perimeter);
-                tolerance = totalLength * 0.001;
-            }
+            var totalLength = allPolygons.Sum(loop => loop.Perimeter);
+            var tolerance = totalLength * 0.001;
+
             var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.jtSquare : JoinType.jtRound) : JoinType.jtMiter;
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject = allPolygons.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
@@ -99,23 +96,8 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         private static List<Polygon> BooleanViaClipper(PolyFillType fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
-            double tolerance, IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
+            IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
         {
-            //Remove any polygons that are only a line.
-            //subject = subject.Where(p => p.Count > 2);
-            //clip = clip?.Where(p => p.Count > 2);
-            var simplifyPriorToBooleanOperation = true;
-            if (simplifyPriorToBooleanOperation)
-            {
-                //subject = subject.Select(p=>SimplifyFuzzy(p));
-                subject = subject.SimplifyByAreaChange(tolerance);
-            }
-            if (simplifyPriorToBooleanOperation)
-            {
-                //If not null
-                //clip = clip?.Select(p => SimplifyFuzzy(p));
-                clip = clip?.SimplifyByAreaChange(tolerance);
-            }
             if (!subject.Any())
             {
                 if (clip == null || !clip.Any())

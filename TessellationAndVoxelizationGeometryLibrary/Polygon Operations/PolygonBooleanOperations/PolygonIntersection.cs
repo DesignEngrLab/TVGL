@@ -77,22 +77,20 @@ namespace TVGL.TwoDimensional
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
             if (intersectionData.Relationship == SegmentRelationship.DoubleOverlap) return true;
-            if (!currentEdgeIsFromPolygonA)
-            {
-                return
-                    intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
-                    intersectionData.Relationship == SegmentRelationship.BEnclosesA;
-            }
-            return intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
-                intersectionData.Relationship == SegmentRelationship.AEnclosesB;
+            if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.BEnclosesA) ||
+                (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB))
+                return false;
+            return true;
         }
 
         protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
+            //if (currentIntersection.Relationship == SegmentRelationship.NoOverlap) return null;
+            // can't reach a NoOverlap in Intersection, but this happens sometimes when following a collinear edge
+            if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
+             (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))
+                return true;
             if (startingIntersection != currentIntersection) return false;
-            if (startingIntersection.Relationship == SegmentRelationship.DoubleOverlap &&
-                startingIntersection.CollinearityType == CollinearityTypes.None)
-                return currentEdge == startingEdge;
             return true;
         }
 

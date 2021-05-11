@@ -1,12 +1,15 @@
 ﻿using System;
+#if !PRESENT
 using Xunit;
+using Snapshooter.Xunit;
+using Snapshooter;
+#endif
+
 using TVGL.Numerics;
 using TVGL;
 using System.IO;
 using TVGL.TwoDimensional;
 using TVGL.IOFunctions;
-using Snapshooter.Xunit;
-using Snapshooter;
 using System.Linq;
 using TVGL.Boolean_Operations;
 using TVGL.Voxelization;

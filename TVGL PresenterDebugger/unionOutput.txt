@@ -1,0 +1,1039 @@
+﻿'TVGL PresenterDebugger.exe' (CoreCLR: DefaultDomain): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Private.CoreLib.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Users\campmatt\source\repos\TVGL\TVGL PresenterDebugger\bin\Debug\netcoreapp3.1\TVGL PresenterDebugger.dll'. Symbols loaded.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Runtime.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.IO.FileSystem.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Collections.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Runtime.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Linq.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Diagnostics.Debug.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Memory.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Runtime.InteropServices.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Threading.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Users\campmatt\source\repos\TVGL\TVGL PresenterDebugger\bin\Debug\netcoreapp3.1\Newtonsoft.Json.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\netstandard.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Runtime.Serialization.Formatters.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Collections.Concurrent.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Diagnostics.TraceSource.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Linq.Expressions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Runtime.Numerics.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Private.Uri.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.ComponentModel.TypeConverter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.ObjectModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Collections.Specialized.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Drawing.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.ComponentModel.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Runtime.Serialization.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Data.Common.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Xml.ReaderWriter.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Private.Xml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.ComponentModel.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Users\campmatt\source\repos\TVGL\TVGL PresenterDebugger\bin\Debug\netcoreapp3.1\MIConvexHull.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Reflection.Emit.ILGeneration.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Reflection.Primitives.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Reflection.Emit.Lightweight.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'Anonymously Hosted DynamicMethods Assembly'. 
+Attempting: unionFail44230.92344259259.0A.json
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\Remote Debugger\x64\Runtime\Microsoft.VisualStudio.Debugger.Runtime.NetCoreApp.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Users\campmatt\source\repos\TVGL\TVGL PresenterDebugger\bin\Debug\netcoreapp3.1\Priority Queue.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Text.Encoding.Extensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+***** UnionLists matches
+clipper time = 00:00:00.1889446; tvgl time = 00:00:00.0758364
+Attempting: unionFail44230.923454097225.0.json
+UnionLists does not match
+clipper time = 00:00:00.0041432; tvgl time = 00:00:00.0001765
++++ both have 4 polygon(s)
+    --- verts: TVGL= 478  : Clipper=427 
+    --- area: TVGL= 6680.9028183871005  : Clipper=5291.554456861773 
+    --- perimeter: TVGL=783.1649215903828  : Clipper=633.6749271842008 
+Attempting: unionFail44230.92350694445.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0068590; tvgl time = 00:00:00.0090684
+Attempting: unionFail44230.92350810185.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0108037; tvgl time = 00:00:00.0054732
+Attempting: unionFail44230.92356380787.0A.json
+***** UnionLists matches
+clipper time = 00:00:00.0032858; tvgl time = 00:00:00.0017698
+Attempting: unionFail44230.92356454861.0A.json
+***** UnionLists matches
+clipper time = 00:00:00.0030750; tvgl time = 00:00:00.0024400
+Attempting: unionFail44230.92356539352.0A.json
+***** UnionLists matches
+clipper time = 00:00:00.0021583; tvgl time = 00:00:00.0012428
+Attempting: unionFail44230.92519553241.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0343505; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.92542515046.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0043486; tvgl time = 00:00:00.0035136
+Attempting: unionFail44230.92542550926.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0022603; tvgl time = 00:00:00.0011715
+Attempting: unionFail44230.925431041665.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0054682; tvgl time = 00:00:00.0026698
+Attempting: unionFail44230.92543898148.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0110099; tvgl time = 00:00:00.0092153
+Attempting: unionFail44230.925439756946.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0132826; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92544056713.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0050360; tvgl time = 00:00:00.0026130
+Attempting: unionFail44230.92544201389.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0049441; tvgl time = 00:00:00.0043131
+Attempting: unionFail44230.92544982639.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0064394; tvgl time = 00:00:00.0042938
+Attempting: unionFail44230.925453194446.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0090152; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.92545462963.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0166834; tvgl time = 00:00:00.0001430
+Attempting: unionFail44230.9254634375.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0076408; tvgl time = 00:00:00.0053577
+Attempting: unionFail44230.925466851855.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0085815; tvgl time = 00:00:00.0077663
+Attempting: unionFail44230.92546842593.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0074656; tvgl time = 00:00:00.0046017
+Attempting: unionFail44230.92547310185.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0047141; tvgl time = 00:00:00.0022717
+Attempting: unionFail44230.92547388889.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0063746; tvgl time = 00:00:00.0024923
+Attempting: unionFail44230.92547550926.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0041644; tvgl time = 00:00:00.0032098
+Attempting: unionFail44230.925480694445.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0092083; tvgl time = 00:00:00.0051638
+Attempting: unionFail44230.92548349537.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0082515; tvgl time = 00:00:00.0026432
+Attempting: unionFail44230.92548578704.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0038497; tvgl time = 00:00:00.0020101
+Attempting: unionFail44230.9254871875.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0082159; tvgl time = 00:00:00.0000968
+Attempting: unionFail44230.925487685185.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035553; tvgl time = 00:00:00.0014841
+Attempting: unionFail44230.92549214121.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0037849; tvgl time = 00:00:00.0014032
+Attempting: unionFail44230.92549653935.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0028952; tvgl time = 00:00:00.0013571
+Attempting: unionFail44230.925499143515.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0046484; tvgl time = 00:00:00.0024764
+Attempting: unionFail44230.92552986111.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0060476; tvgl time = 00:00:00.0042491
+Attempting: unionFail44230.92553896991.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035034; tvgl time = 00:00:00.0019434
+Attempting: unionFail44230.925554699075.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0034379; tvgl time = 00:00:00.0011293
+Attempting: unionFail44230.92557396991.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0053294; tvgl time = 00:00:00.0039461
+Attempting: unionFail44230.92558189815.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0044512; tvgl time = 00:00:00.0040580
+Attempting: unionFail44230.925583854165.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0040842; tvgl time = 00:00:00.0038595
+Attempting: unionFail44230.92559421296.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0061346; tvgl time = 00:00:00.0034809
+Attempting: unionFail44230.92568435185.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0263296; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92568946759.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0299208; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.9256975463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0052708; tvgl time = 00:00:00.0003340
+Attempting: unionFail44230.92570627315.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0269809; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.925718969906.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0033685; tvgl time = 00:00:00.0000915
+Attempting: unionFail44230.92572400463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0285954; tvgl time = 00:00:00.0000012
+Attempting: unionFail44230.92573560185.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0091297; tvgl time = 00:00:00.0001796
+Attempting: unionFail44230.92573606481.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0050464; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.925736516205.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0297799; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.925746458335.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0067198; tvgl time = 00:00:00.0000849
+Attempting: unionFail44230.92575130787.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0054422; tvgl time = 00:00:00.0001611
+Attempting: unionFail44230.92575400463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0056384; tvgl time = 00:00:00.0001572
+Attempting: unionFail44230.9257562037.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0192201; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.9257565625.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0053802; tvgl time = 00:00:00.0001573
+Attempting: unionFail44230.925763125.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0251896; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92576575231.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0237173; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.925770636575.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0309645; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92577219907.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0058104; tvgl time = 00:00:00.0002259
+Attempting: unionFail44230.925772800925.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0055569; tvgl time = 00:00:00.0001756
+Attempting: unionFail44230.92577372685.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0260251; tvgl time = 00:00:00.0001942
+Attempting: unionFail44230.92577525463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0148542; tvgl time = 00:00:00.0000012
+Attempting: unionFail44230.92578157407.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0063236; tvgl time = 00:00:00.0002117
+Attempting: unionFail44230.92578306713.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0354045; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92578402778.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0180164; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92578657407.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0290164; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.925790381945.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0055683; tvgl time = 00:00:00.0001578
+'TVGL PresenterDebugger.exe' (CoreCLR: clrhost): Loaded 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.11\System.Buffers.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Attempting: unionFail44230.92579086805.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0038667; tvgl time = 00:00:00.0000940
+Attempting: unionFail44230.92579349537.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0276298; tvgl time = 00:00:00.0002010
+Attempting: unionFail44230.92579603009.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0082615; tvgl time = 00:00:00.0001528
+Attempting: unionFail44230.925799097226.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0281790; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92580388889.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0090914; tvgl time = 00:00:00.0002544
+Attempting: unionFail44230.92580505787.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0052500; tvgl time = 00:00:00.0001589
+Attempting: unionFail44230.925806354164.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0099500; tvgl time = 00:00:00.0001218
+Attempting: unionFail44230.92580903935.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0047592; tvgl time = 00:00:00.0001385
+Attempting: unionFail44230.92581197917.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0052796; tvgl time = 00:00:00.0001428
+Attempting: unionFail44230.9258175.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0396989; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.925817905096.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0257752; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92581836806.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0119637; tvgl time = 00:00:00.0003123
+Attempting: unionFail44230.92582181713.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0054587; tvgl time = 00:00:00.0001530
+Attempting: unionFail44230.925826377315.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0044924; tvgl time = 00:00:00.0001320
+Attempting: unionFail44230.92582686343.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0055167; tvgl time = 00:00:00.0001424
+Attempting: unionFail44230.9258300463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0058248; tvgl time = 00:00:00.0001930
+Attempting: unionFail44230.92583423611.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0224306; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.925835821756.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0048080; tvgl time = 00:00:00.0001331
+Attempting: unionFail44230.92583658565.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0246936; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92583723379.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0311111; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92584173611.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0052859; tvgl time = 00:00:00.0001882
+Attempting: unionFail44230.9258444213.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0303005; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.925845798614.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0281259; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92584618056.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0058858; tvgl time = 00:00:00.0001612
+Attempting: unionFail44230.925850127314.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0182646; tvgl time = 00:00:00.0004588
+Attempting: unionFail44230.92585201389.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0044771; tvgl time = 00:00:00.0001318
+Attempting: unionFail44230.92585454861.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0054465; tvgl time = 00:00:00.0001514
+Attempting: unionFail44230.92585547454.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0388389; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92585667824.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0049522; tvgl time = 00:00:00.0001696
+Attempting: unionFail44230.92585773148.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0327490; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92585905093.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0038418; tvgl time = 00:00:00.0000964
+Attempting: unionFail44230.92585944445.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0273224; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.925863854165.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0261911; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.925864537036.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0052801; tvgl time = 00:00:00.0002370
+Attempting: unionFail44230.92586517361.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0042632; tvgl time = 00:00:00.0001329
+Attempting: unionFail44230.925868819446.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0053758; tvgl time = 00:00:00.0001447
+Attempting: unionFail44230.92586931713.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0266671; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92587207176.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0345443; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92587291667.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0281267; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92587828704.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0066603; tvgl time = 00:00:00.0001277
+Attempting: unionFail44230.92587886574.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0043035; tvgl time = 00:00:00.0001416
+Attempting: unionFail44230.92588193287.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0190772; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92588238426.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0049325; tvgl time = 00:00:00.0001488
+Attempting: unionFail44230.92588552083.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0146890; tvgl time = 00:00:00.0004801
+Attempting: unionFail44230.92588592593.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0042264; tvgl time = 00:00:00.0001511
+Attempting: unionFail44230.92588634259.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0235799; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.925890914354.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0261690; tvgl time = 00:00:00.0003016
+Attempting: unionFail44230.92589236111.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0042345; tvgl time = 00:00:00.0001132
+Attempting: unionFail44230.92589465278.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0045128; tvgl time = 00:00:00.0001281
+Attempting: unionFail44230.925896747685.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0043606; tvgl time = 00:00:00.0001570
+Attempting: unionFail44230.92589773148.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0227679; tvgl time = 00:00:00.0004758
+Attempting: unionFail44230.925898078705.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0163855; tvgl time = 00:00:00.0004987
+Attempting: unionFail44230.92590226852.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0329323; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.925903194446.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0261792; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92590362269.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0039404; tvgl time = 00:00:00.0001145
+Attempting: unionFail44230.92590621528.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0088772; tvgl time = 00:00:00.0002064
+Attempting: unionFail44230.9259116088.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0042316; tvgl time = 00:00:00.0001613
+Attempting: unionFail44230.92591329861.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0166484; tvgl time = 00:00:00.0004351
+Attempting: unionFail44230.92591423611.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0048519; tvgl time = 00:00:00.0001274
+Attempting: unionFail44230.925916064814.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0048437; tvgl time = 00:00:00.0001536
+Attempting: unionFail44230.92591920139.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0180033; tvgl time = 00:00:00.0004755
+Attempting: unionFail44230.92592109954.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0032955; tvgl time = 00:00:00.0001030
+Attempting: unionFail44230.92592475694.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0158015; tvgl time = 00:00:00.0002877
+Attempting: unionFail44230.92592519676.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0040562; tvgl time = 00:00:00.0001099
+Attempting: unionFail44230.92592628472.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0322651; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92592771991.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0224926; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.925933506944.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0167156; tvgl time = 00:00:00.0004226
+Attempting: unionFail44230.925933969906.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0041702; tvgl time = 00:00:00.0001272
+Attempting: unionFail44230.925936851854.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0040611; tvgl time = 00:00:00.0001285
+Attempting: unionFail44230.925940092595.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0039355; tvgl time = 00:00:00.0001079
+Attempting: unionFail44230.92594090278.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0181304; tvgl time = 00:00:00.0002525
+Attempting: unionFail44230.925941712965.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0046721; tvgl time = 00:00:00.0001314
+Attempting: unionFail44230.92594255787.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0206578; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92594635417.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0282456; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.925948738426.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0238228; tvgl time = 00:00:00.0000008
+Attempting: unionFail44230.92594922454.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0039740; tvgl time = 00:00:00.0001008
+Attempting: unionFail44230.92595334491.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0033753; tvgl time = 00:00:00.0001073
+Attempting: unionFail44230.92595556713.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0219678; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92595725694.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0165220; tvgl time = 00:00:00.0004374
+Attempting: unionFail44230.925958912034.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0046457; tvgl time = 00:00:00.0001221
+Attempting: unionFail44230.92596020833.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0203744; tvgl time = 00:00:00.0003960
+Attempting: unionFail44230.92596101852.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0032474; tvgl time = 00:00:00.0000987
+Attempting: unionFail44230.92596635417.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0225257; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92596770833.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0221703; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.925968634256.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035715; tvgl time = 00:00:00.0001401
+Attempting: unionFail44230.92597290509.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0041795; tvgl time = 00:00:00.0001177
+Attempting: unionFail44230.925973530095.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0215628; tvgl time = 00:00:00.0003626
+Attempting: unionFail44230.92597418981.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0041238; tvgl time = 00:00:00.0000739
+Attempting: unionFail44230.9259778125.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0031263; tvgl time = 00:00:00.0000929
+Attempting: unionFail44230.92597853009.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0042149; tvgl time = 00:00:00.0001267
+Attempting: unionFail44230.92597920139.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0209875; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92598385417.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0100845; tvgl time = 00:00:00.0004681
+Attempting: unionFail44230.92598555556.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0028553; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92598590278.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0110879; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.925989641204.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035194; tvgl time = 00:00:00.0000994
+Attempting: unionFail44230.92599105324.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0266861; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92599333333.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0040352; tvgl time = 00:00:00.0001039
+Attempting: unionFail44230.92599369213.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0175951; tvgl time = 00:00:00.0005983
+Attempting: unionFail44230.92599498843.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035694; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92599769676.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0026160; tvgl time = 00:00:00.0000640
+Attempting: unionFail44230.92599928241.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0244826; tvgl time = 00:00:00.0000010
+Attempting: unionFail44230.925999652776.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0156991; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92600002315.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0100200; tvgl time = 00:00:00.0002457
+Attempting: unionFail44230.926001493055.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0257624; tvgl time = 00:00:00.0003659
+Attempting: unionFail44230.92600454861.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0029419; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92600570602.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0051154; tvgl time = 00:00:00.0001620
+Attempting: unionFail44230.92600811343.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0385135; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92601092593.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0126129; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92601270833.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0041482; tvgl time = 00:00:00.0001205
+Attempting: unionFail44230.92601386574.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0041599; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92601685185.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0031912; tvgl time = 00:00:00.0000937
+Attempting: unionFail44230.926019756946.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0237037; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.92602013889.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0129100; tvgl time = 00:00:00.0002142
+Attempting: unionFail44230.92602046296.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0015240; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.9260227662.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0229539; tvgl time = 00:00:00.0005332
+Attempting: unionFail44230.92602413194.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0050008; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92602709491.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0057498; tvgl time = 00:00:00.0001954
+Attempting: unionFail44230.926028981485.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0040419; tvgl time = 00:00:00.0001018
+Attempting: unionFail44230.92602990741.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0252917; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92603258102.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0209793; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926034421296.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0106006; tvgl time = 00:00:00.0002158
+Attempting: unionFail44230.926034780096.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0027311; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.9260375463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0048766; tvgl time = 00:00:00.0001422
+Attempting: unionFail44230.92603818287.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0291960; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92604032408.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0173573; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.926043865744.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0027754; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92604478009.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0137460; tvgl time = 00:00:00.0002396
+Attempting: unionFail44230.92604619213.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035483; tvgl time = 00:00:00.0034347
+Attempting: unionFail44230.926049016205.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0285841; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926049375.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035414; tvgl time = 00:00:00.0000926
+Attempting: unionFail44230.92605311343.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0029497; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926053449075.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0421344; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92605390046.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0206344; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926055682874.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0025331; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92605806713.0.json
+***** UnionLists matches
+clipper time = 00:00:00.1033512; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.92605841435.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0032522; tvgl time = 00:00:00.0000948
+Attempting: unionFail44230.92606229167.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0034402; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926062673614.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035343; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92606586806.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0262852; tvgl time = 00:00:00.0005857
+Attempting: unionFail44230.92606789352.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0299771; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92606951389.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0275610; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92607134259.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0053834; tvgl time = 00:00:00.0001638
+Attempting: unionFail44230.92607234954.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0048001; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.926076400465.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0386038; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92607761574.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0053276; tvgl time = 00:00:00.0000008
+Attempting: unionFail44230.92607796296.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0500339; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92608287037.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0061232; tvgl time = 00:00:00.0000014
+Attempting: unionFail44230.926083321756.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0035862; tvgl time = 00:00:00.0001099
+Attempting: unionFail44230.926085162035.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0280488; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92608564815.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0064109; tvgl time = 00:00:00.0001140
+Attempting: unionFail44230.9260875.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0230080; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92608792824.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0376500; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926088900465.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0413646; tvgl time = 00:00:00.0000008
+Attempting: unionFail44230.92609361111.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0057677; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.926094016206.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0067500; tvgl time = 00:00:00.0001626
+Attempting: unionFail44230.92609642361.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0050612; tvgl time = 00:00:00.0000016
+Attempting: unionFail44230.92609876157.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0458757; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.926099386576.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0371308; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92610414352.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0030736; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92610550926.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0016537; tvgl time = 00:00:00.0000002
+Attempting: unionFail44230.926105983795.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0271035; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.926110636574.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0302594; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926112291665.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0264715; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92611417824.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0034028; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92611548611.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0057880; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92611700232.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0059578; tvgl time = 00:00:00.0000012
+Attempting: unionFail44230.92612116898.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0392700; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92612192129.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0122268; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.926124618054.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0259051; tvgl time = 00:00:00.0000002
+Attempting: unionFail44230.92612694445.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0038192; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.926128680556.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0022192; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926129872685.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0040655; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92613177084.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0254274; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926135092595.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0016054; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92613638889.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0175482; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92613684028.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0314562; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92613946759.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0151197; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.9261428125.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0027324; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92614408565.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0021057; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92614447917.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0019042; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92614689815.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0312084; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92614900463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0271012; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92614960648.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0171317; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926151631946.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0024055; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92615260417.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0020345; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92615513889.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0204227; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.9261565625.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0231769; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92615721065.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0033050; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92615856481.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0026508; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92615994213.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0062705; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.926163171294.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0295344; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.926163993056.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0316945; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92616480324.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0278045; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92616668982.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0029738; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.9261678125.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0012661; tvgl time = 00:00:00.0000002
+Attempting: unionFail44230.92616891204.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0019611; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92617357639.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0194694; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92617474537.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0204435; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926179270835.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0027341; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92617965278.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0031491; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926180752314.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0365155; tvgl time = 00:00:00.0000010
+Attempting: unionFail44230.926182916664.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0208417; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92618456019.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0161216; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926186689816.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0015995; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92618763889.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0022116; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92619111111.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0159048; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.9261921412.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0179942; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92619333333.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0018091; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92619385417.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0182139; tvgl time = 00:00:00.0006572
+Attempting: unionFail44230.92619618055.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0026720; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92619846065.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0188154; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92620001157.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0159959; tvgl time = 00:00:00.0000002
+Attempting: unionFail44230.92620181713.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0078818; tvgl time = 00:00:00.0000012
+Attempting: unionFail44230.926203055555.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0045533; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.9262033912.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0048630; tvgl time = 00:00:00.0001780
+Attempting: unionFail44230.926208240744.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0248014; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92620984954.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0235833; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92621017361.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0248455; tvgl time = 00:00:00.0008531
+Attempting: unionFail44230.9262118287.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0104120; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92621300926.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0031154; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.9262150463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0025402; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926216817126.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0234331; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926220381945.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0227966; tvgl time = 00:00:00.0000007
+Attempting: unionFail44230.92622069445.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0020401; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.926224456016.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0176226; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92622480324.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0033948; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92622891204.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0018591; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92623123842.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0278517; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.9262325463.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0289668; tvgl time = 00:00:00.0000008
+Attempting: unionFail44230.926237569445.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0026538; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.926243229165.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0199967; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92625502315.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0075140; tvgl time = 00:00:00.0002687
+Attempting: unionFail44230.92625653935.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0114116; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92626364583.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0063703; tvgl time = 00:00:00.0033939
+Attempting: unionFail44230.926265208334.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0165258; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92627646991.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0100100; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92627689815.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0054908; tvgl time = 00:00:00.0001969
+Attempting: unionFail44230.92628208333.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0202514; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92628439815.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0072742; tvgl time = 00:00:00.0057354
+Attempting: unionFail44230.926291331016.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0136891; tvgl time = 00:00:00.0001030
+Attempting: unionFail44230.92629743055.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0023723; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.92630398148.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0175719; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92630535879.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0049897; tvgl time = 00:00:00.0039185
+Attempting: unionFail44230.92630579861.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0071059; tvgl time = 00:00:00.0002088
+Attempting: unionFail44230.92630820602.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0018943; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92631209491.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0201889; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92631318287.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0041473; tvgl time = 00:00:00.0001229
+Attempting: unionFail44230.926313564814.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0236024; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92631576389.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0021376; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92631996528.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0227126; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926320405095.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0053173; tvgl time = 00:00:00.0001666
+Attempting: unionFail44230.926321342595.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0264792; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92632424769.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0019023; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.926325416665.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0051329; tvgl time = 00:00:00.0001491
+Attempting: unionFail44230.92632583333.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0222789; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926327800924.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0275789; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.926330601855.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0112639; tvgl time = 00:00:00.0002404
+Attempting: unionFail44230.926331875.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0023755; tvgl time = 00:00:00.0000709
+Attempting: unionFail44230.92633501157.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0042981; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92633704861.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0234769; tvgl time = 00:00:00.0006066
+Attempting: unionFail44230.926339375.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0032172; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.9263403125.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0239935; tvgl time = 00:00:00.0000003
+Attempting: unionFail44230.92634179398.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0042074; tvgl time = 00:00:00.0000006
+Attempting: unionFail44230.92634391204.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0242340; tvgl time = 00:00:00.0000005
+Attempting: unionFail44230.926345300926.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0297252; tvgl time = 00:00:00.0000004
+Attempting: unionFail44230.92634734954.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0029370; tvgl time = 00:00:00.0000009
+Attempting: unionFail44230.926348796296.0.json
+***** UnionLists matches
+clipper time = 00:00:00.0021968; tvgl time = 00:00:00.0000005
+The program '[12964] TVGL PresenterDebugger.exe' has exited with code 0 (0x0).

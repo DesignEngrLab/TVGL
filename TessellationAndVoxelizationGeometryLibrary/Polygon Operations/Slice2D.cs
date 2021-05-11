@@ -89,7 +89,6 @@ namespace TVGL.TwoDimensional
             out List<Polygon> negativeSidePolygons, out List<Polygon> positiveSidePolygons, double offsetAtLineForNegativeSide = 0.0,
             double offsetAtLineForPositiveSide = 0.0)
         {
-            var tolerance = shallowPolygonTree.GetToleranceForPolygon();
             // like 3D slicing, it is too complicated to try and manage collinear points or line segments. it is better to just change the slice
             // distance by some small amount. This is checked and handled in the ShiftLineToAvoidCollinearPoints
             var distances = new List<double>();
@@ -99,7 +98,7 @@ namespace TVGL.TwoDimensional
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine, tolerance, ref positiveShift, ref negativeShift);
+            distances.SetPositiveAndNegativeShifts(perpendicularDistanceToLine,Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
             /*   First (1), a line hash is used to find all the lines to the left and the intersection lines.
                  Second (2), the intersection point for each of the intersecting lines is found.
                  Third (3), these intersection points are ordered in the perpendicular direction to the search direction
@@ -212,10 +211,8 @@ namespace TVGL.TwoDimensional
         }
 
         private static (double, double) ShiftLineToAvoidCollinearPoints(Polygon shallowPolygonTree,
-            Vector2 lineNormalDirection, double distanceAlongDirection, double tolerance = double.NaN)
+            Vector2 lineNormalDirection, double distanceAlongDirection)
         {
-            if (double.IsNaN(tolerance)) tolerance = shallowPolygonTree.GetToleranceForPolygon();
-
             // search through all points to see if any are collinear. If not, keep track of the closest points
             var distances = new List<double>();
             foreach (var polygons in shallowPolygonTree.AllPolygons)
@@ -224,7 +221,7 @@ namespace TVGL.TwoDimensional
 
             var positiveShift = 0.0;
             var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(distanceAlongDirection, tolerance, ref positiveShift, ref negativeShift);
+            distances.SetPositiveAndNegativeShifts(distanceAlongDirection, Math.Pow(10, -shallowPolygonTree.NumSigDigits), ref positiveShift, ref negativeShift);
             return (positiveShift, negativeShift);
         }
     }

@@ -23,10 +23,9 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType, double tolerance,
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
             List<bool> knownWrongPoints, int maxNumberOfPolygons)
         {
-            var minAllowableArea = tolerance * tolerance / Constants.BaseTolerance;
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygon);
@@ -40,14 +39,14 @@ namespace TVGL.TwoDimensional
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
                 if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(minAllowableArea)) continue;
+                if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
                                                 //in conjunction with the area of the sign. Only if the product is negative - do we do something 
                 {
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
-                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLength(tolerance)));
+                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLengthToNewList(Math.Pow(10, -polygon.NumSigDigits))));
             }
             return newPolygons.OrderByDescending(p => Math.Abs(p.Area))
                 .Take(maxNumberOfPolygons).Reverse()
@@ -62,7 +61,8 @@ namespace TVGL.TwoDimensional
                 currentEdge = null;
                 return false;
             }
-            if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
+            if (intersectionData.Relationship == SegmentRelationship.NoOverlap
+                || intersectionData.Relationship == SegmentRelationship.Abutting)
             {
                 currentEdge = null;
                 return false;

@@ -254,19 +254,18 @@ namespace TVGL.TwoDimensional
                 var intersection = IntersectionData[i];
                 intersection.VisitedA = false;
                 intersection.VisitedB = false;
-                numVertices = intersection.EdgeA.IndexInList;
-                lookupList[numVertices] ??= new List<int>();
-                lookupList[numVertices].Add(i);
-                numVertices = intersection.EdgeB.IndexInList;
-                lookupList[numVertices] ??= new List<int>();
-                lookupList[numVertices].Add(i);
+                var index = intersection.EdgeA.IndexInList;
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
+                index = intersection.EdgeB.IndexInList;
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
             }
             return lookupList;
         }
 
         internal PolygonInteractionRecord InvertPolygonInRecord(Polygon polygon, out Polygon invertedPolygon)
         {
-            var tolerance = polygon.GetToleranceForPolygon();
             bool polygonAIsInverted = subPolygonToInt[polygon] < numPolygonsInA;
             var visitedIntersectionPairs = new HashSet<(PolygonEdge, PolygonEdge)>();
             var delimiters = PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
@@ -292,13 +291,13 @@ namespace TVGL.TwoDimensional
                 {
                     if (visitedIntersectionPairs.Contains((newFlippedEdge, edgeB))) continue;
                     visitedIntersectionPairs.Add((newFlippedEdge, edgeB));
-                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, tolerance);
+                    PolygonOperations.AddIntersectionBetweenLines(newFlippedEdge, edgeB, newIntersections, possibleDuplicates, polygon.NumSigDigits, false, false);
                 }
                 else
                 {
                     if (visitedIntersectionPairs.Contains((edgeA, newFlippedEdge))) continue;
                     visitedIntersectionPairs.Add((edgeA, newFlippedEdge));
-                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, tolerance);
+                    PolygonOperations.AddIntersectionBetweenLines(edgeA, newFlippedEdge, newIntersections, possibleDuplicates, polygon.NumSigDigits, false, false);
                 }
             }
             var newSubPolygonToInt = new Dictionary<Polygon, int>();

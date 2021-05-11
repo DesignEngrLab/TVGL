@@ -1,11 +1,13 @@
 using System;
+#if !PRESENT
 using Xunit;
+using BenchmarkDotNet.Attributes;
+#endif
 using TVGL.Numerics;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using BenchmarkDotNet.Attributes;
 using TVGL.TwoDimensional;
 using System.Linq;
 using TVGL;
@@ -117,7 +119,9 @@ namespace TVGLUnitTestsAndBenchmarking
             var perimeter = 2 * radius * numSides * Math.Sin(Math.PI / numSides);
 
             var polygon = TestCases.MakeCircularPolygon(numSides, radius);
+#if !PRESENT
             Assert.Equal(perimeter, polygon.Perimeter(), 10);
+#endif
         }
 
 
@@ -137,7 +141,9 @@ namespace TVGLUnitTestsAndBenchmarking
             var area = 0.5 * radius * radius * numSides * Math.Sin(2 * Math.PI / numSides);
 
             var polygon = TestCases.MakeCircularPolygon(numSides, radius);
+#if !PRESENT
             Assert.Equal(area, polygon.Area(), 10);
+#endif
         }
 
         public static void TestBoundingRectangle()

@@ -96,8 +96,8 @@ namespace TVGL.IOFunctions
         {
             var now = DateTime.Now;
             ThreeMFFileData threeMFData = null;
-            //try
-            //{
+            try
+            {
                 var settings = new XmlReaderSettings
                 {
                     IgnoreComments = true,
@@ -132,13 +132,13 @@ namespace TVGL.IOFunctions
 
                 Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
                 return results.ToArray();
-            //}
-            //catch (Exception exception)
-            //{
-            //    Message.output("Unable to read in 3Dmodel file.", 1);
-            //    Message.output("Exception: " + exception.Message, 3);
-            //    return null;
-            //}
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to read in 3Dmodel file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
+                return null;
+            }
         }
 
         private IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid,

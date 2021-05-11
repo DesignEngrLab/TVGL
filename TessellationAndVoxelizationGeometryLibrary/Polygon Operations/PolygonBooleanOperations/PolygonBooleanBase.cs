@@ -28,32 +28,26 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The minimum allowable area.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interaction, PolygonCollection polygonCollection,
-            double tolerance = double.NaN)
+            double minimumArea = double.NaN)
         {
-            double areaTolerance;
-            if (double.IsNaN(tolerance))
-            {
-                var minDimension = Math.Min(polygonA.MaxX - polygonA.MinX, Math.Min(polygonA.MaxY - polygonA.MinY,
-                    Math.Min(polygonB.MaxX - polygonB.MinX, polygonB.MaxY - polygonB.MinY)));
-                tolerance = Constants.BaseTolerance * minDimension;
-                areaTolerance = tolerance * minDimension;
-            }
-            else areaTolerance = tolerance * tolerance / Constants.BaseTolerance;   // why change the input tolerance? here, we are using it as a
-            // limit on the minimum allowable area only (about 12 lines down), so in order to change it from units of length to length-squared
-            // we need to find the characteristic length that was multiplied by the base tolerance to obtain the linear tolerance.
+            if (double.IsNaN(minimumArea))
+                minimumArea = (Math.Abs(polygonA.PathArea) + Math.Abs(polygonB.PathArea))
+                    * Math.Pow(10, -(Math.Max(polygonA.NumSigDigits, polygonB.NumSigDigits)));
+
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
             delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
+            var polygonIndex = 0;
             while (GetNextStartingIntersection(interaction.IntersectionData, out var startingIntersection,
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
                     startEdge, switchPolygon, out _).ToList();
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(areaTolerance)) continue;
-                newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLength(tolerance)));
+                if (area.IsNegligible(minimumArea)) continue;
+                newPolygons.Add(new Polygon(polyCoordinates.RemoveCollinearEdgesDestructiveList(), polygonIndex++));
             }
             // to handle the non-intersecting subpolygons
             var nonIntersectingASubPolygons = new List<Polygon>(polygonA.AllPolygons);
@@ -172,28 +166,23 @@ namespace TVGL.TwoDimensional
             out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
+            bool? completed;
             includesWrongPoints = false;
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
             do
             {
-                if (currentEdge == intersectionData.EdgeA)
-                {
-                    if (intersectionData.VisitedA) break;
-                    intersectionData.VisitedA = true;
-                }
-                else
-                {
-                    if (intersectionData.VisitedB) break;
-                    intersectionData.VisitedB = true;
-                }
+                if (currentEdge == intersectionData.EdgeA) intersectionData.VisitedA = true;
+                else intersectionData.VisitedB = true;
                 var intersectionCoordinates = intersectionData.IntersectCoordinates;
+                //if (newPathHash.Contains(intersectionCoordinates)) break;
                 // there used to be some complex conditions here (at 12 lines down before the other newPath.Add(...)
                 // to ensure that the added point wasn't the same as the last. However, for speed, we allow it
                 // and add the check in the Polygon constructor. This also reduces code since sometimes the Vector2's
                 // sent to that constructor would have duplicate points.
                 newPath.Add(intersectionCoordinates);
+                //newPathHash.Add(intersectionCoordinates);
                 if (switchPolygon)
                     currentEdge = (currentEdge == intersectionData.EdgeB) ? intersectionData.EdgeA : intersectionData.EdgeB;
 
@@ -206,11 +195,19 @@ namespace TVGL.TwoDimensional
                     currentEdge = currentEdge.ToPoint.StartLine;
                     if (knownWrongPoints != null && knownWrongPoints[currentEdge.FromPoint.IndexInList]) includesWrongPoints = true;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
+                    //newPathHash.Add(currentEdge.FromPoint.Coordinates);
                     intersectionCoordinates = Vector2.Null; // this is set to null because its value is used in ClosestNextIntersectionOnThisEdge
                                                             // when multiple intersections cross the edge. If we got through the first pass then there are no previous intersections on
                                                             // the edge that concern us. We want that function to report the first one for the edge
+//#if PRESENT
+//                    Presenter.ShowAndHang(newPath);
+//#endif
                 }
-            } while (!PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge));
+            } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
+            //#if PRESENT
+            //            Presenter.ShowAndHang(newPath);
+            //#endif
+            if (completed == null) newPath.Clear();
             return newPath;
         }
 

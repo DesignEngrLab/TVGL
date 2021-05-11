@@ -51,7 +51,7 @@ namespace TVGL
         /// <summary>
         ///     The tolerance used for simplifying polygons by removing tiny lines.
         /// </summary>
-        public const double LineLengthMinimum = 1E-7;
+        public const double LineLengthMinimum = 1E-9;
 
         /// <summary>
         ///     The default color
@@ -66,6 +66,13 @@ namespace TVGL
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
         public const double BaseTolerance = 1E-11;
+
+
+        /// <summary>
+        /// The tolerance multiplier (multiplied into the minimum X or Y dimension of the polygon) for 
+        /// detecting identical/repeat vertices and for intersection checks in various polygon functions.
+        /// </summary>
+        public const double PolygonSameTolerance = 1e-7;
 
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations
@@ -845,6 +852,7 @@ namespace TVGL
     public enum SegmentRelationship
     {
         NoOverlap,
+        Abutting,
         DoubleOverlap,
         BEnclosesA,
         AEnclosesB,

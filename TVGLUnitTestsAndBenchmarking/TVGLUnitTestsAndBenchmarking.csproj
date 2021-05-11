@@ -4,7 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <!--<GenerateProgramFile>false</GenerateProgramFile>
     <IsPackable>false</IsPackable>-->
-    <OutputType>Exe</OutputType>
+    <UseWPF>false</UseWPF>
+    <OutputType>WinExe</OutputType>
     <StartupObject>TVGLUnitTestsAndBenchmarking.Program</StartupObject>
   </PropertyGroup>
 
@@ -15,23 +16,22 @@
 
   <ItemGroup>
     <Compile Remove="PolygonOperations\BenchGrid.cs" />
-    <Compile Remove="PolygonOperations\BenchKnown.cs" />
-    <Compile Remove="Program - Copy.cs" />
   </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
-    <PackageReference Include="MathNet.Numerics" Version="4.12.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
-    <PackageReference Include="OptimizedPriorityQueue" Version="5.0.0" />
-    <PackageReference Include="Snapshooter.Xunit" Version="0.5.5" />
+    <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.1" />
+    <PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
+    <PackageReference Include="Snapshooter.Xunit" Version="0.6.1" />
     <PackageReference Include="StarMath" Version="2.0.20.204" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="coverlet.collector" Version="1.3.0">
+    <PackageReference Include="coverlet.collector" Version="3.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
