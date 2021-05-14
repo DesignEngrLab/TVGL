@@ -286,16 +286,15 @@ namespace TVGL.TwoDimensional
             // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
             // was a merge vertex.
             var edgeDatums = new Dictionary<PolygonEdge, (Vertex2D, bool)>();
-            var tolerance = polygon.GetToleranceForPolygon();
             foreach (var vertex in sortedVertices)
             {
-                var monoChange = GetMonotonicityChange(vertex, tolerance);
+                var monoChange = GetMonotonicityChange(vertex);
                 var cornerCross = vertex.EndLine.Vector.Cross(vertex.StartLine.Vector);
                 if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither || monoChange == MonotonicityChange.Y)
                 // then it's regular
                 {
-                    if (vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) || vertex.EndLine.Vector.X.IsPositiveNonNegligible(tolerance) ||  //headed in the positive x direction (enclosing along the bottom)
-                        (vertex.StartLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.X.IsNegligible() && vertex.StartLine.Vector.Y.IsPositiveNonNegligible(tolerance)))
+                    if (vertex.StartLine.Vector.X > 0 || vertex.EndLine.Vector.X > 0 ||  //headed in the positive x direction (enclosing along the bottom)
+                        (vertex.StartLine.Vector.X == 0 && vertex.EndLine.Vector.X == 0 && vertex.StartLine.Vector.Y > 0))
                     {   // in the CCW direction or along the bottom
                         MakeNewDiagonalEdgeIfMerge(connections, edgeDatums, vertex.EndLine, vertex);
                         edgeDatums.Remove(vertex.EndLine);
@@ -308,10 +307,10 @@ namespace TVGL.TwoDimensional
                         edgeDatums[closestDatumEdge] = (vertex, false);
                     }
                 }
-                else if (!cornerCross.IsNegativeNonNegligible(tolerance)) //then either start or end
+                else if (cornerCross >= 0) //then either start or end
                 {
-                    if ((vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegativeNonNegligible(tolerance)) || // then start
-                        (vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegligible() && vertex.EndLine.Vector.Y.IsNegativeNonNegligible(tolerance)))
+                    if (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X < 0 || // then start
+                        (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X == 0 && vertex.EndLine.Vector.Y < 0))
                         edgeDatums.Add(vertex.StartLine, (vertex, false));
                     else // then it's an end
                     {
@@ -321,8 +320,8 @@ namespace TVGL.TwoDimensional
                 }
                 else //then either split or merge
                 {
-                    if ((vertex.StartLine.Vector.X.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.X.IsNegativeNonNegligible(tolerance)) || // then split
-                       (vertex.StartLine.Vector.Y.IsPositiveNonNegligible(tolerance) && vertex.EndLine.Vector.Y.IsPositiveNonNegligible(tolerance)))
+                    if (vertex.StartLine.Vector.X > 0 && vertex.EndLine.Vector.X < 0 || // then split
+                       (vertex.StartLine.Vector.Y > 0 && vertex.EndLine.Vector.Y > 0))
                     {   // it's a split
                         var closestDatumEdge = FindClosestLowerDatum(edgeDatums.Keys, vertex.Coordinates);
                         var helperVertex = edgeDatums[closestDatumEdge].Item1;

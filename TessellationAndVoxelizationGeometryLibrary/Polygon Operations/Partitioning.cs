@@ -56,13 +56,13 @@ namespace TVGL.TwoDimensional
         /// vertex does not conenct to polygon edges. Be sure to invoke" +
         ///           " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method. - vertex
         /// </exception>
-        public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex, double tolerance)
+        public static MonotonicityChange GetMonotonicityChange(this Vertex2D vertex)
         {
             if (vertex.EndLine == null) throw new ArgumentException("vertex does not connect to polygon edges. Be sure to invoke" +
              " MakePolygonEdgesIfNonExistent on parent polygon before this calling this method.", nameof(vertex));
             var xPrev = vertex.EndLine.Vector.X;
             var yPrev = vertex.EndLine.Vector.Y;
-            if (xPrev.IsNegligible() && yPrev.IsNegligible()) return MonotonicityChange.SameAsPrevious;
+            if (xPrev == 0 && yPrev == 0) return MonotonicityChange.SameAsPrevious;
             double xNext, yNext;
             var neighborVertex = vertex;
             do
@@ -71,7 +71,7 @@ namespace TVGL.TwoDimensional
                 xNext = neighborVertex.EndLine.Vector.X;
                 yNext = neighborVertex.EndLine.Vector.Y;
             }
-            while (xNext.IsNegligible(tolerance) && yNext.IsNegligible(tolerance));
+            while (xNext == 0 && yNext == 0);
 
             //at this point one or both of the x&y deltas are non-negligible.
             /**** I wish this were enough (the next 6 lines) but it leads to problems
@@ -84,66 +84,64 @@ namespace TVGL.TwoDimensional
             ****/
 
             // first check the cases where all four numbers are not negligible
-            var xChangesDir = (xPrev.IsNegativeNonNegligible(tolerance) && xNext.IsPositiveNonNegligible(tolerance))
-                || (xPrev.IsPositiveNonNegligible(tolerance) && xNext.IsNegativeNonNegligible(tolerance));
-            var yChangesDir = (yPrev.IsNegativeNonNegligible(tolerance) && yNext.IsPositiveNonNegligible(tolerance))
-                || (yPrev.IsPositiveNonNegligible(tolerance) && yNext.IsNegativeNonNegligible(tolerance));
+            var xChangesDir = (xPrev < 0 && xNext > 0) || (xPrev > 0 && xNext < 0);
+            var yChangesDir = (yPrev < 0 && yNext > 0) || (yPrev > 0 && yNext < 0);
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
-            var xSameDir = (xPrev.IsNegativeNonNegligible(tolerance) && xNext.IsNegativeNonNegligible(tolerance))
-                || (xPrev.IsPositiveNonNegligible(tolerance) && xNext.IsPositiveNonNegligible(tolerance));
+            var xSameDir = (xPrev < 0 && xNext < 0)
+                || (xPrev > 0 && xNext > 0);
             if (yChangesDir && xSameDir) return MonotonicityChange.Y;
-            var ySameDir = (yPrev.IsNegativeNonNegligible(tolerance) && yNext.IsNegativeNonNegligible(tolerance))
-                || (yPrev.IsPositiveNonNegligible(tolerance) && yNext.IsPositiveNonNegligible(tolerance));
+            var ySameDir = (yPrev < 0 && yNext < 0)
+                || (yPrev > 0 && yNext > 0);
             if (xChangesDir && ySameDir) return MonotonicityChange.X;
             if (xSameDir && ySameDir) return MonotonicityChange.Neither;
 
             // if at this point then one or more values in the vectors is zero/negligible since the above booleans were
             // defined with this restriction
-            if (xPrev.IsNegligible(tolerance) && xNext.IsNegligible(tolerance)) // then line is vertical
+            if (xPrev == 0 && xNext == 0) // then line is vertical
                 return (Math.Sign(yPrev) == Math.Sign(yNext)) ? MonotonicityChange.Neither : MonotonicityChange.Y;
             // eww, the latter in that return is problematic at it would be a knife edge. but that's not this functions job to police
-            if (yPrev.IsNegligible(tolerance) && yNext.IsNegligible(tolerance)) // then line is horizontal
+            if (yPrev == 0 && yNext == 0) // then line is horizontal
                 return (Math.Sign(xPrev) == Math.Sign(xNext)) ? MonotonicityChange.Neither : MonotonicityChange.X;
 
             // at this point, we've checked that 1) no vector is zero, 2) all are nonnegligible,
             // 3) either both x's or both y's are negligible.
             neighborVertex = vertex;
-            if (xPrev.IsNegligible(tolerance)) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
-                                      // the condition before the last). it's possible that yNext is zero, but it doesn't affect the approach
+            if (xPrev == 0) //we know that yPrev != 0 (given first condition) and we know xNext != 0 (given
+                            // the condition before the last). it's possible that yNext is zero, but it doesn't affect the approach
             {
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
                     xPrev = neighborVertex.EndLine.Vector.X;
-                } while (xPrev.IsNegligible(tolerance));
+                } while (xPrev == 0);
                 xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
             }
-            else if (xNext.IsNegligible(tolerance))
+            else if (xNext == 0)
             {
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
                     xNext = neighborVertex.EndLine.Vector.X;
-                } while (xNext.IsNegligible(tolerance));
+                } while (xNext == 0);
                 xChangesDir = Math.Sign(xPrev) != Math.Sign(xNext);
             }
             neighborVertex = vertex;
-            if (yPrev.IsNegligible(tolerance))
+            if (yPrev == 0)
             {
                 do
                 {
                     neighborVertex = neighborVertex.EndLine.FromPoint;
                     yPrev = neighborVertex.EndLine.Vector.Y;
-                } while (yPrev.IsNegligible(tolerance));
+                } while (yPrev == 0);
                 yChangesDir = (Math.Sign(yPrev) != Math.Sign(yNext));
             }
-            else if (yNext.IsNegligible(tolerance))
+            else if (yNext == 0)
             {
                 do
                 {
                     neighborVertex = neighborVertex.StartLine.ToPoint;
                     yNext = neighborVertex.EndLine.Vector.Y;
-                } while (yNext.IsNegligible(tolerance));
+                } while (yNext == 0);
                 yChangesDir = Math.Sign(yPrev) != Math.Sign(yNext);
             }
             if (xChangesDir && yChangesDir) return MonotonicityChange.Both;
@@ -182,13 +180,12 @@ namespace TVGL.TwoDimensional
             var initBoxMonoChange = MonotonicityChange.Neither;
             Vertex2D beginBoxVertex = null;
             var beginBoxMonoChange = MonotonicityChange.Neither;
-            var tolerance = polygon.GetToleranceForPolygon();
             var i = 0;
             var vertexIndex = 0;
             while ((vertexIndex = i++ % numPoints) != initBoxIndex)
             {
                 var vertex = polygon.Vertices[vertexIndex];
-                var monoChange = GetMonotonicityChange(vertex, tolerance);
+                var monoChange = GetMonotonicityChange(vertex);
                 if (monoChange == MonotonicityChange.SameAsPrevious || monoChange == MonotonicityChange.Neither) continue;
                 if (monoChange == MonotonicityChange.Both ||
                     (monoChange == MonotonicityChange.X && (divideAt == MonotonicityChange.X || divideAt == MonotonicityChange.Both)) ||
