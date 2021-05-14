@@ -123,29 +123,29 @@ namespace TVGL
         public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                double basePlaneDistance, double extrusionHeight)
         {
+            TVGL.IOFunctions.IO.Save(polygon, "triangulationError.json");
             var triangleIndices = polygon.TriangulateToIndices().ToList();
             return ExtrusionFaceVectorsFrom2DPolygons(polygon, triangleIndices, basePlaneNormal, basePlaneDistance, extrusionHeight);
         }
 
-        public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, List<(int A, int B, int C)> triangleIndices,
+        public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon,
+            List<(int A, int B, int C)> triangleIndices,
             Vector3 basePlaneNormal, double basePlaneDistance, double extrusionHeight)
         {
             MiscFunctions.TransformToXYPlane(basePlaneNormal, out var rotateTransform);
             #region Make Base faces
             var int2VertexDict = new Dictionary<int, Vector3>();
             var baseVertices = new List<List<Vector3>>();
-            var vertexID = 0;
-            foreach (var loop in polygon.AllPolygons)
+            foreach (var poly in polygon.AllPolygons)
             {
                 var vertexLoop = new List<Vector3>();
                 baseVertices.Add(vertexLoop);
-                foreach (var position2D in loop.Path)
+                foreach (var polyVertex in poly.Vertices)
                 {
-                    var position3D = new Vector3(position2D, 0);
+                    var position3D = new Vector3(polyVertex.X, polyVertex.Y, 0);
                     var newVertex = position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal;
                     vertexLoop.Add(newVertex);
-                    int2VertexDict.Add(vertexID, newVertex);
-                    vertexID++;
+                    int2VertexDict.Add(polyVertex.IndexInList, newVertex);
                 }
             }
             var result = new List<(Vector3 A, Vector3 B, Vector3 C)>();
@@ -158,19 +158,17 @@ namespace TVGL
             #region Make Top faces
             int2VertexDict.Clear();
             var topVertices = new List<List<Vector3>>();
-            vertexID = 0;
             basePlaneDistance += extrusionHeight;
-            foreach (var loop in polygon.AllPolygons)
+            foreach (var poly in polygon.AllPolygons)
             {
                 var vertexLoop = new List<Vector3>();
                 topVertices.Add(vertexLoop);
-                foreach (var position2D in loop.Path)
+                foreach (var polyVertex in poly.Vertices)
                 {
-                    var position3D = new Vector3(position2D, 0);
+                    var position3D = new Vector3(polyVertex.X, polyVertex.Y, 0);
                     var newVertex = position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal;
                     vertexLoop.Add(newVertex);
-                    int2VertexDict.Add(vertexID, newVertex);
-                    vertexID++;
+                    int2VertexDict.Add(polyVertex.IndexInList, newVertex);
                 }
             }
             foreach (var (A, B, C) in triangleIndices)

@@ -18,7 +18,7 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
-        const double areaSimplificationFraction = 1e-3;
+        const double areaSimplificationFraction = 1e-5;
 
         static Stopwatch sw = new Stopwatch();
         const string timeFiles = "times.csv";

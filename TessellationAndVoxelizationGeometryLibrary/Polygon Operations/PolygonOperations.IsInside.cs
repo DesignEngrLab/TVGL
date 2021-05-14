@@ -509,7 +509,7 @@ namespace TVGL.TwoDimensional
                     if (currentLines.Contains(thisPoint.EndLine)) currentLines.Remove(thisPoint.EndLine);
                     else currentLines.Add(thisPoint.EndLine);
                     pointIndex++;
-                    if (pointIndex == sortedPoints.Length) return intersections;
+                    if (pointIndex == sortedPoints.Count) return intersections;
                     thisPoint = sortedPoints[pointIndex];
                 }
                 if (needToOffset)

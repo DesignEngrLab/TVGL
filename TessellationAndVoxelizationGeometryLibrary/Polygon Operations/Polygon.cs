@@ -434,7 +434,7 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_centroid.IsNull())
+                if (_centroid.IsNull() && Vertices != null && Vertices.Count > 0)
                     CalculateCentroid();
                 return _centroid;
             }

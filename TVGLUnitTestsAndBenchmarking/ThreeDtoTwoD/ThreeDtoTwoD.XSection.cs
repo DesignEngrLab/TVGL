@@ -23,7 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
             dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles");
 
             //var fileName = dir.FullName + Path.DirectorySeparatorChar + "test.json";
-            var fileNames = dir.GetFiles("nam*").OrderByDescending(x => x.Length).ToArray();
+            var fileNames = dir.GetFiles("*.json").OrderByDescending(x => x.Length).ToArray();
             for (var i = 0; i < 20; i++)
             {
                 var filename = fileNames[i].FullName;
@@ -31,8 +31,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Attempting: " + filename);
                 IO.Open(filename, out Polygon polygon);
                 Presenter.ShowAndHang(polygon);
-                polygon = polygon.SimplifyMinLength(0.01);
+                polygon = polygon.SimplifyMinLengthToNewPolygon(0.01);
                 //polygon = polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).LargestPolygon();
+                TestTriangulate(polygon);
                 Presenter.ShowAndHang(polygon);
             }
             Console.ReadKey();

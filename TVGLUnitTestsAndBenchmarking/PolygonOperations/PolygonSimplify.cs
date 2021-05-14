@@ -46,7 +46,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 Console.WriteLine("Attempting: " + filename);
                 IO.Open(filename, out Polygon polygon);
                 Presenter.ShowAndHang(polygon);
-                var polygonSimple = polygon.SimplifyMinLength(100);
+                var polygonSimple = polygon.SimplifyMinLengthToNewPolygon(100);
                 Presenter.ShowAndHang(new[] { polygon, polygonSimple });
 
 
