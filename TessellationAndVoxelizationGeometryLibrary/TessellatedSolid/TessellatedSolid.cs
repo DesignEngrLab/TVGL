@@ -125,7 +125,7 @@ namespace TVGL
             MakeVertices(vertsPerFaceList, scaleFactor, out List<int[]> faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
-            if (createFullVersion) CompleteInitiation();
+            if (createFullVersion) CompleteInitiation(true);
         }
 
         /// <summary>
@@ -402,9 +402,9 @@ namespace TVGL
             CompleteInitiation();
         }
 
-        internal void CompleteInitiation()
+        internal void CompleteInitiation(bool fromSTL = false)
         {
-            MakeEdges();
+            MakeEdges(fromSTL);
             CalculateVolume();
             this.CheckModelIntegrity();
             ConvexHull = new TVGLConvexHull(this);
@@ -447,8 +447,8 @@ namespace TVGL
                 if (zMax < v.Z) zMax = v.Z;
             }
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
-            var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
-            SameTolerance = shortestDimension * Constants.BaseTolerance;
+            var averageDimension = 0.333 * ((XMax - XMin) + (YMax - YMin) + (ZMax - ZMin));
+            SameTolerance = averageDimension * Constants.BaseTolerance;
         }
 
         /// <summary>

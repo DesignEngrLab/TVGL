@@ -422,7 +422,7 @@ namespace StarMathLib
                 }
             return true;
         }
- 
+
         #endregion
 
         #region Transpose

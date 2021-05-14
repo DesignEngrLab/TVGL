@@ -67,28 +67,27 @@ namespace TVGL.TwoDimensional
                 currentEdge = intersectionData.EdgeA;
                 return true;
             }
+            // Double_Overlap or Abutting
             currentEdge = null;
             return false;
         }
 
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
-            if (intersectionData.Relationship == SegmentRelationship.NoOverlap) return true;
-            if (currentEdgeIsFromPolygonA)
-            {
-                return
-                    intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
-                    intersectionData.Relationship == SegmentRelationship.BEnclosesA;
-            }
-            return intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
-                intersectionData.Relationship == SegmentRelationship.AEnclosesB;
+            if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB) ||
+                (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.BEnclosesA))
+                return false;
+            return true;
         }
 
         protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
+            if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
+             (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))
+                return true;
             if (startingIntersection != currentIntersection) return false;
-            if (startingIntersection.Relationship == SegmentRelationship.NoOverlap &&
-                startingIntersection.CollinearityType == CollinearityTypes.None)
+            if (currentIntersection.Relationship == SegmentRelationship.NoOverlap &&
+                currentIntersection.CollinearityType == CollinearityTypes.None)
                 return currentEdge == startingEdge;
             return true;
         }

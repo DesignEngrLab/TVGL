@@ -32,6 +32,19 @@ namespace TVGL
         /// </summary>
         /// <value>The plane.</value>
         public Plane Plane { get; set; }
+
+        /// <summary>
+        /// Gets or sets the plane error.
+        /// </summary>
+        /// <value>The plane error.</value>
+        public double PlaneError { get; set; }
+
+        /// <summary>
+        /// Gets or sets the curve error.
+        /// </summary>
+        /// <value>The curve error.</value>
+        public double CurveError { get; set; }
+
         /// <summary>
         /// Gets the edges and direction.
         /// </summary>

@@ -27,9 +27,9 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                lock (_vertices)
+                if (_path == null)
                 {
-                    if (_path == null)
+                    lock (_vertices)
                     {
                         _path = new List<Vector2>();
                         foreach (var point in _vertices)
@@ -40,7 +40,6 @@ namespace TVGL.TwoDimensional
                 }
                 return _path;
             }
-            internal set { _path = value; }
         }
 
         /// <summary>
@@ -72,6 +71,9 @@ namespace TVGL.TwoDimensional
         /// The vertices
         /// </summary>
         List<Vertex2D> _vertices;
+
+        internal int NumSigDigits { get; private set; }
+
 
         /// <summary>
         /// Gets the ordered x vertices.
@@ -137,22 +139,6 @@ namespace TVGL.TwoDimensional
         /// The lines
         /// </summary>
         private PolygonEdge[] _edges;
-
-        /// <summary>
-        /// Makes the vertices.
-        /// </summary>
-        private void MakeVertices()
-        {
-            foreach (var polygon in AllPolygons)
-            {
-                var numPoints = polygon._path.Count;
-                var pointsArray = new Vertex2D[numPoints];
-                for (int i = 0; i < numPoints; i++)
-                    pointsArray[i] = new Vertex2D(polygon._path[i], i, Index);
-                polygon._vertices = pointsArray.ToList();
-            }
-        }
-
 
 
         /// <summary>
@@ -327,7 +313,7 @@ namespace TVGL.TwoDimensional
             {
                 lock (_vertices)
                     if (double.IsNaN(pathArea))
-                    pathArea = Path.Area();
+                        pathArea = Path.Area();
                 return pathArea;
             }
         }
@@ -349,7 +335,7 @@ namespace TVGL.TwoDimensional
             {
                 lock (_vertices)
                     if (double.IsNaN(perimeter))
-                    perimeter = Path.Perimeter();
+                        perimeter = Path.Perimeter();
                 return perimeter + InnerPolygons.Sum(p => p.Perimeter);
             }
         }
@@ -368,8 +354,7 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                lock (_vertices)
-                    if (double.IsInfinity(maxX))
+                if (double.IsInfinity(maxX))
                     SetBounds();
                 return maxX;
             }
@@ -389,8 +374,7 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                lock (_vertices)
-                    if (double.IsInfinity(minX))
+                if (double.IsInfinity(minX))
                     SetBounds();
                 return minX;
             }
@@ -410,8 +394,7 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                lock (_vertices)
-                    if (double.IsInfinity(maxY))
+                if (double.IsInfinity(maxY))
                     SetBounds();
                 return maxY;
             }
@@ -441,11 +424,39 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                lock (_vertices)
-                    if (double.IsInfinity(minY))
+                if (double.IsInfinity(minY))
                     SetBounds();
                 return minY;
             }
+        }
+
+        public Vector2 Centroid
+        {
+            get
+            {
+                if (_centroid.IsNull() && Vertices != null && Vertices.Count > 0)
+                    CalculateCentroid();
+                return _centroid;
+            }
+        }
+        private Vector2 _centroid = Vector2.Null;
+
+        private void CalculateCentroid()
+        {
+            var xCenter = 0.0;
+            var yCenter = 0.0;
+            foreach (var p in AllPolygons)
+            {
+                for (int i = 0, j = Vertices.Count - 1; i < Vertices.Count; j = i++)
+                {
+                    var pj = Vertices[j];
+                    var pi = Vertices[i];
+                    var a = pj.X * pi.Y - pi.X * pj.Y;
+                    xCenter += (pj.X + pi.X) * a;
+                    yCenter += (pj.Y + pi.Y) * a;
+                }
+            }
+            _centroid = new Vector2(xCenter, yCenter) / (6 * Area);
         }
 
         /// <summary>
@@ -458,18 +469,51 @@ namespace TVGL.TwoDimensional
 
         public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
         {
-            //_path = coordinates.ToList();
-            _path = new List<Vector2>();
+            Index = index;
             Vector2 prevCoordinate = Vector2.Null;
+            _path = new List<Vector2>();
             foreach (var p in coordinates)
             {
-                if (p.IsPracticallySame(prevCoordinate)) continue;
+                if (p.X > maxX) maxX = p.X;
+                if (p.X < minX) minX = p.X;
+                if (p.Y > maxY) maxY = p.Y;
+                if (p.Y < minY) minY = p.Y;
                 prevCoordinate = p;
                 _path.Add(p);
             }
-            if (_path.Count > 1 && _path[0].IsPracticallySame(_path[^1])) _path.RemoveAt(_path.Count - 1);
-            Index = index;
-            MakeVertices();
+            MakeVerticesFromPath();
+        }
+
+        private void MakeVerticesFromPath()
+        {
+            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
+            NumSigDigits = 0;
+            while (tolerance < 1 && NumSigDigits < 15)
+            {
+                NumSigDigits++;
+                tolerance *= 10;
+            }
+            _vertices = new List<Vertex2D>();
+            var prevX = Math.Round(_path[0].X, NumSigDigits);
+            var prevY = Math.Round(_path[0].Y, NumSigDigits);
+
+            for (int i = _path.Count - 1; i >= 0; i--)
+            {
+                var x = Math.Round(_path[i].X, NumSigDigits);
+                var y = Math.Round(_path[i].Y, NumSigDigits);
+                if (x != prevX || y != prevY)
+                {
+                    var coord = new Vector2(x, y);
+                    _path[i] = coord;
+                    _vertices.Add(new Vertex2D(coord, i, Index));
+                    prevX = x;
+                    prevY = y;
+                }
+                else
+
+                    _path.RemoveAt(i);
+            }
+            _vertices.Reverse();
         }
 
         public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())
@@ -486,7 +530,32 @@ namespace TVGL.TwoDimensional
         public Polygon(IEnumerable<Vertex2D> vertices, int index = -1)
         {
             _vertices = vertices as List<Vertex2D> ?? vertices.ToList();
+            SetBounds();
             Index = index;
+
+            var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
+            NumSigDigits = 0;
+            while (tolerance < 1 && NumSigDigits < 15)
+            {
+                NumSigDigits++;
+                tolerance *= 10;
+            }
+            var prevX = Math.Round(_vertices[0].X, NumSigDigits);
+            var prevY = Math.Round(_vertices[0].Y, NumSigDigits);
+
+            for (int i = _vertices.Count - 1; i >= 0; i--)
+            {
+                var x = Math.Round(_vertices[i].X, NumSigDigits);
+                var y = Math.Round(_vertices[i].Y, NumSigDigits);
+                if (x != prevX || y != prevY)
+                {
+                    _vertices[i].Coordinates = new Vector2(x, y);
+                    prevX = x;
+                    prevY = y;
+                }
+                else
+                    _vertices.RemoveAt(i);
+            }
         }
 
         /// <summary>
@@ -524,7 +593,6 @@ namespace TVGL.TwoDimensional
                 minY = this.minY,
                 _innerPolygons = thisInnerPolygons
             };
-            copiedPolygon.MakeVertices();
             return copiedPolygon;
         }
 
@@ -544,21 +612,16 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if this instance is convex; otherwise, <c>false</c>.</returns>
         public bool IsConvex()
         {
-            var tolerance = this.GetToleranceForPolygon(); ;
-            if (!Area.IsPositiveNonNegligible(tolerance)) return false; //It must have an area greater than zero
+            if (Area < 0) return false; //It must have an area greater than zero
             var firstLine = Edges.Last();
             foreach (var secondLine in Edges)
             {
                 var cross = firstLine.Vector.Cross(secondLine.Vector);
-                if (secondLine.Length.IsNegligible(0.0000001)) continue; // without updating the first line             
+                if (secondLine.Length.IsNegligible(Constants.PolygonSameTolerance)) continue; // without updating the first line             
                 if (cross < 0)
-                {
                     return false;
-                }
-
                 firstLine = secondLine;
             }
-
             return true;
         }
 
@@ -615,15 +678,13 @@ namespace TVGL.TwoDimensional
 
         public void Reset()
         {
-            lock (_vertices)
-            {
-                _path = null;
-                _edges = null;
-                _orderedXVertices = null;
-                area = double.NaN;
-                pathArea = double.NaN;
-                perimeter = double.NaN;
-            }
+            _path = null;
+            _edges = null;
+            _orderedXVertices = null;
+            area = double.NaN;
+            pathArea = double.NaN;
+            perimeter = double.NaN;
+            _centroid = Vector2.Null;
         }
 
         [JsonExtensionData]
@@ -641,7 +702,8 @@ namespace TVGL.TwoDimensional
         {
             JArray jArray = (JArray)serializationData["Coordinates"];
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
-            MakeVertices();
+            SetBounds();
+            MakeVerticesFromPath();
         }
     }
 
@@ -664,6 +726,27 @@ namespace TVGL.TwoDimensional
             if (v1.Y.IsPracticallySame(v2.Y))
                 return (v1.X < v2.X) ? -1 : 1;
             return (v1.Y < v2.Y) ? -1 : 1;
+        }
+    }
+
+    internal class VertexSortedByDirection : IComparer<Vertex2D>
+    {
+        private readonly Vector2 sweepDirection;
+        private readonly Vector2 alongDirection;
+
+        internal VertexSortedByDirection(Vector2 sweepDirection)
+        {
+            this.sweepDirection = sweepDirection;
+            alongDirection = new Vector2(-sweepDirection.Y, sweepDirection.X);
+
+        }
+        public int Compare(Vertex2D v1, Vertex2D v2)
+        {
+            var d1 = v1.Coordinates.Dot(sweepDirection);
+            var d2 = v2.Coordinates.Dot(sweepDirection);
+            if (d1.IsPracticallySame(d2))
+                return (v1.Coordinates.Dot(alongDirection) < v2.Coordinates.Dot(alongDirection)) ? -1 : 1;
+            return (d1 < d2) ? -1 : 1;
         }
     }
 }

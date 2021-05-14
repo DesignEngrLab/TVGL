@@ -254,12 +254,12 @@ namespace TVGL.TwoDimensional
                 var intersection = IntersectionData[i];
                 intersection.VisitedA = false;
                 intersection.VisitedB = false;
-                numVertices = intersection.EdgeA.IndexInList;
-                lookupList[numVertices] ??= new List<int>();
-                lookupList[numVertices].Add(i);
-                numVertices = intersection.EdgeB.IndexInList;
-                lookupList[numVertices] ??= new List<int>();
-                lookupList[numVertices].Add(i);
+                var index = intersection.EdgeA.IndexInList;
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
+                index = intersection.EdgeB.IndexInList;
+                lookupList[index] ??= new List<int>();
+                lookupList[index].Add(i);
             }
             return lookupList;
         }

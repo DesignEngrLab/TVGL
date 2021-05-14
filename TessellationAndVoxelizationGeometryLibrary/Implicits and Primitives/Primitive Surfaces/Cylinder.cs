@@ -215,14 +215,14 @@ namespace TVGL
         /// <param name="radius">The radius.</param>
         /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
         /// <param name="dxOfTopPlane">The dx of top plane.</param>
-        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double dxOfBottomPlane,
-            double dxOfTopPlane)
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
+            double maxDistanceAlongAxis)
         {
             Axis = axis;
             Anchor = anchor;
             Radius = radius;
-            MinDistanceAlongAxis = dxOfBottomPlane;
-            MaxDistanceAlongAxis = dxOfTopPlane;
+            MinDistanceAlongAxis = minDistanceAlongAxis;
+            MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
         }
         /// <summary>

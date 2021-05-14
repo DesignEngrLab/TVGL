@@ -117,7 +117,6 @@ namespace TVGL
         /// Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        [JsonIgnore]
         public override Vector3 Normal
         {
             get

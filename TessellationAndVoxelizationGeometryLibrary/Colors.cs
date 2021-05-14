@@ -884,49 +884,74 @@ namespace TVGL
             }
         }
 
-        // this function is from https://stackoverflow.com/questions/17080535/hsv-to-rgb-stops-at-yellow-c-sharp
-        // the initial while's and if's seem pretty amateur though
-        public static Color HSVtoRGB(float hue, float saturation, float value, float alpha = 1f)
+        const double HueOffset = -0.3;
+        const double HueContraction = 0.7;
+        /// <summary>
+        /// Converts the HSV color values to RGB.
+        /// This is based on the formula at: https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB
+        /// </summary>
+        /// <param name="hue">The hue.</param>
+        /// <param name="saturation">The saturation.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="alpha">The alpha.</param>
+        /// <returns>Color.</returns>
+        public static Color HSVtoRGB(double hue, double saturation, double value, double alpha = 1)
         {
-            while (hue > 1f) { hue -= 1f; }
-            while (hue < 0f) { hue += 1f; }
-            while (saturation > 1f) { saturation -= 1f; }
-            while (saturation < 0f) { saturation += 1f; }
-            while (value > 1f) { value -= 1f; }
-            while (value < 0f) { value += 1f; }
-            if (hue > 0.999f) { hue = 0.999f; }
-            if (hue < 0.001f) { hue = 0.001f; }
-            if (saturation > 0.999f) { saturation = 0.999f; }
-            if (saturation < 0.001f) { return new Color(alpha, value, value, value); }
-            if (value > 0.999f) { value = 0.999f; }
-            if (value < 0.001f) { value = 0.001f; }
+            hue += HueOffset;
+            if (hue < 0) hue = Math.Abs(1 + hue);
+            if (hue > 1) hue = hue % 1;
+            hue *= HueContraction;
+            if (saturation < 0) saturation = Math.Abs(1 + saturation);
+            if (saturation > 1) saturation = saturation % 1;
+            if (value < 0) value = Math.Abs(1 + value);
+            if (value > 1) value = value % 1;
 
-            float h6 = hue * 6f;
-            if (h6 == 6f) { h6 = 0f; }
-            int ihue = (int)(h6);
-            float p = value * (1f - saturation);
-            float q = value * (1f - (saturation * (h6 - ihue)));
-            float t = value * (1f - (saturation * (1f - (h6 - ihue))));
-            switch (ihue)
+            var chroma = value * saturation;
+            var huePrime = 6 * hue;
+            var x = chroma * (1 - Math.Abs(huePrime % 2 - 1));
+            double red, green, blue;
+            if (huePrime > 5)
             {
-                case 0:
-                    return new Color(alpha, value, t, p);
-
-                case 1:
-                    return new Color(alpha, q, value, p);
-
-                case 2:
-                    return new Color(alpha, p, value, t);
-
-                case 3:
-                    return new Color(alpha, p, q, value);
-
-                case 4:
-                    return new Color(alpha, t, p, value);
-
-                default:
-                    return new Color(alpha, value, p, q);
+                red = chroma;
+                green = 0;
+                blue = x;
             }
+            else if (huePrime > 4)
+            {
+                red = x;
+                green = 0;
+                blue = chroma;
+            }
+            else if (huePrime > 3)
+            {
+                red = 0;
+                green = x;
+                blue = chroma;
+            }
+            else if (huePrime > 2)
+            {
+                red = 0;
+                green = chroma;
+                blue = x;
+            }
+            else if (huePrime > 1)
+            {
+                red = x;
+                green = chroma;
+                blue = 0;
+            }
+            else
+            {
+                red = chroma;
+                green = x;
+                blue = 0;
+            }
+            var m = value - chroma;
+            red += m;
+            green += m;
+            blue += m;
+
+            return new Color((float)alpha, (float)red, (float)green, (float)blue);
         }
 
         #endregion Constructors

@@ -5,7 +5,7 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;PRESENT</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;PRESENT;COMPARE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>TRACE;PRESENT</DefineConstants>
@@ -42,10 +42,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.12.0" />
+    <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.15.0" />
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="OptimizedPriorityQueue" Version="4.2.0" />
+    <PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
     <PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>

@@ -138,6 +138,13 @@ namespace TVGL.TwoDimensional
         /// <returns>List&lt;System.Int32[]&gt;.</returns>
         private static List<Vertex2D[]> Triangulate(this Polygon polygon, bool handleSelfIntersects = true)
         {
+            if (polygon.Area.IsNegligible() || polygon.IsConvex())
+            {
+                var triangleList = new List<Vertex2D[]>();
+                for (int i = 2; i < polygon.Vertices.Count; i++)
+                    triangleList.Add(new[] { polygon.Vertices[0], polygon.Vertices[i - 1], polygon.Vertices[i] });
+                return triangleList;
+            }
             if (!polygon.IsPositive)
                 throw new ArgumentException("Triangulate Polygon requires a positive polygon. A negative one was provided.", nameof(polygon));
 
@@ -270,7 +277,10 @@ namespace TVGL.TwoDimensional
 
         private static Dictionary<Vertex2D, List<Vertex2D>> FindConnectionsToConvertToMonotonePolygons(Polygon polygon)
         {
-            var sortedVertices = polygon.AllPolygons.SelectMany(p => p.Vertices).OrderBy(v => v, new VertexSortedByXFirst());
+            var sortedVertices = new List<Vertex2D>();
+            var comparer = new VertexSortedByXFirst();
+            foreach (var p in polygon.AllPolygons)
+                sortedVertices = CombineSortedVertexLists(sortedVertices, p.OrderedXVertices, comparer).ToList();
             var connections = new Dictionary<Vertex2D, List<Vertex2D>>();
             // the edgeDatums are the current edges in the sweep. The Vertex is the past polygon point (aka helper)
             // that is often connected to the current vertex in the sweep. The boolean is only true when the vertex
@@ -482,5 +492,27 @@ namespace TVGL.TwoDimensional
             return topVertex;
         }
 
+        private static IEnumerable<Vertex2D> CombineSortedVertexLists(IEnumerable<Vertex2D> leftCollection, IEnumerable<Vertex2D> rightCollection,
+            IComparer<Vertex2D> comparer)
+        {
+            var leftEnumerator = leftCollection.GetEnumerator();
+            var rightEnumerator = rightCollection.GetEnumerator();
+            var leftContinues = leftEnumerator.MoveNext();
+            var rightContinues = rightEnumerator.MoveNext();
+            while (leftContinues || rightContinues)
+            {
+                if (!rightContinues || 
+                    leftContinues && comparer.Compare(leftEnumerator.Current, rightEnumerator.Current) <= 0)
+                {
+                    yield return leftEnumerator.Current;
+                    leftContinues = leftEnumerator.MoveNext();
+                }
+                else
+                {
+                    yield return rightEnumerator.Current;
+                    rightContinues = rightEnumerator.MoveNext();
+                }
+            }
+        }
     }
 }

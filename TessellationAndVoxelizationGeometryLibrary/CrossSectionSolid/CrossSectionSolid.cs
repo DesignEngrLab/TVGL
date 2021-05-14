@@ -179,7 +179,7 @@ namespace TVGL
             {
                 var i = layer.Key;
                 //Skip layers outside of the start and stop bounds. This is necessary because of the increment
-                if (i * increment < start * increment || i * increment > stop * increment) return; 
+                if (i * increment < start * increment || i * increment > stop * increment) return;
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
                 var layerfaces = layer.Value.SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
@@ -337,7 +337,28 @@ namespace TVGL
 
         protected override void CalculateCenter()
         {
-            throw new NotImplementedException();
+            var xCenter = 0.0;
+            var yCenter = 0.0;
+            var zCenter = 0.0;
+            var totalArea = 0.0;
+            foreach (var stepDistanceKVP in StepDistances)  // skip the first, this is shown above.
+            {
+                var index = stepDistanceKVP.Key;
+                var distance = stepDistanceKVP.Value;
+                if (!Layer2D.ContainsKey(index)) continue;
+                var layer2D = Layer2D[index];
+                if (layer2D == null || layer2D.Count == 0) continue;
+                foreach (var polygon in layer2D)
+                {
+                    Vector2 c = polygon.Centroid;
+                    var area = polygon.Area;
+                    totalArea += area;
+                    xCenter += area * c.X;
+                    yCenter += area * c.Y;
+                    zCenter += area * distance;
+                }
+            }
+            _center = (new Vector3(xCenter, yCenter, zCenter) / totalArea).Transform(BackTransform);
         }
 
         protected override void CalculateVolume()
@@ -365,12 +386,39 @@ namespace TVGL
 
         protected override void CalculateSurfaceArea()
         {
-            throw new NotImplementedException();
+            // this is probably not correct. I simply took the code for CalculateVolume and changed
+            // polygon area to polygon perimeter.
+            var area = 0.0;
+            var index = StepDistances.Keys.First();
+            var prevDistance = StepDistances.Values.First();
+            var layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+            var prevPerimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
+            foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
+            {
+                index = stepDistanceKVP.Key;
+                var distance = stepDistanceKVP.Value;
+                layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+                var perimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
+                area += (prevPerimeter + perimeter) * (distance - prevDistance);
+                prevPerimeter = perimeter;
+                prevDistance = distance;
+            }
+            area *= 0.5;
+            //
+            if (area < 0) area = -area;
         }
 
         protected override void CalculateInertiaTensor()
         {
             throw new NotImplementedException();
+        }
+
+        public int GetTotalPolygonVertices()
+        {
+            return Layer2D
+                .Sum(layer => layer.Value
+                .Sum(outerP => outerP.AllPolygons
+                .Sum(p => p.Vertices.Count)));
         }
     }
 }
