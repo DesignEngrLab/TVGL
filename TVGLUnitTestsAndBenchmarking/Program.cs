@@ -13,6 +13,8 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
+        const string inputFolder = "OneDrive - Oregon State University\\Desktop\\MedemaPartAnalyzer";
+        //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
 
@@ -33,18 +35,18 @@ namespace TVGLUnitTestsAndBenchmarking
             TVGL.Message.Verbosity = VerbosityLevels.Everything;
             // 1. bubble up from the bin directories to find the TestFiles directory
             var dir = new DirectoryInfo(".");
-            while (!Directory.Exists(dir.FullName + Path.DirectorySeparatorChar + "TestFiles"))
+            while (!Directory.Exists(Path.Combine(dir.FullName, inputFolder)))
                 dir = dir.Parent;
-            dir = new DirectoryInfo(dir.FullName + Path.DirectorySeparatorChar + "TestFiles\\bad");
+            dir = new DirectoryInfo(Path.Combine(dir.FullName, inputFolder));
             var dirName = dir.FullName;
             foreach (var fileName in dir.GetFiles("*"))
             {
                 Debug.WriteLine("Attempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid ts);
                 Presenter.ShowAndHang(ts);
-                var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
-                Presenter.ShowAndHang(css);
-                IO.Save(css, "test.CSSolid");
+                //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
+                //Presenter.ShowAndHang(css);
+                //IO.Save(css, "test.CSSolid");
             }
             #endif
         }

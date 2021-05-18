@@ -2048,5 +2048,67 @@ namespace TVGL
                 return new StraightLine();
             }
         }
+
+
+        internal static Vertex2D ChooseTightestLeftTurn(List<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
+        {
+            var lastVector = previous.Coordinates - current.Coordinates;
+            var minAngle = double.PositiveInfinity;
+            Vertex2D bestVertex = null;
+            foreach (var vertex in nextVertices)
+            {
+                if (vertex == current || vertex == previous) continue;
+                var currentVector = vertex.Coordinates - current.Coordinates;
+                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
+                if (minAngle > angle && !angle.IsNegligible())
+                {
+                    minAngle = angle;
+                    bestVertex = vertex;
+                }
+            }
+            return bestVertex;
+        }
+
+        internal static Vertex2D ChooseTightestLeftTurn(this IEnumerable<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
+        {
+            var lastVector = previous.Coordinates - current.Coordinates;
+            var minAngle = double.PositiveInfinity;
+            Vertex2D bestVertex = null;
+            foreach (var vertex in nextVertices)
+            {
+                if (vertex == current || vertex == previous) continue;
+                var currentVector = vertex.Coordinates - current.Coordinates;
+                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
+                if (minAngle > angle && !angle.IsNegligible())
+                {
+                    minAngle = angle;
+                    bestVertex = vertex;
+                }
+            }
+            return bestVertex;
+        }
+
+        internal static Edge ChooseTightestLeftTurn(this IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal,
+            IEnumerable<bool> edgeDirections = null)
+        {
+            var transform = normal.TransformToXYPlane(out _);
+            var lastVector = refEdge.ConvertTo2DCoordinates(transform);
+            var minAngle = double.PositiveInfinity;
+            Edge bestEdge = null;
+            var directionEnumerator = edgeDirections == null ? null : edgeDirections.GetEnumerator();
+            foreach (var edge in possibleNextEdges)
+            {
+                var currentVector = edge.Vector.ConvertTo2DCoordinates(transform);
+                if (directionEnumerator != null && directionEnumerator.MoveNext() && !directionEnumerator.Current)
+                    currentVector *= -1;                
+                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
+                if (minAngle > angle && !angle.IsNegligible())
+                {
+                    minAngle = angle;
+                    bestEdge = edge;
+                }
+            }
+            return bestEdge;
+        }
     }
 }

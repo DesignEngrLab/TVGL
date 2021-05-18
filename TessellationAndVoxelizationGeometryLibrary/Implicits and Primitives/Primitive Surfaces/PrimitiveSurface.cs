@@ -239,11 +239,12 @@ namespace TVGL
                 var outerEdgesToRemove = new List<Edge>();
                 foreach (var outerEdge in OuterEdges)
                 {
-                    var vertexIndices = Edge.GetVertexIndices(outerEdge.EdgeReference);
-                    if (faceVertexIndices.Contains(vertexIndices.Item1) && faceVertexIndices.Contains(vertexIndices.Item2))
+                    var vertexIndex1 = outerEdge.From.IndexInList;
+                    var vertexIndex2 = outerEdge.To.IndexInList;
+                    if (faceVertexIndices.Contains(vertexIndex1) && faceVertexIndices.Contains(vertexIndex2))
                     {
-                        faceVertexIndices.Remove(vertexIndices.Item1);
-                        faceVertexIndices.Remove(vertexIndices.Item2);
+                        faceVertexIndices.Remove(vertexIndex1);
+                        faceVertexIndices.Remove(vertexIndex2);
                         outerEdge.UpdateWithNewFace(face);
                         outerEdgesToRemove.Add(outerEdge);
                         InnerEdges.Add(outerEdge);
@@ -340,7 +341,7 @@ namespace TVGL
                 SetBorderConvexity(border);
                 if (curveResidual < maxErrorInCurveFit)
                     border.Curve = curve;
-                if (border.IsClosed)
+                if (border.Edges.IsClosed)
                 {
                     var axis = Vector3.Null;
                     var anchor = Vector3.Null;
@@ -378,7 +379,7 @@ namespace TVGL
         {
             var concave = 0;
             var convex = 0;
-            foreach (var (edge, _) in border.EdgesAndDirection)
+            foreach (var (edge, _) in border.Edges)
             {
                 if (edge.Curvature == CurvatureType.Concave) concave++;
                 else if (edge.Curvature == CurvatureType.Convex) convex++;

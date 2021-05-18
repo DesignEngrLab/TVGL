@@ -249,30 +249,11 @@ namespace TVGL.TwoDimensional
                     current = next;
                     nextConnections = connections[current];
                     if (nextConnections.Count == 1) next = nextConnections[0];
-                    else next = ChooseTightestLeftTurn(nextConnections, current, newVertices[^2]);
+                    else next = MiscFunctions.ChooseTightestLeftTurn(nextConnections, current, newVertices[^2]);
                 }
                 RemoveConnection(connections, current, next);
                 yield return new Polygon(newVertices.Select(v => v.Copy()));
             }
-        }
-
-        private static Vertex2D ChooseTightestLeftTurn(List<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
-        {
-            var lastVector = previous.Coordinates - current.Coordinates;
-            var minAngle = double.PositiveInfinity;
-            Vertex2D bestVertex = null;
-            foreach (var vertex in nextVertices)
-            {
-                if (vertex == current || vertex == previous) continue;
-                var currentVector = vertex.Coordinates - current.Coordinates;
-                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle && !angle.IsNegligible())
-                {
-                    minAngle = angle;
-                    bestVertex = vertex;
-                }
-            }
-            return bestVertex;
         }
 
         private static Dictionary<Vertex2D, List<Vertex2D>> FindConnectionsToConvertToMonotonePolygons(Polygon polygon)

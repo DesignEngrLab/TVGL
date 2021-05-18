@@ -341,6 +341,7 @@ namespace TVGL
 
         /// <summary>
         /// Returns owned and other face in that order
+        /// TODO: this function seems convoluted. Why not just return the ownedFace and otherFace directly?
         /// </summary>
         /// <returns></returns>
         public static (PolygonalFace, PolygonalFace) GetOwnedAndOtherFace(long edgeChecksum, PolygonalFace face1, PolygonalFace face2)
