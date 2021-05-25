@@ -48,7 +48,7 @@ namespace StarMathLib
         private static bool solveViaCramersRule3(this double[,] a, IList<double> b, out double[] answer)
         {
             var denominator = determinant(a);
-            if (denominator == 0)
+            if (Math.Abs(denominator) < 5e-8)
             {
                 answer = Array.Empty<double>();
                 return false;
@@ -145,7 +145,7 @@ namespace StarMathLib
                 int[] permutationVector = null;
                 try
                 {
-                  LU = LUDecomposition(A, out permutationVector, length);
+                    LU = LUDecomposition(A, out permutationVector, length);
                 }
                 catch
                 {

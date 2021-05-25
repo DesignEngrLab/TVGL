@@ -2079,7 +2079,7 @@ namespace TVGL
                 if (vertex == current || vertex == previous) continue;
                 var currentVector = vertex.Coordinates - current.Coordinates;
                 var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle && !angle.IsNegligible())
+                if (minAngle > angle) // && !angle.IsNegligible()) // not sure why 0 angle is bad here. ReduceCollinear could be called later
                 {
                     minAngle = angle;
                     bestVertex = vertex;
@@ -2102,7 +2102,7 @@ namespace TVGL
                 if (directionEnumerator != null && directionEnumerator.MoveNext() && !directionEnumerator.Current)
                     currentVector *= -1;                
                 var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle && !angle.IsNegligible())
+                if (minAngle > angle) 
                 {
                     minAngle = angle;
                     bestEdge = edge;

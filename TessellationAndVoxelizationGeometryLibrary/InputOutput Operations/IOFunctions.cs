@@ -562,6 +562,7 @@ namespace TVGL.IOFunctions
                 line = reader.ReadLine();
                 if (reader.EndOfStream) break;
             } while (String.IsNullOrWhiteSpace(line));
+            if (string.IsNullOrEmpty(line)) return "";
             return line.Trim();
         }
 

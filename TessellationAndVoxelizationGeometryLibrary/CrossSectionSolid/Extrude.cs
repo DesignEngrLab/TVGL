@@ -123,7 +123,6 @@ namespace TVGL
         public static List<(Vector3 A, Vector3 B, Vector3 C)> ExtrusionFaceVectorsFrom2DPolygons(this Polygon polygon, Vector3 basePlaneNormal,
                double basePlaneDistance, double extrusionHeight)
         {
-            TVGL.IOFunctions.IO.Save(polygon, "triangulationError.json");
             var triangleIndices = polygon.TriangulateToIndices().ToList();
             return ExtrusionFaceVectorsFrom2DPolygons(polygon, triangleIndices, basePlaneNormal, basePlaneDistance, extrusionHeight);
         }

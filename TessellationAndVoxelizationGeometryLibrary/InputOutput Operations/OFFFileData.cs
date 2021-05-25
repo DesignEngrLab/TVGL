@@ -209,6 +209,13 @@ namespace TVGL.IOFunctions
                 }
                 if (!TryParseDoubleArray(line, out var numbers)) return false;
 
+
+                if (!numbers.Any())
+                {
+                    offData.NumFaces = i;
+                    break;
+                }
+
                 var numVerts = (int)Math.Round(numbers[0], 0);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)

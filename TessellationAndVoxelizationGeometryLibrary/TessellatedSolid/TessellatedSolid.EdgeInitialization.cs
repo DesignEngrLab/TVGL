@@ -54,6 +54,7 @@ namespace TVGL
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
             // moreSingleSidedEdges
+            Presenter.ShowVertexPathsWithSolid(singleSidedEdges.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new[] { this });
             if (overDefinedEdges.Any())
             {
                 Message.output("Edges in Tessellation with 3 or more faces (attempting to fix).", 2);
@@ -348,7 +349,7 @@ namespace TVGL
                     keepEdge = edge2;
                     removeEdge = edge1;
                 }
-                else
+                else //but this seems like a problem. And it is! how to fix?
                 {
                     keepEdge = edge1;
                     removeEdge = edge2;
@@ -419,7 +420,7 @@ namespace TVGL
                         var bestNext = possibleNextEdges.ChooseTightestLeftTurn(loop.Last().Vector, normal);
                         if (bestNext == null) break;
                         loop.Add(bestNext);
-                        var n1 = loop[^1].Vector.Cross(loop[^2].Vector).Normalize();
+                        var n1 = loop[^2].Vector.Cross(loop[^1].Vector).Normalize();
                         if (!n1.IsNull())
                         {
                             n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
@@ -475,9 +476,10 @@ namespace TVGL
             var completedEdges = new List<(Edge, List<PolygonalFace>)>();
             newFaces = new List<PolygonalFace>();
             remainingEdges = new List<Edge>();
+            var k = 0;
             foreach (var tuple in loops)
             {
-                Message.output("Patching hole in tessellation (" + loops.Count + " loops in total).", 2);
+                Message.output("Patching hole #"+ ++k  +" in tessellation (" + loops.Count + " loops in total).", 2);
                 var edges = tuple.Item1;
                 var normal = tuple.Item2;
                 //if a simple triangle, create a new face from vertices
@@ -547,19 +549,30 @@ namespace TVGL
                             foreach (var ed in edges)
                                 startDomain.Add((ed, false));
                             var visitedDomains = new Dictionary<List<int>, DomainClass>();
-                            Single3DPolygonTriangulation.Triangulate(edges[0].OwnedFace.Normal,
-                                edges[0], startDomain, visitedDomains, double.PositiveInfinity, 0.0, 0.0, out var triangles);
+                            var maxSurfaceArea = startDomain.EdgeList.Sum(e => e.Length);
+                            maxSurfaceArea *= 0.25 * maxSurfaceArea; //the max surface area is to take the perimeter and assume that 
+                            // the shape is a circle. I never thought about the before, but the area of a circle is the circumference 
+                            // squared divided by 4.
+                            var fLimit = 0.3 * maxSurfaceArea;
+                            var fResult = double.PositiveInfinity;
+                            List<DomainClass> triangles = null;
+                            while (double.IsInfinity(fResult))
+                            {
+                                fResult = Single3DPolygonTriangulation.Triangulate(edges[0].OwnedFace.Normal,
+                                     edges[0], startDomain, visitedDomains, fLimit, Constants.SameFaceNormalDotTolerance * maxSurfaceArea, 0.0, out triangles);
+                                fLimit = 1.1 * fLimit;
+                                if (double.IsInfinity(fLimit)) throw new Exception("fLimit went to infinity.");
+                            }
 
                             foreach (var triangle in triangles)
                             {
-                                var newFace = new PolygonalFace(
-                                    triangle.DirectionList[0] ? triangle.EdgeList[0].To : triangle.EdgeList[0].From,
-                                    triangle.DirectionList[1] ? triangle.EdgeList[1].To : triangle.EdgeList[1].From,
-                                    triangle.DirectionList[2] ? triangle.EdgeList[2].To : triangle.EdgeList[2].From);
+                                var newFace = new PolygonalFace(triangle.GetVertices(), triangle.Normal);
                                 newFaces.Add(newFace);
                                 foreach (var edgeAnddir in triangle)
                                 {
-                                    if (edgeAnddir.dir) edgeAnddir.edge.OwnedFace = newFace;
+                                    newFace.Edges.Add(edgeAnddir.edge);
+                                    if (edgeAnddir.dir)
+                                        edgeAnddir.edge.OwnedFace = newFace;
                                     else edgeAnddir.edge.OtherFace = newFace;
                                     var checksum = GetEdgeChecksum(edgeAnddir.edge.From, edgeAnddir.edge.To);
                                     if (edgeDic.ContainsKey(checksum))
@@ -568,7 +581,10 @@ namespace TVGL
                                         completedEdges.Add((edgeAnddir.edge, new List<PolygonalFace> { edgeAnddir.edge.OwnedFace, edgeAnddir.edge.OtherFace }));
                                     }
                                     else
+                                    {
+                                        edgeAnddir.edge.EdgeReference = checksum;
                                         edgeDic.Add(checksum, edgeAnddir.edge);
+                                    }
                                 }
                             }
                         }

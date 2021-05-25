@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public static partial class TVGL3Dto2DTests
     {
-        const string inputFolder = "TestFiles\\bad";
+        const string inputFolder = "TestFiles\\polygons";
         //[Fact]
         public static void TestXSectionAndMonotoneTriangulate()
         {

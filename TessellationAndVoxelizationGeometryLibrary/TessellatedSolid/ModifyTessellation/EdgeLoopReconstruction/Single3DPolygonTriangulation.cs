@@ -66,7 +66,7 @@ namespace TVGL
                 secondVertex = accessEdgeAndDir.edge.From;
                 firstVertex = accessEdgeAndDir.edge.To;
             }
-            var bestDomainScore = upperLimit;
+            var bestDomainScore = double.PositiveInfinity;
             triangles = new List<DomainClass>();
             for (int i = 1; i < domain.Count - 1; i++)
             {
@@ -91,7 +91,7 @@ namespace TVGL
                 {
                     rightDomain = new DomainClass();
                     rightDomain.Add((thisTriangle.EdgeList[1], false));
-                    for (int j = 2; j <= i; j++)
+                    for (int j = 1; j <= i; j++)
                         rightDomain.Add(domain[j]);
                     var vertexIDs = rightDomain.VertexIDList();
                     if (visitedDomains.ContainsKey(vertexIDs))
@@ -148,7 +148,8 @@ namespace TVGL
             var vector2 = triangle.EdgeList[1].Vector;
             if (!triangle.DirectionList[1]) vector2 *= -1;
             var cross = vector1.Cross(vector2);
-            var area = cross.Length();
+            var area = cross.Length(); // you're suppose to divided by 2 here but since all triangles scored this way,
+            // then it's okay to work on the doubled value
             triangle.Normal = cross.Normalize();
             return area - dotWeight * neighborNormal.Dot(triangle.Normal);
         }

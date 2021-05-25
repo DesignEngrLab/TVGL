@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
-        const string inputFolder = "OneDrive - Oregon State University\\Desktop\\MedemaPartAnalyzer";
+        const string inputFolder = "OneDrive - Oregon State University\\Desktop\\MedemaPartAnalyzer\\3mf";
         //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
