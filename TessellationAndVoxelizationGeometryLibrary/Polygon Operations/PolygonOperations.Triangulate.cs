@@ -193,14 +193,14 @@ namespace TVGL.TwoDimensional
                     var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
                     polygon.Transform(rotateMatrix);
                 }
-                try
-                {
+                //try
+                //{
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                     triangleArea = 0.5 * localTriangleFaceList
                        .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
-                }
-                catch { }
+                //}
+                //catch { }
                 successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
                 System.Diagnostics.Debug.WriteLineIf(!successful && !double.IsNegativeInfinity(triangleArea),
                     polygon.Area + ",   " + triangleArea);
@@ -229,6 +229,11 @@ namespace TVGL.TwoDimensional
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
+           if (polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X).Count()==2)
+            {
+                yield return polygon;
+                yield break;
+            }
             polygon.MakePolygonEdgesIfNonExistent();
             var connections = FindConnectionsToConvertToMonotonePolygons(polygon);
             foreach (var p in polygon.AllPolygons)

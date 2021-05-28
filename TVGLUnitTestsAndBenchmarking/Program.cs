@@ -39,7 +39,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             dir = new DirectoryInfo(Path.Combine(dir.FullName, inputFolder));
             var dirName = dir.FullName;
-            foreach (var fileName in dir.GetFiles("*"))
+            foreach (var fileName in dir.GetFiles("*").Skip(1))
             {
                 Debug.WriteLine("Attempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid ts);
