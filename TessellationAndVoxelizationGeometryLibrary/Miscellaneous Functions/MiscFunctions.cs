@@ -2079,7 +2079,7 @@ namespace TVGL
                 if (vertex == current || vertex == previous) continue;
                 var currentVector = vertex.Coordinates - current.Coordinates;
                 var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle) // && !angle.IsNegligible()) // not sure why 0 angle is bad here. ReduceCollinear could be called later
+                if (minAngle > angle)
                 {
                     minAngle = angle;
                     bestVertex = vertex;
@@ -2100,9 +2100,52 @@ namespace TVGL
             {
                 var currentVector = edge.Vector.ConvertTo2DCoordinates(transform);
                 if (directionEnumerator != null && directionEnumerator.MoveNext() && !directionEnumerator.Current)
-                    currentVector *= -1;                
+                    currentVector *= -1;
                 var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle) 
+                if (minAngle > angle)
+                {
+                    minAngle = angle;
+                    bestEdge = edge;
+                }
+            }
+            return bestEdge;
+        }
+
+        internal static Vertex2D ChooseTightestRightTurn(this IEnumerable<Vertex2D> nextVertices, Vertex2D current, Vertex2D previous)
+        {
+            var lastVector = previous.Coordinates - current.Coordinates;
+            var minAngle = double.PositiveInfinity;
+            Vertex2D bestVertex = null;
+            foreach (var vertex in nextVertices)
+            {
+                if (vertex == current || vertex == previous) continue;
+                var currentVector = vertex.Coordinates - current.Coordinates;
+                var angle = currentVector.AngleCCWBetweenVectorAAndDatum(lastVector);
+                if (minAngle > angle)
+                {
+                    minAngle = angle;
+                    bestVertex = vertex;
+                }
+            }
+            return bestVertex;
+        }
+
+        internal static Edge ChooseTightestRightTurn(this IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal,
+            IEnumerable<bool> edgeDirections = null)
+        {
+            var transform = normal.TransformToXYPlane(out _);
+            var lastVector = refEdge.ConvertTo2DCoordinates(transform);
+            var minAngle = double.PositiveInfinity;
+            Edge bestEdge = null;
+            var directionEnumerator = edgeDirections == null ? null : edgeDirections.GetEnumerator();
+            foreach (var edge in possibleNextEdges)
+            {
+                var currentVector = edge.Vector.ConvertTo2DCoordinates(transform);
+                if (directionEnumerator != null && directionEnumerator.MoveNext() && !directionEnumerator.Current)
+                    currentVector *= -1;
+                var angle = currentVector.AngleCCWBetweenVectorAAndDatum(lastVector);
+                if (angle.IsNegligible(0.005) || angle.IsPracticallySame(Constants.TwoPi, 0.005)) angle = 0;
+                if (minAngle > angle)
                 {
                     minAngle = angle;
                     bestEdge = edge;

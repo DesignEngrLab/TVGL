@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
@@ -28,11 +29,11 @@ namespace TVGL
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
             var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
+            var improvementOccurred = true;
+            var numAttempts = 6;
             if (fromSTL)
             {
-                var success = true;
-                var numAttempts = 6;
-                while (numAttempts-- > 0 && success && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
+                while (numAttempts-- > 0 && improvementOccurred && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
                 // attempt to increase tolerance to allow more matches
                 {
                     var numOverDefined = overDefinedEdges.Count;
@@ -41,15 +42,17 @@ namespace TVGL
                     SameTolerance *= 1.78; // it takes four to get to 10
                     RestartVerticesToAvoidSingleSidedEdges();
                     edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
-                    success = singleSidedEdges.Count <= numSingleSided && overDefinedEdges.Count <= numOverDefined;
+                    improvementOccurred = (singleSidedEdges.Count < numSingleSided && overDefinedEdges.Count < numOverDefined) ||
+                      (singleSidedEdges.Count < numSingleSided && overDefinedEdges.Count == numOverDefined) ||
+                      (singleSidedEdges.Count == numSingleSided && overDefinedEdges.Count < numOverDefined);
                 }
-                if (!success)
-                {
-                    //one step too far, back up tolerance and just use this
-                    SameTolerance /= 1.78;
-                    RestartVerticesToAvoidSingleSidedEdges();
-                    edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
-                }
+            }
+            if (!improvementOccurred)
+            {
+                //one step too far, back up tolerance and just use this
+                SameTolerance /= 1.78;
+                RestartVerticesToAvoidSingleSidedEdges();
+                edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
             }
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
@@ -67,7 +70,8 @@ namespace TVGL
             edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges, 33 * this.SameTolerance, out var remainingEdges, out var removedVertices));
             //often the singleSided Edges make loops that we can triangulate. If they are not in loops
             // then we spit back the remainingEdges.
-            var loops = OrganizeIntoLoops(remainingEdges, out var borderEdges);
+            var hubVertices = FindHubVertices(remainingEdges);
+            var loops = OrganizeIntoLoops(remainingEdges, hubVertices, out var borderEdges);
             // well, even if they were in loops - sometimes we can't triangulate - yet moreRemainingEdges
             edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out var newFaces, out var moreRemainingEdges));
             borderEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
@@ -80,6 +84,8 @@ namespace TVGL
             // finally, 
             if (borderEdges.Count > 0)
             {
+                Presenter.ShowVertexPathsWithSolid(borderEdges.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new[] { this });
+
                 Errors ??= new TessellationError();
                 if (Errors.SingledSidedEdges == null)
                     Errors.SingledSidedEdges = new List<Edge>(borderEdges);
@@ -107,6 +113,24 @@ namespace TVGL
             }
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
+        }
+
+        private Dictionary<Vertex, int> FindHubVertices(HashSet<Edge> remainingEdges)
+        {
+            var dict = new Dictionary<Vertex, int>();
+            foreach (var edge in remainingEdges)
+            {
+                if (dict.ContainsKey(edge.To)) dict[edge.To]++;
+                else dict.Add(edge.To, 1);
+                edge.To.Edges.Add(edge);
+                if (dict.ContainsKey(edge.From)) dict[edge.From]++;
+                else dict.Add(edge.From, 1);
+                edge.From.Edges.Add(edge);
+            }
+            foreach (var key in dict.Keys.ToList())
+                if (dict[key] <= 2)
+                    dict.Remove(key);
+            return dict;
         }
 
         /// <summary>
@@ -395,29 +419,56 @@ namespace TVGL
 
 
         internal static List<(List<Edge>, Vector3)> OrganizeIntoLoops(IEnumerable<Edge> singleSidedEdges,
-            out List<Edge> remainingEdges)
+            Dictionary<Vertex, int> hubVertices, out List<Edge> remainingEdges)
         {
             var listOfLoops = new List<(List<Edge>, Vector3)>();
-            remainingEdges = new List<Edge>(singleSidedEdges);
-            if (!singleSidedEdges.Any()) return listOfLoops;
+            var remainingEdgesInner = new HashSet<Edge>(singleSidedEdges);
+            if (!singleSidedEdges.Any())
+            {
+                remainingEdges = new List<Edge>();
+                return listOfLoops;
+            }
             var attempts = 0;
-            while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
+            while (remainingEdgesInner.Count > 0 && attempts < remainingEdgesInner.Count)
             {
                 var loop = new List<Edge>();
-                var successful = true;
+                var successful = false;
                 var removedEdges = new List<Edge>();
-                var startingEdge = remainingEdges[0];
+                Edge startingEdge;
+                if (hubVertices.Any())
+                {
+                    var firstHubVertexTuple = hubVertices.First();
+                    var firstHubVertex = firstHubVertexTuple.Key;
+                    var hubEdgeCount = firstHubVertexTuple.Value;
+                    startingEdge = remainingEdgesInner.First(e => e.To == firstHubVertex);
+                    hubEdgeCount -= 2;
+                    hubVertices[firstHubVertex] = hubEdgeCount;
+                    if (hubEdgeCount <= 2) hubVertices.Remove(firstHubVertex);
+                    // becuase using this here will drop it down to 2 - in which case - it's just like all
+                    // the other vertices connected to the singledSidedEdges
+                }
+                else startingEdge = remainingEdgesInner.First();
                 var normal = startingEdge.OwnedFace.Normal;
                 loop.Add(startingEdge);
                 removedEdges.Add(startingEdge);
-                remainingEdges.RemoveAt(0);
+                remainingEdgesInner.Remove(startingEdge);
                 do
                 {
-                    var possibleNextEdges = remainingEdges.Where(e => e.To == loop.Last().From);
-                    if (possibleNextEdges.Any())
+                    var lastVertex = loop.Last().From;
+                    Edge bestNext = null;
+                    if (hubVertices.ContainsKey(lastVertex))
                     {
-                        var bestNext = possibleNextEdges.ChooseTightestLeftTurn(loop.Last().Vector, normal);
-                        if (bestNext == null) break;
+                        var possibleNextEdges = lastVertex.Edges.Where(e => e != loop.Last() && remainingEdgesInner.Contains(e));
+                        //if (possibleNextEdges.Any())
+                        bestNext = MiscFunctions.ChooseTightestRightTurn(possibleNextEdges, loop.Last().Vector, normal);
+                        var hubEdgeCount = hubVertices[lastVertex];
+                        hubEdgeCount -= 2;
+                        hubVertices[lastVertex] = hubEdgeCount;
+                        if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
+                    }
+                    else bestNext = lastVertex.Edges.FirstOrDefault(e => e != loop.Last() && remainingEdgesInner.Contains(e));
+                    if (bestNext != null)
+                    {
                         loop.Add(bestNext);
                         var n1 = loop[^2].Vector.Cross(loop[^1].Vector).Normalize();
                         if (!n1.IsNull())
@@ -428,43 +479,123 @@ namespace TVGL
                                 : ((normal * loop.Count) + n1).Normalize();  //weighted average for subsequent normals
                         }
                         removedEdges.Add(bestNext);
-                        remainingEdges.Remove(bestNext);
+                        remainingEdgesInner.Remove(bestNext);
+                        successful = true;
                     }
                     else
                     {
-                        possibleNextEdges = remainingEdges.Where(e => e.From == loop[0].To).ToList();
-                        if (possibleNextEdges.Any())
+                        lastVertex = loop[0].To;
+
+                        if (hubVertices.ContainsKey(lastVertex))
                         {
-                            var bestPrev = possibleNextEdges.ChooseTightestLeftTurn(loop[0].Vector * -1,
-                                normal);
-                            if (bestPrev == null) break;
-                            loop.Insert(0, bestPrev);
-                            var n1 = loop[1].Vector.Cross(loop[0].Vector).Normalize();
-                            if (!n1.IsNull())
-                            {
-                                n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
-                                normal = loop.Count == 2
-                                    ? n1
-                                    : ((normal * loop.Count) + n1).Divide(loop.Count + 1).Normalize();
-                            }
-                            removedEdges.Add(bestPrev);
-                            remainingEdges.Remove(bestPrev);
+                            var possibleNextEdges = lastVertex.Edges.Where(e => e != loop[0] && remainingEdgesInner.Contains(e));
+                            //if (possibleNextEdges.Any())
+                            bestNext = MiscFunctions.ChooseTightestRightTurn(possibleNextEdges, -loop[0].Vector, normal);
+                            var hubEdgeCount = hubVertices[lastVertex];
+                            hubEdgeCount -= 2;
+                            hubVertices[lastVertex] = hubEdgeCount;
+                            if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
                         }
-                        else successful = false;
+                        else bestNext = lastVertex.Edges.FirstOrDefault(e => e != loop[0] && remainingEdgesInner.Contains(e));
+                        if (bestNext == null) break;
+                        loop.Insert(0, bestNext);
+                        var n1 = loop[1].Vector.Cross(loop[0].Vector).Normalize();
+                        if (!n1.IsNull())
+                        {
+                            n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
+                            normal = loop.Count == 2
+                                ? n1
+                                : ((normal * loop.Count) + n1).Divide(loop.Count + 1).Normalize();
+                        }
+                        removedEdges.Add(bestNext);
+                        remainingEdgesInner.Remove(bestNext);
+                        successful = true;
                     }
                 } while (loop.First().To != loop.Last().From && successful);
                 if (successful && loop.Count > 2)
                 {
-                    listOfLoops.Add((loop, normal));
+                    foreach (List<Edge> subLoop in SeparateIntoMultipleLoops(loop))
+                        listOfLoops.Add((subLoop, normal));
                     attempts = 0;
                 }
                 else
                 {
-                    remainingEdges.AddRange(removedEdges);
+                    foreach (var edge in removedEdges)
+                        remainingEdgesInner.Add(edge);
                     attempts++;
                 }
             }
+            remainingEdges = remainingEdgesInner.ToList();
             return listOfLoops;
+        }
+
+        private static IEnumerable<List<Edge>> SeparateIntoMultipleLoops(List<Edge> loop)
+        {
+            var visitedToVertices = new HashSet<Vertex>(); //used initially to find when a vertex repeats
+            var vertexLocations = new Dictionary<Vertex, List<int>>(); //duplicate vertices and the indices where they occur
+            var lastDuplicateAt = -1; // a small saving to prevent looping a full second time
+            for (int i = 0; i < loop.Count; i++)
+            {
+                var vertex = loop[i].To;
+                if (vertexLocations.ContainsKey(vertex))
+                {
+                    lastDuplicateAt = i; // this is just to 
+                    vertexLocations[vertex].Add(i);
+                }
+                else if (visitedToVertices.Contains(vertex))
+                {
+                    lastDuplicateAt = i; // this is just to 
+                    vertexLocations.Add(vertex, new List<int> { i });
+                }
+                else visitedToVertices.Add(loop[i].To);
+            }
+            for (int i = 0; i < lastDuplicateAt; i++)
+            {
+                var vertex = loop[i].To;
+                if (!vertexLocations.ContainsKey(vertex)) continue;
+                var otherIndices = vertexLocations[vertex];
+                if (!otherIndices.Contains(i))  // it's already been discovered
+                    otherIndices.Insert(0, i);
+            }
+            var loopStartEnd = new List<int>();
+            foreach (var indices in vertexLocations.Values)
+            {
+                for (int i = 0; i < indices.Count - 1; i++)
+                {
+                    loopStartEnd.Add(indices[i]);
+                    loopStartEnd.Add(indices[i + 1]);
+                }
+            }
+            while (loopStartEnd.Any())
+            {
+                for (int i = 0; i < loopStartEnd.Count; i += 2)
+                {
+                    var lb = loopStartEnd[i];
+                    var ub = loopStartEnd[i + 1];
+                    var loopEncompasssOther = false;
+                    for (int j = 0; j < loopStartEnd.Count; j++)
+                    {
+                        if (j == i || j == i + 1) continue;
+                        var index = loopStartEnd[j];
+                        if (index > lb && index < ub)
+                        {
+                            loopEncompasssOther = true;
+                            break;
+                        }
+                    }
+                    if (loopEncompasssOther) continue;
+                    var numInLoop = ub - lb;
+                    yield return loop.GetRange(lb, numInLoop);
+                    loop.RemoveRange(lb, numInLoop);
+                    loopStartEnd.RemoveAt(i); //remove the lb
+                    loopStartEnd.RemoveAt(i); //remove the ub
+
+                    for (int j = 0; j < loopStartEnd.Count; j++)
+                        if (loopStartEnd[j] > lb) loopStartEnd[j] -= numInLoop;
+                    break;
+                }
+            }
+            yield return loop;
         }
 
         private static IEnumerable<(Edge, List<PolygonalFace>)> CreateMissingEdgesAndFaces(

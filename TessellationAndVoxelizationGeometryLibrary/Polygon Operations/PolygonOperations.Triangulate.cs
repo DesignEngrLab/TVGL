@@ -176,6 +176,13 @@ namespace TVGL.TwoDimensional
                 foreach (var smallInnerPolys in hole.InnerPolygons)
                     triangleFaceList.AddRange(Triangulate(smallInnerPolys));
 
+            var selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+            if (selfIntersections.Count > 0)
+            {
+                if (selfIntersections.All(si => si.WhereIntersection == WhereIsIntersection.BothStarts))
+                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
+                else throw new ArgumentException("Self-Intersecting Polygon cannot be triangulated.");
+            }
             const int maxNumberOfAttempts = 10;
             var attempts = 0;
             var random = new Random(1);

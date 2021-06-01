@@ -1,6 +1,7 @@
 ﻿using Priority_Queue;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using TVGL.Numerics;
@@ -19,7 +20,10 @@ namespace TVGL
 
         internal List<int> VertexIDList()
         {
-            return GetVertices().Select(v => v.IndexInList).OrderBy(x => x).ToList();
+            //return GetVertices().Select(v => v.IndexInList).OrderBy(x => x).ToList();
+            //instead of sorting the list, we simply need to change the starting location
+            //to prevent isomorphic solutions. So, this longer, but faster method justs
+            //shifts the start of the list to the lowest entry
             var lowestIndex = int.MaxValue;
             var positionOfLowestIndex = -1;
             var resultList = new List<int>();
@@ -47,6 +51,9 @@ namespace TVGL
     }
     internal static class Single3DPolygonTriangulation
     {
+        const int MaxStatesToSearch = 1000000000; // 1 billion
+        // this is all the Catalan Numbers that fit within the bounds of int32. In this context, they represent the maximum
+        // number of triangulations for a given 3D polygon.
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
@@ -57,36 +64,35 @@ namespace TVGL
         public static bool Triangulate(DomainClass startDomain, out List<DomainClass> triangles)
         {
             triangles = null;
+            var numTriangles = startDomain.Count - 2;
             var visitedDomains = new Dictionary<List<int>, DomainClass>();
             var maxSurfaceArea = startDomain.EdgeList.Sum(e => e.Length);
             maxSurfaceArea *= 0.25 * maxSurfaceArea; //the max surface area is to take the perimeter and assume that 
                                                      // the shape is a circle. I never thought about the before, but the area of a circle is the circumference 
                                                      // squared divided by 4.
-            var weightForDotProduct = maxSurfaceArea / (startDomain.Count - 2);
+            var weightForDotProduct = maxSurfaceArea / numTriangles;
             (Edge edge, bool dir) startingEdgeAndDirection = FindSharpestTurn(startDomain);
-#if PRESENT
-            if (maxSurfaceArea > 6103 && maxSurfaceArea <6104)
-                Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
-#endif
-            // the weight on the dot-product term is the average area for the triangles. Well, that's what we're trying to find. So, since
-            // this is just a simple shape (no holes), we know that the number of triangles will be 2 less than the number of edges.
-            var fLimit = 1e-4 * maxSurfaceArea;
-            var fResult = double.PositiveInfinity;
+
             var startingNeighborFaceNormal = startingEdgeAndDirection.dir ? startingEdgeAndDirection.edge.OtherFace.Normal
                 : startingEdgeAndDirection.edge.OwnedFace.Normal;
-            while (double.IsInfinity(fResult))
+            var fLimit = double.PositiveInfinity;
+            var branchingFactorLimit = 0;
+            var maxBranchingFactor = Math.Min(numTriangles,
+                (int)Math.Floor(Math.Pow(MaxStatesToSearch, 1.0 / numTriangles)));
+            while (branchingFactorLimit++ < maxBranchingFactor)
             {
-                fResult = Single3DPolygonTriangulation.TriangulateRecurse(startingNeighborFaceNormal, startingEdgeAndDirection.edge,
-                    startDomain, visitedDomains, fLimit, weightForDotProduct, 0.0, out triangles);
-                fLimit = 1.75 * fLimit;
-                if (fLimit > 15 * maxSurfaceArea)
-                {
-                    triangles = null;
+                var fResult = Single3DPolygonTriangulation.TriangulateRecurse(startingNeighborFaceNormal, startingEdgeAndDirection.edge,
+                       startDomain, visitedDomains, fLimit, branchingFactorLimit, weightForDotProduct, 0.0, out var tempTriangles);
+                if (double.IsInfinity(fResult)) break;
+                fLimit = fResult;
+                triangles = tempTriangles;
+            }
+            if (double.IsInfinity(fLimit))
+            {
 #if PRESENT
                 Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
 #endif
-                    return false;
-                }
+                return false;
             }
             return true;
         }
@@ -114,7 +120,7 @@ namespace TVGL
         }
 
         private static double TriangulateRecurse(Vector3 accessFaceNormal, Edge accessEdge, DomainClass domain,
-                Dictionary<List<int>, DomainClass> visitedDomains, double upperLimit, double dotWeight, in double currentValue, out List<DomainClass> triangles)
+                Dictionary<List<int>, DomainClass> visitedDomains, double upperLimit, int branchingFactorLimit, double dotWeight, in double currentValue, out List<DomainClass> triangles)
         {
             var accessEdgeIndex = domain.IndexOf(accessEdge);
             var accessEdgeAndDir = domain[accessEdgeIndex];
@@ -131,6 +137,8 @@ namespace TVGL
             }
             var bestDomainScore = upperLimit;
             var sortedBranches = new SimplePriorityQueue<(DomainClass, int), double>();
+            Debug.Indent();
+            Debug.WriteLine("main:  " + string.Join(',', domain.GetVertices().Select(v => v.IndexInList)));
             for (int i = 1; i < domain.Count - 1; i++)
             {
                 var index = i + accessEdgeIndex;
@@ -142,37 +150,49 @@ namespace TVGL
                 if (i == 1)
                     thisTriangle.Add(edgeAt3rdVertex);
                 else thisTriangle.Add(new Edge(secondVertex, thirdVertex, false), true);
+                if (secondVertex == thirdVertex) secondVertex = thirdVertex;
                 if (i == domain.Count - 2)
                     thisTriangle.Add(domain[^1]);
                 else thisTriangle.Add(new Edge(thirdVertex, firstVertex, false), true);
+                if (firstVertex == thirdVertex) firstVertex = thirdVertex;
+
                 thisTriangle.Score = CalcObjFunction(accessFaceNormal, dotWeight, thisTriangle);
                 if (!double.IsInfinity(thisTriangle.Score))
                 {
-                    visitedDomains.Add(thisTriangle.VertexIDList(), thisTriangle);
-                    sortedBranches.Enqueue((thisTriangle, i), thisTriangle.Score);
+                    //visitedDomains.Add(thisTriangle.VertexIDList(), thisTriangle);
+                    sortedBranches.Enqueue((thisTriangle, index), thisTriangle.Score);
                 }
             }
             triangles = new List<DomainClass>();
-            foreach (var branch in sortedBranches)
+            foreach (var branch in sortedBranches.Take(branchingFactorLimit))
             {
                 var thisTriangle = branch.Item1;
-                var i = branch.Item2;
+                var index = branch.Item2;
                 var domainScore = thisTriangle.Score;
                 if (currentValue + domainScore > bestDomainScore) continue;
                 DomainClass rightDomain, leftDomain;
                 List<DomainClass> rhsTriangles = null;
-                if (i > 1) // if 1, then it's the first CCW triangle, so no right-side domain
+                var distance = index - accessEdgeIndex;
+                if (distance < 0) distance += domain.Count;
+                if (distance != 1) // if 1, then it's the first CCW triangle, so no right-side domain
                 {
                     rightDomain = new DomainClass();
                     rightDomain.Add((thisTriangle.EdgeList[1], false));
-                    for (int j = 1; j <= i; j++)
-                        rightDomain.Add(domain[j]);
+                    for (int j = 1; j <= distance; j++)
+                    {
+                        var innerIndex = j + accessEdgeIndex;
+                        if (innerIndex >= domain.Count) innerIndex -= domain.Count;
+                        rightDomain.Add(domain[innerIndex]);
+                    }
+                    Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
+
                     var vertexIDs = rightDomain.VertexIDList();
                     if (visitedDomains.ContainsKey(vertexIDs))
                         rightDomain = visitedDomains[vertexIDs];
                     else
                     {
-                        rightDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[1], rightDomain, visitedDomains, bestDomainScore,
+                        rightDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[1], rightDomain, visitedDomains,
+                            bestDomainScore, branchingFactorLimit,
                             dotWeight, currentValue + domainScore, out rhsTriangles);
                         if (!double.IsInfinity(rightDomain.Score))
                             visitedDomains.Add(vertexIDs, rightDomain);
@@ -183,18 +203,25 @@ namespace TVGL
 
                 List<DomainClass> lhsTriangles = null;
 
-                if (i < domain.Count - 2) // if last one, then it's the last CCW triangle, so no left-side domain
+                if (distance < domain.Count - 2) // if last one, then it's the last CCW triangle, so no left-side domain
                 {
                     leftDomain = new DomainClass();
                     leftDomain.Add((thisTriangle.EdgeList[2], false));
-                    for (int j = i + 1; j < domain.Count; j++)
-                        leftDomain.Add(domain[j]);
+                    for (int j = 1; j < domain.Count -distance; j++)
+                    {
+                        var innerIndex = j + index;
+                        if (innerIndex >= domain.Count) innerIndex -= domain.Count;
+                        leftDomain.Add(domain[innerIndex]);
+                    }
+                    Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
+
                     var vertexIDs = leftDomain.VertexIDList();
                     if (visitedDomains.ContainsKey(vertexIDs))
                         leftDomain = visitedDomains[vertexIDs];
                     else
                     {
-                        leftDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[2], leftDomain, visitedDomains, bestDomainScore,
+                        leftDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[2], leftDomain, visitedDomains,
+                            bestDomainScore, branchingFactorLimit,
                             dotWeight, currentValue + domainScore, out lhsTriangles);
                         if (!double.IsInfinity(leftDomain.Score))
                             visitedDomains.Add(vertexIDs, leftDomain);
@@ -213,6 +240,7 @@ namespace TVGL
                     triangles.AddRange(lhsTriangles);
                 //}
             }
+            Debug.Unindent();
             if (triangles.Any()) return bestDomainScore;
             return double.PositiveInfinity;
         }
@@ -226,7 +254,7 @@ namespace TVGL
             if (!triangle.DirectionList[1]) vector2 *= -1;
             var cross = vector1.Cross(vector2);
             var area = cross.Length(); // you're suppose to divided by 2 here but since all triangles scored this way,
-            // then it's okay to work on the doubled value
+                                       // then it's okay to work on the doubled value
             triangle.Normal = cross.Normalize();
             return area;
             //return area * (2 - neighborNormal.Dot(triangle.Normal));

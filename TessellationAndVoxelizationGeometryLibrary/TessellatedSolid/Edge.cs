@@ -218,8 +218,8 @@ namespace TVGL
 
         internal void UpdateWithNewFace(PolygonalFace face)
         {
-            var v1 = face.Vertices.FindIndex(v =>v== From);
-            var v2 = face.Vertices.FindIndex(v =>v== To);
+            var v1 = face.Vertices.FindIndex(v => v == From);
+            var v2 = face.Vertices.FindIndex(v => v == To);
             var step = v2 - v1;
             if (step < 0) step += face.Vertices.Count;
             if (step == 1) OwnedFace = face;
@@ -327,7 +327,7 @@ namespace TVGL
                 else //(cross > 0)
                 {
                     _internalAngle = Math.PI - Math.Acos(dot);
-                   _curvature = CurvatureType.Convex;
+                    _curvature = CurvatureType.Convex;
                 }
             }
             if (InternalAngle > Constants.TwoPi) throw new Exception("not possible");
@@ -335,8 +335,10 @@ namespace TVGL
 
         internal void DoublyLinkVertices()
         {
-            From.Edges.Add(this);
-            To.Edges.Add(this);
+            if (!From.Edges.Contains(this))
+                From.Edges.Add(this);
+            if (!To.Edges.Contains(this))
+                To.Edges.Add(this);
         }
 
         /// <summary>
