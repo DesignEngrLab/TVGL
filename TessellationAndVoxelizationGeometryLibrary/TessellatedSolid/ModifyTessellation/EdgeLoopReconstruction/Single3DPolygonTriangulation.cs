@@ -11,6 +11,15 @@ namespace TVGL
 
     internal class DomainClass : EdgePath
     {
+        public DomainClass(IEnumerable<(Edge edge, bool dir)> inputs, bool reverse = false):base()
+        {
+            foreach (var tuple in inputs)
+            {
+                EdgeList.Add(tuple.edge);
+                DirectionList.Add(reverse ? !tuple.dir : tuple.dir);
+            }
+        }
+
         internal DomainClass()
         {
             IsClosed = true;
@@ -48,12 +57,11 @@ namespace TVGL
             return resultList;
 
         }
+
     }
     internal static class Single3DPolygonTriangulation
     {
         const int MaxStatesToSearch = 1000000000; // 1 billion
-        // this is all the Catalan Numbers that fit within the bounds of int32. In this context, they represent the maximum
-        // number of triangulations for a given 3D polygon.
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
