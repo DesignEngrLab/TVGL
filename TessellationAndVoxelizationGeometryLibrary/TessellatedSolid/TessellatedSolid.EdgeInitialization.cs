@@ -536,9 +536,11 @@ namespace TVGL
 #if PRESENT
                     //Presenter.ShowVertexPathsWithSolid(new[] { loop.GetVertices().Select(v => v.Coordinates) }.Skip(7), new TessellatedSolid[] { });
 #endif
-                    loop.Normal = normal;
                     foreach (var subLoop in SeparateIntoMultipleLoops(loop))
+                    {
+                        subLoop.Normal = normal;
                         listOfLoops.Add(subLoop);
+                    }
                     attempts = 0;
                 }
                 else

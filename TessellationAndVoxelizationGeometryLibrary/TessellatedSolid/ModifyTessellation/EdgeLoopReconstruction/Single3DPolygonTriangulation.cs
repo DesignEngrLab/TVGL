@@ -11,7 +11,7 @@ namespace TVGL
 
     internal class DomainClass : EdgePath
     {
-        public DomainClass(IEnumerable<(Edge edge, bool dir)> inputs, bool reverse = false):base()
+        public DomainClass(IEnumerable<(Edge edge, bool dir)> inputs, bool reverse = false) : this()
         {
             foreach (var tuple in inputs)
             {
@@ -20,7 +20,7 @@ namespace TVGL
             }
         }
 
-        internal DomainClass()
+        internal DomainClass() : base()
         {
             IsClosed = true;
         }
@@ -79,7 +79,7 @@ namespace TVGL
                                                      // the shape is a circle. I never thought about the before, but the area of a circle is the circumference 
                                                      // squared divided by 4.
             var weightForDotProduct = maxSurfaceArea / numTriangles;
-            (Edge edge, bool dir) startingEdgeAndDirection = FindSharpestTurn(startDomain);
+            var startingEdgeAndDirection = FindSharpestTurn(startDomain);
 
             var startingNeighborFaceNormal = startingEdgeAndDirection.dir ? startingEdgeAndDirection.edge.OtherFace.Normal
                 : startingEdgeAndDirection.edge.OwnedFace.Normal;
@@ -215,7 +215,7 @@ namespace TVGL
                 {
                     leftDomain = new DomainClass();
                     leftDomain.Add((thisTriangle.EdgeList[2], false));
-                    for (int j = 1; j < domain.Count -distance; j++)
+                    for (int j = 1; j < domain.Count - distance; j++)
                     {
                         var innerIndex = j + index;
                         if (innerIndex >= domain.Count) innerIndex -= domain.Count;
