@@ -460,15 +460,20 @@ namespace TVGL
                     Edge bestNext = null;
                     if (hubVertices.ContainsKey(lastVertex))
                     {
-                        var possibleNextEdges = lastVertex.Edges.Where(e => e != lastLoop.edge && remainingEdgesInner.Contains(e));
+                        var possibleNextEdges = lastVertex.Edges.Where(e => e != lastLoop.edge &&
+                        e.From == lastVertex && remainingEdgesInner.Contains(e));
                         bestNext = possibleNextEdges.ChooseHighestCosineSimilarity(lastLoop.edge, !lastLoop.dir,
-                            possibleNextEdges.Select(e => e.From == lastVertex));
-                        var hubEdgeCount = hubVertices[lastVertex];
-                        hubEdgeCount -= 2;
-                        hubVertices[lastVertex] = hubEdgeCount;
-                        if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
+                            possibleNextEdges.Select(e => e.From == lastVertex), 0.0);
+                        if (bestNext != null)
+                        {
+                            var hubEdgeCount = hubVertices[lastVertex];
+                            hubEdgeCount -= 2;
+                            hubVertices[lastVertex] = hubEdgeCount;
+                            if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
+                        }
                     }
-                    else bestNext = lastVertex.Edges.FirstOrDefault(e => e != lastLoop.edge && remainingEdgesInner.Contains(e));
+                    else bestNext = lastVertex.Edges.FirstOrDefault(e => e != lastLoop.edge &&
+                        e.From == lastVertex && remainingEdgesInner.Contains(e));
                     if (bestNext != null)
                     {
                         var dir = bestNext.From == lastVertex;
@@ -493,15 +498,20 @@ namespace TVGL
 
                         if (hubVertices.ContainsKey(lastVertex))
                         {
-                            var possibleNextEdges = lastVertex.Edges.Where(e => e != lastLoop.edge && remainingEdgesInner.Contains(e));
+                            var possibleNextEdges = lastVertex.Edges.Where(e => e != lastLoop.edge &&
+                            e.To == lastVertex && remainingEdgesInner.Contains(e));
                             bestNext = possibleNextEdges.ChooseHighestCosineSimilarity(lastLoop.edge, !lastLoop.dir,
-                                possibleNextEdges.Select(e => e.From == lastVertex));
-                            var hubEdgeCount = hubVertices[lastVertex];
-                            hubEdgeCount -= 2;
-                            hubVertices[lastVertex] = hubEdgeCount;
-                            if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
+                                possibleNextEdges.Select(e => e.From == lastVertex), 0.0);
+                            if (bestNext != null)
+                            {
+                                var hubEdgeCount = hubVertices[lastVertex];
+                                hubEdgeCount -= 2;
+                                hubVertices[lastVertex] = hubEdgeCount;
+                                if (hubEdgeCount <= 2) hubVertices.Remove(lastVertex);
+                            }
                         }
-                        else bestNext = lastVertex.Edges.FirstOrDefault(e => e != lastLoop.edge && remainingEdgesInner.Contains(e));
+                        else bestNext = lastVertex.Edges.FirstOrDefault(e => e != lastLoop.edge &&
+                        e.To == lastVertex && remainingEdgesInner.Contains(e));
                         if (bestNext == null) break;
 
                         var dir = bestNext.To == lastVertex;
@@ -519,9 +529,13 @@ namespace TVGL
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;
                     }
-                } while (loop.FirstVertex != loop.LastVertex && successful);
+                } while (loop.FirstVertex != (loop.DirectionList[^1] ? loop.EdgeList[^1].To : loop.EdgeList[^1].From)
+                && successful);
                 if (successful && loop.Count > 2)
                 {
+#if PRESENT
+                    //Presenter.ShowVertexPathsWithSolid(new[] { loop.GetVertices().Select(v => v.Coordinates) }.Skip(7), new TessellatedSolid[] { });
+#endif
                     loop.Normal = normal;
                     foreach (var subLoop in SeparateIntoMultipleLoops(loop))
                         listOfLoops.Add(subLoop);
@@ -543,9 +557,11 @@ namespace TVGL
             var visitedToVertices = new HashSet<Vertex>(); //used initially to find when a vertex repeats
             var vertexLocations = new Dictionary<Vertex, List<int>>(); //duplicate vertices and the indices where they occur
             var lastDuplicateAt = -1; // a small saving to prevent looping a full second time
-            for (int i = 0; i < loop.Count; i++)
+            var i = -1;
+            foreach (var vertex in loop.GetVertices())
             {
-                var vertex = loop[i].edge.To;
+                i++;
+                //var vertex = loop[i].edge.To;
                 if (vertexLocations.ContainsKey(vertex))
                 {
                     lastDuplicateAt = i; // this is just to 
@@ -556,11 +572,12 @@ namespace TVGL
                     lastDuplicateAt = i; // this is just to 
                     vertexLocations.Add(vertex, new List<int> { i });
                 }
-                else visitedToVertices.Add(loop[i].edge.To);
+                else visitedToVertices.Add(vertex);
             }
-            for (int i = 0; i < lastDuplicateAt; i++)
+            i = -1;
+            foreach (var vertex in loop.GetVertices().Take(lastDuplicateAt))
             {
-                var vertex = loop[i].edge.To;
+                i++;
                 if (!vertexLocations.ContainsKey(vertex)) continue;
                 var otherIndices = vertexLocations[vertex];
                 if (!otherIndices.Contains(i))  // it's already been discovered
@@ -569,7 +586,7 @@ namespace TVGL
             var loopStartEnd = new List<int>();
             foreach (var indices in vertexLocations.Values)
             {
-                for (int i = 0; i < indices.Count - 1; i++)
+                for (i = 0; i < indices.Count - 1; i++)
                 {
                     loopStartEnd.Add(indices[i]);
                     loopStartEnd.Add(indices[i + 1]);
@@ -577,7 +594,8 @@ namespace TVGL
             }
             while (loopStartEnd.Any())
             {
-                for (int i = 0; i < loopStartEnd.Count; i += 2)
+                var successfulUnknot = false;
+                for (i = 0; i < loopStartEnd.Count; i += 2)
                 {
                     var lb = loopStartEnd[i];
                     var ub = loopStartEnd[i + 1];
@@ -594,6 +612,7 @@ namespace TVGL
                     }
                     if (loopEncompasssOther) continue;
                     yield return new DomainClass(loop.GetRange(lb, ub), true);
+                    successfulUnknot = true;
                     loop.RemoveRange(lb, ub);
                     loopStartEnd.RemoveAt(i); //remove the lb
                     loopStartEnd.RemoveAt(i); //remove the ub
@@ -602,8 +621,9 @@ namespace TVGL
                         if (loopStartEnd[j] > lb) loopStartEnd[j] -= numInLoop;
                     break;
                 }
+                if (!successfulUnknot) break;
             }
-            yield return loop;
+            yield return new DomainClass(loop, true);
         }
 
         private static IEnumerable<(Edge, PolygonalFace, PolygonalFace)> CreateMissingEdgesAndFaces(

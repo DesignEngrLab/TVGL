@@ -2088,9 +2088,10 @@ namespace TVGL
             return bestVertex;
         }
 
-        internal static Edge ChooseHighestCosineSimilarity(this IEnumerable<Edge> possibleNextEdges, Edge refEdge, bool refEdgeDir, IEnumerable<bool> edgeDirections = null)
+        internal static Edge ChooseHighestCosineSimilarity(this IEnumerable<Edge> possibleNextEdges, Edge refEdge, bool refEdgeDir,
+            IEnumerable<bool> edgeDirections = null, double minAcceptable = -1.0)
         {
-            var maxCos = -1.0;
+            var maxCos = minAcceptable;
             Edge bestEdge = null;
             var refVector = refEdge.UnitVector;
             if (!refEdgeDir) refVector *= -1;
@@ -2101,7 +2102,7 @@ namespace TVGL
                 if (directionEnumerator != null && directionEnumerator.MoveNext() && !directionEnumerator.Current)
                     currentVector *= -1;
                 var cos = refVector.Dot(currentVector);
-                if (maxCos > cos)
+                if (maxCos < cos)
                 {
                     maxCos = cos;
                     bestEdge = edge;
