@@ -9,18 +9,31 @@ using TVGL.Numerics;
 namespace TVGL
 {
 
-    internal class DomainClass : EdgePath
+    internal class TriangulationLoop : EdgePath
     {
-        public DomainClass(IEnumerable<(Edge edge, bool dir)> inputs, bool reverse = false) : this()
+        public TriangulationLoop(IEnumerable<(Edge edge, bool dir)> inputs, bool reverse = false) : this()
         {
-            foreach (var tuple in inputs)
+            if (reverse)
             {
-                EdgeList.Add(tuple.edge);
-                DirectionList.Add(reverse ? !tuple.dir : tuple.dir);
+                foreach (var tuple in inputs)
+                {
+                    EdgeList.Add(tuple.edge);
+                    DirectionList.Add(!tuple.dir);
+                }
+                EdgeList.Reverse();
+                DirectionList.Reverse();
+            }
+            else
+            {
+                foreach (var tuple in inputs)
+                {
+                    EdgeList.Add(tuple.edge);
+                    DirectionList.Add(tuple.dir);
+                }
             }
         }
 
-        internal DomainClass() : base()
+        internal TriangulationLoop() : base()
         {
             IsClosed = true;
         }
@@ -69,11 +82,11 @@ namespace TVGL
         /// <param name="normal">The normal direction.</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
-        public static bool Triangulate(DomainClass startDomain, out List<DomainClass> triangles)
+        public static bool Triangulate(TriangulationLoop startDomain, out List<TriangulationLoop> triangles)
         {
             triangles = null;
             var numTriangles = startDomain.Count - 2;
-            var visitedDomains = new Dictionary<List<int>, DomainClass>();
+            var visitedDomains = new Dictionary<List<int>, TriangulationLoop>();
             var maxSurfaceArea = startDomain.EdgeList.Sum(e => e.Length);
             maxSurfaceArea *= 0.25 * maxSurfaceArea; //the max surface area is to take the perimeter and assume that 
                                                      // the shape is a circle. I never thought about the before, but the area of a circle is the circumference 
@@ -105,7 +118,7 @@ namespace TVGL
             return true;
         }
 
-        private static (Edge edge, bool dir) FindSharpestTurn(DomainClass domain)
+        private static (Edge edge, bool dir) FindSharpestTurn(TriangulationLoop domain)
         {
             (Edge edge, bool dir) sharpestTurn = (null, false);
             var lowestDot = 1.0;
@@ -127,8 +140,8 @@ namespace TVGL
             return sharpestTurn;
         }
 
-        private static double TriangulateRecurse(Vector3 accessFaceNormal, Edge accessEdge, DomainClass domain,
-                Dictionary<List<int>, DomainClass> visitedDomains, double upperLimit, int branchingFactorLimit, double dotWeight, in double currentValue, out List<DomainClass> triangles)
+        private static double TriangulateRecurse(Vector3 accessFaceNormal, Edge accessEdge, TriangulationLoop domain,
+                Dictionary<List<int>, TriangulationLoop> visitedDomains, double upperLimit, int branchingFactorLimit, double dotWeight, in double currentValue, out List<TriangulationLoop> triangles)
         {
             var accessEdgeIndex = domain.IndexOf(accessEdge);
             var accessEdgeAndDir = domain[accessEdgeIndex];
@@ -144,16 +157,16 @@ namespace TVGL
                 firstVertex = accessEdgeAndDir.edge.To;
             }
             var bestDomainScore = upperLimit;
-            var sortedBranches = new SimplePriorityQueue<(DomainClass, int), double>();
-            Debug.Indent();
-            Debug.WriteLine("main:  " + string.Join(',', domain.GetVertices().Select(v => v.IndexInList)));
+            var sortedBranches = new SimplePriorityQueue<(TriangulationLoop, int), double>();
+            //Debug.Indent();
+            //Debug.WriteLine("main:  " + string.Join(',', domain.GetVertices().Select(v => v.IndexInList)));
             for (int i = 1; i < domain.Count - 1; i++)
             {
                 var index = i + accessEdgeIndex;
                 if (index >= domain.Count) index -= domain.Count;
                 var edgeAt3rdVertex = domain[index];
                 var thirdVertex = edgeAt3rdVertex.dir ? edgeAt3rdVertex.edge.To : edgeAt3rdVertex.edge.From;
-                var thisTriangle = new DomainClass();
+                var thisTriangle = new TriangulationLoop();
                 thisTriangle.Add(accessEdgeAndDir);
                 if (i == 1)
                     thisTriangle.Add(edgeAt3rdVertex);
@@ -171,20 +184,20 @@ namespace TVGL
                     sortedBranches.Enqueue((thisTriangle, index), thisTriangle.Score);
                 }
             }
-            triangles = new List<DomainClass>();
+            triangles = new List<TriangulationLoop>();
             foreach (var branch in sortedBranches.Take(branchingFactorLimit))
             {
                 var thisTriangle = branch.Item1;
                 var index = branch.Item2;
                 var domainScore = thisTriangle.Score;
                 if (currentValue + domainScore > bestDomainScore) continue;
-                DomainClass rightDomain, leftDomain;
-                List<DomainClass> rhsTriangles = null;
+                TriangulationLoop rightDomain, leftDomain;
+                List<TriangulationLoop> rhsTriangles = null;
                 var distance = index - accessEdgeIndex;
                 if (distance < 0) distance += domain.Count;
                 if (distance != 1) // if 1, then it's the first CCW triangle, so no right-side domain
                 {
-                    rightDomain = new DomainClass();
+                    rightDomain = new TriangulationLoop();
                     rightDomain.Add((thisTriangle.EdgeList[1], false));
                     for (int j = 1; j <= distance; j++)
                     {
@@ -192,7 +205,7 @@ namespace TVGL
                         if (innerIndex >= domain.Count) innerIndex -= domain.Count;
                         rightDomain.Add(domain[innerIndex]);
                     }
-                    Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
+                    //Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = rightDomain.VertexIDList();
                     if (visitedDomains.ContainsKey(vertexIDs))
@@ -209,11 +222,11 @@ namespace TVGL
                 }
                 if (currentValue + domainScore > bestDomainScore) continue;
 
-                List<DomainClass> lhsTriangles = null;
+                List<TriangulationLoop> lhsTriangles = null;
 
                 if (distance < domain.Count - 2) // if last one, then it's the last CCW triangle, so no left-side domain
                 {
-                    leftDomain = new DomainClass();
+                    leftDomain = new TriangulationLoop();
                     leftDomain.Add((thisTriangle.EdgeList[2], false));
                     for (int j = 1; j < domain.Count - distance; j++)
                     {
@@ -221,7 +234,7 @@ namespace TVGL
                         if (innerIndex >= domain.Count) innerIndex -= domain.Count;
                         leftDomain.Add(domain[innerIndex]);
                     }
-                    Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
+                    //Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = leftDomain.VertexIDList();
                     if (visitedDomains.ContainsKey(vertexIDs))
@@ -241,19 +254,19 @@ namespace TVGL
                 //if (bestDomainScore > domainScore)
                 //{
                 bestDomainScore = currentValue + domainScore;
-                triangles = new List<DomainClass> { thisTriangle };
+                triangles = new List<TriangulationLoop> { thisTriangle };
                 if (rhsTriangles != null)
                     triangles.AddRange(rhsTriangles);
                 if (lhsTriangles != null)
                     triangles.AddRange(lhsTriangles);
                 //}
             }
-            Debug.Unindent();
+            //Debug.Unindent();
             if (triangles.Any()) return bestDomainScore;
             return double.PositiveInfinity;
         }
 
-        private static double CalcObjFunction(Vector3 neighborNormal, double dotWeight, DomainClass triangle)
+        private static double CalcObjFunction(Vector3 neighborNormal, double dotWeight, TriangulationLoop triangle)
         {
             //be sure to put in normal in the triangle
             var vector1 = triangle.EdgeList[0].Vector;

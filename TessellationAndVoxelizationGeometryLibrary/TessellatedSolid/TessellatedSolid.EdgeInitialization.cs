@@ -57,7 +57,6 @@ namespace TVGL
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
             // moreSingleSidedEdges
-            Presenter.ShowVertexPathsWithSolid(singleSidedEdges.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new[] { this });
             if (overDefinedEdges.Any())
             {
                 Message.output("Edges in Tessellation with 3 or more faces (attempting to fix).", 2);
@@ -418,10 +417,10 @@ namespace TVGL
         }
 
 
-        internal static List<DomainClass> OrganizeIntoLoops(IEnumerable<Edge> singleSidedEdges,
+        internal static List<TriangulationLoop> OrganizeIntoLoops(IEnumerable<Edge> singleSidedEdges,
             Dictionary<Vertex, int> hubVertices, out List<Edge> remainingEdges)
         {
-            var listOfLoops = new List<DomainClass>();
+            var listOfLoops = new List<TriangulationLoop>();
             var remainingEdgesInner = new HashSet<Edge>(singleSidedEdges);
             if (!singleSidedEdges.Any())
             {
@@ -431,7 +430,7 @@ namespace TVGL
             var attempts = 0;
             while (remainingEdgesInner.Count > 0 && attempts < remainingEdgesInner.Count)
             {
-                var loop = new DomainClass();
+                var loop = new TriangulationLoop();
                 var successful = false;
                 var removedEdges = new List<Edge>();
                 Edge startingEdge;
@@ -445,10 +444,9 @@ namespace TVGL
                     hubVertices[firstHubVertex] = hubEdgeCount;
                     if (hubEdgeCount <= 2) hubVertices.Remove(firstHubVertex);
                     // becuase using this here will drop it down to 2 - in which case - it's just like all
-                    // the other vertices connected to the singledSidedEdges
+                    // the other vertices in singledSidedEdges
                 }
                 else startingEdge = remainingEdgesInner.First();
-                var normal = startingEdge.OwnedFace.Normal;
                 loop.Add(startingEdge, true);  //all the directions really should be false since the edges were defined
                                                //with the ownedFace but this is confusing and we'll switch later
                 removedEdges.Add(startingEdge);
@@ -478,15 +476,6 @@ namespace TVGL
                     {
                         var dir = bestNext.From == lastVertex;
                         loop.Add(bestNext, dir);
-                        var n1 = lastLoop.edge.Vector.Cross(bestNext.Vector).Normalize();
-                        if (lastLoop.dir != dir) n1 *= -1;
-                        if (!n1.IsNull())
-                        {
-                            n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
-                            normal = loop.Count == 2
-                                ? n1  // this is better than the neigboring faces normal, so go with this
-                                : ((normal * loop.Count) + n1).Normalize();  //weighted average for subsequent normals
-                        }
                         removedEdges.Add(bestNext);
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;
@@ -516,15 +505,6 @@ namespace TVGL
 
                         var dir = bestNext.To == lastVertex;
                         loop.Insert(0, (bestNext, dir));
-                        var n1 = lastLoop.edge.Vector.Cross(bestNext.Vector).Normalize();
-                        if (lastLoop.dir != dir) n1 *= -1;
-                        if (!n1.IsNull())
-                        {
-                            n1 = n1.Dot(normal) < 0 ? n1 * -1 : n1;
-                            normal = loop.Count == 2
-                                ? n1
-                                : ((normal * loop.Count) + n1).Divide(loop.Count + 1).Normalize();
-                        }
                         removedEdges.Add(bestNext);
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;
@@ -537,10 +517,7 @@ namespace TVGL
                     //Presenter.ShowVertexPathsWithSolid(new[] { loop.GetVertices().Select(v => v.Coordinates) }.Skip(7), new TessellatedSolid[] { });
 #endif
                     foreach (var subLoop in SeparateIntoMultipleLoops(loop))
-                    {
-                        subLoop.Normal = normal;
                         listOfLoops.Add(subLoop);
-                    }
                     attempts = 0;
                 }
                 else
@@ -554,7 +531,7 @@ namespace TVGL
             return listOfLoops;
         }
 
-        private static IEnumerable<DomainClass> SeparateIntoMultipleLoops(DomainClass loop)
+        private static IEnumerable<TriangulationLoop> SeparateIntoMultipleLoops(TriangulationLoop loop)
         {
             var visitedToVertices = new HashSet<Vertex>(); //used initially to find when a vertex repeats
             var vertexLocations = new Dictionary<Vertex, List<int>>(); //duplicate vertices and the indices where they occur
@@ -613,7 +590,7 @@ namespace TVGL
                         }
                     }
                     if (loopEncompasssOther) continue;
-                    yield return new DomainClass(loop.GetRange(lb, ub), true);
+                    yield return new TriangulationLoop(loop.GetRange(lb, ub), true);
                     successfulUnknot = true;
                     loop.RemoveRange(lb, ub);
                     loopStartEnd.RemoveAt(i); //remove the lb
@@ -625,11 +602,11 @@ namespace TVGL
                 }
                 if (!successfulUnknot) break;
             }
-            yield return new DomainClass(loop, true);
+            yield return new TriangulationLoop(loop, true);
         }
 
         private static IEnumerable<(Edge, PolygonalFace, PolygonalFace)> CreateMissingEdgesAndFaces(
-                    List<DomainClass> loops,
+                    List<TriangulationLoop> loops,
                     out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
         {
             var completedEdges = new List<(Edge, PolygonalFace, PolygonalFace)>();
@@ -642,10 +619,10 @@ namespace TVGL
                 //if a simple triangle, create a new face from vertices
                 if (loop.Count == 3)
                 {
-                    var newFace = new PolygonalFace(loop.GetVertices(), loop.Normal);
+                    var newFace = new PolygonalFace(loop.GetVertices());
                     foreach (var eAD in loop)
                         if (eAD.dir)
-                            completedEdges.Add((eAD.edge, newFace, eAD.edge.OwnedFace));
+                            completedEdges.Add((eAD.edge, newFace, eAD.edge.OtherFace));
                         else completedEdges.Add((eAD.edge, eAD.edge.OwnedFace, newFace));
                     newFaces.Add(newFace);
                 }
@@ -668,7 +645,9 @@ namespace TVGL
                     {
                         try
                         {
-                            triangleFaceList = vertices.Triangulate(loop.Normal, true).ToList();
+                            var coords2D = vertices.Select(v => v.Coordinates).ProjectTo2DCoordinates(planeNormal, out _);
+                            if (coords2D.Area() < 0) planeNormal *= -1;
+                            triangleFaceList = vertices.Triangulate(planeNormal, true).ToList();
                             success = true;
                         }
                         catch
@@ -681,7 +660,7 @@ namespace TVGL
                         Message.output("loop successfully repaired with " + triangleFaceList.Count, 5);
                         foreach (var triangle in triangleFaceList)
                         {
-                            var newFace = new PolygonalFace(triangle, loop.Normal);
+                            var newFace = new PolygonalFace(triangle, planeNormal);
                             newFaces.Add(newFace);
                             for (var j = 0; j < 3; j++)
                             {
