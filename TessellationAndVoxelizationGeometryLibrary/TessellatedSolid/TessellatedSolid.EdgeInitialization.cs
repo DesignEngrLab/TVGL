@@ -24,14 +24,19 @@ namespace TVGL
     /// </remarks>
     public partial class TessellatedSolid : Solid
     {
+        const double fractionOfSingleEdgesForTryingExpand = 0.1;
+        const int numberOfAttemptsDefault = 6;
+        const double expansionFactor = 1.78; // it takes four to get to 10
         internal void MakeEdges(bool fromSTL = false)
         {
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
             var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
-            var numAttempts = 6;
-            if (fromSTL)
+            // #2 if more than 10% of edges do not have a matching face then we should try to expand the tolerance for common 
+            // edges and vertices.
+            if (singleSidedEdges.Count / (double)edgeList.Count > fractionOfSingleEdgesForTryingExpand)
             {
+                var numAttempts = numberOfAttemptsDefault;
                 var improvementOccurred = true;
                 while (numAttempts-- > 0 && improvementOccurred && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
                 // attempt to increase tolerance to allow more matches
@@ -39,7 +44,7 @@ namespace TVGL
                     var numOverDefined = overDefinedEdges.Count;
                     var numSingleSided = singleSidedEdges.Count;
                     Message.output("Repairing STL connections...(this may take several iterations).");
-                    SameTolerance *= 1.78; // it takes four to get to 10
+                    SameTolerance *= expansionFactor;
                     RestartVerticesToAvoidSingleSidedEdges();
                     edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
                     improvementOccurred = (singleSidedEdges.Count < numSingleSided && overDefinedEdges.Count < numOverDefined) ||
@@ -49,7 +54,7 @@ namespace TVGL
                 if (!improvementOccurred)
                 {
                     //one step too far, back up tolerance and just use this
-                    SameTolerance /= 1.78;
+                    SameTolerance /= expansionFactor;
                     RestartVerticesToAvoidSingleSidedEdges();
                     edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
                 }
@@ -66,7 +71,9 @@ namespace TVGL
             // #3 the remainingEdges may be close enough that they should have been matched together
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges, 33 * this.SameTolerance, out var remainingEdges, out var removedVertices));
+            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges, 
+                Math.Pow(expansionFactor,numberOfAttemptsDefault) * this.SameTolerance, out var remainingEdges,
+                out var removedVertices));
             //often the singleSided Edges make loops that we can triangulate. If they are not in loops
             // then we spit back the remainingEdges.
             var hubVertices = FindHubVertices(remainingEdges);
@@ -113,6 +120,13 @@ namespace TVGL
             RemoveVertices(removedVertices);
         }
 
+        /// <summary>
+        /// Finds the hub vertices. These are vertices that connect to 3 or more single-sided edges. These are a good place to start
+        /// looking for holes (in non-watertight solids) because they are difficult to handle when encountered DURING loop creation.
+        /// So, the solution is to start with them.
+        /// </summary>
+        /// <param name="remainingEdges">The remaining edges.</param>
+        /// <returns>Dictionary&lt;Vertex, System.Int32&gt;.</returns>
         private Dictionary<Vertex, int> FindHubVertices(HashSet<Edge> remainingEdges)
         {
             var dict = new Dictionary<Vertex, int>();
@@ -614,6 +628,11 @@ namespace TVGL
             var k = 0;
             foreach (var loop in loops)
             {
+                if (loop.Count <= 2)
+                {
+                    Message.output("Recieving hole with only " + loops.Count + " edges.", 2);
+                    continue;
+                }
                 Message.output("Patching hole #" + ++k + " (has " + loop.Count + " edges) in tessellation (" + loops.Count + " loops in total).", 2);
                 //if a simple triangle, create a new face from vertices
                 if (loop.Count == 3)
@@ -656,7 +675,7 @@ namespace TVGL
                     }
                     if (success && triangleFaceList.Any())
                     {
-                        Message.output("loop successfully repaired with " + triangleFaceList.Count, 5);
+                        Message.output("loop successfully repaired with " + triangleFaceList.Count, 2);
                         foreach (var triangle in triangleFaceList)
                         {
                             var newFace = new PolygonalFace(triangle, planeNormal);
