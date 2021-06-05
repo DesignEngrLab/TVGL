@@ -176,6 +176,13 @@ namespace TVGL.TwoDimensional
                 foreach (var smallInnerPolys in hole.InnerPolygons)
                     triangleFaceList.AddRange(Triangulate(smallInnerPolys));
 
+            var selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+            if (selfIntersections.Count > 0)
+            {
+                if (selfIntersections.All(si => si.WhereIntersection == WhereIsIntersection.BothStarts))
+                    return polygon.RemoveSelfIntersections(ResultType.OnlyKeepPositive).SelectMany(p => p.Triangulate(false)).ToList();
+                else throw new ArgumentException("Self-Intersecting Polygon cannot be triangulated.");
+            }
             const int maxNumberOfAttempts = 10;
             var attempts = 0;
             var random = new Random(1);
@@ -193,14 +200,14 @@ namespace TVGL.TwoDimensional
                     var rotateMatrix = new Matrix3x3(c, s, -s, c, 0, 0);
                     polygon.Transform(rotateMatrix);
                 }
-                try
-                {
+                //try
+                //{
                     foreach (var monoPoly in CreateXMonotonePolygons(polygon))
                         localTriangleFaceList.AddRange(TriangulateMonotonePolygon(monoPoly));
                     triangleArea = 0.5 * localTriangleFaceList
                        .Sum(tri => Math.Abs((tri[1].Coordinates - tri[0].Coordinates).Cross(tri[2].Coordinates - tri[0].Coordinates)));
-                }
-                catch { }
+                //}
+                //catch { }
                 successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
                 System.Diagnostics.Debug.WriteLineIf(!successful && !double.IsNegativeInfinity(triangleArea),
                     polygon.Area + ",   " + triangleArea);
@@ -229,6 +236,11 @@ namespace TVGL.TwoDimensional
 
         public static IEnumerable<Polygon> CreateXMonotonePolygons(this Polygon polygon)
         {
+           if (polygon.PartitionIntoMonotoneBoxes(MonotonicityChange.X).Count()==2)
+            {
+                yield return polygon;
+                yield break;
+            }
             polygon.MakePolygonEdgesIfNonExistent();
             var connections = FindConnectionsToConvertToMonotonePolygons(polygon);
             foreach (var p in polygon.AllPolygons)

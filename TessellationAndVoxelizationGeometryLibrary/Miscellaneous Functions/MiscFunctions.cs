@@ -2079,7 +2079,7 @@ namespace TVGL
                 if (vertex == current || vertex == previous) continue;
                 var currentVector = vertex.Coordinates - current.Coordinates;
                 var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle) // && !angle.IsNegligible()) // not sure why 0 angle is bad here. ReduceCollinear could be called later
+                if (minAngle > angle)
                 {
                     minAngle = angle;
                     bestVertex = vertex;
@@ -2088,23 +2088,23 @@ namespace TVGL
             return bestVertex;
         }
 
-        internal static Edge ChooseTightestLeftTurn(this IEnumerable<Edge> possibleNextEdges, Vector3 refEdge, Vector3 normal,
-            IEnumerable<bool> edgeDirections = null)
+        internal static Edge ChooseHighestCosineSimilarity(this IEnumerable<Edge> possibleNextEdges, Edge refEdge, bool refEdgeDir,
+            IEnumerable<bool> edgeDirections = null, double minAcceptable = -1.0)
         {
-            var transform = normal.TransformToXYPlane(out _);
-            var lastVector = refEdge.ConvertTo2DCoordinates(transform);
-            var minAngle = double.PositiveInfinity;
+            var maxCos = minAcceptable;
             Edge bestEdge = null;
+            var refVector = refEdge.UnitVector;
+            if (!refEdgeDir) refVector *= -1;
             var directionEnumerator = edgeDirections == null ? null : edgeDirections.GetEnumerator();
             foreach (var edge in possibleNextEdges)
             {
-                var currentVector = edge.Vector.ConvertTo2DCoordinates(transform);
+                var currentVector = edge.UnitVector;
                 if (directionEnumerator != null && directionEnumerator.MoveNext() && !directionEnumerator.Current)
-                    currentVector *= -1;                
-                var angle = currentVector.AngleCWBetweenVectorAAndDatum(lastVector);
-                if (minAngle > angle) 
+                    currentVector *= -1;
+                var cos = refVector.Dot(currentVector);
+                if (maxCos < cos)
                 {
-                    minAngle = angle;
+                    maxCos = cos;
                     bestEdge = edge;
                 }
             }

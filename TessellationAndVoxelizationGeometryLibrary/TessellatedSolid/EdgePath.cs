@@ -167,6 +167,11 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1" />.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" />.</param>
+        /// <returns><see langword="true" /> if <paramref name="item" /> was successfully removed from the <see cref="T:System.Collections.Generic.ICollection`1" />; otherwise, <see langword="false" />. This method also returns <see langword="false" /> if <paramref name="item" /> is not found in the original <see cref="T:System.Collections.Generic.ICollection`1" />.</returns>
         public bool Remove((Edge edge, bool dir) item)
         {
             var i = IndexOf(item);
@@ -175,6 +180,26 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>Gets the range.</summary>
+        /// <param name="lb">The lb.</param>
+        /// <param name="ub">The ub.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;Edge, System.Boolean&gt;&gt;.</returns>
+        internal IEnumerable<(Edge edge, bool dir)> GetRange(int lb, int ub)
+        {
+            for (int i = lb; i < ub; i++)
+                yield return (EdgeList[i], DirectionList[i]);
+        }
+        /// <summary>
+        /// Removes the range.
+        /// </summary>
+        /// <param name="lb">The lb.</param>
+        /// <param name="ub">The ub.</param>
+        internal void RemoveRange(int lb, int ub)
+        {
+            var numberToRemove = ub - lb;
+            EdgeList.RemoveRange(lb, numberToRemove);
+            DirectionList.RemoveRange(lb, numberToRemove);
+        }
         public IEnumerator<(Edge edge, bool dir)> GetEnumerator()
         {
             for (int i = 0; i < EdgeList.Count; i++)

@@ -39,11 +39,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             dir = new DirectoryInfo(Path.Combine(dir.FullName, inputFolder));
             var dirName = dir.FullName;
-            foreach (var fileName in dir.GetFiles("*"))
+            foreach (var fileName in dir.GetFiles("*").Skip(1))
             {
-                Debug.WriteLine("Attempting to open: " + fileName.Name);
+                Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid ts);
-                Presenter.ShowAndHang(ts);
+                //Presenter.ShowAndHang(ts);
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
                 //Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");
