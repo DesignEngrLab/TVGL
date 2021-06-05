@@ -173,7 +173,7 @@ namespace TVGL
                 else thisTriangle.Add(new Edge(secondVertex, thirdVertex, false), true);
                 if (secondVertex == thirdVertex) secondVertex = thirdVertex;
                 if (i == domain.Count - 2)
-                    thisTriangle.Add(domain[^1]);
+                    thisTriangle.Add(domain[accessEdgeIndex == 0 ? domain.Count - 1 : accessEdgeIndex - 1]);
                 else thisTriangle.Add(new Edge(thirdVertex, firstVertex, false), true);
                 if (firstVertex == thirdVertex) firstVertex = thirdVertex;
 

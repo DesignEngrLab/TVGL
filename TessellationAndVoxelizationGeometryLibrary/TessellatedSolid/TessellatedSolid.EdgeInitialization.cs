@@ -29,10 +29,10 @@ namespace TVGL
             // #1 define edges from faces - this leads to the good, the bad (single-sided), and the ugly
             // (more than 2 faces per edge)
             var edgeList = DefineEdgesFromFaces(Faces, true, out var overDefinedEdges, out var singleSidedEdges);
-            var improvementOccurred = true;
             var numAttempts = 6;
             if (fromSTL)
             {
+                var improvementOccurred = true;
                 while (numAttempts-- > 0 && improvementOccurred && (singleSidedEdges.Count > 0 || overDefinedEdges.Count > 0))
                 // attempt to increase tolerance to allow more matches
                 {
@@ -46,13 +46,13 @@ namespace TVGL
                       (singleSidedEdges.Count < numSingleSided && overDefinedEdges.Count == numOverDefined) ||
                       (singleSidedEdges.Count == numSingleSided && overDefinedEdges.Count < numOverDefined);
                 }
-            }
-            if (!improvementOccurred)
-            {
-                //one step too far, back up tolerance and just use this
-                SameTolerance /= 1.78;
-                RestartVerticesToAvoidSingleSidedEdges();
-                edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
+                if (!improvementOccurred)
+                {
+                    //one step too far, back up tolerance and just use this
+                    SameTolerance /= 1.78;
+                    RestartVerticesToAvoidSingleSidedEdges();
+                    edgeList = DefineEdgesFromFaces(Faces, true, out overDefinedEdges, out singleSidedEdges);
+                }
             }
             // #2 the ugly over-defined ones can be teased apart sometimes but it means the solid is
             // self-intersecting. This function will spit out the ones that couldn't be matched up as
@@ -83,8 +83,7 @@ namespace TVGL
             // finally, 
             if (borderEdges.Count > 0)
             {
-                Presenter.ShowVertexPathsWithSolid(borderEdges.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new[] { this });
-
+                //Presenter.ShowVertexPathsWithSolid(borderEdges.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new[] { this });
                 Errors ??= new TessellationError();
                 if (Errors.SingledSidedEdges == null)
                     Errors.SingledSidedEdges = new List<Edge>(borderEdges);
