@@ -1059,45 +1059,45 @@ namespace TVGL
         /// Determines if Two Lines intersect. Outputs intersection point if they do.
         /// If two lines are collinear, they are not considered intersecting.
         /// </summary>
-        /// <param name="p1">The p1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="q1">The q1.</param>
-        /// <param name="q2">The q2.</param>
+        /// <param name="aFrom">The starting point on the a-Line.</param>
+        /// <param name="aTo">The end point on the a-Line.</param>
+        /// <param name="bFrom">The starting point on the b-Line.</param>
+        /// <param name="bTo">The end point on the b-Line.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
         /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
         /// <returns>System.Boolean.</returns>
-        public static bool SegmentSegment2DIntersection(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2,
+        public static bool SegmentSegment2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
             out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
         {
             intersectionPoint = Vector2.Null;
             // first check if bounding boxes overlap. If they don't then return false here
-            if (Math.Max(p1.X, p2.X) < Math.Min(q1.X, q2.X) || Math.Max(q1.X, q2.X) < Math.Min(p1.X, p2.X) ||
-                Math.Max(p1.Y, p2.Y) < Math.Min(q1.Y, q2.Y) || Math.Max(p1.Y, p2.Y) < Math.Min(q1.Y, q2.Y))
+            if (Math.Max(aFrom.X, aTo.X) < Math.Min(bFrom.X, bTo.X) || Math.Max(bFrom.X, bTo.X) < Math.Min(aFrom.X, aTo.X) ||
+                Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y) || Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y))
                 return false;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if (p1.IsPracticallySame(q1) || p1.IsPracticallySame(q2))
+            if (aFrom.IsPracticallySame(bFrom) || aFrom.IsPracticallySame(bTo))
             {
-                intersectionPoint = p1;
+                intersectionPoint = aFrom;
                 return true;
             }
-            if (p2.IsPracticallySame(q1) || p2.IsPracticallySame(q2))
+            if (aTo.IsPracticallySame(bFrom) || aTo.IsPracticallySame(bTo))
             {
-                intersectionPoint = p2;
+                intersectionPoint = aTo;
                 return true;
             }
 
-            var vp = p2 - p1; //vector along p-line
-            var vq = q2 - q1; //vector along q-line
-            var vCross = vp.Cross(vq); //2D cross product, determines if parallel
-            var vStarts = q1 - p1; // the vector connecting starts
+            var aVector = aTo - aFrom; //vector along p-line
+            var bVector = bTo - bFrom; //vector along q-line
+            var vCross = aVector.Cross(bVector); //2D cross product, determines if parallel
+            var fromPointVector = bFrom - aFrom; // the vector connecting starts
 
             if (vCross.IsNegligible(Constants.BaseTolerance))
             {
                 // if this is also parallel with the vector direction then there is overlap
                 // (since bounding boxes overlap). But we cannot set intersectionPoint
                 // to a single value since it is infinite points!
-                if (vStarts.Cross(vp).IsNegligible(Constants.BaseTolerance))
+                if (fromPointVector.Cross(aVector).IsNegligible(Constants.BaseTolerance))
                     return considerCollinearOverlapAsIntersect;
                 return false;
             }
@@ -1110,14 +1110,17 @@ namespace TVGL
             //   |                    |*|       | =  |            |
             //   |   vp_y      vq_y   | |  t_q  |    | vStarts_y  |
             var oneOverdeterminnant = 1 / vCross;
-            var aInv11 = vq.Y * oneOverdeterminnant;
-            var aInv12 = -vq.X * oneOverdeterminnant;
-            var aInv21 = -vp.Y * oneOverdeterminnant;
-            var aInv22 = vp.X * oneOverdeterminnant;
-            var t_p = aInv11 * vStarts.X + aInv12 * vStarts.Y;
-            var t_q = aInv21 * vStarts.X + aInv22 * vStarts.Y;
-            if (t_p < 0 || t_p > 1 || t_q < 0 || t_q > 1) return false;
-            intersectionPoint = 0.5 * ((1 - t_p) * p1 + t_p * p2 + (1 - t_q) * q1 + t_q * q2);
+            var t_a = oneOverdeterminnant * (bVector.Y * fromPointVector.X - bVector.X * fromPointVector.Y);
+            if (t_a < 0 || t_a > 1)
+                //if (t_1.IsLessThanNonNegligible(0, Constants.PolygonSameTolerance)
+                //    || !t_1.IsLessThanNonNegligible(1.0, Constants.PolygonSameTolerance))
+                return false;
+            var t_b = oneOverdeterminnant * (aVector.Y * fromPointVector.X - aVector.X * fromPointVector.Y);
+            if (t_b < 0 || t_b >= 1)
+                return false;
+
+            intersectionPoint = new Vector2(0.5 * (aFrom.X + t_a * aVector.X + bFrom.X + t_b * bVector.X),
+                0.5 * (aFrom.Y + t_a * aVector.Y + bFrom.Y + t_b * bVector.Y));
             return true;
         }
 
@@ -1125,40 +1128,40 @@ namespace TVGL
         /// Determines if Two Lines intersect. Outputs intersection point if they do.
         /// If two lines are collinear, they are not considered intersecting.
         /// </summary>
-        /// <param name="p1">The p1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="qAnchor">The q1.</param>
-        /// <param name="q2">The q2.</param>
+        /// <param name="aFrom">The starting point on the a-Line.</param>
+        /// <param name="aTo">The end point on the a-Line.</param>
+        /// <param name="bAnchor">Some known point on b-line.</param>
+        /// <param name="bDirection">The direction of the b-line.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
         /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
         /// <returns>System.Boolean.</returns>
-        public static bool SegmentLine2DIntersection(Vector2 p1, Vector2 p2, Vector2 qAnchor, Vector2 qDirection,
+        public static bool SegmentLine2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bAnchor, Vector2 bDirection,
             out Vector2 intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
         {
             intersectionPoint = Vector2.Null;
             // okay, so bounding boxes overlap
             //first a quick check to see if points are the same
-            if (p1.IsPracticallySame(qAnchor))
+            if (aFrom.IsPracticallySame(bAnchor))
             {
-                intersectionPoint = p1;
+                intersectionPoint = aFrom;
                 return true;
             }
-            if (p2.IsPracticallySame(qAnchor))
+            if (aTo.IsPracticallySame(bAnchor))
             {
-                intersectionPoint = p2;
+                intersectionPoint = aTo;
                 return true;
             }
 
-            var vp = p2 - p1; //vector along p-line
-            var vCross = vp.Cross(qDirection); //2D cross product, determines if parallel
-            var vStarts = qAnchor - p1; // the vector connecting starts
+            var aVector = aTo - aFrom; //vector along p-line
+            var vCross = aVector.Cross(bDirection); //2D cross product, determines if parallel
+            var fromPointVector = bAnchor - aFrom; // the vector connecting starts
 
             if (vCross.IsNegligible(Constants.BaseTolerance))
             {
                 // if this is also parallel with the vector direction then there is overlap
                 // (since bounding boxes overlap). But we cannot set intersectionPoint
                 // to a single value since it is infinite points!
-                if (vStarts.Cross(vp).IsNegligible(Constants.BaseTolerance))
+                if (fromPointVector.Cross(aVector).IsNegligible(Constants.BaseTolerance))
                     return considerCollinearOverlapAsIntersect;
                 return false;
             }
@@ -1171,40 +1174,34 @@ namespace TVGL
             //   |                    |*|       | =  |            |
             //   |   vp_y      vq_y   | |  t_q  |    | vStarts_y  |
             var oneOverdeterminnant = 1 / vCross;
-            var aInv11 = qDirection.Y * oneOverdeterminnant;
-            var aInv12 = -qDirection.X * oneOverdeterminnant;
-            //var aInv21 = -vp.Y * oneOverdeterminnant;
-            //var aInv22 = vp.X * oneOverdeterminnant;
-            var t_p = aInv11 * vStarts.X + aInv12 * vStarts.Y;
-            if (t_p < 0 || t_p > 1) return false;
-            intersectionPoint = (1 - t_p) * p1 + t_p * p2;
+            var t_a = oneOverdeterminnant * (bDirection.Y * fromPointVector.X - bDirection.X * fromPointVector.Y);
+            if (t_a < 0 || t_a > 1)
+                //if (t_1.IsLessThanNonNegligible(0, Constants.PolygonSameTolerance)
+                //    || !t_1.IsLessThanNonNegligible(1.0, Constants.PolygonSameTolerance))
+                return false;
+            intersectionPoint = new Vector2(aFrom.X + t_a * aVector.X, aFrom.Y + t_a * aVector.Y);
             return true;
         }
 
         /// <summary>
         /// Lines the line2 d intersection.
         /// </summary>
-        /// <param name="pAnchor">The p anchor.</param>
-        /// <param name="pDirection">The p direction.</param>
-        /// <param name="qAnchor">The q anchor.</param>
-        /// <param name="qDirection">The q direction.</param>
+        /// <param name="aAnchor">Some known point on a-line.</param>
+        /// <param name="aDirection">The direction of the a-line.</param>
+        /// <param name="bAnchor">Some known point on b-line.</param>
+        /// <param name="bDirection">The direction of the b-line.</param>
         /// <returns>TVGL.Numerics.Vector2.</returns>
-        public static Vector2 LineLine2DIntersection(Vector2 pAnchor, Vector2 pDirection, Vector2 qAnchor, Vector2 qDirection)
+        public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
         {
-            if (pDirection.IsPracticallySame(qDirection, Constants.BaseTolerance)) return Vector2.Null;
+            if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;
+            var vCross = aDirection.Cross(bDirection); //2D cross product, determines if parallel
 
-            // solve for the t scalar values for the two lines.
-            // the line is define as all values of t from 0 to 1 in the equations
-            // p-line(t_p) = pAnchor + t_p*pDir
-            // q-line(t_q) = qAnchor + t_q*qDir
-            // solve as a system of two equations
-            //   |   pDirection_x      -qDirection_x   | |  t_p  |    | qAnchor_x - pAnchor_x  |
-            //   |                                     |*|       | =  |                        |
-            //   |   pDirection_y      -qDirection_y   | |  t_q  |    | qAnchor_y - pAnchor_y  |
-            var oneOverdeterminnant = 1.0 / (pDirection.Y * qDirection.X - pDirection.X * qDirection.Y);
-            var t_p = oneOverdeterminnant * ((qAnchor.Y - pAnchor.Y) * qDirection.X - (qAnchor.X - pAnchor.X) * qDirection.Y);
+            if (vCross.IsNegligible(Constants.BaseTolerance))
+                return Vector2.Null;
 
-            return pAnchor + t_p * pDirection;
+            var oneOverdeterminnant = 1.0 / aDirection.Cross(bDirection); //2D cross product, determines if parallel
+            var t_a = oneOverdeterminnant * (bDirection.Y * (bAnchor.X - aAnchor.X) - bDirection.X * (bAnchor.Y - aAnchor.Y));
+            return aAnchor + t_a * aDirection;
         }
 
         /// <summary>
