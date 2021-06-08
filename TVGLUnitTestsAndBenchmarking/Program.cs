@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
-        const string inputFolder = "OneDrive - Oregon State University\\Desktop\\MedemaPartAnalyzer\\3mf";
+        const string inputFolder = "Desktop\\TestFiles";
         //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -39,11 +39,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 dir = dir.Parent;
             dir = new DirectoryInfo(Path.Combine(dir.FullName, inputFolder));
             var dirName = dir.FullName;
-            foreach (var fileName in dir.GetFiles("*").Skip(1))
+            foreach (var fileName in dir.GetFiles("*"))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
-                IO.Open(fileName.FullName, out TessellatedSolid ts);
-                //Presenter.ShowAndHang(ts);
+                IO.Open(fileName.FullName, out TessellatedSolid[] solids);
+                Presenter.ShowAndHang(solids);
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
                 //Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");
