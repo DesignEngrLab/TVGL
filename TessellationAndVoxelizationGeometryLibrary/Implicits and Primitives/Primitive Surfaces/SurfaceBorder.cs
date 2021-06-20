@@ -73,6 +73,7 @@ namespace TVGL
             }
         }
 
+        internal bool BothSidesSamePrimitive;
 
         public IEnumerable<Vertex> GetVertices() => Edges.GetVertices();
 
