@@ -2,6 +2,7 @@ using System;
 using Xunit;
 using TVGL.Numerics;
 using TVGL;
+using System.Collections.Generic;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -9,6 +10,7 @@ namespace TVGLUnitTestsAndBenchmarking
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
+        static double r10 => 20.0 * r.NextDouble() - 10.0;
 
         [Fact]
         public static void Vector2Length()
@@ -124,6 +126,35 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 while (!Matrix4x4.Invert(m, out mInv));
                 Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
+            }
+        }
+
+
+        [Fact]
+        public static void QuarticSolve()
+        {
+            for (int i = 0; i < 5000; i++)
+            {
+                var r = new List<ComplexNumber>
+                {
+                    new ComplexNumber(r10,0),
+                    new ComplexNumber(r10,0),
+                    new ComplexNumber(r10,0),
+                    new ComplexNumber(r10,0)
+                };
+                var a = r10;
+                var b = -a * (r[0] + r[1] + r[2] + r[3]);
+                var c = +a * (r[0] * r[1] + r[0] * r[2] + r[1] * r[2] + r[0] * r[3] + r[1] * r[3] + r[2] * r[3]);
+                var d = -a * (r[0] * r[1] * r[2] + r[0] * r[1] * r[3] + r[0] * r[2] * r[3] + r[1] * r[2] * r[3]);
+                var e = +a * (r[0] * r[1] * r[2] * r[3]);
+
+
+                foreach (var root in PolynomialSolve.Quartic(a, b.Real, c.Real, d.Real, e.Real))
+                {
+                    Assert.True(r.Exists(origRoot => !root.IsPracticallySame(origRoot)));
+                }
+
+
             }
         }
 

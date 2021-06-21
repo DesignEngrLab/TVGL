@@ -46,23 +46,27 @@ namespace TVGL.TwoDimensional
             {
                 var x = p.X;
                 var y = p.Y;
+                var xSq = x * x;
+                var ySq = y * y;
+                var xCubed = x * xSq;
+                var yCubed = y * ySq;
+
                 xSum += x;
                 ySum += y;
-                xSqSum += x * x;
-                ySqSum += y * y;
-                xySum += x * y;
-                xFourthSum += x * x * x * x;
-                xCubedYSum += x * x * y * y;
-                xSqYSqSum += x * x * x * y;
-                xYCubedSum += x * y * y * y;
-                yFourthSum += y * y * y * y;
-                xCubedSum += x * x * x;
-                xSqYSum += x * x * y;
-                xYSqSum += x * y * y;
-                yCubedSum += y * y * y;
-                xSqSum += x * x;
-                xySum += x * y;
-                ySqSum += y * y;
+                xSqSum += xSq;
+                ySqSum += ySq;
+                xySum  += x * y;
+                
+                xCubedSum += xCubed;
+                xSqYSum   += xSq * y;
+                xYSqSum   += x * ySq;
+                yCubedSum += yCubed;
+
+                xFourthSum += xSq * xSq;
+                xCubedYSum += xCubed * y;
+                xSqYSqSum  += xSq * ySq;
+                xYCubedSum += x * yCubed;
+                yFourthSum += ySq * ySq;
                 numPoints++;
             }
             if (numPoints < 5)
@@ -73,11 +77,11 @@ namespace TVGL.TwoDimensional
             }
             var matrix = new double[,]
             {
-                { xFourthSum, xCubedYSum, xSqYSqSum, xCubedSum, xSqYSum },
-                { xCubedYSum, xSqYSqSum, xYCubedSum, xSqYSum, xYSqSum },
-                { xSqYSqSum, xYCubedSum, yFourthSum, xYSqSum, yCubedSum},
-                { xCubedSum, xSqYSum, xYSqSum, xSqSum, xySum },
-                { xSqYSum, xYSqSum, yCubedSum, xySum, ySqSum }
+                { xFourthSum, xCubedYSum, xSqYSqSum,  xCubedSum, xSqYSum },
+                { xCubedYSum, xSqYSqSum,  xYCubedSum, xSqYSum,   xYSqSum },
+                { xSqYSqSum,  xYCubedSum, yFourthSum, xYSqSum,   yCubedSum},
+                { xCubedSum,  xSqYSum,    xYSqSum,    xSqSum,    xySum },
+                { xSqYSum,    xYSqSum,    yCubedSum,  xySum,     ySqSum }
             };
             var b = new[] { xSqSum, xySum, ySqSum, xSum, ySum };
             if (matrix.solve(b, out var result, true))
@@ -144,6 +148,12 @@ namespace TVGL.TwoDimensional
             var radiusSq = rSqMinusXSqMinusYSq + (xCenter * xCenter) + (yCenter * yCenter);
             circle1 = new Circle(new Vector2(xCenter, yCenter), Math.Abs(radiusSq));
             return true;
+        }
+        public static double DistancePointToConic(double A, double B, double C, double D, double E, double F,
+            Vector2 point, out Vector2 pointOnCurve)
+        {
+            throw new NotImplementedException();
+
         }
     }
 }

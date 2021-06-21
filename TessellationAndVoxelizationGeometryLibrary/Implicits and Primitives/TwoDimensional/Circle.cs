@@ -50,7 +50,7 @@ namespace TVGL.TwoDimensional
         {
             var diff = point - Center;
             var error = Math.Sqrt(diff.Dot(diff)) - Radius;
-            return error * error ;
+            return error * error;
         }
 
         /// <summary>
@@ -67,10 +67,16 @@ namespace TVGL.TwoDimensional
             var n = 0;
             double Sxx = 0.0, Syy = 0.0, Sxy = 0.0, Sx = 0.0, Sy = 0.0;
             double Sxxx = 0.0, Sxxy = 0.0, Sxyy = 0.0, Syyy = 0.0;
+            double xMin = double.PositiveInfinity, yMin = double.PositiveInfinity;
+            double xMax = double.NegativeInfinity, yMax = double.NegativeInfinity;
             foreach (var p in points)
             {
                 var x = p.X;
                 var y = p.Y;
+                if (xMin > x) xMin = x;
+                if (yMin > x) yMin = x;
+                if (xMax < x) xMax = x;
+                if (yMax < x) yMax = x;
                 Sx += x;
                 Sy += y;
                 Sxx += x * x;
@@ -105,7 +111,24 @@ namespace TVGL.TwoDimensional
             var yc = ((a1 * c2) - (a2 * c1)) / cross; // returns the center along y
             var radiusSquared = (Sxx - 2 * Sx * xc + n * xc * xc + Syy - 2 * Sy * yc + n * yc * yc) / n; // Radius squared of circle
             var center = new Vector2(xc, yc);
-            circle= new Circle(center, radiusSquared);
+            #region find angle range - if it's too low then probably should be just a line
+            var angle = double.PositiveInfinity;
+            if (xc <= xMin && yc <= yMin) //if the center is below and to the left of bounding box
+                angle = Math.Atan2(yMax - yc, xMin - xc) - Math.Atan2(yMin - yc, xMax - xc);
+            else if (xc <= xMin && yc >= yMax) //if the center is above and to the left of bounding box
+                angle = Math.Atan2(yMax - yc, xMax - xc) - Math.Atan2(yMin - yc, xMin - xc);
+            else if (xc >= xMax && yc >= yMax) //if the center is above and to the right of bounding box
+                angle = Math.Atan2(yMin - yc, xMax - xc) - Math.Atan2(yMax - yc, xMin - xc);
+            else if (xc >= xMax && yc <= yMin) //if the center is below and to the right of bounding box
+                angle = Math.Atan2(yMin - yc, xMin - xc) - Math.Atan2(yMax - yc, xMax - xc);
+            if (angle < 0.02) // which is about 1 degree
+            {
+                circle = new Circle();
+                error = double.PositiveInfinity;
+                return false;
+            }
+            #endregion
+            circle = new Circle(center, radiusSquared);
             error = 0.0;
             foreach (var p in points)
                 error += circle.SquaredErrorOfNewPoint(p);
