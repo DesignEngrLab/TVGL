@@ -49,13 +49,8 @@ namespace TVGL.Numerics
         /// <returns>The normalized ComplexNumber.</returns>
         public static ComplexNumber Normalize(ComplexNumber value)
         {
-            ComplexNumber ans;
             double invNorm = 1.0 / value.Length();
-
-            ans.Real = value.Real * invNorm;
-            ans.Imaginary = value.Imaginary * invNorm;
-
-            return ans;
+            return new ComplexNumber(invNorm * value.Real, invNorm * value.Imaginary);
         }
 
         /// <summary>
@@ -219,6 +214,36 @@ namespace TVGL.Numerics
 
 
         /// <summary>
+        /// Divides a ComplexNumber by another ComplexNumber.
+        /// </summary>
+        /// <param name="value1">The source ComplexNumber.</param>
+        /// <param name="value2">The divisor.</param>
+        /// <returns>The result of the division.</returns>
+        public static ComplexNumber Divide(double value1, ComplexNumber value2)
+        {
+            var oneOverDenom = 1 / (value2.Real * value2.Real + value2.Imaginary * value2.Imaginary);
+            return new ComplexNumber(oneOverDenom * value1 * value2.Real, -oneOverDenom * value2.Imaginary);
+        }
+
+        /// <summary>
+        /// Divides a ComplexNumber by another ComplexNumber.
+        /// </summary>
+        /// <param name="value1">The source ComplexNumber.</param>
+        /// <param name="value2">The divisor.</param>
+        /// <returns>The result of the division.</returns>
+        public static ComplexNumber operator /(double value1, ComplexNumber value2) => Divide(value1, value2);
+
+
+        public static ComplexNumber Sqrt(ComplexNumber value1)
+        {
+            if (value1.JustRealNumber) return new ComplexNumber(Math.Sqrt(value1.Real), 0);
+            var angle = Math.Atan2(value1.Imaginary, value1.Real);
+            angle *= 0.5;
+            var radius = Math.Sqrt(Math.Sqrt(value1.Real * value1.Real + value1.Imaginary * value1.Imaginary));
+            return new ComplexNumber(radius * Math.Cos(angle), radius * Math.Sin(angle));
+        }
+
+        /// <summary>
         /// Returns a boolean indicating whether the two given ComplexNumbers are equal.
         /// </summary>
         /// <param name="value1">The first ComplexNumber to compare.</param>
@@ -266,7 +291,7 @@ namespace TVGL.Numerics
         /// </summary>
         /// <param name="value1">The value1.</param>
         /// <returns>The result of the conversion.</returns>
-        public static double ToDouble(this ComplexNumber value1)
+        public static double ToDouble(ComplexNumber value1)
         {
             return value1.Real;
         }

@@ -57,6 +57,12 @@ namespace TVGL.Numerics
             return IsNegligible(v1 - v2, optionalTolerance);
         }
 
+        public static bool IsPracticallySame(this ComplexNumber v1, ComplexNumber v2, double optionalTolerance = DefaultEqualityTolerance)
+        {
+            return v1.Real.IsPracticallySame(v2.Real, optionalTolerance) &&
+                v1.Imaginary.IsPracticallySame(v2.Imaginary, optionalTolerance);
+        }
+
         /// <summary>
         /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
         /// </summary>

@@ -152,7 +152,7 @@ namespace TVGL.TwoDimensional
         public static double DistancePointToConic(double A, double B, double C, double D, double E, double F,
             Vector2 point, out Vector2 pointOnCurve)
         {
-
+            throw new NotImplementedException();
 
         }
     }

@@ -23,6 +23,7 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
+            TVGLNumericsTests.QuarticSolve();
             //TestVoxelization();
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
