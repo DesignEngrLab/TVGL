@@ -13,6 +13,7 @@
 // ***********************************************************************
 using System.Collections.Generic;
 using System.Linq;
+using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
 namespace TVGL
@@ -70,6 +71,19 @@ namespace TVGL
             {
                 if (Curve == null) return false;
                 return Curve is Circle;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the plane.
+        /// </summary>
+        /// <value>The plane.</value>
+        public Vector3 CircleCenter
+        {
+            get
+            {
+                if (!IsCircular) return default;
+                return ((Circle)Curve).Center.ConvertTo3DLocation(Plane.AsTransformFromXYPlane);
             }
         }
 
