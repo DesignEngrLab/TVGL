@@ -71,7 +71,7 @@ namespace TVGL
 
         public abstract double CalculateError(IEnumerable<IVertex3D> vertices = null);
 
-
+        public int Index { get; set; }
 
         /// <summary>
         ///     Gets the area.
