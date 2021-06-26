@@ -71,7 +71,7 @@ namespace TVGL
 
         public abstract double CalculateError(IEnumerable<IVertex3D> vertices = null);
 
-
+        public int Index { get; set; }
 
         /// <summary>
         ///     Gets the area.
@@ -326,7 +326,7 @@ namespace TVGL
         public void DefineBorders(double maxErrorInCurveFit = -1.0)
         {
             var currentSurfaceError = CalculateError();
-            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = currentSurfaceError;
+            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = Math.Max(currentSurfaceError, Constants.ErrorForFaceInSurface);
             _borders = new List<SurfaceBorder>();
             var edges = new HashSet<Edge>(OuterEdges);
             foreach (var border in edges.GetLoops(Faces))
