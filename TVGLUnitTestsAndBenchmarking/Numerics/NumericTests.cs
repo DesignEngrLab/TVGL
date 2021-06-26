@@ -128,36 +128,5 @@ namespace TVGLUnitTestsAndBenchmarking
                 Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
             }
         }
-
-
-        [Fact]
-        public static void QuarticSolve()
-        {
-            for (int i = 0; i < 5000; i++)
-            {
-                var r = new List<ComplexNumber>
-                {
-                    new ComplexNumber(r10,0),
-                    new ComplexNumber(r10,0),
-                    new ComplexNumber(r10,0),
-                    new ComplexNumber(r10,0)
-                };
-                var a = r10;
-                var b = -a * (r[0] + r[1] + r[2] + r[3]);
-                var c = +a * (r[0] * r[1] + r[0] * r[2] + r[1] * r[2] + r[0] * r[3] + r[1] * r[3] + r[2] * r[3]);
-                var d = -a * (r[0] * r[1] * r[2] + r[0] * r[1] * r[3] + r[0] * r[2] * r[3] + r[1] * r[2] * r[3]);
-                var e = +a * (r[0] * r[1] * r[2] * r[3]);
-
-
-                foreach (var root in PolynomialSolve.Quartic(a, b.Real, c.Real, d.Real, e.Real))
-                {
-                    Assert.True(r.Exists(origRoot => !root.IsPracticallySame(origRoot)));
-                }
-
-
-            }
-        }
-
-
     }
 }
