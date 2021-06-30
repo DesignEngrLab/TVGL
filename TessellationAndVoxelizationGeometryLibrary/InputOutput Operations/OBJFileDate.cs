@@ -119,7 +119,6 @@ namespace TVGL.IOFunctions
         /// <returns>True if the model was loaded successfully.</returns>  
         internal static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
         {
-            var scaleFactor = 1000; //assumed millimeters
             var numDecimalPoints = 8;
 
             char[] split = new char[] { ' ' };
@@ -157,8 +156,8 @@ namespace TVGL.IOFunctions
                         break;
                     case "v"://vertex
                         var v = ReadVertex(line.Substring(2).Split(split, StringSplitOptions.RemoveEmptyEntries));
-                        var coordinates = new Vector3(scaleFactor * Math.Round(v.X, numDecimalPoints),
-                            Math.Round(scaleFactor * v.Y, numDecimalPoints), Math.Round(scaleFactor * v.Z, numDecimalPoints));
+                        var coordinates = new Vector3(Math.Round(v.X, numDecimalPoints),
+                            Math.Round(v.Y, numDecimalPoints), Math.Round(v.Z, numDecimalPoints));
                         //If the vertex already exists, store the 
                         if (!objSolid.Vertices.ContainsKey(coordinates))
                             objSolid.Vertices.Add(coordinates, i++);
