@@ -2,6 +2,7 @@ using System;
 using Xunit;
 using TVGL.Numerics;
 using TVGL;
+using System.Collections.Generic;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -9,6 +10,7 @@ namespace TVGLUnitTestsAndBenchmarking
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
+        static double r10 => 20.0 * r.NextDouble() - 10.0;
 
         [Fact]
         public static void Vector2Length()
@@ -126,7 +128,5 @@ namespace TVGLUnitTestsAndBenchmarking
                 Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
             }
         }
-
-
     }
 }

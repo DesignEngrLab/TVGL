@@ -57,6 +57,7 @@ namespace TVGL.Numerics
             return IsNegligible(v1 - v2, optionalTolerance);
         }
 
+
         /// <summary>
         /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
         /// </summary>

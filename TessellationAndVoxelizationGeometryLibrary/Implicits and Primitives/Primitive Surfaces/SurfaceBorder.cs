@@ -75,14 +75,14 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the plane.
+        /// Gets the center of the circle if the border is a circle.
         /// </summary>
         /// <value>The plane.</value>
         public Vector3 CircleCenter
         {
             get
             {
-                if (!IsCircular) return default;
+                if (!IsCircular) return Vector3.Null;
                 return ((Circle)Curve).Center.ConvertTo3DLocation(Plane.AsTransformFromXYPlane);
             }
         }

@@ -32,6 +32,7 @@
     <Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs">
       <Link>Window3DPlot.xaml.cs</Link>
     </Compile>
+    <Compile Include="..\TVGLUnitTestsAndBenchmarking\Numerics\NumericTests.cs" Link="_Testing_And_Benchmarking_\NumericTests.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonOperationsTesting.cs" Link="_Testing_And_Benchmarking_\PolygonOperationsTesting.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonSimplify.cs" Link="_Testing_And_Benchmarking_\PolygonSimplify.cs" />
     <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\TestCases.cs" Link="_Testing_And_Benchmarking_\TestCases.cs" />
