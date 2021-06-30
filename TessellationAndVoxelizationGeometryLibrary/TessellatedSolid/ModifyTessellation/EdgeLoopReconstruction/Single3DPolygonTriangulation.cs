@@ -72,9 +72,24 @@ namespace TVGL
         }
 
     }
-    internal static class Single3DPolygonTriangulation
+    public static class Single3DPolygonTriangulation
     {
         const int MaxStatesToSearch = 1000000000; // 1 billion
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="edgePath">The edge path.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;Vertex[], Vector3&gt;&gt;.</returns>
+        public static IEnumerable<(List<Vertex> vertices, Vector3 normal)> Triangulate(IList<(Edge edge, bool dir)> edgePath)
+        {
+            if (!Triangulate(new TriangulationLoop(edgePath), out var triangles)) yield break;
+            foreach (var triangle in triangles)
+            {
+                yield return (triangle.GetVertices().ToList(), triangle.Normal);
+            }
+        }
+
+
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
@@ -82,7 +97,7 @@ namespace TVGL
         /// <param name="normal">The normal direction.</param>
         /// <returns>IEnumerable&lt;Vertex[]&gt; where each represents a triangular polygonal face.</returns>
         /// <exception cref="ArgumentException">The vertices must all have a unique IndexInList value - vertexLoop</exception>
-        public static bool Triangulate(TriangulationLoop startDomain, out List<TriangulationLoop> triangles)
+        internal static bool Triangulate(TriangulationLoop startDomain, out List<TriangulationLoop> triangles)
         {
             triangles = null;
             var numTriangles = startDomain.Count - 2;
