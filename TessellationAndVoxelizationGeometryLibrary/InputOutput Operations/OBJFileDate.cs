@@ -53,13 +53,6 @@ namespace TVGL.IOFunctions
 
         GeometrySet CurrentGeometrySet { get; set; }
 
-
-        /// <summary>
-        ///     Gets the vertices.
-        /// </summary>
-        /// <value>The face to vertex indices.</value>
-        internal List<Vector3> Vertices { get; }
-
         /// <summary>
         ///     Gets the face to vertex indices.
         /// </summary>
@@ -71,6 +64,20 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The normals.</value>
         private List<int[]> SurfaceEdges { get; }
+
+        /// <summary>
+        ///     Gets the vertices as ordered by lines in the code. The same Vector3 may be referenced by multiple keys
+        ///     if it appears in multiple lines of code.
+        /// </summary>
+        /// <value>The face to vertex indices.</value>
+        private List<Vector3> VerticesByLine { get; }
+
+
+        /// <summary>
+        ///     Gets the integer location of the Vector within the list of vertices of the solid.
+        /// </summary>
+        /// <value>The face to vertex indices.</value>
+        private Dictionary<Vector3, int> Vertices { get; }
 
         #endregion
 
@@ -93,7 +100,7 @@ namespace TVGL.IOFunctions
             for (int i = 0; i < objData.Count; i++)
             {
                 var objFileData = objData[i];
-                results[i] = new TessellatedSolid(objFileData.Vertices, objFileData.FaceToVertexIndices, true, null,
+                results[i] = new TessellatedSolid(objFileData.Vertices.Keys.ToList(), objFileData.FaceToVertexIndices, true, null,
                                    objFileData.Units, objFileData.Name, filename, objFileData.Comments, objFileData.Language);
             }
             Message.output(
@@ -109,9 +116,12 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="stlData">The STL data.</param>
-        /// <returns>True if the model was loaded successfully.</returns>
+        /// <returns>True if the model was loaded successfully.</returns>  
         internal static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
         {
+            var scaleFactor = 1000; //assumed millimeters
+            var numDecimalPoints = 8;
+
             char[] split = new char[] { ' ' };
             var defaultName = Path.GetFileNameWithoutExtension(filename) + "_";
             var solidNum = 0;
@@ -120,6 +130,7 @@ namespace TVGL.IOFunctions
             var objSolid = new OBJFileData { FileName = filename, Units = UnitType.unspecified };
             var comments = new List<string>();
             var priorWasVertex = false;
+            var i = 0;
             while (!reader.EndOfStream)
             {
                 var line = ReadLine(reader);
@@ -145,8 +156,15 @@ namespace TVGL.IOFunctions
                         //objSolid.Material.Add(values);
                         break;
                     case "v"://vertex
+                        var v = ReadVertex(line.Substring(2).Split(split, StringSplitOptions.RemoveEmptyEntries));
+                        var coordinates = new Vector3(scaleFactor * Math.Round(v.X, numDecimalPoints),
+                            Math.Round(scaleFactor * v.Y, numDecimalPoints), Math.Round(scaleFactor * v.Z, numDecimalPoints));
+                        //If the vertex already exists, store the 
+                        if (!objSolid.Vertices.ContainsKey(coordinates))
+                            objSolid.Vertices.Add(coordinates, i++);
+                        //Store the vertex by line so that it can be referenced by geometry (i.e., face or line)
+                        objSolid.VerticesByLine.Add(coordinates);
                         priorWasVertex = true;
-                        objSolid.ReadVertex(line.Substring(2).Split(split, StringSplitOptions.RemoveEmptyEntries));
                         break;
                     case "vt"://texture coordinate (ignore?)
                         break;
@@ -160,52 +178,59 @@ namespace TVGL.IOFunctions
                         break;
                 }
             }
+            objSolid.CompleteInitialization();
             return true;
         }
 
+        private void CompleteInitialization()
+        {
+            //Need to use the Geometry sets to create surfaces and borders
+            throw new NotImplementedException();
+        }
 
-        private void ReadVertex(string[] values)
+        private static Vector3 ReadVertex(string[] values)
         {    
-            //  Parse vertex coordinates.
             float x = float.Parse(values[0], CultureInfo.InvariantCulture);
             float y = float.Parse(values[1], CultureInfo.InvariantCulture);
             float z = float.Parse(values[2], CultureInfo.InvariantCulture);
-
-            //   Add the vertices.
-            CurrentGeometrySet.Vertices.Add(new Vector3(x, y, z));
+            return new Vector3(x, y, z);
         }
 
         private void ReadFace(string[] values)
         {
-            //  Add each index.
-            var trim = new char[] { '-' };
             var face = new int[3];
             foreach (var index in values)
             {
                 //  Split the parts.
                 string[] parts = index.Split(new char[] { '/' }, StringSplitOptions.None);
-
-                //We just need the vertex references, which are the first index of each part.
-                //  Add each part.
-                face[0] = int.Parse(parts[0].Trim(trim), CultureInfo.InvariantCulture);
-                face[1] = int.Parse(parts[1].Trim(trim), CultureInfo.InvariantCulture);
-                face[2] = int.Parse(parts[2].Trim(trim), CultureInfo.InvariantCulture);
+                face[0] = GetFirstVertexIndex(parts[0]);
+                face[1] = GetFirstVertexIndex(parts[1]);
+                face[2] = GetFirstVertexIndex(parts[2]);
             }
-
-      
             CurrentGeometrySet.GeometryMap.Add(face);
         }
 
         private void ReadSurfaceLine(string[] values)
         {
-            var trim = new char[] { '-' };
             var line = new int[values.Length];
             for(var i = 0; i < values.Length; i++)
             {
-                line[i] = int.Parse(values[i].Trim(trim), CultureInfo.InvariantCulture);
+                line[i] = GetFirstVertexIndex(values[i]);
             }
-        
             CurrentGeometrySet.GeometryMap.Add(line);
+        }
+
+        /// <summary>
+        /// Gets the correct vertex reference. If a negative is before the integer, 
+        /// then count backward in the list of vertices by line.
+        /// </summary>
+        /// <param name="vertexIndex"></param>
+        /// <returns></returns>
+        private int GetFirstVertexIndex(string vertexIndex)
+        {
+            var a = int.Parse(vertexIndex, CultureInfo.InvariantCulture);
+            Index i = a < 0 ? ^a : a;
+            return Vertices[VerticesByLine[i]];
         }
         #endregion
     }
