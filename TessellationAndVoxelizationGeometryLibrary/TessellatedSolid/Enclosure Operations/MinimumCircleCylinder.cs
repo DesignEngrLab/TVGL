@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -344,7 +345,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices, Vector3 likelyAxis = default) where T : IVertex3D
+        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();
@@ -365,35 +366,8 @@ namespace TVGL
                     new[] { directions[i], Vector3.Null, Vector3.Null }, default, default,
                     default);
                 box = Find_via_ChanTan_AABB_Approach(cvxHullVertsList, box);
-                if(likelyAxis == default)
+                for (var j = 0; j < 3; j++)
                 {
-                    for (var j = 0; j < 3; j++)
-                    {
-                        var axis = box.Directions[j];
-                        var pointsOnFace_i = cvxHullVertsList.ProjectTo2DCoordinates(axis, out var backTransform);
-                        var circle = MinimumCircle(pointsOnFace_i);
-                        var height = box.Dimensions[j];
-                        var volume = height * circle.Area;
-                        if (minCylinderVolume > volume)
-                        {
-                            minCylinderVolume = volume;
-                            var anchor = circle.Center.ConvertTo3DLocation(backTransform);
-                            var dxOfBottomPlane = box.PointsOnFaces[2 * j][0].Dot(axis);
-
-                            minCylinder = new Cylinder(axis, anchor,
-                                    circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);
-                        }
-                    }
-                }
-                else
-                {
-                    var d1 = Math.Abs(box.Directions[0].Dot(likelyAxis));
-                    var d2 = Math.Abs(box.Directions[1].Dot(likelyAxis));
-                    var d3 = Math.Abs(box.Directions[2].Dot(likelyAxis));
-                    int j;
-                    if (d1 > d2 && d1 > d3) j = 0;
-                    else if (d2 > d3) j = 1;
-                    else j = 2;
                     var axis = box.Directions[j];
                     var pointsOnFace_i = cvxHullVertsList.ProjectTo2DCoordinates(axis, out var backTransform);
                     var circle = MinimumCircle(pointsOnFace_i);
@@ -409,9 +383,63 @@ namespace TVGL
                                 circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);
                     }
                 }
-               
             }
             return minCylinder;
+        }
+
+        /// <summary>
+        ///     Gets the minimum bounding cylinder using 13 guesses for the depth direction
+        /// </summary>
+        /// <param name="convexHullVertices">The convex hull vertices.</param>
+        /// <returns>BoundingBox.</returns>
+        public static Vector3 MinimumBoundingCylinderAxis<T>(this IEnumerable<T> vertices, Vector3 likelyAxis) where T : IVertex3D
+        {
+            BoundingBox<T> box = null;
+            int j = 0;
+            var movement = 1.0;
+            while(movement > 0.001)
+            {
+                var perp1 = likelyAxis.GetPerpendicularDirection();
+                box = FindOBBAlongDirection(vertices, perp1);
+                var d1 = Math.Abs(box.Directions[0].Dot(likelyAxis));
+                var d2 = Math.Abs(box.Directions[1].Dot(likelyAxis));
+                var d3 = Math.Abs(box.Directions[2].Dot(likelyAxis));
+                j = 2;
+                double d = d3;
+                if (d1 > d2 && d1 > d3)
+                {
+                    j = 0;
+                    d = d1;
+                }
+                else if (d2 > d3)
+                {
+                    j = 1;
+                    d = d2;
+                }
+
+                var newAxis = box.Directions[j];
+                //Repeat along second perpendicular
+                var perp2 = newAxis.Cross(perp1);
+                box = FindOBBAlongDirection(vertices, perp2);
+                d1 = Math.Abs(box.Directions[0].Dot(newAxis));
+                d2 = Math.Abs(box.Directions[1].Dot(newAxis));
+                d3 = Math.Abs(box.Directions[2].Dot(newAxis));
+                j = 2;
+                d = d3;
+                if (d1 > d2 && d1 > d3)
+                {
+                    j = 0;
+                    d = d1;
+                }
+                else if (d2 > d3)
+                {
+                    j = 1;
+                    d = d2;
+                }
+                likelyAxis = box.Directions[j];
+                movement = 1 - d;
+            }  
+            return likelyAxis;
         }
 
 
