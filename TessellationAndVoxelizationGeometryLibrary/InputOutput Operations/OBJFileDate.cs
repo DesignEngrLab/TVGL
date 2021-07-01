@@ -276,6 +276,14 @@ namespace TVGL.IOFunctions
             Index i = a < 0 ? ^a : a;
             return Vertices[VerticesByLine[i]];
         }
+
+        #endregion
+
+        #region Save Solids
+        internal static bool SaveSolids(Stream stream, TessellatedSolid[] tessellatedSolids)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 }

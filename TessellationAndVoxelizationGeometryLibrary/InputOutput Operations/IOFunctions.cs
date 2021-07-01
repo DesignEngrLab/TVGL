@@ -158,47 +158,50 @@ namespace TVGL.IOFunctions
         {
             //try
             //{
-                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-                switch (extension)
-                {
-                    case FileType.STL_ASCII:
-                    case FileType.STL_Binary:
-                        solid = STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
-                        break;
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
+            switch (extension)
+            {
+                case FileType.STL_ASCII:
+                case FileType.STL_Binary:
+                    solid = STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
+                    break;
 
-                    case FileType.ThreeMF:
-                        solid = ThreeMFFileData.OpenSolids(s, filename)[0];
-                        break;
+                case FileType.ThreeMF:
+                    solid = ThreeMFFileData.OpenSolids(s, filename)[0];
+                    break;
 
-                    case FileType.Model3MF:
-                        solid = ThreeMFFileData.OpenModelFile(s, filename)[0];
-                        break;
+                case FileType.Model3MF:
+                    solid = ThreeMFFileData.OpenModelFile(s, filename)[0];
+                    break;
 
-                    case FileType.AMF:
-                        solid = AMFFileData.OpenSolids(s, filename)[0];
-                        break;
+                case FileType.AMF:
+                    solid = AMFFileData.OpenSolids(s, filename)[0];
+                    break;
 
-                    case FileType.OFF:
-                        solid = OFFFileData.OpenSolid(s, filename);
-                        // http://en.wikipedia.org/wiki/OFF_(file_format)
-                        break;
+                case FileType.OBJ:
+                    solid = OBJFileData.OpenSolids(s, filename)[0];
+                    break;
 
-                    case FileType.PLY_ASCII:
-                    case FileType.PLY_Binary:
-                        solid = PLYFileData.OpenSolid(s, filename);
-                        break;
+                case FileType.OFF:
+                    solid = OFFFileData.OpenSolid(s, filename);
+                    break;
 
-                    case FileType.SHELL:
-                        solid = ShellFileData.OpenSolids(s, filename)[0];
-                        break;
+                case FileType.PLY_ASCII:
+                case FileType.PLY_Binary:
+                    solid = PLYFileData.OpenSolid(s, filename);
+                    break;
 
-                    default:
-                        var serializer = new JsonSerializer();
-                        var sr = new StreamReader(s);
-                        using (var reader = new JsonTextReader(sr))
-                            solid = serializer.Deserialize<TessellatedSolid>(reader);
-                        break;
-                }
+                case FileType.SHELL:
+                    solid = ShellFileData.OpenSolids(s, filename)[0];
+                    break;
+
+                default:
+                    var serializer = new JsonSerializer();
+                    var sr = new StreamReader(s);
+                    using (var reader = new JsonTextReader(sr))
+                        solid = serializer.Deserialize<TessellatedSolid>(reader);
+                    break;
+            }
             //}
             //catch (Exception exc)
             //{
@@ -240,6 +243,10 @@ namespace TVGL.IOFunctions
 
                     case FileType.SHELL:
                         tessellatedSolids = ShellFileData.OpenSolids(s, filename);
+                        break;
+
+                    case FileType.OBJ:
+                        tessellatedSolids = OBJFileData.OpenSolids(s, filename);
                         break;
 
                     case FileType.OFF:
@@ -320,6 +327,9 @@ namespace TVGL.IOFunctions
 
                     case FileType.AMF:
                         return AMFFileData.OpenSolids(s, filename)[0];
+
+                    case FileType.OBJ:
+                        return OBJFileData.OpenSolids(s, filename)[0];
 
                     case FileType.OFF:
                         return OFFFileData.OpenSolid(s, filename);
@@ -436,6 +446,7 @@ namespace TVGL.IOFunctions
                 case "3mf": return FileType.ThreeMF;
                 case "model": return FileType.Model3MF;
                 case "amf": return FileType.AMF;
+                case "obj": return FileType.OBJ;
                 case "off": return FileType.OFF;
                 case "ply": return FileType.PLY_ASCII;
                 case "shell": return FileType.SHELL;
@@ -454,6 +465,7 @@ namespace TVGL.IOFunctions
                 case FileType.ThreeMF: return "3mf";
                 case FileType.Model3MF: return "model";
                 case FileType.AMF: return "amf";
+                case FileType.OBJ: return "obj";
                 case FileType.OFF: return "off";
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary: return "ply";
@@ -1036,6 +1048,9 @@ namespace TVGL.IOFunctions
                 case FileType.AMF:
                     return AMFFileData.SaveSolids(stream, solids.Cast<TessellatedSolid>().ToArray());
 
+                case FileType.OBJ:
+                    return OBJFileData.SaveSolids(stream, solids.Cast<TessellatedSolid>().ToArray());
+
                 case FileType.ThreeMF:
                     return ThreeMFFileData.Save(stream, solids.Cast<TessellatedSolid>().ToArray());
 
@@ -1076,6 +1091,9 @@ namespace TVGL.IOFunctions
 
                 case FileType.AMF:
                     return AMFFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
+
+                case FileType.OBJ:
+                    return OBJFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
 
                 case FileType.ThreeMF:
                     return ThreeMFFileData.Save(stream, new[] { (TessellatedSolid)solid });

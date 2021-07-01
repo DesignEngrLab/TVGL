@@ -641,6 +641,11 @@ namespace TVGL
         Model3MF,
 
         /// <summary>
+        ///     Wavefront 3D File Format
+        /// </summary>
+        OBJ,
+
+        /// <summary>
         ///     Additive Manufacturing File Format
         /// </summary>
         AMF,
