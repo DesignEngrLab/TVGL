@@ -245,6 +245,21 @@ namespace TVGL
             Radius = radius;
             IsPositive = isPositive;
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive)
+        {
+            Axis = axis;
+            Anchor = anchor;
+            Radius = radius;
+            IsPositive = isPositive;
+        }
         /// <summary>
         /// Initializes a new instance of the <see cref="Cylinder"/> class.
         /// </summary>

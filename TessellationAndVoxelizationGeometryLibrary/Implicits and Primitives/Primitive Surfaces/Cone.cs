@@ -22,9 +22,9 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="aperture">The aperture.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        /// <param name="facesAll">The faces all.</param>
-        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive, IEnumerable<PolygonalFace> facesAll = null)
-            : base(facesAll)
+        /// <param name="faces">The faces all.</param>
+        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive, IEnumerable<PolygonalFace> faces = null)
+            : base(faces)
         {
             Apex = apex;
             Axis = axis;

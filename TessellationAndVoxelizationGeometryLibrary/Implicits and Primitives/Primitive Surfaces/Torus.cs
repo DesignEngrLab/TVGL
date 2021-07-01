@@ -15,15 +15,38 @@ namespace TVGL
     public class Torus : PrimitiveSurface
     {
         internal Torus() { }
+
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
+        /// Initializes a new instance of the <see cref="Torus"/> class.
         /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="majorRadius">The major radius.</param>
+        /// <param name="minorRadius">The minor radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
         public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive,
             IEnumerable<PolygonalFace> faces) : base(faces)
         {
             Center = center;
             Axis = axis;
+            IsPositive = isPositive;
+            MajorRadius = majorRadius;
+            MinorRadius = minorRadius;
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="majorRadius">The major radius.</param>
+        /// <param name="minorRadius">The minor radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive)
+        {
+            Center = center;
+            Axis = axis;
+            IsPositive = isPositive;
             MajorRadius = majorRadius;
             MinorRadius = minorRadius;
         }

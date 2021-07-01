@@ -46,16 +46,32 @@ namespace TVGL
             }
             return sqDistanceSum / coords.Count;
         }
-    
+
 
         #region Constructor
 
         /// <summary>
-        ///     Primitive Sphere
+        /// Initializes a new instance of the <see cref="Sphere"/> class.
         /// </summary>
-        /// <param name="facesAll">The faces all.</param>
+        /// <param name="center">The center.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        /// <param name="faces">The faces.</param>
         public Sphere(Vector3 center, double radius, bool isPositive, IEnumerable<PolygonalFace> faces)
             : base(faces)
+        {
+            Center = center;
+            IsPositive = isPositive;
+            Radius = radius;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Sphere"/> class.
+        /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        public Sphere(Vector3 center, double radius, bool isPositive)
         {
             Center = center;
             IsPositive = isPositive;
