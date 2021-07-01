@@ -88,9 +88,13 @@ namespace TVGL
             }
         }
 
-        internal bool BothSidesSamePrimitive;
+        /// <summary>
+        /// Gets or sets a value indicating whether [both sides same primitive].
+        /// </summary>
+        /// <value><c>true</c> if [both sides same primitive]; otherwise, <c>false</c>.</value>
+        public bool BothSidesSamePrimitive { get; set; }
 
-        internal SurfaceBorder(IEnumerable<Vector3> points, Type curveType) : base()
+        public SurfaceBorder(IEnumerable<Vector3> points, Type curveType) : base()
         {
             var pointList = GetVertices().Select(v => v.Coordinates).ToList();
             if (points != null) pointList.AddRange(points);
@@ -116,7 +120,7 @@ namespace TVGL
             this.PlaneError = planeError;
         }
 
-        internal double PlaneResidualRatio(Vector3 coordinates, double tolerance)
+        public double PlaneResidualRatio(Vector3 coordinates, double tolerance)
         {
             var denominator = Math.Max(PlaneError, tolerance);
             return CalcPlaneError(coordinates) / denominator;
@@ -128,7 +132,7 @@ namespace TVGL
             return (d - Plane.DistanceToOrigin) * (d - Plane.DistanceToOrigin);
         }
 
-        internal double CurveResidualRatio(Vector3 coordinates, double tolerance)
+        public double CurveResidualRatio(Vector3 coordinates, double tolerance)
         {
             var denominator = Math.Max(CurveError, tolerance);
             return CalcError(coordinates) / denominator;
@@ -140,7 +144,7 @@ namespace TVGL
         }
 
 
-        internal bool Upgrade(Vector3 newPoint)
+        public bool Upgrade(Vector3 newPoint)
         {
             return false;
             throw new NotImplementedException();
@@ -150,7 +154,7 @@ namespace TVGL
             // make the new fit better.
         }
 
-        internal bool UpdateTerms()
+        public bool UpdateTerms()
         {
             return UpdateTerms(GetVertices().Select(v => v.Coordinates).ToList(), Curve.GetType());
         }
