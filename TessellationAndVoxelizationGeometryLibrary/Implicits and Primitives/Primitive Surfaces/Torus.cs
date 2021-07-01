@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TVGL.Numerics;
 
 namespace TVGL
@@ -84,20 +85,28 @@ namespace TVGL
 
         public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
+            List<Vector3> coords;
+            if (vertices == null)
+            {
+                coords = Vertices.Select(v => v.Coordinates).ToList();
+                coords.AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                coords.AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+            }
+            else if (vertices is List<Vector3>)
+                coords = (List<Vector3>)vertices;
+            else coords = vertices.Select(v => new Vector3(v.X, v.Y, v.Z)).ToList();
+
             var planeDist = Center.Dot(Axis);
             var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            foreach (var c in coords)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, coords, planeDist);
-                var d = (coords - ptOnCircle).Length() - MinorRadius;
+                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, c, planeDist);
+                var d = (c - ptOnCircle).Length() - MinorRadius;
                 sqDistanceSum += d * d;
-                numVerts++;
             }
-            return sqDistanceSum / numVerts;
+            return sqDistanceSum / coords.Count;
         }
+
         public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, double planeDist = double.NaN)
         {
             if (double.IsNaN(planeDist)) planeDist = center.Dot(axis);

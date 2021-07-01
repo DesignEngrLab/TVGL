@@ -208,10 +208,11 @@ namespace TVGL
         /// <param name="transformMatrix">The transform matrix.</param>
         public virtual void Transform(Matrix4x4 transformMatrix)
         {
-            foreach (var v in Vertices)
-            {
-                v.Coordinates = v.Coordinates.Transform(transformMatrix);
-            }
+            // it is assumed that this is done before this base call
+            //foreach (var v in Vertices)
+            //{
+            //    v.Coordinates = v.Coordinates.Transform(transformMatrix);
+            //}
         }
 
         /// <summary>

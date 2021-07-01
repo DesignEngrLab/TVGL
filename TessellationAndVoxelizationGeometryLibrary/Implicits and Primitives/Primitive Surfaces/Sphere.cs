@@ -27,21 +27,26 @@ namespace TVGL
 
         public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
-            var radius = Radius;
-            var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            List<Vector3> coords;
+            if (vertices == null)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                var d = (coords - Center).Length() - radius;
-                sqDistanceSum += d * d;
-                numVerts++;
+                coords = Vertices.Select(v => v.Coordinates).ToList();
+                coords.AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                coords.AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
             }
-            return sqDistanceSum / numVerts;
+            else if (vertices is List<Vector3>)
+                coords = (List<Vector3>)vertices;
+            else coords = vertices.Select(v => new Vector3(v.X, v.Y, v.Z)).ToList();
+
+            var sqDistanceSum = 0.0;
+            foreach (var c in coords)
+            {
+                var d = (c - Center).Length() - Radius;
+                sqDistanceSum += d * d;
+            }
+            return sqDistanceSum / coords.Count;
         }
-
-
+    
 
         #region Constructor
 
