@@ -206,13 +206,7 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public virtual void Transform(Matrix4x4 transformMatrix)
-        {
-            foreach (var v in Vertices)
-            {
-                v.Coordinates = v.Coordinates.Transform(transformMatrix);
-            }
-        }
+        public abstract void Transform(Matrix4x4 transformMatrix);
 
         /// <summary>
         ///     Updates surface by adding face

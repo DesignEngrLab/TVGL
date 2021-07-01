@@ -22,9 +22,9 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="aperture">The aperture.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        /// <param name="facesAll">The faces all.</param>
-        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive, IEnumerable<PolygonalFace> facesAll = null)
-            : base(facesAll)
+        /// <param name="faces">The faces all.</param>
+        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive, IEnumerable<PolygonalFace> faces = null)
+            : base(faces)
         {
             Apex = apex;
             Axis = axis;
@@ -36,7 +36,7 @@ namespace TVGL
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
         public Cone(Cone originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied,  copiedTessellatedSolid )
+            : base(originalToBeCopied, copiedTessellatedSolid)
         {
             IsPositive = originalToBeCopied.IsPositive;
             Aperture = originalToBeCopied.Aperture;
@@ -81,19 +81,25 @@ namespace TVGL
 
         public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
-            var aper = Aperture;
-            var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            List<Vector3> coords;
+            if (vertices == null)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                var d = (coords - Apex).Cross(Axis).Length()
-                    - Math.Abs(aper * (coords - Apex).Dot(Axis));
-                sqDistanceSum += d * d;
-                numVerts++;
+                coords = Vertices.Select(v => v.Coordinates).ToList();
+                coords.AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                coords.AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
             }
-            return sqDistanceSum / numVerts;
+            else if (vertices is List<Vector3>)
+                coords = (List<Vector3>)vertices;
+            else coords = vertices.Select(v => new Vector3(v.X, v.Y, v.Z)).ToList();
+
+            var sqDistanceSum = 0.0;
+            foreach (var c in coords)
+            {
+                var d = (c - Apex).Cross(Axis).Length()
+                    - Math.Abs(Aperture * (c - Apex).Dot(Axis));
+                sqDistanceSum += d * d;
+            }
+            return sqDistanceSum / coords.Count;
         }
     }
 }

@@ -292,7 +292,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator /(Vector3 value1, double value2)
         {
-            return value1 / new Vector3(value2);
+            return new Vector3(value1.X / value2, value1.Y / value2, value1.Z / value2);
         }
 
         /// <summary>

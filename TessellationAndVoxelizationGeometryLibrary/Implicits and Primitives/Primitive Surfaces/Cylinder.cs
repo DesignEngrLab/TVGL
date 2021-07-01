@@ -31,18 +31,23 @@ namespace TVGL
 
         public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
-            var radius = Radius;
-            var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            List<Vector3> coords;
+            if (vertices == null)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                var d = (coords - Anchor).Cross(Axis).Length() - radius;
-                sqDistanceSum += d * d;
-                numVerts++;
+                coords = Vertices.Select(v => v.Coordinates).ToList();
+                coords.AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                coords.AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
             }
-            return sqDistanceSum / numVerts;
+            else if (vertices is List<Vector3>)
+                coords = (List<Vector3>)vertices;
+            else coords = vertices.Select(v => new Vector3(v.X, v.Y, v.Z)).ToList();
+            var sqDistanceSum = 0.0;
+            foreach (var c in coords)
+            {
+                var d = (c - Anchor).Cross(Axis).Length() - Radius;
+                sqDistanceSum += d * d;
+            }
+            return sqDistanceSum / coords.Count;
         }
 
         #region Properties
@@ -234,6 +239,21 @@ namespace TVGL
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive, IEnumerable<PolygonalFace> faces) : base(faces)
+        {
+            Axis = axis;
+            Anchor = anchor;
+            Radius = radius;
+            IsPositive = isPositive;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cylinder"/> class.
+        /// </summary>
+        /// <param name="axis">The axis.</param>
+        /// <param name="anchor">The anchor.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        public Cylinder(Vector3 axis, Vector3 anchor, double radius, bool isPositive)
         {
             Axis = axis;
             Anchor = anchor;
