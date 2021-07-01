@@ -22,7 +22,7 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            throw new NotImplementedException();
+            Center = Center.Transform(transformMatrix);
         }
 
         public override double CalculateError(IEnumerable<IVertex3D> vertices = null)

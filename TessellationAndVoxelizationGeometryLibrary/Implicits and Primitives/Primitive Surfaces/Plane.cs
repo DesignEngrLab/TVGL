@@ -85,6 +85,18 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             Normal = normal;
         }
 
+        public Plane(IEnumerable<Vertex> vertices, Vector3 normalGuess)
+        {            
+            DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
+            if (normal.Dot(normalGuess) < 0)
+            {
+                normal *= -1;
+                dto *= -1;
+            }
+            DistanceToOrigin = dto;
+            Normal = normal;
+        }
+
 
         public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vertex> vertices, out double distanceToPlane, out Vector3 normal)
         {
