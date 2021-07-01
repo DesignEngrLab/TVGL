@@ -215,7 +215,7 @@ namespace TVGL
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
-            var random = new Random();
+            var colorsEnumerator = Constants.GetRandomColor().GetEnumerator();
 
             foreach (var path in vertexPaths)
             {
@@ -232,14 +232,16 @@ namespace TVGL
                 if (closeLoops)
                     lineCollection.Add(lineCollection.First());
                 else lineCollection.RemoveAt(lineCollection.Count - 1);
-                var colFamily = Constants.ColorDictionary[(TVGL.ColorFamily)random.Next(12)];
-                var colorKeyList = colFamily.Keys.ToList();
-                var tvglcolor = colFamily[colorKeyList[random.Next(colorKeyList.Count)]];
-                var color = new System.Windows.Media.Color();
-                color.R = tvglcolor.R;
-                color.G = tvglcolor.G;
-                color.B = tvglcolor.B;
-                color.A = tvglcolor.A;
+
+                colorsEnumerator.MoveNext();
+                var tvglcolor = colorsEnumerator.Current;
+                var color = new System.Windows.Media.Color
+                {
+                    R = tvglcolor.R,
+                    G = tvglcolor.G,
+                    B = tvglcolor.B,
+                    A = tvglcolor.A
+                };
                 var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color, Thickness = 3.0 };
                 window.view1.Children.Add(lines);
             }

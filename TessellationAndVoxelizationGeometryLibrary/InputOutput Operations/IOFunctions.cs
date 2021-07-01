@@ -253,12 +253,16 @@ namespace TVGL.IOFunctions
                     case FileType.PLY_ASCII:
                     case FileType.PLY_Binary:
                         throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
-                    default:
+                    case FileType.TVGL:
                         var serializer = new JsonSerializer();
                         var sr = new StreamReader(s);
                         using (var reader = new JsonTextReader(sr))
                             // note this is a hack...<T> is overly specific
                             tessellatedSolids = serializer.Deserialize<TessellatedSolid[]>(reader);
+                        break;
+                    default:
+                        Message.output(filename + " is not a recognized 3D format.");
+                        tessellatedSolids = new TessellatedSolid[0];
                         break;
                 }
             }

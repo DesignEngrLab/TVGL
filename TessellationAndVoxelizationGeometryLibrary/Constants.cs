@@ -200,6 +200,19 @@ namespace TVGL
 
         #region new known colors
 
+        public static IEnumerable<Color> GetRandomColor()
+        {
+            var random = new Random();
+            var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
+                .Select(dict=>dict.Values.OrderBy(dummy2=>random.NextDouble()).ToList()).ToList();
+            var innerIndex = 0;
+            for (int i = 0; i < families.Count; i++)
+            {
+                yield return families[i][innerIndex % families[i].Count];
+                if (i == families.Count - 1) i = 0; //this will make it cycle forever
+            }
+        }
+
         /// <summary>
         /// The new known colors are taken from http://www.workwithcolor.com/
         /// </summary>

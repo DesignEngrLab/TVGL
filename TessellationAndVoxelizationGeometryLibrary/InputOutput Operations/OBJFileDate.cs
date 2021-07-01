@@ -95,6 +95,8 @@ namespace TVGL.IOFunctions
 
         private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts)
         {
+            var showPatches = true;
+            ts.Primitives = new List<PrimitiveSurface>();
             var significantEdges = new HashSet<Edge>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
             foreach (var faceIndices in objFileData.FaceGroups)
@@ -125,7 +127,8 @@ namespace TVGL.IOFunctions
                         }
                     }
                     if (connectingEdge == null)
-                        throw new Exception("No edge in tessellated solid that matches polyline segment");
+                        continue;
+                    //throw new Exception("No edge in tessellated solid that matches polyline segment");
                     if (!significantEdges.Contains(connectingEdge))
                         significantEdges.Add(connectingEdge);
                 }
@@ -136,6 +139,25 @@ namespace TVGL.IOFunctions
                 var primitive = new UnknownRegion(patch);
                 ts.Primitives.Add(primitive);
             }
+#if PRESENT
+            if (showPatches)
+            {
+                ts.ResetDefaultColor();
+                ts.HasUniformColor = false;
+                var colorsEnumerator = Constants.GetRandomColor().GetEnumerator();
+                foreach (var primitive in ts.Primitives)
+                {
+                    colorsEnumerator.MoveNext();
+                    var color = colorsEnumerator.Current;
+                    foreach (var face in primitive.Faces)
+                    {
+                        face.Color = color;
+                    }
+                }
+                Presenter.ShowVertexPathsWithSolid(significantEdges.Select(edge => new[] { edge.From.Coordinates, edge.To.Coordinates }),
+                    new[] { ts }, false);
+            }
+#endif
         }
 
 
@@ -225,6 +247,8 @@ namespace TVGL.IOFunctions
                         break;
                 }
             }
+            if (!objData.Any() || objData[^1] != objSolid) 
+                objData.Add(objSolid);
             return true;
         }
 
@@ -273,7 +297,7 @@ namespace TVGL.IOFunctions
         private int GetFirstVertexIndex(string vertexIndex)
         {
             var a = int.Parse(vertexIndex, CultureInfo.InvariantCulture);
-            Index i = a < 0 ? ^a : a;
+            Index i = a < 0 ? ^-a : a - 1;
             return Vertices[VerticesByLine[i]];
         }
 
