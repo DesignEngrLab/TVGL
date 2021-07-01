@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
@@ -88,6 +89,94 @@ namespace TVGL
         }
 
         internal bool BothSidesSamePrimitive;
+
+        internal SurfaceBorder(IEnumerable<Vector3> points, Type curveType) : base()
+        {
+            var pointList = GetVertices().Select(v => v.Coordinates).ToList();
+            if (points != null) pointList.AddRange(points);
+            if (Plane.DefineNormalAndDistanceFromVertices(pointList, out var distanceToPlane, out var normal))
+                Plane = new Plane(distanceToPlane, normal);
+            else
+            {
+                var lineDir = Vector3.Zero;
+                for (int i = 1; i < pointList.Count; i++)
+                    lineDir += (pointList[i] - pointList[0]);
+                normal = lineDir.Normalize().GetPerpendicularDirection();
+                Plane = new Plane(pointList[0], normal);
+            }
+            UpdateTerms(pointList, curveType);
+        }
+
+
+        public SurfaceBorder(I2DCurve curve2D, Plane curvePlane, double curveError, double planeError) : this()
+        {
+            this.Curve = curve2D;
+            this.Plane = curvePlane;
+            this.CurveError = curveError;
+            this.PlaneError = planeError;
+        }
+
+        internal double PlaneResidualRatio(Vector3 coordinates, double tolerance)
+        {
+            var denominator = Math.Max(PlaneError, tolerance);
+            return CalcPlaneError(coordinates) / denominator;
+        }
+
+        private double CalcPlaneError(Vector3 point)
+        {
+            var d = Plane.Normal.Dot(point);
+            return (d - Plane.DistanceToOrigin) * (d - Plane.DistanceToOrigin);
+        }
+
+        internal double CurveResidualRatio(Vector3 coordinates, double tolerance)
+        {
+            var denominator = Math.Max(CurveError, tolerance);
+            return CalcError(coordinates) / denominator;
+        }
+
+        private double CalcError(Vector3 point)
+        {
+            return Curve.SquaredErrorOfNewPoint(point.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane));
+        }
+
+
+        internal bool Upgrade(Vector3 newPoint)
+        {
+            return false;
+            throw new NotImplementedException();
+            // in the future - see if upgrading from straight to circle
+            // then circle to parabola
+            // or ellipse and hyperbola
+            // make the new fit better.
+        }
+
+        internal bool UpdateTerms()
+        {
+            return UpdateTerms(GetVertices().Select(v => v.Coordinates).ToList(), Curve.GetType());
+        }
+
+        internal bool UpdateTerms(IList<Vector3> pointList, Type curveType)
+        {
+            var sucess = UpdateTerms(pointList.Select(p => p.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane)).ToList(), curveType);
+            if (sucess)
+            {
+                PlaneError = pointList.Sum(p => CalcPlaneError(p)) / pointList.Count;
+                return true;
+            }
+            return false;
+        }
+        internal bool UpdateTerms(IList<Vector2> point2D, Type curveType)
+        {
+            var arguments = new object[] { point2D, null, null };
+            if ((bool)curveType.GetMethod("CreateFromPoints").Invoke(null, arguments))
+            {
+                Curve = (I2DCurve)arguments[1];
+                CurveError = (double)arguments[2];
+                return true;
+            }
+            return false;
+        }
+
 
         public IEnumerable<Vertex> GetVertices() => Edges.GetVertices();
 

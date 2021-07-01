@@ -17,7 +17,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="UnknownRegion" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public UnknownRegion(List<PolygonalFace> faces) : base(faces) { }
+        public UnknownRegion(IEnumerable<PolygonalFace> faces) : base(faces) { }
         public UnknownRegion() { }
 
 
