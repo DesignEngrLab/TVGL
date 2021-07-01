@@ -344,7 +344,7 @@ namespace TVGL
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <returns>BoundingBox.</returns>
-        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices) where T : IVertex3D
+        public static Cylinder MinimumBoundingCylinder<T>(this IEnumerable<T> convexHullVertices, Vector3 likelyAxis = default) where T : IVertex3D
         {
             // here we create 13 directions. just like for bounding box
             var directions = new List<Vector3>();
@@ -365,8 +365,35 @@ namespace TVGL
                     new[] { directions[i], Vector3.Null, Vector3.Null }, default, default,
                     default);
                 box = Find_via_ChanTan_AABB_Approach(cvxHullVertsList, box);
-                for (var j = 0; j < 3; j++)
+                if(likelyAxis == default)
                 {
+                    for (var j = 0; j < 3; j++)
+                    {
+                        var axis = box.Directions[j];
+                        var pointsOnFace_i = cvxHullVertsList.ProjectTo2DCoordinates(axis, out var backTransform);
+                        var circle = MinimumCircle(pointsOnFace_i);
+                        var height = box.Dimensions[j];
+                        var volume = height * circle.Area;
+                        if (minCylinderVolume > volume)
+                        {
+                            minCylinderVolume = volume;
+                            var anchor = circle.Center.ConvertTo3DLocation(backTransform);
+                            var dxOfBottomPlane = box.PointsOnFaces[2 * j][0].Dot(axis);
+
+                            minCylinder = new Cylinder(axis, anchor,
+                                    circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);
+                        }
+                    }
+                }
+                else
+                {
+                    var d1 = Math.Abs(box.Directions[0].Dot(likelyAxis));
+                    var d2 = Math.Abs(box.Directions[1].Dot(likelyAxis));
+                    var d3 = Math.Abs(box.Directions[2].Dot(likelyAxis));
+                    int j;
+                    if (d1 > d2 && d1 > d3) j = 0;
+                    else if (d2 > d3) j = 1;
+                    else j = 2;
                     var axis = box.Directions[j];
                     var pointsOnFace_i = cvxHullVertsList.ProjectTo2DCoordinates(axis, out var backTransform);
                     var circle = MinimumCircle(pointsOnFace_i);
@@ -382,6 +409,7 @@ namespace TVGL
                                 circle.Radius, dxOfBottomPlane, dxOfBottomPlane + height);
                     }
                 }
+               
             }
             return minCylinder;
         }
