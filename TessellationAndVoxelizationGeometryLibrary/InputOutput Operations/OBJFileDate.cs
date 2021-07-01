@@ -95,18 +95,22 @@ namespace TVGL.IOFunctions
 
         private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts)
         {
-            var borders = new List<SurfaceBorder>();
+            var significantEdges = new HashSet<Edge>();
+            var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
             foreach (var faceIndices in objFileData.FaceGroups)
             {
                 var primitive = new UnknownRegion(faceIndices.Select(index => ts.Faces[index]));
                 ts.Primitives.Add(primitive);
-                //primitive.DefineBorders();
-                //foreach (var border in primitive.Borders)
-                //    borders.Add(border);
+                foreach (var face in primitive.Faces)
+                    remainingFaces.Remove(face);
+                primitive.DefineBorders();
+                foreach (var border in primitive.Borders)
+                    foreach (var edge in border.Edges.EdgeList)
+                        if (!significantEdges.Contains(edge))
+                            significantEdges.Add(edge);
             }
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
-                var edgePath = new EdgePath();
                 for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
                 {
                     var vertexJ = ts.Vertices[j];
@@ -122,10 +126,15 @@ namespace TVGL.IOFunctions
                     }
                     if (connectingEdge == null)
                         throw new Exception("No edge in tessellated solid that matches polyline segment");
-                    edgePath.Add(connectingEdge, connectingEdge.To == vertexK);
+                    if (!significantEdges.Contains(connectingEdge))
+                        significantEdges.Add(connectingEdge);
                 }
-                edgePath.IsClosed = borderIndices[0] == borderIndices[^1];
-                borders.Add(new SurfaceBorder { Edges = edgePath });
+            }
+            var patches = SurfaceBorder.GetFacePatchesBetweenSignificantEdges(significantEdges, remainingFaces);
+            foreach (var patch in patches)
+            {
+                var primitive = new UnknownRegion(patch);
+                ts.Primitives.Add(primitive);
             }
         }
 

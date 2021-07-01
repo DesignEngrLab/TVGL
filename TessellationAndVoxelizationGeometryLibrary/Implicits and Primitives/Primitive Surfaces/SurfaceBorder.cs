@@ -234,5 +234,37 @@ namespace TVGL
             }
             return copy;
         }
+
+
+        public static IEnumerable<HashSet<PolygonalFace>> GetFacePatchesBetweenSignificantEdges(HashSet<Edge> significantEdges, IEnumerable<PolygonalFace> faces)
+        {
+            var remainingFaces = new HashSet<PolygonalFace>(faces);
+            //Pick a start edge, then collect all adjacent faces on one side of the face, without crossing over significant edges.
+            //This collection of faces will be used to create a patch.
+            while (remainingFaces.Any())
+            {
+                var startFace = remainingFaces.First();
+                var patch = new HashSet<PolygonalFace> { startFace };
+                remainingFaces.Remove(startFace);
+                var stack = new Stack<PolygonalFace>();
+                stack.Push(startFace);
+                while (stack.Any())
+                {
+                    var face = stack.Pop();
+                    foreach (var edge in face.Edges)
+                    {
+                        if (significantEdges.Contains(edge)) continue;//Don't cross over significant edges
+                        var otherFace = face == edge.OwnedFace ? edge.OtherFace : edge.OwnedFace;
+                        if (remainingFaces.Contains(otherFace))
+                        {
+                            stack.Push(otherFace);
+                            patch.Add(otherFace);
+                            remainingFaces.Remove(otherFace);
+                        }
+                    }
+                }
+                yield return patch;
+            }
+        }
     }
 }
