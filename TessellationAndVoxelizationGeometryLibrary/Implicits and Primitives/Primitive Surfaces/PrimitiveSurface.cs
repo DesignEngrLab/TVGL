@@ -25,10 +25,7 @@ namespace TVGL
         protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
             if (faces == null) return;
-            Faces = new HashSet<PolygonalFace>(faces);
-            foreach (var face in Faces)
-                face.BelongsToPrimitive = this;
-            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+            SetFacesAndVertices(faces);
         }
 
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
@@ -76,7 +73,7 @@ namespace TVGL
             Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
         }
 
-        public abstract double CalculateError(IEnumerable<IVertex3D> vertices = null);
+        public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
 
         public int Index { get; set; }
 
@@ -333,7 +330,7 @@ namespace TVGL
             foreach (var border in edges.GetLoops(Faces))
             {
                 _borders.Add(border);
-                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), 
+                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates),
                     out var bestFitPlane, out var planeResidual, out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)
                 border.Plane = bestFitPlane;

@@ -29,25 +29,24 @@ namespace TVGL
             //throw new NotImplementedException();
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
-            List<Vector3> coords;
             if (vertices == null)
             {
-                coords = Vertices.Select(v => v.Coordinates).ToList();
-                coords.AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
-                coords.AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                vertices = new List<Vector3>();
+                vertices = Vertices.Select(v => v.Coordinates).ToList();
+                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
             }
-            else if (vertices is List<Vector3>)
-                coords = (List<Vector3>)vertices;
-            else coords = vertices.Select(v => new Vector3(v.X, v.Y, v.Z)).ToList();
             var sqDistanceSum = 0.0;
-            foreach (var c in coords)
+            var numVerts = 0;
+            foreach (var c in vertices)
             {
                 var d = (c - Anchor).Cross(Axis).Length() - Radius;
                 sqDistanceSum += d * d;
+                numVerts++;
             }
-            return sqDistanceSum / coords.Count;
+            return sqDistanceSum / numVerts;
         }
 
         #region Properties

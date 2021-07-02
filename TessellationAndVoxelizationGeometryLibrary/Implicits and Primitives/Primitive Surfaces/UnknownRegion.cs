@@ -36,7 +36,7 @@ namespace TVGL
             //base.Transform(transformMatrix);
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
             return 0.0;
         }
