@@ -20,6 +20,11 @@ namespace TVGL
         public UnknownRegion(IEnumerable<PolygonalFace> faces) : base(faces) { }
         public UnknownRegion() { }
 
+        public UnknownRegion(UnknownRegion originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
+    : base(originalToBeCopied, copiedTessellatedSolid)
+        {
+        }
+
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
