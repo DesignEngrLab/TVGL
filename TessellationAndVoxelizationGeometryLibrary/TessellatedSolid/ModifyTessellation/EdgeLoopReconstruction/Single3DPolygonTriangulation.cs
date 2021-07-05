@@ -292,9 +292,9 @@ namespace TVGL
             var area = cross.Length(); // you're suppose to divided by 2 here but since all triangles scored this way,
                                        // then it's okay to work on the doubled value
             triangle.Normal = cross.Normalize();
-            return area;
+            //return area;
             //return area * (2 - neighborNormal.Dot(triangle.Normal));
-            //return area + dotWeight * (1 - neighborNormal.Dot(triangle.Normal));
+            return area *(1+dotWeight * (1 - neighborNormal.Dot(triangle.Normal)));
         }
     }
 }
