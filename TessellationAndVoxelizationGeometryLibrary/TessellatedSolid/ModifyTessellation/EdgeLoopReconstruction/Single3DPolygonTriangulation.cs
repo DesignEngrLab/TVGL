@@ -40,7 +40,7 @@ namespace TVGL
         internal double Score { get; set; }
         internal Vector3 Normal { get; set; }
 
-        internal List<int> VertexIDList()
+        internal int[] VertexIDList()
         {
             //return GetVertices().Select(v => v.IndexInList).OrderBy(x => x).ToList();
             //instead of sorting the list, we simply need to change the starting location
@@ -48,12 +48,12 @@ namespace TVGL
             //shifts the start of the list to the lowest entry
             var lowestIndex = int.MaxValue;
             var positionOfLowestIndex = -1;
-            var resultList = new List<int>();
+            var resultList = new List<int>(Count); //[Count];
             int i = 0;
             foreach (var vertex in GetVertices())
             {
                 var vIndex = vertex.IndexInList;
-                resultList.Add(vIndex);
+                resultList[i] = vIndex;
                 if (vIndex < lowestIndex)
                 {
                     lowestIndex = vIndex;
@@ -61,20 +61,115 @@ namespace TVGL
                 }
                 i++;
             }
-            for (i = 0; i < positionOfLowestIndex; i++)
-            {
-                var thisIndex = resultList[0];
-                resultList.RemoveAt(0);
-                resultList.Add(thisIndex);
-            }
-            return resultList;
-
+            var result = new int[Count];
+            resultList.CopyTo(result, positionOfLowestIndex);
+            resultList.RemoveRange(0, positionOfLowestIndex);
+            resultList.CopyTo(result);
+            return result;
         }
-
     }
     public static class Single3DPolygonTriangulation
     {
         const int MaxStatesToSearch = 1000000000; // 1 billion
+
+
+
+        /// <summary>
+        /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
+        /// </summary>
+        /// <param name="edgePath">The edge path.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;Vertex[], Vector3&gt;&gt;.</returns>
+        public static IEnumerable<(List<Vertex> vertices, Vector3 normal)> QuickTriangulate(IList<(Edge edge, bool dir)> edgePath)
+        {
+            var edgeArray = new (Edge edge, bool dir)[edgePath.Count];
+            edgePath.CopyTo(edgeArray, 0);
+            var sortedVertices = new SimplePriorityQueue<int, double>();
+            var neighborNormals = new Dictionary<Edge, Vector3>();
+            var candidateTriangles = new TriangulationLoop[edgeArray.Length];
+            var maxSurfaceArea = edgeArray.Sum(e => e.edge.Length);
+            var weightForDotProduct = 25 * maxSurfaceArea / (edgeArray.Length - 2);
+            var prevEAD = edgeArray[^1];  // EAD = Edge And Dir
+            var prevFace = prevEAD.dir ? prevEAD.edge.OtherFace : prevEAD.edge.OwnedFace;
+            var prevVertex = prevEAD.dir ? prevEAD.edge.From : prevEAD.edge.To;
+            for (int i = 0; i < edgeArray.Length; i++)
+            {
+                var thisEAD = edgeArray[i];
+                var thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
+                var thisVertex = thisEAD.dir ? thisEAD.edge.To : thisEAD.edge.From;
+                var newEdge = new Edge(thisVertex, prevVertex, false);
+                var triangle = new TriangulationLoop(new[] { prevEAD, thisEAD, (newEdge, true) });
+                sortedVertices.Enqueue(i, CalcObjFunction(weightForDotProduct, triangle, prevFace.Normal, thisFace.Normal, Vector3.Null));
+                neighborNormals.Add(newEdge, triangle.Normal);
+                prevEAD = thisEAD;
+                prevFace = thisFace;
+                prevVertex = thisVertex;
+            }
+            for (int i = 0; i < edgeArray.Length - 2; i++)
+            //while (sortedVertices.Any())
+            {
+                var triangleIndex = sortedVertices.Dequeue();
+                var triangle = candidateTriangles[triangleIndex];
+                yield return (triangle.GetVertices().ToList(), triangle.Normal);
+
+                candidateTriangles[triangleIndex] = null;
+
+                var posDirIndex = GetForwardIndex(candidateTriangles, triangleIndex);
+                var negDirIndex = GetBackwardsIndex(candidateTriangles, triangleIndex);
+                if (i == edgeArray.Length - 3)
+                {
+                    sortedVertices.Remove(posDirIndex);
+                    sortedVertices.Remove(negDirIndex);
+                }
+                else
+                {
+                    var posDirTriangle = candidateTriangles[posDirIndex];
+                    var negDirTriangle = candidateTriangles[negDirIndex];
+
+                    posDirTriangle = new TriangulationLoop(new[] { (triangle[2].edge, !triangle[2].dir),posDirTriangle[1],
+                (new Edge(posDirTriangle[1].dir?posDirTriangle[1].edge.To:posDirTriangle[1].edge.From,
+                triangle.FirstVertex,false), true)});
+                    candidateTriangles[posDirIndex] = posDirTriangle;
+                    negDirTriangle = new TriangulationLoop(new[] { negDirTriangle[0], (triangle[2].edge, !triangle[2].dir),
+                (new Edge(triangle[2].dir?triangle[2].edge.From:triangle[2].edge.To,negDirTriangle.FirstVertex,false),true)});
+                    candidateTriangles[negDirIndex] = negDirTriangle;
+
+                    sortedVertices.UpdatePriority(posDirIndex, CalcObjFunction(weightForDotProduct, posDirTriangle, triangle.Normal, neighborNormals[posDirTriangle[1].edge],
+                       Vector3.Null));
+
+                    sortedVertices.UpdatePriority(negDirIndex, CalcObjFunction(weightForDotProduct, negDirTriangle, neighborNormals[negDirTriangle[0].edge], triangle.Normal,
+                       Vector3.Null));
+                    neighborNormals.Remove(triangle[0].edge);
+                    neighborNormals.Remove(triangle[1].edge);
+                    neighborNormals.Remove(triangle[2].edge);
+                    neighborNormals.Add(posDirTriangle[3].edge, posDirTriangle.Normal);
+                    neighborNormals.Add(negDirTriangle[3].edge, negDirTriangle.Normal);
+                }
+            }
+        }
+
+        private static int GetForwardIndex(TriangulationLoop[] candidateTriangles, int triangleIndex)
+        {
+            var i = triangleIndex;
+            while (++i < candidateTriangles.Length)
+                if (candidateTriangles[i] != null) return i;
+            i = -1;
+            while (++i < triangleIndex)
+                if (candidateTriangles[i] != null) return i;
+            return -1;
+        }
+
+        private static int GetBackwardsIndex(TriangulationLoop[] candidateTriangles, int triangleIndex)
+        {
+            var i = triangleIndex;
+            while (--i >= 0)
+                if (candidateTriangles[i] != null) return i;
+            i = candidateTriangles.Length;
+            while (--i > triangleIndex)
+                if (candidateTriangles[i] != null) return i;
+            return -1;
+        }
+
+
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
         /// </summary>
@@ -103,10 +198,11 @@ namespace TVGL
             var numTriangles = startDomain.Count - 2;
             var visitedDomains = new Dictionary<List<int>, TriangulationLoop>();
             var maxSurfaceArea = startDomain.EdgeList.Sum(e => e.Length);
-            maxSurfaceArea *= 0.25 * maxSurfaceArea; //the max surface area is to take the perimeter and assume that 
-                                                     // the shape is a circle. I never thought about the before, but the area of a circle is the circumference 
-                                                     // squared divided by 4.
-            var weightForDotProduct = maxSurfaceArea / numTriangles;
+            //maxSurfaceArea *= 0.25 * maxSurfaceArea; 
+            //the max surface area is to take the perimeter and assume that 
+            // the shape is a circle. I never thought about the before, but the 
+            // area of a circle is the circumference squared divided by 4.
+            var weightForDotProduct = 3 * maxSurfaceArea / numTriangles;
             var startingEdgeAndDirection = FindSharpestTurn(startDomain);
 
             var startingNeighborFaceNormal = startingEdgeAndDirection.dir ? startingEdgeAndDirection.edge.OtherFace.Normal
@@ -183,16 +279,27 @@ namespace TVGL
                 var thirdVertex = edgeAt3rdVertex.dir ? edgeAt3rdVertex.edge.To : edgeAt3rdVertex.edge.From;
                 var thisTriangle = new TriangulationLoop();
                 thisTriangle.Add(accessEdgeAndDir);
+                var neighborNormal1 = Vector3.Null;
                 if (i == 1)
+                {
                     thisTriangle.Add(edgeAt3rdVertex);
+                    var neighborFace = edgeAt3rdVertex.dir ? edgeAt3rdVertex.edge.OtherFace : edgeAt3rdVertex.edge.OwnedFace;
+                    if (neighborFace != null) neighborNormal1 = neighborFace.Normal;
+                }
                 else thisTriangle.Add(new Edge(secondVertex, thirdVertex, false), true);
                 if (secondVertex == thirdVertex) secondVertex = thirdVertex;
+                var neighborNormal2 = Vector3.Null;
                 if (i == domain.Count - 2)
-                    thisTriangle.Add(domain[accessEdgeIndex == 0 ? domain.Count - 1 : accessEdgeIndex - 1]);
+                {
+                    var lastEdgeAndDir = domain[accessEdgeIndex == 0 ? domain.Count - 1 : accessEdgeIndex - 1];
+                    thisTriangle.Add(lastEdgeAndDir);
+                    var neighborFace = lastEdgeAndDir.dir ? lastEdgeAndDir.edge.OtherFace : lastEdgeAndDir.edge.OwnedFace;
+                    if (neighborFace != null) neighborNormal2 = neighborFace.Normal;
+                }
                 else thisTriangle.Add(new Edge(thirdVertex, firstVertex, false), true);
                 if (firstVertex == thirdVertex) firstVertex = thirdVertex;
 
-                thisTriangle.Score = CalcObjFunction(accessFaceNormal, dotWeight, thisTriangle);
+                thisTriangle.Score = CalcObjFunction(dotWeight, thisTriangle, accessFaceNormal, neighborNormal1, neighborNormal2);
                 if (!double.IsInfinity(thisTriangle.Score))
                 {
                     //visitedDomains.Add(thisTriangle.VertexIDList(), thisTriangle);
@@ -281,7 +388,8 @@ namespace TVGL
             return double.PositiveInfinity;
         }
 
-        private static double CalcObjFunction(Vector3 neighborNormal, double dotWeight, TriangulationLoop triangle)
+        private static double CalcObjFunction(double dotWeight, TriangulationLoop triangle,
+            Vector3 neighborNormal1, Vector3 neighborNormal2, Vector3 neighborNormal3)
         {
             //be sure to put in normal in the triangle
             var vector1 = triangle.EdgeList[0].Vector;
@@ -291,10 +399,26 @@ namespace TVGL
             var cross = vector1.Cross(vector2);
             var area = cross.Length(); // you're suppose to divided by 2 here but since all triangles scored this way,
                                        // then it's okay to work on the doubled value
-            triangle.Normal = cross.Normalize();
-            //return area;
-            //return area * (2 - neighborNormal.Dot(triangle.Normal));
-            return area *(1+dotWeight * (1 - neighborNormal.Dot(triangle.Normal)));
+            triangle.Normal = cross / area; // instead of calling Normalize, we've already found the Length so ever
+                                            //so slightly quicker to divide by it here rather than calling .Normalize().
+                                            //return area;
+                                            //return area * (2 - neighborNormal.Dot(triangle.Normal));
+            var dotPenalty = 0.0;
+            if (!neighborNormal1.IsNull())
+                dotPenalty += (1 - neighborNormal1.Dot(triangle.Normal));
+            if (!neighborNormal2.IsNull())
+                dotPenalty += (1 - neighborNormal2.Dot(triangle.Normal));
+            if (!neighborNormal3.IsNull())
+                dotPenalty += (1 - neighborNormal3.Dot(triangle.Normal));
+            foreach (var ead in triangle)
+            {
+                var neighborFace = ead.dir ? ead.edge.OtherFace : ead.edge.OwnedFace;
+                if (neighborFace != null)
+                    dotPenalty += (1 - neighborFace.Normal.Dot(triangle.Normal));
+            }
+            //return area * dotPenalty;
+            return area + dotWeight * dotPenalty;
+            //return area * (1 + dotWeight * (1 - neighborNormal.Dot(triangle.Normal)));
         }
     }
 }
