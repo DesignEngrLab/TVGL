@@ -39,40 +39,74 @@ namespace TVGL
         }
         internal double Score { get; set; }
         internal Vector3 Normal { get; set; }
+        internal int[] VertexIDList => GetVertices().Select(v => v.IndexInList).ToArray();
+    }
 
-        internal int[] VertexIDList()
+    public class IntArrayComparer : IEqualityComparer<int[]>
+    {
+        public bool Equals(int[] x, int[] y)
         {
-            //return GetVertices().Select(v => v.IndexInList).OrderBy(x => x).ToList();
-            //instead of sorting the list, we simply need to change the starting location
-            //to prevent isomorphic solutions. So, this longer, but faster method justs
-            //shifts the start of the list to the lowest entry
+            var length = x.Length;
+            if (x.Length != y.Length)
+            {
+                return false;
+            }
+            var yOffset = 0;
+            for (; yOffset < length; yOffset++)
+            {
+                if (x[0] == y[yOffset]) break;
+            }
+            for (int i = 0; i < length; i++)
+            {
+                var yIndex = i + yOffset;
+                if (yIndex == length)
+                {
+                    yIndex = 0;
+                    yOffset -= length;
+                }
+                if (x[i] != y[yIndex])
+                    return false;
+            }
+            return true;
+        }
+
+        public int GetHashCode(int[] obj)
+        {
             var lowestIndex = int.MaxValue;
             var positionOfLowestIndex = -1;
-            var resultList = new List<int>(Count); //[Count];
-            int i = 0;
-            foreach (var vertex in GetVertices())
+            var length = obj.Length;
+            for (int i = 0; i < length; i++)
             {
-                var vIndex = vertex.IndexInList;
-                resultList[i] = vIndex;
+                var vIndex = obj[i];
                 if (vIndex < lowestIndex)
                 {
                     lowestIndex = vIndex;
                     positionOfLowestIndex = i;
                 }
-                i++;
             }
-            var result = new int[Count];
-            resultList.CopyTo(result, positionOfLowestIndex);
-            resultList.RemoveRange(0, positionOfLowestIndex);
-            resultList.CopyTo(result);
+            int result = 1;
+            for (int i = positionOfLowestIndex; i < length; i++)
+            {
+                unchecked
+                {
+                    result = result * 23 + obj[i];
+                }
+            }
+            for (int i = 0; i < positionOfLowestIndex; i++)
+            {
+                unchecked
+                {
+                    result = result * 23 + obj[i];
+                }
+            }
             return result;
         }
     }
+
+
     public static class Single3DPolygonTriangulation
     {
         const int MaxStatesToSearch = 1000000000; // 1 billion
-
-
 
         /// <summary>
         /// Triangulates the specified loop of 3D vertices using the projection from the provided normal.
@@ -81,41 +115,48 @@ namespace TVGL
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;Vertex[], Vector3&gt;&gt;.</returns>
         public static IEnumerable<(List<Vertex> vertices, Vector3 normal)> QuickTriangulate(IList<(Edge edge, bool dir)> edgePath)
         {
-            var edgeArray = new (Edge edge, bool dir)[edgePath.Count];
-            edgePath.CopyTo(edgeArray, 0);
+            var triangles = QuickTriangulate(new TriangulationLoop(edgePath));
+            foreach (var triangle in triangles)
+                yield return (triangle.GetVertices().ToList(), triangle.Normal);
+        }
+
+        internal static IEnumerable<TriangulationLoop> QuickTriangulate(TriangulationLoop edgeLoop)
+        {
+            var origNum = edgeLoop.Count;
             var sortedVertices = new SimplePriorityQueue<int, double>();
             var neighborNormals = new Dictionary<Edge, Vector3>();
-            var candidateTriangles = new TriangulationLoop[edgeArray.Length];
-            var maxSurfaceArea = edgeArray.Sum(e => e.edge.Length);
-            var weightForDotProduct = 25 * maxSurfaceArea / (edgeArray.Length - 2);
-            var prevEAD = edgeArray[^1];  // EAD = Edge And Dir
+            var candidateTriangles = new TriangulationLoop[origNum];
+            var maxSurfaceArea = edgeLoop.Sum(e => e.edge.Length);
+            var weightForDotProduct = 25 * maxSurfaceArea / (origNum - 2);
+            var prevEAD = edgeLoop[^1];  // EAD = Edge And Dir
             var prevFace = prevEAD.dir ? prevEAD.edge.OtherFace : prevEAD.edge.OwnedFace;
             var prevVertex = prevEAD.dir ? prevEAD.edge.From : prevEAD.edge.To;
-            for (int i = 0; i < edgeArray.Length; i++)
+            for (int i = 0; i < origNum; i++)
             {
-                var thisEAD = edgeArray[i];
+                var thisEAD = edgeLoop[i];
                 var thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
                 var thisVertex = thisEAD.dir ? thisEAD.edge.To : thisEAD.edge.From;
                 var newEdge = new Edge(thisVertex, prevVertex, false);
                 var triangle = new TriangulationLoop(new[] { prevEAD, thisEAD, (newEdge, true) });
+                candidateTriangles[i] = triangle;
                 sortedVertices.Enqueue(i, CalcObjFunction(weightForDotProduct, triangle, prevFace.Normal, thisFace.Normal, Vector3.Null));
                 neighborNormals.Add(newEdge, triangle.Normal);
                 prevEAD = thisEAD;
                 prevFace = thisFace;
                 prevVertex = thisVertex;
             }
-            for (int i = 0; i < edgeArray.Length - 2; i++)
+            for (int i = 0; i < origNum - 2; i++)
             //while (sortedVertices.Any())
             {
                 var triangleIndex = sortedVertices.Dequeue();
                 var triangle = candidateTriangles[triangleIndex];
-                yield return (triangle.GetVertices().ToList(), triangle.Normal);
+                yield return triangle;
 
                 candidateTriangles[triangleIndex] = null;
 
                 var posDirIndex = GetForwardIndex(candidateTriangles, triangleIndex);
                 var negDirIndex = GetBackwardsIndex(candidateTriangles, triangleIndex);
-                if (i == edgeArray.Length - 3)
+                if (i == origNum - 3)
                 {
                     sortedVertices.Remove(posDirIndex);
                     sortedVertices.Remove(negDirIndex);
@@ -196,7 +237,7 @@ namespace TVGL
         {
             triangles = null;
             var numTriangles = startDomain.Count - 2;
-            var visitedDomains = new Dictionary<List<int>, TriangulationLoop>();
+            var visitedDomains = new Dictionary<int[], TriangulationLoop>(new IntArrayComparer());
             var maxSurfaceArea = startDomain.EdgeList.Sum(e => e.Length);
             //maxSurfaceArea *= 0.25 * maxSurfaceArea; 
             //the max surface area is to take the perimeter and assume that 
@@ -252,7 +293,7 @@ namespace TVGL
         }
 
         private static double TriangulateRecurse(Vector3 accessFaceNormal, Edge accessEdge, TriangulationLoop domain,
-                Dictionary<List<int>, TriangulationLoop> visitedDomains, double upperLimit, int branchingFactorLimit, double dotWeight, in double currentValue, out List<TriangulationLoop> triangles)
+                Dictionary<int[], TriangulationLoop> visitedDomains, double upperLimit, int branchingFactorLimit, double dotWeight, in double currentValue, out List<TriangulationLoop> triangles)
         {
             var accessEdgeIndex = domain.IndexOf(accessEdge);
             var accessEdgeAndDir = domain[accessEdgeIndex];
@@ -329,7 +370,7 @@ namespace TVGL
                     }
                     //Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
 
-                    var vertexIDs = rightDomain.VertexIDList();
+                    var vertexIDs = rightDomain.VertexIDList;
                     if (visitedDomains.ContainsKey(vertexIDs))
                         rightDomain = visitedDomains[vertexIDs];
                     else
@@ -358,7 +399,7 @@ namespace TVGL
                     }
                     //Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
 
-                    var vertexIDs = leftDomain.VertexIDList();
+                    var vertexIDs = leftDomain.VertexIDList;
                     if (visitedDomains.ContainsKey(vertexIDs))
                         leftDomain = visitedDomains[vertexIDs];
                     else
