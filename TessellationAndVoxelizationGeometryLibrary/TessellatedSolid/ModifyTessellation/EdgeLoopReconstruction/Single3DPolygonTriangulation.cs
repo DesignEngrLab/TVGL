@@ -113,59 +113,90 @@ namespace TVGL
         /// </summary>
         /// <param name="edgePath">The edge path.</param>
         /// <returns>IEnumerable&lt;System.ValueTuple&lt;Vertex[], Vector3&gt;&gt;.</returns>
-        public static IEnumerable<(List<Vertex> vertices, Vector3 normal)> QuickTriangulate(IList<(Edge edge, bool dir)> edgePath)
+        public static IEnumerable<(List<Vertex> vertices, Vector3 normal)> QuickTriangulate(IList<(Edge edge, bool dir)> edgePath, double weightForSmoothness)
         {
-            var triangles = QuickTriangulate(new TriangulationLoop(edgePath));
+            var triangles = QuickTriangulate(new TriangulationLoop(edgePath), weightForSmoothness);
             foreach (var triangle in triangles)
                 yield return (triangle.GetVertices().ToList(), triangle.Normal);
         }
 
-        internal static IEnumerable<TriangulationLoop> QuickTriangulate(TriangulationLoop edgeLoop)
+        internal static IEnumerable<TriangulationLoop> QuickTriangulate(TriangulationLoop edgeLoop, double weightForSmoothness)
         {
             var origNum = edgeLoop.Count;
-            var sortedVertices = new SimplePriorityQueue<int, double>();
-            var neighborNormals = new Dictionary<Edge, Vector3>();
+            var sortedOrigCornerIndices = new SimplePriorityQueue<int, double>(); // sorted by the score/obj.fun and the key is the index
+            // into the candidate triangles. Note that these do need to be updated occasionally
             var candidateTriangles = new TriangulationLoop[origNum];
-            var maxSurfaceArea = edgeLoop.Sum(e => e.edge.Length);
-            var weightForDotProduct = 25 * maxSurfaceArea / (origNum - 2);
+            var neighborNormals = new Dictionary<Edge, Vector3>(); // for each each there is one side in which we should know the face normal
+            // first we normalize the two obj fun terms by the max average area of a triangle, which would be if the edges were arranged like
+            // a circle. This turns out to be the circumference squared divided by 4 divided by the number of triangles (edges - 2).
+            var circumference = edgeLoop.Sum(e => e.edge.Length);
+            weightForSmoothness *= circumference * circumference / (4 * (origNum - 2));
+
+            #region Initial priority queue creation
             var prevEAD = edgeLoop[^1];  // EAD = Edge And Dir
-            var prevFace = prevEAD.dir ? prevEAD.edge.OtherFace : prevEAD.edge.OwnedFace;
-            var prevVertex = prevEAD.dir ? prevEAD.edge.From : prevEAD.edge.To;
+            PolygonalFace prevFace;
+            Vertex prevVertex, thisVertex;
+            if (prevEAD.dir)
+            {
+                prevFace = prevEAD.edge.OtherFace;
+                prevVertex = prevEAD.edge.From;
+                thisVertex = prevEAD.edge.To;
+            }
+            else
+            {
+                prevFace = prevEAD.edge.OwnedFace;
+                prevVertex = prevEAD.edge.To;
+                thisVertex = prevEAD.edge.From;
+            }
             for (int i = 0; i < origNum; i++)
             {
                 var thisEAD = edgeLoop[i];
-                var thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
-                var thisVertex = thisEAD.dir ? thisEAD.edge.To : thisEAD.edge.From;
-                var newEdge = new Edge(thisVertex, prevVertex, false);
+                PolygonalFace thisFace = thisEAD.dir ? thisEAD.edge.OtherFace : thisEAD.edge.OwnedFace;
+                neighborNormals.Add(thisEAD.edge, thisFace.Normal);
+                Vertex nextVertex;
+                if (thisEAD.dir)
+                {
+                    thisFace = thisEAD.edge.OtherFace;
+                    nextVertex = thisEAD.edge.To;
+                }
+                else
+                {
+                    thisFace = thisEAD.edge.OwnedFace;
+                    nextVertex = thisEAD.edge.From;
+                }
+                Edge newEdge = new Edge(nextVertex, prevVertex, false);
                 var triangle = new TriangulationLoop(new[] { prevEAD, thisEAD, (newEdge, true) });
                 candidateTriangles[i] = triangle;
-                sortedVertices.Enqueue(i, CalcObjFunction(weightForDotProduct, triangle, prevFace.Normal, thisFace.Normal, Vector3.Null));
+                sortedOrigCornerIndices.Enqueue(i, CalcObjFunction(weightForSmoothness, triangle, prevFace.Normal, thisFace.Normal, Vector3.Null));
                 neighborNormals.Add(newEdge, triangle.Normal);
                 prevEAD = thisEAD;
                 prevFace = thisFace;
                 prevVertex = thisVertex;
+                thisVertex = nextVertex;
             }
-            for (int i = 0; i < origNum - 2; i++)
+            #endregion
+            for (int i = 0; true; i++)
             //while (sortedVertices.Any())
             {
-                var triangleIndex = sortedVertices.Dequeue();
+                var triangleIndex = sortedOrigCornerIndices.Dequeue();
                 var triangle = candidateTriangles[triangleIndex];
                 yield return triangle;
-
-                candidateTriangles[triangleIndex] = null;
-
+                if (i == origNum - 3) break;
+                // that was the easy part, now we have to update the priority queue
+                candidateTriangles[triangleIndex] = null;  // we set to null so that the next two little functions can find the two adjacent
+                // corners which will need to be updated
                 var posDirIndex = GetForwardIndex(candidateTriangles, triangleIndex);
                 var negDirIndex = GetBackwardsIndex(candidateTriangles, triangleIndex);
-                if (i == origNum - 3)
+                if (i == origNum - 4) // then this is second to last or last, then there is no need to update the neighbors
                 {
-                    sortedVertices.Remove(posDirIndex);
-                    sortedVertices.Remove(negDirIndex);
+                    sortedOrigCornerIndices.Remove(posDirIndex);
+                    sortedOrigCornerIndices.Remove(negDirIndex);
                 }
                 else
                 {
                     var posDirTriangle = candidateTriangles[posDirIndex];
                     var negDirTriangle = candidateTriangles[negDirIndex];
-
+                    // this is tricky, and you kind of have to draw it out
                     posDirTriangle = new TriangulationLoop(new[] { (triangle[2].edge, !triangle[2].dir),posDirTriangle[1],
                 (new Edge(posDirTriangle[1].dir?posDirTriangle[1].edge.To:posDirTriangle[1].edge.From,
                 triangle.FirstVertex,false), true)});
@@ -174,16 +205,17 @@ namespace TVGL
                 (new Edge(triangle[2].dir?triangle[2].edge.From:triangle[2].edge.To,negDirTriangle.FirstVertex,false),true)});
                     candidateTriangles[negDirIndex] = negDirTriangle;
 
-                    sortedVertices.UpdatePriority(posDirIndex, CalcObjFunction(weightForDotProduct, posDirTriangle, triangle.Normal, neighborNormals[posDirTriangle[1].edge],
-                       Vector3.Null));
+                    sortedOrigCornerIndices.UpdatePriority(posDirIndex, CalcObjFunction(weightForSmoothness, posDirTriangle,
+                        triangle.Normal, neighborNormals[posDirTriangle[1].edge], Vector3.Null));
 
-                    sortedVertices.UpdatePriority(negDirIndex, CalcObjFunction(weightForDotProduct, negDirTriangle, neighborNormals[negDirTriangle[0].edge], triangle.Normal,
-                       Vector3.Null));
+                    sortedOrigCornerIndices.UpdatePriority(negDirIndex, CalcObjFunction(weightForSmoothness, negDirTriangle,
+                        neighborNormals[negDirTriangle[0].edge], triangle.Normal, Vector3.Null));
+
                     neighborNormals.Remove(triangle[0].edge);
                     neighborNormals.Remove(triangle[1].edge);
-                    neighborNormals.Remove(triangle[2].edge);
-                    neighborNormals.Add(posDirTriangle[3].edge, posDirTriangle.Normal);
-                    neighborNormals.Add(negDirTriangle[3].edge, negDirTriangle.Normal);
+                    //neighborNormals.Remove(triangle[2].edge); nope, don't remove this one, you still may need it 
+                    neighborNormals.Add(posDirTriangle[2].edge, posDirTriangle.Normal);
+                    neighborNormals.Add(negDirTriangle[2].edge, negDirTriangle.Normal);
                 }
             }
         }
@@ -239,10 +271,6 @@ namespace TVGL
             var numTriangles = startDomain.Count - 2;
             var visitedDomains = new Dictionary<int[], TriangulationLoop>(new IntArrayComparer());
             var maxSurfaceArea = startDomain.EdgeList.Sum(e => e.Length);
-            //maxSurfaceArea *= 0.25 * maxSurfaceArea; 
-            //the max surface area is to take the perimeter and assume that 
-            // the shape is a circle. I never thought about the before, but the 
-            // area of a circle is the circumference squared divided by 4.
             var weightForDotProduct = 3 * maxSurfaceArea / numTriangles;
             var startingEdgeAndDirection = FindSharpestTurn(startDomain);
 

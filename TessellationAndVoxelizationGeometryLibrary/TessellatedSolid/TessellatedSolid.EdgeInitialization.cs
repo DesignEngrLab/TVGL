@@ -71,8 +71,8 @@ namespace TVGL
             // #3 the remainingEdges may be close enough that they should have been matched together
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges, 
-                Math.Pow(expansionFactor,numberOfAttemptsDefault) * this.SameTolerance, out var remainingEdges,
+            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges,
+                Math.Pow(expansionFactor, numberOfAttemptsDefault) * this.SameTolerance, out var remainingEdges,
                 out var removedVertices));
             //often the singleSided Edges make loops that we can triangulate. If they are not in loops
             // then we spit back the remainingEdges.
@@ -699,37 +699,39 @@ namespace TVGL
                     }
                     if (!success)
                     {
-                        try
+                        //try
+                        //{
+                        var triangles = Single3DPolygonTriangulation.QuickTriangulate(loop, 5);
+                        //if (!Single3DPolygonTriangulation.Triangulate(loop, out var triangles)) continue;
+                        foreach (var triangle in triangles)
                         {
-                            if (!Single3DPolygonTriangulation.Triangulate(loop, out var triangles)) continue;
-                            foreach (var triangle in triangles)
+                            var newFace = new PolygonalFace(triangle.GetVertices(), triangle.Normal);
+                            newFaces.Add(newFace);
+                            foreach (var edgeAnddir in triangle)
                             {
-                                var newFace = new PolygonalFace(triangle.GetVertices(), triangle.Normal);
-                                newFaces.Add(newFace);
-                                foreach (var edgeAnddir in triangle)
+                                newFace.Edges.Add(edgeAnddir.edge);
+                                if (edgeAnddir.dir)
+                                    edgeAnddir.edge.OwnedFace = newFace;
+                                else edgeAnddir.edge.OtherFace = newFace;
+                                var checksum = GetEdgeChecksum(edgeAnddir.edge.From, edgeAnddir.edge.To);
+                                if (edgeDic.ContainsKey(checksum))
                                 {
-                                    newFace.Edges.Add(edgeAnddir.edge);
-                                    if (edgeAnddir.dir)
-                                        edgeAnddir.edge.OwnedFace = newFace;
-                                    else edgeAnddir.edge.OtherFace = newFace;
-                                    var checksum = GetEdgeChecksum(edgeAnddir.edge.From, edgeAnddir.edge.To);
-                                    if (edgeDic.ContainsKey(checksum))
-                                    {
-                                        edgeDic.Remove(checksum);
-                                        completedEdges.Add((edgeAnddir.edge, edgeAnddir.edge.OwnedFace, edgeAnddir.edge.OtherFace));
-                                    }
-                                    else
-                                    {
-                                        edgeAnddir.edge.EdgeReference = checksum;
-                                        edgeDic.Add(checksum, edgeAnddir.edge);
-                                    }
+                                    var formerEdge = edgeDic[checksum];
+                                    edgeDic.Remove(checksum);
+                                    completedEdges.Add((formerEdge, formerEdge.OwnedFace, edgeAnddir.edge.OwnedFace));
+                                }
+                                else
+                                {
+                                    edgeAnddir.edge.EdgeReference = checksum;
+                                    edgeDic.Add(checksum, edgeAnddir.edge);
                                 }
                             }
                         }
-                        catch (Exception exc)
-                        {
-                            remainingEdges.AddRange(loop.EdgeList);
-                        }
+                        //}
+                        //catch (Exception exc)
+                        //{
+                        //    remainingEdges.AddRange(loop.EdgeList);
+                        //}
                     }
                 }
             }

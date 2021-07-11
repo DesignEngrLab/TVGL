@@ -239,7 +239,7 @@ namespace TVGL
             var positivePolygons = new List<Polygon>();
             foreach (var outerPoly in polygons)
             {
-                foreach(var polygon in outerPoly.AllPolygons)
+                foreach (var polygon in outerPoly.AllPolygons)
                 {
                     if (polygon.IsPositive) positivePolygons.Add(polygon);
                     else negativePolygons.Add(polygon);
@@ -387,6 +387,8 @@ namespace TVGL
             return minCylinder;
         }
 
+        const int MaxMinBoundCylIterations = 120;
+
         /// <summary>
         ///     Gets the minimum bounding cylinder using 13 guesses for the depth direction
         /// </summary>
@@ -397,7 +399,8 @@ namespace TVGL
             BoundingBox<T> box = null;
             int j = 0;
             var movement = 1.0;
-            while(movement > 0.001)
+            var maxIters = MaxMinBoundCylIterations;
+            while (movement > 0.001 && maxIters-- > 0)
             {
                 var perp1 = likelyAxis.GetPerpendicularDirection();
                 box = FindOBBAlongDirection(vertices, perp1);
@@ -438,7 +441,7 @@ namespace TVGL
                 }
                 likelyAxis = box.Directions[j];
                 movement = 1 - d;
-            }  
+            }
             return likelyAxis;
         }
 

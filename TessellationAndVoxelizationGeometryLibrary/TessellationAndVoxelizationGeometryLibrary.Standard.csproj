@@ -41,7 +41,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;Standard2_1;CLIPPER;COMPARE</DefineConstants>
+    <DefineConstants>Standard2_1;CLIPPER;COMPARE</DefineConstants>
     <Optimize>false</Optimize>
   </PropertyGroup>
 
