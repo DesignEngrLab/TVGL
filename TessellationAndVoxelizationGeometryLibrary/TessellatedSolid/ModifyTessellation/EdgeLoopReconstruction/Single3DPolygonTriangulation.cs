@@ -42,7 +42,7 @@ namespace TVGL
         internal int[] VertexIDList => GetVertices().Select(v => v.IndexInList).ToArray();
     }
 
-    public class IntArrayComparer : IEqualityComparer<int[]>
+    public class LoopOfIntsComparer : IEqualityComparer<int[]>
     {
         public bool Equals(int[] x, int[] y)
         {
@@ -269,7 +269,7 @@ namespace TVGL
         {
             triangles = null;
             var numTriangles = startDomain.Count - 2;
-            var visitedDomains = new Dictionary<int[], TriangulationLoop>(new IntArrayComparer());
+            var visitedDomains = new Dictionary<int[], TriangulationLoop>(new LoopOfIntsComparer());
             var maxSurfaceArea = startDomain.EdgeList.Sum(e => e.Length);
             var weightForDotProduct = 3 * maxSurfaceArea / numTriangles;
             var startingEdgeAndDirection = FindSharpestTurn(startDomain);
