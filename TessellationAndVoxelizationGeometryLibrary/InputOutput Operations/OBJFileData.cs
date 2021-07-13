@@ -4,56 +4,35 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using TVGL.Numerics;
 
 namespace TVGL.IOFunctions
 {
-    // http://en.wikipedia.org/wiki/OFF_(file_format)
-    /// <summary>
-    ///     Class OFFFileData.
-    /// </summary>
     internal class OBJFileData : IO
     {
         #region Constructor
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="OFFFileData" /> class.
+        ///     Initializes a new instance of the <see cref="OBJFileData" /> class.
         /// </summary>
-        private OBJFileData()
+        internal OBJFileData()
         {
-            Vertices = new List<Vector3>();
+            FaceGroups = new List<int[]>();
             FaceToVertexIndices = new List<int[]>();
-            Colors = new List<Color>();
+            SurfaceEdges = new List<int[]>();
+            Vertices = new Dictionary<Vector3, int>();
+            VerticesByLine = new List<Vector3>();
         }
 
         #endregion
 
         #region Fields and Properties
 
-        /// <summary>
-        ///     The last color
-        /// </summary>
-        private Color _lastColor;
+        List<int[]> FaceGroups { get; }
 
-        /// <summary>
-        ///     Gets the has color specified.
-        /// </summary>
-        /// <value>The has color specified.</value>
-        private bool HasColorSpecified { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the colors.
-        /// </summary>
-        /// <value>The colors.</value>
-        private List<Color> Colors { get; }
-
-        /// <summary>
-        ///     Gets or sets the Vertices.
-        /// </summary>
-        /// <value>The vertices.</value>
-        private List<Vector3> Vertices { get; }
 
         /// <summary>
         ///     Gets the face to vertex indices.
@@ -62,216 +41,273 @@ namespace TVGL.IOFunctions
         private List<int[]> FaceToVertexIndices { get; }
 
         /// <summary>
-        ///     Gets the number vertices.
+        ///     Gets or sets the surface edges.
         /// </summary>
-        /// <value>The number vertices.</value>
-        private int NumVertices { get; set; }
+        private List<int[]> SurfaceEdges { get; }
 
         /// <summary>
-        ///     Gets the number faces.
+        ///     Gets the vertices as ordered by lines in the code. The same Vector3 may be referenced by multiple keys
+        ///     if it appears in multiple lines of code.
         /// </summary>
-        /// <value>The number faces.</value>
-        private int NumFaces { get; set; }
+        /// <value>The face to vertex indices.</value>
+        private List<Vector3> VerticesByLine { get; }
+
 
         /// <summary>
-        ///     Gets the number edges.
+        ///     Gets the integer location of the Vector within the list of vertices of the solid.
         /// </summary>
-        /// <value>The number edges.</value>
-        private int NumEdges { get; set; }
+        /// <value>The face to vertex indices.</value>
+        private Dictionary<Vector3, int> Vertices { get; }
 
         #endregion
 
-        #region Open Solid
+        #region Open Solids
 
         /// <summary>
         /// Opens the specified s.
         /// </summary>
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
-        /// <returns>
-        /// List&lt;TessellatedSolid&gt;.
-        /// </returns>
-        internal static TessellatedSolid OpenSolid(Stream s, string filename)
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
+            var typeString = "OBJ";
             var now = DateTime.Now;
-                // Read in ASCII format
-                if (TryReadAscii(s, out var objData))
-                    Message.output("Successfully read in ASCII OFF file (" + (DateTime.Now - now) + ").", 3);
-                else
-                {
-                    Message.output("Unable to read in OFF file (" + (DateTime.Now - now) + ").", 1);
-                    return null;
-                }
-            
-            return new TessellatedSolid(objData.Vertices, objData.FaceToVertexIndices, true,
-                objData.HasColorSpecified ? objData.Colors : null, InferUnitsFromComments(objData.Comments),
-                Path.GetFileNameWithoutExtension(filename), filename, objData.Comments,
-                objData.Language);
+            // Try to read in BINARY format
+            if (!TryRead(s, filename, out var objData))
+                Message.output("Unable to read in OBJ file called {0}", filename, 1);
+            var results = new TessellatedSolid[objData.Count];
+            for (int i = 0; i < objData.Count; i++)
+            {
+                var objFileData = objData[i];
+                var vertices = objFileData.Vertices.Keys.ToList();
+                var ts = new TessellatedSolid(vertices, objFileData.FaceToVertexIndices, true, null,
+                               InferUnitsFromComments(objFileData.Comments), objFileData.Name, filename, objFileData.Comments,
+                               objFileData.Language);
+                CreateRegionsFromPolylineAndFaceGroups(objFileData, ts);
+                results[i] = ts;
+            }
+            Message.output(
+                "Successfully read in " + typeString + " file called " + filename + " in " +
+                (DateTime.Now - now).TotalSeconds + " seconds.", 4);
+            return results;
         }
 
+        private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts)
+        {
+            var showPatches = true;
+            ts.Primitives = new List<PrimitiveSurface>();
+            var significantEdges = new HashSet<Edge>();
+            var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
+            foreach (var faceIndices in objFileData.FaceGroups)
+            {
+                var primitive = new UnknownRegion(faceIndices.Select(index => ts.Faces[index]));
+                ts.Primitives.Add(primitive);
+                foreach (var face in primitive.Faces)
+                    remainingFaces.Remove(face);
+                primitive.DefineBorders();
+                foreach (var border in primitive.Borders)
+                    foreach (var edge in border.Edges.EdgeList)
+                        if (!significantEdges.Contains(edge))
+                            significantEdges.Add(edge);
+            }
+            foreach (var borderIndices in objFileData.SurfaceEdges)
+            {
+                for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
+                {
+                    var vertexJ = ts.Vertices[j];
+                    var vertexK = ts.Vertices[k];
+                    Edge connectingEdge = null;
+                    foreach (var edge in vertexJ.Edges)
+                    {
+                        if (edge.OtherVertex(vertexJ) == vertexK)
+                        {
+                            connectingEdge = edge;
+                            break;
+                        }
+                    }
+                    if (connectingEdge == null)
+                        continue;
+                    //throw new Exception("No edge in tessellated solid that matches polyline segment");
+                    if (!significantEdges.Contains(connectingEdge))
+                        significantEdges.Add(connectingEdge);
+                }
+            }
+            var patches = SurfaceBorder.GetFacePatchesBetweenSignificantEdges(significantEdges, remainingFaces);
+            foreach (var patch in patches)
+            {
+                var primitive = new UnknownRegion(patch);
+                ts.Primitives.Add(primitive);
+            }
+#if PRESENT
+            if (showPatches)
+            {
+                ts.ResetDefaultColor();
+                ts.HasUniformColor = false;
+                var colorsEnumerator = Constants.GetRandomColor().GetEnumerator();
+                foreach (var primitive in ts.Primitives)
+                {
+                    colorsEnumerator.MoveNext();
+                    var color = colorsEnumerator.Current;
+                    foreach (var face in primitive.Faces)
+                    {
+                        face.Color = color;
+                    }
+                }
+                Presenter.ShowVertexPathsWithSolid(significantEdges.Select(edge => new[] { edge.From.Coordinates, edge.To.Coordinates }),
+                    new[] { ts }, false);
+            }
+#endif
+        }
+
+
         /// <summary>
-        ///     Tries the read ASCII.
+        /// Reads the model in ASCII format from the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="objData">The off data.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private static bool TryReadAscii(Stream stream, out OBJFileData objData)
+        /// <param name="filename">The filename.</param>
+        /// <param name="stlData">The STL data.</param>
+        /// <returns>True if the model was loaded successfully.</returns>  
+        internal static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
         {
             var reader = new StreamReader(stream);
-            objData = new OBJFileData();
-            var line = ReadLine(reader);
-            if (!line.Contains("off") && !line.Contains("OFF"))
-                return false;
-            objData.ContainsNormals = line.Contains("N");
-            objData.ContainsColors = line.Contains("C");
-            objData.ContainsTextureCoordinates = line.Contains("ST");
-            objData.ContainsHomogeneousCoordinates = line.Contains("4");
+            var numDecimalPoints = 8;
 
-            line = ReadLine(reader);
-            while (line.StartsWith("#"))
+            char[] split = new char[] { ' ' };
+            var defaultName = Path.GetFileNameWithoutExtension(filename) + "_";
+            var solidNum = 0;
+            objData = new List<OBJFileData>();
+            var objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
+            var readingFaces = false;
+            var faceGroup = new List<int>();
+            var i = 0;
+            while (!reader.EndOfStream)
             {
-                line.Remove(0, 1);
-                if (!string.IsNullOrWhiteSpace(line))
-                    objData.Comments.Add(line.Substring(1));
-                line = ReadLine(reader);
+                if (!readingFaces && faceGroup.Any())
+                {
+                    objSolid.FaceGroups.Add(faceGroup.ToArray());
+                    faceGroup = new List<int>();
+                }
+                var line = ReadLine(reader);
+                ParseLine(line, out var id, out var values);
+
+                readingFaces = false; //instead of putting this in every case below, let's just re-set it to false. if we are reading faces
+                switch (id)
+                {
+                    case "#":
+                        objSolid.Comments.Add(values);
+                        break;
+                    case "mtllib":
+                        //ToDo: Read the materials file if needed.
+                        break;
+                    case "g":
+                        if (objSolid.FaceToVertexIndices.Count == 0)
+                        {   // often, the solid is not defined until one gets to the faces. So, if encountering the "g" before any faces
+                            // have been defined, then this simply defines the name for the sub-solid
+                            if (!string.IsNullOrWhiteSpace(values)) objSolid.Name = values;
+                            // also use this as the opportunity to add the solid to the collection
+                            objData.Add(objSolid);
+                        }
+                        else // then that's the end of the prior solid. Time to start a new one.
+                        {
+                            if (faceGroup.Any()) // but before we do that, better be sure to capture any file GeometrySets
+                            {
+                                objSolid.FaceGroups.Add(faceGroup.ToArray());
+                                faceGroup = new List<int>();
+                            }
+                            solidNum++;
+                            objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
+                        }
+                        break;
+                    case "usemtl":
+                        //  The material is everything after the first space.
+                        //objSolid.Material.Add(values);
+                        break;
+                    case "v"://vertex
+                        var v = ReadVertex(values.Split(split, StringSplitOptions.RemoveEmptyEntries));
+                        var coordinates = new Vector3(Math.Round(v.X, numDecimalPoints),
+                            Math.Round(v.Y, numDecimalPoints), Math.Round(v.Z, numDecimalPoints));
+                        //If the vertex already exists, store the 
+                        if (!objSolid.Vertices.ContainsKey(coordinates))
+                            objSolid.Vertices.Add(coordinates, i++);
+                        //Store the vertex by line so that it can be referenced by geometry (i.e., face or line)
+                        objSolid.VerticesByLine.Add(coordinates);
+                        break;
+                    case "vt"://texture coordinate (ignore?)
+                        break;
+                    case "vn"://Vertex normal (ignore?)
+                        break;
+                    case "f"://Face - multiple formats possible
+                        faceGroup.Add(objSolid.FaceToVertexIndices.Count);
+                        objSolid.FaceToVertexIndices.Add(objSolid.ReadFace(values.Split(split, StringSplitOptions.RemoveEmptyEntries)));
+                        readingFaces = true;
+                        break;
+                    case "l"://Line 
+                        objSolid.SurfaceEdges.Add(objSolid.ReadSurfaceLine(values.Split(split, StringSplitOptions.RemoveEmptyEntries)));
+                        break;
+                }
             }
-            if (TryParseDoubleArray(line, out var point))
-            {
-                objData.NumVertices = (int)Math.Round(point[0], 0);
-                objData.NumFaces = (int)Math.Round(point[1], 0);
-                objData.NumEdges = (int)Math.Round(point[2], 0);
-            }
-            else return false;
-
-            for (var i = 0; i < objData.NumVertices; i++)
-            {
-                line = ReadLine(reader);
-                while (line.StartsWith("#"))
-                {
-                    line.Remove(0, 1);
-                    if (!string.IsNullOrWhiteSpace(line))
-                        objData.Comments.Add(line.Substring(1));
-                    line = ReadLine(reader);
-                }
-                if (TryParseDoubleArray(line, out point))
-                {
-                    if (objData.ContainsHomogeneousCoordinates
-                        && !point[3].IsNegligible())
-                        objData.Vertices.Add(new Vector3(
-                            point[0] / point[3],
-                            point[1] / point[3],
-                            point[2] / point[3]
-                        ));
-                    else objData.Vertices.Add(new Vector3(point[0], point[1], point[2]));
-                }
-                else return false;
-            }
-            for (var i = 0; i < objData.NumFaces; i++)
-            {
-                line = ReadLine(reader);
-                while (line.StartsWith("#"))
-                {
-                    line.Remove(0, 1);
-                    if (!string.IsNullOrWhiteSpace(line))
-                        objData.Comments.Add(line.Substring(1));
-                    line = ReadLine(reader);
-                }
-                if (!TryParseDoubleArray(line, out var numbers)) return false;
-
-
-                if (!numbers.Any())
-                {
-                    objData.NumFaces = i;
-                    break;
-                }
-
-                var numVerts = (int)Math.Round(numbers[0], 0);
-                var vertIndices = new int[numVerts];
-                for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = (int)Math.Round(numbers[1 + j], 0);
-                objData.FaceToVertexIndices.Add(vertIndices);
-
-                if (numbers.GetLength(0) == 1 + numVerts + 3)
-                {
-                    var r = (float)numbers[1 + numVerts];
-                    var g = (float)numbers[2 + numVerts];
-                    var b = (float)numbers[3 + numVerts];
-                    var currentColor = new Color(1f, r, g, b);
-                    objData.HasColorSpecified = true;
-                    if (objData._lastColor == null || !objData._lastColor.Equals(currentColor))
-                        objData._lastColor = currentColor;
-                }
-                objData.Colors.Add(objData._lastColor);
-            }
+            if (!objData.Any() || objData[^1] != objSolid) 
+                objData.Add(objSolid);
             return true;
         }
-                #endregion
 
-        #region Save Solid
 
-        /// <summary>
-        /// Saves the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="solid">The solid.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
+        private static Vector3 ReadVertex(string[] values)
         {
-            try
-            {
-                var colorsDefined =
-                    !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
-                var colorString = solid.SolidColor.Rf + " " + solid.SolidColor.Gf + " " + solid.SolidColor.Bf;
-                var writer = new StreamWriter(stream);
-                if (colorsDefined)
-                    writer.WriteLine("off C");
-                else
-                    writer.WriteLine("off");
-                writer.WriteLine("#  " + TvglDateMarkText);
-                if (!string.IsNullOrWhiteSpace(solid.Name))
-                    writer.WriteLine("#  Name : " + solid.Name);
-                if (!string.IsNullOrWhiteSpace(solid.FileName))
-                    writer.WriteLine("#  Originally loaded from : " + solid.FileName);
-                if (solid.Units != UnitType.unspecified)
-                    writer.WriteLine("#  Units : " + solid.Units);
-                if (!string.IsNullOrWhiteSpace(solid.Language))
-                    writer.WriteLine("#  Lang : " + solid.Language);
-                if (solid.Comments != null)
-                    foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
-                        writer.WriteLine("#  " + comment);
-                writer.WriteLine(solid.NumberOfVertices + " " + solid.NumberOfFaces + " " + solid.NumberOfEdges);
-                writer.WriteLine();
-                foreach (var v in solid.Vertices)
-                    writer.WriteLine(v.X + " " + v.Y + " " + v.Z);
-                writer.WriteLine();
-                foreach (var face in solid.Faces)
-                {
-                    var faceString = face.Vertices.Count.ToString();
-                    foreach (var v in face.Vertices)
-                        faceString += " " + v.IndexInList;
-                    if (colorsDefined)
-                    {
-                        if (face.Color != null)
-                            faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
-                                          face.Color.A;
-                        else
-                            faceString += colorString;
-                    }
-                    writer.WriteLine(faceString);
-                }
-                writer.Flush();
-                Message.output("Successfully wrote OFF file to stream.", 3);
-                return true;
-            }
-            catch (Exception exception)
-            {
-                Message.output("Unable to write in model file.", 1);
-                Message.output("Exception: " + exception.Message, 3);
-                return false;
-            }
+            var x = double.Parse(values[0], CultureInfo.InvariantCulture);
+            var y = double.Parse(values[1], CultureInfo.InvariantCulture);
+            var z = double.Parse(values[2], CultureInfo.InvariantCulture);
+            if (values.Length < 4)
+                return new Vector3(x, y, z);
+            var w = double.Parse(values[2], CultureInfo.InvariantCulture);
+            return new Vector3(x / w, y / w, z / w);
         }
 
+        private int[] ReadFace(string[] values)
+        {
+            var face = new int[3];
+            for (int i = 0; i < values.Length; i++)
+            {
+                //  Split the parts.
+                string[] parts = values[i].Split(new char[] { '/' }, StringSplitOptions.None);
+                face[i] = GetFirstVertexIndex(parts[0]);
+                //face[1] = GetFirstVertexIndex(parts[1]); // this is the vt or vertex texture index
+                //face[2] = GetFirstVertexIndex(parts[2]); // this is the vt or vertex normal index
+            }
+            return face;
+        }
+
+        private int[] ReadSurfaceLine(string[] values)
+        {
+            var line = new int[values.Length];
+            for (var i = 0; i < values.Length; i++)
+            {
+                line[i] = GetFirstVertexIndex(values[i]);
+            }
+            return line;
+        }
+
+        /// <summary>
+        /// Gets the correct vertex reference. If a negative is before the integer, 
+        /// then count backward in the list of vertices by line.
+        /// </summary>
+        /// <param name="vertexIndex"></param>
+        /// <returns></returns>
+        private int GetFirstVertexIndex(string vertexIndex)
+        {
+            var a = int.Parse(vertexIndex, CultureInfo.InvariantCulture);
+            Index i = a < 0 ? ^-a : a - 1;
+            return Vertices[VerticesByLine[i]];
+        }
+
+        #endregion
+
+        #region Save Solids
+        internal static bool SaveSolids(Stream stream, TessellatedSolid[] tessellatedSolids)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     }
 }

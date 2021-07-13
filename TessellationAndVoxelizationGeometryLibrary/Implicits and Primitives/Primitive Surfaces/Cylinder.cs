@@ -29,16 +29,20 @@ namespace TVGL
             //throw new NotImplementedException();
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
-            var radius = Radius;
-            var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            if (vertices == null)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                var d = (coords - Anchor).Cross(Axis).Length() - radius;
+                vertices = new List<Vector3>();
+                vertices = Vertices.Select(v => v.Coordinates).ToList();
+                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+            }
+            var sqDistanceSum = 0.0;
+            var numVerts = 0;
+            foreach (var c in vertices)
+            {
+                var d = (c - Anchor).Cross(Axis).Length() - Radius;
                 sqDistanceSum += d * d;
                 numVerts++;
             }

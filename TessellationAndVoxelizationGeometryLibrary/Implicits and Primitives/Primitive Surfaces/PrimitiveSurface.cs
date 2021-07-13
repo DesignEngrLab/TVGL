@@ -24,12 +24,9 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
-            Faces = new HashSet<PolygonalFace>(faces);
-            foreach (var face in Faces)
-                face.BelongsToPrimitive = this;
-            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+            if (faces == null) return;
+            SetFacesAndVertices(faces);
         }
-
 
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
         {
@@ -68,8 +65,15 @@ namespace TVGL
 
         #endregion Constructors
 
+        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces)
+        {
+            Faces = new HashSet<PolygonalFace>(faces);
+            foreach (var face in Faces)
+                face.BelongsToPrimitive = this;
+            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+        }
 
-        public abstract double CalculateError(IEnumerable<IVertex3D> vertices = null);
+        public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
 
         public int Index { get; set; }
 
@@ -206,13 +210,7 @@ namespace TVGL
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public virtual void Transform(Matrix4x4 transformMatrix)
-        {
-            foreach (var v in Vertices)
-            {
-                v.Coordinates = v.Coordinates.Transform(transformMatrix);
-            }
-        }
+        public abstract void Transform(Matrix4x4 transformMatrix);
 
         /// <summary>
         ///     Updates surface by adding face
@@ -332,7 +330,7 @@ namespace TVGL
             foreach (var border in edges.GetLoops(Faces))
             {
                 _borders.Add(border);
-                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), 
+                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates),
                     out var bestFitPlane, out var planeResidual, out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)
                 border.Plane = bestFitPlane;
