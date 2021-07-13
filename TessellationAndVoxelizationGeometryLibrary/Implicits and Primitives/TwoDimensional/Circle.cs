@@ -74,9 +74,9 @@ namespace TVGL.TwoDimensional
                 var x = p.X;
                 var y = p.Y;
                 if (xMin > x) xMin = x;
-                if (yMin > x) yMin = x;
+                if (yMin > y) yMin = y;
                 if (xMax < x) xMax = x;
-                if (yMax < x) yMax = x;
+                if (yMax < y) yMax = y;
                 Sx += x;
                 Sy += y;
                 Sxx += x * x;

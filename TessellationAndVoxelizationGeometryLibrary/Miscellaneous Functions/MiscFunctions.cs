@@ -356,7 +356,7 @@ namespace TVGL
         {
             if (flat.Faces.Contains(face)) return false;
             if (!face.Normal.Dot(flat.Normal).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) return false;
-            return flat.CalculateError(face.Vertices) < tolerance;
+            return flat.CalculateError(face.Vertices.Select(v => v.Coordinates)) < tolerance;
             //Return true if all the vertices are within the tolerance 
         }
 
@@ -2021,7 +2021,7 @@ namespace TVGL
                 }
                 curveResidual = minResidual;
                 plane = thisPlane;
-                planeResidual = thisPlane.CalculateError(pointList.Cast<IVertex3D>());
+                planeResidual = thisPlane.CalculateError(pointList);
                 return bestCurve;
             }
             else
@@ -2035,7 +2035,7 @@ namespace TVGL
                     out var straightLine, out var error))
                 {
                     plane = thisPlane;
-                    planeResidual = thisPlane.CalculateError(pointList.Cast<IVertex3D>());
+                    planeResidual = thisPlane.CalculateError(pointList);
                     curveResidual = error;
                     return straightLine;
                 }

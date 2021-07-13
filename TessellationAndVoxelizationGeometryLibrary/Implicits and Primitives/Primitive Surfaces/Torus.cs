@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TVGL.Numerics;
 
 namespace TVGL
@@ -14,15 +15,38 @@ namespace TVGL
     public class Torus : PrimitiveSurface
     {
         internal Torus() { }
+
         /// <summary>
-        ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
+        /// Initializes a new instance of the <see cref="Torus"/> class.
         /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="majorRadius">The major radius.</param>
+        /// <param name="minorRadius">The minor radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
         /// <param name="faces">The faces.</param>
         public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive,
             IEnumerable<PolygonalFace> faces) : base(faces)
         {
             Center = center;
             Axis = axis;
+            IsPositive = isPositive;
+            MajorRadius = majorRadius;
+            MinorRadius = minorRadius;
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Torus"/> class.
+        /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="majorRadius">The major radius.</param>
+        /// <param name="minorRadius">The minor radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        public Torus(Vector3 center, Vector3 axis, double majorRadius, double minorRadius, bool isPositive)
+        {
+            Center = center;
+            Axis = axis;
+            IsPositive = isPositive;
             MajorRadius = majorRadius;
             MinorRadius = minorRadius;
         }
@@ -82,22 +106,28 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
+            if (vertices == null)
+            {
+                vertices = new List<Vector3>();
+                vertices = Vertices.Select(v => v.Coordinates).ToList();
+                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+            }
             var planeDist = Center.Dot(Axis);
             var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            var numVerts = 0;
+            foreach (var c in vertices)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, coords, planeDist);
-                var d = (coords - ptOnCircle).Length() - MinorRadius;
+                Vector3 ptOnCircle = ClosestPointOnCenterRingToPoint(Axis, Center, MajorRadius, c, planeDist);
+                var d = (c - ptOnCircle).Length() - MinorRadius;
                 sqDistanceSum += d * d;
                 numVerts++;
             }
             return sqDistanceSum / numVerts;
         }
+
         public static Vector3 ClosestPointOnCenterRingToPoint(Vector3 axis, Vector3 center, double majorRadius, Vector3 vertexCoord, double planeDist = double.NaN)
         {
             if (double.IsNaN(planeDist)) planeDist = center.Dot(axis);

@@ -9,12 +9,12 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL.Numerics  
 {
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    // COMMENTEDCHANGE [Intrinsic]
+    
     public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D, IVertex
     {
         #region Public Static Properties
@@ -22,7 +22,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (NaN,NaN). This is often used in place of null.
         /// </summary>
         public static Vector2 Null =>
-            // COMMENTEDCHANGE [Intrinsic]
+            
             new Vector2(double.NaN, double.NaN);
 
 
@@ -30,14 +30,14 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,0).
         /// </summary>
         public static Vector2 Zero =>
-            // COMMENTEDCHANGE [Intrinsic]
+            
             default;
 
         /// <summary>
         /// Returns the vector (1,1).
         /// </summary>
         public static Vector2 One =>
-            // COMMENTEDCHANGE [Intrinsic]
+            
             new Vector2(1.0, 1.0);
 
         /// <summary>

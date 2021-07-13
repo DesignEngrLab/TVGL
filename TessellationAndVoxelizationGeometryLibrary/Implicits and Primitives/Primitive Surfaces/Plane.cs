@@ -15,7 +15,7 @@ using System.Runtime.CompilerServices;
 using StarMathLib;
 using TVGL.Numerics;
 
-namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL 
 {
     /// <summary>
     /// A structure encapsulating a 3D Plane
@@ -77,6 +77,18 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             Vertices = new HashSet<Vertex>(faces.SelectMany(f => f.Vertices).Distinct());
             DefineNormalAndDistanceFromVertices(Vertices, out var dto, out var normal);
             if (normal.Dot(faces.First().Normal) < 0)
+            {
+                normal *= -1;
+                dto *= -1;
+            }
+            DistanceToOrigin = dto;
+            Normal = normal;
+        }
+
+        public Plane(IEnumerable<Vertex> vertices, Vector3 normalGuess)
+        {            
+            DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
+            if (normal.Dot(normalGuess) < 0)
             {
                 normal *= -1;
                 dto *= -1;
@@ -479,14 +491,20 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
             Normal = originalToBeCopied.Normal;
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
-            var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            if (vertices == null)
             {
-                var d = v.Dot(Normal) - DistanceToOrigin;
+                vertices = new List<Vector3>();
+                vertices = Vertices.Select(v => v.Coordinates).ToList();
+                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+            }
+            var sqDistanceSum = 0.0;
+            var numVerts = 0;
+            foreach (var c in vertices)
+            {
+                var d = c.Dot(Normal) - DistanceToOrigin;
                 sqDistanceSum += d * d;
                 numVerts++;
             }

@@ -171,7 +171,8 @@ namespace TVGL
         /// </summary>
         /// <param name="segments">The segments.</param>
         /// <param name="solids">The solids.</param>
-        public static void ShowVertexPathsWithSolid(IEnumerable<Vector3> segments, IEnumerable<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IEnumerable<Vector3> path, IEnumerable<TessellatedSolid> solids,
+            bool closeLoops = true)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -183,18 +184,32 @@ namespace TVGL
                 window.view1.Children.Add(model);
             }
 
-            foreach (var point in segments)
+            var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
+
+            //Now create a line collection by doubling up the points
+            var lineCollection = new List<Point3D>();
+            foreach (var t in contour)
             {
-                var lineCollection = new List<Point3D>
-                {
-                    new Point3D(point[0], point[1], point[2]),
-                    new Point3D(point[3], point[4], point[5])
-                };
-                var color = new System.Windows.Media.Color();
-                color.R = 255; //G & B default to 0 to form red
-                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
-                window.view1.Children.Add(lines);
+                lineCollection.Add(t);
+                lineCollection.Add(t);
             }
+            lineCollection.RemoveAt(0);
+            if (closeLoops)
+                lineCollection.Add(lineCollection.First());
+            else lineCollection.RemoveAt(lineCollection.Count - 1);
+
+            var tvglcolor =  Constants.GetRandomColor().First();
+
+            var color = new System.Windows.Media.Color
+            {
+                R = tvglcolor.R,
+                G = tvglcolor.G,
+                B = tvglcolor.B,
+                A = tvglcolor.A
+            };
+            var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color, Thickness = 3.0 };
+            window.view1.Children.Add(lines);
+        
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
@@ -215,7 +230,7 @@ namespace TVGL
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
-            var random = new Random();
+            var colorsEnumerator = Constants.GetRandomColor().GetEnumerator();
 
             foreach (var path in vertexPaths)
             {
@@ -232,14 +247,16 @@ namespace TVGL
                 if (closeLoops)
                     lineCollection.Add(lineCollection.First());
                 else lineCollection.RemoveAt(lineCollection.Count - 1);
-                var colFamily = Constants.ColorDictionary[(TVGL.ColorFamily)random.Next(12)];
-                var colorKeyList = colFamily.Keys.ToList();
-                var tvglcolor = colFamily[colorKeyList[random.Next(colorKeyList.Count)]];
-                var color = new System.Windows.Media.Color();
-                color.R = tvglcolor.R;
-                color.G = tvglcolor.G;
-                color.B = tvglcolor.B;
-                color.A = tvglcolor.A;
+
+                colorsEnumerator.MoveNext();
+                var tvglcolor = colorsEnumerator.Current;
+                var color = new System.Windows.Media.Color
+                {
+                    R = tvglcolor.R,
+                    G = tvglcolor.G,
+                    B = tvglcolor.B,
+                    A = tvglcolor.A
+                };
                 var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color, Thickness = 3.0 };
                 window.view1.Children.Add(lines);
             }

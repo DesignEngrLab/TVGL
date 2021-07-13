@@ -17,8 +17,13 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="UnknownRegion" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public UnknownRegion(List<PolygonalFace> faces) : base(faces) { }
+        public UnknownRegion(IEnumerable<PolygonalFace> faces) : base(faces) { }
         public UnknownRegion() { }
+
+        public UnknownRegion(UnknownRegion originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
+    : base(originalToBeCopied, copiedTessellatedSolid)
+        {
+        }
 
 
         /// <summary>
@@ -28,10 +33,10 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            base.Transform(transformMatrix);
+            //base.Transform(transformMatrix);
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
             return 0.0;
         }

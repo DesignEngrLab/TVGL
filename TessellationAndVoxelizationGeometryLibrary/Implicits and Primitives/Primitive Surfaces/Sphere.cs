@@ -22,19 +22,23 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            throw new NotImplementedException();
+            Center = Center.Transform(transformMatrix);
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
-            var radius = Radius;
-            var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            if (vertices == null)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                var d = (coords - Center).Length() - radius;
+                vertices = new List<Vector3>();
+                vertices = Vertices.Select(v => v.Coordinates).ToList();
+                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+            }
+            var sqDistanceSum = 0.0;
+            var numVerts = 0;
+            foreach (var c in vertices)
+            {
+                var d = (c - Center).Length() - Radius;
                 sqDistanceSum += d * d;
                 numVerts++;
             }
@@ -42,15 +46,30 @@ namespace TVGL
         }
 
 
-
         #region Constructor
 
         /// <summary>
-        ///     Primitive Sphere
+        /// Initializes a new instance of the <see cref="Sphere"/> class.
         /// </summary>
-        /// <param name="facesAll">The faces all.</param>
+        /// <param name="center">The center.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        /// <param name="faces">The faces.</param>
         public Sphere(Vector3 center, double radius, bool isPositive, IEnumerable<PolygonalFace> faces)
             : base(faces)
+        {
+            Center = center;
+            IsPositive = isPositive;
+            Radius = radius;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Sphere"/> class.
+        /// </summary>
+        /// <param name="center">The center.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        public Sphere(Vector3 center, double radius, bool isPositive)
         {
             Center = center;
             IsPositive = isPositive;
