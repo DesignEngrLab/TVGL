@@ -231,47 +231,30 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Plane CreateFromVertices(Vector3 point1, Vector3 point2, Vector3 point3)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                Vector3 a = point2 - point1;
-                Vector3 b = point3 - point1;
+            double ax = point2.X - point1.X;
+            double ay = point2.Y - point1.Y;
+            double az = point2.Z - point1.Z;
 
-                // N = Cross(a, b)
-                Vector3 n = Vector3.Cross(a, b);
-                Vector3 normal = Vector3.Normalize(n);
+            double bx = point3.X - point1.X;
+            double by = point3.Y - point1.Y;
+            double bz = point3.Z - point1.Z;
 
-                // D = - Dot(N, point1)
-                double d = -Vector3.Dot(normal, point1);
+            // N=Cross(a,b)
+            double nx = ay * bz - az * by;
+            double ny = az * bx - ax * bz;
+            double nz = ax * by - ay * bx;
 
-                return new Plane(d, normal);
-            }
-            else
-            {
-                double ax = point2.X - point1.X;
-                double ay = point2.Y - point1.Y;
-                double az = point2.Z - point1.Z;
+            // Normalize(N)
+            double ls = nx * nx + ny * ny + nz * nz;
+            double invNorm = 1.0 / Math.Sqrt(ls);
 
-                double bx = point3.X - point1.X;
-                double by = point3.Y - point1.Y;
-                double bz = point3.Z - point1.Z;
+            Vector3 normal = new Vector3(
+                nx * invNorm,
+                ny * invNorm,
+                nz * invNorm);
 
-                // N=Cross(a,b)
-                double nx = ay * bz - az * by;
-                double ny = az * bx - ax * bz;
-                double nz = ax * by - ay * bx;
-
-                // Normalize(N)
-                double ls = nx * nx + ny * ny + nz * nz;
-                double invNorm = 1.0 / Math.Sqrt(ls);
-
-                Vector3 normal = new Vector3(
-                    nx * invNorm,
-                    ny * invNorm,
-                    nz * invNorm);
-
-                return new Plane(
-                    -(normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z), normal);
-            }
+            return new Plane(
+                -(normal.X * point1.X + normal.Y * point1.Y + normal.Z * point1.Z), normal);
         }
 
         /// <summary>
@@ -402,17 +385,10 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotCoordinate(Plane plane, Vector3 value)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                return Vector3.Dot(plane.Normal, value) + plane.DistanceToOrigin;
-            }
-            else
-            {
-                return plane.Normal.X * value.X +
-                       plane.Normal.Y * value.Y +
-                       plane.Normal.Z * value.Z +
-                       plane.DistanceToOrigin;
-            }
+            return plane.Normal.X * value.X +
+                   plane.Normal.Y * value.Y +
+                   plane.Normal.Z * value.Z +
+                   plane.DistanceToOrigin;
         }
 
         /// <summary>
@@ -424,16 +400,9 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DotNormal(Plane plane, Vector3 value)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                return Vector3.Dot(plane.Normal, value);
-            }
-            else
-            {
-                return plane.Normal.X * value.X +
-                       plane.Normal.Y * value.Y +
-                       plane.Normal.Z * value.Z;
-            }
+            return plane.Normal.X * value.X +
+                   plane.Normal.Y * value.Y +
+                   plane.Normal.Z * value.Z;
         }
 
         /// <summary>
@@ -444,17 +413,10 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SameLocation(Plane other)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                return this.Normal.Equals(other.Normal) && this.DistanceToOrigin == other.DistanceToOrigin;
-            }
-            else
-            {
-                return (Normal.X == other.Normal.X &&
-                        Normal.Y == other.Normal.Y &&
-                        Normal.Z == other.Normal.Z &&
-                        DistanceToOrigin == other.DistanceToOrigin);
-            }
+            return (Normal.X == other.Normal.X &&
+                    Normal.Y == other.Normal.Y &&
+                    Normal.Z == other.Normal.Z &&
+                    DistanceToOrigin == other.DistanceToOrigin);
         }
 
         /// <summary>
@@ -472,7 +434,7 @@ namespace TVGL // COMMENTEDCHANGE namespace System.Numerics
         /// Initializes a new instance of the <see cref="Plane"/> class.
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
-        public Plane(Plane originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null) 
+        public Plane(Plane originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
             : base(originalToBeCopied, copiedTessellatedSolid)
         {
             DistanceToOrigin = originalToBeCopied.DistanceToOrigin;

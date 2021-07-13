@@ -14,30 +14,354 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    // COMMENTEDCHANGE [Intrinsic]
+    [Intrinsic]
     public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex3D, IVertex
     {
+
+        /// <summary>
+        /// The X component of the vector.
+        /// </summary>
+        public double X { get; }
+        /// <summary>
+        /// The Y component of the vector.
+        /// </summary>
+        public double Y { get; }
+        /// <summary>
+        /// The Z component of the vector.
+        /// </summary>
+        public double Z { get; }
+
+        #region Constructors
+        /// <summary>
+        /// Constructs a vector whose elements are all the single specified value.
+        /// </summary>
+        /// <param name="value">The element to fill the vector with.</param>
+        [Intrinsic]
+        internal Vector3(double value) : this(value, value, value) { }
+
+
+        /// <summary>
+        /// Constructs a Vector3 from the given Vector2 and a third value.
+        /// </summary>
+        /// <param name="value">The Vector to extract X and Y components from.</param>
+        /// <param name="z">The Z component.</param>
+        [Intrinsic]
+        public Vector3(Vector2 value, double z) : this(value.X, value.Y, z) { }
+        public Vector3(Vector3 value) : this(value.X, value.Y, value.Z) { }
+
+        /// <summary>
+        /// Constructs a vector with the given individual elements.
+        /// </summary>
+        /// <param name="x">The X component.</param>
+        /// <param name="y">The Y component.</param>
+        /// <param name="z">The Z component.</param>
+        [Intrinsic]
+        public Vector3(double x, double y, double z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+
+        public Vector3(double[] d) : this()
+        {
+            X = d[0];
+            Y = d[1];
+            Z = d[2];
+        }
+        //public Vector3(Vector4 vector4) : this()
+        //{
+        //    var multiplier = 1 / vector4.W;
+        //    X = vector4.X * multiplier;
+        //    Y = vector4.Y * multiplier;
+        //    Z = vector4.Z * multiplier;
+        //}
+        #endregion Constructors
+
+        #region Public Instance Methods
+        /// <summary>
+        /// Copies the contents of the vector into the given array.
+        /// </summary>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyTo(double[] array)
+        {
+            CopyTo(array, 0);
+        }
+
+
+
+        /// <summary>
+        /// Copies the contents of the vector into the given array, starting from index.
+        /// </summary>
+        /// <exception cref="ArgumentNullException">If array is null.</exception>
+        /// <exception cref="RankException">If array is multidimensional.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">If index is greater than end of the array or index is less than zero.</exception>
+        /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array.</exception>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyTo(double[] array, int index)
+        {
+            if (array == null)
+            {
+                // Match the JIT's exception type here. For perf, a NullReference is thrown instead of an ArgumentNull.
+                throw new NullReferenceException(); // COMMENTEDCHANGE SR.Arg_NullArgumentNullRef);
+            }
+            if (index < 0 || index >= array.Length)
+            {
+                throw new ArgumentOutOfRangeException(); // COMMENTEDCHANGE nameof(index), SR.Format(SR.Arg_ArgumentOutOfRangeException, index));
+            }
+            if ((array.Length - index) < 3)
+            {
+                throw new ArgumentException(); // COMMENTEDCHANGE SR.Format(SR.Arg_ElementsInSourceIsGreaterThanDestination, index));
+            }
+            array[index] = X;
+            array[index + 1] = Y;
+            array[index + 2] = Z;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given Vector3 is equal to this Vector3 instance.
+        /// </summary>
+        /// <param name="other">The Vector3 to compare this instance to.</param>
+        /// <returns>True if the other Vector3 is equal to this instance; False otherwise.</returns>
+        [Intrinsic]
+        public bool Equals(Vector3 other)
+        {
+            return X == other.X &&
+                   Y == other.Y &&
+                   Z == other.Z;
+        }
+        #endregion Public Instance Methods
+
+        #region Public Static Methods
+        /// <summary>
+        /// Returns the dot product of two vectors.
+        /// </summary>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector.</param>
+        /// <returns>The dot product.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double Dot(Vector3 vector1, Vector3 vector2)
+        {
+            return vector1.X * vector2.X +
+                   vector1.Y * vector2.Y +
+                   vector1.Z * vector2.Z;
+        }
+
+        /// <summary>
+        /// Returns a vector whose elements are the minimum of each of the pairs of elements in the two source vectors.
+        /// </summary>
+        /// <param name="value1">The first source vector.</param>
+        /// <param name="value2">The second source vector.</param>
+        /// <returns>The minimized vector.</returns>
+        [Intrinsic]
+        public static Vector3 Min(Vector3 value1, Vector3 value2)
+        {
+            return new Vector3(
+                (value1.X < value2.X) ? value1.X : value2.X,
+                (value1.Y < value2.Y) ? value1.Y : value2.Y,
+                (value1.Z < value2.Z) ? value1.Z : value2.Z);
+        }
+
+        /// <summary>
+        /// Returns a vector whose elements are the maximum of each of the pairs of elements in the two source vectors.
+        /// </summary>
+        /// <param name="value1">The first source vector.</param>
+        /// <param name="value2">The second source vector.</param>
+        /// <returns>The maximized vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Max(Vector3 value1, Vector3 value2)
+        {
+            return new Vector3(
+                (value1.X > value2.X) ? value1.X : value2.X,
+                (value1.Y > value2.Y) ? value1.Y : value2.Y,
+                (value1.Z > value2.Z) ? value1.Z : value2.Z);
+        }
+
+        /// <summary>
+        /// Returns a vector whose elements are the absolute values of each of the source vector's elements.
+        /// </summary>
+        /// <param name="value">The source vector.</param>
+        /// <returns>The absolute value vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Abs(Vector3 value)
+        {
+            return new Vector3(Math.Abs(value.X), Math.Abs(value.Y), Math.Abs(value.Z));
+        }
+
+        /// <summary>
+        /// Returns a vector whose elements are the square root of each of the source vector's elements.
+        /// </summary>
+        /// <param name="value">The source vector.</param>
+        /// <returns>The square root vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 SquareRoot(Vector3 value)
+        {
+            return new Vector3(Math.Sqrt(value.X), Math.Sqrt(value.Y), Math.Sqrt(value.Z));
+        }
+        #endregion Public Static Methods
+
+        #region Public Static Operators
+        /// <summary>
+        /// Adds two vectors together.
+        /// </summary>
+        /// <param name="left">The first source vector.</param>
+        /// <param name="right">The second source vector.</param>
+        /// <returns>The summed vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator +(Vector3 left, Vector3 right)
+        {
+            return new Vector3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
+        }
+
+        /// <summary>
+        /// Subtracts the second vector from the first.
+        /// </summary>
+        /// <param name="left">The first source vector.</param>
+        /// <param name="right">The second source vector.</param>
+        /// <returns>The difference vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator -(Vector3 left, Vector3 right)
+        {
+            return new Vector3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
+        }
+
+        /// <summary>
+        /// Multiplies two vectors together. This produces a new Vector3 where the components are
+        /// x_1 * x_2, y_1 * y_2, and z_1 * z_2
+        /// </summary>
+        /// <param name="left">The first source vector.</param>
+        /// <param name="right">The second source vector.</param>
+        /// <returns>The product vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator *(Vector3 left, Vector3 right)
+        {
+            return new Vector3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
+        }
+
+        /// <summary>
+        /// Multiplies a vector by the given scalar.
+        /// </summary>
+        /// <param name="left">The source vector.</param>
+        /// <param name="right">The scalar value.</param>
+        /// <returns>The scaled vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator *(Vector3 left, double right)
+        {
+            return left * new Vector3(right);
+        }
+
+        /// <summary>
+        /// Multiplies a vector by the given scalar.
+        /// </summary>
+        /// <param name="left">The scalar value.</param>
+        /// <param name="right">The source vector.</param>
+        /// <returns>The scaled vector.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator *(double left, Vector3 right)
+        {
+            return new Vector3(left) * right;
+        }
+
+        /// <summary>
+        /// Divides the first vector by the second.
+        /// </summary>
+        /// <param name="left">The first source vector.</param>
+        /// <param name="right">The second source vector.</param>
+        /// <returns>The vector resulting from the division.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator /(Vector3 left, Vector3 right)
+        {
+            return new Vector3(left.X / right.X, left.Y / right.Y, left.Z / right.Z);
+        }
+
+        /// <summary>
+        /// Divides the vector by the given scalar.
+        /// </summary>
+        /// <param name="value1">The source vector.</param>
+        /// <param name="value2">The scalar value.</param>
+        /// <returns>The result of the division.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator /(Vector3 value1, double value2)
+        {
+            return value1 / new Vector3(value2);
+        }
+
+        /// <summary>
+        /// Negates a given vector.
+        /// </summary>
+        /// <param name="value">The source vector.</param>
+        /// <returns>The negated vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator -(Vector3 value)
+        {
+            return Zero - value;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the two given vectors are equal.
+        /// </summary>
+        /// <param name="left">The first vector to compare.</param>
+        /// <param name="right">The second vector to compare.</param>
+        /// <returns>True if the vectors are equal; False otherwise.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(Vector3 left, Vector3 right)
+        {
+            return (left.X == right.X &&
+                    left.Y == right.Y &&
+                    left.Z == right.Z);
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the two given vectors are not equal.
+        /// </summary>
+        /// <param name="left">The first vector to compare.</param>
+        /// <param name="right">The second vector to compare.</param>
+        /// <returns>True if the vectors are not equal; False if they are equal.</returns>
+        [Intrinsic]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(Vector3 left, Vector3 right)
+        {
+            return (left.X != right.X ||
+                    left.Y != right.Y ||
+                    left.Z != right.Z);
+        }
+        #endregion Public Static Operators
+
+
         #region Public Static Properties
         /// <summary>
         /// Returns the vector (0,0,0).
         /// </summary>
+        [Intrinsic]
         public static Vector3 Zero =>
-            // COMMENTEDCHANGE [Intrinsic]
-            default;
+        default;
 
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
+        [Intrinsic]
         public static Vector3 One =>
-            // COMMENTEDCHANGE [Intrinsic]
-            new Vector3(1.0, 1.0, 1.0);
+        new Vector3(1.0, 1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
+        [Intrinsic]
         public static Vector3 Null =>
-            // COMMENTEDCHANGE [Intrinsic]
-            new Vector3(double.NaN, double.NaN, double.NaN);
+        new Vector3(double.NaN, double.NaN, double.NaN);
 
         public bool IsNull()
         {
@@ -136,7 +460,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
             //Else, use the tolerance to determine with the dot product
             var dot = Math.Abs(this.Dot(other));
-            return dot.IsPracticallySame(1.0, dotTolerance);    
+            return dot.IsPracticallySame(1.0, dotTolerance);
         }
 
         /// <summary>
@@ -188,16 +512,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double Length()
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                double ls = Vector3.Dot(this, this);
-                return Math.Sqrt(ls);
-            }
-            else
-            {
-                double ls = X * X + Y * Y + Z * Z;
-                return Math.Sqrt(ls);
-            }
+            double ls = X * X + Y * Y + Z * Z;
+            return Math.Sqrt(ls);
         }
 
         /// <summary>
@@ -207,14 +523,8 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double LengthSquared()
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                return Vector3.Dot(this, this);
-            }
-            else
-            {
-                return X * X + Y * Y + Z * Z;
-            }
+            return X * X + Y * Y + Z * Z;
+
         }
         #endregion Public Instance Methods
 
@@ -229,22 +539,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Distance(Vector3 value1, Vector3 value2)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                Vector3 difference = value1 - value2;
-                double ls = Vector3.Dot(difference, difference);
-                return Math.Sqrt(ls);
-            }
-            else
-            {
-                double dx = value1.X - value2.X;
-                double dy = value1.Y - value2.Y;
-                double dz = value1.Z - value2.Z;
+            double dx = value1.X - value2.X;
+            double dy = value1.Y - value2.Y;
+            double dz = value1.Z - value2.Z;
 
-                double ls = dx * dx + dy * dy + dz * dz;
+            double ls = dx * dx + dy * dy + dz * dz;
 
-                return Math.Sqrt(ls);
-            }
+            return Math.Sqrt(ls);
         }
 
         /// <summary>
@@ -258,19 +559,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double DistanceSquared(Vector3 value1, Vector3 value2)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                Vector3 difference = value1 - value2;
-                return Vector3.Dot(difference, difference);
-            }
-            else
-            {
-                double dx = value1.X - value2.X;
-                double dy = value1.Y - value2.Y;
-                double dz = value1.Z - value2.Z;
+            double dx = value1.X - value2.X;
+            double dy = value1.Y - value2.Y;
+            double dz = value1.Z - value2.Z;
 
-                return dx * dx + dy * dy + dz * dz;
-            }
+            return dx * dx + dy * dy + dz * dz;
         }
 
         /// <summary>
@@ -281,18 +574,10 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Normalize(Vector3 value)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                double length = value.Length();
-                return value / length;
-            }
-            else
-            {
-                double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
-                if (ls.IsPracticallySame(1.0)) return value;
-                double lengthfactor = 1 / Math.Sqrt(ls);
-                return new Vector3(value.X * lengthfactor, value.Y * lengthfactor, value.Z * lengthfactor);
-            }
+            double ls = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
+            if (ls.IsPracticallySame(1.0)) return value;
+            double lengthfactor = 1 / Math.Sqrt(ls);
+            return new Vector3(value.X * lengthfactor, value.Y * lengthfactor, value.Z * lengthfactor);
         }
 
         /// <summary>
@@ -319,20 +604,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Reflect(in Vector3 vector, Vector3 normal)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                double dot = Vector3.Dot(vector, normal);
-                Vector3 temp = normal * dot * 2.0;
-                return vector - temp;
-            }
-            else
-            {
-                double dot = vector.X * normal.X + vector.Y * normal.Y + vector.Z * normal.Z;
-                double tempX = normal.X * dot * 2.0;
-                double tempY = normal.Y * dot * 2.0;
-                double tempZ = normal.Z * dot * 2.0;
-                return new Vector3(vector.X - tempX, vector.Y - tempY, vector.Z - tempZ);
-            }
+            double dot = vector.X * normal.X + vector.Y * normal.Y + vector.Z * normal.Z;
+            double tempX = normal.X * dot * 2.0;
+            double tempY = normal.Y * dot * 2.0;
+            double tempZ = normal.Z * dot * 2.0;
+            return new Vector3(vector.X - tempX, vector.Y - tempY, vector.Z - tempZ);
         }
 
         /// <summary>
@@ -372,19 +648,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Lerp(Vector3 value1, Vector3 value2, double amount)
         {
-            if (Constants.IsHardwareAccelerated) // COMMENTEDCHANGE (Vector.IsHardwareAccelerated)
-            {
-                Vector3 firstInfluence = value1 * (1.0 - amount);
-                Vector3 secondInfluence = value2 * amount;
-                return firstInfluence + secondInfluence;
-            }
-            else
-            {
-                return new Vector3(
-                    value1.X + (value2.X - value1.X) * amount,
-                    value1.Y + (value2.Y - value1.Y) * amount,
-                    value1.Z + (value2.Z - value1.Z) * amount);
-            }
+            var oppositeAmount = 1 - amount;
+            return new Vector3(
+             oppositeAmount * value1.X + value2.X * amount,
+             oppositeAmount * value1.Y + value2.Y * amount,
+             oppositeAmount * value1.Z + value2.Z * amount);
         }
 
         /// <summary>
