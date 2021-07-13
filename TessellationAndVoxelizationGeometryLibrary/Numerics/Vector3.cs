@@ -9,12 +9,12 @@ using System.Text;
 using MIConvexHull;
 using Newtonsoft.Json;
 
-namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL.Numerics  
 {
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    // COMMENTEDCHANGE [Intrinsic]
+    
     public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex3D, IVertex
     {
         #region Public Static Properties
@@ -22,21 +22,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Returns the vector (0,0,0).
         /// </summary>
         public static Vector3 Zero =>
-            // COMMENTEDCHANGE [Intrinsic]
+            
             default;
 
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
         public static Vector3 One =>
-            // COMMENTEDCHANGE [Intrinsic]
+            
             new Vector3(1.0, 1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
         public static Vector3 Null =>
-            // COMMENTEDCHANGE [Intrinsic]
+            
             new Vector3(double.NaN, double.NaN, double.NaN);
 
         public bool IsNull()
