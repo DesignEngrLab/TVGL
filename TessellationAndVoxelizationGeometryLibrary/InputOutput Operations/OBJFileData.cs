@@ -108,15 +108,14 @@ namespace TVGL.IOFunctions
                 primitive.DefineBorders();
                 foreach (var border in primitive.Borders)
                     foreach (var edge in border.Edges.EdgeList)
-                        if (!significantEdges.Contains(edge))
-                            significantEdges.Add(edge);
+                        significantEdges.Add(edge);
             }
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
                 for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
                 {
-                    var vertexJ = ts.Vertices[j];
-                    var vertexK = ts.Vertices[k];
+                    var vertexJ = ts.Vertices[borderIndices[j]];
+                    var vertexK = ts.Vertices[borderIndices[k]];
                     Edge connectingEdge = null;
                     foreach (var edge in vertexJ.Edges)
                     {
@@ -129,8 +128,7 @@ namespace TVGL.IOFunctions
                     if (connectingEdge == null)
                         continue;
                     //throw new Exception("No edge in tessellated solid that matches polyline segment");
-                    if (!significantEdges.Contains(connectingEdge))
-                        significantEdges.Add(connectingEdge);
+                    significantEdges.Add(connectingEdge);
                 }
             }
             var patches = SurfaceBorder.GetFacePatchesBetweenSignificantEdges(significantEdges, remainingFaces);
