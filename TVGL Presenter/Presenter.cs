@@ -198,7 +198,7 @@ namespace TVGL
                 lineCollection.Add(lineCollection.First());
             else lineCollection.RemoveAt(lineCollection.Count - 1);
 
-            var tvglcolor =  Constants.GetRandomColor().First();
+            var tvglcolor = Color.GetRandomColors().First();
 
             var color = new System.Windows.Media.Color
             {
@@ -209,17 +209,20 @@ namespace TVGL
             };
             var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color, Thickness = 3.0 };
             window.view1.Children.Add(lines);
-        
+
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
+
+
+
         /// <summary>
         /// Shows the vertex paths with solid.
         /// </summary>
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<Vector3>> vertexPaths, IEnumerable<TessellatedSolid> solids,
-            bool closeLoops = true)
+            bool closeLoops = true, Color[] colors = null)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -230,7 +233,8 @@ namespace TVGL
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
-            var colorsEnumerator = Constants.GetRandomColor().GetEnumerator();
+
+            var colorsEnumerator = colors == null ? Color.GetRandomColors().GetEnumerator() : ((IEnumerable<Color>)colors).GetEnumerator();
 
             foreach (var path in vertexPaths)
             {
@@ -269,7 +273,7 @@ namespace TVGL
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertexPaths, IEnumerable<TessellatedSolid> solids,
-            bool closeLoops = true)
+            bool closeLoops = true, Color[] colors = null)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -280,7 +284,7 @@ namespace TVGL
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
-            var random = new Random();
+            var colorsEnumerator = colors == null ? Color.GetRandomColors().GetEnumerator() : ((IEnumerable<Color>)colors).GetEnumerator();
             foreach (var crossSection in vertexPaths)
             {
                 foreach (var path in crossSection)
@@ -298,13 +302,11 @@ namespace TVGL
                     if (closeLoops)
                         lineCollection.Add(lineCollection.First());
                     else lineCollection.RemoveAt(lineCollection.Count - 1);
-                    var colFamily = Constants.ColorDictionary[(TVGL.ColorFamily)random.Next(12)];
-                    var colorKeyList = colFamily.Keys.ToList();
-                    var tvglcolor = colFamily[colorKeyList[random.Next(colorKeyList.Count)]];
+                    colorsEnumerator.MoveNext();
                     var color = new System.Windows.Media.Color();
-                    color.R = tvglcolor.R;
-                    color.G = tvglcolor.G;
-                    color.B = tvglcolor.B;
+                    color.R = colorsEnumerator.Current.R;
+                    color.G = colorsEnumerator.Current.G;
+                    color.B = colorsEnumerator.Current.B;
                     var lines = new LinesVisual3D
                     {
                         Points = new Point3DCollection(lineCollection),
@@ -324,9 +326,9 @@ namespace TVGL
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<IEnumerable<Vertex>>> vertexPaths, IEnumerable<TessellatedSolid> solids,
-            bool closeLoops)
+            bool closeLoops, Color[] colors = null)
         {
-            ShowVertexPathsWithSolid(vertexPaths.Select(layer => layer.Select(polygon => polygon.Select(v => v.Coordinates))), solids, closeLoops);
+            ShowVertexPathsWithSolid(vertexPaths.Select(layer => layer.Select(polygon => polygon.Select(v => v.Coordinates))), solids, closeLoops, colors);
         }
         /// <summary>
         /// Shows the vertex paths.
@@ -545,7 +547,7 @@ namespace TVGL
                 ShowVertexPathsWithSolid(tessellatedSolid.Edges.Select(e => new[] { e.From.Coordinates, e.To.Coordinates }).ToList(),
                     new[] { tessellatedSolid });
             else
-                ShowVertexPaths(tessellatedSolid.Edges.Select(e => new []{e.From.X, e.From.Y, e.From.Z,
+                ShowVertexPaths(tessellatedSolid.Edges.Select(e => new[]{e.From.X, e.From.Y, e.From.Z,
                     e.To.X, e.To.Y, e.To.Z }).ToList());
         }
         /// <summary>

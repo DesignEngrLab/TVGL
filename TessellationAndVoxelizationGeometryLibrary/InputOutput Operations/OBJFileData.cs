@@ -142,7 +142,7 @@ namespace TVGL.IOFunctions
             {
                 ts.ResetDefaultColor();
                 ts.HasUniformColor = false;
-                var colorsEnumerator = Constants.GetRandomColor().GetEnumerator();
+                var colorsEnumerator = Color.GetRandomColors().GetEnumerator();
                 foreach (var primitive in ts.Primitives)
                 {
                     colorsEnumerator.MoveNext();

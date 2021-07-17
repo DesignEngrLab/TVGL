@@ -20,6 +20,10 @@
     <NeutralLanguage />
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;CLIPPER</DefineConstants>
+  </PropertyGroup>
+
 
   <ItemGroup>
     <Compile Remove="TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
