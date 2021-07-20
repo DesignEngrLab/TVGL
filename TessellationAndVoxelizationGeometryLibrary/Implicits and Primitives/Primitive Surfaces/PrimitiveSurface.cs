@@ -314,6 +314,18 @@ namespace TVGL
                 return _borders;
             }
         }
+
+        private List<SurfaceBorder> _bordersEncirclingAxis;
+        public List<SurfaceBorder> BordersEncirclingAxis
+        {
+            get
+            {
+                if (_bordersEncirclingAxis == null)
+                    _bordersEncirclingAxis = Borders.Where(p => p.EncirclesAxis).ToList();
+                return _bordersEncirclingAxis;
+            }
+        }
+
         /// <summary>
         /// Takes in a list of edges and returns their list of loops for edges and vertices
         /// The order of the output loops are not considered (i.e., they may be "reversed"),
