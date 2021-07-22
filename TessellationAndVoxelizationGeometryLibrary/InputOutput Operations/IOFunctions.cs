@@ -441,7 +441,7 @@ namespace TVGL.IOFunctions
             Open(stream, out solid);
         }
 
-        private static FileType GetFileTypeFromExtension(string extension)
+        public static FileType GetFileTypeFromExtension(string extension)
         {
             extension = extension.ToLower(CultureInfo.InvariantCulture).Trim(' ', '.');
             switch (extension)
