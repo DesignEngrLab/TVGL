@@ -336,7 +336,7 @@ namespace TVGL
         public void DefineBorders(double maxErrorInCurveFit = -1.0)
         {
             var currentSurfaceError = CalculateError();
-            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = Math.Max(currentSurfaceError, Constants.ErrorForFaceInSurface);
+            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = Math.Max(currentSurfaceError, Constants.ErrorForFaceInSurface * 100);
             _borders = new List<SurfaceBorder>();
             var edges = new HashSet<Edge>(OuterEdges);
             foreach (var border in edges.GetLoops(Faces))
