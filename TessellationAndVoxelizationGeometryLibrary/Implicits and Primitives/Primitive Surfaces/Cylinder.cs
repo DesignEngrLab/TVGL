@@ -116,52 +116,9 @@ namespace TVGL
         /// <param name="facesAll">The faces all.</param>
         /// <param name="axis">The axis.</param>
         public Cylinder(IEnumerable<PolygonalFace> facesAll, Vector3 axis)
-            : base(facesAll)
         {
-            var faces = Faces.FacesWithDistinctNormals();
-            var n = faces.Count;
-            var centers = new List<Vector3>();
-            var signedDistances = new List<double>();
-            MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
-                faces[n - 1].Center, faces[n - 1].Normal, out var center, out _, out _,
-                out var t1, out var t2);
-            if (!center.IsNull() && !center.IsNegligible())
-            {
-                centers.Add(center);
-                signedDistances.Add(t1);
-                signedDistances.Add(t2);
-            }
-            for (var i = 1; i < n; i++)
-            {
-                MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
-                    faces[i - 1].Center, faces[i - 1].Normal, out center, out _, out _,
-                    out t1, out t2);
-                if (!center.IsNull() && !center.IsNegligible())
-                {
-                    centers.Add(center);
-                    signedDistances.Add(t1);
-                    signedDistances.Add(t2);
-                }
-            }
-            center = Vector3.Zero;
-            center = centers.Aggregate(center, (current, c) => current + c);
-            center = center.Divide(centers.Count);
-            /* move center to origin plane */
-            var distBackToOrigin = -1 * axis.Dot(center);
-            center = center - (axis * distBackToOrigin);
-            /* determine is positive or negative */
-            var numNeg = signedDistances.Count(d => d < 0);
-            var numPos = signedDistances.Count(d => d > 0);
-            var isPositive = numNeg > numPos;
-            var radii = new List<double>();
-            foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToLine(v.Coordinates, center, axis)));
-            var averageRadius = radii.Average();
+            throw new NotSupportedException("The method is no longer valid.");
 
-            Axis = axis;
-            Anchor = center;
-            IsPositive = isPositive;
-            Radius = averageRadius;
         }
 
         /// <summary>
@@ -170,43 +127,8 @@ namespace TVGL
         /// <param name="edge">The edge.</param>
         /// <exception cref="System.Exception">Edge used to define cylinder is flat.</exception>
         internal Cylinder(Edge edge)
-            : base(new List<PolygonalFace>(new[] { edge.OwnedFace, edge.OtherFace }))
         {
-            var axis = edge.OwnedFace.Normal.Cross(edge.OtherFace.Normal);
-            var length = axis.Length();
-            if (length.IsNegligible()) throw new Exception("Edge used to define cylinder is flat.");
-            axis = axis.Normalize();
-            var v1 = edge.From;
-            var v2 = edge.To;
-            var v3 = edge.OwnedFace.Vertices.First(v => v != v1 && v != v2);
-            var v4 = edge.OtherFace.Vertices.First(v => v != v1 && v != v2);
-            MiscFunctions.SkewedLineIntersection(edge.OwnedFace.Center, edge.OwnedFace.Normal,
-                edge.OtherFace.Center, edge.OtherFace.Normal, out var center);
-            /* determine is positive or negative */
-            var isPositive = edge.Curvature == CurvatureType.Convex;
-            /* move center to origin plane */
-            var distToOrigin = axis.Dot(center);
-            if (distToOrigin < 0)
-            {
-                distToOrigin *= -1;
-                axis = -1 * axis;
-            }
-            center = new Vector3(center.X - distToOrigin * axis.X, center.Y - distToOrigin * axis.Y,
-                center.Z - distToOrigin * axis.Z);
-            var d1 = MiscFunctions.DistancePointToLine(v1.Coordinates, center, axis);
-            var d2 = MiscFunctions.DistancePointToLine(v2.Coordinates, center, axis);
-            var d3 = MiscFunctions.DistancePointToLine(v3.Coordinates, center, axis);
-            var d4 = MiscFunctions.DistancePointToLine(v4.Coordinates, center, axis);
-            var averageRadius = (d1 + d2 + d3 + d4) / 4;
-            var outerEdges = new List<Edge>(edge.OwnedFace.Edges);
-            outerEdges.AddRange(edge.OtherFace.Edges);
-            outerEdges.Remove(edge);
-            outerEdges.Remove(edge);
-
-            Axis = axis;
-            Anchor = center;
-            IsPositive = isPositive;
-            Radius = averageRadius;
+            throw new NotSupportedException("The method is no longer valid.");
         }
 
         internal Cylinder() { }

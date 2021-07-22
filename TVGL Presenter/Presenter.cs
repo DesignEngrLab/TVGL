@@ -421,7 +421,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="colors">The colors.</param>
         /// <param name="ts">The ts.</param>
-        public static void ShowGaussSphereWithIntensity(IEnumerable<Vertex> vertices, IEnumerable<Color> colors, TessellatedSolid ts)
+        public static void ShowGaussSphereWithIntensity(IEnumerable<Vector3> vertices, IEnumerable<Color> colors, TessellatedSolid ts)
         {
             var window = new Window3DPlot();
             var pt0 = new Point3D(ts.Center[0], ts.Center[1], ts.Center[2]);
@@ -442,7 +442,7 @@ namespace TVGL
             //window.view1.Children.Add(sphere);
 
             var i = 0;
-            var colorEnumerator = colors.GetEnumerator();
+            var colorEnumerator = colors != null ? colors.GetEnumerator() : Color.GetRandomColors().GetEnumerator();
             foreach (var point in vertices)
             {
                 colorEnumerator.MoveNext();

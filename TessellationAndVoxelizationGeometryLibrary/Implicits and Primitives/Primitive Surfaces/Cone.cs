@@ -66,7 +66,8 @@ namespace TVGL
         public bool IsPositive;
 
         /// <summary>
-        ///     Gets the aperture.
+        ///     Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
+        ///     like y = mx + b
         /// </summary>
         /// <value>The aperture.</value>
         public double Aperture { get; set; }
@@ -105,11 +106,12 @@ namespace TVGL
             }
             var sqDistanceSum = 0.0;
             var numVerts = 0;
+            var cosApertureSquared = 1 / (1 + Aperture);
             foreach (var c in vertices)
             {
                 var d = (c - Apex).Cross(Axis).Length()
                     - Math.Abs(Aperture * (c - Apex).Dot(Axis));
-                sqDistanceSum += d * d;
+                sqDistanceSum += d * d * cosApertureSquared;
                 numVerts++;
             }
             return sqDistanceSum / numVerts;
