@@ -156,57 +156,62 @@ namespace TVGL.IOFunctions
         /// Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.</exception>
         public static void Open(Stream s, string filename, out TessellatedSolid solid)
         {
-            //try
-            //{
-            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-            switch (extension)
+            try
             {
-                case FileType.STL_ASCII:
-                case FileType.STL_Binary:
-                    solid = STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
-                    break;
+                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
+                switch (extension)
+                {
+                    case FileType.STL_ASCII:
+                    case FileType.STL_Binary:
+                        solid = STLFileData.OpenSolids(s, filename)[0]; // Standard Tessellation or StereoLithography
+                        break;
 
-                case FileType.ThreeMF:
-                    solid = ThreeMFFileData.OpenSolids(s, filename)[0];
-                    break;
+                    case FileType.ThreeMF:
+                        solid = ThreeMFFileData.OpenSolids(s, filename)[0];
+                        break;
 
-                case FileType.Model3MF:
-                    solid = ThreeMFFileData.OpenModelFile(s, filename)[0];
-                    break;
+                    case FileType.Model3MF:
+                        solid = ThreeMFFileData.OpenModelFile(s, filename)[0];
+                        break;
 
-                case FileType.AMF:
-                    solid = AMFFileData.OpenSolids(s, filename)[0];
-                    break;
+                    case FileType.AMF:
+                        solid = AMFFileData.OpenSolids(s, filename)[0];
+                        break;
 
-                case FileType.OBJ:
-                    solid = OBJFileData.OpenSolids(s, filename)[0];
-                    break;
+                    case FileType.OBJ:
+                        solid = OBJFileData.OpenSolids(s, filename)[0];
+                        break;
 
-                case FileType.OFF:
-                    solid = OFFFileData.OpenSolid(s, filename);
-                    break;
+                    case FileType.OFF:
+                        solid = OFFFileData.OpenSolid(s, filename);
+                        break;
 
-                case FileType.PLY_ASCII:
-                case FileType.PLY_Binary:
-                    solid = PLYFileData.OpenSolid(s, filename);
-                    break;
+                    case FileType.PLY_ASCII:
+                    case FileType.PLY_Binary:
+                        solid = PLYFileData.OpenSolid(s, filename);
+                        break;
 
-                case FileType.SHELL:
-                    solid = ShellFileData.OpenSolids(s, filename)[0];
-                    break;
+                    case FileType.SHELL:
+                        solid = ShellFileData.OpenSolids(s, filename)[0];
+                        break;
 
-                default:
-                    var serializer = new JsonSerializer();
-                    var sr = new StreamReader(s);
-                    using (var reader = new JsonTextReader(sr))
-                        solid = serializer.Deserialize<TessellatedSolid>(reader);
-                    break;
+                    case FileType.unspecified:
+                        solid = null;
+                        break;
+
+                    default:
+                        var serializer = new JsonSerializer();
+                        var sr = new StreamReader(s);
+                        using (var reader = new JsonTextReader(sr))
+                            solid = serializer.Deserialize<TessellatedSolid>(reader);
+                        break;
+                }
             }
-            //}
-            //catch (Exception exc)
-            //{
-            //    throw new Exception("Cannot open file. Message: " + exc.Message);
-            //}
+            catch (Exception exc)
+            {
+                Console.WriteLine("Cannot open file. Message: " + exc.Message);
+                solid = null;
+            }
         }
 
         /// <summary>
@@ -991,9 +996,9 @@ namespace TVGL.IOFunctions
             return Double.NaN;
         }
 
-        #endregion Open/Load/Read
+#endregion Open/Load/Read
 
-        #region Save/Write
+#region Save/Write
 
         /// <summary>
         /// Saves the specified solids to a file.
@@ -1245,6 +1250,6 @@ namespace TVGL.IOFunctions
             }
         }
 
-        #endregion Save/Write
+#endregion Save/Write
     }
 }
