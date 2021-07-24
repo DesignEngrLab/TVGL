@@ -40,7 +40,7 @@ namespace TVGL
         /// legitimately be modelling as a circle (or more generically as a conic curve). It sounds like the max smooth tessellation in
         /// SolidWorks is 150-degrees (or .83*pi). So 0.8 is between these two values.
         /// </summary>
-        public const double MinCircleAngle = 0.8 * Math.PI;  
+        public const double MinSmoothAngle = 0.85 * Math.PI;  
 
         /// <summary>
         ///     The tolerance used for simplifying polygons by joining to similary sloped lines.

@@ -80,6 +80,8 @@ namespace TVGL
         /// </summary>
         [JsonIgnore]
         public TessellationError Errors { get; internal set; }
+
+        public HashSet<Edge> NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors

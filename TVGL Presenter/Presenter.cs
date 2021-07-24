@@ -222,7 +222,7 @@ namespace TVGL
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<Vector3>> vertexPaths, IEnumerable<TessellatedSolid> solids,
-            bool closeLoops = true, Color[] colors = null)
+            bool closeLoops = true, IEnumerable<Color> colors = null)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -273,7 +273,7 @@ namespace TVGL
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertexPaths, IEnumerable<TessellatedSolid> solids,
-            bool closeLoops = true, Color[] colors = null)
+            bool closeLoops = true, IEnumerable<Color> colors = null)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -326,7 +326,7 @@ namespace TVGL
         /// <param name="vertexPaths">The vertex paths.</param>
         /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<IEnumerable<Vertex>>> vertexPaths, IEnumerable<TessellatedSolid> solids,
-            bool closeLoops, Color[] colors = null)
+            bool closeLoops, IEnumerable<Color> colors = null)
         {
             ShowVertexPathsWithSolid(vertexPaths.Select(layer => layer.Select(polygon => polygon.Select(v => v.Coordinates))), solids, closeLoops, colors);
         }

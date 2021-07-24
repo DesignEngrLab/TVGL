@@ -48,7 +48,7 @@ namespace StarMathLib
         private static bool solveViaCramersRule3(this double[,] a, IList<double> b, out double[] answer)
         {
             var denominator = determinant(a);
-            if (Math.Abs(denominator) < 5e-8)
+            if (Math.Abs(denominator) < TVGL.Constants.BaseTolerance)
             {
                 answer = Array.Empty<double>();
                 return false;
