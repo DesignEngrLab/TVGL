@@ -700,7 +700,7 @@ namespace TVGL
         /// <param name="edges">The edges.</param>
         /// <param name="FacesToContain">The faces to contain.</param>
         /// <returns>IEnumerable&lt;SurfaceBorder&gt;.</returns>
-        internal static IEnumerable<SurfaceBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
+        public static IEnumerable<SurfaceBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
         {
             while (edges.Any())
             {
