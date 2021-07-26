@@ -123,8 +123,7 @@ namespace TVGL.IOFunctions
             {
                 MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
                 foreach (var discontinuousEdge in outerEdges)
-                    if (!ts.NonsmoothEdges.Contains(discontinuousEdge))
-                        ts.NonsmoothEdges.Add(discontinuousEdge);
+                    ts.NonsmoothEdges.Add(discontinuousEdge);
             }
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
@@ -141,44 +140,46 @@ namespace TVGL.IOFunctions
                             break;
                         }
                     }
-                    if (!ts.NonsmoothEdges.Contains(discontinuousEdge))
-                        ts.NonsmoothEdges.Add(discontinuousEdge);
+                    ts.NonsmoothEdges.Add(discontinuousEdge);
                 }
             }
-            var dotMinSmoothAngle =Math.Abs(Math.Cos(Constants.TwoPi - Constants.MinSmoothAngle));
-            var vertexNormals = objFileData.VertexNormals.Keys.Select(n => n.Normalize()).ToList();
-            foreach (var possibleEdge in ts.Edges)
+            if (!ts.NonsmoothEdges.Any())
             {
-                if (ts.NonsmoothEdges.Contains(possibleEdge) )
-                    continue;
-                var index = possibleEdge.OwnedFace.IndexInList;
-                var ownedFace = ts.Faces[index];
-                if (index >= objFileData.FaceToNormalIndices.Count) continue;
-                var ownedNormalIndices = objFileData.FaceToNormalIndices[index];
-                index = possibleEdge.OtherFace.IndexInList;
-                var otherFace = ts.Faces[index];
-                if (index >= objFileData.FaceToNormalIndices.Count) continue;
-                var otherNormalIndices = objFileData.FaceToNormalIndices[index];
-                index = ownedFace.Vertices.IndexOf(possibleEdge.From);
-                var fromOwnedIndex = ownedNormalIndices[index];
-                var fromOwnedNormal = vertexNormals[fromOwnedIndex];
-                index = otherFace.Vertices.IndexOf(possibleEdge.From);
-                var fromOtherIndex = ownedNormalIndices[index];
-                var fromOtherNormal = vertexNormals[fromOtherIndex];
-                if (fromOwnedNormal.Dot(fromOtherNormal) < dotMinSmoothAngle)
-                    ts.NonsmoothEdges.Add(possibleEdge);
-                else
+                //Try setting the edges. This is less accurate tha
+                var dotMinSmoothAngle = Math.Abs(Math.Cos(Constants.TwoPi - Constants.MinSmoothAngle));
+                var vertexNormals = objFileData.VertexNormals.Keys.Select(n => n.Normalize()).ToList();
+                foreach (var possibleEdge in ts.Edges)
                 {
-                    index = ownedFace.Vertices.IndexOf(possibleEdge.To);
-                    var toOwnedIndex = ownedNormalIndices[index];
-                    var toOwnedNormal = vertexNormals[toOwnedIndex];
-                    index = otherFace.Vertices.IndexOf(possibleEdge.To);
-                    var toOtherIndex = ownedNormalIndices[index];
-                    var toOtherNormal = vertexNormals[toOtherIndex];
-                    if (toOwnedNormal.Dot(toOtherNormal) < dotMinSmoothAngle)
+                    if (ts.NonsmoothEdges.Contains(possibleEdge)) continue;
+                    var index = possibleEdge.OwnedFace.IndexInList;
+                    var ownedFace = ts.Faces[index];
+                    if (index >= objFileData.FaceToNormalIndices.Count) continue;
+                    var ownedNormalIndices = objFileData.FaceToNormalIndices[index];
+                    index = possibleEdge.OtherFace.IndexInList;
+                    var otherFace = ts.Faces[index];
+                    if (index >= objFileData.FaceToNormalIndices.Count) continue;
+                    var otherNormalIndices = objFileData.FaceToNormalIndices[index];
+                    index = ownedFace.Vertices.IndexOf(possibleEdge.From);
+                    var fromOwnedIndex = ownedNormalIndices[index];
+                    var fromOwnedNormal = vertexNormals[fromOwnedIndex];
+                    index = otherFace.Vertices.IndexOf(possibleEdge.From);
+                    var fromOtherIndex = ownedNormalIndices[index];
+                    var fromOtherNormal = vertexNormals[fromOtherIndex];
+                    if (fromOwnedNormal.Dot(fromOtherNormal) < dotMinSmoothAngle)
                         ts.NonsmoothEdges.Add(possibleEdge);
+                    else
+                    {
+                        index = ownedFace.Vertices.IndexOf(possibleEdge.To);
+                        var toOwnedIndex = ownedNormalIndices[index];
+                        var toOwnedNormal = vertexNormals[toOwnedIndex];
+                        index = otherFace.Vertices.IndexOf(possibleEdge.To);
+                        var toOtherIndex = ownedNormalIndices[index];
+                        var toOtherNormal = vertexNormals[toOtherIndex];
+                        if (toOwnedNormal.Dot(toOtherNormal) < dotMinSmoothAngle)
+                            ts.NonsmoothEdges.Add(possibleEdge);
+                    }
                 }
-            }
+            }   
         }
 
 

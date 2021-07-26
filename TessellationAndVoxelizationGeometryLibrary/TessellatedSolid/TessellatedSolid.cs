@@ -963,6 +963,22 @@ namespace TVGL
                     var surfConstructor = surfType.GetConstructor(new[] { surfType, typeof(TessellatedSolid) });
                     copy.AddPrimitive((PrimitiveSurface)surfConstructor.Invoke(new object[] { surface, copy }));
                 }
+                //Rebuild the nonsmooth edges from the primitives if possible
+                if (NonsmoothEdges != null && NonsmoothEdges.Any())
+                {
+                    copy.NonsmoothEdges = new HashSet<Edge>();
+                    foreach (var primitive in copy.Primitives)
+                        foreach (var outerEdge in primitive.OuterEdges)
+                            copy.NonsmoothEdges.Add(outerEdge);
+                }
+            } 
+            else if (NonsmoothEdges != null && NonsmoothEdges.Any())
+            {
+                copy.NonsmoothEdges = new HashSet<Edge>();
+                foreach (var edge in NonsmoothEdges)
+                {
+                    copy.NonsmoothEdges.Add(copy.Edges[edge.IndexInList]);
+                }
             }
             return copy;
         }
