@@ -124,11 +124,11 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonA = polygonA.SimplifyFuzzy();
+                polygonA = polygonA.SimplifyFast();
                 //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                 {
-                    polygonB = polygonB?.SimplifyFuzzy();
+                    polygonB = polygonB?.SimplifyFast();
                     //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 }
             }
@@ -208,7 +208,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
-                polygons = polygons.Select(p=>SimplifyFuzzy(p));
+                polygons = polygons.Select(p=>SimplifyFast(p));
                 //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctUnion, polygons);
@@ -320,10 +320,10 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonsA = polygonsA.Select(p => SimplifyFuzzy(p));
+                polygonsA = polygonsA.Select(p => SimplifyFast(p));
                 //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
-                    polygonsB = polygonsB?.Select(p => SimplifyFuzzy(p));
+                    polygonsB = polygonsB?.Select(p => SimplifyFast(p));
                     //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
@@ -447,12 +447,12 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonA = polygonA.SimplifyFuzzy();
+                polygonA = polygonA.SimplifyFast();
                 //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                 {
                     //If not null
-                    polygonB = polygonB?.SimplifyFuzzy();
+                    polygonB = polygonB?.SimplifyFast();
                     //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 }
             }
@@ -526,10 +526,10 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonsA = polygonsA.Select(p=>SimplifyFuzzy(p));
+                polygonsA = polygonsA.Select(p=>SimplifyFast(p));
                 polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
-                    polygonsB = polygonsB.Select(p => SimplifyFuzzy(p));
+                    polygonsB = polygonsB.Select(p => SimplifyFast(p));
                     //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
@@ -603,7 +603,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
-                polygons = polygons.Select(p=>SimplifyFuzzy(p));
+                polygons = polygons.Select(p=>SimplifyFast(p));
                 //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.pftPositive, ClipperLib.ClipType.ctIntersection, polygons);
@@ -669,10 +669,10 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                minuend = minuend.SimplifyFuzzy();
+                minuend = minuend.SimplifyFast();
                 //minuend = minuend.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (subtrahend != null)
-                    subtrahend = subtrahend?.SimplifyFuzzy();
+                    subtrahend = subtrahend?.SimplifyFast();
                 //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER
@@ -747,10 +747,10 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                minuends = minuends.Select(p => SimplifyFuzzy(p));
+                minuends = minuends.Select(p => SimplifyFast(p));
                 //minuends = minuends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (subtrahends != null)
-                    subtrahends = subtrahends.Select(p => SimplifyFuzzy(p));
+                    subtrahends = subtrahends.Select(p => SimplifyFast(p));
                     //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
@@ -829,10 +829,10 @@ foreach (var polyB in subtrahends)
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonA = polygonA.SimplifyFuzzy();
+                polygonA = polygonA.SimplifyFast();
                 //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
-                    polygonB = polygonB.SimplifyFuzzy();
+                    polygonB = polygonB.SimplifyFast();
                     //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER

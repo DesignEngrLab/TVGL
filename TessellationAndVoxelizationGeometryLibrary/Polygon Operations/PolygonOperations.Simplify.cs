@@ -795,7 +795,8 @@ namespace TVGL.TwoDimensional
         #endregion
         #endregion Simplify by area change
 
-        public static Polygon SimplifyFuzzy(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
+        #region SimplifyFast (By MinLength and RemoveCollinearEdges) - Does not use PriorityQueue
+        public static Polygon SimplifyFast(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
            double slopeTolerance = Constants.LineSlopeTolerance)
         {
             var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyFuzzy(lengthTolerance, slopeTolerance));
@@ -907,6 +908,7 @@ namespace TVGL.TwoDimensional
             return simplePath;
         }
 
+        [Intrinsic]
         private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
         {
             var dX = p1X - p2X;
@@ -914,12 +916,14 @@ namespace TVGL.TwoDimensional
             return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
         }
 
+        [Intrinsic]
         private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y,
             double tolerance = Constants.LineSlopeTolerance)
         {
             var value = (p1Y - p2Y) * (p2X - p3X) - (p1X - p2X) * (p2Y - p3Y);
             return value.IsNegligible(tolerance);
         }
+        #endregion
 
         #region Complexify
         #region Complexify - max allowable length
