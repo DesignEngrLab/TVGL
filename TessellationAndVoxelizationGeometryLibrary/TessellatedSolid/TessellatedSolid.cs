@@ -80,6 +80,12 @@ namespace TVGL
         /// </summary>
         [JsonIgnore]
         public TessellationError Errors { get; internal set; }
+
+        /// <summary>
+        /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
+        /// </summary>
+        /// <value>The nonsmooth edges.</value>
+        public HashSet<Edge> NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors

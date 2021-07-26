@@ -4,6 +4,10 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;CLIPPER, PRESENT</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -56,11 +60,10 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StarMathLib\inversion transpose.cs" Link="TVGL\Numerics\StarMathLib\inversion transpose.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StarMathLib\solve.cs" Link="TVGL\Numerics\StarMathLib\solve.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StarMathLib\svd.cs" Link="TVGL\Numerics\StarMathLib\svd.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StatisticCollection.cs" Link="TVGL\Numerics\StarMathLib\StatisticCollection.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs" Link="TVGL\Numerics\StarMathLib\Vector2.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2_Intrinsics.cs" Link="TVGL\Numerics\StarMathLib\Vector2_Intrinsics.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs" Link="TVGL\Numerics\StarMathLib\Vector3.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3_Intrinsics.cs" Link="TVGL\Numerics\StarMathLib\Vector3_Intrinsics.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StatisticCollection.cs" Link="TVGL\Numerics\StatisticCollection.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs" Link="TVGL\Numerics\Vector2.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs" Link="TVGL\Numerics\Vector3.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\IntrinsicAttribute.cs" Link="TVGL\Numerics\IntrinsicAttribute.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />

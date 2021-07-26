@@ -449,19 +449,42 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Returns a boolean indicating whether the given Object is equal to this Vector3 instance.
+        /// Returns a boolean indicating whether the given vecotr is aligned or exactly in the opposite direction.
         /// </summary>
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
-        public bool AlignedOrReverse(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        public bool IsAlignedOrReverse(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
         {
             //Perform a quick check to see if they are perfectly equal or opposite
             if (X == other.X && Y == other.Y && Z == other.Z) return true;
             if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
-            //Else, use the tolerance to determine with the dot product
-            var dot = Math.Abs(this.Dot(other));
-            return dot.IsPracticallySame(1.0, dotTolerance);
+            // if the magnitude of the cross product is nearly zero than the two vectors are aligned
+            var crossMagnitudeSquared = this.Cross(other).LengthSquared();
+            crossMagnitudeSquared /= this.LengthSquared();
+            crossMagnitudeSquared /= other.LengthSquared();
+            return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
         }
+
+        /// <summary>
+        /// Determines whether the specified d2 is aligned.
+        /// </summary>
+        /// <param name="d1">The d1.</param>
+        /// <param name="d2">The d2.</param>
+        /// <param name="reverseIsDuplicate">if set to <c>true</c> [reverse is duplicate].</param>
+        /// <param name="dotTolerance">The dot tolerance.</param>
+        /// <returns><c>true</c> if the specified d2 is aligned; otherwise, <c>false</c>.</returns>
+        public bool IsAligned(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        {
+            if (X == other.X && Y == other.Y && Z == other.Z) return true;
+            // but also need to check that they are in the same direction
+            if (this.Dot(other) < 0) return false;
+            // if the magnitude of the cross product is nearly zero than the two vectors are aligned
+            var crossMagnitudeSquared = this.Cross(other).LengthSquared();
+            crossMagnitudeSquared /= this.LengthSquared();
+            crossMagnitudeSquared /= other.LengthSquared();
+            return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
+        }
+
 
         /// <summary>
         /// Returns a String representing this Vector3 instance.

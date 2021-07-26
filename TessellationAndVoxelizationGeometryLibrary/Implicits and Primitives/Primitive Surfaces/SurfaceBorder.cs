@@ -22,7 +22,7 @@ namespace TVGL
     /// <summary>
     /// Class PrimitiveSurfaceBorder.
     /// </summary>
-    public class SurfaceBorder
+    public class SurfaceBorder : EdgePath
     {
         /// <summary>
         /// Gets or sets the curve.
@@ -182,16 +182,16 @@ namespace TVGL
         }
 
 
-        public IEnumerable<Vertex> GetVertices() => Edges.GetVertices();
+        //public IEnumerable<Vertex> GetVertices() => Edges.GetVertices();
 
-        public EdgePath Edges { get; set; }
+        //public EdgePath Edges { get; set; }
 
         public Polygon AsPolygon
         {
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(Edges.GetVertices().ProjectTo2DCoordinates(Plane.Normal, out _));
+                    _polygon = new Polygon(GetVertices().ProjectTo2DCoordinates(Plane.Normal, out _));
                 return _polygon;
             }
         }
@@ -202,7 +202,7 @@ namespace TVGL
         /// </summary>
         public SurfaceBorder()
         {
-            Edges = new EdgePath();
+            //Edges = new EdgePath();
         }
 
 
@@ -215,56 +215,24 @@ namespace TVGL
             copy.EncirclesAxis = EncirclesAxis;
             copy.FullyConcave = FullyConcave;
             copy.FullyConvex = FullyConvex;
-            copy.Edges = new EdgePath { IsClosed = Edges.IsClosed };
+            //copy.Edges = new EdgePath { IsClosed = Edges.IsClosed };
             if (copiedTessellatedSolid == null)
             {
-                foreach (var eAndA in Edges)
+                foreach (var eAndA in this)
                     if (reverse)
-                        copy.Edges.Insert(0, (eAndA.edge, !eAndA.dir));
+                        copy.Insert(0, (eAndA.edge, !eAndA.dir));
                     else
-                        copy.Edges.Add((eAndA.edge, eAndA.dir));
+                        copy.Add((eAndA.edge, eAndA.dir));
             }
             else
             {
-                foreach (var eAndA in Edges)
+                foreach (var eAndA in this)
                     if (reverse)
-                        copy.Edges.Insert(0, (copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], !eAndA.dir));
+                        copy.Insert(0, (copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], !eAndA.dir));
                     else
-                        copy.Edges.Add((copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], eAndA.dir));
+                        copy.Add((copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], eAndA.dir));
             }
             return copy;
-        }
-
-
-        public static IEnumerable<HashSet<PolygonalFace>> GetFacePatchesBetweenSignificantEdges(HashSet<Edge> significantEdges, IEnumerable<PolygonalFace> faces)
-        {
-            var remainingFaces = new HashSet<PolygonalFace>(faces);
-            //Pick a start edge, then collect all adjacent faces on one side of the face, without crossing over significant edges.
-            //This collection of faces will be used to create a patch.
-            while (remainingFaces.Any())
-            {
-                var startFace = remainingFaces.First();
-                var patch = new HashSet<PolygonalFace> { startFace };
-                remainingFaces.Remove(startFace);
-                var stack = new Stack<PolygonalFace>();
-                stack.Push(startFace);
-                while (stack.Any())
-                {
-                    var face = stack.Pop();
-                    foreach (var edge in face.Edges)
-                    {
-                        if (significantEdges.Contains(edge)) continue;//Don't cross over significant edges
-                        var otherFace = face == edge.OwnedFace ? edge.OtherFace : edge.OwnedFace;
-                        if (remainingFaces.Contains(otherFace))
-                        {
-                            stack.Push(otherFace);
-                            patch.Add(otherFace);
-                            remainingFaces.Remove(otherFace);
-                        }
-                    }
-                }
-                yield return patch;
-            }
         }
     }
 }

@@ -224,8 +224,8 @@ namespace TVGL.IOFunctions
         /// <exception cref="Exception">Cannot open file. Message: " + exc.Message</exception>
         public static void Open(Stream s, string filename, out TessellatedSolid[] tessellatedSolids)
         {
-            try
-            {
+            //try
+            //{
                 var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
@@ -270,11 +270,11 @@ namespace TVGL.IOFunctions
                         tessellatedSolids = new TessellatedSolid[0];
                         break;
                 }
-            }
-            catch (Exception exc)
-            {
-                throw new Exception("Cannot open file. Message: " + exc.Message);
-            }
+            //}
+            //catch (Exception exc)
+            //{
+            //    throw new Exception("Cannot open file. Message: " + exc.Message);
+            //}
         }
 
         /// <summary>

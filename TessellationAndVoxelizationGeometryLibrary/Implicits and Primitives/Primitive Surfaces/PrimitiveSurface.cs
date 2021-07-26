@@ -186,24 +186,7 @@ namespace TVGL
 
         private void DefineInnerOuterEdges()
         {
-            var outerEdgeHash = new HashSet<Edge>();
-            var innerEdgeHash = new HashSet<Edge>();
-            if (Faces != null)
-                foreach (var face in Faces)
-                {
-                    foreach (var edge in face.Edges)
-                    {
-                        if (innerEdgeHash.Contains(edge)) continue;
-                        if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
-                        else
-                        {
-                            innerEdgeHash.Add(edge);
-                            outerEdgeHash.Remove(edge);
-                        }
-                    }
-                }
-            _outerEdges = outerEdgeHash;
-            _innerEdges = innerEdgeHash;
+            MiscFunctions.DefineInnerOuterEdges(Faces, out _innerEdges, out _outerEdges);
         }
 
         /// <summary>
@@ -351,7 +334,7 @@ namespace TVGL
                 SetBorderConvexity(border);
                 if (curveResidual < maxErrorInCurveFit)
                     border.Curve = curve;
-                if (border.Edges.IsClosed)
+                if (border.IsClosed)
                 {
                     var axis = Vector3.Null;
                     var anchor = Vector3.Null;
@@ -389,7 +372,7 @@ namespace TVGL
         {
             var concave = 0;
             var convex = 0;
-            foreach (var (edge, _) in border.Edges)
+            foreach (var (edge, _) in border)
             {
                 if (edge.Curvature == CurvatureType.Concave) concave++;
                 else if (edge.Curvature == CurvatureType.Convex) convex++;

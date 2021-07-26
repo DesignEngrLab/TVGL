@@ -25,6 +25,9 @@ namespace TVGL.IOFunctions
             SurfaceEdges = new List<int[]>();
             Vertices = new Dictionary<Vector3, int>();
             VerticesByLine = new List<Vector3>();
+            VertexNormals = new Dictionary<Vector3, int>();
+            VertexNormalsByLine = new List<Vector3>();
+            FaceToNormalIndices = new List<int[]>();
         }
 
         #endregion
@@ -58,6 +61,25 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The face to vertex indices.</value>
         private Dictionary<Vector3, int> Vertices { get; }
+
+        /// <summary>
+        ///     Just like vertices, the vertex normals are stored. However, in TVGL - this is primarily used to find edges
+        ///     that represent C1 discontinuities which are important in delineating the primtive surfaces.
+        /// </summary>
+        /// <value>The face to vertex indices.</value>
+        private List<Vector3> VertexNormalsByLine { get; }
+
+
+        /// <summary>
+        ///     Gets the integer location of the vertex normal within the list of normals of the solid.
+        /// </summary>
+        /// <value>The face to vertex indices.</value>
+        private Dictionary<Vector3, int> VertexNormals { get; }
+        /// <summary>
+        ///     Gets the face to normal indices.
+        /// </summary>
+        /// <value>The face to vertex indices.</value>
+        private List<int[]> FaceToNormalIndices { get; }
 
         #endregion
 
@@ -95,20 +117,14 @@ namespace TVGL.IOFunctions
 
         private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts)
         {
-            var showPatches = true;
-            ts.Primitives = new List<PrimitiveSurface>();
-            var significantEdges = new HashSet<Edge>();
+            ts.NonsmoothEdges = new HashSet<Edge>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
             foreach (var faceIndices in objFileData.FaceGroups)
             {
-                var primitive = new UnknownRegion(faceIndices.Select(index => ts.Faces[index]));
-                ts.Primitives.Add(primitive);
-                foreach (var face in primitive.Faces)
-                    remainingFaces.Remove(face);
-                primitive.DefineBorders();
-                foreach (var border in primitive.Borders)
-                    foreach (var edge in border.Edges.EdgeList)
-                        significantEdges.Add(edge);
+                MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
+                foreach (var discontinuousEdge in outerEdges)
+                    if (!ts.NonsmoothEdges.Contains(discontinuousEdge))
+                        ts.NonsmoothEdges.Add(discontinuousEdge);
             }
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
@@ -116,46 +132,53 @@ namespace TVGL.IOFunctions
                 {
                     var vertexJ = ts.Vertices[borderIndices[j]];
                     var vertexK = ts.Vertices[borderIndices[k]];
-                    Edge connectingEdge = null;
+                    Edge discontinuousEdge = null;
                     foreach (var edge in vertexJ.Edges)
                     {
                         if (edge.OtherVertex(vertexJ) == vertexK)
                         {
-                            connectingEdge = edge;
+                            discontinuousEdge = edge;
                             break;
                         }
                     }
-                    if (connectingEdge == null)
-                        continue;
-                    //throw new Exception("No edge in tessellated solid that matches polyline segment");
-                    significantEdges.Add(connectingEdge);
+                    if (!ts.NonsmoothEdges.Contains(discontinuousEdge))
+                        ts.NonsmoothEdges.Add(discontinuousEdge);
                 }
             }
-            var patches = SurfaceBorder.GetFacePatchesBetweenSignificantEdges(significantEdges, remainingFaces);
-            foreach (var patch in patches)
+            var dotMinSmoothAngle =Math.Abs(Math.Cos(Constants.TwoPi - Constants.MinSmoothAngle));
+            var vertexNormals = objFileData.VertexNormals.Keys.Select(n => n.Normalize()).ToList();
+            foreach (var possibleEdge in ts.Edges)
             {
-                var primitive = new UnknownRegion(patch);
-                ts.Primitives.Add(primitive);
-            }
-#if PRESENT
-            if (showPatches)
-            {
-                ts.ResetDefaultColor();
-                ts.HasUniformColor = false;
-                var colorsEnumerator = Constants.GetRandomColor().GetEnumerator();
-                foreach (var primitive in ts.Primitives)
+                if (ts.NonsmoothEdges.Contains(possibleEdge) )
+                    continue;
+                var index = possibleEdge.OwnedFace.IndexInList;
+                var ownedFace = ts.Faces[index];
+                if (index >= objFileData.FaceToNormalIndices.Count) continue;
+                var ownedNormalIndices = objFileData.FaceToNormalIndices[index];
+                index = possibleEdge.OtherFace.IndexInList;
+                var otherFace = ts.Faces[index];
+                if (index >= objFileData.FaceToNormalIndices.Count) continue;
+                var otherNormalIndices = objFileData.FaceToNormalIndices[index];
+                index = ownedFace.Vertices.IndexOf(possibleEdge.From);
+                var fromOwnedIndex = ownedNormalIndices[index];
+                var fromOwnedNormal = vertexNormals[fromOwnedIndex];
+                index = otherFace.Vertices.IndexOf(possibleEdge.From);
+                var fromOtherIndex = ownedNormalIndices[index];
+                var fromOtherNormal = vertexNormals[fromOtherIndex];
+                if (fromOwnedNormal.Dot(fromOtherNormal) < dotMinSmoothAngle)
+                    ts.NonsmoothEdges.Add(possibleEdge);
+                else
                 {
-                    colorsEnumerator.MoveNext();
-                    var color = colorsEnumerator.Current;
-                    foreach (var face in primitive.Faces)
-                    {
-                        face.Color = color;
-                    }
+                    index = ownedFace.Vertices.IndexOf(possibleEdge.To);
+                    var toOwnedIndex = ownedNormalIndices[index];
+                    var toOwnedNormal = vertexNormals[toOwnedIndex];
+                    index = otherFace.Vertices.IndexOf(possibleEdge.To);
+                    var toOtherIndex = ownedNormalIndices[index];
+                    var toOtherNormal = vertexNormals[toOtherIndex];
+                    if (toOwnedNormal.Dot(toOtherNormal) < dotMinSmoothAngle)
+                        ts.NonsmoothEdges.Add(possibleEdge);
                 }
-                Presenter.ShowVertexPathsWithSolid(significantEdges.Select(edge => new[] { edge.From.Coordinates, edge.To.Coordinates }),
-                    new[] { ts }, false);
             }
-#endif
         }
 
 
@@ -166,10 +189,11 @@ namespace TVGL.IOFunctions
         /// <param name="filename">The filename.</param>
         /// <param name="stlData">The STL data.</param>
         /// <returns>True if the model was loaded successfully.</returns>  
-        internal static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
+        private static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
         {
             var reader = new StreamReader(stream);
-            var numDecimalPoints = 8;
+            var numDecimalPointsCoords = 8;
+            var numDecimalPointsNormals = 3;
 
             char[] split = new char[] { ' ' };
             var defaultName = Path.GetFileNameWithoutExtension(filename) + "_";
@@ -178,7 +202,8 @@ namespace TVGL.IOFunctions
             var objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
             var readingFaces = false;
             var faceGroup = new List<int>();
-            var i = 0;
+            var indexFace = 0;
+            var indexNormal = 0;
             while (!reader.EndOfStream)
             {
                 if (!readingFaces && faceGroup.Any())
@@ -222,22 +247,32 @@ namespace TVGL.IOFunctions
                         //objSolid.Material.Add(values);
                         break;
                     case "v"://vertex
-                        var v = ReadVertex(values.Split(split, StringSplitOptions.RemoveEmptyEntries));
-                        var coordinates = new Vector3(Math.Round(v.X, numDecimalPoints),
-                            Math.Round(v.Y, numDecimalPoints), Math.Round(v.Z, numDecimalPoints));
-                        //If the vertex already exists, store the 
+                        var v = ReadVector3(values.Split(split, StringSplitOptions.RemoveEmptyEntries));
+                        var coordinates = new Vector3(Math.Round(v.X, numDecimalPointsCoords),
+                            Math.Round(v.Y, numDecimalPointsCoords), Math.Round(v.Z, numDecimalPointsCoords));
+                        //If the vertex doesn't already exists, store it in the list 
                         if (!objSolid.Vertices.ContainsKey(coordinates))
-                            objSolid.Vertices.Add(coordinates, i++);
+                            objSolid.Vertices.Add(coordinates, indexFace++);
                         //Store the vertex by line so that it can be referenced by geometry (i.e., face or line)
                         objSolid.VerticesByLine.Add(coordinates);
                         break;
                     case "vt"://texture coordinate (ignore?)
                         break;
-                    case "vn"://Vertex normal (ignore?)
+                    case "vn"://Vertex normal
+                        var vn = ReadVector3(values.Split(split, StringSplitOptions.RemoveEmptyEntries));
+                        var normal = new Vector3(Math.Round(vn.X, numDecimalPointsNormals),
+                           Math.Round(vn.Y, numDecimalPointsNormals), Math.Round(vn.Z, numDecimalPointsNormals));
+                        //If the normal already exists, store the 
+                        if (!objSolid.VertexNormals.ContainsKey(normal))
+                            objSolid.VertexNormals.Add(normal, indexNormal++);
+                        //Store the vertex by line so that it can be referenced by geometry (i.e., face or line)
+                        objSolid.VertexNormalsByLine.Add(normal);
                         break;
                     case "f"://Face - multiple formats possible
                         faceGroup.Add(objSolid.FaceToVertexIndices.Count);
-                        objSolid.FaceToVertexIndices.Add(objSolid.ReadFace(values.Split(split, StringSplitOptions.RemoveEmptyEntries)));
+                        var perVertexValues = values.Split(split, StringSplitOptions.RemoveEmptyEntries);
+                        objSolid.FaceToVertexIndices.Add(objSolid.ReadFaceVertices(perVertexValues));
+                        objSolid.FaceToNormalIndices.Add(objSolid.ReadFaceNormals(perVertexValues));
                         readingFaces = true;
                         break;
                     case "l"://Line 
@@ -245,13 +280,13 @@ namespace TVGL.IOFunctions
                         break;
                 }
             }
-            if (!objData.Any() || objData[^1] != objSolid) 
+            if (!objData.Any() || objData[^1] != objSolid)
                 objData.Add(objSolid);
             return true;
         }
 
 
-        private static Vector3 ReadVertex(string[] values)
+        private static Vector3 ReadVector3(string[] values)
         {
             var x = double.Parse(values[0], CultureInfo.InvariantCulture);
             var y = double.Parse(values[1], CultureInfo.InvariantCulture);
@@ -262,18 +297,38 @@ namespace TVGL.IOFunctions
             return new Vector3(x / w, y / w, z / w);
         }
 
-        private int[] ReadFace(string[] values)
+        private int[] ReadFaceVertices(IEnumerable<string> values)
         {
             var face = new int[3];
-            for (int i = 0; i < values.Length; i++)
+            var i = 0;
+            foreach (var value in values)
             {
-                //  Split the parts.
-                string[] parts = values[i].Split(new char[] { '/' }, StringSplitOptions.None);
+                string[] parts = value.Split(new char[] { '/' }, StringSplitOptions.None);
                 face[i] = GetFirstVertexIndex(parts[0]);
-                //face[1] = GetFirstVertexIndex(parts[1]); // this is the vt or vertex texture index
-                //face[2] = GetFirstVertexIndex(parts[2]); // this is the vt or vertex normal index
+                i++;
             }
             return face;
+        }
+        private int[] ReadFaceNormals(IEnumerable<string> values)
+        {
+            var face = new int[3];
+            var i = 0;
+            var success = false;
+            foreach (var value in values)
+            {
+                string[] parts = value.Split(new char[] { '/' }, StringSplitOptions.None);
+                if (parts.Length < 3) face[i] = -1;
+                else if (int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var a))
+                {
+                    Index index = a < 0 ? ^-a : a - 1;
+                    face[i] = VertexNormals[VertexNormalsByLine[index]];
+                    success = true;
+                }
+                else face[i] = -1;
+                i++;
+            }
+            if (success) return face;
+            return null;
         }
 
         private int[] ReadSurfaceLine(string[] values)
@@ -298,6 +353,8 @@ namespace TVGL.IOFunctions
             Index i = a < 0 ? ^-a : a - 1;
             return Vertices[VerticesByLine[i]];
         }
+
+
 
         #endregion
 

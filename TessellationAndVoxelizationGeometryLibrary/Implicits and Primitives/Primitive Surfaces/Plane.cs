@@ -85,7 +85,7 @@ namespace TVGL
             Normal = normal;
         }
 
-        public Plane(IEnumerable<Vertex> vertices, Vector3 normalGuess)
+        public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
         {            
             DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
             if (normal.Dot(normalGuess) < 0)
