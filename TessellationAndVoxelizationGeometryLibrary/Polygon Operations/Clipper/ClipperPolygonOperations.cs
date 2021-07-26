@@ -98,40 +98,51 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> BooleanViaClipper(PolyFillType fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
             IEnumerable<Polygon> clip = null, bool subjectIsClosed = true, bool clipIsClosed = true)
         {
-            if (!subject.Any())
+            //Convert to int points and remove collinear edges
+            var clipperSubject = new List<List<IntPoint>>();
+            foreach (var polygon in subject)
             {
-                if (clip == null || !clip.Any())
+                foreach(var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                {
+                    clipperSubject.Add(polygonElement.Path.Select(p => new IntPoint(p.X * scale, p.Y * scale)).ToList());
+                }
+            }
+            var clipperClip = new List<List<IntPoint>>();
+            if (clip != null)
+            {
+                foreach (var polygon in clip)
+                {
+                    foreach (var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
+                    {
+                        clipperClip.Add(polygonElement.Path.Select(p => new IntPoint(p.X * scale, p.Y * scale)).ToList());
+                    }
+                }
+            }
+            //If subject is null, use the clip as the subject for unions. Else, return empty.
+            if (!clipperSubject.Any())
+            {
+                if (clip == null || !clipperClip.Any())
                 {
                     return new List<Polygon>();
                 }
                 //Use the clip as the subject if this is a union operation and the clip is not null.
                 if (clipType == ClipType.ctUnion)
                 {
-                    subject = clip;
+                    clipperSubject = clipperClip;
                     clip = null;
                 }
             }
-            var subjectAll = subject.SelectMany(p => p.AllPolygons).ToList();
-
-            var clipperSolution = new List<List<IntPoint>>();
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var clipperSubject =
-                subjectAll.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
 
             //Setup Clipper
             var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
             clipper.AddPaths(clipperSubject, PolyType.ptSubject, subjectIsClosed);
 
-            if (clip != null)
-            {
-                var clipAll = clip.SelectMany(p => p.AllPolygons).ToList();
-
-                var clipperClip =
-                    clipAll.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+            //Don't add the clip unless it is not null (and has not been set to be the subject - see a few lines above) 
+            if (clip != null && clipperClip.Any())
                 clipper.AddPaths(clipperClip, PolyType.ptClip, clipIsClosed);
-            }
 
             //Begin an evaluation
+            var clipperSolution = new List<List<IntPoint>>();
             var result = clipper.Execute(clipType, clipperSolution, fillMethod, fillMethod);
             if (!result) throw new Exception("Clipper Union Failed");
 
@@ -140,6 +151,5 @@ namespace TVGL.TwoDimensional
             return solution.CreateShallowPolygonTrees(true);
         }
         #endregion
-
     }
 }
