@@ -119,12 +119,15 @@ namespace TVGL.IOFunctions
         {
             ts.NonsmoothEdges = new HashSet<Edge>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
-            foreach (var faceIndices in objFileData.FaceGroups)
+            if(objFileData.FaceGroups.Count > 1)
             {
-                MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
-                foreach (var discontinuousEdge in outerEdges)
-                    ts.NonsmoothEdges.Add(discontinuousEdge);
-            }
+                foreach (var faceIndices in objFileData.FaceGroups)
+                {
+                    MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
+                    foreach (var discontinuousEdge in outerEdges)
+                        ts.NonsmoothEdges.Add(discontinuousEdge);
+                }
+            }       
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
                 for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
