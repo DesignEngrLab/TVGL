@@ -111,12 +111,9 @@ namespace TVGL.TwoDimensional
 
         public void MakePolygonEdgesIfNonExistent()
         {
-            lock (_vertices)
-            {
                 if (_edges != null && _edges.Length == Vertices.Count) return;
                 foreach (var poly in AllPolygons)
                     poly.MakeThisPolygonsEdges();
-            }
         }
 
         private void MakeThisPolygonsEdges()

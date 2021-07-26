@@ -212,8 +212,8 @@ namespace TVGL
                 if (i * increment < start * increment || i * increment > stop * increment) return;
                 foreach (var polygon in layer.Value)
                 {
-                    lock (polygon)
-                        faces.TryAdd(polygon, polygon.TriangulateToIndices().ToList());
+                    var poly = new Polygon(polygon.Path);//Create a copy to avoid complex locking / multi-threading issues 
+                    faces.TryAdd(polygon, poly.TriangulateToIndices().ToList());
                 }
             });
             return faces;
