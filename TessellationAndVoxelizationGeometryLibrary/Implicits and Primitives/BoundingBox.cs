@@ -284,7 +284,7 @@ namespace TVGL
                 new PolygonalFace(new []{vertices[6],vertices[7],vertices[4] }),
                 new PolygonalFace(new []{vertices[6],vertices[4],vertices[5] })
             };
-                var random = new Random();
+                var random = new Random(0);
                 _tessellatedSolid = new TessellatedSolid(faces, true, false, vertices, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
             }

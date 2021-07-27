@@ -1787,7 +1787,7 @@ namespace TVGL
             var facesAbove = new List<PolygonalFace>();
             var facesBelow = new List<PolygonalFace>();
             var inconclusive = true;
-            var rnd = new Random();
+            var rnd = new Random(0);
             //Added while inconclusive and random direction because there are some special cases that look the
             //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis,
             //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box

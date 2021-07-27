@@ -1090,7 +1090,7 @@ namespace TVGL
 
         public static IEnumerable<Color> GetRandomColors()
         {
-            var random = new Random();
+            var random = new Random(0);
             var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
                 .Select(dict => dict.Values.OrderBy(dummy2 => random.NextDouble()).ToList()).ToList();
             var innerIndex = 0;
