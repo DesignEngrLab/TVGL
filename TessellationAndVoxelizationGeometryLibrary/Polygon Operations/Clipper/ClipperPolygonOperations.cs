@@ -126,7 +126,7 @@ namespace TVGL.TwoDimensional
                     return new List<Polygon>();
                 }
                 //Use the clip as the subject if this is a union operation and the clip is not null.
-                if (clipType == ClipType.ctUnion)
+                if (clipType == ClipType.Union)
                 {
                     clipperSubject = clipperClip;
                     clip = null;
