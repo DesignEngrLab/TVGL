@@ -117,6 +117,7 @@ namespace TVGL
         /// Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
+        [JsonIgnore]
         public override Vector3 Normal
         {
             get
@@ -126,6 +127,7 @@ namespace TVGL
             }
         }
 
+        [JsonIgnore] //cannot serialize null values.
         private Vector3 _normal = Vector3.Null;
 
         private void DetermineNormal()

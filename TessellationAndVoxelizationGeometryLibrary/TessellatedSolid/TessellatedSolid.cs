@@ -85,6 +85,7 @@ namespace TVGL
         /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
         /// </summary>
         /// <value>The nonsmooth edges.</value>
+        [JsonIgnore] 
         public HashSet<Edge> NonsmoothEdges { get; set; }
         #endregion
 
