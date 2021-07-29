@@ -27,23 +27,26 @@ namespace TVGL.TwoDimensional
     {
         const double scale = 1000000;
         #region Offset
-        private static List<Polygon> OffsetViaClipper(Polygon polygon, double offset, bool notMiter, double deltaAngle)
+        private static List<Polygon> OffsetViaClipper(Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle)
         {
-            return OffsetViaClipper(new[] { polygon }, offset, notMiter, deltaAngle);
+            return OffsetViaClipper(new[] { polygon }, offset, notMiter, tolerance, deltaAngle);
         }
 
-        private static List<Polygon> OffsetViaClipper(IEnumerable<Polygon> polygons, double offset, bool notMiter, double deltaAngle)
+        private static List<Polygon> OffsetViaClipper(IEnumerable<Polygon> polygons, double offset, bool notMiter, double tolerance, double deltaAngle)
         {
             var allPolygons = polygons.SelectMany(polygon => polygon.AllPolygons).ToList();
-            var totalLength = allPolygons.Sum(loop => loop.Perimeter);
-            var tolerance = totalLength * 0.001;
+            if (double.IsNaN(tolerance) || tolerance.IsNegligible())
+            {
+                var totalLength = allPolygons.Sum(loop => loop.Perimeter);
+                tolerance = totalLength * 0.001;
+            }
 
             var joinType = notMiter ? (double.IsNaN(deltaAngle) ? JoinType.jtSquare : JoinType.jtRound) : JoinType.jtMiter;
             //Convert Points (TVGL) to IntPoints (Clipper)
             var clipperSubject = allPolygons.Select(loop => loop.Vertices.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
 
             //Setup Clipper
-            var clip = new ClipperOffset(2, tolerance * scale);
+            var clip = new ClipperOffset(2, Math.Abs(tolerance) * scale);
             clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation

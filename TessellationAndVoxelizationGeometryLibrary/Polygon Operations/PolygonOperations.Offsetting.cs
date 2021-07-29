@@ -78,7 +78,7 @@ namespace TVGL.TwoDimensional
             double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
-            return Offset(polygon, offset, true, deltaAngle);
+            return Offset(polygon, offset, true, tolerance, deltaAngle);
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace TVGL.TwoDimensional
             double tolerance, double deltaAngle = double.NaN)
         {
 #if CLIPPER
-            return OffsetViaClipper(polygons, offset, notMiter, deltaAngle);
+            return OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
 #elif !COMPARE
             var allPolygons = new List<Polygon>();
             foreach (var polygon in polygons)
@@ -178,10 +178,10 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
+        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle = double.NaN)
         {
 #if CLIPPER
-return OffsetViaClipper(polygon, offset, notMiter, deltaAngle);
+            return OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
 #elif !COMPARE
             var bb = polygon.BoundingRectangle();
             // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
