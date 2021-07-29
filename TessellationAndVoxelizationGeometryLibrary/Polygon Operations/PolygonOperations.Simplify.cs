@@ -796,12 +796,23 @@ namespace TVGL.TwoDimensional
         #endregion Simplify by area change
 
         #region SimplifyFast (By MinLength and RemoveCollinearEdges) - Does not use PriorityQueue
+        public static List<Polygon> SimplifyFast(this List<Polygon> polygons, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
+        {
+            var output = new List<Polygon>(polygons.Count);
+            foreach(var poly in polygons)
+            {
+                output.Add(SimplifyFast(poly, lengthTolerance, slopeTolerance));
+            }
+            return output;
+        }
+
         public static Polygon SimplifyFast(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
            double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyFuzzy(lengthTolerance, slopeTolerance));
+            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyFast(lengthTolerance, slopeTolerance));
             foreach (var polygonHole in polygon.InnerPolygons)
-                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyFuzzy(lengthTolerance, slopeTolerance)));
+                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyFast(lengthTolerance, slopeTolerance)));
             return simplifiedPositivePolygon;
         }
 
@@ -810,7 +821,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> SimplifyFuzzy(this IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
+        public static List<Vector2> SimplifyFast(this IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
             if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
