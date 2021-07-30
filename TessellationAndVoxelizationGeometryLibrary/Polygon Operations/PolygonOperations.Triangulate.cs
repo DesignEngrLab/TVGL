@@ -184,7 +184,7 @@ namespace TVGL.TwoDimensional
                 else 
                 {
                     //Try to simplify and then re-check to see if it is valid now. This will also fix threading issues.
-                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction); 
+                    polygon = SimplifyFast(polygon);//SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction); 
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
@@ -240,7 +240,7 @@ namespace TVGL.TwoDimensional
                 else
                 {
                     //Try to simplify and then re-check to see if it is valid now.
-                    polygon = SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction);
+                    polygon = SimplifyFast(polygon);//SimplifyByAreaChangeToNewPolygon(polygon, areaSimplificationFraction);
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
