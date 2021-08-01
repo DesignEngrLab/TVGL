@@ -413,7 +413,11 @@ namespace TVGL
             }
         }
 
-        public Vector3 Center
+        /// <summary>
+        /// Gets the center of the bounding box.
+        /// </summary>
+        /// <value>The center of the bounding box.</value>
+        public Vector3 CenterOfBoundingBox
         {
             get
             {
