@@ -143,6 +143,7 @@ namespace TVGL.IOFunctions
                             break;
                         }
                     }
+                    if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
                     ts.NonsmoothEdges.Add(discontinuousEdge);
                 }
             }
