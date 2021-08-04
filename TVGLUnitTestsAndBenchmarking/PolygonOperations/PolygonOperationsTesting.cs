@@ -25,7 +25,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
         internal static void DebugEdgeCases()
         {
-            foreach (var name in TestCases.EdgeCases.Keys)
+            foreach (var name in TestCases.EdgeCases.Keys.Skip(4))
                 DebugEdgeCases(name);
         }
         internal static void DebugEdgeCases(string name)

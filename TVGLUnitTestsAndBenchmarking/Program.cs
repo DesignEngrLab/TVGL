@@ -20,6 +20,7 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
+            //PolygonOperationsTesting.DebugEdgeCases();
             //DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
             DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
         }
