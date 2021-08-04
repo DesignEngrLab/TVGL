@@ -121,7 +121,7 @@ namespace TVGL.TwoDimensional
             return allPolygons;
 #else
             sw.Restart();
-            var pClipper = OffsetViaClipper(polygons, offset, notMiter, deltaAngle);
+            var pClipper = OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
@@ -208,7 +208,7 @@ namespace TVGL.TwoDimensional
             return outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
 #else
             sw.Restart();
-            var pClipper = OffsetViaClipper(polygon, offset, notMiter, deltaAngle);
+            var pClipper = OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
