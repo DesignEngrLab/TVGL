@@ -136,9 +136,9 @@ namespace TVGL.TwoDimensional
             if (Compare(allPolygons, pClipper, "Offset", clipTime, tvglTime))
             {
 #if PRESENT
-            Presenter.ShowAndHang(polygons);
-            Presenter.ShowAndHang(pClipper);
-            Presenter.ShowAndHang(allPolygons);
+                Presenter.ShowAndHang(polygons);
+                Presenter.ShowAndHang(pClipper);
+                Presenter.ShowAndHang(allPolygons);
 #else
                 var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
                 int i = 0;
@@ -159,23 +159,57 @@ namespace TVGL.TwoDimensional
                 return new List<Polygon>();
             var longerLength = Math.Max(bb.Length1, bb.Length2);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
-            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, out var maxNumberOfPolygons,
-                deltaAngle);
-            var outer = new Polygon(outerData.points);
-            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
+            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, deltaAngle);
+            var outer = new Polygon(outerData);
+#if PRESENT
+            Presenter.ShowAndHang(outer);
+#endif
+            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
                 if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, out maxNumberOfPolygons, deltaAngle);
-                var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
+                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, deltaAngle);
+                var newHoles = new Polygon(newHoleData);
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative).Where(p => !p.IsPositive));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
-            return outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
+            return outers.IntersectPolygonsFromOffset(inners).Where(p => p.IsPositive).ToList();
         }
+
+        /// <summary>
+        /// temporary
+        /// </summary>
+        /// <param name="polygonsA">The polygons a.</param>
+        /// <param name="polygonsB">The polygons b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        private static List<Polygon> IntersectPolygonsFromOffset(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
+        {
+            if (areaSimplificationFraction > 0)
+            {
+                polygonsA = polygonsA.Select(p => SimplifyFast(p));
+                polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                if (polygonsB != null)
+                    polygonsB = polygonsB.Select(p => SimplifyFast(p));
+                //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+            }
+
+            if (polygonsB is null)
+                return UnionPolygons(polygonsA, outputAsCollectionType);
+
+            var result = polygonsA.ToList();
+            foreach (var polygon in polygonsB)
+            {
+                if (!result.Any()) break;
+                result = result.SelectMany(r => r.Intersect(polygon)).ToList();
+            }
+            return result;
+        }
+
+
 
 
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle = double.NaN)
@@ -219,19 +253,18 @@ namespace TVGL.TwoDimensional
                 return new List<Polygon>();
             var longerLength = Math.Max(bb.Length1, bb.Length2);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
-            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, out var maxNumberOfPolygons,
-                deltaAngle);
-            var outer = new Polygon(outerData.points);
-            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
+            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, deltaAngle);
+            var outer = new Polygon(outerData);
+            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
                 if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, out maxNumberOfPolygons, deltaAngle);
-                var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, newHoleData.knownWrongPoints, maxNumberOfPolygons).Where(p => !p.IsPositive));
+                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, deltaAngle);
+                var newHoles = new Polygon(newHoleData);
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative).Where(p => !p.IsPositive));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
             var pTVGL = outers.IntersectPolygons(inners).Where(p => p.IsPositive).ToList();
@@ -240,9 +273,9 @@ namespace TVGL.TwoDimensional
             if (Compare(pTVGL, pClipper, "Offset", clipTime, tvglTime))
             {
 #if PRESENT
-            Presenter.ShowAndHang(polygon);
-            Presenter.ShowAndHang(pClipper);
-            Presenter.ShowAndHang(pTVGL);
+                Presenter.ShowAndHang(polygon);
+                Presenter.ShowAndHang(pClipper);
+                Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
                 TVGL.IOFunctions.IO.Save(polygon, fileNameStart + ".0.json");
@@ -252,11 +285,10 @@ namespace TVGL.TwoDimensional
 #endif
         }
 
-        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
-            double maxLengthSquared, out int maxNumberOfPolygons, double deltaAngle = double.NaN)
+        private static List<Vector2> MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
+            double maxLengthSquared, double deltaAngle = double.NaN)
         {
             var tolerance = Math.Pow(10, -polygon.NumSigDigits);
-            maxNumberOfPolygons = 1;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var numPoints = polygon.Edges.Length;
             int numFalsesToAdd;
@@ -267,39 +299,40 @@ namespace TVGL.TwoDimensional
             var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(offsetSign * deltaAngle) : Matrix3x3.Null;
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
             var pointsList = new List<Vector2>(startingListSize);
-            var wrongPoints = new List<bool>(startingListSize);
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
             var prevLine = polygon.Edges[0];
             var prevLineLengthReciprocal = 1.0 / prevLine.Length;
-            var prevUnitNormal = new Vector2(prevLine.Vector.Y * prevLineLengthReciprocal, -prevLine.Vector.X * prevLineLengthReciprocal);
+            var prevUnitVector = new Vector2(prevLine.Vector.X * prevLineLengthReciprocal, prevLine.Vector.Y * prevLineLengthReciprocal);
+            var prevUnitNormal = new Vector2(prevUnitVector.Y, -prevUnitVector.X);
             for (int i = 1; i <= numPoints; i++)
             {
                 var nextLine = (i == numPoints) ? polygon.Edges[0] : polygon.Edges[i];
                 var nextLineLengthReciprocal = 1.0 / nextLine.Length;
-                var nextUnitNormal = new Vector2(nextLine.Vector.Y * nextLineLengthReciprocal, -nextLine.Vector.X * nextLineLengthReciprocal);
+                var nextUnitVector = new Vector2(nextLine.Vector.X * nextLineLengthReciprocal, nextLine.Vector.Y * nextLineLengthReciprocal);
+                var nextUnitNormal = new Vector2(nextUnitVector.Y, -nextUnitVector.X);
                 // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".
                 var point = nextLine.FromPoint.Coordinates;
                 var cross = prevLine.Vector.Cross(nextLine.Vector);
                 var dot = prevLine.Vector.Dot(nextLine.Vector);
-                // cross/dot is the tan(angle). both dot and cross are quicker than square-root or trigonometric functions
-                // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
-                // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
-                // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if ((cross * offset / dot).IsNegligible(100 * tolerance))
-                {
-                    if (prevUnitNormal.Dot(nextUnitNormal) > 0)
-                        // if line is practically straight, and going the same direction, then simply offset it without all the complication below
-                        pointsList.Add(point + offset * prevUnitNormal);
-                    else pointsList.Add(point);
-                }
+
                 // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
-                // let's start with the roundCorners
-                else if (cross * offset > 0)
+                if (cross * offset > 0)
                 {
-                    if ((polygon.IsPositive && offset < 0) || (!polygon.IsPositive && offset > 0)) maxNumberOfPolygons++;
-                    if (roundCorners)
+                    // add just one point is angle is slight
+                    if ((cross * offset / dot).IsNegligible(10 * tolerance))
+                    {
+                        // cross/dot is the tan(angle). both dot and cross are quicker than square-root or trigonometric functions
+                        // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
+                        // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
+                        // or if angle is convex or concave. Oh, the 1000 is added to account for problems that arise when intersections weren't detected
+                        if (prevUnitNormal.Dot(nextUnitNormal) > 0)
+                            // if line is practically straight, and going the same direction, then simply offset it without all the complication below
+                            pointsList.Add(point + offset * prevUnitNormal);
+                        else pointsList.Add(point);
+                    }
+                    else if (roundCorners)
                     {
                         var firstPoint = point + offset * prevUnitNormal;
                         pointsList.Add(firstPoint);
@@ -350,19 +383,28 @@ namespace TVGL.TwoDimensional
                 }
                 else
                 {
-                    numFalsesToAdd = pointsList.Count - wrongPoints.Count;
-                    for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
-                    wrongPoints.Add(true);
-                    wrongPoints.Add(true);
-                    pointsList.Add(point + offset * prevUnitNormal);
-                    pointsList.Add(point + offset * nextUnitNormal);
+                    // the two points at "point + offset * prevUnitNormal" and "point + offset * nextUnitNormal" would overlap, so need to find the intersection
+                    var prevBasePoint = point + offset * prevUnitNormal;
+                    var nextBasePoint = point + offset * nextUnitNormal;
+                    if (prevBasePoint.IsPracticallySame(nextBasePoint, Constants.BaseTolerance))
+                        pointsList.Add(prevBasePoint);
+                    else
+                    {
+                        var vCross = prevUnitVector.Cross(nextUnitVector); //2D cross product, determines if parallel
+
+                        if (vCross.IsNegligible(Constants.BaseTolerance))
+                            pointsList.Add((prevBasePoint + nextBasePoint) / 2);
+
+                        var oneOverdeterminnant = 1.0 / prevUnitVector.Cross(nextUnitVector);
+                        var t_a = oneOverdeterminnant * (nextUnitVector.Y * (nextBasePoint.X - prevBasePoint.X) - nextUnitVector.X * (nextBasePoint.Y - prevBasePoint.Y));
+                        pointsList.Add(prevBasePoint + t_a * prevUnitVector);
+                    }
                 }
                 prevLine = nextLine;
+                prevUnitVector = nextUnitVector;
                 prevUnitNormal = nextUnitNormal;
             }
-            numFalsesToAdd = pointsList.Count - wrongPoints.Count;
-            for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
-            return (pointsList, wrongPoints);
+            return pointsList;
         }
         #endregion
     }

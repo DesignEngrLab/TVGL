@@ -23,8 +23,7 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
-            List<bool> knownWrongPoints, int maxNumberOfPolygons)
+        internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType)
         {
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
@@ -36,8 +35,7 @@ namespace TVGL.TwoDimensional
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
-                if (includesWrongPoints) continue;
+                    startEdge, switchPolygon).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
@@ -48,9 +46,7 @@ namespace TVGL.TwoDimensional
                 }
                 newPolygons.Add(new Polygon(polyCoordinates.SimplifyMinLengthToNewList(Math.Pow(10, -polygon.NumSigDigits))));
             }
-            return newPolygons.OrderByDescending(p => Math.Abs(p.Area))
-                .Take(maxNumberOfPolygons).Reverse()
-                .CreateShallowPolygonTrees(true, true);
+            return newPolygons.CreateShallowPolygonTrees(true);
         }
 
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge, out bool startAgain)

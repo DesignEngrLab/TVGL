@@ -931,14 +931,13 @@ namespace TVGL.TwoDimensional
         /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
-            List<bool> knownWrongPoints = null, int maxNumberOfPolygons = int.MaxValue)
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType)
         {
             var intersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType, knownWrongPoints, maxNumberOfPolygons);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType);
         }
 
         #endregion RemoveSelfIntersections Public Method
