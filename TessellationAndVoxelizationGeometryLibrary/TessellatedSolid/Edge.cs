@@ -392,6 +392,13 @@ namespace TVGL
             OwnedFace = OtherFace;
             OtherFace = tempFace;
         }
+
+        //Leave this as a method, to limit excess memory.
+        [Intrinsic]
+        public Vector3 Center()
+        {
+            return (To.Coordinates + From.Coordinates) / 2;
+        }
         #endregion
     }
 }
