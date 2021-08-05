@@ -119,7 +119,7 @@ namespace TVGL.IOFunctions
         {
             ts.NonsmoothEdges = new HashSet<Edge>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
-            if(objFileData.FaceGroups.Count > 1)
+            if(objFileData.FaceGroups.Count > 1 && !objFileData.SurfaceEdges.Any())
             {
                 foreach (var faceIndices in objFileData.FaceGroups)
                 {
