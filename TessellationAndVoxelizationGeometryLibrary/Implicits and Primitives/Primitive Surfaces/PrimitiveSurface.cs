@@ -11,11 +11,34 @@ using TVGL.TwoDimensional;
 
 namespace TVGL
 {
+    public enum PrimitiveType
+    {
+        Plane,
+        Cylinder, 
+        Cone,
+        Sphere,
+        Torus,
+        UnknownRegion
+    }
+
     /// <summary>
     ///     Class PrimitiveSurface.
     /// </summary>
     public abstract class PrimitiveSurface
     {
+        public PrimitiveType Type
+        {
+            get
+            {
+                if (this is Plane) return PrimitiveType.Plane;
+                if (this is Cylinder) return PrimitiveType.Cylinder;
+                if (this is Cone) return PrimitiveType.Cone;
+                if (this is Sphere) return PrimitiveType.Sphere;
+                if (this is Torus) return PrimitiveType.Torus;
+                if (this is UnknownRegion) return PrimitiveType.UnknownRegion;
+                throw new NotImplementedException();
+            }
+        }
         #region Constructors
 
         /// <summary>
@@ -140,6 +163,22 @@ namespace TVGL
                 return _innerEdges;
             }
             protected set => _innerEdges = value;
+        }
+
+        /// <summary>
+        ///     Gets IsPositive by using the inner edges
+        /// </summary>
+        /// <value>The inner edges.</value>
+        public bool PositiveByEdges()
+        {
+            var concave = 0;
+            var convex = 0;
+            foreach(var edge in InnerEdges)
+            {
+                if (edge.Curvature == CurvatureType.Concave) concave++;
+                else if (edge.Curvature == CurvatureType.Convex) convex++;
+            }
+            return convex > concave;
         }
 
         public int[] InnerEdgeIndices
@@ -298,15 +337,15 @@ namespace TVGL
             }
         }
 
-        private List<SurfaceBorder> _bordersEncirclingAxis;
-        public List<SurfaceBorder> BordersEncirclingAxis
+        public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
         {
-            get
+            var transform = axis.TransformToXYPlane(out _);
+            foreach(var border in Borders)
             {
-                if (_bordersEncirclingAxis == null)
-                    _bordersEncirclingAxis = Borders.Where(p => p.EncirclesAxis).ToList();
-                return _bordersEncirclingAxis;
-            }
+                var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
+                if (anchor != Vector3.Null && polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform)))
+                    yield return border;
+            }    
         }
 
         /// <summary>
@@ -372,13 +411,25 @@ namespace TVGL
         {
             var concave = 0;
             var convex = 0;
+            var flat = 0;
             foreach (var (edge, _) in border)
             {
-                if (edge.Curvature == CurvatureType.Concave) concave++;
-                else if (edge.Curvature == CurvatureType.Convex) convex++;
+                var p1 = edge.OwnedFace.OtherVertex(edge);
+                var p2 = edge.OtherFace.OtherVertex(edge);
+                var v1 = p2.Coordinates - p1.Coordinates;
+                var dot1 = v1.Dot(edge.OwnedFace.Normal);
+                var v2 = p1.Coordinates - p2.Coordinates;
+                var dot2 = v2.Dot(edge.OtherFace.Normal);
+                if(Math.Sign(dot1) != Math.Sign(dot2)) { }
+                if (dot1 < 0 && edge.Curvature == CurvatureType.Concave ) { }
+                if (dot1 > 0 && edge.Curvature == CurvatureType.Convex && !edge.InternalAngle.IsNegligible(0.001)) { }
+                if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.SameFaceNormalDotTolerance)) flat++;
+                else if (edge.InternalAngle > Math.PI) concave++;
+                else convex++;
             }
-            border.FullyConcave = concave > 0 && convex == 0;
-            border.FullyConvex = convex > 0 && concave == 0;
+            border.FullyFlush = flat > 0 && convex == 0 && concave == 0;
+            border.FullyConcave = concave > 0 && flat == 0 && convex == 0;
+            border.FullyConvex = convex > 0 && flat == 0  && concave == 0;
         }
 
         public double MaxX { get; protected set; } = double.NaN;
