@@ -89,7 +89,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         public static IList<Vector2> RemoveCollinearEdgesToNewList(this IEnumerable<Vector2> path)
         {
-            var polygon = path as IList<Vector2> ?? path.ToList();
+            var polygon = path.ToList();
             var forwardPoint = polygon[0];
             var currentPoint = polygon[^1];
             for (int i = polygon.Count - 1; i >= 0; i--)

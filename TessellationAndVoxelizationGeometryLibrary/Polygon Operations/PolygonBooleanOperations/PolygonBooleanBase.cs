@@ -185,9 +185,9 @@ namespace TVGL.TwoDimensional
                 {
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
-//#if PRESENT
-//                    Presenter.ShowAndHang(newPath);
-//#endif
+                    //#if PRESENT
+                    //                    Presenter.ShowAndHang(newPath);
+                    //#endif
                 }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
@@ -227,15 +227,23 @@ namespace TVGL.TwoDimensional
                 var candidateIntersect = allIntersections[index];
                 if (formerIntersect == candidateIntersect) continue;
                 var currentEdgeIsFromPolygonA = candidateIntersect.EdgeA == currentEdge;
-                var distance = 0.0;
-                if (!(formerIntersect == null && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
+                double distance;
+                // only calculate the distance if 
+                if (formerIntersect == null && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
-                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA))))
+                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA)))
+                    distance = 0.0;
+                else if (formerIntersect != null || candidateIntersect.WhereIntersection == WhereIsIntersection.Intermediate ||
+                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && !currentEdgeIsFromPolygonA) ||
+                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && currentEdgeIsFromPolygonA))
                 {
                     distance = currentEdge.Vector.Dot(candidateIntersect.IntersectCoordinates - datum);
-                    if (distance < 0 || (distance.IsNegligible() && candidateIntersect.VisitedA && candidateIntersect.VisitedB))
+                    if (distance < 0 || (distance.IsNegligible() &&
+                        (candidateIntersect.VisitedA && currentEdgeIsFromPolygonA) ||
+                        (candidateIntersect.VisitedB && !currentEdgeIsFromPolygonA)))
                         continue;
                 }
+                else continue;
                 if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;

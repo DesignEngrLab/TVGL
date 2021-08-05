@@ -121,7 +121,7 @@ namespace TVGLUnitTestsAndBenchmarking
             numTVGLErrors += errors.Item1;
             numClipperErrors += errors.Item2;
             /********** Intersection *********/
-            p1 = tvglResult.LargestPolygon();
+            p1 = tvglResult.LargestPolygonWithHoles();
             //v1 = clipperResult;
             operationString = "Intersect";
             Console.WriteLine("testing " + operationString + ": " + numVerts + " vertices");
@@ -390,7 +390,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //var polygon1 = new Polygon(coords1, true);
             // Presenter.ShowAndHang(polygon1);
             //var polygons3 = polygon1.OffsetRound(88);
-            var offsetBase = Math.Sqrt(polygons.LargestPolygon().Area);
+            var offsetBase = Math.Sqrt(polygons.MostPositivePolygon().PathArea);
             var factors = new[] { -.01, 0.01, -.03, 0.03, -.1, 0.1, -.3, 0.3, -1, 1, -3, 3, -10 };
             foreach (var factor in factors)
             {

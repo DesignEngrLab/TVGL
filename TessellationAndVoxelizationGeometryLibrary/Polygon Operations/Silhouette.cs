@@ -54,7 +54,7 @@ namespace TVGL.TwoDimensional
                 polygons.AddRange(ArrangeOuterEdgesIntoPolygon(outerEdges, dot > 0, transform));
             }
             //Presenter.ShowAndHang(polygons);
-            return polygons.UnionPolygons(PolygonCollection.PolygonWithHoles).LargestPolygon();
+            return polygons.UnionPolygons(PolygonCollection.PolygonWithHoles).LargestPolygonWithHoles();
         }
 
         /// <summary>
