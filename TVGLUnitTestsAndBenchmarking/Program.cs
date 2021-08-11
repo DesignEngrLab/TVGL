@@ -20,10 +20,10 @@ namespace TVGLUnitTestsAndBenchmarking
         [STAThread]
         private static void Main(string[] args)
         {
-            JustShowMeThePolygons(BackoutToFolder("TestFiles\\polygons"));
+            //JustShowMeThePolygons(BackoutToFolder("TestFiles\\polygons"));
             //PolygonOperationsTesting.DebugEdgeCases();
             //DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
-            //DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
+            DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
             //DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
         }
 
@@ -59,7 +59,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 if (polygons.All(p => p == null)) continue;
                 Debug.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygons);
-                var result = polygons.OffsetSquare(offset);
+                var result = polygons.OffsetSquare(offset,-0.002);
                 Presenter.ShowAndHang(result);
             }
         }

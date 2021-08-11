@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -32,12 +33,15 @@ namespace TVGL.TwoDimensional
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
+            //int k = 0;
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
+                //k++;
+                //Debug.WriteLine(k);
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
-                //if (includesWrongPoints) continue;
+                if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used

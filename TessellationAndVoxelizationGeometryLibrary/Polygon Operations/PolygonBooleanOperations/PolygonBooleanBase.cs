@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 
@@ -166,7 +167,10 @@ namespace TVGL.TwoDimensional
             out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
-            bool? completed;
+            var maxNumPoints = knownWrongPoints != null ? knownWrongPoints.Count + intersections.Count : int.MaxValue;
+            bool overMaxPoints = false;
+            //Debug.WriteLine("starting MakePolygonThroughIntersections in" + this.GetType().ToString());
+            bool? completed = null;
             includesWrongPoints = false;
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
@@ -188,15 +192,21 @@ namespace TVGL.TwoDimensional
                     if (knownWrongPoints != null && knownWrongPoints[currentEdge.ToPoint.IndexInList]) includesWrongPoints = true;
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
-//#if PRESENT
-//                    Presenter.ShowAndHang(newPath);
-//#endif
+                    //#if PRESENT
+                    //                    Presenter.ShowAndHang(newPath);
+                    //#endif
                 }
-            } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
+                if (newPath.Count >= maxNumPoints)
+                {
+                    overMaxPoints = true;
+                    completed = null;
+                }
+            } while (!overMaxPoints && false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
             //            Presenter.ShowAndHang(newPath);
             //#endif
             if (completed == null) newPath.Clear();
+            //Debug.WriteLine("    .... result has {0} vertices.", newPath.Count);
             return newPath;
         }
 
@@ -236,7 +246,7 @@ namespace TVGL.TwoDimensional
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA)))
                     distance = 0.0;
-                else 
+                else
                 // this is always true?
                 //if (formerIntersect != null || candidateIntersect.WhereIntersection == WhereIsIntersection.Intermediate ||
                 //     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && !currentEdgeIsFromPolygonA) ||
@@ -265,10 +275,10 @@ namespace TVGL.TwoDimensional
                     var newCandidateEdge = candidateIntersect.EdgeA == currentEdge ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
                     var bestAngle = currentEdge.Vector.SmallerAngleBetweenVectors(bestEdge.Vector);
                     var newCandidateAngle = currentEdge.Vector.SmallerAngleBetweenVectors(newCandidateEdge.Vector);
-                    if (newCandidateAngle > bestAngle) bestIntersection = candidateIntersect;
+                    if (newCandidateAngle < bestAngle) bestIntersection = candidateIntersect;
                     if (newCandidateAngle == bestAngle)
                     {   // really?! if you are here than not only are there two segments that pass through currentEdge at the same
-                        // point, but the do so at the same angle! So, we are going to choose the one that is shorter
+                        // point, but they do so at the same angle! So, we are going to choose the one that is shorter
                         var bestRemainingLength = (bestEdge.ToPoint.Coordinates - bestIntersection.IntersectCoordinates).LengthSquared();
                         var newCandRemainingLength = (newCandidateEdge.ToPoint.Coordinates - candidateIntersect.IntersectCoordinates).LengthSquared();
                         if (newCandRemainingLength < bestRemainingLength) bestIntersection = candidateIntersect;

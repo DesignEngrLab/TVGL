@@ -111,7 +111,7 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
-            polygons = polygons.CleanUpForBooleanOperations(out _);
+            //polygons = polygons.CleanUpForBooleanOperations(out _);
 #if CLIPPER
             return OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
 #elif !COMPARE
@@ -164,6 +164,9 @@ namespace TVGL.TwoDimensional
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, deltaAngle);
             var outer = new Polygon(outerData.points);
+//#if PRESENT
+//            Presenter.ShowAndHang(new[] { polygon, outer });
+//#endif
             var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
@@ -270,6 +273,7 @@ namespace TVGL.TwoDimensional
                 var point = nextLine.FromPoint.Coordinates;
                 var cross = prevLine.Vector.Cross(nextLine.Vector);
                 var dot = prevLine.Vector.Dot(nextLine.Vector);
+                var angle = Math.Atan2(cross, dot);
                 // cross/dot is the tan(angle). both dot and cross are quicker than square-root or trigonometric functions
                 // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
                 // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
@@ -349,7 +353,6 @@ namespace TVGL.TwoDimensional
             numFalsesToAdd = pointsList.Count - wrongPoints.Count;
             for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
 
-            var lengthTolerance = Constants.LineLengthMinimum;
             var slopeTolerance = Constants.LineSlopeTolerance;
             var forwardPoint = pointsList[0];
             var currentPoint = pointsList[^1];
@@ -359,12 +362,22 @@ namespace TVGL.TwoDimensional
                 var backwardPoint = i == 0 ? pointsList[^1] : pointsList[i - 1];
                 var backVector = currentPoint - backwardPoint;
                 var cross = backVector.Cross(forwardVector);
-                if (!wrongPoints[i] && cross.IsNegligible(slopeTolerance) || backVector.LengthSquared() < lengthTolerance)
+                if (!wrongPoints[i] && cross.IsNegligible(slopeTolerance))
+                // unlike SimplifyFast, we won't throw out points just because they're close. This further copmlicates
+                // the wrong-point assignment
                 {
                     pointsList.RemoveAt(i);
                     wrongPoints.RemoveAt(i);
                     forwardVector = forwardPoint - backwardPoint;
                     currentPoint = backwardPoint;
+                    // furthermore, removing a point may make a point that was believed to be a wrong point - to become a 
+                    // valid one.
+                    var j = i;
+                    while (j < wrongPoints.Count && wrongPoints[j])
+                        wrongPoints[j++] = false;
+                    j = i - 1;
+                    while (j >= 0 && wrongPoints[j])
+                        wrongPoints[j--] = false;
                 }
                 else
                 {

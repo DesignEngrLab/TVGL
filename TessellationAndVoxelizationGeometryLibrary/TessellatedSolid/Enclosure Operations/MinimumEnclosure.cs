@@ -749,9 +749,9 @@ namespace TVGL
                         currentVertex = currentEdge.OtherVertex(currentVertex);
                     } while (currentEdge != null && currentVertex != startVertex);
                     border.IsClosed = currentVertex == startVertex && border.NumPoints > 2;
-#if PRESENT
+//#if PRESENT
                     //TVGL.Presenter.ShowVertexPathsWithSolid(new [] {border.GetVertices().Select(v => v.Coordinates) }, new[] { debugSolid }, false);
-#endif
+//#endif
                     if (border.IsClosed) break;
                     var currentEdgeAndDir = border[0];
                     currentEdge = currentEdgeAndDir.edge;

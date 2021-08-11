@@ -1003,7 +1003,9 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         public static double SmallerAngleBetweenVectors(this Vector2 vector1, Vector2 vector2)
         {
-            return Math.PI - Math.Acos(vector1.Dot(vector2) / (vector1.Length() * vector2.Length()));
+            var angle = Math.Atan2(vector1.Cross(vector2), vector1.Dot(vector2));
+            if (angle >= 0) return angle;
+            return Math.PI + angle;
         }
 
         /// <summary>

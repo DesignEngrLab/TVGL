@@ -526,9 +526,9 @@ namespace TVGL
                 && successful);
                 if (successful && loop.Count > 2)
                 {
-#if PRESENT
+//#if PRESENT
                     //Presenter.ShowVertexPathsWithSolid(new[] { loop.GetVertices().Select(v => v.Coordinates) }.Skip(7), new TessellatedSolid[] { });
-#endif
+//#endif
                     foreach (var subLoop in SeparateIntoMultipleLoops(loop))
                         listOfLoops.Add(subLoop);
                     attempts = 0;
