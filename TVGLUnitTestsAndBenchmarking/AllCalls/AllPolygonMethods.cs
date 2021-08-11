@@ -55,7 +55,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //a.OffsetRound(5.0);
             //a.OffsetSquare(5.0);
             a.Perimeter();
-            //a.RemoveCollinearEdges();
+            //a.SimplifyFast();
             //a.SimplifyMinLength(1e-3);
             //a.SimplifyMinLength(10);
             //a.SimplifyByAreaChange(1e-3);
@@ -76,7 +76,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //c.OffsetSquare(5.0);
             c.Perimeter();
             c.ExtrusionFacesFrom2DPolygons(Vector3.UnitX, 1.0, 4.0);
-            //a.RemoveCollinearEdges();
+            //a.SimplifyFast();
             //a.SimplifyMinLength(1e-3);
             //a.SimplifyMinLength(10);
             //a.SimplifyByAreaChange(1e-3);

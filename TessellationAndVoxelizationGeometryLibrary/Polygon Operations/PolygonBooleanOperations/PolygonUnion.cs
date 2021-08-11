@@ -74,13 +74,16 @@ namespace TVGL.TwoDimensional
 
         protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
         {
-            if ((currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.AEnclosesB) ||
-                (!currentEdgeIsFromPolygonA && intersectionData.Relationship == SegmentRelationship.BEnclosesA))
+            if ((currentEdgeIsFromPolygonA && (intersectionData.Relationship == SegmentRelationship.AEnclosesB ||
+                intersectionData.Relationship==SegmentRelationship.CrossOver_AOutsideAfter))
+                ||
+                (!currentEdgeIsFromPolygonA && (intersectionData.Relationship == SegmentRelationship.BEnclosesA
+                || intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter)))
                 return false;
             return true;
         }
 
-        protected override bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
+        protected override bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection, PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             if ((currentEdge == currentIntersection.EdgeA && currentIntersection.VisitedA) ||
              (currentEdge == currentIntersection.EdgeB && currentIntersection.VisitedB))

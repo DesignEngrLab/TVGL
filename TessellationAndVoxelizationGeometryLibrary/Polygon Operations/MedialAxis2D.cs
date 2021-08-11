@@ -31,7 +31,7 @@ namespace TVGL.TwoDimensional
             {
                 var posPolygonList = positivePolygon.ToList();
                 var perimeter = posPolygonList.Perimeter();
-                var sampled = posPolygonList.RemoveCollinearEdgesDestructiveList();
+                var sampled = posPolygonList.SimplifyFastDestructiveList();
                 var smaller = new Polygon(sampled).OffsetRound(-0.001 * perimeter).First();
 
                 //Delaunay Medial Axis

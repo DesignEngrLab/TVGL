@@ -44,10 +44,10 @@ namespace TVGL.TwoDimensional
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
-                    startEdge, switchPolygon).ToList();
+                    startEdge, switchPolygon, out _).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minimumArea)) continue;
-                newPolygons.Add(new Polygon(polyCoordinates.RemoveCollinearEdgesDestructiveList(), polygonIndex++));
+                newPolygons.Add(new Polygon(polyCoordinates.SimplifyFastDestructiveList(), polygonIndex++));
             }
             // to handle the non-intersecting subpolygons
             var nonIntersectingASubPolygons = new List<Polygon>(polygonA.AllPolygons);
@@ -162,10 +162,12 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
-            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon)
+            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon,
+            out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
             bool? completed;
+            includesWrongPoints = false;
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
@@ -183,11 +185,12 @@ namespace TVGL.TwoDimensional
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
+                    if (knownWrongPoints != null && knownWrongPoints[currentEdge.ToPoint.IndexInList]) includesWrongPoints = true;
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
-                    //#if PRESENT
-                    //                    Presenter.ShowAndHang(newPath);
-                    //#endif
+//#if PRESENT
+//                    Presenter.ShowAndHang(newPath);
+//#endif
                 }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
@@ -233,17 +236,22 @@ namespace TVGL.TwoDimensional
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA)))
                     distance = 0.0;
-                else if (formerIntersect != null || candidateIntersect.WhereIntersection == WhereIsIntersection.Intermediate ||
-                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && !currentEdgeIsFromPolygonA) ||
-                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && currentEdgeIsFromPolygonA))
+                else 
+                // this is always true?
+                //if (formerIntersect != null || candidateIntersect.WhereIntersection == WhereIsIntersection.Intermediate ||
+                //     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && !currentEdgeIsFromPolygonA) ||
+                //     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && currentEdgeIsFromPolygonA))
                 {
                     distance = currentEdge.Vector.Dot(candidateIntersect.IntersectCoordinates - datum);
-                    if (distance < 0 || (distance.IsNegligible() &&
-                        (candidateIntersect.VisitedA && currentEdgeIsFromPolygonA) ||
-                        (candidateIntersect.VisitedB && !currentEdgeIsFromPolygonA)))
+                    if (distance < 0
+                        )
+                        // this is now handled below in "else if (minDistanceToIntersection == distance)"
+                        //|| (distance.IsNegligible() &&
+                        //((candidateIntersect.VisitedA && currentEdgeIsFromPolygonA)
+                        //|| (candidateIntersect.VisitedB && !currentEdgeIsFromPolygonA))))
                         continue;
                 }
-                else continue;
+                //else continue;
                 if (minDistanceToIntersection > distance)
                 {
                     minDistanceToIntersection = distance;
@@ -283,7 +291,7 @@ namespace TVGL.TwoDimensional
 
         protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA);
 
-        protected abstract bool PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
+        protected abstract bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
            PolygonEdge currentEdge, PolygonEdge startingEdge);
 
         protected abstract bool HandleNonIntersectingSubPolygon(Polygon subPolygon, List<Polygon> newPolygons,

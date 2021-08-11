@@ -124,11 +124,11 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonA = polygonA.SimplifyFast();
+                polygonA = polygonA.CleanUpForBooleanOperations(out _);
                 //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                 {
-                    polygonB = polygonB?.SimplifyFast();
+                    polygonB = polygonB?.CleanUpForBooleanOperations(out _);
                     //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 }
             }
@@ -208,7 +208,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
-                polygons = polygons.Select(p => SimplifyFast(p));
+                polygons = polygons.CleanUpForBooleanOperations(out _);
             //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygons);
@@ -232,9 +232,9 @@ namespace TVGL.TwoDimensional
                     }
                     else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
                     {
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
-                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
+                        //if (i == 4 && j == 2)
+                        //    Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                            var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
                         //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
                         //Presenter.ShowAndHang(newPolygons);
@@ -248,7 +248,7 @@ namespace TVGL.TwoDimensional
             }
             return polygonList;
 #else
-            sw.Restart();
+                            sw.Restart();
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Union, polygons);
             sw.Stop();
             var clipTime = sw.Elapsed;
@@ -320,10 +320,10 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonsA = polygonsA.Select(p => SimplifyFast(p));
+                polygonsA = polygonsA.CleanUpForBooleanOperations(out _);
                 //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
-                    polygonsB = polygonsB?.Select(p => SimplifyFast(p));
+                    polygonsB = polygonsB?.CleanUpForBooleanOperations(out _);
                 //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
@@ -447,12 +447,12 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonA = polygonA.SimplifyFast();
+                polygonA = polygonA.CleanUpForBooleanOperations(out _);
                 //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                 {
                     //If not null
-                    polygonB = polygonB?.SimplifyFast();
+                    polygonB = polygonB?.CleanUpForBooleanOperations(out _);
                     //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 }
             }
@@ -526,10 +526,10 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonsA = polygonsA.Select(p => SimplifyFast(p));
-                polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                polygonsA = polygonsA.CleanUpForBooleanOperations(out _);
+                //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
-                    polygonsB = polygonsB.Select(p => SimplifyFast(p));
+                    polygonsB = polygonsB.CleanUpForBooleanOperations(out _);
                 //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
@@ -603,7 +603,7 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> IntersectPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
-                polygons = polygons.Select(p => SimplifyFast(p));
+                polygons = polygons.CleanUpForBooleanOperations(out _);
             //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, polygons);
@@ -682,19 +682,17 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                minuend = minuend.SimplifyFast();
-                //minuend = minuend.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                minuend = minuend.CleanUpForBooleanOperations(out _);
                 if (subtrahend != null)
-                    subtrahend = subtrahend?.SimplifyFast();
-                //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                    subtrahend = subtrahend?.CleanUpForBooleanOperations(out _);
             }
 #if CLIPPER
                     return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, new[] { minuend },
                                     new[] { subtrahend });
 #elif !COMPARE
-                    var polygonBInverted = subtrahend.Copy(true, true);
-                    var relationship = GetPolygonInteraction(minuend, polygonBInverted);
-                    return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
+            var polygonBInverted = subtrahend.Copy(true, true);
+            var relationship = GetPolygonInteraction(minuend, polygonBInverted);
+            return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
 #else
             sw.Restart();
             var pClipper = BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, new[] { minuend },
@@ -760,27 +758,25 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                minuends = minuends.Select(p => SimplifyFast(p));
-                //minuends = minuends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                minuends = minuends.CleanUpForBooleanOperations(out _);
                 if (subtrahends != null)
-                    subtrahends = subtrahends.Select(p => SimplifyFast(p));
-                //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                    subtrahends = subtrahends.CleanUpForBooleanOperations(out _);
             }
 #if CLIPPER
                     return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, minuends, subtrahends);
 #elif !COMPARE
-                    var minuendsList = minuends.ToList();
-        foreach (var polyB in subtrahends)
-                    {
-                        for (int i = minuendsList.Count - 1; i >= 0; i--)
-                        {
-                            var newPolygons = minuendsList[i].Subtract(polyB, outputAsCollectionType, tolerance);
-                            minuendsList.RemoveAt(i);
-                            foreach (var newPoly in newPolygons)
-                                minuendsList.Insert(i, newPoly);
-                        }
-                    }
-                    return minuendsList;
+            var minuendsList = minuends.ToList();
+            foreach (var polyB in subtrahends)
+            {
+                for (int i = minuendsList.Count - 1; i >= 0; i--)
+                {
+                    var newPolygons = minuendsList[i].Subtract(polyB, outputAsCollectionType, tolerance);
+                    minuendsList.RemoveAt(i);
+                    foreach (var newPoly in newPolygons)
+                        minuendsList.Insert(i, newPoly);
+                }
+            }
+            return minuendsList;
 #else
             var minuendsList = minuends.ToList();
             sw.Restart();
@@ -842,11 +838,9 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
             {
-                polygonA = polygonA.SimplifyFast();
-                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                polygonA = polygonA.CleanUpForBooleanOperations(out _);
                 if (polygonB != null)
-                    polygonB = polygonB.SimplifyFast();
-                //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
+                    polygonB = polygonB.CleanUpForBooleanOperations(out _);
             }
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });
@@ -931,16 +925,19 @@ namespace TVGL.TwoDimensional
         /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType, List<SegmentIntersection> intersections = null)
+        public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
+            List<bool> knownWrongPoints = null, int maxNumberOfPolygons = int.MaxValue)
         {
-            if (intersections == null)
-                intersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+            var intersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, knownWrongPoints);
+            
         }
 
         #endregion RemoveSelfIntersections Public Method
+
+
     }
 }

@@ -111,9 +111,9 @@ namespace TVGL.TwoDimensional
 
         public void MakePolygonEdgesIfNonExistent()
         {
-                if (_edges != null && _edges.Length == Vertices.Count) return;
-                foreach (var poly in AllPolygons)
-                    poly.MakeThisPolygonsEdges();
+            if (_edges != null && _edges.Length == Vertices.Count) return;
+            foreach (var poly in AllPolygons)
+                poly.MakeThisPolygonsEdges();
         }
 
         private void MakeThisPolygonsEdges()
@@ -469,6 +469,11 @@ namespace TVGL.TwoDimensional
             Index = index;
             Vector2 prevCoordinate = Vector2.Null;
             _path = new List<Vector2>();
+            if (!coordinates.Any())
+            {
+                _vertices = new List<Vertex2D>();
+                return;
+            }
             foreach (var p in coordinates)
             {
                 if (p.X > maxX) maxX = p.X;

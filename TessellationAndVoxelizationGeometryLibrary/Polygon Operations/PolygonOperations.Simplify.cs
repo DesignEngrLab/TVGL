@@ -16,18 +16,19 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
-        #region RemoveCollinearEdges
+        #region SimplifyFast And Remove Intersections
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static Polygon RemoveCollinearEdgesToNewPolygon(this Polygon polygon)
+        private static Polygon CleanUpForBooleanOperations(this Polygon polygon, out bool removalsOccurred, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
         {
             var copiedPolygon = polygon.Copy(true, false);
-            RemoveCollinearEdges(copiedPolygon);
-            return copiedPolygon;
+            removalsOccurred = SimplifyFast(copiedPolygon, lengthTolerance, slopeTolerance);
+            return copiedPolygon.RemoveSelfIntersections(ResultType.BothPermitted).LargestPolygonWithHoles();
         }
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
@@ -35,41 +36,71 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static IEnumerable<Polygon> RemoveCollinearEdgesToNewPolygons(this IEnumerable<Polygon> polygons)
+        private static IEnumerable<Polygon> CleanUpForBooleanOperations(this IEnumerable<Polygon> polygons, out bool removalsOccurred, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            var copiedPolygons = polygons.Select(p => p.Copy(true, false));
-            RemoveCollinearEdges(copiedPolygons);
-            return copiedPolygons;
+            var resultPolygons = SimplifyFast(polygons, out removalsOccurred, lengthTolerance, slopeTolerance);
+            return resultPolygons.SelectMany(p => p.RemoveSelfIntersections(ResultType.BothPermitted));
         }
+
+        #endregion
+        #region SimplifyFast
+        /// <summary>
+        /// Simplifies the specified polygons by removing vertices that have collinear edges.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
+        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
+        //public static Polygon SimplifyFastToNewPolygon(this Polygon polygon, out bool removalsOccurred, double lengthTolerance = Constants.LineLengthMinimum,
+        //    double slopeTolerance = Constants.LineSlopeTolerance)
+        //{
+        //    var copiedPolygon = polygon.Copy(true, false);
+        //    removalsOccurred = SimplifyFast(copiedPolygon, lengthTolerance, slopeTolerance);
+        //    return copiedPolygon;
+        //}
 
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
         /// <param name="polygons">The polygons.</param>
-        /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
-        /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        public static void RemoveCollinearEdges(this IEnumerable<Polygon> polygons)
+        /// <returns><c>true</c> if there were any removals, <c>false</c> otherwise.</returns>
+        public static List<Polygon> SimplifyFast(this IEnumerable<Polygon> polygons, out bool removalsOccurred, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
         {
+            var result = new List<Polygon>();
+            removalsOccurred = false;
             foreach (var polygon in polygons)
-                polygon.RemoveCollinearEdges();
+            {
+                removalsOccurred = removalsOccurred || polygon.SimplifyFast(lengthTolerance, slopeTolerance);
+                result.Add(polygon);
+            }
+            return result;
         }
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>
         /// <param name="polygon">The polygon.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
-        /// <returns>Polygon.</returns>
-        public static void RemoveCollinearEdges(this Polygon polygon)
+        /// <returns><c>true</c> if there were any removals, <c>false</c> otherwise.</returns>
+        public static bool SimplifyFast(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
         {
+            var removalsOccurred = false;
             polygon.MakePolygonEdgesIfNonExistent();
             foreach (var vertex in polygon.Vertices)
             {
-                if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible())
+                if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible(slopeTolerance)
+                    || vertex.EndLine.Vector.LengthSquared().IsNegligible(lengthTolerance))
+                {
+                    removalsOccurred = true;
                     vertex.DeleteVertex();
+                }
             }
-            polygon.RecreateVertices();
+            if (removalsOccurred)
+                polygon.RecreateVertices();
             foreach (var polygonHole in polygon.InnerPolygons)
-                polygonHole.RemoveCollinearEdges();
+                removalsOccurred = removalsOccurred || polygonHole.SimplifyFast(lengthTolerance, slopeTolerance);
+            return removalsOccurred;
         }
 
         /// <summary>        
@@ -77,9 +108,10 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="paths">The paths.</param>
         /// <returns>List&lt;List&lt;Vector2&gt;&gt;.</returns>
-        public static IEnumerable<IList<Vector2>> RemoveCollinearEdgesToNewLists(this IEnumerable<IEnumerable<Vector2>> paths)
+        public static IEnumerable<IList<Vector2>> SimplifyFastToNewLists(this IEnumerable<IEnumerable<Vector2>> paths,
+            double lengthTolerance = Constants.LineLengthMinimum, double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            return paths.Select(p => RemoveCollinearEdgesToNewList(p));
+            return paths.Select(p => SimplifyFastToNewList(p, lengthTolerance, slopeTolerance));
         }
 
         /// <summary>
@@ -87,20 +119,10 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static IList<Vector2> RemoveCollinearEdgesToNewList(this IEnumerable<Vector2> path)
+        public static IList<Vector2> SimplifyFastToNewList(this IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            var polygon = path.ToList();
-            var forwardPoint = polygon[0];
-            var currentPoint = polygon[^1];
-            for (int i = polygon.Count - 1; i >= 0; i--)
-            {
-                var backwardPoint = i == 0 ? polygon[^1] : polygon[i - 1];
-                var cross = (currentPoint - backwardPoint).Cross(forwardPoint - currentPoint);
-                if (cross.IsNegligible()) polygon.RemoveAt(i);
-                else forwardPoint = currentPoint;
-                currentPoint = backwardPoint;
-            }
-            return polygon;
+            return SimplifyFastDestructiveList(path.ToList(), lengthTolerance, slopeTolerance);
         }
 
         /// <summary>
@@ -108,17 +130,29 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static IList<Vector2> RemoveCollinearEdgesDestructiveList(this IList<Vector2> path)
+        public static IList<Vector2> SimplifyFastDestructiveList(this IList<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
         {
             var forwardPoint = path[0];
             var currentPoint = path[^1];
+            var forwardVector = forwardPoint - currentPoint;
             for (int i = path.Count - 1; i >= 0; i--)
             {
                 var backwardPoint = i == 0 ? path[^1] : path[i - 1];
-                var cross = (currentPoint - backwardPoint).Cross(forwardPoint - currentPoint);
-                if (cross.IsNegligible()) path.RemoveAt(i);
-                else forwardPoint = currentPoint;
-                currentPoint = backwardPoint;
+                var backVector = currentPoint - backwardPoint;
+                var cross = backVector.Cross(forwardVector);
+                if (cross.IsNegligible(slopeTolerance) || backVector.LengthSquared() < lengthTolerance)
+                {
+                    path.RemoveAt(i);
+                    forwardVector = forwardPoint - backwardPoint;
+                    currentPoint = backwardPoint;
+                }
+                else
+                {
+                    forwardVector = backVector;
+                    forwardPoint = currentPoint;
+                    currentPoint = backwardPoint;
+                }
             }
             return path;
         }
@@ -229,7 +263,7 @@ namespace TVGL.TwoDimensional
         public static IEnumerable<Vector2> SimplifyMinLengthToNewList(this IEnumerable<Vector2> path, double minAllowableLength)
         {
             // first remove collinear points
-            var polygon = path.RemoveCollinearEdgesToNewList();
+            var polygon = path.SimplifyFastToNewList();
             var numPoints = polygon.Count;
 
             #region build initial list of edge lengths
@@ -318,8 +352,7 @@ namespace TVGL.TwoDimensional
         public static void SimplifyMinLength(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
-            var allPolygons = polygons.SelectMany(p => p.AllPolygons).ToList();
-            allPolygons.RemoveCollinearEdges();
+            var allPolygons = polygons.SelectMany(p => p.AllPolygons).SimplifyFast(out _);
             var numPoints = allPolygons.Select(p => p.Vertices.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0) return;
@@ -380,7 +413,7 @@ namespace TVGL.TwoDimensional
         public static IEnumerable<IList<Vector2>> SimplifyMinLength(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
-            var polygons = paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList();
+            var polygons = paths.Select(p => p.SimplifyFastToNewList()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0)
@@ -491,7 +524,7 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         public static void SimplifyByAreaChange(this Polygon polygon, double allowableChangeInAreaFraction)
         {
-            polygon.RemoveCollinearEdges();
+            polygon.SimplifyFast();
             var origArea = Math.Abs(polygon.Area);
             if (origArea.IsNegligible()) return;
 
@@ -553,7 +586,7 @@ namespace TVGL.TwoDimensional
         /// <returns></returns>
         public static IEnumerable<Vector2> SimplifyByAreaChangeToNewList(this IEnumerable<Vector2> path, double allowableChangeInAreaFraction)
         {
-            var polygon = path.RemoveCollinearEdgesToNewList();
+            var polygon = path.SimplifyFastToNewList();
             var numPoints = polygon.Count;
             var origArea = Math.Abs(polygon.Area());
             if (origArea.IsNegligible()) return polygon;
@@ -682,8 +715,7 @@ namespace TVGL.TwoDimensional
         public static void SimplifyByAreaChange(this IEnumerable<Polygon> polygons, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
-            var allPolygons = polygons.SelectMany(p => p.AllPolygons).ToList();
-            allPolygons.RemoveCollinearEdges();
+            var allPolygons = polygons.SelectMany(p => p.AllPolygons).SimplifyFast(out _);
             var numPoints = allPolygons.Select(p => p.Vertices.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0) return;
@@ -729,7 +761,7 @@ namespace TVGL.TwoDimensional
         public static IEnumerable<IList<Vector2>> SimplifyByAreaChangeToNewLists(this IEnumerable<IEnumerable<Vector2>> paths, int targetNumberOfPoints)
         {
             // first remove collinear points and set up lists
-            var polygons = paths.Select(p => p.RemoveCollinearEdgesToNewList()).ToList();
+            var polygons = paths.Select(p => p.SimplifyFastToNewList()).ToList();
             var numPoints = polygons.Select(p => p.Count).ToList();
             var numToRemove = numPoints.Sum() - targetNumberOfPoints;
             if (numToRemove <= 0)
@@ -795,24 +827,24 @@ namespace TVGL.TwoDimensional
         #endregion
         #endregion Simplify by area change
 
-        #region SimplifyFast (By MinLength and RemoveCollinearEdges) - Does not use PriorityQueue
-        public static List<Polygon> SimplifyFast(this List<Polygon> polygons, double lengthTolerance = Constants.LineLengthMinimum,
+        #region SimplifyFast (By MinLength and SimplifyFast) - Does not use PriorityQueue
+        public static List<Polygon> SimplifyFastORIG(this List<Polygon> polygons, double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
             var output = new List<Polygon>(polygons.Count);
-            foreach(var poly in polygons)
+            foreach (var poly in polygons)
             {
-                output.Add(SimplifyFast(poly, lengthTolerance, slopeTolerance));
+                output.Add(SimplifyFastORIG(poly, lengthTolerance, slopeTolerance));
             }
             return output;
         }
 
-        public static Polygon SimplifyFast(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
+        public static Polygon SimplifyFastORIG(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
            double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyFast(lengthTolerance, slopeTolerance));
+            var simplifiedPositivePolygon = new Polygon(polygon.Path.SimplifyFastORIG(lengthTolerance, slopeTolerance));
             foreach (var polygonHole in polygon.InnerPolygons)
-                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyFast(lengthTolerance, slopeTolerance)));
+                simplifiedPositivePolygon.AddInnerPolygon(new Polygon(polygonHole.Path.SimplifyFastORIG(lengthTolerance, slopeTolerance)));
             return simplifiedPositivePolygon;
         }
 
@@ -821,7 +853,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Vector2> SimplifyFast(this IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
+        public static List<Vector2> SimplifyFastORIG(this IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
             if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
@@ -1211,7 +1243,15 @@ namespace TVGL.TwoDimensional
         {
             var index = 0;
             while (polygon.Vertices[index].EndLine == null || polygon.Vertices[index].StartLine == null)
+            {
                 index++;
+                if (polygon.Vertices.Count == index)
+                {
+                    polygon.Vertices.Clear();
+                    polygon.Reset();
+                    return;
+                }
+            }
             var firstVertex = polygon.Vertices[index];
             var current = firstVertex;
             polygon.Vertices.Clear();

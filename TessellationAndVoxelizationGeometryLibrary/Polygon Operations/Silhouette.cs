@@ -217,7 +217,7 @@ namespace TVGL.TwoDimensional
                     var xDim = polyCoordinates.Max(c => c.X) - polyCoordinates.Min(c => c.X);
                     var yDim = polyCoordinates.Max(c => c.Y) - polyCoordinates.Min(c => c.Y);
                     var tolerance = Math.Min(xDim, yDim) * Constants.PolygonSameTolerance;
-                    var newPolygons = new Polygon(polyCoordinates.SimplifyMinLengthToNewList(tolerance)).RemoveSelfIntersections(ResultType.BothPermitted);
+                    var newPolygons = new Polygon(polyCoordinates.SimplifyFastDestructiveList(tolerance)).RemoveSelfIntersections(ResultType.BothPermitted);
                     // make the coordinates into polygons. Simplify and remove self intersections. 
                     foreach (var newPolygon in newPolygons)
                     {
