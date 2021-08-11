@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Priority_Queue;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using TVGL.Numerics;
-using static ClipperMath;
+using static ClipperLib2Beta.ClipperMath;
 
 /*******************************************************************************
 * Author    :  Angus Johnson                                                   *
@@ -14,11 +17,18 @@ using static ClipperMath;
 
 namespace ClipperLib2Beta
 {
+	using OutRecList = List<OutRec>;
+	using IntersectList = List<IntersectNode>;
+	using ScanlinePriorityQueue = SortedSet<long>;
+	using MinimaList = List<LocalMinima>;
+	using VertexList = List<Vertex>;
+
 	//------------------------------------------------------------------------------
 	// Miscellaneous structures etc.
 	//------------------------------------------------------------------------------
 	[Flags]
 	internal enum VertexFlags { vfNone = 0, vfOpenStart = 1, vfOpenEnd = 2, vfLocalMax = 4, vfLocalMin = 8 }
+	internal enum OutRecState { Undefined, Open, Outer, OuterCheck, Inner, InnerCheck };
 
 	public enum ClipType { None, Intersection, Union, Difference, Xor };
 	public enum PathType { Subject, Clip };
@@ -101,41 +111,53 @@ namespace ClipperLib2Beta
 		internal LocalMinima local_min;  //the bottom of an edge 'bound' (also Vatti)
 	};
 
+	public class ScanLine
+	{
+		internal ScanLine(long y)
+        {
+			Y = y;
+        }
+		internal long Y;
+		internal ScanLine next;
+	};
+
+	public class IntersectNode
+	{
+		internal PointI pt;
+		internal Active edge1;
+		internal Active edge2;
+	};
+
 	//------------------------------------------------------------------------------
 	// Clipper 
 	//------------------------------------------------------------------------------
-	public class Clipper
+	public abstract class Clipper
 	{
+		internal long botY { get; set; } = 0;
+		internal double _scale { get; set; } = 1.0;
+		internal bool has_open_paths_ { get; set; }
+		internal bool minimasSorted { get; set; }
+		internal ClipType cliptype { get; set; } = ClipType.None;
+		internal FillRule fillrule { get; set; } = FillRule.EvenOdd;
+		internal Active actives { get; set; }
+		internal Active sel { get; set; }
+		internal MinimaList minimas { get; set; }
+		internal IEnumerator<LocalMinima> currentLocalMin { get; set; }
+		internal OutRecList outRecs { get; set; }
+		internal IntersectList intersections { get; set; }
+		internal VertexList vertices { get; set; }
+		internal ScanlinePriorityQueue scanlines { get; set; }
 		internal const double DefaultScale = 100;
-
-		public class ScanLine
-		{
-			internal long y;
-			internal ScanLine next;
-		};
-
-		public class IntersectNode
-		{
-			internal PointI pt;
-			internal Active edge1;
-			internal Active edge2;
-		};
-
-		internal struct LocMinSorter
-		{
-			[Intrinsic]
-			static bool Sort(LocalMinima locMin1, LocalMinima locMin2) => locMin2.vertex.pt.y < locMin1.vertex.pt.y;
-		};
 
 		//------------------------------------------------------------------------------
 		// miscellaneous functions ...
 		//------------------------------------------------------------------------------
 
 		[Intrinsic]
-		internal static bool IsOdd(int val) => val % 2 != 0;
+		private static bool IsOdd(int val) => val % 2 != 0;
 
 		[Intrinsic]
-		internal void SetCheckFlag(OutRec outrec)
+		private void SetCheckFlag(OutRec outrec)
 		{
 			if (outrec.state == OutRecState.Inner)
 				outrec.state = OutRecState.InnerCheck;
@@ -144,7 +166,7 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal void UnsetCheckFlag(OutRec outrec)
+		private void UnsetCheckFlag(OutRec outrec)
 		{
 			if (outrec.state == OutRecState.InnerCheck)
 				outrec.state = OutRecState.Inner;
@@ -153,16 +175,16 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal bool IsHotEdge(Active edge) => edge.outrec != null;
+		private bool IsHotEdge(Active edge) => edge.outrec != null;
 
 		[Intrinsic]
-		internal bool IsOpen(Active edge) => edge.local_min.is_open;
+		private bool IsOpen(Active edge) => edge.local_min.is_open;
 
 		[Intrinsic]
-		internal bool IsOpen(OutRec outrec) => outrec.state == OutRecState.Open;
+		private bool IsOpen(OutRec outrec) => outrec.state == OutRecState.Open;
 
 		[Intrinsic]
-		internal Active GetPrevHotEdge(Active edge)
+		private Active GetPrevHotEdge(Active edge)
 		{
 			Active prev = edge.prev_in_ael;
 			while (prev != null && (IsOpen(prev) || !IsHotEdge(prev)))
@@ -171,24 +193,24 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal bool IsOuter(OutRec outrec) => outrec.state == OutRecState.Outer || outrec.state == OutRecState.OuterCheck;
+		private bool IsOuter(OutRec outrec) => outrec.state == OutRecState.Outer || outrec.state == OutRecState.OuterCheck;
 
 		[Intrinsic]
-		internal void SetAsOuter(OutRec outrec) => outrec.state = OutRecState.Outer;
+		private void SetAsOuter(OutRec outrec) => outrec.state = OutRecState.Outer;
 
 		[Intrinsic]
-		internal bool IsInner(OutRec outrec) => outrec.state == OutRecState.Inner || outrec.state == OutRecState.InnerCheck;
+		private bool IsInner(OutRec outrec) => outrec.state == OutRecState.Inner || outrec.state == OutRecState.InnerCheck;
 
 		[Intrinsic]
-		internal void SetAsInner(OutRec outrec) => outrec.state = OutRecState.Inner;
+		private void SetAsInner(OutRec outrec) => outrec.state = OutRecState.Inner;
 
 		//the front edge will be the LEFT edge when it's an OUTER polygon
 		//so that outer polygons will be orientated clockwise
 		[Intrinsic]
-		internal bool IsFront(Active e) => e.outrec.state == OutRecState.Open ? e.wind_dx > 0 : e == e.outrec.front_e;
+		private bool IsFront(Active e) => e.outrec.state == OutRecState.Open ? e.wind_dx > 0 : e == e.outrec.front_e;
 
 		[Intrinsic]
-		internal bool IsInvalidPath(OutPt op) => op == null || op.next == op;
+		private bool IsInvalidPath(OutPt op) => op == null || op.next == op;
 
 		/*******************************************************************************
 		  *  Dx:                             0(90deg)                                    *
@@ -196,7 +218,7 @@ namespace ClipperLib2Beta
 		  *               +inf (180deg) <--- o --. -inf (0deg)                          *
 		  *******************************************************************************/
 		[Intrinsic]
-		internal double GetDx(PointI pt1, PointI pt2)
+		private double GetDx(PointI pt1, PointI pt2)
 		{
 			var dy = (double)(pt2.y - pt1.y);
 			if (dy != 0)
@@ -208,7 +230,7 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal long TopX(Active e, long currentY)
+		private long TopX(Active e, long currentY)
 		{
 			if ((currentY == e.top.y) || (e.top.x == e.bot.x))
 				return e.top.x;
@@ -217,7 +239,7 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal long TopX(PointI pt1, PointI pt2, long y)
+		private long TopX(PointI pt1, PointI pt2, long y)
 		{
 			if (y == pt1.y)
 				return pt1.x;
@@ -233,16 +255,16 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal bool IsHorizontal(Active edge) => edge.top.y == edge.bot.y;
+		private bool IsHorizontal(Active edge) => edge.top.y == edge.bot.y;
 
 		[Intrinsic]
-		internal bool IsHeadingRightHorz(Active edge) => edge.dx == double.MinValue;
+		private bool IsHeadingRightHorz(Active edge) => edge.dx == double.MinValue;
 
 		[Intrinsic]
-		internal bool IsHeadingLeftHorz(Active edge) => edge.dx == double.MaxValue;
+		private bool IsHeadingLeftHorz(Active edge) => edge.dx == double.MaxValue;
 
 		[Intrinsic]
-		internal void SwapActives(Active e1, Active e2)
+		private void SwapActives(Active e1, Active e2)
 		{
 			Active e = e1;
 			e1 = e2;
@@ -250,13 +272,13 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal PathType GetPolyType(Active edge) => edge.local_min.polytype;
+		private PathType GetPolyType(Active edge) => edge.local_min.polytype;
 
 
 		[Intrinsic]
-		internal bool IsSamePolyType(Active e1, Active e2) => e1.local_min.polytype == e2.local_min.polytype;
+		private bool IsSamePolyType(Active e1, Active e2) => e1.local_min.polytype == e2.local_min.polytype;
 
-		internal PointI GetIntersectPoint(Active e1, Active e2)
+		private PointI GetIntersectPoint(Active e1, Active e2)
 		{
 			double b1, b2;
 			if (e1.dx == e2.dx) return e1.top;
@@ -285,33 +307,33 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal void SetDx(Active e) => e.dx = GetDx(e.bot, e.top);
+		private void SetDx(Active e) => e.dx = GetDx(e.bot, e.top);
 
 		[Intrinsic]
-		internal bool IsLeftBound(Active e) => e.wind_dx > 0;
+		private bool IsLeftBound(Active e) => e.wind_dx > 0;
 
 		[Intrinsic]
-		internal Vertex NextVertex(Active e) => IsLeftBound(e) ? e.vertex_top.next : e.vertex_top.prev;
+		private Vertex NextVertex(Active e) => IsLeftBound(e) ? e.vertex_top.next : e.vertex_top.prev;
 
 		[Intrinsic]
-		internal Vertex NextVertex(Vertex op, bool going_forward) => going_forward ? op.next : op.prev;
+		private Vertex NextVertex(Vertex op, bool going_forward) => going_forward ? op.next : op.prev;
 
 		[Intrinsic]
-		internal Vertex PrevVertex(Vertex op, bool going_forward) => going_forward ? op.prev : op.next;
+		private Vertex PrevVertex(Vertex op, bool going_forward) => going_forward ? op.prev : op.next;
 
 		[Intrinsic]
-		internal bool IsClockwise(Vertex vertex) => CrossProduct(vertex.prev.pt, vertex.pt, vertex.next.pt) >= 0;
+		private bool IsClockwise(Vertex vertex) => CrossProduct(vertex.prev.pt, vertex.pt, vertex.next.pt) >= 0;
 
 		[Intrinsic]
-		internal bool IsClockwise(OutPt op) => CrossProduct(op.prev.pt, op.pt, op.next.pt) >= 0;
+		private bool IsClockwise(OutPt op) => CrossProduct(op.prev.pt, op.pt, op.next.pt) >= 0;
 
 		[Intrinsic]
-		internal bool IsMaxima(Active e)
+		private bool IsMaxima(Active e)
 		{
 			return (e.vertex_top.flags & VertexFlags.vfLocalMax) != VertexFlags.vfNone;
 		}
 
-		internal Active GetMaximaPair(Active e)
+		private Active GetMaximaPair(Active e)
 		{
 			Active e2;
 			if (IsHorizontal(e))
@@ -358,7 +380,7 @@ namespace ClipperLib2Beta
 
 		internal PathI BuildPath(OutPt op)
 		{
-			PathI path;
+			var path = new PathI();
 			int opCnt = PointCount(op);
 			if (opCnt < 2) return path;
 
@@ -373,16 +395,15 @@ namespace ClipperLib2Beta
 		}
 
 		[Intrinsic]
-		internal void DisposeOutPt(OutPt pp)
+		private void DisposeOutPt(OutPt pp)
 		{
 			//OutPt *pp_next =
 			pp.prev.next = pp.next;
 			pp.next.prev = pp.prev;
-			delete pp;
 		}
 
 		[Intrinsic]
-		internal void DisposeOutPts(OutPt op)
+		private void DisposeOutPts(OutPt op)
 		{
 			if (op == null) return;
 			op.prev.next = null;
@@ -390,25 +411,17 @@ namespace ClipperLib2Beta
 			{
 				OutPt tmpPp = op;
 				op = op.next;
-				delete tmpPp;
 			}
 		}
 
 		[Intrinsic]
-		internal bool IntersectListSort(IntersectNode a, IntersectNode b)
-		{
-			//note different inequality tests ...
-			return (a.pt.y == b.pt.y) ? (a.pt.x < b.pt.x) : (a.pt.y > b.pt.y);
-		}
-
-		[Intrinsic]
-		internal void SetSides(OutRec outrec, Active start_edge, Active end_edge)
+		private void SetSides(OutRec outrec, Active start_edge, Active end_edge)
 		{
 			outrec.front_e = start_edge;
 			outrec.back_e = end_edge;
 		}
 
-		internal void SwapOutrecs(Active e1, Active e2)
+		private void SwapOutrecs(Active e1, Active e2)
 		{
 			OutRec or1 = e1.outrec;
 			OutRec or2 = e2.outrec;
@@ -437,7 +450,7 @@ namespace ClipperLib2Beta
 			e2.outrec = or1;
 		}
 
-		internal double Area(OutPt op)
+		private double Area(OutPt op)
 		{
 			double area = 0.0;
 			OutPt op2 = op;
@@ -453,7 +466,7 @@ namespace ClipperLib2Beta
 			return area * -0.5;  //positive areas are clockwise
 		}
 
-		internal void ReverseOutPts(OutPt op)
+		private void ReverseOutPts(OutPt op)
 		{
 			if (op == null) return;
 
@@ -468,7 +481,7 @@ namespace ClipperLib2Beta
 				op1 = op2;
 			} while (op1 != op);
 		}
-		internal bool RecheckInnerOuter(Active e)
+		private bool RecheckInnerOuter(Active e)
 		{
 			double area = Area(e.outrec.pts);
 			bool result = area != 0.0;
@@ -518,7 +531,7 @@ namespace ClipperLib2Beta
 
 
 		[Intrinsic]
-		internal void SwapSides(OutRec outrec)
+		private void SwapSides(OutRec outrec)
 		{
 			Active e2 = outrec.front_e;
 			outrec.front_e = outrec.back_e;
@@ -526,14 +539,14 @@ namespace ClipperLib2Beta
 			outrec.pts = outrec.pts.next;
 		}
 
-		bool FixSides(Active e)
+		private bool FixSides(Active e)
 		{
 			bool fix = !RecheckInnerOuter(e) || ((IsOuter(e.outrec)) != IsFront(e));
 			if (fix) SwapSides(e.outrec);
 			return fix;
 		}
 
-		internal void SetOwnerAndInnerOuterState(Active e)
+		private void SetOwnerAndInnerOuterState(Active e)
 		{
 			Active e2;
 			OutRec outrec = e.outrec;
@@ -590,81 +603,73 @@ namespace ClipperLib2Beta
 			Clear();
 		}
 
-		public void CleanUp()
+		internal void CleanUp()
 		{
-			while (actives_) DeleteFromAEL(actives_);
-			scanline_list_ = ScanlineList();  //resets priority_queue
+			while (actives != null) DeleteFromAEL(actives);
+			scanlines = new ScanlinePriorityQueue();  //resets priority_queue
 			DisposeIntersectNodes();
 			DisposeAllOutRecs();
 		}
 
-		public Clear()
+		private void Clear()
 		{
 			CleanUp();
 			DisposeVerticesAndLocalMinima();
-			curr_loc_min_ = minima_list_.begin();
-			minima_list_sorted_ = false;
+			currentLocalMin = minimas.GetEnumerator();
+			minimasSorted = false;
 			has_open_paths_ = false;
 		}
 
-		public void Reset()
+		private void Reset()
 		{
-			if (!minima_list_sorted_)
+			if (!minimasSorted)
 			{
-				std.sort(minima_list_.begin(), minima_list_.end(), LocMinSorter());
-				minima_list_sorted_ = true;
+				minimas = minimas.OrderBy(p => p.vertex.pt.y).ToList();
+				minimasSorted = true;
 			}
-			MinimaList.const_reverse_iterator i;
-			for (i = minima_list_.rbegin(); i != minima_list_.rend(); ++i)
-				InsertScanline((*i).vertex.pt.y);
+			foreach (var minima in minimas)
+				InsertScanline(minima.vertex.pt.y);
 
-			curr_loc_min_ = minima_list_.begin();
-			actives_ = null;
-			sel_ = null;
+			currentLocalMin = minimas.GetEnumerator();
+			actives = null;
+			sel = null;
 		}
 
 		[Intrinsic]
-		public void InsertScanline(long y) => scanline_list_.push(y);
+		private void InsertScanline(long y) => scanlines.Add(y);
 
-		public bool PopScanline(long y)
+		private bool PopScanline(out long y)
 		{
-			if (scanline_list_.empty()) return false;
-			y = scanline_list_.top();
-			scanline_list_.pop();
-			while (!scanline_list_.empty() && y == scanline_list_.top())
-				scanline_list_.pop();  // Pop duplicates.
+			y = 0;
+			if (!scanlines.Any()) return false;
+			y = scanlines.Max;
+			scanlines.Remove(y);
+			while (scanlines.Any() && y == scanlines.Max)
+				scanlines.Remove(y);  // Pop duplicates.
 			return true;
 		}
 
-		public bool PopLocalMinima(long y, LocalMinima local_minima)
+		private bool PopLocalMinima(long y, out LocalMinima local_minima)
 		{
-			if (curr_loc_min_ == minima_list_.end() || (curr_loc_min_).vertex.pt.y != y) return false;
-			local_minima = curr_loc_min_;
-			++curr_loc_min_;
+			local_minima = null;
+			if (currentLocalMin.Current == minimas.Last() || currentLocalMin.Current.vertex.pt.y != y) return false;
+			local_minima = currentLocalMin.Current;
+			currentLocalMin.MoveNext();
 			return true;
 		}
 
-		public void DisposeAllOutRecs()
+		private void DisposeAllOutRecs()
 		{
-			for (auto outrec :  outrec_list_)
-			{
-				if (outrec.pts) DisposeOutPts(outrec.pts);
-				delete outrec;
-			}
-			outrec_list_.Resize(0);
+			outRecs.Clear();
 		}
 
-		public void DisposeVerticesAndLocalMinima()
+		private void DisposeVerticesAndLocalMinima()
 		{
-			for (auto loc_min : minima_list_)
-				delete(loc_min);
-			minima_list_.clear();
-			for (auto vertex : vertex_list_)
-				delete[] vertex;
-			vertex_list_.clear();
+			minimas.Clear();
+			vertices.Clear();
 		}
 
-		public void AddLocMin(Vertex vert, PathType polytype, bool is_open)
+		private void AddLocMin(Vertex vert, PathType polytype, bool is_open)
 		{
 			//make sure the vertex is added only once ...
 			if ((VertexFlags.vfLocalMin & vert.flags) != VertexFlags.vfNone) return;
@@ -674,12 +679,12 @@ namespace ClipperLib2Beta
 			lm.vertex = vert;
 			lm.polytype = polytype;
 			lm.is_open = is_open;
-			minima_list_.push_back(lm);
+			minimas.Add(lm);
 		}
 
-		public void AddPathToVertexList(PathI path, PathType polytype, bool is_open)
+		private void AddPathToVertexList(PathI path, PathType polytype, bool is_open)
 		{
-			var path_len = (int)path.size();
+			var path_len = (int)path.Count;
 			if (!is_open)
 			{
 				while (path_len > 1 && (path[(int)(path_len - 1)] == path[0])) --path_len;
@@ -688,7 +693,6 @@ namespace ClipperLib2Beta
 			else if (path_len == 0) return;
 
 			Vertex[] vertices = new Vertex[path_len];
-			vertex_list_.push_back(vertices);
 
 			int highI = path_len - 1;
 			vertices[0].pt = path[0];
@@ -731,7 +735,7 @@ namespace ClipperLib2Beta
 				vertices[i].prev = vertices[j];
 				if (path[i].y > path[j].y && going_up)
 				{
-					vertices[j].flags = (vertices[j].flags | VertexFlags.vfLocalMax);
+					vertices[j].flags = vertices[j].flags | VertexFlags.vfLocalMax;
 					going_up = false;
 				}
 				else if (path[i].y < path[j].y && !going_up)
@@ -758,6 +762,8 @@ namespace ClipperLib2Beta
 				if (going_up0) AddLocMin(vertices[highI], polytype, is_open);
 				else vertices[highI].flags = vertices[highI].flags | VertexFlags.vfLocalMax;
 			}
+
+			this.vertices.AddRange(vertices);
 		}
 
 		public void AddPath(PathI path, PathType polytype, bool is_open)
@@ -768,19 +774,19 @@ namespace ClipperLib2Beta
 					throw new Exception("AddPath: Only subject paths may be open.");
 				has_open_paths_ = true;
 			}
-			minima_list_sorted_ = false;
+			minimasSorted = false;
 			AddPathToVertexList(path, polytype, is_open);
 		}
 
 		public void AddPaths(PathsI paths, PathType polytype, bool is_open)
 		{
-			for (const auto &path : paths.data)
-					AddPath(path, polytype, is_open);
+			foreach (var path in paths.data)
+				AddPath(path, polytype, is_open);
 		}
 
-		internal bool IsContributingClosed(Active e)
+		private bool IsContributingClosed(Active e)
 		{
-			switch (fillrule_)
+			switch (fillrule)
 			{
 				case FillRule.NonZero:
 					if (Math.Abs(e.wind_cnt) != 1) return false;
@@ -794,10 +800,10 @@ namespace ClipperLib2Beta
 				default:
 					break;  // delphi2cpp translation note: no warnings
 			}
-			switch (cliptype_)
+			switch (cliptype)
 			{
 				case ClipType.Intersection:
-					switch (fillrule_)
+					switch (fillrule)
 					{
 						case FillRule.EvenOdd:
 						case FillRule.NonZero: return e.wind_cnt2 != 0;
@@ -806,7 +812,7 @@ namespace ClipperLib2Beta
 					}
 					break;
 				case ClipType.Union:
-					switch (fillrule_)
+					switch (fillrule)
 					{
 						case FillRule.EvenOdd:
 						case FillRule.NonZero: return e.wind_cnt2 == 0;
@@ -816,7 +822,7 @@ namespace ClipperLib2Beta
 					break;
 				case ClipType.Difference:
 					if (GetPolyType(e) == PathType.Subject)
-						switch (fillrule_)
+						switch (fillrule)
 						{
 							case FillRule.EvenOdd:
 							case FillRule.NonZero: return e.wind_cnt2 == 0;
@@ -824,7 +830,7 @@ namespace ClipperLib2Beta
 							case FillRule.Negative: return e.wind_cnt2 >= 0;
 						}
 					else
-						switch (fillrule_)
+						switch (fillrule)
 						{
 							case FillRule.EvenOdd:
 							case FillRule.NonZero: return e.wind_cnt2 != 0;
@@ -840,9 +846,9 @@ namespace ClipperLib2Beta
 			return false;  //we should never get here
 		}
 
-		internal bool IsContributingOpen(Active e)
+		private bool IsContributingOpen(Active e)
 		{
-			switch (cliptype_)
+			switch (cliptype)
 			{
 				case ClipType.Intersection: return e.wind_cnt2 != 0;
 				case ClipType.Union: return (e.wind_cnt == 0) && (e.wind_cnt2 == 0);
@@ -854,7 +860,7 @@ namespace ClipperLib2Beta
 			return false;  //stops compiler error
 		}
 
-		internal void SetWindCountForClosedPathEdge(Active e)
+		private void SetWindCountForClosedPathEdge(Active e)
 		{
 			//Wind counts refer to polygon regions not edges, so here an edge's WindCnt
 			//indicates the higher of the wind counts for the two regions touching the
@@ -869,9 +875,9 @@ namespace ClipperLib2Beta
 			if (e2 == null)
 			{
 				e.wind_cnt = e.wind_dx;
-				e2 = actives_;
+				e2 = actives;
 			}
-			else if (fillrule_ == FillRule.EvenOdd)
+			else if (fillrule == FillRule.EvenOdd)
 			{
 				e.wind_cnt = e.wind_dx;
 				e.wind_cnt2 = e2.wind_cnt2;
@@ -915,7 +921,7 @@ namespace ClipperLib2Beta
 			}
 
 			//update wind_cnt2 ...
-			if (fillrule_ == FillRule.EvenOdd)
+			if (fillrule == FillRule.EvenOdd)
 				while (e2 != e)
 				{
 					if (GetPolyType(e2) != pt && !IsOpen(e2))
@@ -931,10 +937,10 @@ namespace ClipperLib2Beta
 				}
 		}
 
-		internal void SetWindCountForOpenPathEdge(Active e)
+		private void SetWindCountForOpenPathEdge(Active e)
 		{
-			Active e2 = actives_;
-			if (fillrule_ == FillRule.EvenOdd)
+			Active e2 = actives;
+			if (fillrule == FillRule.EvenOdd)
 			{
 				int cnt1 = 0, cnt2 = 0;
 				while (e2 != e)
@@ -961,7 +967,7 @@ namespace ClipperLib2Beta
 			}
 		}
 
-		internal bool IsValidAelOrder(Active a1, Active a2)
+		private bool IsValidAelOrder(Active a1, Active a2)
 		{
 			bool is_valid;
 			PointI pt1;
@@ -1019,51 +1025,50 @@ namespace ClipperLib2Beta
 			return is_valid;
 		}
 
-		internal void InsertLeftEdge(Active e)
+		private void InsertLeftEdge(Active e)
 		{
 			Active e2;
 
-			if (!actives_)
+			if (actives == null)
 			{
 				e.prev_in_ael = null;
 				e.next_in_ael = null;
-				actives_ = e;
+				actives = e;
 			}
-			else if (IsValidAelOrder(e, actives_))
+			else if (IsValidAelOrder(e, actives))
 			{
 				e.prev_in_ael = null;
-				e.next_in_ael = actives_;
-				actives_.prev_in_ael = e;
-				actives_ = e;
+				e.next_in_ael = actives;
+				actives.prev_in_ael = e;
+				actives = e;
 			}
 			else
 			{
-				e2 = actives_;
-				while (e2.next_in_ael && IsValidAelOrder(e2.next_in_ael, e))
+				e2 = actives;
+				while (e2.next_in_ael != null && IsValidAelOrder(e2.next_in_ael, e))
 					e2 = e2.next_in_ael;
 				e.next_in_ael = e2.next_in_ael;
-				if (e2.next_in_ael) e2.next_in_ael.prev_in_ael = e;
+				if (e2.next_in_ael != null) e2.next_in_ael.prev_in_ael = e;
 				e.prev_in_ael = e2;
 				e2.next_in_ael = e;
 			}
 		}
 
-		internal void InsertRightEdge(Active e, Active e2)
+		private void InsertRightEdge(Active e, Active e2)
 		{
 			e2.next_in_ael = e.next_in_ael;
-			if (e.next_in_ael) e.next_in_ael.prev_in_ael = e2;
+			if (e.next_in_ael != null) e.next_in_ael.prev_in_ael = e2;
 			e2.prev_in_ael = e;
 			e.next_in_ael = e2;
 		}
 
-		internal InsertLocalMinimaIntoAEL(long bot_y)
+		private void InsertLocalMinimaIntoAEL(long bot_y)
 		{
-			LocalMinima local_minima;
 			Active left_bound, right_bound;
 			//Add any local minima (if any) at BotY ...
 			//nb: horizontal local minima edges should contain locMin.vertex.prev
 
-			while (PopLocalMinima(bot_y, local_minima))
+			while (PopLocalMinima(bot_y, out LocalMinima local_minima))
 			{
 				if ((local_minima.vertex.flags & VertexFlags.vfOpenStart) != VertexFlags.vfNone)
 				{
@@ -1157,17 +1162,19 @@ namespace ClipperLib2Beta
 			}  //while (PopLocalMinima())
 		}
 
-		internal void PushHorz(Active e)
+		[Intrinsic]
+		private void PushHorz(Active e)
 		{
-			e.next_in_sel = (sel_ ? sel_ : null);
-			sel_ = e;
+			e.next_in_sel = sel != null ? sel : null;
+			sel = e;
 		}
 
-		internal bool PopHorz(Active e)
+		[Intrinsic]
+		private bool PopHorz(out Active e)
 		{
-			e = sel_;
+			e = sel;
 			if (e == null) return false;
-			sel_ = sel_.next_in_sel;
+			sel = sel.next_in_sel;
 			return true;
 		}
 
@@ -1192,11 +1199,11 @@ namespace ClipperLib2Beta
 		}*/
 		//------------------------------------------------------------------------------
 
-		internal void AddLocalMinPoly(Active e1, Active e2, PointI pt, bool is_new, bool orientation_check_required)
+		private void AddLocalMinPoly(Active e1, Active e2, PointI pt, bool is_new = false, bool orientation_check_required = false)
 		{
 			OutRec outrec = CreateOutRec();
-			outrec.idx = (int)outrec_list_.size();
-			outrec_list_.push_back(outrec);
+			outrec.idx = (int)outRecs.Count;
+			outRecs.Add(outrec);
 			outrec.pts = null;
 			outrec.PolyTree = null;
 
@@ -1225,7 +1232,7 @@ namespace ClipperLib2Beta
 			//nb: currently e1.NextInAEL == e2 but this could change immediately on return
 		}
 
-		internal void AddLocalMaxPoly(Active e1, Active e2, PointI pt)
+		private void AddLocalMaxPoly(Active e1, Active e2, PointI pt)
 		{
 			if (!IsOpen(e1) && (IsFront(e1) == IsFront(e2)))
 				if (!FixSides(e1)) FixSides(e2);
@@ -1262,7 +1269,7 @@ namespace ClipperLib2Beta
 				JoinOutrecPaths(e2, e1);
 		}
 
-		internal void JoinOutrecPaths(Active e1, Active e2)
+		private void JoinOutrecPaths(Active e1, Active e2)
 		{
 			if (IsFront(e1) == IsFront(e2))
 			{
@@ -1270,7 +1277,7 @@ namespace ClipperLib2Beta
 				if (IsOpen(e1))
 					SwapSides(e2.outrec);
 				else if (!FixSides(e1) && !FixSides(e2))
-					throw new ClipperLibException("Error in JoinOutrecPaths()");
+					throw new Exception("Error in JoinOutrecPaths()");
 				if (e1.outrec.owner == e2.outrec) e1.outrec.owner = e2.outrec.owner;
 			}
 
@@ -1336,14 +1343,14 @@ namespace ClipperLib2Beta
 
 		//this is a virtual method as descendant classes may need
 		//to produce descendant classes of OutPt ...
-		internal OutPt CreateOutPt() => new OutPt();
+		private OutPt CreateOutPt() => new OutPt();
 
 		//this is a virtual method as descendant classes may need
 		//to produce descendant classes of OutRec ...
 
-		internal OutRec CreateOutRec() => new OutRec();
+		private OutRec CreateOutRec() => new OutRec();
 
-		internal OutPt AddOutPt(Active e, PointI pt)
+		private OutPt AddOutPt(Active e, PointI pt)
 		{
 			OutPt new_op = null;
 
@@ -1371,11 +1378,11 @@ namespace ClipperLib2Beta
 			return new_op;
 		}
 
-		internal void StartOpenPath(Active e, PointI pt)
+		private void StartOpenPath(Active e, PointI pt)
 		{
 			OutRec outrec = CreateOutRec();
-			outrec.idx = outrec_list_.size();
-			outrec_list_.push_back(outrec);
+			outrec.idx = outRecs.Count;
+			outRecs.Add(outrec);
 			outrec.owner = null;
 			outrec.state = OutRecState.Open;
 			outrec.pts = null;
@@ -1391,7 +1398,7 @@ namespace ClipperLib2Beta
 			outrec.pts = op;
 		}
 
-		internal void UpdateEdgeIntoAEL(Active e)
+		private void UpdateEdgeIntoAEL(Active e)
 		{
 			e.bot = e.top;
 			e.vertex_top = NextVertex(e);
@@ -1401,7 +1408,7 @@ namespace ClipperLib2Beta
 			if (!IsHorizontal(e)) InsertScanline(e.top.y);
 		}
 
-		internal void IntersectEdges(Active e1, Active e2, PointI pt, bool orientation_check_required)
+		private void IntersectEdges(Active e1, Active e2, PointI pt, bool orientation_check_required = false)
 		{
 			//MANAGE OPEN PATH INTERSECTIONS SEPARATELY ...
 			if (has_open_paths_ && (IsOpen(e1) || IsOpen(e2)))
@@ -1419,7 +1426,7 @@ namespace ClipperLib2Beta
 					edge_c = e1;
 				}
 
-				switch (cliptype_)
+				switch (cliptype)
 				{
 					case ClipType.Intersection:
 					case ClipType.Difference:
@@ -1433,7 +1440,7 @@ namespace ClipperLib2Beta
 						if (Math.Abs(edge_c.wind_cnt) != 1) return;
 						break;
 					default:
-						throw new ClipperLibException("Error in IntersectEdges - ClipType is unknown!");
+						throw new Exception("Error in IntersectEdges - ClipType is unknown!");
 				}
 				//toggle contribution ...
 				if (IsHotEdge(edge_o))
@@ -1450,7 +1457,7 @@ namespace ClipperLib2Beta
 			int old_e1_windcnt, old_e2_windcnt;
 			if (e1.local_min.polytype == e2.local_min.polytype)
 			{
-				if (fillrule_ == FillRule.EvenOdd)
+				if (fillrule == FillRule.EvenOdd)
 				{
 					old_e1_windcnt = e1.wind_cnt;
 					e1.wind_cnt = e2.wind_cnt;
@@ -1470,17 +1477,17 @@ namespace ClipperLib2Beta
 			}
 			else
 			{
-				if (fillrule_ != FillRule.EvenOdd)
+				if (fillrule != FillRule.EvenOdd)
 					e1.wind_cnt2 += e2.wind_dx;
 				else
 					e1.wind_cnt2 = (e1.wind_cnt2 == 0 ? 1 : 0);
-				if (fillrule_ != FillRule.EvenOdd)
+				if (fillrule != FillRule.EvenOdd)
 					e2.wind_cnt2 -= e1.wind_dx;
 				else
 					e2.wind_cnt2 = (e2.wind_cnt2 == 0 ? 1 : 0);
 			}
 
-			switch (fillrule_)
+			switch (fillrule)
 			{
 				case FillRule.Positive:
 					old_e1_windcnt = e1.wind_cnt;
@@ -1509,7 +1516,7 @@ namespace ClipperLib2Beta
 			if (IsHotEdge(e1) && IsHotEdge(e2))
 			{
 				if ((old_e1_windcnt != 0 && old_e1_windcnt != 1) || (old_e2_windcnt != 0 && old_e2_windcnt != 1) ||
-						(e1.local_min.polytype != e2.local_min.polytype && cliptype_ != ClipType.Xor))
+						(e1.local_min.polytype != e2.local_min.polytype && cliptype != ClipType.Xor))
 				{
 					AddLocalMaxPoly(e1, e2, pt);
 				}
@@ -1540,7 +1547,7 @@ namespace ClipperLib2Beta
 			else
 			{  //neither edge is 'hot'
 				long e1Wc2, e2Wc2;
-				switch (fillrule_)
+				switch (fillrule)
 				{
 					case FillRule.Positive:
 						e1Wc2 = e1.wind_cnt2;
@@ -1561,7 +1568,7 @@ namespace ClipperLib2Beta
 					AddLocalMinPoly(e1, e2, pt, false, orientation_check_required);
 				}
 				else if (old_e1_windcnt == 1 && old_e2_windcnt == 1)
-					switch (cliptype_)
+					switch (cliptype)
 					{
 						case ClipType.Intersection:
 							if (e1Wc2 > 0 && e2Wc2 > 0)
@@ -1587,24 +1594,23 @@ namespace ClipperLib2Beta
 			}
 		}
 
-		internal void DeleteFromAEL(Active e)
+		private void DeleteFromAEL(Active e)
 		{
 			Active prev = e.prev_in_ael;
 			Active next = e.next_in_ael;
-			if (prev == null && next == null && (e != actives_)) return;  //already deleted
+			if (prev == null && next == null && (e != actives)) return;  //already deleted
 			if (prev != null)
 				prev.next_in_ael = next;
 			else
-				actives_ = next;
+				actives = next;
 			if (next != null) next.prev_in_ael = prev;
-			delete e;
 		}
 
 		[Intrinsic]
-		internal void AdjustCurrXAndCopyToSEL(long top_y)
+		private void AdjustCurrXAndCopyToSEL(long top_y)
 		{
-			Active e = actives_;
-			sel_ = e;
+			Active e = actives;
+			sel = e;
 			while (e != null)
 			{
 				e.prev_in_sel = e.prev_in_ael;
@@ -1618,75 +1624,20 @@ namespace ClipperLib2Beta
 		internal void ExecuteInternal(ClipType ct, FillRule ft)
 		{
 			//if (ct == ClipType.None) return;
-			fillrule_ = ft;
-			cliptype_ = ct;
+			fillrule = ft;
+			cliptype = ct;
 			Reset();
-			long y;
-			if (!PopScanline(y)) return;
+			if (!PopScanline(out long y)) return;
 
 			while (true)
 			{
 				InsertLocalMinimaIntoAEL(y);
-				Active e;
-				while (PopHorz(e)) DoHorizontal(e);
-				bot_y_ = y;  //bot_y_ == bottom of scanbeam
-				if (!PopScanline(y)) break;  //y new top of scanbeam
+				while (PopHorz(out Active e)) DoHorizontal(e);
+				botY = y;  //bot_y_ == bottom of scanbeam
+				if (!PopScanline(out y)) break;  //y new top of scanbeam
 				DoIntersections(y);
 				DoTopOfScanbeam(y);
 			}
-		}
-
-		public bool Execute(ClipType clipType, FillRule ft, PathsI solution_closed)
-		{
-			bool executed = true;
-			solution_closed.clear();
-			try
-			{
-				ExecuteInternal(clipType, ft);
-				BuildResultI(solution_closed, null);
-			}
-			catch ()
-			{
-				executed = false;
-			}
-			CleanUp();
-			return executed;
-		}
-
-		public bool Execute(ClipType clipType, FillRule ft, PathsI solution_closed, PathsI solution_open)
-		{
-			bool executed = true;
-			solution_closed.clear();
-			solution_open.clear();
-			try
-			{
-				ExecuteInternal(clipType, ft);
-				BuildResultI(solution_closed, solution_open);
-			}
-			catch ()
-			{
-				executed = false;
-			}
-			CleanUp();
-			return executed;
-		}
-
-		public bool Execute(ClipType clipType, FillRule ft, PolyTreeI solution_closed, PathsI solution_open)
-		{
-			bool executed = true;
-			solution_closed.Clear();
-			solution_open.clear();
-			try
-			{
-				ExecuteInternal(clipType, ft);
-				BuildResultTreeI(solution_closed, solution_open);
-			}
-			catch ()
-			{
-				executed = false;
-			}
-			CleanUp();
-			return executed;
 		}
 
 		public void DoIntersections(long top_y)
@@ -1701,9 +1652,7 @@ namespace ClipperLib2Beta
 		[Intrinsic]
 		private void DisposeIntersectNodes()
 		{
-			for (auto intersect : intersect_list_)
-				delete intersect;
-			intersect_list_.resize(0);
+			intersections.Clear();
 		}
 
 		private void AddNewIntersectNode(Active e1, Active e2, long top_y)
@@ -1712,15 +1661,15 @@ namespace ClipperLib2Beta
 
 			//rounding errors can occasionally place the calculated intersection
 			//point either below or above the scanbeam, so check and correct ...
-			if (pt.y > bot_y_)
+			if (pt.y > botY)
 			{
 				//e.curr.y is still the bottom of scanbeam
-				pt.y = bot_y_;
+				pt.y = botY;
 				//use the more vertical of the 2 edges to derive pt.x ...
 				if (Math.Abs(e1.dx) < Math.Abs(e2.dx))
-					pt.x = TopX(e1, bot_y_);
+					pt.x = TopX(e1, botY);
 				else
-					pt.x = TopX(e2, bot_y_);
+					pt.x = TopX(e2, botY);
 			}
 			else if (pt.y < top_y)
 			{
@@ -1740,12 +1689,12 @@ namespace ClipperLib2Beta
 			node.edge1 = e1;
 			node.edge2 = e2;
 			node.pt = pt;
-			intersect_list_.push_back(node);
+			intersections.Add(node);
 		}
 
-		internal bool BuildIntersectList(long top_y)
+		private bool BuildIntersectList(long top_y)
 		{
-			if (!actives_ || !actives_.next_in_ael) return false;
+			if (actives == null || actives.next_in_ael == null) return false;
 
 			//Calculate edge positions at the top of the current scanbeam, and from this
 			//we will determine the intersections required to reach these new positions.
@@ -1757,14 +1706,14 @@ namespace ClipperLib2Beta
 			int jump_size = 1;
 			while (true)
 			{
-				Active first = sel_, second = null, base_e = null, prev_base = null;
+				Active first = sel, second = null, base_e = null, prev_base = null;
 				//sort successive larger jump counts of nodes ...
-				while (first)
+				while (first != null)
 				{
 					if (jump_size == 1)
 					{
 						second = first.next_in_sel;
-						if (!second)
+						if (second == null)
 						{
 							first.jump = null;
 							break;
@@ -1774,7 +1723,7 @@ namespace ClipperLib2Beta
 					else
 					{
 						second = first.jump;
-						if (!second)
+						if (second == null)
 						{
 							first.jump = null;
 							break;
@@ -1804,10 +1753,10 @@ namespace ClipperLib2Beta
 							//now move the out of place 'second' to it's new position in SEL ...
 							if (first == base_e)
 							{
-								if (prev_base) prev_base.jump = second;
+								if (prev_base != null) prev_base.jump = second;
 								base_e = second;
 								base_e.jump = first.jump;
-								if (!first.prev_in_sel) sel_ = second;
+								if (first.prev_in_sel == null) sel = second;
 							}
 							tmp = second.next_in_sel;
 
@@ -1815,16 +1764,16 @@ namespace ClipperLib2Beta
 							Active prev_e = second.prev_in_sel;
 							Active next_e = second.next_in_sel;
 							prev_e.next_in_sel = next_e;
-							if (next_e) next_e.prev_in_sel = prev_e;
+							if (next_e != null) next_e.prev_in_sel = prev_e;
 							//and then reinsert 'second' into list just before 'first' ...
 							prev_e = first.prev_in_sel;
-							if (prev_e) prev_e.next_in_sel = second;
+							if (prev_e != null) prev_e.next_in_sel = second;
 							first.prev_in_sel = second;
 							second.prev_in_sel = prev_e;
 							second.next_in_sel = first;
 
 							second = tmp;
-							if (!second) break;
+							if (second == null) break;
 							--right_cnt;
 						}
 						else
@@ -1836,15 +1785,15 @@ namespace ClipperLib2Beta
 					first = base_e.jump;
 					prev_base = base_e;
 				}
-				if (!sel_.jump) //this is safe because 'sel' is always assigned
+				if (sel.jump == null) //this is safe because 'sel' is always assigned
 					break;
 				else
 					jump_size <<= 1;
 			}
-			return intersect_list_.size() > 0;
+			return intersections.Count > 0;
 		}
 
-		internal void ProcessIntersectList()
+		private void ProcessIntersectList()
 		{
 			//We now have a list of intersections required so that edges will be
 			//correctly positioned at the top of the scanbeam. However, it's important
@@ -1852,29 +1801,33 @@ namespace ClipperLib2Beta
 			//crucial that intersections only occur between adjacent edges.
 
 			//First we do a quicksort so intersections proceed in a bottom up order ...
-			std.sort(intersect_list_.begin(), intersect_list_.end(), IntersectListSort);
+			intersections = intersections.OrderBy(p => p.pt.y).ThenBy(p => p.pt.x).ToList();
 			//Now as we process these intersections, we must sometimes adjust the order
 			//to ensure that intersecting edges are always adjacent ...
-			for (int i = 0; i < intersect_list_.size(); ++i)
+			for (int i = 0; i < intersections.Count; ++i)
 			{
-				if (!EdgesAdjacentInAEL(intersect_list_[i]))
+				if (!EdgesAdjacentInAEL(intersections[i]))
 				{
 					int j = i + 1;
-					while (j < intersect_list_.size() && !EdgesAdjacentInAEL(intersect_list_[j])) j++;
-					if (j < intersect_list_.size())
-						std.swap(intersect_list_[i], intersect_list_[j]);
+					while (j < intersections.Count && !EdgesAdjacentInAEL(intersections[j])) j++;
+					if (j < intersections.Count)
+					{
+						var temp = intersections[i];
+						intersections[i] = intersections[j];
+						intersections[j] = temp;
+					}
 				}
 
 				//Occasionally a non-minima intersection is processed before its own
 				//minima. This causes problems with orientation so we need to flag it ...
-				IntersectNode node = intersect_list_[i];
-				bool flagged = (i < intersect_list_.size() - 1) &&
-					(intersect_list_[i + 1].pt.y > node.pt.y);
+				IntersectNode node = intersections[i];
+				bool flagged = (i < intersections.Count - 1) &&
+					(intersections[i + 1].pt.y > node.pt.y);
 				IntersectEdges(node.edge1, node.edge2, node.pt, flagged);
 				SwapPositionsInAEL(node.edge1, node.edge2);
 			}
 		}
-		internal void SwapPositionsInAEL(Active e1, Active e2)
+		private void SwapPositionsInAEL(Active e1, Active e2)
 		{
 			//preconditon: e1 must be immediately to the left of e2
 			Active next = e2.next_in_ael;
@@ -1885,10 +1838,10 @@ namespace ClipperLib2Beta
 			e2.next_in_ael = e1;
 			e1.prev_in_ael = e2;
 			e1.next_in_ael = next;
-			if (e2.prev_in_ael == null) actives_ = e2;
+			if (e2.prev_in_ael == null) actives = e2;
 		}
 
-		internal bool ResetHorzDirection(Active horz, Active max_pair, long horz_left, long horz_right)
+		private bool ResetHorzDirection(Active horz, Active max_pair, out long horz_left, out long horz_right)
 		{
 			if (horz.bot.x == horz.top.x)
 			{
@@ -1927,7 +1880,7 @@ namespace ClipperLib2Beta
 		*          o ============#=========*======*========#=========o (HE1)           *
 		*         /              |        /       |       /                            *
 		*******************************************************************************/
-		internal void DoHorizontal(Active horz)
+		private void DoHorizontal(Active horz)
 		{
 			PointI pt;
 			//with closed paths, simplify consecutive horizontals into a 'single' edge ...
@@ -1950,8 +1903,7 @@ namespace ClipperLib2Beta
 				((horz.vertex_top.flags & (VertexFlags.vfOpenStart | VertexFlags.vfOpenEnd)) == VertexFlags.vfNone)))
 				max_pair = GetMaximaPair(horz);
 
-			long horz_left, horz_right;
-			bool is_left_to_right = ResetHorzDirection(horz, max_pair, horz_left, horz_right);
+			bool is_left_to_right = ResetHorzDirection(horz, max_pair, out long horz_left, out long horz_right);
 			if (IsHotEdge(horz)) AddOutPt(horz, new PointI(horz.curr_x, horz.bot.y));
 
 			while (true)
@@ -2009,7 +1961,7 @@ namespace ClipperLib2Beta
 
 				//still more horizontals in bound to process ...
 				UpdateEdgeIntoAEL(horz);
-				is_left_to_right = ResetHorzDirection(horz, max_pair, horz_left, horz_right);
+				is_left_to_right = ResetHorzDirection(horz, max_pair, out horz_left, out horz_right);
 
 				if (IsOpen(horz))
 				{
@@ -2023,7 +1975,7 @@ namespace ClipperLib2Beta
 				UpdateEdgeIntoAEL(horz);  //this is the } of an intermediate horiz.
 			else if (!IsMaxima(horz))
 				UpdateEdgeIntoAEL(horz);
-			else if (!max_pair)  //ie open at top
+			else if (max_pair == null)  //ie open at top
 				DeleteFromAEL(horz);
 			else if (IsHotEdge(horz))
 				AddLocalMaxPoly(horz, max_pair, horz.top);
@@ -2034,10 +1986,10 @@ namespace ClipperLib2Beta
 			}
 		}
 
-		internal void DoTopOfScanbeam(long y)
+		private void DoTopOfScanbeam(long y)
 		{
-			sel_ = null;  // sel_ is reused to flag horizontals (see PushHorz below)
-			Active e = actives_;
+			sel = null;  // sel_ is reused to flag horizontals (see PushHorz below)
+			Active e = actives;
 			while (e != null)
 			{
 				//nb: 'e' will never be horizontal here
@@ -2106,14 +2058,14 @@ namespace ClipperLib2Beta
 			{
 				if (IsHotEdge(e))
 				{
-					if (max_pair)
+					if (max_pair != null)
 						AddLocalMaxPoly(e, max_pair, e.top);
 					else
 						AddOutPt(e, e.top);
 				}
-				if (max_pair) DeleteFromAEL(max_pair);
+				if (max_pair != null) DeleteFromAEL(max_pair);
 				DeleteFromAEL(e);
-				return (prev_e ? prev_e.next_in_ael : actives_);
+				return prev_e != null ? prev_e.next_in_ael : actives;
 			}
 			//here E.next_in_ael == ENext == EMaxPair ...
 			if (IsHotEdge(e))
@@ -2121,7 +2073,68 @@ namespace ClipperLib2Beta
 
 			DeleteFromAEL(e);
 			DeleteFromAEL(max_pair);
-			return (prev_e ? prev_e.next_in_ael : actives_);
+			return prev_e != null ? prev_e.next_in_ael : actives;
+		}
+	}
+
+    #region ClipperI
+    public class ClipperI : Clipper
+    {
+		public ClipperI(int scale = 1)
+        {
+			_scale = scale == 0 ? 1 : Math.Abs(scale);
+		}
+        public bool Execute(ClipType clipType, FillRule ft, PathsI solution_closed)
+		{
+			bool executed = true;
+			solution_closed.clear();
+			try
+			{
+				ExecuteInternal(clipType, ft);
+				BuildResultI(solution_closed, new PathsI());
+			}
+			catch
+			{
+				executed = false;
+			}
+			CleanUp();
+			return executed;
+		}
+
+		public bool Execute(ClipType clipType, FillRule ft, PathsI solution_closed, PathsI solution_open)
+		{
+			bool executed = true;
+			solution_closed.clear();
+			solution_open.clear();
+			try
+			{
+				ExecuteInternal(clipType, ft);
+				BuildResultI(solution_closed, solution_open);
+			}
+			catch
+			{
+				executed = false;
+			}
+			CleanUp();
+			return executed;
+		}
+
+		public bool Execute(ClipType clipType, FillRule ft, PolyTreeI solution_closed, PathsI solution_open)
+		{
+			bool executed = true;
+			solution_closed.Clear();
+			solution_open.clear();
+			try
+			{
+				ExecuteInternal(clipType, ft);
+				BuildResultTreeI(solution_closed, solution_open);
+			}
+			catch
+			{
+				executed = false;
+			}
+			CleanUp();
+			return executed;
 		}
 
 		internal bool BuildResultI(PathsI solution_closed, PathsI solution_open)
@@ -2130,26 +2143,24 @@ namespace ClipperLib2Beta
 			try
 			{
 				solution_closed.resize(0);
-				solution_closed.reserve(outrec_list_.size());
-				if (solution_open)
+				solution_closed.reserve(outRecs.Count);
+				if (solution_open.data == null)
 				{
-					solution_open.resize(0);
-					solution_open.reserve(outrec_list_.size());
+					solution_open.data = new List<PathI>(outRecs.Count);
 				}
 
-				if (scale_ == 0) scale_ = 1; //should be redundant
-				double inv_scale = 1 / scale_;
+				double inv_scale = 1 / _scale;
 
-				foreach (var outrec in outrec_list_) 
+				foreach (var outrec in outRecs)
 				{
-					if (!outrec.pts) continue;
+					if (outrec.pts == null) continue;
 					OutPt op = outrec.pts.next;
 					int cnt = PointCount(op);
 
 					bool is_open = (outrec.state == OutRecState.Open);
 					if (is_open)
 					{
-						if (cnt < 2 || !solution_open) continue;
+						if (cnt < 2 || solution_open.data == null) continue;
 					}
 					else
 					{
@@ -2158,13 +2169,12 @@ namespace ClipperLib2Beta
 						if (cnt < 3) continue;
 					}
 
-					PathI p;
-					p.reserve(cnt);
-					if (scale_ != 1.0)
+					PathI p = new PathI(cnt);
+					if (_scale != 1.0)
 					{
 						for (int i = 0; i < cnt; i++)
 						{
-							p.push_back(PointI((long)Math.Round(op.pt.x * inv_scale),
+							p.Add(new PointI((long)Math.Round(op.pt.x * inv_scale),
 								(long)Math.Round(op.pt.y * inv_scale)));
 							op = op.next;
 						}
@@ -2173,19 +2183,19 @@ namespace ClipperLib2Beta
 					{
 						for (int i = 0; i < cnt; i++)
 						{
-							p.push_back(op.pt);
+							p.Add(op.pt);
 							op = op.next;
 						}
 					}
 
 					if (is_open)
-						solution_open.push_back(p);
+						solution_open.Add(p);
 					else
-						solution_closed.push_back(p);
+						solution_closed.Add(p);
 				}
 				built = true;
 			}
-			catch ()
+			catch
 			{
 				built = false;
 			}
@@ -2199,34 +2209,32 @@ namespace ClipperLib2Beta
 			try
 			{
 				pt.Clear();
-				if (solution_open)
+				if (solution_open.data != null)
 				{
 					solution_open.resize(0);
-					solution_open.reserve(outrec_list_.size());
+					solution_open.reserve(outRecs.Count);
 				}
 
-				if (scale_ == 0) scale_ = 1; //should be redundant
-				double inv_scale = 1 / scale_;
+				double inv_scale = 1 / _scale;
 
-				foreach (var outrec in outrec_list_) 
+				foreach (var outrec in outRecs)
 				{
-					if (!outrec.pts) continue;
+					if (outrec.pts == null) continue;
 					OutPt op = outrec.pts.next;
 					int cnt = PointCount(op);
 					//fixup for duplicate start and } points ...
 					if (op.pt == outrec.pts.pt) cnt--;
 
 					bool is_open = outrec.state == OutRecState.Open;
-					if (cnt < 2 || (!is_open && cnt == 2) || (is_open && !solution_open))
+					if (cnt < 2 || (!is_open && cnt == 2) || (is_open && solution_open.data == null))
 						continue;
 
-					PathI p;
-					p.reserve(cnt);
-					if (scale_ != 1.0)
+					var p = new PathI(cnt);
+					if (_scale != 1.0)
 					{
 						for (int i = 0; i < cnt; i++)
 						{
-							p.push_back(new PointI((long)Math.Round(op.pt.x * inv_scale),
+							p.Add(new PointI((long)Math.Round(op.pt.x * inv_scale),
 								(long)Math.Round(op.pt.y * inv_scale)));
 							op = op.next;
 						}
@@ -2235,17 +2243,16 @@ namespace ClipperLib2Beta
 					{
 						for (int i = 0; i < cnt; i++)
 						{
-							p.push_back(op.pt);
+							p.Add(op.pt);
 							op = op.next;
 						}
 					}
 
 					if (is_open)
-						solution_open.push_back(p);
-					else if (outrec.owner && outrec.owner.PolyTree)
+						solution_open.Add(p);
+					else if (outrec.owner != null && outrec.owner.PolyTree != null)
 					{
-						PolyTreeI po = outrec.owner.PolyTree;
-						outrec.PolyTree = new PolyTreeI(po, p);
+						outrec.PolyTree = new PolyTreeI(outrec.owner.PolyTree, p);
 					}
 					else
 					{
@@ -2254,7 +2261,7 @@ namespace ClipperLib2Beta
 				}
 				built = true;
 			}
-			catch ()
+			catch
 			{
 				built = false;
 			}
@@ -2263,10 +2270,9 @@ namespace ClipperLib2Beta
 
 		private RectI GetBounds()
 		{
-			if (vertex_list_.size() == 0) return RectI(0, 0, 0, 0);
+			if (vertices.Count == 0) return new RectI(0, 0, 0, 0);
 			RectI bounds = new RectI(int.MaxValue, int.MaxValue, int.MinValue, int.MinValue);
-			VertexList.const_iterator it = vertex_list_.begin();
-			while (it != vertex_list_.end())
+			foreach (var it in vertices)
 			{
 				Vertex v = it, v2 = v;
 				do
@@ -2277,11 +2283,10 @@ namespace ClipperLib2Beta
 					if (v2.pt.y > bounds.bottom) bounds.bottom = v2.pt.y;
 					v2 = v2.next;
 				} while (v2 != v);
-				++it;
 			}
-			if (scale_ != 1.0)
+			if (_scale != 1.0)
 			{
-				double inv_scale = 1 / scale_;
+				double inv_scale = 1 / _scale;
 				bounds.left = (long)Math.Round(bounds.left * inv_scale);
 				bounds.top = (long)Math.Round(bounds.top * inv_scale);
 				bounds.right = (long)Math.Round(bounds.right * inv_scale);
@@ -2289,17 +2294,21 @@ namespace ClipperLib2Beta
 			}
 			return bounds;
 		}
+	}
+	#endregion
 
-		// ClipperD methods ...
-		//------------------------------------------------------------------------------
-		public ClipperD(double scale) : Clipper()
+	#region ClipperD 
+	public class ClipperD : Clipper
+    {
+		public ClipperD(double scale = DefaultScale)
 		{
-			scale_ = (scale == 0 ? DefaultScale : scale);
+			_scale = scale == 0 ? 1 : Math.Abs(scale);
 		}
+		
 
 		public void AddPath(PathD path, PathType poly_type, bool is_open)
 		{
-			PathI p = PathI(path, scale_);
+			PathI p = new PathI(path, _scale);
 			AddPath(p, poly_type, is_open);
 		}
 
@@ -2309,33 +2318,32 @@ namespace ClipperLib2Beta
 				AddPath(path, poly_type, is_open);
 		}
 
-		public bool BuildResultD(PathsD solution_closed, PathsD solution_open)
+		public bool BuildResultD(PathsD solution_closed, PathsD solution_open = default)
 		{
 			bool built = false;
 			try
 			{
 				solution_closed.resize(0);
-				solution_closed.reserve(outrec_list_.size());
-				if (solution_open)
+				solution_closed.reserve(outRecs.Count);
+				if (solution_open.data != null)
 				{
 					solution_open.resize(0);
-					solution_open.reserve(outrec_list_.size());
+					solution_open.reserve(outRecs.Count);
 				}
 
-				if (scale_ == 0) scale_ = 1; //should be redundant
-				double inv_scale = 1 / scale_;
+				double inv_scale = 1 / _scale;
 
-				foreach (var outrec in outrec_list_) 
+				foreach (var outrec in outRecs) 
 				{
-					if (!outrec.pts) continue;
+					if (outrec.pts == null) continue;
 					OutPt op = outrec.pts.next;
 					int cnt = PointCount(op);
 
-					bool is_open = (outrec.state == OutRecState.Open);
+					bool is_open = outrec.state == OutRecState.Open;
 
 					if (is_open)
 					{
-						if (cnt < 2 || !solution_open) continue;
+						if (cnt < 2 || solution_open.data == null) continue;
 					}
 					else
 					{
@@ -2344,22 +2352,21 @@ namespace ClipperLib2Beta
 						if (cnt < 3) continue;
 					}
 
-					PathD p;
-					p.reserve(cnt);
+					var p = new PathD(cnt);
 					for (int i = 0; i < cnt; i++)
 					{
-						p.push_back(new PointD(op.pt.x * inv_scale, op.pt.y * inv_scale));
+						p.Add(new PointD(op.pt.x * inv_scale, op.pt.y * inv_scale));
 						op = op.next;
 					}
 
 					if (is_open)
-						solution_open.push_back(p);
+						solution_open.Add(p);
 					else
-						solution_closed.push_back(p);
+						solution_closed.Add(p);
 				}
 				built = true;
 			}
-			catch ()
+			catch
 			{
 				built = false;
 			}
@@ -2368,53 +2375,49 @@ namespace ClipperLib2Beta
 
 		private bool BuildResultTreeD(PolyTreeD pt, PathsD solution_open)
 		{
-			bool built = false;
-
-			try
+            bool built;
+            try
 			{
 				pt.Clear();
-				if (solution_open)
+				if (solution_open.data != null)
 				{
 					solution_open.resize(0);
-					solution_open.reserve(outrec_list_.size());
+					solution_open.reserve(outRecs.Count);
 				}
 
-				if (scale_ == 0) scale_ = 1; //should be redundant
-				double inv_scale = 1 / scale_;
+				double inv_scale = 1 / _scale;
 
-				foreach (var outrec in outrec_list_)
+				foreach (var outrec in outRecs)
 				{
-					if (!outrec.pts) continue;
+					if (outrec.pts == null) continue;
 					OutPt op = outrec.pts.next;
 					int cnt = PointCount(op);
 					//fixup for duplicate start and } points ...
 					if (op.pt == outrec.pts.pt) cnt--;
 
 					bool is_open = (outrec.state == OutRecState.Open);
-					if (cnt < 2 || (!is_open && cnt == 2) || (is_open && !solution_open))
+					if (cnt < 2 || (!is_open && cnt == 2) || (is_open && solution_open.data == null))
 						continue;
 
-					PathD p;
-					p.reserve(cnt);
+					var p = new PathD(cnt);
 					for (int i = 0; i < cnt; i++)
 					{
-						p.push_back(new PointD((double)op.pt.x * inv_scale,
+						p.Add(new PointD((double)op.pt.x * inv_scale,
 							(double)op.pt.y * inv_scale));
 						op = op.next;
 					}
 					if (is_open)
-						solution_open.push_back(p);
-					else if (outrec.owner && outrec.owner.PolyTree)
+						solution_open.Add(p);
+					else if (outrec.owner != null && outrec.owner.PolyTree != null)
 					{
-						PolyTreeD po = (PolyTreeD)(outrec.owner.PolyTree);
-						outrec.PolyTree = (PolyTreeI)(new PolyTreeD(po, p));
+						outrec.PolyTree = new PolyTreeI(outrec.owner.PolyTree, new PathI(p, _scale));
 					}
 					else
-						outrec.PolyTree = (PolyTreeI)(new PolyTreeD(pt, p));
+						outrec.PolyTree = new PolyTreeI(new PolyTreeD(pt, p));
 				}
 				built = true;
 			}
-			catch ()
+			catch
 			{
 				built = false;
 			}
@@ -2428,9 +2431,9 @@ namespace ClipperLib2Beta
 			try
 			{
 				ExecuteInternal(clipType, ft);
-				BuildResultD(solution_closed, null);
+				BuildResultD(solution_closed);
 			}
-			catch ()
+			catch
 			{
 				executed = false;
 			}
@@ -2446,9 +2449,9 @@ namespace ClipperLib2Beta
 			try
 			{
 				ExecuteInternal(clipType, ft);
-				BuildResultD(solution_closed, &solution_open);
+				BuildResultD(solution_closed, solution_open);
 			}
-			catch()
+			catch
 			{
 				executed = false;
 			}
@@ -2464,9 +2467,9 @@ namespace ClipperLib2Beta
 			try
 			{
 				ExecuteInternal(clipType, ft);
-				BuildResultTreeD(solution_closed, &solution_open);
+				BuildResultTreeD(solution_closed, solution_open);
 			}
-			catch()
+			catch
 			{
 				executed = false;
 			}
@@ -2474,5 +2477,5 @@ namespace ClipperLib2Beta
 			return executed;
 		}
 	}
+    #endregion
 }
-	

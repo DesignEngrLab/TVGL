@@ -4,15 +4,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
+using static ClipperLib2Beta.ClipperConstants;
 
 namespace ClipperLib2Beta
 {
-	public class ClipperConstants
+	internal static class ClipperConstants
     {
-		private const double floating_point_tolerance = 1E-15;           //floating point tolerance for equality
-		private const double default_min_edge_len = 0.2;  //minimum edge length for stripping duplicates
-		private const double sqrt_two = 1.4142135623731;
-		private const double one_degree_as_radians = 0.01745329252;
+		internal const double floating_point_tolerance = 1E-15;           //floating point tolerance for equality
+		internal const double default_min_edge_len = 0.2;  //minimum edge length for stripping duplicates
+		internal const double sqrt_two = 1.4142135623731;
+		internal const double one_degree_as_radians = 0.01745329252;
 	}
 
 	//Path: a simple data structure to represent a series of vertices, whether
@@ -22,34 +23,44 @@ namespace ClipperLib2Beta
 	//paths (holes). For complex polygons (and also for overlapping polygons),
 	//explicit 'filling rules' (see below) are used to indicate regions that are
 	//inside (filled) and regions that are outside (unfilled) a specific polygon.
-	public interface Path<T> : IList<T>
+	public interface Path<T> 
 	{
 		public int size();
 		public bool empty();
 		public void reserve(int size);
-		//public void push_back(Point<T> point);
+		//public void Add(Point<T> point);
 		public void pop_back();
 		public void clear();
 		public void Resize(int n);
 		public void Rotate(PointD center, double angle_rad);
+		public void Append(Path<T> extra);
 	}
-	public struct PathD : Path<PointD>, IList<PointD>
+	public struct PathD : Path<double>, IList<PointD>
 	{
+		public PathD(int size)
+		{
+			data = new List<PointD>(size);
+		}
+		public PathD(Path<long> other, double scale)
+		{
+			data = new List<PointD>(other.size());
+			AppendPointsScale(other, scale);
+		}
 		public List<PointD> data { get; set; }
 		public PointD this[int i] { get => data[i]; set => data[i] = value; }
+		IEnumerator IEnumerable.GetEnumerator() => data.GetEnumerator();
+		public IEnumerator<PointD> GetEnumerator() => data.GetEnumerator();
 		public int Count => data.Count;
 		public bool IsReadOnly => false;
-		public void Add(PointD p) => data.Add(p);
+		public void Add(PointD point) => data.Add(point);
 		public void Clear() => data.Clear();
 		public bool Contains(PointD p) => data.Contains(p);
 		public void CopyTo(PointD[] array, int arrayIndex) => data.CopyTo(array, arrayIndex);
-		public IEnumerator<PointD> GetEnumerator() => data.GetEnumerator();
 		public int IndexOf(PointD p) => data.IndexOf(p);
 		public void Insert(int i, PointD p) => data.Insert(i, p);
 		public bool Remove(PointD p) => data.Remove(p);
 		public void RemoveAt(int i) => data.RemoveAt(i);
 		public void Resize(int n) => data = new List<PointD>(n);
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public void Rotate(PointD center, double angle_rad)
 		{
 			double cos_a = Math.Cos(angle_rad);
@@ -60,14 +71,13 @@ namespace ClipperLib2Beta
 		public int size() => data.Count();
 		public bool empty() => data.Count() == 0;
 		public void reserve(int size) => data.Capacity = size;
-		public void push_back(PointD point) => data.Add(point);
 		public void pop_back() => data.RemoveAt(data.Count() - 1);
 		public void clear() => data.Clear();
 
-		public void Append(PathD extra)
+		public void Append(Path<double> extra)
 		{
 			if (extra.size() > 0)
-				data.AddRange(extra.data);
+				data.AddRange(((PathD)extra).data);
 		}
 
 		public double Area()
@@ -129,34 +139,64 @@ namespace ClipperLib2Beta
 			StripDuplicates();
 		}
 
-		public void StripDuplicates(bool is_closed_path = false, long min_length = 0)
+		private void StripDuplicates(bool is_closed_path = false, double min_length = 0)
 		{
-			throw new NotImplementedException();
+			if (data.Count() < 2) return;
+
+			if (min_length < floating_point_tolerance)
+				min_length = default_min_edge_len;
+			var minLengthSquared = min_length * min_length;
+			//for (auto it = data.begin() + 1; it != data.end();)
+			for (int i = 1, j = 0; i < data.Count; j = i++)
+			{ 
+				if (data[j].NearEqual(data[i], minLengthSquared))
+                {
+					data.RemoveAt(i);
+					i--;//decrement i to repeat.
+				}
+			}
+			var len = data.Count();
+			if (!is_closed_path || len == 0) return;
+			if (data[0].NearEqual(data[len - 1], minLengthSquared))
+				data.RemoveAt(len - 1);
 		}
 
-		public void AppendPointsScale(Path<PointI> other, double scale)
+		private void AppendPointsScale(Path<long> other, double scale)
 		{
-			throw new NotImplementedException();
+			data = new List<PointD>(other.size());
+			foreach (var point in (PathI)other)
+			{
+				data.Add(new PointD(point.x * scale, point.y * scale));
+			}
 		}
-    }
+	}
 
-	public struct PathI : Path<PointI>, IList<PointI>
+	public struct PathI : Path<long>, IList<PointI>
 	{
+		public PathI(int size)
+        {
+			data = new List<PointI>(size);
+        }
+		public PathI(Path<double> other, double scale)
+		{
+			data = new List<PointI>(other.size());
+			AppendPointsScale(other, scale);
+		}
 		public List<PointI> data { get; set; }
 		public PointI this[int i] { get => data[i]; set => data[i] = value; }
+		IEnumerator IEnumerable.GetEnumerator() => data.GetEnumerator();
+		public IEnumerator<PointI> GetEnumerator() => data.GetEnumerator();
 		public int Count => data.Count;
 		public bool IsReadOnly => false;
-		public void Add(PointI p) => data.Add(p);
+		public void Add(PointI point) => data.Add(point);
 		public void Clear() => data.Clear();
 		public bool Contains(PointI p) => data.Contains(p);
 		public void CopyTo(PointI[] array, int arrayIndex) => data.CopyTo(array, arrayIndex);
-		public IEnumerator<PointI> GetEnumerator() => data.GetEnumerator();
 		public int IndexOf(PointI p) => data.IndexOf(p);
 		public void Insert(int i, PointI p) => data.Insert(i, p);
 		public bool Remove(PointI p) => data.Remove(p);
 		public void RemoveAt(int i) => data.RemoveAt(i);
 		public void Resize(int n) => data.Resize(n);
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 		public void Rotate(PointD center, double angle_rad)
 		{
 			double cos_a = Math.Cos(angle_rad);
@@ -167,14 +207,13 @@ namespace ClipperLib2Beta
 		public int size() => data.Count();
 		public bool empty() => data.Count() == 0;
 		public void reserve(int size) => data.Capacity = size;
-		public void push_back(PointI point) => data.Add(point);
 		public void pop_back() => data.RemoveAt(data.Count() - 1);
 		public void clear() => data.Clear();
 
-		public void Append(PathI extra)
+		public void Append(Path<long> extra)
 		{
 			if (extra.size() > 0)
-				data.AddRange(extra.data);
+				data.AddRange(((PathI)extra).data);
 		}
 
 		public double Area()
@@ -236,15 +275,25 @@ namespace ClipperLib2Beta
 			StripDuplicates();
 		}
 
-		public void StripDuplicates(bool is_closed_path = false, long min_length = 0)
+		private void StripDuplicates(bool is_closed_path = false, long min_length = 0)
 		{
-			throw new NotImplementedException();
+			if (data.Count() < 2) return;
+
+			data = data.Distinct().ToList();
+
+			var len = data.Count;
+			if (!is_closed_path || len == 0) return;
+			if (data[0].NearEqual(data[len - 1], min_length * min_length))
+				data.RemoveAt(len - 1);
 		}
 
-        public void AppendPointsScale(Path<PointI> other, double scale)
+        private void AppendPointsScale(Path<double> other, double scale)
         {
-            throw new NotImplementedException();
-        }
+			foreach(var point in (PathD)other)
+            {
+				data.Add(new PointI((long)Math.Round(point.x * scale), (long)Math.Round(point.y * scale)));
+			}
+		}
 
         //PathI(Path<PointI> other, double scale)
         //{
@@ -293,7 +342,7 @@ namespace ClipperLib2Beta
 
         //	friend inline Path<T> &operator<<(Path<T> &path, const Point<T> &point) 
         //{
-        //	path.data.push_back(point);
+        //	path.data.Add(point);
         //	return path;
         //}
         //friend std::ostream &operator<<(std::ostream &os, const Path<T> &path)
@@ -819,9 +868,9 @@ namespace ClipperLib2Beta
 		public int size();
 		public void resize(int size);
 		public void reserve(int size);
-		public void push_back(Path<T> paths);
+		public void Add(Path<T> paths);
 		public void clear();
-		public void Append(List<Path<T>> extra);
+		public void Append(Paths<T> extra);
 		public Rect<T> Bounds();
 		public void offset(T dx, T dy);
 		public void Reverse();
@@ -874,7 +923,7 @@ namespace ClipperLib2Beta
 		//}
 
 		//friend inline Paths<T> &operator<<(Paths<T> &paths, const Path<T> &path) {
-		//	paths.data.push_back(path);
+		//	paths.data.Add(path);
 		//	return paths;
 		//}
 
@@ -887,21 +936,22 @@ namespace ClipperLib2Beta
 		//}
 	}
 
-    public struct PathsI : Paths<PathI>
+    public struct PathsI : Paths<long>
     {
 		public List<PathI> data;
 		public PathI this[int i] { get => data[i]; set => data[i] = value; }
 		public int size() => data.Sum(p => p.Count);
 		public void resize(int size) => data.Resize(size);
 		public void reserve(int size) => data.Capacity = size;
-		public void push_back(PathI paths) => data.Add(paths);
+		public void Add(Path<long> paths) => data.Add((PathI)paths);
+		public void Reverse() => data.Reverse();
 		public void clear() => data.Clear();
-        public void Append(Paths<PathI> extra)
+        public void Append(Paths<long> extra)
 		{
 			if (extra.size() > 0)
 				data.AddRange(((PathsI)extra).data);
 		}
-		public RectI Bounds()
+		public Rect<long> Bounds()
         {
 			var bounds = new RectI(long.MaxValue, long.MaxValue, long.MinValue, long.MinValue);
 			foreach(var path in data)
@@ -917,15 +967,6 @@ namespace ClipperLib2Beta
 			return (bounds.left >= bounds.right) ? new RectI() : bounds;
 		}
 
-        public void offset(PointI dx, PointI dy)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Reverse()
-        {
-            throw new NotImplementedException();
-        }
 
         public void Rotate(Point<PointI> center, double angle_rad)
         {
@@ -941,21 +982,36 @@ namespace ClipperLib2Beta
         {
             throw new NotImplementedException();
         }
+
+        public void offset(long dx, long dy)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Rotate(Point<long> center, double angle_rad)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void StripDuplicates(bool is_closed_path, long min_length)
+        {
+            throw new NotImplementedException();
+        }
     }
 
-    public struct PathsD : Paths<PathD>
+    public struct PathsD : Paths<double>
 	{
 		public List<PathD> data;
 		public PathD this[int i] { get => data[i]; set => data[i] = value; }
 		public int size() => data.Sum(p => p.Count);
 		public void resize(int size) => data.Resize(size);
 		public void reserve(int size) => data.Capacity = size;
-		public void push_back(PathD paths) => data.Add(paths);
+		public void Add(Path<double> paths) => data.Add((PathD)paths);
 		public void clear() => data.Clear();
-		public void Append(List<PathD> extra)
+		public void Append(Paths<double> extra)
 		{
-			if (extra.Count > 0)
-				data.AddRange(extra);
+			if (extra.size() > 0)
+				data.AddRange(((PathsD)extra).data);
 		}
 		public RectD Bounds()
 		{
@@ -973,22 +1029,12 @@ namespace ClipperLib2Beta
 			return (bounds.left >= bounds.right) ? new RectD() : bounds;
 		}
 
-        public void push_back(Path<PointD> paths)
+        Rect<double> Paths<double>.Bounds()
         {
             throw new NotImplementedException();
         }
 
-        public void Append(Paths<PointD> extra)
-        {
-            throw new NotImplementedException();
-        }
-
-        RectI Paths<PointD>.Bounds()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void offset(PointD dx, PointD dy)
+        public void offset(double dx, double dy)
         {
             throw new NotImplementedException();
         }
@@ -998,7 +1044,7 @@ namespace ClipperLib2Beta
             throw new NotImplementedException();
         }
 
-        public void Rotate(Point<PointD> center, double angle_rad)
+        public void Rotate(Point<double> center, double angle_rad)
         {
             throw new NotImplementedException();
         }
@@ -1008,7 +1054,7 @@ namespace ClipperLib2Beta
             throw new NotImplementedException();
         }
 
-        public void StripDuplicates(bool is_closed_path, PointD min_length)
+        public void StripDuplicates(bool is_closed_path, double min_length)
         {
             throw new NotImplementedException();
         }
@@ -1022,7 +1068,7 @@ namespace ClipperLib2Beta
 	//	public int Size => data.Count;
 	//	public void resize(int size) => data.Resize(size);
 	//	public void reserve(int size) => data.Capacity = size;
-	//	public void push_back(Path<T> paths) => data.Add(paths);
+	//	public void Add(Path<T> paths) => data.Add(paths);
 	//	public void clear() => data.Clear();
 	//}
 
@@ -1193,5 +1239,95 @@ namespace ClipperLib2Beta
 	}
 
 	//PipResult PointInPolygon(PointI pt, PathI path);
+	// PolyTree --------------------------------------------------------------------
+
+	//PolyTree: is intended as a READ-ONLY data structure for CLOSED paths returned
+	//by clipping operations. While this structure is more complex than the
+	//alternative Paths structure, it does preserve path 'ownership' - ie those
+	//paths that contain (or own) other paths. This will be useful to some users.
+	public abstract class PolyTree<T1, T2>
+	{
+		public double Scale;
+		public Path<T1> Path;
+		public PolyTree<T1, T2> Parent;
+		public List<PolyTree<T1, T2>> children;
+		public PolyTree(double scale = 1.0)
+		{  //only for root node
+			Scale = scale;
+			Parent = null;
+		}
+		public void Clear() => children.Clear();
+		public int ChildCount() => children.Count;
+		PolyTree<T1, T2> Child(int index)
+		{
+			if (index >= children.Count)
+				throw new Exception("invalid range in PolyTree::GetChild.");
+			return children[index];
+		}
+		public bool IsHole()
+		{
+			var pp = Parent;
+			bool is_hole = pp != null;
+			while (pp != null)
+			{
+				is_hole = !is_hole;
+				pp = pp.Parent;
+			}
+			return is_hole;
+		}
+		public void SetScale(double scale)
+		{
+			Scale = scale;
+			foreach(var child in children)
+				child.SetScale(scale);
+		}
+	}
+	public class PolyTreeI : PolyTree<long, double>
+	{
+		public PolyTreeI() { }
+		public PolyTreeI (PolyTreeI parent, Path<long> path)
+        {
+			Parent = parent;
+			Scale = parent.Scale;
+			Path.Append((PathI)path);
+			Parent.children.Add(this);
+		}
+		public PolyTreeI(PolyTree<double, long> other)
+		{
+			//The parent is null for the outmost iteration
+			Path = new PathI(other.Path, Scale);
+
+			//Create children and link them to this parent. This will recursively add children
+			children = new List<PolyTree<long, double>>();
+			foreach (var child in other.children)
+			{
+				children.Add(new PolyTreeI(child) { Parent = this });
+			}
+		}
+	}
+
+	public class PolyTreeD : PolyTree<double, long>
+	{
+		public PolyTreeD() { }
+		public PolyTreeD(PolyTreeD parent, Path<double> path)
+		{
+			Parent = parent;
+			Scale = parent.Scale;
+			Path.Append((PathD)path);
+			Parent.children.Add(this);
+		}
+		public PolyTreeD(PolyTree<long, double> other)
+		{
+			//The parent is null for the outmost iteration
+			Path = new PathD(other.Path, Scale);
+
+			//Create children and link them to this parent. This will recursively add children
+			children = new List<PolyTree<double, long>>();
+			foreach (var child in other.children)
+			{
+				children.Add(new PolyTreeD(child) { Parent = this });
+			}
+		}
+	}
 }  
 
