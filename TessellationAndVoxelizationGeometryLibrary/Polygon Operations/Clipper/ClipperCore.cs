@@ -1,5 +1,4 @@
-﻿using ClipperLib2Beta;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -146,7 +145,6 @@ namespace ClipperLib2Beta
 			if (min_length < floating_point_tolerance)
 				min_length = default_min_edge_len;
 			var minLengthSquared = min_length * min_length;
-			//for (auto it = data.begin() + 1; it != data.end();)
 			for (int i = 1, j = 0; i < data.Count; j = i++)
 			{ 
 				if (data[j].NearEqual(data[i], minLengthSquared))
@@ -177,6 +175,10 @@ namespace ClipperLib2Beta
         {
 			data = new List<PointI>(size);
         }
+		public PathI(IEnumerable<PointI> path)
+        {
+			data = new List<PointI>(path);
+		}
 		public PathI(Path<double> other, double scale)
 		{
 			data = new List<PointI>(other.size());
@@ -297,15 +299,15 @@ namespace ClipperLib2Beta
 
         //PathI(Path<PointI> other, double scale)
         //{
-        //	if (scale == 0) scale = 1;
-        //	if (scale == 1)
-        //	{
-        //		Append(other);
-        //	}
-        //	else
-        //	{
-        //		AppendPointsScale(other, scale);
-        //	}
+        //    if (scale == 0) scale = 1;
+        //    if (scale == 1)
+        //    {
+        //        Append(other);
+        //    }
+        //    else
+        //    {
+        //        AppendPointsScale(other, scale);
+        //    }
         //}
 
         //		public Path(Path<T> other, double scale)
@@ -951,6 +953,7 @@ namespace ClipperLib2Beta
 			if (extra.size() > 0)
 				data.AddRange(((PathsI)extra).data);
 		}
+		public bool Any() => data.Count > 0;
 		public Rect<long> Bounds()
         {
 			var bounds = new RectI(long.MaxValue, long.MaxValue, long.MinValue, long.MinValue);

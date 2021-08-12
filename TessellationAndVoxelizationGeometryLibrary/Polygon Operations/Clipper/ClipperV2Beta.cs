@@ -26,19 +26,23 @@ namespace ClipperLib2Beta
 	//------------------------------------------------------------------------------
 	// Miscellaneous structures etc.
 	//------------------------------------------------------------------------------
-	[Flags]
 	internal enum VertexFlags { vfNone = 0, vfOpenStart = 1, vfOpenEnd = 2, vfLocalMax = 4, vfLocalMin = 8 }
 	internal enum OutRecState { Undefined, Open, Outer, OuterCheck, Inner, InnerCheck };
-
 	public enum ClipType { None, Intersection, Union, Difference, Xor };
 	public enum PathType { Subject, Clip };
+	public enum PipResult { Inside, Outside, OnEdge };
+
 	//By far the most widely used winding rules for polygon filling are
 	//EvenOdd & NonZero (GDI, GDI+, XLib, OpenGL, Cairo, AGG, Quartz, SVG, Gr32)
 	//Others rules include Positive, Negative and ABS_GTR_EQ_TWO (only in OpenGL)
 	//see http://glprogramming.com/red/chapter11.html
-	public enum FillRule { EvenOdd, NonZero, Positive, Negative };
-
-	public enum PipResult { Inside, Outside, OnEdge };
+	public enum FillRule //http://www.angusj.com/delphi/clipper/documentation/Docs/Units/ClipperLib/Types/PolyFillType.htm
+	{
+		Positive, // (Most common if polygons are ordered correctly and not self-intersecting) All sub-regions with winding counts > 0 are filled.
+		EvenOdd,  // (Most common when polygon directions are unknown) Odd numbered sub-regions are filled, while even numbered sub-regions are not.
+		Negative, // (Rarely used) All sub-regions with winding counts < 0 are filled.
+		NonZero //(Common if polygon directions are unknown) All non-zero sub-regions are filled (used in silhouette because we prefer filled regions).
+	};
 
 	//Vertex must be a class to avoid circular references introduced as struct objects.
 	internal class Vertex
@@ -54,7 +58,6 @@ namespace ClipperLib2Beta
 	//down. Edges consecutively going up or consecutively going down are called
 	//'bounds' (or sides if they're simple polygons). 'Local Minima' refer to
 	//vertices where descending bounds become ascending ones.
-
 	internal class LocalMinima
 	{
 		internal Vertex vertex;
@@ -62,7 +65,7 @@ namespace ClipperLib2Beta
 		internal bool is_open = false;
 	}
 
-	public class OutPt
+	internal class OutPt
 	{
 		internal PointI pt;
 		internal OutPt next;
@@ -72,7 +75,7 @@ namespace ClipperLib2Beta
 
 	//OutRec: contains a path in the clipping solution. Edges in the AEL will
 	//have OutRec pointers assigned when they form part of the clipping solution.
-	public class OutRec
+	internal class OutRec
 	{
 		internal int idx;
 		internal OutRec owner;
