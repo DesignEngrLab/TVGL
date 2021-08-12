@@ -126,18 +126,66 @@ namespace TVGL
                 var layer = new Vector3[numLoops][];
                 result[k++] = layer;
                 int j = 0;
-                foreach (var poly in layerKeyValuePair.Value)
-                    foreach (var innerPoly in poly.AllPolygons)
+
+                //Check that the loop does not contain any duplicate points
+                var skipHoles = false;
+                var layer2DLoops = layerKeyValuePair.Value;
+                if (ContainsDuplicatePoints(layer2DLoops))
+                {
+                    //try offsetting in by a small amount
+                    layer2DLoops = PolygonOperations.OffsetSquare(layer2DLoops, -Constants.LineSlopeTolerance, Constants.LineSlopeTolerance);
+                    //Offsetting did not work, so try offsetting by a larger amount.
+                    if (ContainsDuplicatePoints(layer2DLoops))
                     {
-                        var loop = new Vector3[innerPoly.Path.Count];
+                        layer2DLoops = PolygonOperations.OffsetSquare(layer2DLoops, -Constants.LineSlopeTolerance * 10, Constants.LineSlopeTolerance);
+                        //If still no luck, then skip the inner loops
+                        skipHoles = ContainsDuplicatePoints(layer2DLoops);
+                    }            
+                }
+     
+                foreach (var poly in layer2DLoops)
+                {
+                    if (skipHoles)
+                    {
+                        var loop = new Vector3[poly.Path.Count];
                         layer[j] = loop;
                         for (int i = 0; i < loop.Length; i++)
-                            loop[i] = (new Vector3(innerPoly.Path[i], zValue)).Transform(BackTransform);
+                            loop[i] = new Vector3(poly.Path[i], zValue).Transform(BackTransform);
                         j++;
                     }
+                    else
+                    {
+                        foreach (var innerPoly in poly.AllPolygons)
+                        {
+                            var loop = new Vector3[innerPoly.Path.Count];
+                            layer[j] = loop;
+                            for (int i = 0; i < loop.Length; i++)
+                                loop[i] = new Vector3(innerPoly.Path[i], zValue).Transform(BackTransform);
+                            j++;
+                        }
+                    }                    
+                }                  
             }
             return result;
         }
 
+        private static bool ContainsDuplicatePoints(IList<Polygon> layer)
+        {
+            var allPoints = new HashSet<Vector2>();
+            foreach (var poly in layer)
+            {
+                foreach (var innerPoly in poly.AllPolygons)
+                {
+                    foreach (var point in innerPoly.Path)
+                    {
+                        if (allPoints.Contains(point))
+                            return true;
+                        else
+                            allPoints.Add(point);
+                    }
+                }
+            }
+            return false;
+        }
     }
 }

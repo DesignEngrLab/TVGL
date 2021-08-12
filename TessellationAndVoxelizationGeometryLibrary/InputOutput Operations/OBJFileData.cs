@@ -119,7 +119,7 @@ namespace TVGL.IOFunctions
         {
             ts.NonsmoothEdges = new HashSet<Edge>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
-            if(objFileData.FaceGroups.Count > 1)
+            if(objFileData.FaceGroups.Count > 1 && !objFileData.SurfaceEdges.Any())
             {
                 foreach (var faceIndices in objFileData.FaceGroups)
                 {
@@ -143,6 +143,7 @@ namespace TVGL.IOFunctions
                             break;
                         }
                     }
+                    if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
                     ts.NonsmoothEdges.Add(discontinuousEdge);
                 }
             }
