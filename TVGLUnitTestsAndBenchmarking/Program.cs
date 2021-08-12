@@ -23,8 +23,8 @@ namespace TVGLUnitTestsAndBenchmarking
             //JustShowMeThePolygons(BackoutToFolder("TestFiles\\polygons"));
             //PolygonOperationsTesting.DebugEdgeCases();
             //DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
-            //DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
-            DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
+            DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
+            //DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
         }
 
         public static DirectoryInfo BackoutToFolder(string folderName = "")
@@ -40,29 +40,34 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void DebugOffsetCases(DirectoryInfo dir)
         {
-            var fileNames = dir.GetFiles("endles*.json").ToList();
-            while (fileNames.Any())
-            {
-                //var filename = fileNames[0].Name;
-                var filename = fileNames[r.Next(fileNames.Count)].Name;
-                var nameSegments = filename.Split('.');
-                var preName = string.Join('.', nameSegments.Take(nameSegments.Length - 1).ToArray());
-                //var offset = double.Parse(nameSegments[^2]);
-                var offset = -0.2;
                 var polygons = new List<Polygon>();
-                foreach (var item in dir.GetFiles(preName + "*"))
-                {
-                    fileNames.RemoveAll(fn => fn.FullName == item.FullName);
-                    IO.Open(item.FullName, out Polygon p);
-                    polygons.Add(p);
-                }
-                if (polygons.All(p => p == null)) continue;
-                Debug.WriteLine("Attempting: " + filename);
+            var fileNames = dir.GetFiles("offse*.json").ToList();
+            IO.Open(fileNames[0].FullName, out Polygon p);
+            //polygons.Add(p);
+            IO.Open(fileNames[1].FullName, out  p);
+            polygons.Add(p);
+            var offset = -0.2;
+
+            //while (fileNames.Any())
+            //{
+            //    //var filename = fileNames[0].Name;
+            //    var filename = fileNames[r.Next(fileNames.Count)].Name;
+            //    var nameSegments = filename.Split('.');
+            //    var preName = string.Join('.', nameSegments.Take(nameSegments.Length - 1).ToArray());
+            //    //var offset = double.Parse(nameSegments[^2]);
+            //    foreach (var item in dir.GetFiles(preName + "*"))
+            //    {
+            //        fileNames.RemoveAll(fn => fn.FullName == item.FullName);
+            //        IO.Open(item.FullName, out Polygon p);
+            //        polygons.Add(p);
+            //    }
+            //    if (polygons.All(p => p == null)) continue;
+            //Debug.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygons);
-                var result = polygons.OffsetSquare(offset, -0.002);
+                var result = polygons[0].OffsetMiter(offset, -0.002);
                 Presenter.ShowAndHang(result);
             }
-        }
+        
         public static void DebugIntersectCases(DirectoryInfo dir)
         {
             var fileNames = dir.GetFiles("intersect*.json").ToList();

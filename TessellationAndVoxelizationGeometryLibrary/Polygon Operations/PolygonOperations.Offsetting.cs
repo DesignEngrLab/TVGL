@@ -111,7 +111,7 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             double tolerance, double deltaAngle = double.NaN)
         {
-            //polygons = polygons.CleanUpForBooleanOperations(out _);
+            polygons = polygons.CleanUpForBooleanOperations(out _);
 #if CLIPPER
             return OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
 #elif !COMPARE
@@ -154,7 +154,6 @@ namespace TVGL.TwoDimensional
 
         private static List<Polygon> OffsetJust(this Polygon polygon, double offset, bool notMiter, double deltaAngle = double.NaN)
         {
-            //IOFunctions.IO.Save(polygon, "endlessOffset.json");
             var bb = polygon.BoundingRectangle();
             // if the offset is negative then perhaps we just delete the entire polygon if it is smaller than
             // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
@@ -273,7 +272,7 @@ namespace TVGL.TwoDimensional
                 var point = nextLine.FromPoint.Coordinates;
                 var cross = prevLine.Vector.Cross(nextLine.Vector);
                 var dot = prevLine.Vector.Dot(nextLine.Vector);
-                var angle = Math.Atan2(cross, dot);
+                //var angle = Math.Atan2(cross, dot);
                 // cross/dot is the tan(angle). both dot and cross are quicker than square-root or trigonometric functions
                 // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
                 // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
@@ -329,13 +328,18 @@ namespace TVGL.TwoDimensional
                     {
                         var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
                             prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
-                        // if the corner is too shape the new point will be placed far away (near infinity). This is to rein it in
-                        var vectorToCorner = intersection - point;
-                        var vectorToCornerLengthSquared = vectorToCorner.LengthSquared();
-                        if (vectorToCornerLengthSquared > maxLengthSquared)
-                            intersection =
-                                point + vectorToCorner * Math.Sqrt(maxLengthSquared / vectorToCornerLengthSquared);
-                        pointsList.Add(intersection);
+                        if (intersection.IsNull())
+                            pointsList.Add(point + offset * prevUnitNormal);
+                        else
+                        {
+                            // if the corner is too shape the new point will be placed far away (near infinity). This is to rein it in
+                            var vectorToCorner = intersection - point;
+                            var vectorToCornerLengthSquared = vectorToCorner.LengthSquared();
+                            if (vectorToCornerLengthSquared > maxLengthSquared)
+                                intersection =
+                                    point + vectorToCorner * Math.Sqrt(maxLengthSquared / vectorToCornerLengthSquared);
+                            pointsList.Add(intersection);
+                        }
                     }
                 }
                 else
