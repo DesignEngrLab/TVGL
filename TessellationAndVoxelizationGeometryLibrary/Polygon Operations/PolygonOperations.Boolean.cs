@@ -134,8 +134,24 @@ namespace TVGL.TwoDimensional
                 }
             }
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, ClipType.Union, new[] { polygonA },
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Union, new[] { polygonA },
                   new[] { polygonB });
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Union, new[] { polygonA },
+                new[] { polygonB });
+            sw.Stop();
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+                var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
+                IOFunctions.IO.Save(polygonA, fileNameStart + ".A.json");
+                IOFunctions.IO.Save(polygonB, fileNameStart + ".B.json");
+            }
+            return pClipper;
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Union(polygonA, polygonB, relationship, outputAsCollectionType);
@@ -212,7 +228,20 @@ namespace TVGL.TwoDimensional
                 polygons = polygons.Select(p=>SimplifyFast(p));
                 //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, ClipType.Union, polygons);
+            //return BooleanViaClipper(FillRule.Positive, ClipType.Union, polygons);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Union, polygons);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Union, polygons);
+            sw.Stop();
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
 #elif !COMPARE
             var polygonList = polygons.ToList();
             for (int i = polygonList.Count - 1; i > 0; i--)
@@ -328,7 +357,20 @@ namespace TVGL.TwoDimensional
                     //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, ClipType.Union, polygonsA, polygonsB);
+            //return BooleanViaClipper(FillRule.Positive, ClipType.Union, polygonsA, polygonsB);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Union, polygonsA, polygonsB);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Union, polygonsA, polygonsB);
+            sw.Stop();
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
 #elif !COMPARE
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
@@ -458,8 +500,23 @@ namespace TVGL.TwoDimensional
                 }
             }
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, new[] { polygonA },
+            //return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, new[] { polygonA },
+            //        new[] { polygonB });
+
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Intersection, new[] { polygonA },
                     new[] { polygonB });
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Intersection, new[] { polygonA },
+                    new[] { polygonB });
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
@@ -534,7 +591,19 @@ namespace TVGL.TwoDimensional
                     //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygonsA, polygonsB);
+            //return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygonsA, polygonsB);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygonsA, polygonsB);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygonsA, polygonsB);
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
 #elif !COMPARE
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
@@ -607,7 +676,19 @@ namespace TVGL.TwoDimensional
                 polygons = polygons.Select(p=>SimplifyFast(p));
                 //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygons);
+            //return BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygons);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygons);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Intersection, polygons);
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
 #elif !COMPARE
             var result = new List<Polygon>();
             if (!polygons.Any()) return result;
@@ -690,13 +771,27 @@ namespace TVGL.TwoDimensional
                         //    subtrahend = subtrahend?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                     }
         #if CLIPPER
-                    return BooleanViaClipper(FillRule.Positive, ClipType.Difference, new[] { minuend },
+                    //return BooleanViaClipper(FillRule.Positive, ClipType.Difference, new[] { minuend },
+                    //                new[] { subtrahend });
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Difference, new[] { minuend },
                                     new[] { subtrahend });
-        #elif !COMPARE
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Difference, new[] { minuend },
+                                    new[] { subtrahend });
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
+#elif !COMPARE
                     var polygonBInverted = subtrahend.Copy(true, true);
                     var relationship = GetPolygonInteraction(minuend, polygonBInverted);
                     return Intersect(minuend, polygonBInverted, relationship, outputAsCollectionType, tolerance);
-        #else
+#else
                     sw.Restart();
                     var pClipper = BooleanViaClipper(FillRule.pftPositive, ClipType.ctDifference, new[] { minuend },
                         new[] { subtrahend });
@@ -711,20 +806,20 @@ namespace TVGL.TwoDimensional
                     var tvglTime = sw.Elapsed;
                     if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
                     {
-        #if PRESENT
+#if PRESENT
 
                         Presenter.ShowAndHang(new[] { minuend, subtrahend });
                         Presenter.ShowAndHang(pClipper);
                         Presenter.ShowAndHang(pTVGL);
-        #else
+#else
                         var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
                         TVGL.IOFunctions.IO.Save(minuend, fileNameStart + "." + "min.json");
                         TVGL.IOFunctions.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
-        #endif
+#endif
                     }
                     return pClipper;
-        #endif
-                }
+#endif
+        }
 
                 /// <summary>
                 /// Returns the list of polygons that result from A-B (subtracting polygon B from polygon A). By providing the intersections
@@ -768,8 +863,20 @@ namespace TVGL.TwoDimensional
                             //subtrahends = subtrahends.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                     }
         #if CLIPPER
-                    return BooleanViaClipper(FillRule.Positive, ClipType.Difference, minuends, subtrahends);
-        #elif !COMPARE
+                   // return BooleanViaClipper(FillRule.Positive, ClipType.Difference, minuends, subtrahends);
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Difference, minuends, subtrahends);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Difference, minuends, subtrahends);
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
+#elif !COMPARE
                     var minuendsList = minuends.ToList();
         foreach (var polyB in subtrahends)
                     {
@@ -782,7 +889,7 @@ namespace TVGL.TwoDimensional
                         }
                     }
                     return minuendsList;
-        #else
+#else
                     var minuendsList = minuends.ToList();
                     sw.Restart();
                     var pClipper = BooleanViaClipper(FillRule.pftPositive, ClipType.ctDifference, minuends, subtrahends);
@@ -804,13 +911,13 @@ namespace TVGL.TwoDimensional
                     var tvglTime = sw.Elapsed;
                     if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
                     {
-        #if PRESENT
+#if PRESENT
                         var all = minuends.ToList();
                         all.AddRange(subtrahends);
                         Presenter.ShowAndHang(all);
                         Presenter.ShowAndHang(pClipper);
                         Presenter.ShowAndHang(minuendsList);
-        #else
+#else
                         var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
                         int i = 0;
                         foreach (var poly in minuends)
@@ -818,11 +925,11 @@ namespace TVGL.TwoDimensional
                         i = 0;
                         foreach (var poly in subtrahends)
                             TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
-        #endif
+#endif
                     }
                     return pClipper;
-        #endif
-                }
+#endif
+        }
 
 
                 #endregion Subtract Public Methods
@@ -850,7 +957,19 @@ namespace TVGL.TwoDimensional
                     //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
             }
 #if CLIPPER
-            return BooleanViaClipper(FillRule.Positive, ClipType.Xor, new[] { polygonA }, new[] { polygonB });
+            //return BooleanViaClipper(FillRule.Positive, ClipType.Xor, new[] { polygonA }, new[] { polygonB });
+            sw.Restart();
+            var pClipper = BooleanViaClipper(FillRule.Positive, ClipType.Xor, new[] { polygonA }, new[] { polygonB });
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+
+            sw.Restart();
+            var pClipper2B = BooleanViaClipper(FillRule.Positive, ClipType.Xor, new[] { polygonA }, new[] { polygonB });
+            var clipBTime = sw.Elapsed;
+            if (Compare(pClipper, pClipper, "Union", clipTime, clipBTime))
+            {
+            }
+            return pClipper;
 #elif !COMPARE
             var relationship = GetPolygonInteraction(polygonA, polygonB);
             return ExclusiveOr(polygonA, polygonB, relationship, outputAsCollectionType);
