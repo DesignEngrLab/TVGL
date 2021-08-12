@@ -28,7 +28,7 @@ namespace ClipperLib2Beta
 	//------------------------------------------------------------------------------
 	internal enum VertexFlags { vfNone = 0, vfOpenStart = 1, vfOpenEnd = 2, vfLocalMax = 4, vfLocalMin = 8 }
 	internal enum OutRecState { Undefined, Open, Outer, OuterCheck, Inner, InnerCheck };
-	public enum ClipType { None, Intersection, Union, Difference, Xor };
+	public enum ClipType2 { None, Intersection, Union, Difference, Xor };
 	public enum PathType { Subject, Clip };
 	public enum PipResult { Inside, Outside, OnEdge };
 
@@ -47,11 +47,11 @@ namespace ClipperLib2Beta
 	//Vertex must be a class to avoid circular references introduced as struct objects.
 	internal class Vertex
 	{
-		internal PointI pt;
-		internal Vertex next;
-		internal Vertex prev;
-		internal VertexFlags flags = VertexFlags.vfNone;
-	}
+		internal PointI pt { get; set; }
+		internal Vertex next { get; set; }
+		internal Vertex prev { get; set; }
+		internal VertexFlags flags { get; set; } = VertexFlags.vfNone;
+}
 
 	//Every closed path (or polygon) is made up of a series of vertices forming
 	//edges that alternate between going up (relative to the Y-axis) and going
@@ -140,7 +140,7 @@ namespace ClipperLib2Beta
 		internal double _scale { get; set; } = 1.0;
 		internal bool has_open_paths_ { get; set; }
 		internal bool minimasSorted { get; set; }
-		internal ClipType cliptype { get; set; } = ClipType.None;
+		internal ClipType2 cliptype { get; set; } = ClipType2.None;
 		internal FillRule fillrule { get; set; } = FillRule.EvenOdd;
 		internal Active actives { get; set; }
 		internal Active sel { get; set; }
@@ -586,7 +586,7 @@ namespace ClipperLib2Beta
 					outrec.owner = e2.outrec;
 			}
 			//set inner/outer ...
-			if (outrec.owner != null || IsInner(outrec.owner))
+			if (outrec.owner == null || IsInner(outrec.owner))
 				outrec.state = OutRecState.Outer;
 			else
 				outrec.state = OutRecState.Inner;
@@ -603,7 +603,12 @@ namespace ClipperLib2Beta
 
 		public Clipper()
 		{
-			Clear();
+			minimas = new MinimaList();
+			currentLocalMin = minimas.GetEnumerator();
+			outRecs = new OutRecList();
+			intersections = new IntersectList();
+			vertices = new VertexList();
+			scanlines = new ScanlinePriorityQueue();
 		}
 
 		internal void CleanUp()
@@ -655,6 +660,7 @@ namespace ClipperLib2Beta
 		private bool PopLocalMinima(long y, out LocalMinima local_minima)
 		{
 			local_minima = null;
+			if(currentLocalMin.Current == null && minimas.Any()) currentLocalMin.MoveNext();
 			if (currentLocalMin.Current == minimas.Last() || currentLocalMin.Current.vertex.pt.y != y) return false;
 			local_minima = currentLocalMin.Current;
 			currentLocalMin.MoveNext();
@@ -696,6 +702,8 @@ namespace ClipperLib2Beta
 			else if (path_len == 0) return;
 
 			Vertex[] vertices = new Vertex[path_len];
+			for (var i = 0; i < path_len; i++)
+				vertices[i] = new Vertex();
 
 			int highI = path_len - 1;
 			vertices[0].pt = path[0];
@@ -805,7 +813,7 @@ namespace ClipperLib2Beta
 			}
 			switch (cliptype)
 			{
-				case ClipType.Intersection:
+				case ClipType2.Intersection:
 					switch (fillrule)
 					{
 						case FillRule.EvenOdd:
@@ -814,7 +822,7 @@ namespace ClipperLib2Beta
 						case FillRule.Negative: return e.wind_cnt2 < 0;
 					}
 					break;
-				case ClipType.Union:
+				case ClipType2.Union:
 					switch (fillrule)
 					{
 						case FillRule.EvenOdd:
@@ -823,7 +831,7 @@ namespace ClipperLib2Beta
 						case FillRule.Negative: return e.wind_cnt2 >= 0;
 					}
 					break;
-				case ClipType.Difference:
+				case ClipType2.Difference:
 					if (GetPolyType(e) == PathType.Subject)
 						switch (fillrule)
 						{
@@ -841,7 +849,7 @@ namespace ClipperLib2Beta
 							case FillRule.Negative: return e.wind_cnt2 < 0;
 						}
 					break;
-				case ClipType.Xor:
+				case ClipType2.Xor:
 					return true;  //XOr is always contributing unless open
 				default:
 					return false;  // delphi2cpp translation note: no warnings
@@ -853,10 +861,10 @@ namespace ClipperLib2Beta
 		{
 			switch (cliptype)
 			{
-				case ClipType.Intersection: return e.wind_cnt2 != 0;
-				case ClipType.Union: return (e.wind_cnt == 0) && (e.wind_cnt2 == 0);
-				case ClipType.Difference: return e.wind_cnt2 == 0;
-				case ClipType.Xor: return (e.wind_cnt != 0) != (e.wind_cnt2 != 0);
+				case ClipType2.Intersection: return e.wind_cnt2 != 0;
+				case ClipType2.Union: return (e.wind_cnt == 0) && (e.wind_cnt2 == 0);
+				case ClipType2.Difference: return e.wind_cnt2 == 0;
+				case ClipType2.Xor: return (e.wind_cnt != 0) != (e.wind_cnt2 != 0);
 				default:
 					return false;  // delphi2cpp translation note: no warnings
 			}
@@ -1431,15 +1439,15 @@ namespace ClipperLib2Beta
 
 				switch (cliptype)
 				{
-					case ClipType.Intersection:
-					case ClipType.Difference:
+					case ClipType2.Intersection:
+					case ClipType2.Difference:
 						if (IsSamePolyType(edge_o, edge_c) || (Math.Abs(edge_c.wind_cnt) != 1)) return;
 						break;
-					case ClipType.Union:
+					case ClipType2.Union:
 						if (IsHotEdge(edge_o) != ((Math.Abs(edge_c.wind_cnt) != 1) ||
 							(IsHotEdge(edge_o) != (edge_c.wind_cnt != 0)))) return;  //just works!
 						break;
-					case ClipType.Xor:
+					case ClipType2.Xor:
 						if (Math.Abs(edge_c.wind_cnt) != 1) return;
 						break;
 					default:
@@ -1519,7 +1527,7 @@ namespace ClipperLib2Beta
 			if (IsHotEdge(e1) && IsHotEdge(e2))
 			{
 				if ((old_e1_windcnt != 0 && old_e1_windcnt != 1) || (old_e2_windcnt != 0 && old_e2_windcnt != 1) ||
-						(e1.local_min.polytype != e2.local_min.polytype && cliptype != ClipType.Xor))
+						(e1.local_min.polytype != e2.local_min.polytype && cliptype != ClipType2.Xor))
 				{
 					AddLocalMaxPoly(e1, e2, pt);
 				}
@@ -1573,22 +1581,22 @@ namespace ClipperLib2Beta
 				else if (old_e1_windcnt == 1 && old_e2_windcnt == 1)
 					switch (cliptype)
 					{
-						case ClipType.Intersection:
+						case ClipType2.Intersection:
 							if (e1Wc2 > 0 && e2Wc2 > 0)
 								AddLocalMinPoly(e1, e2, pt, false, orientation_check_required);
 							break;
-						case ClipType.Union:
+						case ClipType2.Union:
 							if (e1Wc2 <= 0 && e2Wc2 <= 0)
 								AddLocalMinPoly(e1, e2, pt, false, orientation_check_required);
 							break;
-						case ClipType.Difference:
+						case ClipType2.Difference:
 							if (((GetPolyType(e1) == PathType.Clip) && (e1Wc2 > 0) && (e2Wc2 > 0)) ||
 									((GetPolyType(e1) == PathType.Subject) && (e1Wc2 <= 0) && (e2Wc2 <= 0)))
 							{
 								AddLocalMinPoly(e1, e2, pt, false, orientation_check_required);
 							}
 							break;
-						case ClipType.Xor:
+						case ClipType2.Xor:
 							AddLocalMinPoly(e1, e2, pt, false, orientation_check_required);
 							break;
 						default:
@@ -1624,7 +1632,7 @@ namespace ClipperLib2Beta
 			}
 		}
 
-		internal void ExecuteInternal(ClipType ct, FillRule ft)
+		internal void ExecuteInternal(ClipType2 ct, FillRule ft)
 		{
 			//if (ct == ClipType.None) return;
 			fillrule = ft;
@@ -2083,11 +2091,11 @@ namespace ClipperLib2Beta
     #region ClipperI
     public class ClipperI : Clipper
     {
-		public ClipperI(int scale = 1)
+		public ClipperI(int scale = 1) : base()
         {
 			_scale = scale == 0 ? 1 : Math.Abs(scale);
 		}
-        public bool Execute(ClipType clipType, FillRule ft, PathsI solution_closed)
+        public bool Execute(ClipType2 clipType, FillRule ft, PathsI solution_closed)
 		{
 			bool executed = true;
 			solution_closed.clear();
@@ -2104,7 +2112,7 @@ namespace ClipperLib2Beta
 			return executed;
 		}
 
-		public bool Execute(ClipType clipType, FillRule ft, PathsI solution_closed, PathsI solution_open)
+		public bool Execute(ClipType2 clipType, FillRule ft, PathsI solution_closed, PathsI solution_open)
 		{
 			bool executed = true;
 			solution_closed.clear();
@@ -2122,7 +2130,7 @@ namespace ClipperLib2Beta
 			return executed;
 		}
 
-		public bool Execute(ClipType clipType, FillRule ft, PolyTreeI solution_closed, PathsI solution_open)
+		public bool Execute(ClipType2 clipType, FillRule ft, PolyTreeI solution_closed, PathsI solution_open)
 		{
 			bool executed = true;
 			solution_closed.Clear();
@@ -2303,7 +2311,7 @@ namespace ClipperLib2Beta
 	#region ClipperD 
 	public class ClipperD : Clipper
     {
-		public ClipperD(double scale = DefaultScale)
+		public ClipperD(double scale = DefaultScale) : base()
 		{
 			_scale = scale == 0 ? 1 : Math.Abs(scale);
 		}
@@ -2427,7 +2435,7 @@ namespace ClipperLib2Beta
 			return built;
 		}
 
-		public bool Execute(ClipType clipType, FillRule ft, PathsD solution_closed)
+		public bool Execute(ClipType2 clipType, FillRule ft, PathsD solution_closed)
 		{
 			bool executed = true;
 			solution_closed.clear();
@@ -2444,7 +2452,7 @@ namespace ClipperLib2Beta
 			return executed;
 		}
 
-		public bool Execute(ClipType clipType, FillRule ft, PathsD solution_closed, PathsD solution_open)
+		public bool Execute(ClipType2 clipType, FillRule ft, PathsD solution_closed, PathsD solution_open)
 		{
 			bool executed = true;
 			solution_closed.clear();
@@ -2462,7 +2470,7 @@ namespace ClipperLib2Beta
 			return executed;
 		}
 
-		public bool Execute(ClipType clipType, FillRule ft, PolyTreeD solution_closed, PathsD solution_open) 
+		public bool Execute(ClipType2 clipType, FillRule ft, PolyTreeD solution_closed, PathsD solution_open) 
 		{
 			bool executed = true;
 			solution_closed.Clear();

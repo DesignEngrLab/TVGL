@@ -18,7 +18,7 @@ namespace ClipperLib2Beta
     /// <summary>
     /// A set of general operation for points and paths
     /// </summary>
-    public static partial class PolygonOperations
+    public static class PolygonOperationsV2
     {
         const double scale = 1000000;
         #region Offset
@@ -93,11 +93,11 @@ namespace ClipperLib2Beta
         /// <param name="fillMethod"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType clipType, IEnumerable<Polygon> subject,
+        public static List<Polygon> BooleanViaClipper(FillRule fillMethod, ClipType2 clipType, IEnumerable<Polygon> subject,
             IEnumerable<Polygon> clip = null)
         {
             //Convert to int points and remove collinear edges
-            var clipperSubject = new PathsI();
+            var clipperSubject = new PathsI() { data = new List<PathI>() };
             foreach (var polygon in subject)
             {
                 foreach(var polygonElement in polygon.AllPolygons.Where(p => !p.PathArea.IsNegligible(Constants.BaseTolerance)))
@@ -105,7 +105,7 @@ namespace ClipperLib2Beta
                     clipperSubject.Add(new PathI(polygonElement.Path.Select(p => new PointI((long)(p.X * scale), (long)(p.Y * scale)))));
                 }
             }
-            var clipperClip = new PathsI();
+            var clipperClip = new PathsI() { data = new List<PathI>() };
             if (clip != null)
             {
                 foreach (var polygon in clip)
@@ -124,7 +124,7 @@ namespace ClipperLib2Beta
                     return new List<Polygon>();
                 }
                 //Use the clip as the subject if this is a union operation and the clip is not null.
-                if (clipType == ClipType.Union)
+                if (clipType == ClipType2.Union)
                 {
                     clipperSubject = clipperClip;
                     clip = null;
@@ -140,7 +140,7 @@ namespace ClipperLib2Beta
                 clipper.AddPaths(clipperClip, PathType.Clip, false);
 
             //Begin an evaluation
-            var clipperSolution = new PathsI();
+            var clipperSolution = new PathsI() { data = new List<PathI>() };
             var result = clipper.Execute(clipType, fillMethod, clipperSolution);
             if (!result) throw new Exception("Clipper Union Failed");
 
