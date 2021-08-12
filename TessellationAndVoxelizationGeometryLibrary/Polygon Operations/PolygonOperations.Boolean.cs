@@ -233,11 +233,15 @@ namespace TVGL.TwoDimensional
                     else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
                     {
                         //if (i == 4 && j == 2)
-                        //    Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+//#if PRESENT
+//                        Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+//                        #endif
                             var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
                         //Debug.WriteLine("i = {0}, j = {1}", i, j);
                         //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(newPolygons);
+//#if PRESENT
+//                        Presenter.ShowAndHang(newPolygons);
+//#endif
                         polygonList.RemoveAt(i);
                         polygonList.RemoveAt(j);
                         polygonList.AddRange(newPolygons);
@@ -318,6 +322,12 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles,
             double tolerance = double.NaN)
         {
+            //var polygons = new List<Polygon>(polygonsA);
+            //polygons.AddRange(polygonsB);
+            //for (int i = 0; i < 2; i++)
+            //{
+            //    IOFunctions.IO.Save(polygons[i], "unionProblem" + i + ".json");
+            //}
             if (areaSimplificationFraction > 0)
             {
                 polygonsA = polygonsA.CleanUpForBooleanOperations(out _);

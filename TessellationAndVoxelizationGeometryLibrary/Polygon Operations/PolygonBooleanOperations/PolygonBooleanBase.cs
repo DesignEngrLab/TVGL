@@ -192,9 +192,9 @@ namespace TVGL.TwoDimensional
                     if (knownWrongPoints != null && knownWrongPoints[currentEdge.ToPoint.IndexInList]) includesWrongPoints = true;
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
-                    //#if PRESENT
-                    //                    Presenter.ShowAndHang(newPath);
-                    //#endif
+//#if PRESENT
+//                    Presenter.ShowAndHang(newPath);
+//#endif
                 }
                 if (newPath.Count >= maxNumPoints)
                 {
@@ -202,9 +202,9 @@ namespace TVGL.TwoDimensional
                     completed = null;
                 }
             } while (!overMaxPoints && false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
-            //#if PRESENT
-            //            Presenter.ShowAndHang(newPath);
-            //#endif
+//#if PRESENT
+//            Presenter.ShowAndHang(newPath);
+//#endif
             if (completed == null) newPath.Clear();
             //Debug.WriteLine("    .... result has {0} vertices.", newPath.Count);
             return newPath;

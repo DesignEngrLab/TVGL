@@ -760,7 +760,7 @@ namespace TVGL.TwoDimensional
             var isOpposite = true;
             foreach (var intersect in intersections)
             {
-                if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.Relationship != SegmentRelationship.Abutting || 
+                if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.Relationship != SegmentRelationship.Abutting ||
                     intersect.CollinearityType != CollinearityTypes.BothOppositeDirection)
                 {
                     isOpposite = false;
@@ -955,12 +955,12 @@ namespace TVGL.TwoDimensional
                     //   |   line1.Vector.Y      -line2.Vector.Y   | |  t_2  |    | vStart.Y  |
                     var oneOverdeterminnant = 1 / lineACrossLineB;
                     var t_1 = oneOverdeterminnant * (bVector.Y * fromPointVector.X - bVector.X * fromPointVector.Y);
-                    if (t_1 < 0 || t_1 >= 1)
+                    if (t_1.IsNegativeNonNegligible() || t_1 >= 1)
                         //if (t_1.IsLessThanNonNegligible(0, Constants.PolygonSameTolerance)
                         //    || !t_1.IsLessThanNonNegligible(1.0, Constants.PolygonSameTolerance))
                         return false;
                     var t_2 = oneOverdeterminnant * (aVector.Y * fromPointVector.X - aVector.X * fromPointVector.Y);
-                    if (t_2 < 0 || t_2 >= 1)
+                    if (t_2.IsNegativeNonNegligible() || t_2 >= 1)
                         return false;
                     var aIntersection = new Vector2(
                             Math.Round(aFrom.X + t_1 * aVector.X, numSigDigs),

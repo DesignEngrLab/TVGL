@@ -23,8 +23,8 @@ namespace TVGLUnitTestsAndBenchmarking
             //JustShowMeThePolygons(BackoutToFolder("TestFiles\\polygons"));
             //PolygonOperationsTesting.DebugEdgeCases();
             //DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
-            DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
-            //DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
+            //DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
+            DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
         }
 
         public static DirectoryInfo BackoutToFolder(string folderName = "")
@@ -59,7 +59,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 if (polygons.All(p => p == null)) continue;
                 Debug.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygons);
-                var result = polygons.OffsetSquare(offset,-0.002);
+                var result = polygons.OffsetSquare(offset, -0.002);
                 Presenter.ShowAndHang(result);
             }
         }
@@ -88,24 +88,35 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void DebugUnionCases(DirectoryInfo dir)
         {
             var fileNames = dir.GetFiles("union*.json").ToList();
-            while (fileNames.Any())
-            {
-                var filename = fileNames[r.Next(fileNames.Count)].Name;
-                var nameSegments = filename.Split('.');
-                var preName = string.Join('.', nameSegments.Take(nameSegments.Length - 2).ToArray());
+            var polygons = new List<Polygon>();
 
-                var polygons = new List<Polygon>();
-                foreach (var item in dir.GetFiles(preName + "*"))
-                {
-                    fileNames.RemoveAll(fn => fn.FullName == item.FullName);
-                    IO.Open(item.FullName, out Polygon p);
-                    polygons.Add(p);
-                }
-                Debug.WriteLine("Attempting: " + filename);
-                Presenter.ShowAndHang(polygons);
-                var result = polygons.UnionPolygons();
-                Presenter.ShowAndHang(result);
+            for (int i = 0; i < 5; i++)
+            {
+                var item = dir.GetFiles("unionProblem" + i + ".json").First(); 
+                //var item = fileNames[i];
+                Console.WriteLine(item.FullName);
+                IO.Open(item.FullName, out Polygon p);
+                polygons.Add(p);
             }
+            //while (fileNames.Any())
+            //{
+            //    var filename = fileNames[r.Next(fileNames.Count)].Name;
+            //    var nameSegments = filename.Split('.');
+            //    var preName = string.Join('.', nameSegments.Take(nameSegments.Length - 2).ToArray());
+
+            //    var polygons = new List<Polygon>();
+            //    foreach (var item in dir.GetFiles(preName + "*"))
+            //    {
+            //        fileNames.RemoveAll(fn => fn.FullName == item.FullName);
+            //        IO.Open(item.FullName, out Polygon p);
+            //        polygons.Add(p);
+            //    }
+            //Debug.WriteLine("Attempting: " + filename);
+            //Presenter.ShowAndHang(polygons.Take(4));
+            //Presenter.ShowAndHang(polygons.Skip(4));
+            //Presenter.ShowAndHang(polygons);
+            var result = polygons.UnionPolygons();
+            Presenter.ShowAndHang(result);
         }
         public static void JustShowMeThePolygons(DirectoryInfo dir)
         {
@@ -119,8 +130,8 @@ namespace TVGLUnitTestsAndBenchmarking
             }
             Presenter.ShowAndHang(silhouetteBeforeFace);
 
-             var poly1 = silhouetteBeforeFace.OffsetMiter(15.557500000000001, 0.08);
-             var showe = new List<Polygon>();
+            var poly1 = silhouetteBeforeFace.OffsetMiter(15.557500000000001, 0.08);
+            var showe = new List<Polygon>();
             showe.AddRange(silhouetteBeforeFace);
             showe.AddRange(poly1);
             Presenter.ShowAndHang(showe);
