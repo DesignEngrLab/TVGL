@@ -40,7 +40,8 @@ namespace TVGL.TwoDimensional
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
             var resultPolygons = SimplifyFast(polygons, out removalsOccurred, lengthTolerance, slopeTolerance);
-            return resultPolygons.SelectMany(p => p.RemoveSelfIntersections(ResultType.BothPermitted));
+            return resultPolygons.SelectMany(p => p.RemoveSelfIntersections(ResultType.BothPermitted))
+                .Where(p => p.Vertices.Count > 2);
         }
 
         #endregion

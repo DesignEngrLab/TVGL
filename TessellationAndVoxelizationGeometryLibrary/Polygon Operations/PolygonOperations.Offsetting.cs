@@ -163,9 +163,9 @@ namespace TVGL.TwoDimensional
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, deltaAngle);
             var outer = new Polygon(outerData.points);
-//#if PRESENT
-//            Presenter.ShowAndHang(new[] { polygon, outer });
-//#endif
+            //#if PRESENT
+            //            Presenter.ShowAndHang(new[] { polygon, outer });
+            //#endif
             var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
@@ -177,7 +177,7 @@ namespace TVGL.TwoDimensional
                 var newHoles = new Polygon(newHoleData.points);
                 inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative).Where(p => !p.IsPositive));
             }
-            if (inners.Count == 0) return outers.Where(p => p.IsPositive).ToList();
+            if (inners.Count == 0) return outers.Where(p => p.IsPositive && p.Vertices.Count > 2).ToList();
             return outers.IntersectPolygonsFromOffset(inners).Where(p => p.IsPositive).ToList();
         }
 

@@ -82,7 +82,7 @@ namespace TVGL.TwoDimensional
             foreach (var poly in nonIntersectingBSubPolygons)
                 if (HandleNonIntersectingSubPolygon(poly, newPolygons, interaction.GetRelationships(poly), true))
                     newPolygons.Add(poly.Copy(false, false));
-
+            newPolygons.RemoveAll(p => p.Vertices.Count <= 2);
             switch (polygonCollection)
             {
                 case PolygonCollection.SeparateLoops:
