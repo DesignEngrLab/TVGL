@@ -167,8 +167,8 @@ namespace TVGL.TwoDimensional
             out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
-            var maxNumPoints = knownWrongPoints != null ? knownWrongPoints.Count + intersections.Count : int.MaxValue;
-            bool overMaxPoints = false;
+            //var maxNumPoints = knownWrongPoints != null ? knownWrongPoints.Count + intersections.Count : int.MaxValue;
+            //bool overMaxPoints = false;
             //Debug.WriteLine("starting MakePolygonThroughIntersections in" + this.GetType().ToString());
             bool? completed = null;
             includesWrongPoints = false;
@@ -177,8 +177,16 @@ namespace TVGL.TwoDimensional
             var currentEdge = startingEdge;
             do
             {
-                if (currentEdge == intersectionData.EdgeA) intersectionData.VisitedA = true;
-                else intersectionData.VisitedB = true;
+                if (currentEdge == intersectionData.EdgeA)
+                {
+                    if (intersectionData.VisitedA) { completed = null; break; }
+                    intersectionData.VisitedA = true;
+                }
+                else
+                {
+                    if (intersectionData.VisitedB) { completed = null; break; }
+                    intersectionData.VisitedB = true;
+                }
                 if (newPath.Count == 0 || newPath[^1] != intersectionData.IntersectCoordinates)
                     newPath.Add(intersectionData.IntersectCoordinates);
                 if (switchPolygon)
@@ -192,16 +200,18 @@ namespace TVGL.TwoDimensional
                     if (knownWrongPoints != null && knownWrongPoints[currentEdge.ToPoint.IndexInList]) includesWrongPoints = true;
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
+                }
 //#if PRESENT
-//                    Presenter.ShowAndHang(newPath);
+//                    Presenter.ShowAndHang(newPath,closeShape:false);
 //#endif
-                }
-                if (newPath.Count >= maxNumPoints)
-                {
-                    overMaxPoints = true;
-                    completed = null;
-                }
-            } while (!overMaxPoints && false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
+                
+                //if (newPath.Count >= maxNumPoints)
+                //{
+                //    overMaxPoints = true;
+                //    completed = null;
+                //}
+            //} while (!overMaxPoints && false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
+            } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
 //#if PRESENT
 //            Presenter.ShowAndHang(newPath);
 //#endif

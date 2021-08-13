@@ -386,6 +386,8 @@ namespace TVGL
         private static BoundingRectangle RotatingCalipers2DMethod(IEnumerable<Vector2> initialPoints,
             bool pointsAreConvexHull, bool setCornerPoints, bool setPointsOnSide)
         {
+            if (!initialPoints.Any())
+                return new BoundingRectangle();
             /* welcome to a surprisingly complex method that is optimized for linear time.
              * the points are ordered in the CCW polygon from starting with the lowest x-value.
              * Then we rotate the shape from 0 to up to 90-degree to identify all possible 2d

@@ -226,50 +226,50 @@ namespace TVGL.IOFunctions
         {
             //try
             //{
-                var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
-                switch (extension)
-                {
-                    case FileType.STL_ASCII:
-                    case FileType.STL_Binary:
-                        tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
-                        break;
+            var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
+            switch (extension)
+            {
+                case FileType.STL_ASCII:
+                case FileType.STL_Binary:
+                    tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
+                    break;
 
-                    case FileType.ThreeMF:
-                        tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.ThreeMF:
+                    tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.Model3MF:
-                        tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
-                        break;
+                case FileType.Model3MF:
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
+                    break;
 
-                    case FileType.AMF:
-                        tessellatedSolids = AMFFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.AMF:
+                    tessellatedSolids = AMFFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.SHELL:
-                        tessellatedSolids = ShellFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.SHELL:
+                    tessellatedSolids = ShellFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.OBJ:
-                        tessellatedSolids = OBJFileData.OpenSolids(s, filename);
-                        break;
+                case FileType.OBJ:
+                    tessellatedSolids = OBJFileData.OpenSolids(s, filename);
+                    break;
 
-                    case FileType.OFF:
-                    case FileType.PLY_ASCII:
-                    case FileType.PLY_Binary:
-                        throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
-                    case FileType.TVGL:
-                        var serializer = new JsonSerializer();
-                        var sr = new StreamReader(s);
-                        using (var reader = new JsonTextReader(sr))
-                            // note this is a hack...<T> is overly specific
-                            tessellatedSolids = serializer.Deserialize<TessellatedSolid[]>(reader);
-                        break;
-                    default:
-                        Message.output(filename + " is not a recognized 3D format.");
-                        tessellatedSolids = new TessellatedSolid[0];
-                        break;
-                }
+                case FileType.OFF:
+                case FileType.PLY_ASCII:
+                case FileType.PLY_Binary:
+                    throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
+                case FileType.TVGL:
+                    var serializer = new JsonSerializer();
+                    var sr = new StreamReader(s);
+                    using (var reader = new JsonTextReader(sr))
+                        // note this is a hack...<T> is overly specific
+                        tessellatedSolids = serializer.Deserialize<TessellatedSolid[]>(reader);
+                    break;
+                default:
+                    Message.output(filename + " is not a recognized 3D format.");
+                    tessellatedSolids = new TessellatedSolid[0];
+                    break;
+            }
             //}
             //catch (Exception exc)
             //{
@@ -459,8 +459,7 @@ namespace TVGL.IOFunctions
                 case "off": return FileType.OFF;
                 case "ply": return FileType.PLY_ASCII;
                 case "shell": return FileType.SHELL;
-                case "tvgl":
-                case "json": return FileType.TVGL;
+                case "tvgl": return FileType.TVGL;
                 default: return FileType.unspecified;
             }
         }
@@ -996,9 +995,9 @@ namespace TVGL.IOFunctions
             return Double.NaN;
         }
 
-#endregion Open/Load/Read
+        #endregion Open/Load/Read
 
-#region Save/Write
+        #region Save/Write
 
         /// <summary>
         /// Saves the specified solids to a file.
@@ -1250,6 +1249,6 @@ namespace TVGL.IOFunctions
             }
         }
 
-#endregion Save/Write
+        #endregion Save/Write
     }
 }

@@ -33,12 +33,9 @@ namespace TVGL.TwoDimensional
             var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
-            //int k = 0;
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
                 out var startEdge, out var switchPolygon, ref indexIntersectionStart))
             {
-                //k++;
-                //Debug.WriteLine(k);
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
                 if (includesWrongPoints) continue;
@@ -50,7 +47,6 @@ namespace TVGL.TwoDimensional
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
-                //polyCoordinates = polyCoordinates.SimplifyMinLengthToNewList(Math.Pow(10, -polygon.NumSigDigits));
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             return newPolygons.CreateShallowPolygonTrees(true);

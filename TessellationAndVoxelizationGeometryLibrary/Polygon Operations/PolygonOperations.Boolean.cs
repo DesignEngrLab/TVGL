@@ -455,17 +455,15 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Intersect(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (polygonA.Vertices.Count <= 2 || polygonB.Vertices.Count <= 2) return new List<Polygon>();
             if (areaSimplificationFraction > 0)
             {
                 polygonA = polygonA.CleanUpForBooleanOperations(out _);
-                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
-                {
-                    //If not null
                     polygonB = polygonB?.CleanUpForBooleanOperations(out _);
-                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
-                }
             }
+            if (polygonA.Vertices.Count <= 2 || polygonB.Vertices.Count <= 2) return new List<Polygon>();
+
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Intersection, new[] { polygonA },
                     new[] { polygonB });
@@ -690,12 +688,14 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> Subtract(this Polygon minuend, Polygon subtrahend,
                     PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
+            if (subtrahend.Vertices.Count <= 2) return new List<Polygon> { minuend };
             if (areaSimplificationFraction > 0)
             {
                 minuend = minuend.CleanUpForBooleanOperations(out _);
                 if (subtrahend != null)
                     subtrahend = subtrahend?.CleanUpForBooleanOperations(out _);
             }
+            if (subtrahend.Vertices.Count <= 2) return new List<Polygon> { minuend };
 #if CLIPPER
                     return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Difference, new[] { minuend },
                                     new[] { subtrahend });
@@ -846,12 +846,16 @@ namespace TVGL.TwoDimensional
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB,
             PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
+            if (polygonA.Vertices.Count <= 2) return new List<Polygon> { polygonB };
+            if (polygonB.Vertices.Count <= 2) return new List<Polygon> { polygonA };
             if (areaSimplificationFraction > 0)
             {
                 polygonA = polygonA.CleanUpForBooleanOperations(out _);
                 if (polygonB != null)
                     polygonB = polygonB.CleanUpForBooleanOperations(out _);
             }
+            if (polygonA.Vertices.Count <= 2) return new List<Polygon> { polygonB };
+            if (polygonB.Vertices.Count <= 2) return new List<Polygon> { polygonA };
 #if CLIPPER
             return BooleanViaClipper(ClipperLib.PolyFillType.Positive, ClipperLib.ClipType.Xor, new[] { polygonA }, new[] { polygonB });
 #elif !COMPARE

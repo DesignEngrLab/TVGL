@@ -42,11 +42,13 @@ namespace TVGLUnitTestsAndBenchmarking
         {
                 var polygons = new List<Polygon>();
             var fileNames = dir.GetFiles("offse*.json").ToList();
-            IO.Open(fileNames[0].FullName, out Polygon p);
-            //polygons.Add(p);
-            IO.Open(fileNames[1].FullName, out  p);
+            foreach (var item in fileNames.Take(1))
+            {
+            IO.Open(item.FullName, out Polygon p);
             polygons.Add(p);
-            var offset = -0.2;
+
+            }
+            var offset = 3.8893750000000002;
 
             //while (fileNames.Any())
             //{
@@ -64,7 +66,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //    if (polygons.All(p => p == null)) continue;
             //Debug.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygons);
-                var result = polygons[0].OffsetMiter(offset, -0.002);
+                var result = polygons.OffsetMiter(offset, -0.002);
                 Presenter.ShowAndHang(result);
             }
         
