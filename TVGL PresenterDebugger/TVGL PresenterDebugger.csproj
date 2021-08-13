@@ -66,6 +66,11 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\IntrinsicAttribute.cs" Link="TVGL\Numerics\IntrinsicAttribute.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperCore.cs" Link="TVGL\Polygon Operations\Clipper\ClipperCore.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperOffsetV2.cs" Link="TVGL\Polygon Operations\Clipper\ClipperOffsetV2.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperV2.cs" Link="TVGL\Polygon Operations\Clipper\ClipperV2.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperV2Beta.cs" Link="TVGL\Polygon Operations\Clipper\ClipperV2Beta.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperV2BetaPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperV2BetaPolygonOperations.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\MedialAxis2D.cs" Link="TVGL\Polygon Operations\MedialAxis2D.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Partitioning.cs" Link="TVGL\Polygon Operations\Partitioning.cs" />

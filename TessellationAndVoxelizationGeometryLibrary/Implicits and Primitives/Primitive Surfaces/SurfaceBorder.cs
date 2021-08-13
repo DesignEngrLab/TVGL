@@ -63,6 +63,12 @@ namespace TVGL
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
         public bool FullyConvex { get; set; }
         /// <summary>
+        /// Gets or sets a value indicating whether [border is flush/flat - not concave or convex].
+        /// </summary>
+        /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
+        public bool FullyFlush { get; set; }
+
+        /// <summary>
         /// Gets whether the [border is circular].
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
@@ -213,6 +219,7 @@ namespace TVGL
                 copy.Plane = new Plane(Plane.DistanceToOrigin, Plane.Normal);
             copy.Curve = Curve;
             copy.EncirclesAxis = EncirclesAxis;
+            copy.FullyFlush = FullyFlush;
             copy.FullyConcave = FullyConcave;
             copy.FullyConvex = FullyConvex;
             //copy.Edges = new EdgePath { IsClosed = Edges.IsClosed };

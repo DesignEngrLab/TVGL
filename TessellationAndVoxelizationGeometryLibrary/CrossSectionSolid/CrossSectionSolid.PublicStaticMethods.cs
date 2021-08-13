@@ -138,6 +138,23 @@ namespace TVGL
             }
             return result;
         }
-
+        private static bool ContainsDuplicatePoints(IList<Polygon> layer)
+        {
+            var allPoints = new HashSet<Vector2>();
+            foreach (var poly in layer)
+            {
+                foreach (var innerPoly in poly.AllPolygons)
+                {
+                    foreach (var point in innerPoly.Path)
+                    {
+                        if (allPoints.Contains(point))
+                            return true;
+                        else
+                            allPoints.Add(point);
+                    }
+                }
+            }
+            return false;
+        }
     }
 }
