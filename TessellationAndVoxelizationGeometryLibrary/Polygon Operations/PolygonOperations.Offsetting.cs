@@ -201,7 +201,7 @@ namespace TVGL.TwoDimensional
                 return UnionPolygons(polygonsA, outputAsCollectionType);
 
             var result = polygonsA.ToList();
-            foreach (var polygon in polygonsB)
+            foreach (var polygon in polygonsB.ToList())
             {
                 if (!result.Any()) break;
                 result = result.SelectMany(r => r.Intersect(polygon)).ToList();

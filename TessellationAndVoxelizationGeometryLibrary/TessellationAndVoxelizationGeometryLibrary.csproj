@@ -10,7 +10,10 @@
     <PackageId>TVGL</PackageId>
     <Authors>Matt Campbell, Brandon Massoni, Nima Rafibakhsh</Authors>
     <Company>Design Engineering Lab</Company>
-    <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C# implementation. As a .NET Standard library (and a legacy portable class library), the functions can be accessed from other managed code.</Description>
+    <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed
+    to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C#
+    implementation. As a .NET Standard library (and a legacy portable class library), the functions can be accessed from other managed 
+    code.</Description>
     <Copyright>2014</Copyright>
     <PackageLicenseUrl>https://github.com/DesignEngrLab/TVGL/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>http://designengrlab.github.io/TVGL/</PackageProjectUrl>
@@ -21,11 +24,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE; COMPARE</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE; COMPARE</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
 

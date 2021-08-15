@@ -26,7 +26,9 @@ namespace TVGL.TwoDimensional
         private static Polygon CleanUpForBooleanOperations(this Polygon polygon, out bool removalsOccurred, double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            var copiedPolygon = polygon.Copy(true, false);
+            Polygon copiedPolygon;
+            lock (polygon)
+                copiedPolygon = polygon.Copy(true, false);
             removalsOccurred = SimplifyFast(copiedPolygon, lengthTolerance, slopeTolerance);
             return copiedPolygon.RemoveSelfIntersections(ResultType.BothPermitted).LargestPolygonWithHoles();
         }
@@ -87,18 +89,21 @@ namespace TVGL.TwoDimensional
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
             var removalsOccurred = false;
-            polygon.MakePolygonEdgesIfNonExistent();
-            foreach (var vertex in polygon.Vertices)
+            lock (polygon)
             {
-                if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible(slopeTolerance)
-                    || vertex.EndLine.Vector.LengthSquared().IsNegligible(lengthTolerance))
+                polygon.MakePolygonEdgesIfNonExistent();
+                foreach (var vertex in polygon.Vertices)
                 {
-                    removalsOccurred = true;
-                    vertex.DeleteVertex();
+                    if (vertex.EndLine.Vector.Cross(vertex.StartLine.Vector).IsNegligible(slopeTolerance)
+                        || vertex.EndLine.Vector.LengthSquared().IsNegligible(lengthTolerance))
+                    {
+                        removalsOccurred = true;
+                        vertex.DeleteVertex();
+                    }
                 }
+                if (removalsOccurred)
+                    polygon.RecreateVertices();
             }
-            if (removalsOccurred)
-                polygon.RecreateVertices();
             foreach (var polygonHole in polygon.InnerPolygons)
                 removalsOccurred = removalsOccurred || polygonHole.SimplifyFast(lengthTolerance, slopeTolerance);
             return removalsOccurred;

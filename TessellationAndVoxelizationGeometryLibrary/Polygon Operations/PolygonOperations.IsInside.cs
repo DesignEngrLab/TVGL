@@ -1231,25 +1231,27 @@ namespace TVGL.TwoDimensional
 
         private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
         {
-            var intersections = new List<SegmentIntersection>();
-            var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
-            var numLines = polygonA.Edges.Length;
-            var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
-            for (int i = 0; i < numLines - 1; i++)
+            lock (polygonA)
             {
-                var current = orderedLines[i];
-                for (int j = i + 1; j < numLines; j++)
+                var intersections = new List<SegmentIntersection>();
+                var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
+                var numLines = polygonA.Edges.Length;
+                var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
+                for (int i = 0; i < numLines - 1; i++)
                 {
-                    var other = orderedLines[j];
-                    if (current.XMax < orderedLines[j].XMin) break;
-                    if (current.IsAdjacentTo(other)) continue;
-                    AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, polygonA.NumSigDigits, false, false);
+                    var current = orderedLines[i];
+                    for (int j = i + 1; j < numLines; j++)
+                    {
+                        var other = orderedLines[j];
+                        if (current.XMax < orderedLines[j].XMin) break;
+                        if (current.IsAdjacentTo(other)) continue;
+                        AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, polygonA.NumSigDigits, false, false);
+                    }
                 }
+                RemoveDuplicateIntersections(possibleDuplicates, intersections);
+                return intersections;
             }
-            RemoveDuplicateIntersections(possibleDuplicates, intersections);
-            return intersections;
         }
-
 
     }
 }

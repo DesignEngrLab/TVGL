@@ -23,8 +23,8 @@ namespace TVGLUnitTestsAndBenchmarking
             //JustShowMeThePolygons(BackoutToFolder("TestFiles\\polygons"));
             //PolygonOperationsTesting.DebugEdgeCases();
             //DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
-            DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
-            //DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
+            //DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
+            DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
         }
 
         public static DirectoryInfo BackoutToFolder(string folderName = "")
@@ -41,14 +41,14 @@ namespace TVGLUnitTestsAndBenchmarking
         public static void DebugOffsetCases(DirectoryInfo dir)
         {
                 var polygons = new List<Polygon>();
-            var fileNames = dir.GetFiles("offse*.json").ToList();
-            foreach (var item in fileNames.Take(1))
+            var fileNames = dir.GetFiles("offsetProble*.json").ToList();
+            foreach (var item in fileNames)
             {
             IO.Open(item.FullName, out Polygon p);
             polygons.Add(p);
 
             }
-            var offset = 3.8893750000000002;
+            var offset = -0.2;
 
             //while (fileNames.Any())
             //{
@@ -94,37 +94,23 @@ namespace TVGLUnitTestsAndBenchmarking
         }
         public static void DebugUnionCases(DirectoryInfo dir)
         {
-            var fileNames = dir.GetFiles("union*.json").ToList();
-            var polygons = new List<Polygon>();
+            var polygonsA = new List<Polygon>();
+            var polygonsB = new List<Polygon>();
 
-            for (int i = 0; i < 5; i++)
+            foreach (var item in dir.GetFiles("union*.json"))
             {
-                var item = dir.GetFiles("unionProblem" + i + ".json").First(); 
-                //var item = fileNames[i];
-                Console.WriteLine(item.FullName);
                 IO.Open(item.FullName, out Polygon p);
-                polygons.Add(p);
+                if (item.Name.Contains("B", StringComparison.InvariantCulture))
+                    polygonsB.Add(p);
+                else polygonsA.Add(p);
             }
-            //while (fileNames.Any())
-            //{
-            //    var filename = fileNames[r.Next(fileNames.Count)].Name;
-            //    var nameSegments = filename.Split('.');
-            //    var preName = string.Join('.', nameSegments.Take(nameSegments.Length - 2).ToArray());
 
-            //    var polygons = new List<Polygon>();
-            //    foreach (var item in dir.GetFiles(preName + "*"))
-            //    {
-            //        fileNames.RemoveAll(fn => fn.FullName == item.FullName);
-            //        IO.Open(item.FullName, out Polygon p);
-            //        polygons.Add(p);
-            //    }
-            //Debug.WriteLine("Attempting: " + filename);
-            //Presenter.ShowAndHang(polygons.Take(4));
-            //Presenter.ShowAndHang(polygons.Skip(4));
-            //Presenter.ShowAndHang(polygons);
-            var result = polygons.UnionPolygons();
+            Presenter.ShowAndHang(polygonsA);
+            Presenter.ShowAndHang(polygonsB);
+            Presenter.ShowAndHang(new[] { polygonsA, polygonsB }.SelectMany(p=>p));
+            var result = polygonsA.UnionPolygons(polygonsB);
             Presenter.ShowAndHang(result);
-        }
+         }
         public static void JustShowMeThePolygons(DirectoryInfo dir)
         {
             var fileNames = dir.GetFiles("endles*.json").ToList();
