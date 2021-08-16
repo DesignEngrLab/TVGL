@@ -132,7 +132,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
             if (allPolygons.Count > 1)
-                allPolygons = allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
+                allPolygons = UnionPolygonsFromOtherOps(allPolygons, PolygonCollection.PolygonWithHoles);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(allPolygons, pClipper, "Offset", clipTime, tvglTime))
@@ -163,9 +163,9 @@ namespace TVGL.TwoDimensional
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, deltaAngle);
             var outer = new Polygon(outerData.points);
-            //#if PRESENT
-            //            Presenter.ShowAndHang(new[] { polygon, outer });
-            //#endif
+//#if PRESENT
+//            Presenter.ShowAndHang(new[] { polygon, outer });
+//#endif
             var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
@@ -178,7 +178,7 @@ namespace TVGL.TwoDimensional
                 inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative).Where(p => !p.IsPositive));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive && p.Vertices.Count > 2).ToList();
-            return outers.IntersectPolygonsFromOffset(inners).Where(p => p.IsPositive).ToList();
+            return outers.IntersectPolygonsFromOtherOps(inners).Where(p => p.IsPositive).ToList();
         }
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace TVGL.TwoDimensional
         /// <param name="polygonsB">The polygons b.</param>
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        private static List<Polygon> IntersectPolygonsFromOffset(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
+        private static List<Polygon> IntersectPolygonsFromOtherOps(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
             {
@@ -198,18 +198,16 @@ namespace TVGL.TwoDimensional
             }
 
             if (polygonsB is null)
-                return UnionPolygons(polygonsA, outputAsCollectionType);
+                return polygonsA.ToList();
 
             var result = polygonsA.ToList();
             foreach (var polygon in polygonsB.ToList())
             {
                 if (!result.Any()) break;
-                result = result.SelectMany(r => r.Intersect(polygon)).ToList();
+                result = result.SelectMany(r => IntersectFromOtherOps(r, polygon)).ToList();
             }
             return result;
         }
-
-
 
 
         private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle = double.NaN)
@@ -277,7 +275,7 @@ namespace TVGL.TwoDimensional
                 // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
                 // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
                 // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if ((cross * offset / dot).IsNegligible(100 * tolerance))
+                if ((cross * offset / dot).IsNegligible(333 * tolerance))
                 {
                     if (prevUnitNormal.Dot(nextUnitNormal) > 0)
                         // if line is practically straight, and going the same direction, then simply offset it without all the complication below

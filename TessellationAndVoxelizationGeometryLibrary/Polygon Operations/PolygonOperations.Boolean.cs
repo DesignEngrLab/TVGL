@@ -225,6 +225,55 @@ namespace TVGL.TwoDimensional
         /// <param name="outputAsCollectionType">Type of the output as collection.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
+        private static List<Polygon> UnionPolygonsFromOtherOps(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
+        {
+            if (areaSimplificationFraction > 0)
+                polygons = polygons.CleanUpForBooleanOperations(out _);
+
+            var polygonList = polygons.ToList();
+            for (int i = polygonList.Count - 1; i > 0; i--)
+            {
+                for (int j = i - 1; j >= 0; j--)
+                {
+                    var interaction = GetPolygonInteraction(polygonList[i], polygonList[j]);
+                    if (interaction.Relationship == PolygonRelationship.BInsideA
+                        || interaction.Relationship == PolygonRelationship.Equal)
+                    {  // remove polygon B
+                        polygonList.RemoveAt(j);
+                        i--;
+                    }
+                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
+                    {                            // remove polygon A
+                        polygonList.RemoveAt(i);
+                        break; // to stop the inner loop
+                    }
+                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
+                    {
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
+                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
+                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
+                        //if (i == 1 && j == 0)
+                        //Presenter.ShowAndHang(newPolygons);
+                        polygonList.RemoveAt(i);
+                        polygonList.RemoveAt(j);
+                        polygonList.AddRange(newPolygons);
+                        i = polygonList.Count; // to restart the outer loop
+                        break; // to stop the inner loop
+                    }
+                }
+            }
+            return polygonList;
+        }
+
+        /// <summary>
+        /// Returns the list of polygons that are the subshapes of ANY of the provided polygons. Notice this is called UnionPolygons here to distinguish
+        /// it from the LINQ function Union, which is also a valid extension for any IEnumerable collection.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> UnionPolygons(this IEnumerable<Polygon> polygons, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
         {
             if (areaSimplificationFraction > 0)
@@ -481,6 +530,30 @@ Presenter.ShowAndHang(unionedPolygons);
 
         #region Intersect Public Methods
 
+
+        /// <summary>
+        /// Returns the list of polygons that result from the subshapes common to both A and B.
+        /// </summary>
+        /// <param name="polygonA">The polygon a.</param>
+        /// <param name="polygonB">The polygon b.</param>
+        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
+        private static List<Polygon> IntersectFromOtherOps(this Polygon polygonA, Polygon polygonB,
+            PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+        {
+            if (polygonA.Vertices.Count <= 2 || polygonB.Vertices.Count <= 2) return new List<Polygon>();
+            if (areaSimplificationFraction > 0)
+            {
+                polygonA = polygonA.CleanUpForBooleanOperations(out _);
+                if (polygonB != null)
+                    polygonB = polygonB?.CleanUpForBooleanOperations(out _);
+            }
+            if (polygonA.Vertices.Count <= 2 || polygonB.Vertices.Count <= 2) return new List<Polygon>();
+
+            var relationship = GetPolygonInteraction(polygonA, polygonB);
+            return Intersect(polygonA, polygonB, relationship, outputAsCollectionType, tolerance);
+        }
         /// <summary>
         /// Returns the list of polygons that result from the subshapes common to both A and B.
         /// </summary>
