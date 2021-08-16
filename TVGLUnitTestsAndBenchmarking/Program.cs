@@ -40,11 +40,11 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void DebugOffsetCases(DirectoryInfo dir)
         {
-            var polygons = new List<Polygon>();
             var fileNames = dir.GetFiles("offsetFail*.json").ToList();
             var offset = -0.2;
             while (fileNames.Any())
             {
+            var polygons = new List<Polygon>();
                 var filename = fileNames[0].Name;
                 //var filename = fileNames[r.Next(fileNames.Count)].Name;
                 var nameSegments = filename.Split('.');
@@ -58,7 +58,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 if (polygons.All(p => p == null)) continue;
                 Debug.WriteLine("Attempting: " + filename);
-                //Presenter.ShowAndHang(polygons);
+                Presenter.ShowAndHang(polygons);
                 var result = polygons.OffsetMiter(offset, -0.002);
                 //Presenter.ShowAndHang(result);
             }

@@ -202,16 +202,9 @@ namespace TVGL.TwoDimensional
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                 }
 //#if PRESENT
-//                    Presenter.ShowAndHang(newPath,closeShape:false);
+//                Presenter.ShowAndHang(newPath, closeShape: false);
 //#endif
-                
-                //if (newPath.Count >= maxNumPoints)
-                //{
-                //    overMaxPoints = true;
-                //    completed = null;
-                //}
-            //} while (!overMaxPoints && false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
-            } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
+             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
 //#if PRESENT
 //            Presenter.ShowAndHang(newPath);
 //#endif

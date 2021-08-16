@@ -38,6 +38,9 @@ namespace TVGL.TwoDimensional
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
+//#if PRESENT
+//                Presenter.ShowAndHang(polyCoordinates);
+//#endif
                 if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;

@@ -131,7 +131,7 @@ namespace TVGL.TwoDimensional
             var allPolygons = new List<Polygon>();
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
-            if (allPolygons.Count > 1)
+            if (allPolygons.Count > 1 && offset > 0)
                 allPolygons = UnionPolygonsFromOtherOps(allPolygons, PolygonCollection.PolygonWithHoles);
             sw.Stop();
             var tvglTime = sw.Elapsed;
@@ -275,7 +275,7 @@ namespace TVGL.TwoDimensional
                 // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
                 // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
                 // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if ((cross * offset / dot).IsNegligible(333 * tolerance))
+                if ((cross * offset / dot).IsNegligible(3333 * tolerance))
                 {
                     if (prevUnitNormal.Dot(nextUnitNormal) > 0)
                         // if line is practically straight, and going the same direction, then simply offset it without all the complication below
