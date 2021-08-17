@@ -50,17 +50,19 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreateShallowPolygonTrees(this IEnumerable<Polygon> polygons, bool vertexNegPosOrderIsGuaranteedCorrect,
-            bool alreadyOrderedInIncreasingArea = false)
+            bool alreadyOrderedInIncreasingArea = false, bool keepStrayHoles = false)
         {
-            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, alreadyOrderedInIncreasingArea);
+            var polygonTrees = CreatePolygonTree(polygons, vertexNegPosOrderIsGuaranteedCorrect, alreadyOrderedInIncreasingArea, keepStrayHoles);
 
             var polygonList = new List<Polygon>();
             foreach (var polygon in polygonTrees.SelectMany(p => p.AllPolygons))
                 if (polygon.IsPositive) polygonList.Add(polygon);
 
             foreach (var polygon in polygonList)
+            {
                 foreach (var hole in polygon.InnerPolygons)
                     hole.RemoveAllInnerPolygon();
+            }
             foreach (var strayHole in polygonTrees.Where(p => !p.IsPositive))
                 polygonList.Add(strayHole);
             return polygonList;
@@ -74,7 +76,7 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> CreatePolygonTree(this IEnumerable<Polygon> polygons, bool polygonSignIsCorrect,
-            bool alreadyOrderedInIncreasingArea = false)
+            bool alreadyOrderedInIncreasingArea = false, bool keepStrayHoles = false)
         {
             var branches = new List<Polygon>();
             var orderedPolygons = alreadyOrderedInIncreasingArea ? polygons : polygons.OrderBy(p => Math.Abs(p.Area));
@@ -92,6 +94,8 @@ namespace TVGL.TwoDimensional
                 }
                 branches.Add(polygon);
             }
+            if (!keepStrayHoles)
+                branches.RemoveAll(b => !b.IsPositive);
             foreach (var branch in branches)
             {
                 if (polygonSignIsCorrect) RecurseDownPolygonTreeCleanUp(branch);

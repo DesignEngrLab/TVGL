@@ -25,7 +25,7 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
-            List<bool> knownWrongPoints)
+            List<bool> knownWrongPoints, bool shapeIsOnlyNegative)
         {
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
@@ -38,21 +38,20 @@ namespace TVGL.TwoDimensional
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
-//#if PRESENT
-//                Presenter.ShowAndHang(polyCoordinates);
-//#endif
+                //#if PRESENT
+                //                Presenter.ShowAndHang(polyCoordinates);
+                //#endif
                 if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
-                                                //in conjunction with the area of the sign. Only if the product is negative - do we do something 
-                {
+                {                                //in conjunction with the area of the sign. Only if the product is negative - do we do something 
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
-            return newPolygons.CreateShallowPolygonTrees(true);
+            return newPolygons.CreateShallowPolygonTrees(true, false, shapeIsOnlyNegative);
         }
 
         protected override bool ValidStartingIntersection(SegmentIntersection intersectionData, out PolygonEdge currentEdge, out bool startAgain)

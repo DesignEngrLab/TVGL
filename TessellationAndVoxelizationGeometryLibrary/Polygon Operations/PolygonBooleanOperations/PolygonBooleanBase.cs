@@ -167,9 +167,6 @@ namespace TVGL.TwoDimensional
             out bool includesWrongPoints, List<bool> knownWrongPoints = null)
 
         {
-            //var maxNumPoints = knownWrongPoints != null ? knownWrongPoints.Count + intersections.Count : int.MaxValue;
-            //bool overMaxPoints = false;
-            //Debug.WriteLine("starting MakePolygonThroughIntersections in" + this.GetType().ToString());
             bool? completed = null;
             includesWrongPoints = false;
             var newPath = new List<Vector2>();
@@ -204,7 +201,7 @@ namespace TVGL.TwoDimensional
 //#if PRESENT
 //                Presenter.ShowAndHang(newPath, closeShape: false);
 //#endif
-             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
+            } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
 //#if PRESENT
 //            Presenter.ShowAndHang(newPath);
 //#endif
@@ -242,49 +239,61 @@ namespace TVGL.TwoDimensional
             {
                 var candidateIntersect = allIntersections[index];
                 if (formerIntersect == candidateIntersect) continue;
-                var currentEdgeIsFromPolygonA = candidateIntersect.EdgeA == currentEdge;
+                var currentEdgeIsEdgeA = candidateIntersect.EdgeA == currentEdge;
                 double distance;
-                // only calculate the distance if 
                 if (formerIntersect == null && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
-                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsFromPolygonA) ||
-                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsFromPolygonA)))
+                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsEdgeA) ||
+                    (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && !currentEdgeIsEdgeA)))
                     distance = 0.0;
                 else
-                // this is always true?
-                //if (formerIntersect != null || candidateIntersect.WhereIntersection == WhereIsIntersection.Intermediate ||
-                //     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && !currentEdgeIsFromPolygonA) ||
-                //     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfB && currentEdgeIsFromPolygonA))
                 {
                     distance = currentEdge.Vector.Dot(candidateIntersect.IntersectCoordinates - datum);
-                    if (distance < 0
-                        )
-                        // this is now handled below in "else if (minDistanceToIntersection == distance)"
-                        //|| (distance.IsNegligible() &&
-                        //((candidateIntersect.VisitedA && currentEdgeIsFromPolygonA)
-                        //|| (candidateIntersect.VisitedB && !currentEdgeIsFromPolygonA))))
-                        continue;
+                    if (!distance.IsPositiveNonNegligible()) continue;
                 }
-                //else continue;
-                if (minDistanceToIntersection > distance)
+
+                if (distance.IsLessThanNonNegligible(minDistanceToIntersection))
                 {
                     minDistanceToIntersection = distance;
                     bestIntersection = candidateIntersect;
                 }
-                else if (minDistanceToIntersection == distance)
-                {   // this is super rare and likely only to happen in RemoveSelfIntersections
+                else if (distance.IsPracticallySame(minDistanceToIntersection))
+                {   // this is super rare but does occasionally happen - especially from offsetting
                     // basically we are going to choose the line that makes the sharpest (smallest) left turn (convex turn)
                     // into the polygon
-                    var bestEdge = bestIntersection.EdgeA == currentEdge ? bestIntersection.EdgeB : bestIntersection.EdgeA;
-                    var newCandidateEdge = candidateIntersect.EdgeA == currentEdge ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
-                    var bestAngle = currentEdge.Vector.SmallerAngleBetweenVectors(bestEdge.Vector);
-                    var newCandidateAngle = currentEdge.Vector.SmallerAngleBetweenVectors(newCandidateEdge.Vector);
-                    if (newCandidateAngle < bestAngle) bestIntersection = candidateIntersect;
-                    if (newCandidateAngle == bestAngle)
+                    var bestEdgeisEdgeA = bestIntersection.EdgeA == currentEdge;
+                    var bestEdge = bestEdgeisEdgeA ? bestIntersection.EdgeB : bestIntersection.EdgeA;
+                    var newCandidateEdge = currentEdgeIsEdgeA ? candidateIntersect.EdgeB : candidateIntersect.EdgeA;
+                    var bestAngle = Math.PI - bestEdge.Vector.AngleCCWBetweenVectorAAndDatum(currentEdge.Vector);
+                    var newCandidateAngle = Math.PI - newCandidateEdge.Vector.AngleCCWBetweenVectorAAndDatum(currentEdge.Vector);
+                    if (newCandidateAngle.IsLessThanNonNegligible(bestAngle))
+                        bestIntersection = candidateIntersect;
+                    if (newCandidateAngle.IsPracticallySame(bestAngle))
                     {   // really?! if you are here than not only are there two segments that pass through currentEdge at the same
-                        // point, but they do so at the same angle! So, we are going to choose the one that is shorter
-                        var bestRemainingLength = (bestEdge.ToPoint.Coordinates - bestIntersection.IntersectCoordinates).LengthSquared();
-                        var newCandRemainingLength = (newCandidateEdge.ToPoint.Coordinates - candidateIntersect.IntersectCoordinates).LengthSquared();
-                        if (newCandRemainingLength < bestRemainingLength) bestIntersection = candidateIntersect;
+                        // point, but they do so at the same angle! This happens in offsetting when a big flat edge with a circle pushed into it
+                        // is offset inwards. First go with the intersection that hasn't been visited as the visited one will nullify the polygon                        
+                        if (((candidateIntersect.VisitedA && currentEdgeIsEdgeA) || (candidateIntersect.VisitedB && !currentEdgeIsEdgeA))
+                            && !((bestIntersection.VisitedA && bestEdgeisEdgeA) || (bestIntersection.VisitedB && !bestEdgeisEdgeA)))
+                            continue;
+                        else if (!((candidateIntersect.VisitedA && currentEdgeIsEdgeA) || (candidateIntersect.VisitedB && !currentEdgeIsEdgeA))
+                             && ((bestIntersection.VisitedA && bestEdgeisEdgeA) || (bestIntersection.VisitedB && !bestEdgeisEdgeA)))
+                            bestIntersection = candidateIntersect;
+                        else
+                        {
+                            // otherwise, we have to look forward to what happens at the next intersection
+                            //So, we are going to choose the one that is shorter and turns inwward
+                            var bestNextSide = bestEdge.ToPoint.Coordinates - bestIntersection.IntersectCoordinates;
+                            var bestNextNextSide = bestEdge.ToPoint.StartLine.ToPoint.Coordinates - bestEdge.ToPoint.Coordinates;
+                            var candNextSide = newCandidateEdge.ToPoint.Coordinates - candidateIntersect.IntersectCoordinates;
+                            var candNextNextSide = newCandidateEdge.ToPoint.StartLine.ToPoint.Coordinates - newCandidateEdge.ToPoint.Coordinates;
+                            var bestNextLength = bestNextSide.LengthSquared();
+                            var candNextLength = candNextSide.LengthSquared();
+                            var bestNextCornerIsConvex = bestNextSide.Cross(bestNextNextSide) > 0;
+                            var candNextCornerIsConvex = candNextSide.Cross(candNextNextSide) > 0;
+
+                            if ((candNextLength < bestNextLength && candNextCornerIsConvex)
+                                || (bestNextLength < candNextLength && !bestNextCornerIsConvex))
+                                bestIntersection = candidateIntersect;
+                        }
                     }
                 }
             }

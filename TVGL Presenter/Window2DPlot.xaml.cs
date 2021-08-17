@@ -242,6 +242,7 @@ namespace TVGL
         /// <param name="marker">The marker.</param>
         private void AddLineSeriesToModel(IList<double[]> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
         {
+            if (!points.Any()) return;
             var series = new LineSeries { MarkerType = marker };
 
             //Add color to series if applicable

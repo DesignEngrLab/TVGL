@@ -127,11 +127,9 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 polygonA = polygonA.CleanUpForBooleanOperations(out _);
-                //polygonA = polygonA.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 if (polygonB != null)
                 {
                     polygonB = polygonB?.CleanUpForBooleanOperations(out _);
-                    //polygonB = polygonB?.SimplifyByAreaChangeToNewPolygon(areaSimplificationFraction);
                 }
             }
 #if CLIPPER
@@ -214,7 +212,7 @@ namespace TVGL.TwoDimensional
             if (polygonInteraction.Relationship == PolygonRelationship.AInsideB)
                 return new List<Polygon> { polygonB.Copy(true, false) };
             polygonUnion ??= new PolygonUnion();
-            return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance);
+            return polygonUnion.Run(polygonA, polygonB, polygonInteraction, outputAsCollectionType, tolerance).Where(p => p.IsPositive).ToList();
         }
 
         /// <summary>
@@ -278,7 +276,6 @@ namespace TVGL.TwoDimensional
         {
             if (areaSimplificationFraction > 0)
                 polygons = polygons.CleanUpForBooleanOperations(out _);
-            //polygons = polygons.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
 #if CLIPPER
             return BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygons);
             sw.Restart();
@@ -295,40 +292,7 @@ namespace TVGL.TwoDimensional
             }
             return pClipper;
 #elif !COMPARE
-            var polygonList = polygons.ToList();
-            for (int i = polygonList.Count - 1; i > 0; i--)
-            {
-                for (int j = i - 1; j >= 0; j--)
-                {
-                    var interaction = GetPolygonInteraction(polygonList[i], polygonList[j]);
-                    if (interaction.Relationship == PolygonRelationship.BInsideA
-                        || interaction.Relationship == PolygonRelationship.Equal)
-                    {  // remove polygon B
-                        polygonList.RemoveAt(j);
-                        i--;
-                    }
-                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
-                    {                            // remove polygon A
-                        polygonList.RemoveAt(i);
-                        break; // to stop the inner loop
-                    }
-                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
-                    {
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
-                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
-                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(newPolygons);
-                        polygonList.RemoveAt(i);
-                        polygonList.RemoveAt(j);
-                        polygonList.AddRange(newPolygons);
-                        i = polygonList.Count; // to restart the outer loop
-                        break; // to stop the inner loop
-                    }
-                }
-            }
-            return polygonList;
+            return UnionPolygonsFromOtherOps(polygons, outputAsCollectionType);
 #else
             sw.Restart();
             var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygons);
@@ -336,39 +300,7 @@ namespace TVGL.TwoDimensional
             var clipTime = sw.Elapsed;
 
             sw.Restart();
-            var polygonList = polygons.ToList();
-            for (int i = polygonList.Count - 1; i > 0; i--)
-            {
-                for (int j = i - 1; j >= 0; j--)
-                {
-                    var interaction = GetPolygonInteraction(polygonList[i], polygonList[j]);
-                    if (interaction.Relationship == PolygonRelationship.BInsideA
-                        || interaction.Relationship == PolygonRelationship.Equal)
-                    {  // remove polygon B
-                        polygonList.RemoveAt(j);
-                        i--;
-                    }
-                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
-                    {                            // remove polygon A
-                        polygonList.RemoveAt(i);
-                        break; // to stop the inner loop
-                    }
-                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
-                    {
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
-                        var newPolygons = Union(polygonList[i], polygonList[j], interaction, outputAsCollectionType);
-                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(newPolygons);
-                        polygonList.RemoveAt(i);
-                        polygonList.RemoveAt(j);
-                        polygonList.AddRange(newPolygons);
-                        i = polygonList.Count; // to restart the outer loop
-                        break; // to stop the inner loop
-                    }
-                }
-            }
+            var polygonList = UnionPolygonsFromOtherOps(polygons, outputAsCollectionType);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(polygonList, pClipper, "UnionLists", clipTime, tvglTime))
@@ -422,86 +354,21 @@ namespace TVGL.TwoDimensional
             }
             return pClipper;
 #elif !COMPARE
-            if (polygonsB is null)
-                return UnionPolygons(polygonsA, outputAsCollectionType);
-            var unionedPolygons = polygonsA.ToList();
-            var polygonBList = polygonsB.ToList();
-            for (int i = unionedPolygons.Count - 1; i >= 0; i--)
-            {
-                for (int j = polygonBList.Count - 1; j >= 0; j--)
-                {
-                    var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j]);
-                    if (interaction.Relationship == PolygonRelationship.BInsideA
-                        || interaction.Relationship == PolygonRelationship.Equal)
-                    {  // remove polygon B
-                        polygonBList.RemoveAt(j);
-                    }
-                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
-                    {                            // remove polygon A
-                        unionedPolygons[i] = polygonBList[j];
-                        polygonBList.RemoveAt(j);
-                        break; // to stop the inner loop
-                    }
-                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
-                    {
-                        var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
-                        unionedPolygons.RemoveAt(i);
-                        polygonBList.RemoveAt(j);
-                        unionedPolygons.AddRange(newPolygons);
-#if PRESENT
-Presenter.ShowAndHang(unionedPolygons);
-#endif
-                        i = unionedPolygons.Count; // to restart the outer loop
-                        break; // to stop the inner loop
-                    }
-                }
-            }
-            return UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType);
+            var pTVGL = polygonsA.ToList();
+            if (polygonsB is null) return pTVGL;
+            pTVGL.AddRange(polygonsB);
+            return UnionPolygonsFromOtherOps(pTVGL, outputAsCollectionType);
 #else
-            if (polygonsB is null)
-                return UnionPolygons(polygonsA, outputAsCollectionType);
-            var unionedPolygons = polygonsA.ToList();
-            var polygonBList = polygonsB.ToList();
             sw.Restart();
             var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Union, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
 
             sw.Restart();
-            List<Polygon> pTVGL = null;
-            for (int i = unionedPolygons.Count - 1; i >= 0; i--)
-            {
-                for (int j = polygonBList.Count - 1; j >= 0; j--)
-                {
-                    var interaction = GetPolygonInteraction(unionedPolygons[i], polygonBList[j]);
-                    if (interaction.Relationship == PolygonRelationship.BInsideA
-                        || interaction.Relationship == PolygonRelationship.Equal)
-                    {  // remove polygon B
-                        polygonBList.RemoveAt(j);
-                    }
-                    else if (interaction.Relationship == PolygonRelationship.AInsideB)
-                    {                            // remove polygon A
-                        unionedPolygons[i] = polygonBList[j];
-                        polygonBList.RemoveAt(j);
-                        break; // to stop the inner loop
-                    }
-                    else if (interaction.CoincidentEdges || interaction.Relationship == PolygonRelationship.Intersection)
-                    {
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(new[] { polygonList[i], polygonList[j] });
-                        var newPolygons = Union(unionedPolygons[i], polygonBList[j], interaction, outputAsCollectionType, tolerance);
-                        //Debug.WriteLine("i = {0}, j = {1}", i, j);
-                        //if (i == 1 && j == 0)
-                        //Presenter.ShowAndHang(newPolygons);
-                        unionedPolygons.RemoveAt(i);
-                        polygonBList.RemoveAt(j);
-                        unionedPolygons.AddRange(newPolygons);
-                        i = unionedPolygons.Count; // to restart the outer loop
-                        break; // to stop the inner loop
-                    }
-                }
-            }
-            pTVGL = UnionPolygons(unionedPolygons.Where(p => p.IsPositive), outputAsCollectionType);
+            var pTVGL = polygonsA.ToList();
+            if (polygonsB is null) return pTVGL;
+            pTVGL.AddRange(polygonsB);
+            pTVGL = UnionPolygonsFromOtherOps(pTVGL, outputAsCollectionType);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "UnionTwoLists", clipTime, tvglTime))
@@ -511,7 +378,7 @@ Presenter.ShowAndHang(unionedPolygons);
                 all.AddRange(polygonsB);
                 Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(unionedPolygons);
+                Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
@@ -1092,7 +959,7 @@ Presenter.ShowAndHang(unionedPolygons);
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>System.Collections.Generic.List&lt;TVGL.TwoDimensional.Polygon&gt;.</returns>
         public static List<Polygon> ExclusiveOr(this Polygon polygonA, Polygon polygonB, PolygonInteractionRecord interactionRecord,
-       PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
+        PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles, double tolerance = double.NaN)
         {
             if (interactionRecord.IntersectionWillBeEmpty())
                 return new List<Polygon> { polygonA.Copy(true, false), polygonB.Copy(true, false) };
@@ -1129,16 +996,15 @@ Presenter.ShowAndHang(unionedPolygons);
         /// <param name="resultType">Type of the result.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="knownWrongPoints">The known wrong points.</param>
-        /// <param name="maxNumberOfPolygons">The maximum number of polygons.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
-            List<bool> knownWrongPoints = null, int maxNumberOfPolygons = int.MaxValue)
+            List<bool> knownWrongPoints = null, bool shapeIsOnlyNegative = false)
         {
             var intersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType, knownWrongPoints);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, knownWrongPoints, shapeIsOnlyNegative);
 
         }
 

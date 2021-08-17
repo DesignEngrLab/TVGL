@@ -175,7 +175,10 @@ namespace TVGL.TwoDimensional
                 if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
                 var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, deltaAngle);
                 var newHoles = new Polygon(newHoleData.points);
-                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative).Where(p => !p.IsPositive));
+//#if PRESENT
+//                Presenter.ShowAndHang(new[] { polygon, newHoles });
+//#endif
+                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, newHoleData.knownWrongPoints, true));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive && p.Vertices.Count > 2).ToList();
             return outers.IntersectPolygonsFromOtherOps(inners).Where(p => p.IsPositive).ToList();
@@ -275,7 +278,7 @@ namespace TVGL.TwoDimensional
                 // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
                 // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
                 // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if ((cross * offset / dot).IsNegligible(3333 * tolerance))
+                if ((cross * offset / dot).IsNegligible(10000 * tolerance))
                 {
                     if (prevUnitNormal.Dot(nextUnitNormal) > 0)
                         // if line is practically straight, and going the same direction, then simply offset it without all the complication below
