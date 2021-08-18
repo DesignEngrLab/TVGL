@@ -630,7 +630,41 @@ namespace TVGL
                 return solids;
             }
             foreach (var seperateSolid in seperateSolids)
-                solids.Add(new TessellatedSolid(seperateSolid, true, false));
+            {
+                //Copy the non-smooth edges over to the seperate solid
+                HashSet<(Vector3, Vector3)> nonSmoothEdgesForSolid = null;
+                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
+                {
+                    //Get all the edges in order, avoiding duplicates by using a hashset.
+                    var edges = new HashSet<Edge>();
+                    foreach (var face in seperateSolid)
+                        foreach (var edge in face.Edges) 
+                            edges.Add(edge);
+    
+                    nonSmoothEdgesForSolid = new HashSet<(Vector3, Vector3)>();
+                    foreach(var edge in edges)
+                    {
+                        if (ts.NonsmoothEdges.Contains(edge))
+                            nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates));
+                    }
+                }
+
+                var newSolid = new TessellatedSolid(seperateSolid, true, false);
+
+                if (nonSmoothEdgesForSolid != null)
+                {
+                    newSolid.NonsmoothEdges = new HashSet<Edge>();
+                    foreach (var edge in newSolid.Edges)
+                    {
+                        if (nonSmoothEdgesForSolid.Contains((edge.From.Coordinates, edge.To.Coordinates))
+                            || nonSmoothEdgesForSolid.Contains((edge.To.Coordinates, edge.From.Coordinates)))
+                            newSolid.NonsmoothEdges.Add(edge);
+                    }
+                }
+
+                solids.Add(newSolid);
+            }
+           
             return solids;
         }
 

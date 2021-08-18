@@ -98,7 +98,8 @@ namespace TVGL.IOFunctions
             // Try to read in BINARY format
             if (!TryRead(s, filename, out var objData))
                 Message.output("Unable to read in OBJ file called {0}", filename, 1);
-            var results = new TessellatedSolid[objData.Count];
+            var results = new List<TessellatedSolid>();
+            var j = 0;
             for (int i = 0; i < objData.Count; i++)
             {
                 var objFileData = objData[i];
@@ -107,12 +108,14 @@ namespace TVGL.IOFunctions
                                InferUnitsFromComments(objFileData.Comments), objFileData.Name, filename, objFileData.Comments,
                                objFileData.Language);
                 CreateRegionsFromPolylineAndFaceGroups(objFileData, ts);
-                results[i] = ts;
+                var multipleSolids = ts.GetMultipleSolids();
+                foreach(var solid in multipleSolids)
+                    results.Add(solid);
             }
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
                 (DateTime.Now - now).TotalSeconds + " seconds.", 4);
-            return results;
+            return results.ToArray();
         }
 
         private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts)
