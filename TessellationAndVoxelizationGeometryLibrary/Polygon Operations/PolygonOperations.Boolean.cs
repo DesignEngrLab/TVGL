@@ -527,7 +527,7 @@ namespace TVGL.TwoDimensional
             if (areaSimplificationFraction > 0)
             {
                 polygonsA = polygonsA.Select(p=>SimplifyFast(p));
-                polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
+                //polygonsA = polygonsA.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
                 if (polygonsB != null)
                     polygonsB = polygonsB.Select(p => SimplifyFast(p));
                     //polygonsB = polygonsB?.SimplifyByAreaChangeToNewPolygons(areaSimplificationFraction);
