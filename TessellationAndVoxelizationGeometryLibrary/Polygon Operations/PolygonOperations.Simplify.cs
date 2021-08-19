@@ -75,7 +75,8 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons)
             {
                 removalsOccurred = removalsOccurred || polygon.SimplifyFast(lengthTolerance, slopeTolerance);
-                result.Add(polygon);
+                if (polygon.Vertices.Count > 2)
+                    result.Add(polygon);
             }
             return result;
         }

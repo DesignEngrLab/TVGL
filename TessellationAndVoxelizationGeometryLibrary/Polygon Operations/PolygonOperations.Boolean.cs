@@ -552,24 +552,17 @@ namespace TVGL.TwoDimensional
 #else
             if (polygonsB is null)
                 return UnionPolygons(polygonsA, outputAsCollectionType);
-            var polygonAList = new List<Polygon>(polygonsA);
-            var polygonBList = polygonsB.ToList();
             sw.Restart();
             var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygonsA, polygonsB);
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
 
-            foreach (var polyB in polygonBList)
-            {
-                for (int i = polygonAList.Count - 1; i >= 0; i--)
-                {
-                    var newPolygons = polygonAList[i].Intersect(polyB, outputAsCollectionType);
-                    polygonAList.RemoveAt(i);
-                    foreach (var newPoly in newPolygons)
-                        polygonAList.Insert(i, newPoly);
-                }
-            }
+            var polygonAList = new List<Polygon>(polygonsA);
+            var newPolygons = new List<Polygon>();
+            foreach (var polyB in polygonsB)
+                foreach (var polyA in polygonAList)
+                    newPolygons.AddRange(polyA.Intersect(polyB, outputAsCollectionType));
             //return polygonAList;
             sw.Stop();
             var tvglTime = sw.Elapsed;

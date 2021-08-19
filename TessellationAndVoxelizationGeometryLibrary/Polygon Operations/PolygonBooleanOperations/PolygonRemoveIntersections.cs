@@ -38,9 +38,9 @@ namespace TVGL.TwoDimensional
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
-                //#if PRESENT
-                //                Presenter.ShowAndHang(polyCoordinates);
-                //#endif
+//#if PRESENT
+//                Presenter.ShowAndHang(polyCoordinates);
+//#endif
                 if (includesWrongPoints) continue;
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
@@ -98,10 +98,10 @@ namespace TVGL.TwoDimensional
                 intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
                 intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
                 return true;
-            //if (intersectionData.Relationship == SegmentRelationship.AEnclosesB)
-            //    return !currentEdgeIsFromPolygonA;
-            //if (intersectionData.Relationship == SegmentRelationship.BEnclosesA)
-            //    return currentEdgeIsFromPolygonA;
+            if (intersectionData.Relationship == SegmentRelationship.AEnclosesB)
+                return !currentEdgeIsFromPolygonA;
+            if (intersectionData.Relationship == SegmentRelationship.BEnclosesA)
+                return currentEdgeIsFromPolygonA;
             //if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
             return false;
         }
