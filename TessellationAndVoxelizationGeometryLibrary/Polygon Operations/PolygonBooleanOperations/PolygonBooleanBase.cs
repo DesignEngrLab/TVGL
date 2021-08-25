@@ -193,9 +193,9 @@ namespace TVGL.TwoDimensional
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                 }
-#if PRESENT
-                Presenter.ShowAndHang(newPath, closeShape: false);
-#endif
+//#if PRESENT
+//                Presenter.ShowAndHang(newPath, closeShape: false);
+//#endif
 
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
@@ -224,7 +224,10 @@ namespace TVGL.TwoDimensional
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
             SegmentIntersection bestIntersection = null;
             if (intersectionIndices == null)
+            {
+                formerIntersect = null;
                 return false;
+            }
             var minDistanceToIntersection = double.PositiveInfinity;
             var datum = formerIntersect != null ? formerIntersect.IntersectCoordinates : currentEdge.FromPoint.Coordinates;
             foreach (var index in intersectionIndices)
@@ -296,7 +299,11 @@ namespace TVGL.TwoDimensional
                 formerIntersect = bestIntersection;
                 return true;
             }
-            else return false;
+            else
+            {
+                formerIntersect = null;
+                return false;
+            }
         }
 
         protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative);
