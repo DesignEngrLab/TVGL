@@ -4,6 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL.Enclosure_Operations;
@@ -163,9 +164,9 @@ namespace TVGL.TwoDimensional
             var longerLength = Math.Max(bb.Length1, bb.Length2) + 2 * Math.Max(0, offset);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outer = CreateOffsetPoints(polygon, offset, notMiter, longerLengthSquared, deltaAngle, out var wrongPoints);
-//#if PRESENT
-//            Presenter.ShowAndHang(new[] { polygon, outer });
-//#endif
+#if PRESENT
+            Presenter.ShowAndHang(new[] { polygon, outer });
+#endif
             var intersections = outer.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             var interaction = new PolygonInteractionRecord(outer, null);
             interaction.IntersectionData.AddRange(intersections);
@@ -190,7 +191,9 @@ namespace TVGL.TwoDimensional
                 //#if PRESENT
                 //                Presenter.ShowAndHang(new[] { polygon, newHoles });
                 //#endif
-                inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true, false));
+                if (intersections.Count == 0)
+                    inners.Add(newHole);
+                else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true, false));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive && p.Vertices.Count > 2).ToList();
             return outers.IntersectPolygonsFromOtherOps(inners).Where(p => p.IsPositive).ToList();
@@ -246,7 +249,7 @@ namespace TVGL.TwoDimensional
                         if (!intersectionData.VisitedA && currentEdge == intersectionData.EdgeA)
                         {
                             intersectionData.VisitedA = true;
-                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData,true, true))
+                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData, true, true))
                                 currentEdge = intersectionData.EdgeB;
                         }
                         else if (!intersectionData.VisitedB)
@@ -354,12 +357,12 @@ namespace TVGL.TwoDimensional
                 var point = nextLine.FromPoint.Coordinates;
                 var cross = prevLine.Vector.Cross(nextLine.Vector);
                 var dot = prevLine.Vector.Dot(nextLine.Vector);
-                //var angle = Math.Atan2(cross, dot);
-                // cross/dot is the tan(angle). both dot and cross are quicker than square-root or trigonometric functions
-                // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
-                // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
-                // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if (dot > 0 && offsetSquared * (1 - prevLineLengthReciprocal * nextLineLengthReciprocal * dot) < minEdgeLengthSqd)
+
+                // with the information found thus far, we can determine whether or not to put down one point or two.
+                // using law of cosines, we can find the distance between the two points that would result from offsetting lines at
+                // the current point. h^2 = 2*d^2*(1-cos(theta).   Instead of solving for cos(theta), we can use the dot product
+                // and the line-length-reciprocals. 
+                if (dot > 0 && 2 * offsetSquared * (1 - prevLineLengthReciprocal * nextLineLengthReciprocal * dot) < minEdgeLengthSqd)
                     path.Add(point + offset * prevUnitNormal);
                 // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
                 // let's start with the roundCorners
@@ -427,6 +430,7 @@ namespace TVGL.TwoDimensional
                     path.Add(point + offset * nextUnitNormal);
                 }
                 prevLine = nextLine;
+                prevLineLengthReciprocal = nextLineLengthReciprocal;
                 prevUnitNormal = nextUnitNormal;
                 //#if PRESENT
                 //                Presenter.ShowAndHang(new[] { polygon, new Polygon(path) });
@@ -434,30 +438,37 @@ namespace TVGL.TwoDimensional
             }
             #region SimplifyFast but with updates to indicesOfWrongPoints
             var forwardPoint = path[0];
-            var currentPoint = path[^1];
-            var forwardVector = forwardPoint - currentPoint;
             for (int i = path.Count - 1; i >= 0; i--)
             {
-                var backwardPoint = i == 0 ? path[^1] : path[i - 1];
-                var backVector = currentPoint - backwardPoint;
-                var cross = backVector.Cross(forwardVector);
-                if (cross.IsNegligible(minEdgeLengthSqd) || backVector.LengthSquared() < minEdgeLengthSqd)
+                var currentPoint = path[i];
+                var line = forwardPoint - currentPoint;
+                if (line.LengthSquared() < minEdgeLengthSqd) // || cross.IsNegligible(minEdgeLengthSqd) )
                 {
-                    path.RemoveAt(i);
-                    forwardVector = forwardPoint - backwardPoint;
-                    currentPoint = backwardPoint;
                     var positionInWrongPoints = indicesOfWrongPoints.Count - 1;
                     while (positionInWrongPoints >= 0 && i < indicesOfWrongPoints[positionInWrongPoints])
                         indicesOfWrongPoints[positionInWrongPoints--]--;
                     if (positionInWrongPoints >= 0 && i == indicesOfWrongPoints[positionInWrongPoints])
                         indicesOfWrongPoints.RemoveAt(positionInWrongPoints);
+                    path.RemoveAt(i);
+                    if (path.Count == i) forwardPoint = path[0];
+                    else forwardPoint = path[i];
                 }
                 else
-                {
-                    forwardVector = backVector;
                     forwardPoint = currentPoint;
-                    currentPoint = backwardPoint;
+            }
+            var nextIndex = path.Count;
+            for (int i = indicesOfWrongPoints.Count - 1; i > 0; i--)
+            {
+                var currentIndex = indicesOfWrongPoints[i];
+                if (currentIndex - indicesOfWrongPoints[i - 1] > 1 &&
+                    nextIndex - currentIndex > 1)
+                {
+                    indicesOfWrongPoints.RemoveAt(i);
+                    //Debug.WriteLine("*** Lone wrong point!! ***");
+                    if (indicesOfWrongPoints.Count == i) nextIndex = path.Count;
+                    else nextIndex = indicesOfWrongPoints[i];
                 }
+                else nextIndex = currentIndex;
             }
 
             #endregion
