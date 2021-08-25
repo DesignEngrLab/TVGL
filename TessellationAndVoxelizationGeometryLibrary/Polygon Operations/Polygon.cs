@@ -495,10 +495,10 @@ namespace TVGL.TwoDimensional
                 tolerance *= 10;
             }
             _vertices = new List<Vertex2D>();
-            var prevX = Math.Round(_path[0].X, NumSigDigits);
-            var prevY = Math.Round(_path[0].Y, NumSigDigits);
+            var prevX = Math.Round(_path[^1].X, NumSigDigits);
+            var prevY = Math.Round(_path[^1].Y, NumSigDigits);
 
-            for (int i = _path.Count - 1; i >= 0; i--)
+            for (int i = 0; i < _path.Count; i++)
             {
                 var x = Math.Round(_path[i].X, NumSigDigits);
                 var y = Math.Round(_path[i].Y, NumSigDigits);
@@ -511,10 +511,11 @@ namespace TVGL.TwoDimensional
                     prevY = y;
                 }
                 else
-
+                {
                     _path.RemoveAt(i);
+                    i--;
+                }
             }
-            _vertices.Reverse();
         }
 
         public Polygon(IEnumerable<IList<Vector2>> loops) : this(loops.First())

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TVGL.Enclosure_Operations;
 using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
@@ -159,29 +160,105 @@ namespace TVGL.TwoDimensional
             // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
             if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
                 return new List<Polygon>();
-            var longerLength = Math.Max(bb.Length1, bb.Length2);
+            var longerLength = Math.Max(bb.Length1, bb.Length2) + 2 * Math.Max(0, offset);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
-            var outerData = MainOffsetRoutine(polygon, offset, notMiter, longerLengthSquared, deltaAngle);
-            var outer = new Polygon(outerData.points);
+            var outer = CreateOffsetPoints(polygon, offset, notMiter, longerLengthSquared, deltaAngle, out var wrongPoints);
 #if PRESENT
             Presenter.ShowAndHang(new[] { polygon, outer });
 #endif
-            var outers = outer.RemoveSelfIntersections(ResultType.OnlyKeepPositive, outerData.knownWrongPoints);
+            var intersections = outer.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+            var interaction = new PolygonInteractionRecord(outer, null);
+            interaction.IntersectionData.AddRange(intersections);
+            var intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count);
+            polygonRemoveIntersections ??= new PolygonRemoveIntersections();
+            AssignVisitedToWrongPolygons(outer, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections);
+
+            var outers = (intersections.Count == 0) ? new List<Polygon> { outer }
+            : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, false, false);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
                 if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var newHoleData = MainOffsetRoutine(hole, offset, notMiter, longerLengthSquared, deltaAngle);
-                var newHoles = new Polygon(newHoleData.points);
-//#if PRESENT
-//                Presenter.ShowAndHang(new[] { polygon, newHoles });
-//#endif
-                inners.AddRange(newHoles.RemoveSelfIntersections(ResultType.OnlyKeepNegative, newHoleData.knownWrongPoints, true));
+                var newHole = CreateOffsetPoints(hole, offset, notMiter, longerLengthSquared, deltaAngle, out wrongPoints);
+                intersections = newHole.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+                interaction.IntersectionData.Clear();
+                interaction.IntersectionData.AddRange(intersections);
+                intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count);
+                AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections);
+                //#if PRESENT
+                //                Presenter.ShowAndHang(new[] { polygon, newHoles });
+                //#endif
+                inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true, false));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive && p.Vertices.Count > 2).ToList();
             return outers.IntersectPolygonsFromOtherOps(inners).Where(p => p.IsPositive).ToList();
+        }
+
+        private static void AssignVisitedToWrongPolygons(Polygon outer, List<SegmentIntersection> intersections, List<int>[] intersectionLookup, List<int> wrongPointIndices,
+            PolygonRemoveIntersections polygonRemoveIntersections)
+        {
+            var wrongPoints = wrongPointIndices.Select(index => outer.Vertices[index]).ToHashSet();
+            while (wrongPoints.Any())
+            {
+                var wrongPoint = wrongPoints.First();
+                var endPoint = wrongPoint;
+                wrongPoints.Remove(endPoint);
+                PolygonEdge currentEdge = null;
+                SegmentIntersection intersectionData = null;
+                do
+                {
+                    if (endPoint != null)
+                        currentEdge = endPoint.StartLine;
+                    var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
+                    if (intersectionIndices == null)
+                    {
+                        endPoint = currentEdge.ToPoint;
+                        wrongPoints.Remove(endPoint);
+                    }
+                    else
+                    {
+                        var closestDistance = double.PositiveInfinity;
+                        SegmentIntersection closestIntersection = null;
+                        var datum = intersectionData != null ? intersectionData.IntersectCoordinates : endPoint.Coordinates;
+                        foreach (var interIndex in intersectionIndices)
+                        {
+                            var inter = intersections[interIndex];
+                            if (inter == intersectionData) continue;
+                            var distance = currentEdge.Vector.Dot(inter.IntersectCoordinates - datum);
+                            if (distance < 0) continue;
+                            if (distance < closestDistance)
+                            {
+                                closestDistance = distance;
+                                closestIntersection = inter;
+                            }
+                        }
+                        if (closestIntersection == null)
+                        {
+                            endPoint = currentEdge.ToPoint;
+                            wrongPoints.Remove(endPoint);
+                            intersectionData = null;
+                            continue;
+                        }
+                        intersectionData = closestIntersection;
+                        endPoint = null;
+                        if (!intersectionData.VisitedA && currentEdge == intersectionData.EdgeA)
+                        {
+                            intersectionData.VisitedA = true;
+                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData,true, true))
+                                currentEdge = intersectionData.EdgeB;
+                        }
+                        else if (!intersectionData.VisitedB)
+                        {
+                            intersectionData.VisitedB = true;
+                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData, false, true))
+                                currentEdge = intersectionData.EdgeA;
+                        }
+                        else break;
+                    }
+                } while (wrongPoint != endPoint);
+            }
         }
 
         /// <summary>
@@ -247,21 +324,21 @@ namespace TVGL.TwoDimensional
 #endif
         }
 
-        private static (List<Vector2> points, List<bool> knownWrongPoints) MainOffsetRoutine(Polygon polygon, double offset, bool notMiter,
-            double maxLengthSquared, double deltaAngle = double.NaN)
+        private static Polygon CreateOffsetPoints(Polygon polygon, double offset, bool notMiter, double maxLengthSquared, double deltaAngle,
+            out List<int> indicesOfWrongPoints)
         {
-            var tolerance = Math.Pow(10, -polygon.NumSigDigits);
+            indicesOfWrongPoints = new List<int>();
+            var minEdgeLengthSqd = 1E-6 * maxLengthSquared; // this means that the minimum edge would be one-thousandth of the longer side
+            var offsetSquared = offset * offset;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
             var numPoints = polygon.Edges.Length;
-            int numFalsesToAdd;
             var startingListSize = numPoints;
             var roundCorners = !double.IsNaN(deltaAngle);
             if (roundCorners) startingListSize += (int)(2 * Math.PI / deltaAngle);
             var offsetSign = Math.Sign(offset);
             var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(offsetSign * deltaAngle) : Matrix3x3.Null;
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
-            var pointsList = new List<Vector2>(startingListSize);
-            var wrongPoints = new List<bool>(startingListSize);
+            var path = new List<Vector2>(startingListSize);
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
@@ -282,13 +359,8 @@ namespace TVGL.TwoDimensional
                 // and essentially tan(angle) * offset will be the distance between two points emanating from the polygons edges at
                 // this point. If it is less than the tolerance, then just make one point - it doesn't matter if offset is negative/positive
                 // or if angle is convex or concave. Oh, the 100 is added to account for problems that arise when intersections weren't detected
-                if ((cross * offset / dot).IsNegligible(10000 * tolerance))
-                {
-                    if (prevUnitNormal.Dot(nextUnitNormal) > 0)
-                        // if line is practically straight, and going the same direction, then simply offset it without all the complication below
-                        pointsList.Add(point + offset * prevUnitNormal);
-                    else pointsList.Add(point);
-                }
+                if (dot > 0 && offsetSquared * (1 - prevLineLengthReciprocal * nextLineLengthReciprocal * dot) < minEdgeLengthSqd)
+                    path.Add(point + offset * prevUnitNormal);
                 // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
                 // let's start with the roundCorners
                 else if (cross * offset > 0)
@@ -296,7 +368,7 @@ namespace TVGL.TwoDimensional
                     if (roundCorners)
                     {
                         var firstPoint = point + offset * prevUnitNormal;
-                        pointsList.Add(firstPoint);
+                        path.Add(firstPoint);
                         var lastPoint = point + offset * nextUnitNormal;
                         var firstToLastVector = lastPoint - firstPoint;
                         var firstToLastNormal = new Vector2(firstToLastVector.Y, -firstToLastVector.X);
@@ -309,11 +381,11 @@ namespace TVGL.TwoDimensional
                         // positive side of the line connecting the first and last points. This is defined by the following dot-product
                         while (offsetSign * firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
                         {
-                            pointsList.Add(nextPoint);
+                            path.Add(nextPoint);
                             firstPoint = nextPoint;
                             nextPoint = firstPoint.Transform(transform);
                         }
-                        pointsList.Add(lastPoint);
+                        path.Add(lastPoint);
                     }
                     // if the cross is positive and the offset is positive, then we will need to make extra points for the 
                     // squaredCorners
@@ -323,9 +395,9 @@ namespace TVGL.TwoDimensional
                         var middleUnitVector = (prevUnitNormal + nextUnitNormal).Normalize();
                         var middlePoint = point + offset * middleUnitVector;
                         var middleDir = new Vector2(-middleUnitVector.Y, middleUnitVector.X);
-                        pointsList.Add(MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
+                        path.Add(MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
                             prevLine.Vector, middlePoint, middleDir));
-                        pointsList.Add(MiscFunctions.LineLine2DIntersection(middlePoint, middleDir,
+                        path.Add(MiscFunctions.LineLine2DIntersection(middlePoint, middleDir,
                             point + offset * nextUnitNormal, nextLine.Vector));
                     }
                     // miter and concave connections are done the same way...
@@ -334,7 +406,7 @@ namespace TVGL.TwoDimensional
                         var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
                             prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
                         if (intersection.IsNull())
-                            pointsList.Add(point + offset * prevUnitNormal);
+                            path.Add(point + offset * prevUnitNormal);
                         else
                         {
                             // if the corner is too shape the new point will be placed far away (near infinity). This is to rein it in
@@ -343,50 +415,42 @@ namespace TVGL.TwoDimensional
                             if (vectorToCornerLengthSquared > maxLengthSquared)
                                 intersection =
                                     point + vectorToCorner * Math.Sqrt(maxLengthSquared / vectorToCornerLengthSquared);
-                            pointsList.Add(intersection);
+                            path.Add(intersection);
                         }
                     }
                 }
                 else
                 {
-                    numFalsesToAdd = pointsList.Count - wrongPoints.Count;
-                    for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
-                    wrongPoints.Add(true);
-                    wrongPoints.Add(true);
-                    pointsList.Add(point + offset * prevUnitNormal);
-                    pointsList.Add(point + offset * nextUnitNormal);
+                    indicesOfWrongPoints.Add(path.Count);
+                    path.Add(point + offset * prevUnitNormal);
+                    indicesOfWrongPoints.Add(path.Count);
+                    path.Add(point + offset * nextUnitNormal);
                 }
                 prevLine = nextLine;
                 prevUnitNormal = nextUnitNormal;
+                //#if PRESENT
+                //                Presenter.ShowAndHang(new[] { polygon, new Polygon(path) });
+                //#endif
             }
-            numFalsesToAdd = pointsList.Count - wrongPoints.Count;
-            for (int k = 0; k < numFalsesToAdd; k++) wrongPoints.Add(false);
-
-            var slopeTolerance = Constants.LineSlopeTolerance;
-            var forwardPoint = pointsList[0];
-            var currentPoint = pointsList[^1];
+            #region SimplifyFast but with updates to indicesOfWrongPoints
+            var forwardPoint = path[0];
+            var currentPoint = path[^1];
             var forwardVector = forwardPoint - currentPoint;
-            for (int i = pointsList.Count - 1; i >= 0; i--)
+            for (int i = path.Count - 1; i >= 0; i--)
             {
-                var backwardPoint = i == 0 ? pointsList[^1] : pointsList[i - 1];
+                var backwardPoint = i == 0 ? path[^1] : path[i - 1];
                 var backVector = currentPoint - backwardPoint;
                 var cross = backVector.Cross(forwardVector);
-                if (!wrongPoints[i] && cross.IsNegligible(slopeTolerance))
-                // unlike SimplifyFast, we won't throw out points just because they're close. This further copmlicates
-                // the wrong-point assignment
+                if (cross.IsNegligible(minEdgeLengthSqd) || backVector.LengthSquared() < minEdgeLengthSqd)
                 {
-                    pointsList.RemoveAt(i);
-                    wrongPoints.RemoveAt(i);
+                    path.RemoveAt(i);
                     forwardVector = forwardPoint - backwardPoint;
                     currentPoint = backwardPoint;
-                    // furthermore, removing a point may make a point that was believed to be a wrong point - to become a 
-                    // valid one.
-                    var j = i;
-                    while (j < wrongPoints.Count && wrongPoints[j])
-                        wrongPoints[j++] = false;
-                    j = i - 1;
-                    while (j >= 0 && wrongPoints[j])
-                        wrongPoints[j--] = false;
+                    var positionInWrongPoints = indicesOfWrongPoints.Count - 1;
+                    while (positionInWrongPoints >= 0 && i < indicesOfWrongPoints[positionInWrongPoints])
+                        indicesOfWrongPoints[positionInWrongPoints--]--;
+                    if (positionInWrongPoints >= 0 && i == indicesOfWrongPoints[positionInWrongPoints])
+                        indicesOfWrongPoints.RemoveAt(positionInWrongPoints);
                 }
                 else
                 {
@@ -395,7 +459,9 @@ namespace TVGL.TwoDimensional
                     currentPoint = backwardPoint;
                 }
             }
-            return (pointsList, wrongPoints);
+
+            #endregion
+            return new Polygon(path);
         }
         #endregion
     }

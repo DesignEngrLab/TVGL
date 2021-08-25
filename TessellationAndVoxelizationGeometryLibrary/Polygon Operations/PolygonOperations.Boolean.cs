@@ -991,13 +991,13 @@ namespace TVGL.TwoDimensional
         /// <param name="knownWrongPoints">The known wrong points.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> RemoveSelfIntersections(this Polygon polygon, ResultType resultType,
-            List<bool> knownWrongPoints = null, bool shapeIsOnlyNegative = false)
+            bool shapeIsOnlyNegative = false)
         {
             var intersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType, knownWrongPoints, shapeIsOnlyNegative);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, shapeIsOnlyNegative, false);
 
         }
 

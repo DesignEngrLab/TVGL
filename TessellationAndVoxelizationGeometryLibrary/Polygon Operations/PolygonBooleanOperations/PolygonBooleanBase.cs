@@ -42,10 +42,10 @@ namespace TVGL.TwoDimensional
             var indexIntersectionStart = 0;
             var polygonIndex = 0;
             while (GetNextStartingIntersection(interaction.IntersectionData, out var startingIntersection,
-                out var startEdge, out var switchPolygon, ref indexIntersectionStart))
+                out var startEdge, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
-                    startEdge, switchPolygon, out _).ToList();
+                    startEdge, false).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minimumArea)) continue;
                 newPolygons.Add(new Polygon(polyCoordinates.SimplifyFastDestructiveList(), polygonIndex++));
@@ -107,8 +107,7 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if a new starting intersection was found, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected bool GetNextStartingIntersection(List<SegmentIntersection> intersections,
-            out SegmentIntersection nextStartingIntersection, out PolygonEdge currentEdge, out bool switchPolygon,
-            ref int indexIntersectionStart)
+            out SegmentIntersection nextStartingIntersection, out PolygonEdge currentEdge, ref int indexIntersectionStart)
         {
             if (intersections != null && intersections.Count > 0)
             {
@@ -119,13 +118,11 @@ namespace TVGL.TwoDimensional
                     {
                         if (startAgain) indexIntersectionStart = i;
                         else indexIntersectionStart = i + 1;
-                        switchPolygon = SwitchAtThisIntersection(intersectionData, currentEdge == intersectionData.EdgeA);
                         nextStartingIntersection = intersectionData;
                         return true;
                     }
                 }
             }
-            switchPolygon = false;
             currentEdge = null;
             nextStartingIntersection = null;
             return false;
@@ -163,17 +160,16 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
-            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool switchPolygon,
-            out bool includesWrongPoints, List<bool> knownWrongPoints = null)
+            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool shapeIsOnlyNegative)
 
         {
             bool? completed = null;
-            includesWrongPoints = false;
             var newPath = new List<Vector2>();
             var intersectionData = startingIntersection;
             var currentEdge = startingEdge;
             do
             {
+                var switchPolygon = SwitchAtThisIntersection(intersectionData, intersectionData.EdgeA == currentEdge, shapeIsOnlyNegative);
                 if (currentEdge == intersectionData.EdgeA)
                 {
                     if (intersectionData.VisitedA) { completed = null; break; }
@@ -190,21 +186,21 @@ namespace TVGL.TwoDimensional
                     currentEdge = (currentEdge == intersectionData.EdgeB) ? intersectionData.EdgeA : intersectionData.EdgeB;
 
                 // the following while loop adds all the points along the subpath until the next intersection is encountered
-                while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections, ref intersectionData, out switchPolygon))
+                while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections, ref intersectionData))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
-                    if (knownWrongPoints != null && knownWrongPoints[currentEdge.ToPoint.IndexInList]) includesWrongPoints = true;
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                 }
-//#if PRESENT
-//                Presenter.ShowAndHang(newPath, closeShape: false);
-//#endif
+#if PRESENT
+                Presenter.ShowAndHang(newPath, closeShape: false);
+#endif
+
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
-//#if PRESENT
-//            Presenter.ShowAndHang(newPath);
-//#endif
+            //#if PRESENT
+            //            Presenter.ShowAndHang(newPath);
+            //#endif
             if (completed == null) newPath.Clear();
             //Debug.WriteLine("    .... result has {0} vertices.", newPath.Count);
             return newPath;
@@ -223,16 +219,12 @@ namespace TVGL.TwoDimensional
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         private bool ClosestNextIntersectionOnThisEdge(List<int>[] intersectionLookup, PolygonEdge currentEdge, List<SegmentIntersection> allIntersections,
-       ref SegmentIntersection formerIntersect, out bool switchPolygon)
+       ref SegmentIntersection formerIntersect)
         {
             var intersectionIndices = intersectionLookup[currentEdge.IndexInList];
             SegmentIntersection bestIntersection = null;
             if (intersectionIndices == null)
-            {
-                formerIntersect = null;
-                switchPolygon = false;
                 return false;
-            }
             var minDistanceToIntersection = double.PositiveInfinity;
             var datum = formerIntersect != null ? formerIntersect.IntersectCoordinates : currentEdge.FromPoint.Coordinates;
             foreach (var index in intersectionIndices)
@@ -240,6 +232,8 @@ namespace TVGL.TwoDimensional
                 var candidateIntersect = allIntersections[index];
                 if (formerIntersect == candidateIntersect) continue;
                 var currentEdgeIsEdgeA = candidateIntersect.EdgeA == currentEdge;
+                //if (candidateIntersect.CollinearityType == CollinearityTypes.Before && ((candidateIntersect.VisitedA && currentEdgeIsEdgeA) || (candidateIntersect.VisitedB && !currentEdgeIsEdgeA)))
+                //    continue;
                 double distance;
                 if (formerIntersect == null && (candidateIntersect.WhereIntersection == WhereIsIntersection.BothStarts ||
                     (candidateIntersect.WhereIntersection == WhereIsIntersection.AtStartOfA && currentEdgeIsEdgeA) ||
@@ -299,19 +293,13 @@ namespace TVGL.TwoDimensional
             }
             if (bestIntersection != null)
             {
-                switchPolygon = SwitchAtThisIntersection(bestIntersection, bestIntersection.EdgeA == currentEdge);
                 formerIntersect = bestIntersection;
                 return true;
             }
-            else
-            {
-                switchPolygon = false;
-                formerIntersect = null;
-                return false;
-            }
+            else return false;
         }
 
-        protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA);
+        protected abstract bool SwitchAtThisIntersection(SegmentIntersection newIntersection, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative);
 
         protected abstract bool? PolygonCompleted(SegmentIntersection currentIntersection, SegmentIntersection startingIntersection,
            PolygonEdge currentEdge, PolygonEdge startingEdge);

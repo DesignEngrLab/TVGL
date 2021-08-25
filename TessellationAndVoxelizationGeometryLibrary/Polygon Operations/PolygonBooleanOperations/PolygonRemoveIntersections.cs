@@ -25,23 +25,22 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
-            List<bool> knownWrongPoints, bool shapeIsOnlyNegative)
+            bool shapeIsOnlyNegative, bool resetVisitedIntersections)
         {
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygon);
-            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
+            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1], false);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
             while (GetNextStartingIntersection(intersections, out var startingIntersection,
-                out var startEdge, out var switchPolygon, ref indexIntersectionStart))
+                out var startEdge, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, switchPolygon, out var includesWrongPoints, knownWrongPoints).ToList();
-//#if PRESENT
-//                Presenter.ShowAndHang(polyCoordinates);
-//#endif
-                if (includesWrongPoints) continue;
+                    startEdge, shapeIsOnlyNegative).ToList();
+                //#if PRESENT
+                //                Presenter.ShowAndHang(polyCoordinates);
+                //#endif
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
@@ -87,21 +86,24 @@ namespace TVGL.TwoDimensional
             PolygonEdge currentEdge, PolygonEdge startingEdge)
         {
             if (startingIntersection == currentIntersection && currentEdge == startingEdge) return true;
-            if (currentIntersection.VisitedA && currentIntersection.VisitedB) return null;
+            //if (currentIntersection.VisitedA && currentIntersection.VisitedB) return null;
             return false;
         }
 
-        //private bool lastSwitch = false;
-        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA)
+        internal bool SwitchAtThisIntersectionFromOffsetting(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative)
+        {
+            return SwitchAtThisIntersection(intersectionData, currentEdgeIsFromPolygonA, shapeIsOnlyNegative);
+        }
+        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative)
         {
             if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
                 intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||
                 intersectionData.Relationship == SegmentRelationship.DoubleOverlap)
                 return true;
             if (intersectionData.Relationship == SegmentRelationship.AEnclosesB)
-                return !currentEdgeIsFromPolygonA;
+                return currentEdgeIsFromPolygonA != shapeIsOnlyNegative;
             if (intersectionData.Relationship == SegmentRelationship.BEnclosesA)
-                return currentEdgeIsFromPolygonA;
+                return currentEdgeIsFromPolygonA == shapeIsOnlyNegative;
             //if (intersectionData.Relationship == SegmentRelationship.NoOverlap)
             return false;
         }
@@ -127,5 +129,7 @@ namespace TVGL.TwoDimensional
             return true;
             //newPolygons.Add(subPolygon.Copy(false, false));  //add the positive as a positive or add the negative as a negative
         }
+
+
     }
 }

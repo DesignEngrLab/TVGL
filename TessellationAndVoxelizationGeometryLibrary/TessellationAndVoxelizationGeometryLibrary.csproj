@@ -24,12 +24,12 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE; COMPARE</DefineConstants>
+    <DefineConstants>TRACE;</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE; COMPARE</DefineConstants>
+    <DefineConstants>TRACE;</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 

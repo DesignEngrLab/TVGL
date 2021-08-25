@@ -58,9 +58,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 if (polygons.All(p => p == null)) continue;
                 Debug.WriteLine("Attempting: " + filename);
-                Presenter.ShowAndHang(polygons);
+                //Presenter.ShowAndHang(polygons);
                 var result = polygons.OffsetMiter(offset, -0.002);
-                Presenter.ShowAndHang(result);
+                //Presenter.ShowAndHang(result);
             }
         }
 
