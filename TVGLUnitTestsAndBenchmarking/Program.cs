@@ -40,7 +40,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
         public static void DebugOffsetCases(DirectoryInfo dir)
         {
-            var fileNames = dir.GetFiles("offsetFail*.json").ToList();
+            var fileNames = dir.GetFiles("offsetFail*.json").Skip(0).ToList();
             //var offset = -0.2;
             while (fileNames.Any())
             {

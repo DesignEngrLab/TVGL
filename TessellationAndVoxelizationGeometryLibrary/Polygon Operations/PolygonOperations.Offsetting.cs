@@ -164,18 +164,18 @@ namespace TVGL.TwoDimensional
             var longerLength = Math.Max(bb.Length1, bb.Length2) + 2 * Math.Max(0, offset);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outer = CreateOffsetPoints(polygon, offset, notMiter, longerLengthSquared, deltaAngle, out var wrongPoints);
-#if PRESENT
-            Presenter.ShowAndHang(new[] { polygon, outer });
-#endif
+//#if PRESENT
+//            Presenter.ShowAndHang(new[] { polygon, outer });
+//#endif
             var intersections = outer.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             var interaction = new PolygonInteractionRecord(outer, null);
             interaction.IntersectionData.AddRange(intersections);
             var intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count);
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            AssignVisitedToWrongPolygons(outer, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections);
+            AssignVisitedToWrongPolygons(outer, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
 
             var outers = (intersections.Count == 0) ? new List<Polygon> { outer }
-            : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, false, false);
+            : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, offset>0, false);
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
@@ -187,7 +187,7 @@ namespace TVGL.TwoDimensional
                 interaction.IntersectionData.Clear();
                 interaction.IntersectionData.AddRange(intersections);
                 intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count);
-                AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections);
+                AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
                 //#if PRESENT
                 //                Presenter.ShowAndHang(new[] { polygon, newHoles });
                 //#endif
@@ -200,7 +200,7 @@ namespace TVGL.TwoDimensional
         }
 
         private static void AssignVisitedToWrongPolygons(Polygon outer, List<SegmentIntersection> intersections, List<int>[] intersectionLookup, List<int> wrongPointIndices,
-            PolygonRemoveIntersections polygonRemoveIntersections)
+            PolygonRemoveIntersections polygonRemoveIntersections, bool shapeIsOnlyNegative)
         {
             var wrongPoints = wrongPointIndices.Select(index => outer.Vertices[index]).ToHashSet();
             while (wrongPoints.Any())
@@ -249,13 +249,13 @@ namespace TVGL.TwoDimensional
                         if (!intersectionData.VisitedA && currentEdge == intersectionData.EdgeA)
                         {
                             intersectionData.VisitedA = true;
-                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData, true, true))
+                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData, true, shapeIsOnlyNegative))
                                 currentEdge = intersectionData.EdgeB;
                         }
-                        else if (!intersectionData.VisitedB)
+                        else if (!intersectionData.VisitedB && currentEdge != intersectionData.EdgeA)
                         {
                             intersectionData.VisitedB = true;
-                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData, false, true))
+                            if (polygonRemoveIntersections.SwitchAtThisIntersectionFromOffsetting(intersectionData, false, shapeIsOnlyNegative))
                                 currentEdge = intersectionData.EdgeA;
                         }
                         else break;
@@ -437,6 +437,7 @@ namespace TVGL.TwoDimensional
                 //#endif
             }
             #region SimplifyFast but with updates to indicesOfWrongPoints
+            minEdgeLengthSqd = Math.Pow(10, -(int)(1.7 * polygon.NumSigDigits));
             var forwardPoint = path[0];
             for (int i = path.Count - 1; i >= 0; i--)
             {

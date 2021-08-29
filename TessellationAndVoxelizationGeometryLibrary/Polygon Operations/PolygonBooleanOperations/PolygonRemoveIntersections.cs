@@ -38,9 +38,9 @@ namespace TVGL.TwoDimensional
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
                     startEdge, shapeIsOnlyNegative).ToList();
-//#if PRESENT
-//                Presenter.ShowAndHang(polyCoordinates);
-//#endif
+                //#if PRESENT
+                //                Presenter.ShowAndHang(polyCoordinates);
+                //#endif
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
