@@ -202,9 +202,9 @@ namespace TVGL.TwoDimensional
             var longerLength = Math.Max(bb.Length1, bb.Length2) + 2 * Math.Max(0, offset);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outer = CreateOffsetPoints(polygon, offset, notMiter, longerLengthSquared, deltaAngle, out var wrongPoints);
-#if PRESENT
-            Presenter.ShowAndHang(new[] { polygon, outer });
-#endif
+//#if PRESENT
+//            Presenter.ShowAndHang(new[] { polygon, outer });
+//#endif
             var intersections = outer.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             var interaction = new PolygonInteractionRecord(outer, null);
             interaction.IntersectionData.AddRange(intersections);
@@ -216,9 +216,9 @@ namespace TVGL.TwoDimensional
             : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, offset > 0);
             var maxOuterArea = outers.Max(p => p.PathArea);
             outers.RemoveAll(p => p.PathArea / maxOuterArea < 1e-5);
-#if PRESENT
-            Presenter.ShowAndHang(outers);
-#endif
+//#if PRESENT
+//            Presenter.ShowAndHang(outers);
+//#endif
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
@@ -231,9 +231,9 @@ namespace TVGL.TwoDimensional
                 interaction.IntersectionData.AddRange(intersections);
                 intersectionLookup = interaction.MakeIntersectionLookupList(newHole.Vertices.Count, true);
                 AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
-#if PRESENT
-                Presenter.ShowAndHang(new[] { polygon, newHole });
-#endif
+//#if PRESENT
+//                Presenter.ShowAndHang(new[] { polygon, newHole });
+//#endif
                 if (intersections.Count == 0)
                     inners.Add(newHole);
                 else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true));
