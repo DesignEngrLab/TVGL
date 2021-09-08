@@ -26,9 +26,10 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetSquare(this Polygon polygon, double offset,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
             double tolerance = double.NaN)
         {
-            return Offset(polygon, offset, true, tolerance);
+            return Offset(polygon, offset, true, polygonSimplify, tolerance);
         }
 
         /// <summary>
@@ -38,9 +39,10 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetSquare(this IEnumerable<Polygon> polygons, double offset,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
             double tolerance = double.NaN)
         {
-            return Offset(polygons, offset, true, tolerance);
+            return Offset(polygons, offset, true, polygonSimplify, tolerance);
         }
 
         /// <summary>
@@ -51,9 +53,10 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetMiter(this Polygon polygon, double offset,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
             double tolerance = double.NaN)
         {
-            return Offset(polygon, offset, false, tolerance);
+            return Offset(polygon, offset, false, polygonSimplify, tolerance);
         }
         /// <summary>
         /// Offset the polygon with miter (sharp) corners. The resulting polygons are joined (unioned) if overlapping.
@@ -62,9 +65,10 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetMiter(this IEnumerable<Polygon> polygons, double offset,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
             double tolerance = double.NaN)
         {
-            return Offset(polygons, offset, false, tolerance);
+            return Offset(polygons, offset, false,polygonSimplify, tolerance);
         }
 
 
@@ -78,10 +82,11 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance"></param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this Polygon polygon, double offset,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
             double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
-            return Offset(polygon, offset, true, tolerance, deltaAngle);
+            return Offset(polygon, offset,  true,polygonSimplify, tolerance, deltaAngle);
         }
 
         /// <summary>
@@ -94,10 +99,11 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance"></param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this IEnumerable<Polygon> polygons, double offset,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
             double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
-            return Offset(polygons, offset, true, tolerance, deltaAngle);
+            return Offset(polygons, offset, true, polygonSimplify, tolerance, deltaAngle);
         }
 
         private static double DefineDeltaAngle(double offset, double tolerance, double maxCircleDeviation)
@@ -110,10 +116,42 @@ namespace TVGL.TwoDimensional
         }
 
 
-        private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
-            double tolerance, double deltaAngle = double.NaN)
+        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter,
+            PolygonSimplify polygonSimplify, double tolerance, double deltaAngle = double.NaN)
         {
-            polygons = polygons.CleanUpForBooleanOperations(out _);
+            polygon = polygon.CleanUpForBooleanOperations(polygonSimplify);
+#if CLIPPER
+            return OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
+#elif !COMPARE
+            return polygon.OffsetJust(offset, notMiter, deltaAngle);
+#else
+            sw.Restart();
+            var pClipper = OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
+            sw.Stop();
+            var clipTime = sw.Elapsed;
+            sw.Restart();
+            var pTVGL = polygon.OffsetJust(offset, notMiter, deltaAngle);
+            sw.Stop();
+            var tvglTime = sw.Elapsed;
+            if (Compare(pTVGL, pClipper, "Offset", clipTime, tvglTime))
+            {
+#if PRESENT
+                Presenter.ShowAndHang(polygon);
+                Presenter.ShowAndHang(pClipper);
+                Presenter.ShowAndHang(pTVGL);
+#else
+                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
+                TVGL.IOFunctions.IO.Save(polygon, fileNameStart + ".0.json");
+#endif
+            }
+            return pClipper;
+#endif
+        }
+
+        private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
+            PolygonSimplify polygonSimplify, double tolerance, double deltaAngle = double.NaN)
+        {
+            polygons = polygons.CleanUpForBooleanOperations(polygonSimplify);
 #if CLIPPER
             return OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
 #elif !COMPARE
@@ -121,7 +159,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
             if (allPolygons.Count > 1)
-                return allPolygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
+                return allPolygons.UnionPolygons(PolygonSimplify.CanSimplifyOriginal, PolygonCollection.PolygonWithHoles);
             return allPolygons;
 #else
             sw.Restart();
@@ -134,7 +172,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
             if (allPolygons.Count > 1 && offset > 0)
-                allPolygons = UnionPolygonsFromOtherOps(allPolygons, PolygonCollection.PolygonWithHoles);
+                allPolygons = UnionPolygonsTVGL(allPolygons, PolygonCollection.PolygonWithHoles);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(allPolygons, pClipper, "Offset", clipTime, tvglTime))
@@ -164,39 +202,49 @@ namespace TVGL.TwoDimensional
             var longerLength = Math.Max(bb.Length1, bb.Length2) + 2 * Math.Max(0, offset);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outer = CreateOffsetPoints(polygon, offset, notMiter, longerLengthSquared, deltaAngle, out var wrongPoints);
-//#if PRESENT
-//            Presenter.ShowAndHang(new[] { polygon, outer });
-//#endif
+#if PRESENT
+            Presenter.ShowAndHang(new[] { polygon, outer });
+#endif
             var intersections = outer.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             var interaction = new PolygonInteractionRecord(outer, null);
             interaction.IntersectionData.AddRange(intersections);
-            var intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count);
+            var intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count, true);
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
             AssignVisitedToWrongPolygons(outer, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
 
             var outers = (intersections.Count == 0) ? new List<Polygon> { outer }
-            : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, offset>0, false);
+            : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, offset > 0);
+            var maxOuterArea = outers.Max(p => p.PathArea);
+            outers.RemoveAll(p => p.PathArea / maxOuterArea < 1e-5);
+#if PRESENT
+            Presenter.ShowAndHang(outers);
+#endif
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
-                if (bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
+                if (hole.Vertices.Count == 0 || bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
                 var newHole = CreateOffsetPoints(hole, offset, notMiter, longerLengthSquared, deltaAngle, out wrongPoints);
                 intersections = newHole.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                 interaction.IntersectionData.Clear();
                 interaction.IntersectionData.AddRange(intersections);
-                intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count);
+                intersectionLookup = interaction.MakeIntersectionLookupList(newHole.Vertices.Count, true);
                 AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
-                //#if PRESENT
-                //                Presenter.ShowAndHang(new[] { polygon, newHoles });
-                //#endif
+#if PRESENT
+                Presenter.ShowAndHang(new[] { polygon, newHole });
+#endif
                 if (intersections.Count == 0)
                     inners.Add(newHole);
-                else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true, false));
+                else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive && p.Vertices.Count > 2).ToList();
-            return outers.IntersectPolygonsFromOtherOps(inners).Where(p => p.IsPositive).ToList();
+            var newPolygons = new List<Polygon>();
+            foreach (var outer1 in outers)
+            {
+                newPolygons.AddRange(outer1.IntersectTVGL(inners));
+            }
+            return newPolygons;
         }
 
         private static void AssignVisitedToWrongPolygons(Polygon outer, List<SegmentIntersection> intersections, List<int>[] intersectionLookup, List<int> wrongPointIndices,
@@ -264,68 +312,6 @@ namespace TVGL.TwoDimensional
             }
         }
 
-        /// <summary>
-        /// temporary
-        /// </summary>
-        /// <param name="polygonsA">The polygons a.</param>
-        /// <param name="polygonsB">The polygons b.</param>
-        /// <param name="outputAsCollectionType">Type of the output as collection.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        private static List<Polygon> IntersectPolygonsFromOtherOps(this IEnumerable<Polygon> polygonsA, IEnumerable<Polygon> polygonsB, PolygonCollection outputAsCollectionType = PolygonCollection.PolygonWithHoles)
-        {
-            if (areaSimplificationFraction > 0)
-            {
-                polygonsA = polygonsA.CleanUpForBooleanOperations(out _);
-                if (polygonsB != null)
-                    polygonsB = polygonsB.CleanUpForBooleanOperations(out _);
-            }
-
-            if (polygonsB is null)
-                return polygonsA.ToList();
-
-            var result = polygonsA.ToList();
-            foreach (var polygon in polygonsB.ToList())
-            {
-                if (!result.Any()) break;
-                result = result.SelectMany(r =>
-                {
-                    var relationship = GetPolygonInteraction(r, polygon);
-                    return Intersect(r, polygon, relationship, outputAsCollectionType);
-                }).ToList();
-            }
-            return result;
-        }
-
-
-        private static List<Polygon> Offset(this Polygon polygon, double offset, bool notMiter, double tolerance, double deltaAngle = double.NaN)
-        {
-#if CLIPPER
-            return OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
-#elif !COMPARE
-            return polygon.OffsetJust(offset, notMiter, deltaAngle);
-#else
-            sw.Restart();
-            var pClipper = OffsetViaClipper(polygon, offset, notMiter, tolerance, deltaAngle);
-            sw.Stop();
-            var clipTime = sw.Elapsed;
-            sw.Restart();
-            var pTVGL = polygon.OffsetJust(offset, notMiter, deltaAngle);
-            sw.Stop();
-            var tvglTime = sw.Elapsed;
-            if (Compare(pTVGL, pClipper, "Offset", clipTime, tvglTime))
-            {
-#if PRESENT
-                Presenter.ShowAndHang(polygon);
-                Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(pTVGL);
-#else
-                var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
-                TVGL.IOFunctions.IO.Save(polygon, fileNameStart + ".0.json");
-#endif
-            }
-            return pClipper;
-#endif
-        }
 
         private static Polygon CreateOffsetPoints(Polygon polygon, double offset, bool notMiter, double maxLengthSquared, double deltaAngle,
             out List<int> indicesOfWrongPoints)

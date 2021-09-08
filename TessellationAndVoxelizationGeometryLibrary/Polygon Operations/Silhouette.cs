@@ -54,7 +54,7 @@ namespace TVGL.TwoDimensional
                 polygons.AddRange(ArrangeOuterEdgesIntoPolygon(outerEdges, dot > 0, transform));
             }
             //Presenter.ShowAndHang(polygons);
-            return polygons.UnionPolygons(PolygonCollection.PolygonWithHoles).LargestPolygonWithHoles();
+            return polygons.UnionPolygons(PolygonSimplify.CanSimplifyOriginal, PolygonCollection.PolygonWithHoles).LargestPolygonWithHoles();
         }
 
         /// <summary>
@@ -217,7 +217,8 @@ namespace TVGL.TwoDimensional
                     var xDim = polyCoordinates.Max(c => c.X) - polyCoordinates.Min(c => c.X);
                     var yDim = polyCoordinates.Max(c => c.Y) - polyCoordinates.Min(c => c.Y);
                     var tolerance = Math.Min(xDim, yDim) * Constants.PolygonSameTolerance;
-                    var newPolygons = new Polygon(polyCoordinates.SimplifyFastDestructiveList(tolerance)).RemoveSelfIntersections(ResultType.BothPermitted);
+                    var newPolygons = new Polygon(polyCoordinates.SimplifyFastDestructiveList(tolerance))
+                        .RemoveSelfIntersections(ResultType.BothPermitted);
                     // make the coordinates into polygons. Simplify and remove self intersections. 
                     foreach (var newPolygon in newPolygons)
                     {
@@ -244,7 +245,7 @@ namespace TVGL.TwoDimensional
             foreach (var hole in negativePolygons)
                 AddHoleToLargerPostivePolygon(polygons, hole);
             //now union this result before returning to the main loop - to, again, union with the other polygons
-            polygons = polygons.UnionPolygons(PolygonCollection.PolygonWithHoles);
+            polygons = polygons.UnionPolygons(PolygonSimplify.CanSimplifyOriginal, PolygonCollection.PolygonWithHoles);
             return polygons;
         }
 

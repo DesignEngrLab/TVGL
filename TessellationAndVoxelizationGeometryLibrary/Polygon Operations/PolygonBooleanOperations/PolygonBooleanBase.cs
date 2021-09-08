@@ -37,7 +37,7 @@ namespace TVGL.TwoDimensional
 
             var delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonA);
             delimiters = NumberVerticesAndGetPolygonVertexDelimiter(polygonB, delimiters[^1]);
-            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1]);
+            var intersectionLookup = interaction.MakeIntersectionLookupList(delimiters[^1], true);
             var newPolygons = new List<Polygon>();
             var indexIntersectionStart = 0;
             var polygonIndex = 0;
@@ -137,8 +137,9 @@ namespace TVGL.TwoDimensional
             foreach (var poly in polygon.AllPolygons)
             {
                 polygonStartIndices.Add(index);
-                foreach (var vertex in poly.Vertices)
-                    vertex.IndexInList = index++;
+                if (poly.Vertices != null)
+                    foreach (var vertex in poly.Vertices)
+                        vertex.IndexInList = index++;
             }
             polygonStartIndices.Add(index); // add a final exclusive top of the range for the for-loop below (not the next one, the one after)
             return polygonStartIndices;
@@ -194,9 +195,9 @@ namespace TVGL.TwoDimensional
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                 }
-//#if PRESENT
-//                Presenter.ShowAndHang(newPath, closeShape: false);
-//#endif
+                //#if PRESENT
+                //                Presenter.ShowAndHang(newPath, closeShape: false);
+                //#endif
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
             //            Presenter.ShowAndHang(newPath);

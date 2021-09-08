@@ -101,15 +101,17 @@ namespace TVGL
         public Window2DPlot(IEnumerable<IEnumerable<Vector2>> listOfArrayOfPoints, string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker) : this(title)
         {
+            var allPoints = new List<Vector2>();
             foreach (var points in listOfArrayOfPoints)
             {
-                if (!points.Any()) continue;
+                if (points == null || !points.Any()) continue;
+                allPoints.AddRange(points);
                 if (plot2DType == Plot2DType.Line)
                     AddLineSeriesToModel(points, closeShape, marker);
                 else
                     AddScatterSeriesToModel(points, marker);
             }
-            SetAxes(listOfArrayOfPoints.SelectMany(v => v));
+            SetAxes(allPoints);
             InitializeComponent();
             Title = title;
         }

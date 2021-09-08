@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -101,7 +102,8 @@ namespace TVGL.TwoDimensional
                 if (polygonSignIsCorrect) RecurseDownPolygonTreeCleanUp(branch);
                 else
                 {
-                    branch.IsPositive = true;
+                    if (!branch.IsPositive) 
+                        branch.Reverse();
                     RecurseDownPolygonTreeAndFlipSigns(branch);
                 }
             }
@@ -129,7 +131,9 @@ namespace TVGL.TwoDimensional
             var childIsPositive = !parent.IsPositive;
             foreach (var child in parent.InnerPolygons)
             {
-                child.IsPositive = childIsPositive;
+                //child.IsPositive = childIsPositive;
+                if (child.IsPositive != childIsPositive)
+                    child.Reverse();
                 RecurseDownPolygonTreeAndFlipSigns(child);
             }
         }

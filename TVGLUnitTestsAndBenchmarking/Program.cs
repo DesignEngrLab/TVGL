@@ -22,8 +22,8 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //JustShowMeThePolygons(BackoutToFolder("TestFiles\\polygons"));
             //PolygonOperationsTesting.DebugEdgeCases();
-            //DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
-            DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
+            DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
+             DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
             //DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
         }
 
@@ -58,9 +58,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 if (polygons.All(p => p == null)) continue;
                 Debug.WriteLine("Attempting: " + filename);
-                //Presenter.ShowAndHang(polygons);
-                var result = polygons.OffsetMiter(offset, -0.002);
-                //Presenter.ShowAndHang(result);
+                Presenter.ShowAndHang(polygons);
+                var result = polygons.OffsetMiter(offset, tolerance: 0.002);
+                Presenter.ShowAndHang(result);
             }
         }
 
@@ -84,9 +84,11 @@ namespace TVGLUnitTestsAndBenchmarking
                     else polygonsA.Add(p);
                 }
                 Debug.WriteLine("Attempting: " + filename);
-                //Presenter.ShowAndHang(polygons);
+                Presenter.ShowAndHang(polygonsA);
+                Presenter.ShowAndHang(polygonsB);
+                Presenter.ShowAndHang(new[] { polygonsA, polygonsB }.SelectMany(p => p));
                 var result = polygonsA.IntersectPolygons(polygonsB);
-                //Presenter.ShowAndHang(result);
+                Presenter.ShowAndHang(result);
             }
         }
         public static void DebugUnionCases(DirectoryInfo dir)
@@ -120,13 +122,13 @@ namespace TVGLUnitTestsAndBenchmarking
             }
             Presenter.ShowAndHang(silhouetteBeforeFace);
 
-            var poly1 = silhouetteBeforeFace.OffsetMiter(15.557500000000001, 0.08);
+            var poly1 = silhouetteBeforeFace.OffsetMiter(15.557500000000001, tolerance: 0.08);
             var showe = new List<Polygon>();
             showe.AddRange(silhouetteBeforeFace);
             showe.AddRange(poly1);
             Presenter.ShowAndHang(showe);
 
-            var poly2 = poly1.OffsetRound(-15.557500000000001, 0.08);
+            var poly2 = poly1.OffsetRound(-15.557500000000001, tolerance: 0.08);
 
             showe.AddRange(poly2);
             Presenter.ShowAndHang(showe);

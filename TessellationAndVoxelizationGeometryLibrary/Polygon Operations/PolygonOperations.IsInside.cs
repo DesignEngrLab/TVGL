@@ -676,6 +676,10 @@ namespace TVGL.TwoDimensional
                 subPolygonA.MinY > subPolygonB.MaxY ||
                 subPolygonA.MaxY < subPolygonB.MinY)
                 return PolyRelInternal.Separated;
+            if (subPolygonA.Vertices == null && double.IsPositiveInfinity(subPolygonA.MaxX))
+                return PolyRelInternal.BInsideA;
+            if (subPolygonB.Vertices == null && double.IsPositiveInfinity(subPolygonB.MaxX))
+                return PolyRelInternal.AInsideB;
 
             subPolygonA.MakePolygonEdgesIfNonExistent();
             subPolygonB.MakePolygonEdgesIfNonExistent();
@@ -1214,7 +1218,7 @@ namespace TVGL.TwoDimensional
 
         private static PolygonEdge[] GetOrderedLines(Vertex2D[] orderedPoints)
         {
-            var length = orderedPoints.Length;
+            var length = orderedPoints != null ? orderedPoints.Length : 0;
             var result = new PolygonEdge[length];
             var k = 0;
             for (int i = 0; i < length; i++)

@@ -43,7 +43,7 @@ namespace TVGL.TwoDimensional
                 indexToVertexDict.Add(vertex.IndexInList, vertex);
             }
             var polygon = new Polygon(coords);
-            if (forceToPositive && !polygon.IsPositive) polygon.IsPositive = true;
+            if (forceToPositive && !polygon.IsPositive) polygon.Reverse();
             foreach (var triangleIndices in polygon.TriangulateToIndices())
             {
                 if (indexToVertexDict[triangleIndices.A] != indexToVertexDict[triangleIndices.B]

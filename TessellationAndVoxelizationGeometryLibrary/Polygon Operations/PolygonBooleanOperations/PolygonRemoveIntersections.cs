@@ -25,7 +25,7 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
-            bool shapeIsOnlyNegative, bool resetVisitedIntersections)
+            bool shapeIsOnlyNegative)
         {
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);

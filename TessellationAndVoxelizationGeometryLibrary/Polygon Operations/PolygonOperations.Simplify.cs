@@ -11,6 +11,12 @@ using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
+    public enum PolygonSimplify
+    {
+        DoNotSimplify,
+        SimplifyCopy,
+        CanSimplifyOriginal
+    }
     /// <summary>
     /// A set of general operation for points and paths
     /// </summary>
@@ -23,14 +29,17 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        private static Polygon CleanUpForBooleanOperations(this Polygon polygon, out bool removalsOccurred, double lengthTolerance = Constants.LineLengthMinimum,
-            double slopeTolerance = Constants.LineSlopeTolerance)
+        private static Polygon CleanUpForBooleanOperations(this Polygon polygon, PolygonSimplify polygonSimplify,
+            double lengthTolerance = Constants.LineLengthMinimum, double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            Polygon copiedPolygon;
-            lock (polygon)
-                copiedPolygon = polygon.Copy(true, false);
-            removalsOccurred = SimplifyFast(copiedPolygon, lengthTolerance, slopeTolerance);
-            return copiedPolygon.RemoveSelfIntersections(ResultType.BothPermitted).LargestPolygonWithHoles();
+            var newPolygon = polygonSimplify == PolygonSimplify.SimplifyCopy ? polygon.Copy(true, false) : polygon;
+            if (polygonSimplify != PolygonSimplify.DoNotSimplify)
+                SimplifyFast(newPolygon, lengthTolerance, slopeTolerance);
+            var intersections = newPolygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+            if (intersections.Count == 0)
+                return newPolygon;
+            polygonRemoveIntersections ??= new PolygonRemoveIntersections();
+            return polygonRemoveIntersections.Run(newPolygon, intersections, ResultType.BothPermitted, false).LargestPolygonWithHoles();
         }
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
@@ -38,12 +47,13 @@ namespace TVGL.TwoDimensional
         /// <param name="polygons">The polygons.</param>
         /// <param name="allowableChangeInAreaFraction">The allowable change in area fraction.</param>
         /// <returns>IEnumerable&lt;Polygon&gt;.</returns>
-        private static IEnumerable<Polygon> CleanUpForBooleanOperations(this IEnumerable<Polygon> polygons, out bool removalsOccurred, double lengthTolerance = Constants.LineLengthMinimum,
-            double slopeTolerance = Constants.LineSlopeTolerance)
+        private static IEnumerable<Polygon> CleanUpForBooleanOperations(this IEnumerable<Polygon> polygons, PolygonSimplify polygonSimplify,
+            double lengthTolerance = Constants.LineLengthMinimum, double slopeTolerance = Constants.LineSlopeTolerance)
         {
-            var resultPolygons = SimplifyFast(polygons, out removalsOccurred, lengthTolerance, slopeTolerance);
-            return resultPolygons.SelectMany(p => p.RemoveSelfIntersections(ResultType.BothPermitted))
-                .Where(p => p.Vertices.Count > 2);
+            foreach (var polygon in polygons)
+            {
+                yield return polygon.CleanUpForBooleanOperations(polygonSimplify, lengthTolerance, slopeTolerance);
+            }
         }
 
         #endregion
@@ -140,6 +150,7 @@ namespace TVGL.TwoDimensional
         public static IList<Vector2> SimplifyFastDestructiveList(this IList<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
             double slopeTolerance = Constants.LineSlopeTolerance)
         {
+            if (path.Count == 0) return path;
             var forwardPoint = path[0];
             var currentPoint = path[^1];
             var forwardVector = forwardPoint - currentPoint;
@@ -246,7 +257,7 @@ namespace TVGL.TwoDimensional
                 edgeLengthQueue.Remove(otherEdge);
                 edgeLengthQueue.Enqueue(newEdge, newEdge.Length);
             }
-            RecreateVertices(polygon);
+            polygon.RecreateVertices();
         }
 
         /// <summary>
@@ -395,7 +406,7 @@ namespace TVGL.TwoDimensional
                 edgeLengthQueue.Enqueue(newEdge, newEdge.Length);
             }
             foreach (var polygon in allPolygons)
-                RecreateVertices(polygon);
+                polygon.RecreateVertices();
         }
 
         /// <summary>
@@ -571,7 +582,7 @@ namespace TVGL.TwoDimensional
                     UpdateCrossProductInQueues(nextVertex, convexCornerQueue, concaveCornerQueue);
                 }
             }
-            RecreateVertices(polygon);
+            polygon.RecreateVertices();
         }
 
 
@@ -745,7 +756,7 @@ namespace TVGL.TwoDimensional
                 cornerQueue.UpdatePriority(nextVertex, nextVertex.EndLine.Vector.Cross(nextVertex.StartLine.Vector));
             }
             foreach (var polygon in allPolygons)
-                RecreateVertices(polygon);
+                polygon.RecreateVertices();
         }
 
         /// <summary>
@@ -1118,7 +1129,7 @@ namespace TVGL.TwoDimensional
                 edgeLengthPQ.Enqueue(newEdge, newEdge.Length);
             }
             foreach (var polygon in allPolygons)
-                RecreateVertices(polygon);
+                polygon.RecreateVertices();
         }
         #endregion
         #endregion
@@ -1246,39 +1257,6 @@ namespace TVGL.TwoDimensional
             vertexToDelete.EndLine = null;
             return newEdge;
         }
-        private static void RecreateVertices(this Polygon polygon, bool topOnly = true)
-        {
-            var index = 0;
-            while (polygon.Vertices[index].EndLine == null || polygon.Vertices[index].StartLine == null)
-            {
-                index++;
-                if (polygon.Vertices.Count == index)
-                {
-                    polygon.Vertices.Clear();
-                    polygon.Reset();
-                    return;
-                }
-            }
-            var firstVertex = polygon.Vertices[index];
-            var current = firstVertex;
-            polygon.Vertices.Clear();
-            //polygon.Edges.Clear();
-            index = 0;
-            do
-            {
-                current.IndexInList = index++;
-                current.LoopID = polygon.Index;
-                polygon.Vertices.Add(current);
-                current = current.StartLine.ToPoint;
-            } while (current != firstVertex);
-            polygon.Reset();
-            if (!topOnly)
-            {
-                foreach (var innerP in polygon.InnerPolygons)
-                    RecreateVertices(innerP);
-            }
-        }
-
 
         #endregion
     }
