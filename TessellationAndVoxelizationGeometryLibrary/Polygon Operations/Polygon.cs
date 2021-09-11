@@ -346,7 +346,10 @@ namespace TVGL.TwoDimensional
         /// <param name="reverseInnerPolygons">if set to <c>true</c> [reverse inner polygons].</param>
         public void Reverse(bool reverseInnerPolygons = false)
         {
-            _vertices.Reverse();
+            if (_path == null) return;
+            _path.Reverse();
+            if (_vertices != null)
+                _vertices.Reverse();
             Reset();
         }
 

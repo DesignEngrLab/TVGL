@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE; PRESENT; COMPARF</DefineConstants>
+    <DefineConstants>TRACE; PRESENT; COMPARE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />

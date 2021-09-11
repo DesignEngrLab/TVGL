@@ -26,8 +26,8 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetSquare(this Polygon polygon, double offset,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            double tolerance = double.NaN)
+            double tolerance = double.NaN,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal)
         {
             return Offset(polygon, offset, true, polygonSimplify, tolerance);
         }
@@ -39,8 +39,8 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetSquare(this IEnumerable<Polygon> polygons, double offset,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            double tolerance = double.NaN)
+            double tolerance = double.NaN,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal)
         {
             return Offset(polygons, offset, true, polygonSimplify, tolerance);
         }
@@ -53,8 +53,8 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetMiter(this Polygon polygon, double offset,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            double tolerance = double.NaN)
+            double tolerance = double.NaN,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal)
         {
             return Offset(polygon, offset, false, polygonSimplify, tolerance);
         }
@@ -65,10 +65,10 @@ namespace TVGL.TwoDimensional
         /// <param name="offset">The offset.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetMiter(this IEnumerable<Polygon> polygons, double offset,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            double tolerance = double.NaN)
+            double tolerance = double.NaN,
+            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal)
         {
-            return Offset(polygons, offset, false,polygonSimplify, tolerance);
+            return Offset(polygons, offset, false, polygonSimplify, tolerance);
         }
 
 
@@ -82,11 +82,11 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance"></param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this Polygon polygon, double offset,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
+            double tolerance = double.NaN,
+            double maxCircleDeviation = double.NaN, PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
-            return Offset(polygon, offset,  true,polygonSimplify, tolerance, deltaAngle);
+            return Offset(polygon, offset, true, polygonSimplify, tolerance, deltaAngle);
         }
 
         /// <summary>
@@ -99,8 +99,8 @@ namespace TVGL.TwoDimensional
         /// <param name="tolerance"></param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         public static List<Polygon> OffsetRound(this IEnumerable<Polygon> polygons, double offset,
-            PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal,
-            double tolerance = double.NaN, double maxCircleDeviation = double.NaN)
+            double tolerance = double.NaN,
+            double maxCircleDeviation = double.NaN, PolygonSimplify polygonSimplify = PolygonSimplify.CanSimplifyOriginal)
         {
             double deltaAngle = DefineDeltaAngle(offset, tolerance, maxCircleDeviation);
             return Offset(polygons, offset, true, polygonSimplify, tolerance, deltaAngle);
@@ -158,8 +158,8 @@ namespace TVGL.TwoDimensional
             var allPolygons = new List<Polygon>();
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
-            if (allPolygons.Count > 1)
-                return allPolygons.UnionPolygons(PolygonSimplify.CanSimplifyOriginal, PolygonCollection.PolygonWithHoles);
+            if (allPolygons.Count > 1 && offset > 0)
+                allPolygons = UnionPolygonsTVGL(allPolygons, PolygonSimplify.DoNotSimplify);
             return allPolygons;
 #else
             sw.Restart();
@@ -172,7 +172,7 @@ namespace TVGL.TwoDimensional
             foreach (var polygon in polygons)
                 allPolygons.AddRange(polygon.OffsetJust(offset, notMiter, deltaAngle));
             if (allPolygons.Count > 1 && offset > 0)
-                allPolygons = UnionPolygonsTVGL(allPolygons, PolygonCollection.PolygonWithHoles);
+                allPolygons = UnionPolygonsTVGL(allPolygons, PolygonSimplify.DoNotSimplify);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(allPolygons, pClipper, "Offset", clipTime, tvglTime))
@@ -202,9 +202,9 @@ namespace TVGL.TwoDimensional
             var longerLength = Math.Max(bb.Length1, bb.Length2) + 2 * Math.Max(0, offset);
             var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
             var outer = CreateOffsetPoints(polygon, offset, notMiter, longerLengthSquared, deltaAngle, out var wrongPoints);
-//#if PRESENT
-//            Presenter.ShowAndHang(new[] { polygon, outer });
-//#endif
+#if PRESENT
+                        Presenter.ShowAndHang(new[] { polygon, outer });
+#endif
             var intersections = outer.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             var interaction = new PolygonInteractionRecord(outer, null);
             interaction.IntersectionData.AddRange(intersections);
@@ -216,9 +216,9 @@ namespace TVGL.TwoDimensional
             : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, offset > 0);
             var maxOuterArea = outers.Max(p => p.PathArea);
             outers.RemoveAll(p => p.PathArea / maxOuterArea < 1e-5);
-//#if PRESENT
-//            Presenter.ShowAndHang(outers);
-//#endif
+#if PRESENT
+                        Presenter.ShowAndHang(outers);
+#endif
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
@@ -231,9 +231,9 @@ namespace TVGL.TwoDimensional
                 interaction.IntersectionData.AddRange(intersections);
                 intersectionLookup = interaction.MakeIntersectionLookupList(newHole.Vertices.Count, true);
                 AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
-//#if PRESENT
-//                Presenter.ShowAndHang(new[] { polygon, newHole });
-//#endif
+#if PRESENT
+                                Presenter.ShowAndHang(new[] { polygon, newHole });
+#endif
                 if (intersections.Count == 0)
                     inners.Add(newHole);
                 else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true));
@@ -242,7 +242,7 @@ namespace TVGL.TwoDimensional
             var newPolygons = new List<Polygon>();
             foreach (var outer1 in outers)
             {
-                newPolygons.AddRange(outer1.IntersectTVGL(inners));
+                newPolygons.AddRange(outer1.IntersectTVGL(inners, PolygonSimplify.DoNotSimplify));
             }
             return newPolygons;
         }
@@ -348,7 +348,7 @@ namespace TVGL.TwoDimensional
                 // using law of cosines, we can find the distance between the two points that would result from offsetting lines at
                 // the current point. h^2 = 2*d^2*(1-cos(theta).   Instead of solving for cos(theta), we can use the dot product
                 // and the line-length-reciprocals. 
-                if (dot > 0 && 2 * offsetSquared * (1 - prevLineLengthReciprocal * nextLineLengthReciprocal * dot) < minEdgeLengthSqd)
+                if (dot > 0 && offsetSquared * (1 - prevLineLengthReciprocal * nextLineLengthReciprocal * dot) < 2 * minEdgeLengthSqd)
                     path.Add(point + offset * prevUnitNormal);
                 // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
                 // let's start with the roundCorners
@@ -408,7 +408,8 @@ namespace TVGL.TwoDimensional
                         }
                     }
                 }
-                else
+                else // here is where we add the wrong point. We have to add them because the intersections (both immediate and with lines far 
+                // from this).
                 {
                     indicesOfWrongPoints.Add(path.Count);
                     path.Add(point + offset * prevUnitNormal);

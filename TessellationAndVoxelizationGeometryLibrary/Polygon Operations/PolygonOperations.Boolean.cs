@@ -473,7 +473,7 @@ namespace TVGL.TwoDimensional
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var pTVGL =IntersectTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType, tolerance);
+            var pTVGL =IntersectTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType, minAllowableArea);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "Intersect", clipTime, tvglTime))
@@ -592,7 +592,7 @@ namespace TVGL.TwoDimensional
             if (Compare(newPolygons, pClipper, "IntersectTwoList", clipTime, tvglTime))
             {
 #if PRESENT
-                var all = polygonsBList.ToList();
+                var all = polygonsB.ToList();
                 all.Add(polygonA);
                 Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
@@ -670,8 +670,6 @@ namespace TVGL.TwoDimensional
 #elif !COMPARE
             return IntersectPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType, minAllowableArea);
 #else
-            if (polygonsB is null)
-                return UnionPolygons(polygonsA, outputAsCollectionType);
             sw.Restart();
             var pClipper = BooleanViaClipper(PolyFillType.Positive, ClipType.Intersection, polygonsA, polygonsB);
             sw.Stop();
@@ -687,7 +685,7 @@ namespace TVGL.TwoDimensional
                 all.AddRange(polygonsB);
                 Presenter.ShowAndHang(all);
                 Presenter.ShowAndHang(pClipper);
-                Presenter.ShowAndHang(polygonAList);
+                Presenter.ShowAndHang(newPolygons);
 #else
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;

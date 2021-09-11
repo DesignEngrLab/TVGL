@@ -22,8 +22,8 @@ namespace TVGLUnitTestsAndBenchmarking
         {
             //JustShowMeThePolygons(BackoutToFolder("TestFiles\\polygons"));
             //PolygonOperationsTesting.DebugEdgeCases();
-            DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
-             DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
+            //DebugIntersectCases(BackoutToFolder("TestFiles\\polygons"));
+            DebugOffsetCases(BackoutToFolder("TestFiles\\polygons"));
             //DebugUnionCases(BackoutToFolder("TestFiles\\polygons"));
         }
 
@@ -49,7 +49,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 //var filename = fileNames[r.Next(fileNames.Count)].Name;
                 var nameSegments = filename.Split('.');
                 var preName = string.Join('.', nameSegments.Take(2).ToArray());
-                var offset = double.Parse(nameSegments[^4]+"."+ nameSegments[^3]);
+                var offset = double.Parse(nameSegments[^4] + "." + nameSegments[^3]);
                 foreach (var item in dir.GetFiles(preName + "*"))
                 {
                     fileNames.RemoveAll(fn => fn.FullName == item.FullName);
@@ -58,9 +58,9 @@ namespace TVGLUnitTestsAndBenchmarking
                 }
                 if (polygons.All(p => p == null)) continue;
                 Debug.WriteLine("Attempting: " + filename);
-                //Presenter.ShowAndHang(polygons);
-                var result = polygons.OffsetMiter(offset, tolerance: 0.002);
-                //Presenter.ShowAndHang(result);
+                Presenter.ShowAndHang(polygons);
+                var result = polygons.OffsetRound(offset, 0.002, polygonSimplify: PolygonSimplify.DoNotSimplify);
+                Presenter.ShowAndHang(result);
             }
         }
 
