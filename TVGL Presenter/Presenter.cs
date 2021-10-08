@@ -287,6 +287,7 @@ namespace TVGL
             var colorsEnumerator = colors == null ? Color.GetRandomColors().GetEnumerator() : ((IEnumerable<Color>)colors).GetEnumerator();
             foreach (var crossSection in vertexPaths)
             {
+                if (crossSection is null) continue;
                 foreach (var path in crossSection)
                 {
                     var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();

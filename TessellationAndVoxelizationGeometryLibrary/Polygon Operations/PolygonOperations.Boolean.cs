@@ -385,7 +385,7 @@ namespace TVGL.TwoDimensional
             var clipTime = sw.Elapsed;
 
             sw.Restart();
-            var pTVGL = UnionPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType,tolerance);
+            var pTVGL = UnionPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType, tolerance);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "UnionTwoLists", clipTime, tvglTime))
@@ -473,7 +473,7 @@ namespace TVGL.TwoDimensional
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var pTVGL =IntersectTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType, minAllowableArea);
+            var pTVGL = IntersectTVGL(polygonA, polygonB, polygonSimplify, outputAsCollectionType, minAllowableArea);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "Intersect", clipTime, tvglTime))
@@ -586,7 +586,7 @@ namespace TVGL.TwoDimensional
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var newPolygons=IntersectTVGL(polygonA, polygonsB, polygonSimplify, outputAsCollectionType,minAllowableArea);
+            var newPolygons = IntersectTVGL(polygonA, polygonsB, polygonSimplify, outputAsCollectionType, minAllowableArea);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(newPolygons, pClipper, "IntersectTwoList", clipTime, tvglTime))
@@ -675,7 +675,7 @@ namespace TVGL.TwoDimensional
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var newPolygons = IntersectPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType,minAllowableArea);
+            var newPolygons = IntersectPolygonsTVGL(polygonsA, polygonsB, polygonSimplify, outputAsCollectionType, minAllowableArea);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(newPolygons, pClipper, "IntersectTwoList", clipTime, tvglTime))
@@ -890,7 +890,7 @@ namespace TVGL.TwoDimensional
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-            var pTVGL =  SubtractTVGL(minuend, subtrahend, polygonSimplify, outputAsCollectionType, minAllowableArea);
+            var pTVGL = SubtractTVGL(minuend, subtrahend, polygonSimplify, outputAsCollectionType, minAllowableArea);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(pTVGL, pClipper, "Subtract", clipTime, tvglTime))
@@ -992,7 +992,7 @@ namespace TVGL.TwoDimensional
             sw.Stop();
             var clipTime = sw.Elapsed;
             sw.Restart();
-           var minuendsList = SubtractTVGL(minuends, subtrahends, polygonSimplify, outputAsCollectionType, minAllowableArea);
+            var minuendsList = SubtractTVGL(minuends, subtrahends, polygonSimplify, outputAsCollectionType, minAllowableArea);
             sw.Stop();
             var tvglTime = sw.Elapsed;
             if (Compare(minuendsList, pClipper, "SubtractLists", clipTime, tvglTime))
@@ -1138,7 +1138,7 @@ namespace TVGL.TwoDimensional
             if (intersections.Count == 0)
                 return new List<Polygon> { polygon };
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(polygon, intersections, resultType, shapeIsOnlyNegative);
+            return polygonRemoveIntersections.Run(polygon, intersections, resultType, shapeIsOnlyNegative, null);
 
         }
 

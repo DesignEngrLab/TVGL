@@ -39,7 +39,7 @@ namespace TVGL.TwoDimensional
             if (intersections.Count == 0)
                 return newPolygon;
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            return polygonRemoveIntersections.Run(newPolygon, intersections, ResultType.BothPermitted, false).LargestPolygonWithHoles();
+            return polygonRemoveIntersections.Run(newPolygon, intersections, ResultType.BothPermitted, false, null).LargestPolygonWithHoles();
         }
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.

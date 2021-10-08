@@ -25,7 +25,7 @@ namespace TVGL.TwoDimensional
         /// <param name="strayHoles">The stray holes.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
         internal List<Polygon> Run(Polygon polygon, List<SegmentIntersection> intersections, ResultType resultType,
-            bool shapeIsOnlyNegative)
+            bool shapeIsOnlyNegative, HashSet<int> edgesToIgnore)
         {
             var interaction = new PolygonInteractionRecord(polygon, null);
             interaction.IntersectionData.AddRange(intersections);
@@ -37,10 +37,8 @@ namespace TVGL.TwoDimensional
                 out var startEdge, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, intersections, startingIntersection,
-                    startEdge, shapeIsOnlyNegative).ToList();
-                //#if PRESENT
-                //                Presenter.ShowAndHang(polyCoordinates);
-                //#endif
+                    startEdge, shapeIsOnlyNegative, edgesToIgnore).ToList();
+
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
@@ -48,6 +46,9 @@ namespace TVGL.TwoDimensional
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;
                     else polyCoordinates.Reverse();
                 }
+#if PRESENT
+                Presenter.ShowAndHang(polyCoordinates);
+#endif
                 newPolygons.Add(new Polygon(polyCoordinates));
             }
             return newPolygons.CreateShallowPolygonTrees(true, false, shapeIsOnlyNegative);
@@ -90,11 +91,13 @@ namespace TVGL.TwoDimensional
             return false;
         }
 
-        internal bool SwitchAtThisIntersectionFromOffsetting(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative)
+        internal bool SwitchAtThisIntersectionFromOffsetting(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA,
+            bool shapeIsOnlyNegative)
         {
             return SwitchAtThisIntersection(intersectionData, currentEdgeIsFromPolygonA, shapeIsOnlyNegative);
         }
-        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA, bool shapeIsOnlyNegative)
+        protected override bool SwitchAtThisIntersection(SegmentIntersection intersectionData, bool currentEdgeIsFromPolygonA,
+            bool shapeIsOnlyNegative)
         {
             if (intersectionData.Relationship == SegmentRelationship.CrossOver_AOutsideAfter ||
                 intersectionData.Relationship == SegmentRelationship.CrossOver_BOutsideAfter ||

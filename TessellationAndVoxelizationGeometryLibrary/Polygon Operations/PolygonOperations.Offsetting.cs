@@ -151,7 +151,7 @@ namespace TVGL.TwoDimensional
         private static List<Polygon> Offset(this IEnumerable<Polygon> polygons, double offset, bool notMiter,
             PolygonSimplify polygonSimplify, double tolerance, double deltaAngle = double.NaN)
         {
-            polygons = polygons.CleanUpForBooleanOperations(polygonSimplify);
+            polygons = polygons.CleanUpForBooleanOperations(polygonSimplify).ToList();
 #if CLIPPER
             return OffsetViaClipper(polygons, offset, notMiter, tolerance, deltaAngle);
 #elif !COMPARE
@@ -199,25 +199,25 @@ namespace TVGL.TwoDimensional
             // twice the offset. Notice how the RHS is negative and can only be true is offset is negative
             if (bb.Length1 < -2 * offset || bb.Length2 < -2 * offset)
                 return new List<Polygon>();
-            var longerLength = Math.Max(bb.Length1, bb.Length2) + 2 * Math.Max(0, offset);
-            var longerLengthSquared = longerLength * longerLength; // 3 * offset * offset;
-            var outer = CreateOffsetPoints(polygon, offset, notMiter, longerLengthSquared, deltaAngle, out var wrongPoints);
+            var diagLengthSqared = (new Vector2(bb.Length1 + 2 * Math.Max(0, offset), bb.Length2 + 2 * Math.Max(0, offset))).LengthSquared();
+            var outer = CreateOffsetPoints(polygon, offset, notMiter, diagLengthSqared, deltaAngle, out var edgesToIgnore);
 #if PRESENT
-                        Presenter.ShowAndHang(new[] { polygon, outer });
+            Presenter.ShowAndHang(new[] { polygon, outer });
 #endif
-            var intersections = outer.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
+            var intersections = outer.GetSelfIntersections(edgesToIgnore)
+                .Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
             var interaction = new PolygonInteractionRecord(outer, null);
             interaction.IntersectionData.AddRange(intersections);
             var intersectionLookup = interaction.MakeIntersectionLookupList(outer.Vertices.Count, true);
             polygonRemoveIntersections ??= new PolygonRemoveIntersections();
-            AssignVisitedToWrongPolygons(outer, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
+            //AssignVisitedToWrongPolygons(outer, intersections, intersectionLookup, edgesToIgnore, polygonRemoveIntersections, offset < 0);
 
             var outers = (intersections.Count == 0) ? new List<Polygon> { outer }
-            : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, offset > 0);
+            : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, false, edgesToIgnore);
             var maxOuterArea = outers.Max(p => p.PathArea);
             outers.RemoveAll(p => p.PathArea / maxOuterArea < 1e-5);
 #if PRESENT
-                        Presenter.ShowAndHang(outers);
+            Presenter.ShowAndHang(outers);
 #endif
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
@@ -225,18 +225,18 @@ namespace TVGL.TwoDimensional
                 bb = hole.BoundingRectangle();
                 // like the above, but a positive offset will close the hole
                 if (hole.Vertices.Count == 0 || bb.Length1 < 2 * offset || bb.Length2 < 2 * offset) continue;
-                var newHole = CreateOffsetPoints(hole, offset, notMiter, longerLengthSquared, deltaAngle, out wrongPoints);
+                var newHole = CreateOffsetPoints(hole, offset, notMiter, diagLengthSqared, deltaAngle, out edgesToIgnore);
                 intersections = newHole.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                 interaction.IntersectionData.Clear();
                 interaction.IntersectionData.AddRange(intersections);
                 intersectionLookup = interaction.MakeIntersectionLookupList(newHole.Vertices.Count, true);
-                AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, wrongPoints, polygonRemoveIntersections, offset < 0);
+                //AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, edgesToIgnore, polygonRemoveIntersections, offset < 0);
 #if PRESENT
-                                Presenter.ShowAndHang(new[] { polygon, newHole });
+                Presenter.ShowAndHang(new[] { polygon, newHole });
 #endif
                 if (intersections.Count == 0)
                     inners.Add(newHole);
-                else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true));
+                else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true, edgesToIgnore));
             }
             if (inners.Count == 0) return outers.Where(p => p.IsPositive && p.Vertices.Count > 2).ToList();
             var newPolygons = new List<Polygon>();
@@ -314,9 +314,9 @@ namespace TVGL.TwoDimensional
 
 
         private static Polygon CreateOffsetPoints(Polygon polygon, double offset, bool notMiter, double maxLengthSquared, double deltaAngle,
-            out List<int> indicesOfWrongPoints)
+            out HashSet<int> indicesOfWrongLines)
         {
-            indicesOfWrongPoints = new List<int>();
+            indicesOfWrongLines = new HashSet<int>();
             var minEdgeLengthSqd = 1E-6 * maxLengthSquared; // this means that the minimum edge would be one-thousandth of the longer side
             var offsetSquared = offset * offset;
             // set up the return list (predict size to prevent re-allocation) and rotation matrix for OffsetRound
@@ -328,6 +328,7 @@ namespace TVGL.TwoDimensional
             var rotMatrix = roundCorners ? Matrix3x3.CreateRotation(offsetSign * deltaAngle) : Matrix3x3.Null;
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
             var path = new List<Vector2>(startingListSize);
+            Vector2 lastPathPoint = Vector2.Null;
             // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
             // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
             // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
@@ -341,23 +342,19 @@ namespace TVGL.TwoDimensional
                 var nextUnitNormal = new Vector2(nextLine.Vector.Y * nextLineLengthReciprocal, -nextLine.Vector.X * nextLineLengthReciprocal);
                 // establish the new offset points for the point connecting prevLine to nextLive. this is stored as "point".
                 var point = nextLine.FromPoint.Coordinates;
-                var cross = prevLine.Vector.Cross(nextLine.Vector);
-                var dot = prevLine.Vector.Dot(nextLine.Vector);
+                var cross = prevUnitNormal.Cross(nextUnitNormal);
+                var dot = prevUnitNormal.Dot(nextUnitNormal);
 
-                // with the information found thus far, we can determine whether or not to put down one point or two.
-                // using law of cosines, we can find the distance between the two points that would result from offsetting lines at
-                // the current point. h^2 = 2*d^2*(1-cos(theta).   Instead of solving for cos(theta), we can use the dot product
-                // and the line-length-reciprocals. 
-                if (dot > 0 && offsetSquared * (1 - prevLineLengthReciprocal * nextLineLengthReciprocal * dot) < 2 * minEdgeLengthSqd)
-                    path.Add(point + offset * prevUnitNormal);
                 // if the cross is positive and the offset is positive (or there both negative), then we will need to make extra points
                 // let's start with the roundCorners
-                else if (cross * offset > 0)
+                if (cross * offset > 0)
                 {
-                    if (roundCorners)
+                    if (dot > 0 && 2 * offsetSquared * (1 - dot) < minEdgeLengthSqd)
+                        AddToOffsetPath(path, ref lastPathPoint, point + offset * prevUnitNormal, minEdgeLengthSqd);
+                    else if (roundCorners)
                     {
                         var firstPoint = point + offset * prevUnitNormal;
-                        path.Add(firstPoint);
+                        AddToOffsetPath(path, ref lastPathPoint, firstPoint, minEdgeLengthSqd);
                         var lastPoint = point + offset * nextUnitNormal;
                         var firstToLastVector = lastPoint - firstPoint;
                         var firstToLastNormal = new Vector2(firstToLastVector.Y, -firstToLastVector.X);
@@ -370,11 +367,11 @@ namespace TVGL.TwoDimensional
                         // positive side of the line connecting the first and last points. This is defined by the following dot-product
                         while (offsetSign * firstToLastNormal.Dot(nextPoint - lastPoint) > 0)
                         {
-                            path.Add(nextPoint);
+                            AddToOffsetPath(path, ref lastPathPoint, nextPoint, minEdgeLengthSqd);
                             firstPoint = nextPoint;
                             nextPoint = firstPoint.Transform(transform);
                         }
-                        path.Add(lastPoint);
+                        AddToOffsetPath(path, ref lastPathPoint, lastPoint, minEdgeLengthSqd);
                     }
                     // if the cross is positive and the offset is positive, then we will need to make extra points for the 
                     // squaredCorners
@@ -384,10 +381,10 @@ namespace TVGL.TwoDimensional
                         var middleUnitVector = (prevUnitNormal + nextUnitNormal).Normalize();
                         var middlePoint = point + offset * middleUnitVector;
                         var middleDir = new Vector2(-middleUnitVector.Y, middleUnitVector.X);
-                        path.Add(MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
-                            prevLine.Vector, middlePoint, middleDir));
-                        path.Add(MiscFunctions.LineLine2DIntersection(middlePoint, middleDir,
-                            point + offset * nextUnitNormal, nextLine.Vector));
+                        AddToOffsetPath(path, ref lastPathPoint, MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
+                            prevLine.Vector, middlePoint, middleDir), minEdgeLengthSqd);
+                        AddToOffsetPath(path, ref lastPathPoint, MiscFunctions.LineLine2DIntersection(middlePoint, middleDir,
+                            point + offset * nextUnitNormal, nextLine.Vector), minEdgeLengthSqd);
                     }
                     // miter and concave connections are done the same way...
                     else
@@ -395,7 +392,7 @@ namespace TVGL.TwoDimensional
                         var intersection = MiscFunctions.LineLine2DIntersection(point + offset * prevUnitNormal,
                             prevLine.Vector, point + offset * nextUnitNormal, nextLine.Vector);
                         if (intersection.IsNull())
-                            path.Add(point + offset * prevUnitNormal);
+                            AddToOffsetPath(path, ref lastPathPoint, point + offset * prevUnitNormal, minEdgeLengthSqd);
                         else
                         {
                             // if the corner is too shape the new point will be placed far away (near infinity). This is to rein it in
@@ -404,63 +401,81 @@ namespace TVGL.TwoDimensional
                             if (vectorToCornerLengthSquared > maxLengthSquared)
                                 intersection =
                                     point + vectorToCorner * Math.Sqrt(maxLengthSquared / vectorToCornerLengthSquared);
-                            path.Add(intersection);
+                            AddToOffsetPath(path, ref lastPathPoint, intersection, minEdgeLengthSqd);
                         }
                     }
                 }
                 else // here is where we add the wrong point. We have to add them because the intersections (both immediate and with lines far 
                 // from this).
                 {
-                    indicesOfWrongPoints.Add(path.Count);
-                    path.Add(point + offset * prevUnitNormal);
-                    indicesOfWrongPoints.Add(path.Count);
-                    path.Add(point + offset * nextUnitNormal);
+                    // with the information found thus far, we can determine whether or not to put down one point or two.
+                    // using law of cosines, we can find the distance between the two points that would result from offsetting lines at
+                    // the current point. h^2 = 2*d^2*(1-cos(theta).   Instead of solving for cos(theta), we can use the dot product
+                    // and the line-length-reciprocals. 
+                    if (dot > 0 && 2 * offsetSquared * (1 - dot) < minEdgeLengthSqd)
+                    {
+                        var combineNormal = (prevUnitNormal + nextUnitNormal).Normalize();
+                        AddToOffsetPath(path, ref lastPathPoint, point + offset * combineNormal, minEdgeLengthSqd);
+                    }
+                    else
+                    {
+                        path.Add(point + offset * prevUnitNormal);
+                        indicesOfWrongLines.Add(path.Count);
+                        lastPathPoint = point + offset * nextUnitNormal;
+                        path.Add(lastPathPoint);
+                    }
                 }
                 prevLine = nextLine;
-                prevLineLengthReciprocal = nextLineLengthReciprocal;
                 prevUnitNormal = nextUnitNormal;
                 //#if PRESENT
                 //                Presenter.ShowAndHang(new[] { polygon, new Polygon(path) });
                 //#endif
             }
             #region SimplifyFast but with updates to indicesOfWrongPoints
-            minEdgeLengthSqd = Math.Pow(10, -(int)(1.7 * polygon.NumSigDigits));
-            var forwardPoint = path[0];
-            for (int i = path.Count - 1; i >= 0; i--)
-            {
-                var currentPoint = path[i];
-                var line = forwardPoint - currentPoint;
-                if (line.LengthSquared() < minEdgeLengthSqd) // || cross.IsNegligible(minEdgeLengthSqd) )
-                {
-                    var positionInWrongPoints = indicesOfWrongPoints.Count - 1;
-                    while (positionInWrongPoints >= 0 && i < indicesOfWrongPoints[positionInWrongPoints])
-                        indicesOfWrongPoints[positionInWrongPoints--]--;
-                    if (positionInWrongPoints >= 0 && i == indicesOfWrongPoints[positionInWrongPoints])
-                        indicesOfWrongPoints.RemoveAt(positionInWrongPoints);
-                    path.RemoveAt(i);
-                    if (path.Count == i) forwardPoint = path[0];
-                    else forwardPoint = path[i];
-                }
-                else
-                    forwardPoint = currentPoint;
-            }
-            var nextIndex = path.Count;
-            for (int i = indicesOfWrongPoints.Count - 1; i > 0; i--)
-            {
-                var currentIndex = indicesOfWrongPoints[i];
-                if (currentIndex - indicesOfWrongPoints[i - 1] > 1 &&
-                    nextIndex - currentIndex > 1)
-                {
-                    indicesOfWrongPoints.RemoveAt(i);
-                    //Debug.WriteLine("*** Lone wrong point!! ***");
-                    if (indicesOfWrongPoints.Count == i) nextIndex = path.Count;
-                    else nextIndex = indicesOfWrongPoints[i];
-                }
-                else nextIndex = currentIndex;
-            }
+            //minEdgeLengthSqd = Math.Pow(10, -(int)(1.7 * polygon.NumSigDigits));
+            //var forwardPoint = path[0];
+            //for (int i = path.Count - 1; i >= 0; i--)
+            //{
+            //    var currentPoint = path[i];
+            //    var line = forwardPoint - currentPoint;
+            //    if (line.LengthSquared() < minEdgeLengthSqd) // || cross.IsNegligible(minEdgeLengthSqd) )
+            //    {
+            //        var positionInWrongPoints = indicesOfWrongLines.Count - 1;
+            //        while (positionInWrongPoints >= 0 && i < indicesOfWrongLines[positionInWrongPoints])
+            //            indicesOfWrongLines[positionInWrongPoints--]--;
+            //        if (positionInWrongPoints >= 0 && i == indicesOfWrongLines[positionInWrongPoints])
+            //            indicesOfWrongLines.RemoveAt(positionInWrongPoints);
+            //        path.RemoveAt(i);
+            //        if (path.Count == i) forwardPoint = path[0];
+            //        else forwardPoint = path[i];
+            //    }
+            //    else
+            //        forwardPoint = currentPoint;
+            //}
+            //var nextIndex = path.Count;
+            //for (int i = indicesOfWrongLines.Count - 1; i > 0; i--)
+            //{
+            //    var currentIndex = indicesOfWrongLines[i];
+            //    if (currentIndex - indicesOfWrongLines[i - 1] > 1 &&
+            //        nextIndex - currentIndex > 1)
+            //    {
+            //        indicesOfWrongLines.RemoveAt(i);
+            //        //Debug.WriteLine("*** Lone wrong point!! ***");
+            //        if (indicesOfWrongLines.Count == i) nextIndex = path.Count;
+            //        else nextIndex = indicesOfWrongLines[i];
+            //    }
+            //    else nextIndex = currentIndex;
+            //}
 
             #endregion
             return new Polygon(path);
+        }
+
+        private static void AddToOffsetPath(List<Vector2> path, ref Vector2 lastPathPoint, Vector2 newPoint, double minLengthSqared)
+        {
+            if ((newPoint - lastPathPoint).LengthSquared() < minLengthSqared) return;
+            lastPathPoint = newPoint;
+            path.Add(newPoint);
         }
         #endregion
     }

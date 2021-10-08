@@ -45,7 +45,7 @@ namespace TVGL.TwoDimensional
                 out var startEdge, ref indexIntersectionStart))
             {
                 var polyCoordinates = MakePolygonThroughIntersections(intersectionLookup, interaction.IntersectionData, startingIntersection,
-                    startEdge, false).ToList();
+                    startEdge, false, null).ToList();
                 var area = polyCoordinates.Area();
                 if (area.IsNegligible(minimumArea)) continue;
                 newPolygons.Add(new Polygon(polyCoordinates.SimplifyFastDestructiveList(), polygonIndex++));
@@ -161,8 +161,7 @@ namespace TVGL.TwoDimensional
         /// <returns>Polygon.</returns>
         /// <exception cref="NotImplementedException"></exception>
         protected List<Vector2> MakePolygonThroughIntersections(List<int>[] intersectionLookup, List<SegmentIntersection> intersections,
-            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool shapeIsOnlyNegative)
-
+            SegmentIntersection startingIntersection, PolygonEdge startingEdge, bool shapeIsOnlyNegative, HashSet<int> badEdgeIndices)
         {
             bool? completed = null;
             var newPath = new List<Vector2>();
@@ -170,6 +169,7 @@ namespace TVGL.TwoDimensional
             var currentEdge = startingEdge;
             do
             {
+
                 var currentIsEdgeA = currentEdge == intersectionData.EdgeA;
                 var switchPolygon = SwitchAtThisIntersection(intersectionData, currentIsEdgeA, shapeIsOnlyNegative);
                 if (currentIsEdgeA)
@@ -186,18 +186,25 @@ namespace TVGL.TwoDimensional
                     newPath.Add(intersectionData.IntersectCoordinates);
                 if (switchPolygon)
                     currentEdge = currentIsEdgeA ? intersectionData.EdgeB : intersectionData.EdgeA;
-
+                var includesBadEdge = false;
                 // the following while loop adds all the points along the subpath until the next intersection is encountered
-                while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections, ref intersectionData))
+                while (!ClosestNextIntersectionOnThisEdge(intersectionLookup, currentEdge, intersections,
+                        ref intersectionData))
                 // when this returns true (a valid intersection is found - even if previously visited), then we break
                 // out of the loop. The intersection is identified here, but processed above
                 {
+                    if (badEdgeIndices != null && badEdgeIndices.Contains(currentEdge.IndexInList))
+                    {
+                        includesBadEdge = true;
+                        break;
+                    }
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                 }
-                //#if PRESENT
-                //                Presenter.ShowAndHang(newPath, closeShape: false);
-                //#endif
+#if PRESENT
+                Presenter.ShowAndHang(newPath, closeShape: false);
+#endif
+                if (includesBadEdge) { completed = null; break; }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT
             //            Presenter.ShowAndHang(newPath);

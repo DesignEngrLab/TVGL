@@ -59,7 +59,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 if (polygons.All(p => p == null)) continue;
                 Debug.WriteLine("Attempting: " + filename);
                 Presenter.ShowAndHang(polygons);
-                var result = polygons.OffsetRound(offset, 0.002, polygonSimplify: PolygonSimplify.DoNotSimplify);
+                var result = polygons.OffsetRound(offset, 0.02, polygonSimplify: PolygonSimplify.DoNotSimplify);
                 Presenter.ShowAndHang(result);
             }
         }

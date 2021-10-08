@@ -1215,7 +1215,6 @@ namespace TVGL.TwoDimensional
                 && polygonA.MinY <= polygonB.MinY);
         }
 
-
         private static PolygonEdge[] GetOrderedLines(Vertex2D[] orderedPoints)
         {
             var length = orderedPoints != null ? orderedPoints.Length : 0;
@@ -1233,14 +1232,34 @@ namespace TVGL.TwoDimensional
             return result;
         }
 
-        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA)
+        private static PolygonEdge[] GetOrderedLines(Vertex2D[] orderedPoints, HashSet<int> edgesToIgnore)
+        {
+            var length = orderedPoints != null ? orderedPoints.Length : 0;
+            var result = new PolygonEdge[length - edgesToIgnore.Count];
+            var resultIndex = 0;
+            for (int i = 0; i < length; i++)
+            {
+                var point = orderedPoints[i];
+                if (!edgesToIgnore.Contains(point.StartLine.IndexInList) && point.StartLine.OtherPoint(point).X >= point.X)
+                    result[resultIndex++] = point.StartLine;
+                if (!edgesToIgnore.Contains(point.EndLine.IndexInList) && point.EndLine.OtherPoint(point).X > point.X)
+                    result[resultIndex++] = point.EndLine;
+                if (resultIndex >= length - edgesToIgnore.Count) break;
+            }
+            return result;
+        }
+
+        private static List<SegmentIntersection> GetSelfIntersections(this Polygon polygonA, HashSet<int> edgesToIgnore = null)
         {
             lock (polygonA)
             {
+                polygonA.MakePolygonEdgesIfNonExistent();
                 var intersections = new List<SegmentIntersection>();
                 var possibleDuplicates = new List<(int index, PolygonEdge lineA, PolygonEdge lineB)>();
-                var numLines = polygonA.Edges.Length;
-                var orderedLines = GetOrderedLines(polygonA.OrderedXVertices);
+                var orderedLines = edgesToIgnore == null? GetOrderedLines(polygonA.OrderedXVertices) :
+                     GetOrderedLines(polygonA.OrderedXVertices, edgesToIgnore);
+                var numLines = orderedLines.Length;
+
                 for (int i = 0; i < numLines - 1; i++)
                 {
                     var current = orderedLines[i];
@@ -1249,7 +1268,8 @@ namespace TVGL.TwoDimensional
                         var other = orderedLines[j];
                         if (current.XMax < orderedLines[j].XMin) break;
                         if (current.IsAdjacentTo(other)) continue;
-                        AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, polygonA.NumSigDigits, false, false);
+                        AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates,
+                            polygonA.NumSigDigits, false, false);
                     }
                 }
                 RemoveDuplicateIntersections(possibleDuplicates, intersections);
