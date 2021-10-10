@@ -201,9 +201,9 @@ namespace TVGL.TwoDimensional
                     currentEdge = currentEdge.ToPoint.StartLine;
                     newPath.Add(currentEdge.FromPoint.Coordinates);
                 }
-#if PRESENT
-                Presenter.ShowAndHang(newPath, closeShape: false);
-#endif
+//#if PRESENT
+//                Presenter.ShowAndHang(newPath, closeShape: false);
+//#endif
                 if (includesBadEdge) { completed = null; break; }
             } while (false == (completed = PolygonCompleted(intersectionData, startingIntersection, currentEdge, startingEdge)));
             //#if PRESENT

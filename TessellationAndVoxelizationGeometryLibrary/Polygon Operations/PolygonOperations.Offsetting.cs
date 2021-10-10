@@ -216,9 +216,9 @@ namespace TVGL.TwoDimensional
             : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, false, edgesToIgnore);
             var maxOuterArea = outers.Max(p => p.PathArea);
             outers.RemoveAll(p => p.PathArea / maxOuterArea < 1e-5);
-#if PRESENT
-            Presenter.ShowAndHang(outers);
-#endif
+//#if PRESENT
+//            Presenter.ShowAndHang(outers);
+//#endif
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
@@ -231,9 +231,9 @@ namespace TVGL.TwoDimensional
                 interaction.IntersectionData.AddRange(intersections);
                 intersectionLookup = interaction.MakeIntersectionLookupList(newHole.Vertices.Count, true);
                 //AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, edgesToIgnore, polygonRemoveIntersections, offset < 0);
-#if PRESENT
-                Presenter.ShowAndHang(new[] { polygon, newHole });
-#endif
+//#if PRESENT
+//                Presenter.ShowAndHang(new[] { polygon, newHole });
+//#endif
                 if (intersections.Count == 0)
                     inners.Add(newHole);
                 else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true, edgesToIgnore));
@@ -412,7 +412,7 @@ namespace TVGL.TwoDimensional
                     // using law of cosines, we can find the distance between the two points that would result from offsetting lines at
                     // the current point. h^2 = 2*d^2*(1-cos(theta).   Instead of solving for cos(theta), we can use the dot product
                     // and the line-length-reciprocals. 
-                    if (dot > 0 && 2 * offsetSquared * (1 - dot) < minEdgeLengthSqd)
+                    if (dot > 0 && 1.0002 * offsetSquared * (1 - dot) < minEdgeLengthSqd)
                     {
                         var combineNormal = (prevUnitNormal + nextUnitNormal).Normalize();
                         AddToOffsetPath(path, ref lastPathPoint, point + offset * combineNormal, minEdgeLengthSqd);
@@ -427,9 +427,9 @@ namespace TVGL.TwoDimensional
                 }
                 prevLine = nextLine;
                 prevUnitNormal = nextUnitNormal;
-                //#if PRESENT
-                //                Presenter.ShowAndHang(new[] { polygon, new Polygon(path) });
-                //#endif
+//#if PRESENT
+//                                Presenter.ShowAndHang(new[] { polygon, new Polygon(path) });
+//#endif
             }
             #region SimplifyFast but with updates to indicesOfWrongPoints
             //minEdgeLengthSqd = Math.Pow(10, -(int)(1.7 * polygon.NumSigDigits));
