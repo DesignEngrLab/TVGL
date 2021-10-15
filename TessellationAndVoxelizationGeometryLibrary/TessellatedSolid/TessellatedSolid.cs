@@ -414,6 +414,11 @@ namespace TVGL
             MakeEdges(fromSTL);
             CalculateVolume();
             this.CheckModelIntegrity();
+
+            //If the volume is zero, creating the convex hull may cause a null exception
+            if (this.Volume.IsNegligible()) return;     
+
+            //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
             ConvexHull = new TVGLConvexHull(this);
             if (ConvexHull.Vertices != null)
                 foreach (var cvxHullPt in ConvexHull.Vertices)
