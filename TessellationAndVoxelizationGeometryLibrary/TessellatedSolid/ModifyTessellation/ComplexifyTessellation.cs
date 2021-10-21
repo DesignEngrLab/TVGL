@@ -121,7 +121,7 @@ namespace TVGL
                 addedFaces.Add(newLeftFace);
                 addedFaces.Add(newRightFace);
                 addedVertices.Add(addedVertex);
-                edge = edgeQueue.First();
+                edge = edgeQueue.Dequeue();
             }
             ts.AddVertices(addedVertices);
             ts.AddEdges(addedEdges);
