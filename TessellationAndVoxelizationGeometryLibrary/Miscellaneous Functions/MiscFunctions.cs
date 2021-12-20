@@ -1087,6 +1087,8 @@ namespace TVGL
         /// <param name="bFrom">The starting point on the b-Line.</param>
         /// <param name="bTo">The end point on the b-Line.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
+        /// <param name="t_a">The t a.</param>
+        /// <param name="t_b">The t b.</param>
         /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
         /// <returns>System.Boolean.</returns>
         /*
@@ -1143,7 +1145,8 @@ namespace TVGL
         /// <param name="bFrom">The starting point on the b-Line.</param>
         /// <param name="bTo">The end point on the b-Line.</param>
         /// <param name="intersectionPoint">The intersection point.</param>
-        /// <param name="considerCollinearOverlapAsIntersect">The consider collinear overlap as intersect.</param>
+        /// <param name="t_a">The fractional amount along line-a.</param>
+        /// <param name="t_b">The fractional amount along line-b.</param>
         /// <returns>System.Boolean.</returns>
 
         [Intrinsic]
@@ -1151,49 +1154,46 @@ namespace TVGL
         public static bool SegmentSegment2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
             out Vector2 intersectionPoint, out double t_a, out double t_b, bool considerCollinearOverlapAsIntersect = false)
         {
+            // first create descriptions of the lines using the Join operator from Project Geometric Algebra (PGA2D; https://bivector.net/2DPGA.pdf)
+            var aLine = new Vector3(aTo.Y - aFrom.Y, aFrom.X - aTo.X, aFrom.Y * aTo.X - aFrom.X * aTo.Y); //JoinPointsIntoLineDescriptor(aFrom, aTo);
+            var bLine = new Vector3(bTo.Y - bFrom.Y, bFrom.X - bTo.X, bFrom.Y * bTo.X - bFrom.X * bTo.Y); // JoinPointsIntoLineDescriptor(bFrom, bTo);
 
-            // first check if bounding boxes overlap. If they don't then return false here...actually this slows it down! Commented out
-            //if (Math.Max(aFrom.X, aTo.X) < Math.Min(bFrom.X, bTo.X) || Math.Max(bFrom.X, bTo.X) < Math.Min(aFrom.X, aTo.X) ||
-            //    Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y) || Math.Max(aFrom.Y, aTo.Y) < Math.Min(bFrom.Y, bTo.Y))
-            //{
-            //    t_a = double.NaN;
-            //    t_b = double.NaN;
-            //    intersectionPoint = Vector2.Null;
-            //    return false;
-            //}
+            // now use the Meet operator to find the intersection point in homogeneous coordinates.
+            var interPoint3 = new Vector3(bLine.Z * aLine.Y - bLine.Y * aLine.Z, bLine.X * aLine.Z - bLine.Z * aLine.X, bLine.Y * aLine.X - bLine.X * aLine.Y); // MeetAtProjective2DPointUA(lg1, lg2);
 
-            var lg1 = new Vector3(aTo.Y - aFrom.Y, aFrom.X - aTo.X, aFrom.Y * aTo.X - aFrom.X * aTo.Y); //JoinPointsIntoLineDescriptorPGAUA(aFrom, aTo);
-            var lg2 = new Vector3(bTo.Y - bFrom.Y, bFrom.X - bTo.X, bFrom.Y * bTo.X - bFrom.X * bTo.Y); // JoinPointsIntoLineDescriptorPGAUA(bFrom, bTo);
-            var ip = new Vector3(lg2.Z * lg1.Y - lg2.Y * lg1.Z, lg2.X * lg1.Z - lg2.Z * lg1.X, lg2.Y * lg1.X - lg2.X * lg1.Y); // MeetAtProjective2DPointUA(lg1, lg2);
+            // there are several ways to check whether to intersection point is in between the endpoints (see https://observablehq.com/@skydog23/point-in-segment)
+            // but since one may also want to know the fraction along the line as indicated by the return values t_a and t_b, we define one
+            // based on dot products with the sub line to to the total line
+            var aLineIPFrom = new Vector3(interPoint3.Y - aFrom.Y * interPoint3.Z, aFrom.X * interPoint3.Z - interPoint3.X, aFrom.Y * interPoint3.X - aFrom.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(aFrom, ip);
+            var aLineIPTo = new Vector3(interPoint3.Y - aTo.Y * interPoint3.Z, aTo.X * interPoint3.Z - interPoint3.X, aTo.Y * interPoint3.X - aTo.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(aTo, ip);
+            var dotFromA = aLineIPFrom.X * aLine.X + aLineIPFrom.Y * aLine.Y;  // PGAInnerProductUA(iVfg1, lg1);
+            var dotToA = -aLineIPTo.X * aLine.X - aLineIPTo.Y * aLine.Y; // -PGAInnerProductUA(iVtg1, lg1);
 
-            var iVfg1 = new Vector3(ip.Y - aFrom.Y * ip.Z, aFrom.X * ip.Z - ip.X, aFrom.Y * ip.X - aFrom.X * ip.Y); // JoinPointsIntoLineDescriptorPGAUA(aFrom, ip);
-            var iVtg1 = new Vector3(ip.Y - aTo.Y * ip.Z, aTo.X * ip.Z - ip.X, aTo.Y * ip.X - aTo.X * ip.Y); // JoinPointsIntoLineDescriptorPGAUA(aTo, ip);
-            var dotf1 = iVfg1.X * lg1.X + iVfg1.Y * lg1.Y;  // PGAInnerProductUA(iVfg1, lg1);
-            var dott1 = -iVtg1.X * lg1.X - iVtg1.Y * lg1.Y; // -PGAInnerProductUA(iVtg1, lg1);
-
-
-
-            if ((dotf1 < 0 && dott1 >= 0) || (dotf1 >= 0 && dott1 < 0))
+            // note that the dotToA is actually a negative of the dot product. if both are positive or both are negative then you are in between
+            // the end points
+            if ((dotFromA < 0 && dotToA >= 0) || (dotFromA >= 0 && dotToA < 0))
             {
                 t_a = double.NaN;
                 t_b = double.NaN;
                 intersectionPoint = Vector2.Null;
                 return false;
             }
-            var iVfg2 = new Vector3(ip.Y - bFrom.Y * ip.Z, bFrom.X * ip.Z - ip.X, bFrom.Y * ip.X - bFrom.X * ip.Y); // JoinPointsIntoLineDescriptorPGAUA(bFrom, ip);
-            var iVtg2 = new Vector3(ip.Y - bTo.Y * ip.Z, bTo.X * ip.Z - ip.X, bTo.Y * ip.X - bTo.X * ip.Y); // JoinPointsIntoLineDescriptorPGAUA(bTo, ip);
-            var dotf2 = iVfg2.X * lg2.X + iVfg2.Y * lg2.Y; // PGAInnerProductUA(iVfg2, lg2);
-            var dott2 = -iVtg2.X * lg2.X - iVtg2.Y * lg2.Y; // -PGAInnerProductUA(iVtg2, lg2);
-            if ((dotf2 < 0 && dott2 >= 0) || (dotf2 >= 0 && dott2 < 0))
+
+            // now the same for the b-Line
+            var blineIPFrom = new Vector3(interPoint3.Y - bFrom.Y * interPoint3.Z, bFrom.X * interPoint3.Z - interPoint3.X, bFrom.Y * interPoint3.X - bFrom.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(bFrom, ip);
+            var blineIPTo = new Vector3(interPoint3.Y - bTo.Y * interPoint3.Z, bTo.X * interPoint3.Z - interPoint3.X, bTo.Y * interPoint3.X - bTo.X * interPoint3.Y); // JoinPointsIntoLineDescriptor(bTo, ip);
+            var dotFromB = blineIPFrom.X * bLine.X + blineIPFrom.Y * bLine.Y; // PGAInnerProductUA(iVfg2, lg2);
+            var dotToB = -blineIPTo.X * bLine.X - blineIPTo.Y * bLine.Y; // -PGAInnerProductUA(iVtg2, lg2);
+            if ((dotFromB < 0 && dotToB >= 0) || (dotFromB >= 0 && dotToB < 0))
             {
                 t_a = double.NaN;
                 t_b = double.NaN;
                 intersectionPoint = Vector2.Null;
                 return false;
             }
-            t_a = dotf1 / (dotf1 + dott1);
-            t_b = dotf2 / (dotf2 + dott2);
-            intersectionPoint = new Vector2(ip.X / ip.Z, ip.Y / ip.Z);
+            t_a = dotFromA / (dotFromA + dotToA);
+            t_b = dotFromB / (dotFromB + dotToB);
+            intersectionPoint = new Vector2(interPoint3.X / interPoint3.Z, interPoint3.Y / interPoint3.Z);
             return true;
         }
 
