@@ -58,6 +58,26 @@ namespace TVGL.TwoDimensional
 
         #endregion
         #region SimplifyFast
+
+
+        public static List<Polygon> SimplifyFast(this IEnumerable<Polygon> polygons, double lengthTolerance = Constants.LineLengthMinimum,
+            double slopeTolerance = Constants.LineSlopeTolerance)
+        { return SimplifyFast(polygons, out _, lengthTolerance, slopeTolerance); }
+        public static List<Polygon> RemoveCollinearEdges(this IEnumerable<Polygon> polygons, double lengthTolerance = Constants.LineLengthMinimum,
+        double slopeTolerance = Constants.LineSlopeTolerance)
+        { return SimplifyFast(polygons, out _, lengthTolerance, slopeTolerance); }
+
+        public static bool RemoveCollinearEdges(this Polygon polygon, double lengthTolerance = Constants.LineLengthMinimum,
+    double slopeTolerance = Constants.LineSlopeTolerance)
+        {
+            return SimplifyFast(polygon, lengthTolerance, slopeTolerance); }
+        public static IList<Vector2> RemoveCollinearEdgesToNewList(this IEnumerable<Vector2> path, double lengthTolerance = Constants.LineLengthMinimum,
+    double slopeTolerance = Constants.LineSlopeTolerance)
+        {
+            return SimplifyFastDestructiveList(path.ToList(), lengthTolerance, slopeTolerance);
+        }
+
+
         /// <summary>
         /// Simplifies the specified polygons by removing vertices that have collinear edges.
         /// </summary>

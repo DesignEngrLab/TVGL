@@ -40,7 +40,7 @@ namespace TVGL.TwoDimensional
                     startEdge, shapeIsOnlyNegative, edgesToIgnore).ToList();
 
                 var area = polyCoordinates.Area();
-                if (area.IsNegligible(polygon.Area * Constants.PolygonSameTolerance)) continue;
+                if (area.IsNegligible(Math.Abs(polygon.Area * Constants.PolygonSameTolerance))) continue;
                 if (area * (int)resultType < 0) // note that the ResultType enum has assigned negative values that are used
                 {                                //in conjunction with the area of the sign. Only if the product is negative - do we do something 
                     if (resultType == ResultType.OnlyKeepNegative || resultType == ResultType.OnlyKeepPositive) continue;

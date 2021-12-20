@@ -365,7 +365,7 @@ namespace TVGL.TwoDimensional
             {
                 if (_path == null || _path.Count == 0)
                 {
-                    if (_innerPolygons.Count > 0) area = double.PositiveInfinity;
+                    if (_innerPolygons != null && _innerPolygons.Count > 0) area = double.PositiveInfinity;
                     else area = 0.0;
                 }
                 else
@@ -557,6 +557,7 @@ namespace TVGL.TwoDimensional
         private void MakeVerticesFromPath()
         {
             _vertices = new List<Vertex2D>();
+            if (_path.Count == 0) return;
             var prevX = Math.Round(_path[^1].X, NumSigDigits);
             var prevY = Math.Round(_path[^1].Y, NumSigDigits);
 

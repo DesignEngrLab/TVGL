@@ -14,12 +14,16 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
-        /// <summary>
-        /// Get the largest polygon by net area from the collections of polygons
-        /// </summary>
-        /// <param name="polygons"></param>
-        /// <returns></returns>
-        public static Polygon LargestPolygonWithHoles(this IEnumerable<Polygon> polygons)
+        public static Polygon LargestPolygon(this IEnumerable<Polygon> polygons)
+        {
+            return LargestPolygonWithHoles(polygons);
+        }
+            /// <summary>
+            /// Get the largest polygon by net area from the collections of polygons
+            /// </summary>
+            /// <param name="polygons"></param>
+            /// <returns></returns>
+            public static Polygon LargestPolygonWithHoles(this IEnumerable<Polygon> polygons)
         {
             return polygons
                 .Aggregate((poly1, poly2) => poly1.Area > poly2.Area ? poly1 : poly2);

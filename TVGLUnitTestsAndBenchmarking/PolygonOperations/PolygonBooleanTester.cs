@@ -14,7 +14,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     public class PolygonBooleanTester
     {
-        [Benchmark]
+        //[Benchmark]
         [ArgumentsSource(nameof(Data))]
         public static List<Polygon> TVGLUnion(Polygon polygon1, Polygon polygon2)
             => TVGL.TwoDimensional.PolygonOperations.Union(polygon1, polygon2, PolygonSimplify.CanSimplifyOriginal, PolygonCollection.SeparateLoops);

@@ -37,8 +37,8 @@ namespace TVGLUnitTestsAndBenchmarking
             // KnuckleTopOp flecks
             // mendel_extruder - one show up blank
             //var fileNames = dir.GetFiles("Obliq*").ToArray();
-            var fileNames = dir.GetFiles("*").Reverse().ToArray();
-            for (var i = 10; i < fileNames.Length - 0; i++)
+            var fileNames = dir.GetFiles("*").ToArray();
+            for (var i = 7; i < fileNames.Length - 0; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -61,8 +61,10 @@ namespace TVGLUnitTestsAndBenchmarking
                     Console.WriteLine(direction[0] + ", " + direction[1] + ", " + direction[2]);
                     //var silhouette = solid.CreateSilhouetteSimple(direction);
                     //Presenter.ShowAndHang(silhouette);
-                    solid.SliceOnInfiniteFlat(new Plane(solid.Center, direction),out var solids, out var contactData);
-                    Presenter.ShowAndHang(solids);
+                    var polys = solid.GetCrossSection(new Plane(solid.Center, direction));
+                    //solid.SliceOnInfiniteFlat(new Plane(solid.Center, direction),out var solids, out var contactData);
+                    Presenter.ShowAndHang(polys);
+                    IO.Save(polys[0], "ring.json");
                 }
             }
 

@@ -21,6 +21,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>3d, solid modeling, computational geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

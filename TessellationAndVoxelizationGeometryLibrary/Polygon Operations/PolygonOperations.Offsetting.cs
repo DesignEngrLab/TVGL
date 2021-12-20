@@ -214,11 +214,14 @@ namespace TVGL.TwoDimensional
 
             var outers = (intersections.Count == 0) ? new List<Polygon> { outer }
             : polygonRemoveIntersections.Run(outer, intersections, ResultType.BothPermitted, false, edgesToIgnore);
-            var maxOuterArea = outers.Max(p => p.PathArea);
-            outers.RemoveAll(p => p.PathArea / maxOuterArea < 1e-5);
-//#if PRESENT
-//            Presenter.ShowAndHang(outers);
-//#endif
+            if (outers.Count > 0)
+            {
+                var maxOuterArea = outers.Max(p => p.PathArea);
+                outers.RemoveAll(p => p.PathArea / maxOuterArea < 1e-5);
+            }
+            //#if PRESENT
+            //            Presenter.ShowAndHang(outers);
+            //#endif
             var inners = new List<Polygon>();
             foreach (var hole in polygon.InnerPolygons)
             {
@@ -231,9 +234,9 @@ namespace TVGL.TwoDimensional
                 interaction.IntersectionData.AddRange(intersections);
                 intersectionLookup = interaction.MakeIntersectionLookupList(newHole.Vertices.Count, true);
                 //AssignVisitedToWrongPolygons(newHole, intersections, intersectionLookup, edgesToIgnore, polygonRemoveIntersections, offset < 0);
-//#if PRESENT
-//                Presenter.ShowAndHang(new[] { polygon, newHole });
-//#endif
+                //#if PRESENT
+                //                Presenter.ShowAndHang(new[] { polygon, newHole });
+                //#endif
                 if (intersections.Count == 0)
                     inners.Add(newHole);
                 else inners.AddRange(polygonRemoveIntersections.Run(newHole, intersections, ResultType.OnlyKeepNegative, true, edgesToIgnore));
@@ -329,9 +332,8 @@ namespace TVGL.TwoDimensional
             if (notMiter && !roundCorners) startingListSize = (int)(1.5 * startingListSize);
             var path = new List<Vector2>(startingListSize);
             Vector2 lastPathPoint = Vector2.Null;
-            // previous line starts at the end of the list and then updates to whatever next line was. In addition to the previous line, we
-            // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction). The prevLineLengthReciprocal was originally
-            // thought to have uses outside of the unit vector but it doesn't. Anyway, slight speed up in calculating it once
+            // previous line starts as the first edge in the polygon then it updates to whatever nextLine was assigned to. In addition to the previous line, we
+            // also want to capture the unit vector pointing outward (which is in the {Y, -X} direction) and the prevLineLengthReciprocal
             var prevLine = polygon.Edges[0];
             var prevLineLengthReciprocal = 1.0 / prevLine.Length;
             var prevUnitNormal = new Vector2(prevLine.Vector.Y * prevLineLengthReciprocal, -prevLine.Vector.X * prevLineLengthReciprocal);
@@ -405,13 +407,12 @@ namespace TVGL.TwoDimensional
                         }
                     }
                 }
-                else // here is where we add the wrong point. We have to add them because the intersections (both immediate and with lines far 
-                // from this).
+                else // here is where we add the wrong point. We have to add them because the intersections (both immediate and with
+                     // lines far from this).
                 {
                     // with the information found thus far, we can determine whether or not to put down one point or two.
                     // using law of cosines, we can find the distance between the two points that would result from offsetting lines at
-                    // the current point. h^2 = 2*d^2*(1-cos(theta).   Instead of solving for cos(theta), we can use the dot product
-                    // and the line-length-reciprocals. 
+                    // the current point. h^2 = 2*d^2*(1-cos(theta)).   Instead of solving for cos(theta), we can use the dot product
                     if (dot > 0 && 1.0002 * offsetSquared * (1 - dot) < minEdgeLengthSqd)
                     {
                         var combineNormal = (prevUnitNormal + nextUnitNormal).Normalize();
@@ -427,9 +428,9 @@ namespace TVGL.TwoDimensional
                 }
                 prevLine = nextLine;
                 prevUnitNormal = nextUnitNormal;
-//#if PRESENT
-//                                Presenter.ShowAndHang(new[] { polygon, new Polygon(path) });
-//#endif
+                //#if PRESENT
+                //                                Presenter.ShowAndHang(new[] { polygon, new Polygon(path) });
+                //#endif
             }
             #region SimplifyFast but with updates to indicesOfWrongPoints
             //minEdgeLengthSqd = Math.Pow(10, -(int)(1.7 * polygon.NumSigDigits));
