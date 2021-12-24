@@ -187,5 +187,64 @@ namespace TVGL
             }
             return false;
         }
+
+        public void SetLayer2DArea()
+        {
+            Layer2DArea = new Dictionary<int, double>();
+            foreach(var layer in Layer2D)
+            {
+                Layer2DArea.Add(layer.Key, layer.Value.Sum(p => p.Area));
+            }
+        }
+
+        public void Reverse(Dictionary<int, double> newStepDistances)
+        {
+            var direction = Direction * -1;
+            var transform = direction.TransformToXYPlane(out var backTransform);
+            StepDistances = newStepDistances;
+            if (Layer2D != null && Layer2D.Any())
+            {
+                var j = 0;
+                var min = Layer2D.Keys.Min();
+                var newLayer2D = new Dictionary<int, IList<Polygon>>();
+                for (var i = Layer2D.Keys.Max(); i >= min; i--)
+                {
+                    var polygons = new List<Polygon>();
+                    foreach (var polygon in Layer2D[i])
+                    {
+                        //There is probably a better way to this, but this should work.
+                        //First, convert the 2D polygons back into their 3D coordates using 
+                        //the original BackTransform. Then, transform to the new 2D coordinates.
+                        //The polygons are now aligned with the specified reversed direction.
+                        var positiveLoop = polygon.Path.ConvertTo3DLocations(BackTransform);
+                        var positivePath = positiveLoop.ProjectTo2DCoordinates(transform).ToList();
+                        if (positivePath.Area() < 0) positivePath.Reverse();
+                        var newPolygon = new Polygon(positivePath);
+                        foreach (var path in polygon.InnerPolygons)
+                        {
+                            var negativeLoop = path.Path.ConvertTo3DLocations(BackTransform);
+                            var negativePath = negativeLoop.ProjectTo2DCoordinates(transform).ToList();
+                            if (negativePath.Area() > 0) negativePath.Reverse();
+                            newPolygon.AddInnerPolygon(new Polygon(negativePath));
+                        }
+                        polygons.Add(newPolygon);
+                    }
+                    newLayer2D[j++] = polygons;
+                }                   
+                Layer2D = newLayer2D;
+            }           
+            if (Layer2DArea != null && Layer2DArea.Any())
+            {
+                var j = 0;
+                var min = Layer2DArea.Keys.Min();
+                var newLayer2DArea = new Dictionary<int, double>();
+                for (var i = Layer2DArea.Keys.Max(); i >= min; i--)
+                    newLayer2DArea[j++] = Layer2DArea[i];
+            }
+            TransformMatrix = transform;
+            BackTransform = backTransform;
+            FirstIndex = Layer2D.Keys.First();
+            LastIndex = Layer2D.Keys.Last();
+        }
     }
 }

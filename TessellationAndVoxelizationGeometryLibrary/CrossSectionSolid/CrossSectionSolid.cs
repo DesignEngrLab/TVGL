@@ -35,6 +35,12 @@ namespace TVGL
         [JsonIgnore]
         public IDictionary<int, IList<Polygon>> Layer2D;
 
+        /// <summary>
+        /// Optional Layer2DArea can be used when the Layer2D polygons are unnessary and only the area is needed.
+        /// </summary>
+        [JsonIgnore]
+        public IDictionary<int, double> Layer2DArea { get; set; }
+
         // an alternate approach without using dictionaries could be pursued
         //public List<Polygon>[] Layer2D { get; }
 
@@ -43,7 +49,7 @@ namespace TVGL
         /// It can be bigger than either of the above dictionaries if, for example,
         /// you wanted to define multiple ParallelCrossSectionSolids along the same direction.
         /// <summary>
-        public Dictionary<int, double> StepDistances { get; }
+        public Dictionary<int, double> StepDistances { get; private set; }
         // an alternate approach without using dictionaries should be pursued
         //public Vector2 StepDistances { get; }
         /// <summary>
@@ -72,7 +78,7 @@ namespace TVGL
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
-            Layer2D = new Dictionary<int, IList<Polygon>>();
+            Layer2D = new Dictionary<int, IList<Polygon>>();         
             StepDistances = stepDistances;
         }
 
@@ -419,6 +425,18 @@ namespace TVGL
                 .Sum(layer => layer.Value
                 .Sum(outerP => outerP.AllPolygons
                 .Sum(p => p.Vertices.Count)));
+        }
+
+        public void CheckForMissingLayers()
+        {
+            for (var i = Layer2D.Keys.Min(); i <= Layer2D.Keys.Max(); i++) //Including the last index
+            {
+                if (Layer2D.ContainsKey(i)) continue;
+                else
+                {
+                    throw new Exception();
+                }
+            }
         }
     }
 }
