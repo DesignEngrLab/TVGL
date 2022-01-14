@@ -1152,7 +1152,7 @@ namespace TVGL
         [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool SegmentSegment2DIntersection(Vector2 aFrom, Vector2 aTo, Vector2 bFrom, Vector2 bTo,
-            out Vector2 intersectionPoint, out double t_a, out double t_b, bool considerCollinearOverlapAsIntersect = false)
+            out Vector2 intersectionPoint, out double t_a, out double t_b)
         {
             // first create descriptions of the lines using the Join operator from Project Geometric Algebra (PGA2D; https://bivector.net/2DPGA.pdf)
             var aLine = new Vector3(aTo.Y - aFrom.Y, aFrom.X - aTo.X, aFrom.Y * aTo.X - aFrom.X * aTo.Y); //JoinPointsIntoLineDescriptor(aFrom, aTo);
