@@ -188,7 +188,8 @@ namespace TVGL
                 if (i * increment < start * increment || i * increment > stop * increment) return;
                 var basePlaneDistance = extrudeBack ? StepDistances[i - increment] : StepDistances[i];
                 var topPlaneDistance = extrudeBack ? StepDistances[i] : StepDistances[i + increment];
-                var layerfaces = layer.Value.SelectMany(polygon => polygon.ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
+                //Copy polygon to avoid 
+                var layerfaces = layer.Value.SelectMany(polygon => polygon.Copy(true, false).ExtrusionFaceVectorsFrom2DPolygons(BackTransform.ZBasisVector,
                     basePlaneDistance, topPlaneDistance - basePlaneDistance)).ToList();
                 foreach (var face in layerfaces) faces.Add(face);
             }
@@ -434,7 +435,8 @@ namespace TVGL
                 if (Layer2D.ContainsKey(i)) continue;
                 else
                 {
-                    throw new Exception();
+                    Layer2D[i] = Layer2D[i - 1].Select(p => p.Copy(true, false)).ToList();//make same as the prior cross section
+                    //throw new Exception();
                 }
             }
         }

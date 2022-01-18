@@ -121,11 +121,7 @@ namespace TVGL
             foreach (var layerKeyValuePair in Layer2D)
             {
                 var index = layerKeyValuePair.Key;
-                var zValue = StepDistances[index];
-                var numLoops = layerKeyValuePair.Value.Sum(poly => 1 + poly.NumberOfInnerPolygons);
-                var layer = new Vector3[numLoops][];
-                result[k++] = layer;
-                int j = 0;
+                var zValue = StepDistances[index];               
 
                 //Check that the loop does not contain any duplicate points
                 var skipHoles = false;
@@ -142,26 +138,28 @@ namespace TVGL
                         skipHoles = ContainsDuplicatePoints(layer2DLoops);
                     }            
                 }
-     
+
+                var numLoops = layer2DLoops.Sum(poly => 1 + poly.NumberOfInnerPolygons);
+                var layer = new Vector3[numLoops][];
+                result[k++] = layer;
+                int j = 0;
                 foreach (var poly in layer2DLoops)
                 {
                     if (skipHoles)
                     {
-                        var loop = new Vector3[poly.Path.Count];
-                        layer[j] = loop;
+                        var loop = new Vector3[poly.Path.Count];           
                         for (int i = 0; i < loop.Length; i++)
                             loop[i] = new Vector3(poly.Path[i], zValue).Transform(BackTransform);
-                        j++;
+                        layer[j++] = loop;
                     }
                     else
                     {
-                        foreach (var innerPoly in poly.AllPolygons)
+                        foreach (var path in poly.AllPaths)
                         {
-                            var loop = new Vector3[innerPoly.Path.Count];
-                            layer[j] = loop;
-                            for (int i = 0; i < loop.Length; i++)
-                                loop[i] = new Vector3(innerPoly.Path[i], zValue).Transform(BackTransform);
-                            j++;
+                            var loop = new Vector3[path.Count];
+                            for (int i = 0; i < path.Count; i++)
+                                loop[i] = new Vector3(path[i], zValue).Transform(BackTransform);
+                            layer[j++] = loop;
                         }
                     }                    
                 }                  
@@ -201,11 +199,13 @@ namespace TVGL
         {
             var direction = Direction * -1;
             var transform = direction.TransformToXYPlane(out var backTransform);
+            //Get the solid offset, since Layer2D may not be the full size as the StepDistances.
+            var maxD = StepDistances.Keys.Max() - Layer2D.Keys.Max();
             StepDistances = newStepDistances;
             if (Layer2D != null && Layer2D.Any())
             {
-                var j = 0;
                 var min = Layer2D.Keys.Min();
+                var j = maxD; //Start at maxD offset, not necessarily zero.
                 var newLayer2D = new Dictionary<int, IList<Polygon>>();
                 for (var i = Layer2D.Keys.Max(); i >= min; i--)
                 {

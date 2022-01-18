@@ -372,7 +372,15 @@ namespace TVGL
                 border.CurveError = curveResidual;
                 SetBorderConvexity(border);
                 if (curveResidual < maxErrorInCurveFit)
-                    border.Curve = curve;
+                {
+                    //Check curve residual with center points to avoid fitting curves to non-curved features.
+                    //Do not do this when defining the curve, because these center points will always have increased error.
+                    //var vertices = border.EdgeList.Select(p => p.Center());
+                    //foreach (var p in vertices)
+                    //    curveResidual += curve.SquaredErrorOfNewPoint(p.ConvertTo2DCoordinates(border.Plane.AsTransformToXYPlane));
+                    if (curveResidual < maxErrorInCurveFit)
+                        border.Curve = curve;
+                }                 
                 if (border.IsClosed)
                 {
                     var axis = Vector3.Null;
@@ -406,7 +414,7 @@ namespace TVGL
                 }
             }
         }
-
+        
         private static void SetBorderConvexity(SurfaceBorder border)
         {
             var concave = 0;
