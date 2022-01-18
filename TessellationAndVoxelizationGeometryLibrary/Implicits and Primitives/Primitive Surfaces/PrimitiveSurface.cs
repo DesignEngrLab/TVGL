@@ -375,9 +375,9 @@ namespace TVGL
                 {
                     //Check curve residual with center points to avoid fitting curves to non-curved features.
                     //Do not do this when defining the curve, because these center points will always have increased error.
-                    //var vertices = border.EdgeList.Select(p => p.Center());
-                    //foreach (var p in vertices)
-                    //    curveResidual += curve.SquaredErrorOfNewPoint(p.ConvertTo2DCoordinates(border.Plane.AsTransformToXYPlane));
+                    var vertices = border.EdgeList.Select(p => p.Center());
+                    foreach (var p in vertices)
+                        curveResidual += curve.SquaredErrorOfNewPoint(p.ConvertTo2DCoordinates(border.Plane.AsTransformToXYPlane));
                     if (curveResidual < maxErrorInCurveFit)
                         border.Curve = curve;
                 }                 
