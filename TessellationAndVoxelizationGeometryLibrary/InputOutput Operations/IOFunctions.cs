@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml.Serialization;
 using TVGL.TwoDimensional;
 using TVGL.Voxelization;
@@ -1188,14 +1189,29 @@ namespace TVGL.IOFunctions
                 Formatting = Formatting.Indented,
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             };
-            using var fileStream = File.OpenWrite(filename);
-            using var sw = new StreamWriter(fileStream);
-            using var writer = new JsonTextWriter(sw);
-            var jObject = JObject.FromObject(polygon, serializer);
-            jObject.WriteTo(writer);
-            writer.Flush();
-        }
 
+            var NumberOfRetries = 3;
+            var DelayOnRetry = 1000;
+            for (int i = 1; i <= NumberOfRetries; ++i)
+            {
+                try
+                {
+                    using var fileStream = File.OpenWrite(filename);
+                    using var sw = new StreamWriter(fileStream);
+                    using var writer = new JsonTextWriter(sw);
+                    var jObject = JObject.FromObject(polygon, serializer);
+                    jObject.WriteTo(writer);
+                    writer.Flush();
+                    break; // When done we can break loop
+                }
+                catch (IOException e) when (i <= NumberOfRetries)
+                {
+                    // You may check error code to filter some exceptions, not every error
+                    // can be recovered.
+                    Thread.Sleep(DelayOnRetry);
+                }
+            }           
+        }
 
         /// <summary>
         /// Opens the specified filename.
