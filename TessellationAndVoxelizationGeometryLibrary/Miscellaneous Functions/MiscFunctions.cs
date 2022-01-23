@@ -630,7 +630,41 @@ namespace TVGL
                 return solids;
             }
             foreach (var seperateSolid in seperateSolids)
-                solids.Add(new TessellatedSolid(seperateSolid, true, false));
+            {
+                //Copy the non-smooth edges over to the seperate solid
+                HashSet<(Vector3, Vector3)> nonSmoothEdgesForSolid = null;
+                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
+                {
+                    //Get all the edges in order, avoiding duplicates by using a hashset.
+                    var edges = new HashSet<Edge>();
+                    foreach (var face in seperateSolid)
+                        foreach (var edge in face.Edges) 
+                            edges.Add(edge);
+    
+                    nonSmoothEdgesForSolid = new HashSet<(Vector3, Vector3)>();
+                    foreach(var edge in edges)
+                    {
+                        if (ts.NonsmoothEdges.Contains(edge))
+                            nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates));
+                    }
+                }
+
+                var newSolid = new TessellatedSolid(seperateSolid, true, false);
+
+                if (nonSmoothEdgesForSolid != null)
+                {
+                    newSolid.NonsmoothEdges = new HashSet<Edge>();
+                    foreach (var edge in newSolid.Edges)
+                    {
+                        if (nonSmoothEdgesForSolid.Contains((edge.From.Coordinates, edge.To.Coordinates))
+                            || nonSmoothEdgesForSolid.Contains((edge.To.Coordinates, edge.From.Coordinates)))
+                            newSolid.NonsmoothEdges.Add(edge);
+                    }
+                }
+
+                solids.Add(newSolid);
+            }
+           
             return solids;
         }
 
@@ -1787,7 +1821,7 @@ namespace TVGL
             var facesAbove = new List<PolygonalFace>();
             var facesBelow = new List<PolygonalFace>();
             var inconclusive = true;
-            var rnd = new Random();
+            var rnd = new Random(0);
             //Added while inconclusive and random direction because there are some special cases that look the
             //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis,
             //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box

@@ -1090,7 +1090,10 @@ namespace TVGL
 
         public static IEnumerable<Color> GetRandomColors()
         {
-            var random = new Random();
+            //var random = new Random();
+            // Given repeated plotting - it's nice to see a pattern to the colors, so the seed
+            // for this is fixed. Is there ever a reason it should be truly random?
+            var random = new Random(0);
             var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
                 .Select(dict => dict.Values.OrderBy(dummy2 => random.NextDouble()).ToList()).ToList();
             var innerIndex = 0;

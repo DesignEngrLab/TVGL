@@ -449,12 +449,30 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         }
 
         /// <summary>
-        /// Returns a boolean indicating whether the given vecotr is aligned or exactly in the opposite direction.
+        /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
         /// </summary>
         /// <param name="obj">The Object to compare against.</param>
         /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
         public bool IsAlignedOrReverse(Vector3 other, double dotTolerance = Constants.SameFaceNormalDotTolerance)
         {
+            //Perform a quick check to see if they are perfectly equal or opposite
+            if (X == other.X && Y == other.Y && Z == other.Z) return true;
+            if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
+            // if the magnitude of the cross product is nearly zero than the two vectors are aligned
+            var crossMagnitudeSquared = this.Cross(other).LengthSquared();
+            crossMagnitudeSquared /= this.LengthSquared();
+            crossMagnitudeSquared /= other.LengthSquared();
+            return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating whether the given vector is aligned or exactly in the opposite direction.
+        /// </summary>
+        /// <param name="obj">The Object to compare against.</param>
+        /// <returns>True if the Object is equal or opposite to this Vector3; False otherwise.</returns>
+        public bool IsAlignedOrReverse(Vector3 other, out bool isReverse, double dotTolerance = Constants.SameFaceNormalDotTolerance)
+        {
+            isReverse = this.Dot(other) < 0;
             //Perform a quick check to see if they are perfectly equal or opposite
             if (X == other.X && Y == other.Y && Z == other.Z) return true;
             if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;

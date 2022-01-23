@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using TVGL.Numerics;
@@ -146,6 +147,7 @@ namespace TVGL
         ///     - that is, produces the proper cross-product normal).
         /// </summary>
         /// <value>The owned face.</value>
+        [JsonIgnore] //this two-way link creates an infinite loop for serialization and must be ignored.
         public PolygonalFace OwnedFace
         {
             get => _ownedFace;
@@ -161,6 +163,7 @@ namespace TVGL
         ///     make sense- that is, produces the negative cross-product normal).
         /// </summary>
         /// <value>The other face.</value>
+        [JsonIgnore] //this two-way link creates an infinite loop for serialization and must be ignored.
         public PolygonalFace OtherFace
         {
             get => _otherFace;
@@ -200,6 +203,7 @@ namespace TVGL
         /// Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
+        [JsonIgnore] //Cannot serialize a possibly null value
         public override Vector3 Normal
         {
             get
@@ -387,6 +391,13 @@ namespace TVGL
             var tempFace = OwnedFace;
             OwnedFace = OtherFace;
             OtherFace = tempFace;
+        }
+
+        //Leave this as a method, to limit excess memory.
+        [Intrinsic]
+        public Vector3 Center()
+        {
+            return (To.Coordinates + From.Coordinates) / 2;
         }
         #endregion
     }

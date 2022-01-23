@@ -131,6 +131,7 @@ namespace TVGL
             List<(int A, int B, int C)> triangleIndices,
             Vector3 basePlaneNormal, double basePlaneDistance, double extrusionHeight)
         {
+            PolygonBooleanBase.NumberVerticesAndGetPolygonVertexDelimiter(polygon);
             MiscFunctions.TransformToXYPlane(basePlaneNormal, out var rotateTransform);
             #region Make Base faces
             var int2VertexDict = new Dictionary<int, Vector3>();

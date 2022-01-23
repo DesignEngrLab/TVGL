@@ -85,6 +85,7 @@ namespace TVGL
         /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
         /// </summary>
         /// <value>The nonsmooth edges.</value>
+        [JsonIgnore] 
         public HashSet<Edge> NonsmoothEdges { get; set; }
         #endregion
 
@@ -413,6 +414,11 @@ namespace TVGL
             MakeEdges(fromSTL);
             CalculateVolume();
             this.CheckModelIntegrity();
+
+            //If the volume is zero, creating the convex hull may cause a null exception
+            if (this.Volume.IsNegligible()) return;     
+
+            //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
             ConvexHull = new TVGLConvexHull(this);
             if (ConvexHull.Vertices != null)
                 foreach (var cvxHullPt in ConvexHull.Vertices)
@@ -962,6 +968,22 @@ namespace TVGL
                     var surfType = surface.GetType();
                     var surfConstructor = surfType.GetConstructor(new[] { surfType, typeof(TessellatedSolid) });
                     copy.AddPrimitive((PrimitiveSurface)surfConstructor.Invoke(new object[] { surface, copy }));
+                }
+                //Rebuild the nonsmooth edges from the primitives if possible
+                if (NonsmoothEdges != null && NonsmoothEdges.Any())
+                {
+                    copy.NonsmoothEdges = new HashSet<Edge>();
+                    foreach (var primitive in copy.Primitives)
+                        foreach (var outerEdge in primitive.OuterEdges)
+                            copy.NonsmoothEdges.Add(outerEdge);
+                }
+            } 
+            else if (NonsmoothEdges != null && NonsmoothEdges.Any())
+            {
+                copy.NonsmoothEdges = new HashSet<Edge>();
+                foreach (var edge in NonsmoothEdges)
+                {
+                    copy.NonsmoothEdges.Add(copy.Edges[edge.IndexInList]);
                 }
             }
             return copy;

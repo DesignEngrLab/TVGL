@@ -37,7 +37,7 @@ namespace TVGL
             #region Algorithm 1
 
             ////Randomize the list of points
-            //var r = new Random();
+            //var r = new Random(0);
             //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
 
             //if (randomPoints.Count < 2) return new Circle(0.0, points[0]);
@@ -91,7 +91,7 @@ namespace TVGL
             #endregion
 
             #region Algorithm 2: Furthest Point
-            //var r = new Random();
+            //var r = new Random(0);
             //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
 
             //Algorithm 2

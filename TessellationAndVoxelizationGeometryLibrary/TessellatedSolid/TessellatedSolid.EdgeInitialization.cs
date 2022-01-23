@@ -156,7 +156,7 @@ namespace TVGL
             var colors = Faces.Select(f => f.Color).ToArray();
             var numDecimalPoints = 0;
             //Gets the number of decimal places. this is the crucial part where we consolidate vertices...
-            while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            while (numDecimalPoints < 15 && Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var coords = new List<Vector3>();
             var simpleCompareDict = new Dictionary<Vector3, int>();
             //in order to reduce compare times we use a string comparer and dictionary
