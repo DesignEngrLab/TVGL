@@ -1,19 +1,24 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// TVGL Version building on System.Numerics at https://github.com/dotnet/runtime/tree/main/src/libraries/System.Private.CoreLib/src/System/Numerics
+// That version is licensed to the .NET Foundation under the MIT license.
+// See their LICENSE file for more information: https://github.com/dotnet/runtime/blob/main/LICENSE.TXT
+// TVGL Version changes to double precision and adds a few functions.
 
 using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
-// COMMENTEDCHANGE using System.Runtime.Intrinsics;
-// COMMENTEDCHANGE using System.Runtime.Intrinsics.X86;
+//using Internal.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
+using System.Runtime.Intrinsics.X86;
 
-namespace TVGL.Numerics  
+namespace TVGL.Numerics
 {
     /// <summary>
     /// A structure encapsulating a 4x4 matrix.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
+    [Intrinsic]
     public readonly struct Matrix4x4 : IEquatable<Matrix4x4>
     {
         private const double BillboardEpsilon = 1e-4;
@@ -90,24 +95,79 @@ namespace TVGL.Numerics
         /// </summary>
         public double M44 { get; }
 
-        // Now the Projective Transform terms
+
+
+        /// <summary>
+        /// Gets the cell <see cref="System.Double"/> at the specified row and column.
+        /// Note that while cells are 1-based, these are 0-based like the rest of C#.
+        /// </summary>
+        /// <param name="row">The row.</param>
+        /// <param name="column">The column.</param>
+        /// <returns>System.Double.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
+        public double this[int row, int column]
+        {
+            get
+            {
+                if (row == 0)
+                {
+                    if (column == 0) return M11;
+                    if (column == 1) return M12;
+                    if (column == 2) return M13;
+                    if (column == 3) return M14;
+                    throw new ArgumentOutOfRangeException();
+                }
+                if (row == 1)
+                {
+                    if (column == 0) return M21;
+                    if (column == 1) return M22;
+                    if (column == 2) return M23;
+                    if (column == 3) return M24;
+                    throw new ArgumentOutOfRangeException();
+                }
+                if (row == 2)
+                {
+                    if (column == 0) return M31;
+                    if (column == 1) return M32;
+                    if (column == 2) return M33;
+                    if (column == 3) return M34;
+                    throw new ArgumentOutOfRangeException();
+                }
+                if (row == 3)
+                {
+                    if (column == 0) return M41;
+                    if (column == 1) return M42;
+                    if (column == 2) return M43;
+                    if (column == 3) return M44;
+                    throw new ArgumentOutOfRangeException();
+                }
+                throw new ArgumentOutOfRangeException();
+            }
+        }
+        
         /// <summary>
         /// Gets a value indicating whether this instance is projective transform. This means that the fourth
         /// column has non-trivia values MX4 are nonzero or M44 is not unity (1).
+        /// Note: this is not in the System.Numerics approach
         /// </summary>
         /// <value><c>true</c> if this instance is projective transform; otherwise, <c>false</c>.</value>
         public bool IsProjectiveTransform { get; }
 
         #endregion Public Fields
-        /// <summary>
-        /// Returns the multiplicative identity matrix.
-        /// </summary>
-        public static Matrix4x4 Identity => new Matrix4x4(
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1,
-            0, 0, 0);
+        /// <summary>Gets the multiplicative identity matrix.</summary>
+        /// <value>Gets the multiplicative identity matrix.</value>
+        public static Matrix4x4 Identity
+        {
+            get => _identity;
+        }
 
+        private static readonly Matrix4x4 _identity = new Matrix4x4
+        (
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
         /// <summary>
         /// Returns a null matrix, which means all values are set to Not-A-Number.
         /// </summary>
@@ -121,6 +181,7 @@ namespace TVGL.Numerics
         /// <summary>
         /// Returns whether the matrix is the identity matrix.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsIdentity(double tolerance = double.NaN)
         {
             if (double.IsNaN(tolerance))
@@ -131,7 +192,7 @@ namespace TVGL.Numerics
                     M31 == 0.0 && M32 == 0.0 && M34 == 0.0 &&
                     M41 == 0.0 && M42 == 0.0 && M43 == 0.0;
             return !IsProjectiveTransform &&
-                M11.IsPracticallySame(1,tolerance) && M22.IsPracticallySame(1, tolerance) && 
+                M11.IsPracticallySame(1, tolerance) && M22.IsPracticallySame(1, tolerance) &&
                 M33.IsPracticallySame(1, tolerance) && M44.IsPracticallySame(1, tolerance) && // Check diagonal element first for early out.
                 M12.IsNegligible(tolerance) && M13.IsNegligible(tolerance) && M14.IsNegligible(tolerance) &&
                 M21.IsNegligible(tolerance) && M23.IsNegligible(tolerance) && M24.IsNegligible(tolerance) &&
@@ -143,6 +204,7 @@ namespace TVGL.Numerics
         /// <summary>
         /// Returns whether the matrix has any Not-A-Numbers or if all terms are zero.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsNull()
         {
             return
@@ -280,6 +342,7 @@ namespace TVGL.Numerics
         /// <param name="cameraUpVector">The up vector of the camera.</param>
         /// <param name="cameraForwardVector">The forward vector of the camera.</param>
         /// <returns>The created billboard matrix</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 CreateBillboard(Vector3 objectPosition, Vector3 cameraPosition, Vector3 cameraUpVector, Vector3 cameraForwardVector)
         {
             Vector3 zaxis = new Vector3(
@@ -319,6 +382,7 @@ namespace TVGL.Numerics
         /// <param name="cameraForwardVector">Forward vector of the camera.</param>
         /// <param name="objectForwardVector">Forward vector of the object.</param>
         /// <returns>The created billboard matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 CreateConstrainedBillboard(Vector3 objectPosition, Vector3 cameraPosition, Vector3 rotateAxis, Vector3 cameraForwardVector, Vector3 objectForwardVector)
         {
             // Treat the case when object and camera positions are too close.
@@ -630,6 +694,7 @@ namespace TVGL.Numerics
         /// <param name="axis">The axis to rotate around.</param>
         /// <param name="angle">The angle to rotate around the given axis, in radians.</param>
         /// <returns>The rotation matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 CreateFromAxisAngle(Vector3 axis, double angle)
         {
             // a: angle
@@ -691,6 +756,7 @@ namespace TVGL.Numerics
         /// <param name="nearPlaneDistance">Distance to the near view plane.</param>
         /// <param name="farPlaneDistance">Distance to the far view plane.</param>
         /// <returns>The perspective projection matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 CreatePerspectiveFieldOfView(double fieldOfView, double aspectRatio, double nearPlaneDistance, double farPlaneDistance)
         {
             if (fieldOfView <= 0.0 || fieldOfView >= Math.PI)
@@ -972,6 +1038,7 @@ namespace TVGL.Numerics
         /// Calculates the determinant of the matrix.
         /// </summary>
         /// <returns>The determinant of the matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetDeterminant()
         {
             // | a b c d |     | f g h |     | e g h |     | e f h |     | e f g |
@@ -1033,6 +1100,7 @@ namespace TVGL.Numerics
         /// <param name="matrix">The source matrix to invert.</param>
         /// <param name="result">If successful, contains the inverted matrix.</param>
         /// <returns>True if the source matrix could be inverted; False otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Invert(Matrix4x4 matrix, out Matrix4x4 result)
         {
             //                                       -1
@@ -1268,6 +1336,7 @@ namespace TVGL.Numerics
         /// <param name="rotation">The rotation component of the transformation matrix.</param>
         /// <param name="translation">The translation component of the transformation matrix</param>
         /// <returns>True if the source matrix was successfully decomposed; False otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Decompose(Matrix4x4 matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation)
         {
             bool result = true;
@@ -1419,6 +1488,7 @@ namespace TVGL.Numerics
         /// <param name="value">The source matrix to transform.</param>
         /// <param name="rotation">The rotation to apply.</param>
         /// <returns>The transformed matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 Transform(Matrix4x4 value, Quaternion rotation)
         {
             // Compute rotation matrix.
@@ -1513,6 +1583,7 @@ namespace TVGL.Numerics
         /// <param name="matrix2">The second source matrix.</param>
         /// <param name="amount">The relative weight of the second source matrix.</param>
         /// <returns>The interpolated matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 Lerp(Matrix4x4 matrix1, Matrix4x4 matrix2, double amount)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)
@@ -1629,6 +1700,7 @@ namespace TVGL.Numerics
         /// <param name="value1">The first source matrix.</param>
         /// <param name="value2">The second source matrix.</param>
         /// <returns>The resulting matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 operator +(Matrix4x4 value1, Matrix4x4 value2)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)
@@ -1653,6 +1725,7 @@ namespace TVGL.Numerics
         /// <param name="value1">The first source matrix.</param>
         /// <param name="value2">The second source matrix.</param>
         /// <returns>The result of the subtraction.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 operator -(Matrix4x4 value1, Matrix4x4 value2)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)
@@ -1677,6 +1750,7 @@ namespace TVGL.Numerics
         /// <param name="value1">The first source matrix.</param>
         /// <param name="value2">The second source matrix.</param>
         /// <returns>The result of the multiplication.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 operator *(Matrix4x4 value1, Matrix4x4 value2)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)
@@ -1827,6 +1901,7 @@ namespace TVGL.Numerics
         /// <returns>The scaled matrix.</returns>
         public static Matrix4x4 operator *(double value1, Matrix4x4 value2)
         { return value2 * value1; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4x4 operator *(Matrix4x4 value1, double value2)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)
@@ -1861,6 +1936,7 @@ namespace TVGL.Numerics
         /// <param name="value1">The first matrix to compare.</param>
         /// <param name="value2">The second matrix to compare.</param>
         /// <returns>True if the given matrices are equal; False otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Matrix4x4 value1, Matrix4x4 value2)
         {
             if (false) // COMMENTEDCHANGE (Sse.IsSupported)
@@ -1930,15 +2006,31 @@ namespace TVGL.Numerics
         /// Returns the hash code for this instance.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
-            unchecked
-            {
-                return M11.GetHashCode() + M12.GetHashCode() + M13.GetHashCode() + M14.GetHashCode() +
-                       M21.GetHashCode() + M22.GetHashCode() + M23.GetHashCode() + M24.GetHashCode() +
-                       M31.GetHashCode() + M32.GetHashCode() + M33.GetHashCode() + M34.GetHashCode() +
-                       M41.GetHashCode() + M42.GetHashCode() + M43.GetHashCode() + M44.GetHashCode();
-            }
+            HashCode hash = default;
+
+            hash.Add(M11);
+            hash.Add(M12);
+            hash.Add(M13);
+            hash.Add(M14);
+
+            hash.Add(M21);
+            hash.Add(M22);
+            hash.Add(M23);
+            hash.Add(M24);
+
+            hash.Add(M31);
+            hash.Add(M32);
+            hash.Add(M33);
+            hash.Add(M34);
+
+            hash.Add(M41);
+            hash.Add(M42);
+            hash.Add(M43);
+            hash.Add(M44);
+
+            return hash.ToHashCode();
         }
     }
 }

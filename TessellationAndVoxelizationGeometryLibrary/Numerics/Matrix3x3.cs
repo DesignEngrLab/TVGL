@@ -1,6 +1,7 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// TVGL Version building on System.Numerics but - for this class -
+// there is no equivalent Matrix3x3.
+// See their LICENSE file for more information: https://github.com/dotnet/runtime/blob/main/LICENSE.TXT
+// TVGL Version changes to double precision and adds a few functions.
 
 using System;
 using System.Globalization;
@@ -711,5 +712,6 @@ namespace TVGL.Numerics
                              M21.GetHashCode() + M22.GetHashCode() + M23.GetHashCode() +
                              M31.GetHashCode() + M32.GetHashCode() + M33.GetHashCode());
         }
+
     }
 }
