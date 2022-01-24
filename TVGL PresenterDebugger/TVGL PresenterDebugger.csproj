@@ -63,7 +63,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StatisticCollection.cs" Link="TVGL\Numerics\StatisticCollection.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs" Link="TVGL\Numerics\Vector2.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs" Link="TVGL\Numerics\Vector3.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\IntrinsicAttribute.cs" Link="TVGL\Numerics\IntrinsicAttribute.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4.cs" Link="TVGL\Numerics\Vector4.cs" />
+	  <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\PolynomialSolve.cs" Link="TVGL\Numerics\PolynomialSolve.cs" />
+	  <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\ComplexNumber.cs" Link="TVGL\Numerics\ComplexNumber.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />

@@ -149,7 +149,7 @@ namespace TVGL
                     {
                         var loop = new Vector3[poly.Path.Count];           
                         for (int i = 0; i < loop.Length; i++)
-                            loop[i] = new Vector3(poly.Path[i], zValue).Transform(BackTransform);
+                            loop[i] = new Vector3(poly.Path[i], zValue).Multiply(BackTransform);
                         layer[j++] = loop;
                     }
                     else
@@ -158,7 +158,7 @@ namespace TVGL
                         {
                             var loop = new Vector3[path.Count];
                             for (int i = 0; i < path.Count; i++)
-                                loop[i] = new Vector3(path[i], zValue).Transform(BackTransform);
+                                loop[i] = new Vector3(path[i], zValue).Multiply(BackTransform);
                             layer[j++] = loop;
                         }
                     }                    

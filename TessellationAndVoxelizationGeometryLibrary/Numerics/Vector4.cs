@@ -14,7 +14,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating three single precision doubleing point values and provides hardware accelerated methods.
     /// </summary>
-    [Intrinsic]
     public readonly partial struct Vector4 : IEquatable<Vector4>, IFormattable, IVertex3D, IVertex
     {
 
@@ -35,13 +34,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         public double W { get; }
 
+        public double[] Position => new[] { X / W, Y / W, Z / W };
         #region Constructors
         /// <summary>
         /// Constructs a Vector4 from the given Vector2 and a third value.
         /// </summary>
         /// <param name="value">The Vector to extract X and Y components from.</param>
         /// <param name="z">The Z component.</param>
-        [Intrinsic]
         public Vector4(Vector2 value, double z) : this(value.X, value.Y, z) { }
         public Vector4(Vector4 value) : this(value.X, value.Y, value.Z, value.W) { }
 
@@ -51,7 +50,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="x">The X component.</param>
         /// <param name="y">The Y component.</param>
         /// <param name="z">The Z component.</param>
-        [Intrinsic]
         public Vector4(double x, double y, double z)
         {
             X = x;
@@ -66,7 +64,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="x">The X component.</param>
         /// <param name="y">The Y component.</param>
         /// <param name="z">The Z component.</param>
-        [Intrinsic]
         public Vector4(double x, double y, double z, double w)
         {
             X = x;
@@ -75,7 +72,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             W = w;
         }
 
-        [Intrinsic]
         public Vector4(ReadOnlySpan<double> values)
         {
             if (values.Length < 3)
@@ -92,12 +88,11 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
 
         #endregion Constructors
 
-        #region Public Instance Methods
+
         /// <summary>Gets a vector whose 4 elements are equal to zero.</summary>
         /// <value>A vector whose four elements are equal to zero (that is, it returns the vector <c>(0,0,0,0)</c>.</value>
         public static Vector4 Zero
         {
-            [Intrinsic]
             get => default;
         }
 
@@ -132,7 +127,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN, NaN).
         /// </summary>
-        [Intrinsic]
         public static Vector4 Null =>
         new Vector4(double.NaN, double.NaN, double.NaN, double.NaN);
 
@@ -159,7 +153,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second vector to add.</param>
         /// <returns>The summed vector.</returns>
         /// <remarks>The <see cref="System.Numerics.Vector4.op_Addition" /> method defines the addition operation for <see cref="System.Numerics.Vector4" /> objects.</remarks>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator +(Vector4 left, Vector4 right)
         {
@@ -176,7 +169,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second vector.</param>
         /// <returns>The vector that results from dividing <paramref name="left" /> by <paramref name="right" />.</returns>
         /// <remarks>The <see cref="System.Numerics.Vector4.op_Division" /> method defines the division operation for <see cref="System.Numerics.Vector4" /> objects.</remarks>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator /(Vector4 left, Vector4 right)
         {
@@ -204,7 +196,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second vector to compare.</param>
         /// <returns><see langword="true" /> if <paramref name="left" /> and <paramref name="right" /> are equal; otherwise, <see langword="false" />.</returns>
         /// <remarks>Two <see cref="System.Numerics.Vector4" /> objects are equal if each element in <paramref name="left" /> is equal to the corresponding element in <paramref name="right" />.</remarks>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector4 left, Vector4 right)
         {
@@ -218,7 +209,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns><see langword="true" /> if <paramref name="left" /> and <paramref name="right" /> are not equal; otherwise, <see langword="false" />.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector4 left, Vector4 right)
         {
@@ -230,7 +220,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second vector.</param>
         /// <returns>The element-wise product vector.</returns>
         /// <remarks>The <see cref="System.Numerics.Vector4.op_Multiply" /> method defines the multiplication operation for <see cref="System.Numerics.Vector4" /> objects.</remarks>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator *(Vector4 left, Vector4 right)
         {
@@ -269,7 +258,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="right">The second vector.</param>
         /// <returns>The vector that results from subtracting <paramref name="right" /> from <paramref name="left" />.</returns>
         /// <remarks>The <see cref="System.Numerics.Vector4.op_Subtraction" /> method defines the subtraction operation for <see cref="System.Numerics.Vector4" /> objects.</remarks>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator -(Vector4 left, Vector4 right)
         {
@@ -294,7 +282,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>Returns a vector whose elements are the absolute values of each of the specified vector's elements.</summary>
         /// <param name="value">A vector.</param>
         /// <returns>The absolute value vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Abs(Vector4 value)
         {
@@ -374,7 +361,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="vector1">The first vector.</param>
         /// <param name="vector2">The second vector.</param>
         /// <returns>The dot product.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Dot(Vector4 vector1, Vector4 vector2)
         {
@@ -394,7 +380,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="vector1">The first vector.</param>
         /// <param name="vector2">The second vector.</param>
         /// <returns>The cross product.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Cross(in Vector4 vector1, Vector4 vector2)
         {
@@ -423,7 +408,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first vector.</param>
         /// <param name="value2">The second vector.</param>
         /// <returns>The maximized vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Max(Vector4 value1, Vector4 value2)
         {
@@ -439,7 +423,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first vector.</param>
         /// <param name="value2">The second vector.</param>
         /// <returns>The minimized vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Min(Vector4 value1, Vector4 value2)
         {
@@ -502,7 +485,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>Returns a vector whose elements are the square root of each of a specified vector's elements.</summary>
         /// <param name="value">A vector.</param>
         /// <returns>The square root vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 SquareRoot(Vector4 value)
         {
@@ -661,7 +643,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <exception cref="System.NullReferenceException"><paramref name="array" /> is <see langword="null" />.</exception>
         /// <exception cref="System.ArgumentException">The number of elements in the current instance is greater than in the array.</exception>
         /// <exception cref="System.RankException"><paramref name="array" /> is multidimensional.</exception>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void CopyTo(double[] array)
         {
@@ -678,7 +659,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// -or-
         /// <paramref name="index" /> is greater than or equal to the array length.</exception>
         /// <exception cref="System.RankException"><paramref name="array" /> is multidimensional.</exception>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void CopyTo(double[] array, int index)
         {
@@ -702,7 +682,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="other">The other vector.</param>
         /// <returns><see langword="true" /> if the two vectors are equal; otherwise, <see langword="false" />.</returns>
         /// <remarks>Two vectors are equal if their <see cref="System.Numerics.Vector4.X" />, <see cref="System.Numerics.Vector4.Y" />, <see cref="System.Numerics.Vector4.Z" />, and <see cref="System.Numerics.Vector4.W" /> elements are equal.</remarks>
-        [Intrinsic]
         public readonly bool Equals(Vector4 other)
         {
             return this == other;
@@ -800,7 +779,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="position">The vector.</param>
         /// <param name="matrix">The matrix.</param>
         /// <returns>The transformed vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator *(Vector4 rowVector, Matrix4x4 matrix)
         {
@@ -831,7 +809,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="matrix">The Matrix value.</param>
         /// <param name="colVector">The vector.</param>
         /// <returns>The scaled vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator *(Matrix4x4 matrix, Vector4 colVector)
         {

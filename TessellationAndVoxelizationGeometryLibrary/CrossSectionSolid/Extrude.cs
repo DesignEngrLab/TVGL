@@ -143,7 +143,7 @@ namespace TVGL
                 foreach (var polyVertex in poly.Vertices)
                 {
                     var position3D = new Vector3(polyVertex.X, polyVertex.Y, 0);
-                    var newVertex = position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal;
+                    var newVertex = position3D.Multiply(rotateTransform) + basePlaneDistance * basePlaneNormal;
                     vertexLoop.Add(newVertex);
                     int2VertexDict.Add(polyVertex.IndexInList, newVertex);
                 }
@@ -166,7 +166,7 @@ namespace TVGL
                 foreach (var polyVertex in poly.Vertices)
                 {
                     var position3D = new Vector3(polyVertex.X, polyVertex.Y, 0);
-                    var newVertex = position3D.Transform(rotateTransform) + basePlaneDistance * basePlaneNormal;
+                    var newVertex = position3D.Multiply(rotateTransform) + basePlaneDistance * basePlaneNormal;
                     vertexLoop.Add(newVertex);
                     int2VertexDict.Add(polyVertex.IndexInList, newVertex);
                 }

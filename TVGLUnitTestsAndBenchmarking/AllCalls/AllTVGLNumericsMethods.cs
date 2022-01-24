@@ -175,7 +175,7 @@ namespace TVGLUnitTestsAndBenchmarking
             v3_1 = v3_1.Multiply(m3x3);
 
             m4x4 = new Matrix4x4();
-            v3_1 = v3_1.Transform(m4x4);
+            v3_1 = v3_1.Multiply(m4x4);
             v3_1 = v3_1.TransformNoTranslate(m4x4);
             v3_1 = v3_1.Transform(new Quaternion());
             #endregion

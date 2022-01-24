@@ -1038,7 +1038,7 @@ namespace TVGL
             var zMax = double.NegativeInfinity;
             foreach (var v in Vertices)
             {
-                v.Coordinates = v.Coordinates.Transform(transformMatrix);
+                v.Coordinates = v.Coordinates.Multiply(transformMatrix);
                 if (xMin > v.Coordinates.X) xMin = v.Coordinates.X;
                 if (yMin > v.Coordinates.Y) yMin = v.Coordinates.Y;
                 if (zMin > v.Coordinates.Z) zMin = v.Coordinates.Z;
@@ -1059,7 +1059,7 @@ namespace TVGL
             {
                 edge.Update(true);
             }
-            _center = _center.Transform(transformMatrix);
+            _center = _center.Multiply(transformMatrix);
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,

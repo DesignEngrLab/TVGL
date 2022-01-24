@@ -154,5 +154,11 @@ namespace TVGL.TwoDimensional
         {
             throw new NotImplementedException();
         }
+
+
+        public static IEnumerable<ComplexNumber> IntersectingConics()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

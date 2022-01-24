@@ -283,11 +283,11 @@ namespace TVGL.TwoDimensional
         private static KeyValuePair<Edge, bool> ChooseBestNextEdge(Edge current, bool edgeSign, List<KeyValuePair<Edge, bool>> viableEdges, Matrix4x4 transform)
         {
             var edgesScores = new double[viableEdges.Count];
-            var currentUnitDirection = current.Vector.Normalize().Transform(transform);
+            var currentUnitDirection = current.Vector.Normalize().Multiply(transform);
             if (!edgeSign) currentUnitDirection *= -1;
             for (int i = 0; i < viableEdges.Count; i++)
             {
-                var direction = viableEdges[i].Key.Vector.Normalize().Transform(transform);
+                var direction = viableEdges[i].Key.Vector.Normalize().Multiply(transform);
                 if (!viableEdges[i].Value) direction *= -1;
                 edgesScores[i] = currentUnitDirection.Dot(direction);
             }

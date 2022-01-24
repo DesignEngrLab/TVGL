@@ -18,7 +18,6 @@ namespace TVGL.Numerics
     /// <summary>
     /// A structure encapsulating a 4x4 matrix.
     /// </summary>
-    [Intrinsic]
     public readonly struct Matrix4x4 : IEquatable<Matrix4x4>
     {
         private const double BillboardEpsilon = 1e-4;

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    public static class TVGLNumericsTests
+    public static partial class TVGLNumericsTests
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
@@ -103,10 +103,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     m = new Matrix4x4(r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100);
                     v1 = new Vector3(r100, r100, r100);
-                    v2 = v1.Transform(m);
+                    v2 = v1.Multiply(m);
                 }
                 while (!Matrix4x4.Invert(m, out mInv));
-                Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
+                Assert.True(v1.IsPracticallySame(v2.Multiply(mInv), 1e-10));
             }
         }
         [Fact]
@@ -122,10 +122,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     m = new Matrix4x4(r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100);
                     v1 = new Vector3(r100, r100, r100);
-                    v2 = v1.Transform(m);
+                    v2 = v1.Multiply(m);
                 }
                 while (!Matrix4x4.Invert(m, out mInv));
-                Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
+                Assert.True(v1.IsPracticallySame(v2.Multiply(mInv), 1e-10));
             }
         }
     }

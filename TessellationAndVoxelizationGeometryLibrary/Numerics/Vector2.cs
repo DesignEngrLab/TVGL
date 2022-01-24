@@ -14,14 +14,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    [Intrinsic]
     public readonly partial struct Vector2 : IEquatable<Vector2>, IFormattable, IVertex2D, IVertex
     {
         #region Public Static Properties
         /// <summary>
         /// Returns the vector (NaN,NaN). This is often used in place of null.
         /// </summary>
-        [Intrinsic]
         public static Vector2 Null =>
         new Vector2(double.NaN, double.NaN);
 
@@ -29,14 +27,12 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (0,0).
         /// </summary>
-        [Intrinsic]
         public static Vector2 Zero =>
         default;
 
         /// <summary>
         /// Returns the vector (1,1).
         /// </summary>
-        [Intrinsic]
         public static Vector2 One =>
         new Vector2(1.0, 1.0);
 
@@ -86,7 +82,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Constructs a vector whose elements are all the single specified value.
         /// </summary>
         /// <param name="value">The element to fill the vector with.</param>
-        [Intrinsic]
         internal Vector2(double value) : this(value, value) { }
 
         /// <summary>
@@ -94,7 +89,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="x">The X component.</param>
         /// <param name="y">The Y component.</param>
-        [Intrinsic]
         public Vector2(double x, double y)
         {
             X = x;
@@ -115,7 +109,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// Copies the contents of the vector into the given array.
         /// </summary>
         /// <param name="array">The destination array.</param>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(double[] array)
         {
@@ -130,7 +123,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <exception cref="ArgumentOutOfRangeException">If index is greater than end of the array or index is less than zero.</exception>
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array
         /// or if there are not enough elements to copy.</exception>
-        [Intrinsic]
         public void CopyTo(double[] array, int index)
         {
             if (array == null)
@@ -163,7 +155,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="other">The Vector2 to compare this instance to.</param>
         /// <returns>True if the other Vector2 is equal to this instance; False otherwise.</returns>
-        [Intrinsic]
         public bool Equals(Vector2 other)
         {
             return this.X == other.X && this.Y == other.Y;
@@ -177,7 +168,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first vector.</param>
         /// <param name="value2">The second vector.</param>
         /// <returns>The dot product.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Dot(Vector2 value1, Vector2 value2)
         {
@@ -193,7 +183,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first vector.</param>
         /// <param name="value2">The second vector.</param>
         /// <returns>The value of the z-coordinate from the cross product.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Cross(Vector2 value1, Vector2 value2)
         {
@@ -207,7 +196,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first source vector.</param>
         /// <param name="value2">The second source vector.</param>
         /// <returns>The minimized vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Min(Vector2 value1, Vector2 value2)
         {
@@ -222,7 +210,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first source vector</param>
         /// <param name="value2">The second source vector</param>
         /// <returns>The maximized vector</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Max(Vector2 value1, Vector2 value2)
         {
@@ -236,7 +223,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The absolute value vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Abs(Vector2 value)
         {
@@ -248,7 +234,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The square root vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 SquareRoot(Vector2 value)
         {
@@ -263,7 +248,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator +(Vector2 left, Vector2 right)
         {
@@ -276,7 +260,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator -(Vector2 left, Vector2 right)
         {
@@ -289,7 +272,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The product vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(Vector2 left, Vector2 right)
         {
@@ -302,7 +284,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The scalar value.</param>
         /// <param name="right">The source vector.</param>
         /// <returns>The scaled vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(double left, Vector2 right)
         {
@@ -315,7 +296,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The source vector.</param>
         /// <param name="right">The scalar value.</param>
         /// <returns>The scaled vector.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(Vector2 left, double right)
         {
@@ -328,7 +308,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The vector resulting from the division.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator /(Vector2 left, Vector2 right)
         {
@@ -364,7 +343,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are equal; False otherwise.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector2 left, Vector2 right)
         {
@@ -377,7 +355,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are not equal; False if they are equal.</returns>
-        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector2 left, Vector2 right)
         {

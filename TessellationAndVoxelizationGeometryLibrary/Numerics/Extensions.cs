@@ -289,6 +289,15 @@ namespace TVGL.Numerics
         { return Vector3.Multiply(position, matrix); }
 
         /// <summary>
+        /// Transforms a vector by the given matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        public static Vector3 Multiply(this Vector3 position, Matrix4x4 matrix)
+        { return Vector3.Multiply(position, matrix); }
+
+        /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
         /// This is often used for transforming normals, however note that proper transformations
         /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
@@ -427,6 +436,18 @@ namespace TVGL.Numerics
         {
             return Vector4.Cross(vector1, vector2);
         }
+
+
+
+        /// <summary>
+        /// Transforms a vector by the given matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        public static Vector4 Multiply(this Vector4 position, Matrix4x4 matrix)
+        { return Vector4.Multiply(position, matrix); }
+
         #endregion
 
         #region Matrix3x3, Matrix4x4, Quaternion, and Plane

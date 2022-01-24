@@ -666,7 +666,7 @@ namespace TVGL
             //Get the Direction vectors from rotating caliper and projection.
 
             var direction2 = new Vector3(boundingRectangle.Direction1, 0);
-            direction2 = direction2.Transform(backTransform).Normalize();
+            direction2 = direction2.Multiply(backTransform).Normalize();
             var direction3 = direction1.Cross(direction2); // you could also get this from the bounding rectangle
             // but this is quicker and more accurate to reproduce with cross-product 
             IEnumerable<T>[] verticesOnFaces = new IEnumerable<T>[6];

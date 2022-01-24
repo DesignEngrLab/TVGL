@@ -217,7 +217,7 @@ namespace TVGL
                     // since the transform would change 0,0,0 into the bottom corner
                     // it would also change Dimensions into the opposite corner.
                     // there the center can be found by transforming half the dimensions
-                    _center = (0.5 * new Vector3(Dimensions)).Transform(Transform);
+                    _center = (0.5 * new Vector3(Dimensions)).Multiply(Transform);
                 }
                 return _center;
             }

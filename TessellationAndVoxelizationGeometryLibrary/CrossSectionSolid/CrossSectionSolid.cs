@@ -365,7 +365,7 @@ namespace TVGL
                     zCenter += area * distance;
                 }
             }
-            _center = (new Vector3(xCenter, yCenter, zCenter) / totalArea).Transform(BackTransform);
+            _center = (new Vector3(xCenter, yCenter, zCenter) / totalArea).Multiply(BackTransform);
         }
 
         protected override void CalculateVolume()

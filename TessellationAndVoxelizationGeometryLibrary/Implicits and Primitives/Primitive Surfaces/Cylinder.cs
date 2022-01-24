@@ -22,8 +22,8 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            Anchor = Anchor.Transform(transformMatrix);
-            Axis = Axis.Transform(transformMatrix);
+            Anchor = Anchor.Multiply(transformMatrix);
+            Axis = Axis.Multiply(transformMatrix);
             Axis = Axis.Normalize();
             //how to adjust the radii?
             //throw new NotImplementedException();

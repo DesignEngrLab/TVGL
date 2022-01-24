@@ -91,8 +91,8 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            Axis = Axis.Transform(transformMatrix);
-            Apex = Apex.Transform(transformMatrix);
+            Axis = Axis.Multiply(transformMatrix);
+            Apex = Apex.Multiply(transformMatrix);
         }
 
         public override double CalculateError(IEnumerable<Vector3> vertices = null)

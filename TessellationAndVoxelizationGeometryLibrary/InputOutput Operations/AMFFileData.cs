@@ -173,7 +173,7 @@ namespace TVGL.IOFunctions
                 //do matrix multiplication go the other way?
                 tMatrix = tMatrix * Matrix4x4.CreateTranslation(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz);
                 for (int i = 0; i < vertices.Count; i++)
-                    vertices[i] = vertices[i].Transform(tMatrix);
+                    vertices[i] = vertices[i].Multiply(tMatrix);
             }
             return new TessellatedSolid(vertices, amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
                 true, colors, this.Units, name + "_" + amfObject.id, this.FileName,

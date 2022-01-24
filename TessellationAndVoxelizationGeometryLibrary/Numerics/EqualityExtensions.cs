@@ -141,5 +141,23 @@ namespace TVGL.Numerics
         }
 
 
+
+        public static bool IsPracticallySame(this ComplexNumber v1, ComplexNumber v2, double optionalTolerance = DefaultEqualityTolerance)
+        {
+            return v1.Real.IsPracticallySame(v2.Real, optionalTolerance) &&
+                v1.Imaginary.IsPracticallySame(v2.Imaginary, optionalTolerance);
+        }
+
+        /// <summary>
+        /// Determines whether the specified x is negligible (|x| lte 1e-15).
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
+        public static bool IsNegligible(this ComplexNumber x, double optionalTolerance = DefaultEqualityTolerance)
+        {
+            return Math.Abs(x.Real) <= optionalTolerance && Math.Abs(x.Imaginary) <= optionalTolerance;
+        }
+
     }
 }
