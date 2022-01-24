@@ -601,11 +601,25 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="Exception"></exception>
-        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts)
+        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
         {
             var solids = new List<TessellatedSolid>();
             var seperateSolids = new List<List<PolygonalFace>>();
             var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
+            // first the easy part - simply separate out known groups that have already been determined to be bodies
+            if (faceGroupsThatAreBodies!=null)
+            {
+                foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
+                {
+                    var faceList = new List<PolygonalFace>();
+                    foreach (var index in bodyGroupIndices)
+                    {
+                        faceList.Add(ts.Faces[index]);
+                        unusedFaces.Remove(index);
+                    }
+                }
+            }
+            // now, the hard part - need to progressively find subsets of faces.
             while (unusedFaces.Any())
             {
                 var faces = new HashSet<PolygonalFace>();
