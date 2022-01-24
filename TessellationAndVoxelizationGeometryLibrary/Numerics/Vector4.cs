@@ -831,6 +831,23 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 colVector.X * matrix.M31 + colVector.Y * matrix.M32 + colVector.Z * matrix.M33 + colVector.W * matrix.M34,
                 colVector.X * matrix.M41 + colVector.Y * matrix.M42 + colVector.Z * matrix.M43 + colVector.W * matrix.M44);
         }
+        /// <summary>
+        /// Transforms a vector by the given matrix without the translation component.
+        /// This is often used for transforming normals, however note that proper transformations
+        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// </summary>
+        /// <param name="rowVector">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 TransformNoTranslate(Vector4 rowVector, Matrix4x4 matrix)
+        {
+            return new Vector4(
+                rowVector.X * matrix.M11 + rowVector.Y * matrix.M21 + rowVector.Z * matrix.M31 ,
+                rowVector.X * matrix.M12 + rowVector.Y * matrix.M22 + rowVector.Z * matrix.M32 ,
+                rowVector.X * matrix.M13 + rowVector.Y * matrix.M23 + rowVector.Z * matrix.M33,
+                rowVector.X * matrix.M14 + rowVector.Y * matrix.M24 + rowVector.Z * matrix.M34 + rowVector.W * matrix.M44);
+        }
         #endregion
         #region Solve Ax=b
         /// <summary>
