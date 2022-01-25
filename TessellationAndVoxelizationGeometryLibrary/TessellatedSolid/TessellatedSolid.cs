@@ -398,7 +398,6 @@ namespace TVGL
                             if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
                         }
                     }
-
                 }
             }
         }
@@ -416,7 +415,7 @@ namespace TVGL
             this.CheckModelIntegrity();
 
             //If the volume is zero, creating the convex hull may cause a null exception
-            if (this.Volume.IsNegligible()) return;     
+            if (this.Volume.IsNegligible()) return;
 
             //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
             ConvexHull = new TVGLConvexHull(this);
@@ -430,7 +429,6 @@ namespace TVGL
                     if (e != null) e.PartOfConvexHull = true;
             }
         }
-
 
         #endregion
 
@@ -1048,11 +1046,10 @@ namespace TVGL
             }
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
 
-
             //Update the faces
             foreach (var face in Faces)
             {
-                face.Update();
+                face.Update();// Transform(transformMatrix);
             }
             //Update the edges
             foreach (var edge in Edges)
@@ -1068,6 +1065,7 @@ namespace TVGL
             if (Primitives != null)
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
+            this.SetNegligibleAreaFaceNormals(true);
         }
         /// <summary>
         /// Gets a new solid by transforming its vertices.
