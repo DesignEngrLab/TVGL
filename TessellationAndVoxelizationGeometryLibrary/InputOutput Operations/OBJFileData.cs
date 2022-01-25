@@ -211,7 +211,7 @@ namespace TVGL.IOFunctions
             char[] split = new char[] { ' ' };
             var defaultName = Path.GetFileNameWithoutExtension(filename) + "_";
             var solidNum = 0;
-            objData = new List<OBJFileData>();
+            var objDataDict = new Dictionary<string, OBJFileData>(); 
             var objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
             var readingFaces = false;
             var faceGroup = new List<int>();
@@ -237,16 +237,31 @@ namespace TVGL.IOFunctions
                         //ToDo: Read the materials file if needed.
                         break;
                     case "usemtl":
-                        //  The material is everything after the first space.
-                        //objSolid.Material.Add(values);
-                        // note, there is no "break" here. We will intentionally flow down into the next case which traditionally defines FaceGroups
+                        values = values.Substring(1);//remove the l or f to get the hexadecimal number
+                        if (objDataDict.ContainsKey(values))//If the solid already exists and is called here (ex. both usemtl l and f)
+                        {
+                            objSolid = objDataDict[values];
+                        }
+                        else // then that's the end of the prior solid. Time to start a new one.
+                        {
+                            if (faceGroup.Any()) // but before we do that, better be sure to capture any file GeometrySets
+                            {
+                                objSolid.FaceGroups.Add(faceGroup.ToArray());
+                                faceGroup = new List<int>();
+                            }
+                            solidNum++;
+                            objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
+                            objDataDict.Add(values, objSolid);
+                        }
+                        break;
                     case "g":
                         if (objSolid.FaceToVertexIndices.Count == 0)
-                        {   // often, the solid is not defined until one gets to the faces. So, if encountering the "g" before any faces
+                        {   
+                            // often, the solid is not defined until one gets to the faces. So, if encountering the "g" before any faces
                             // have been defined, then this simply defines the name for the sub-solid
                             if (!string.IsNullOrWhiteSpace(values)) objSolid.Name = values;
                             // also use this as the opportunity to add the solid to the collection
-                            objData.Add(objSolid);
+                            objDataDict.Add(values, objSolid);
                         }
                         else // then that's the end of the prior solid. Time to start a new one.
                         {
@@ -293,6 +308,7 @@ namespace TVGL.IOFunctions
                         break;
                 }
             }
+            objData = objDataDict.Values.ToList();
             if (!objData.Any() || objData[^1] != objSolid)
                 objData.Add(objSolid);
             return true;
