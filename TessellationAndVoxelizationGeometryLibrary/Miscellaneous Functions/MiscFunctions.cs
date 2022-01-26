@@ -604,7 +604,7 @@ namespace TVGL
         public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
         {
             var solids = new List<TessellatedSolid>();
-            var seperateSolids = new List<List<PolygonalFace>>();
+            var separateSolids = new List<List<PolygonalFace>>();
             var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
             // first the easy part - simply separate out known groups that have already been determined to be bodies
             if (faceGroupsThatAreBodies!=null)
@@ -617,6 +617,7 @@ namespace TVGL
                         faceList.Add(ts.Faces[index]);
                         unusedFaces.Remove(index);
                     }
+                    separateSolids.Add(faceList);
                 }
             }
             // now, the hard part - need to progressively find subsets of faces.
@@ -636,14 +637,14 @@ namespace TVGL
                         stack.Push(adjacentFace);
                     }
                 }
-                seperateSolids.Add(faces.ToList());
+                separateSolids.Add(faces.ToList());
             }
-            if (seperateSolids.Count == 1)
+            if (separateSolids.Count == 1)
             {
                 solids.Add(ts);
                 return solids;
             }
-            foreach (var seperateSolid in seperateSolids)
+            foreach (var seperateSolid in separateSolids)
             {
                 //Copy the non-smooth edges over to the seperate solid
                 HashSet<(Vector3, Vector3)> nonSmoothEdgesForSolid = null;

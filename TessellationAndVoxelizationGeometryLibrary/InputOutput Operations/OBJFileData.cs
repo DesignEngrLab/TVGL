@@ -123,19 +123,7 @@ namespace TVGL.IOFunctions
             faceGroupsThatAreBodies = new List<int[]>();
             ts.NonsmoothEdges = new HashSet<Edge>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
-            if (objFileData.FaceGroups.Count > 1 && !objFileData.SurfaceEdges.Any())
-            {
-                foreach (var faceIndices in objFileData.FaceGroups)
-                {
-                    MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
-                    if (!outerEdges.Any()) faceGroupsThatAreBodies.Add(faceIndices);
-                    else
-                    {
-                        foreach (var discontinuousEdge in outerEdges)
-                            ts.NonsmoothEdges.Add(discontinuousEdge);
-                    }
-                }
-            }
+
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
                 for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
@@ -153,6 +141,19 @@ namespace TVGL.IOFunctions
                     }
                     if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
                     ts.NonsmoothEdges.Add(discontinuousEdge);
+                }
+            }
+             if (objFileData.FaceGroups.Count > 1) // && !objFileData.SurfaceEdges.Any())
+            {
+                foreach (var faceIndices in objFileData.FaceGroups)
+                {
+                    MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
+                    if (!outerEdges.Any()) faceGroupsThatAreBodies.Add(faceIndices);
+                    else
+                    {
+                        foreach (var discontinuousEdge in outerEdges)
+                            ts.NonsmoothEdges.Add(discontinuousEdge);
+                    }
                 }
             }
             if (!ts.NonsmoothEdges.Any())
@@ -191,7 +192,7 @@ namespace TVGL.IOFunctions
                             ts.NonsmoothEdges.Add(possibleEdge);
                     }
                 }
-            }
+            }   
         }
 
 
@@ -236,10 +237,6 @@ namespace TVGL.IOFunctions
                     case "mtllib":
                         //ToDo: Read the materials file if needed.
                         break;
-                    case "usemtl":
-                        //  The material is everything after the first space.
-                        //objSolid.Material.Add(values);
-                        // note, there is no "break" here. We will intentionally flow down into the next case which traditionally defines FaceGroups
                     case "g":
                         if (objSolid.FaceToVertexIndices.Count == 0)
                         {   // often, the solid is not defined until one gets to the faces. So, if encountering the "g" before any faces
@@ -258,6 +255,10 @@ namespace TVGL.IOFunctions
                             solidNum++;
                             objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
                         }
+                        break;
+                    case "usemtl":
+                        //  The material is everything after the first space.
+                        //objSolid.Material.Add(values);
                         break;
                     case "v"://vertex
                         var v = ReadVector3(values.Split(split, StringSplitOptions.RemoveEmptyEntries));
