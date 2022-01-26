@@ -107,9 +107,9 @@ namespace TVGL.IOFunctions
                 var ts = new TessellatedSolid(vertices, objFileData.FaceToVertexIndices, true, null,
                                InferUnitsFromComments(objFileData.Comments), objFileData.Name, filename, objFileData.Comments,
                                objFileData.Language);
-                CreateRegionsFromPolylineAndFaceGroups(objFileData, ts);
-                var multipleSolids = ts.GetMultipleSolids();
-                foreach(var solid in multipleSolids)
+                CreateRegionsFromPolylineAndFaceGroups(objFileData, ts, out var faceGroupsThatAreBodies);
+                var multipleSolids = ts.GetMultipleSolids(faceGroupsThatAreBodies);
+                foreach (var solid in multipleSolids)
                     results.Add(solid);
             }
             Message.output(
@@ -118,19 +118,12 @@ namespace TVGL.IOFunctions
             return results.ToArray();
         }
 
-        private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts)
+        private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts, out List<int[]> faceGroupsThatAreBodies)
         {
+            faceGroupsThatAreBodies = new List<int[]>();
             ts.NonsmoothEdges = new HashSet<Edge>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
-            if(objFileData.FaceGroups.Count > 1 && !objFileData.SurfaceEdges.Any())
-            {
-                foreach (var faceIndices in objFileData.FaceGroups)
-                {
-                    MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
-                    foreach (var discontinuousEdge in outerEdges)
-                        ts.NonsmoothEdges.Add(discontinuousEdge);
-                }
-            }       
+
             foreach (var borderIndices in objFileData.SurfaceEdges)
             {
                 for (int k = 1, j = 0; k < borderIndices.Length; j = k++) //clever loop to have j always one step behind k
@@ -148,6 +141,19 @@ namespace TVGL.IOFunctions
                     }
                     if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
                     ts.NonsmoothEdges.Add(discontinuousEdge);
+                }
+            }
+             if (objFileData.FaceGroups.Count > 1) // && !objFileData.SurfaceEdges.Any())
+            {
+                foreach (var faceIndices in objFileData.FaceGroups)
+                {
+                    MiscFunctions.DefineInnerOuterEdges(faceIndices.Select(index => ts.Faces[index]), out _, out var outerEdges);
+                    if (!outerEdges.Any()) faceGroupsThatAreBodies.Add(faceIndices);
+                    else
+                    {
+                        foreach (var discontinuousEdge in outerEdges)
+                            ts.NonsmoothEdges.Add(discontinuousEdge);
+                    }
                 }
             }
             if (!ts.NonsmoothEdges.Any())
@@ -199,6 +205,7 @@ namespace TVGL.IOFunctions
         /// <returns>True if the model was loaded successfully.</returns>  
         private static bool TryRead(Stream stream, string filename, out List<OBJFileData> objData)
         {
+            objData = new List<OBJFileData>();  
             var reader = new StreamReader(stream);
             var numDecimalPointsCoords = 8;
             var numDecimalPointsNormals = 3;
@@ -206,7 +213,6 @@ namespace TVGL.IOFunctions
             char[] split = new char[] { ' ' };
             var defaultName = Path.GetFileNameWithoutExtension(filename) + "_";
             var solidNum = 0;
-            objData = new List<OBJFileData>();
             var objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
             var readingFaces = false;
             var faceGroup = new List<int>();
@@ -231,9 +237,17 @@ namespace TVGL.IOFunctions
                     case "mtllib":
                         //ToDo: Read the materials file if needed.
                         break;
+                    case "usemtl":
+                            if (faceGroup.Any()) // but before we do that, better be sure to capture any file GeometrySets
+                            {
+                                objSolid.FaceGroups.Add(faceGroup.ToArray());
+                                faceGroup = new List<int>();
+                            }
+                        break;
                     case "g":
                         if (objSolid.FaceToVertexIndices.Count == 0)
-                        {   // often, the solid is not defined until one gets to the faces. So, if encountering the "g" before any faces
+                        {   
+                            // often, the solid is not defined until one gets to the faces. So, if encountering the "g" before any faces
                             // have been defined, then this simply defines the name for the sub-solid
                             if (!string.IsNullOrWhiteSpace(values)) objSolid.Name = values;
                             // also use this as the opportunity to add the solid to the collection
@@ -249,10 +263,6 @@ namespace TVGL.IOFunctions
                             solidNum++;
                             objSolid = new OBJFileData { FileName = filename, Name = defaultName + solidNum, Units = UnitType.unspecified };
                         }
-                        break;
-                    case "usemtl":
-                        //  The material is everything after the first space.
-                        //objSolid.Material.Add(values);
                         break;
                     case "v"://vertex
                         var v = ReadVector3(values.Split(split, StringSplitOptions.RemoveEmptyEntries));

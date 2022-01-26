@@ -59,6 +59,16 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Transforms this face's normal and center. Vertices and edges are transformed seperately
+        /// </summary>
+        internal void Transform(Matrix4x4 transformMatrix)
+        {
+            _center = Center.Transform(transformMatrix);
+            _normal = Normal.Transform(transformMatrix);
+            //Area remains unchanged
+        }
+
+        /// <summary>
         /// Adds the edge.
         /// </summary>
         /// <param name="edge">The edge.</param>
@@ -133,6 +143,25 @@ namespace TVGL
         internal void AdoptNeighborsNormal(PolygonalFace ownedFace)
         {
             _normal = ownedFace.Normal;
+        }
+
+        /// <summary>
+        /// This is a T-Edge. Set the face normal to be that of the two smaller edges other face.
+        /// </summary>
+        internal bool AdoptNeighborsNormal()
+        {
+            var edges = Edges.OrderBy(p => p.Length).ToList();
+            var edge1 = edges[0];
+            var edge2 = edges[1];
+            var face1Normal = (this == edge1.OwnedFace ? edge1.OtherFace : edge1.OwnedFace).Normal;
+            var face2Normal = (this == edge2.OwnedFace ? edge2.OtherFace : edge2.OwnedFace).Normal;
+            var dot = face1Normal.Dot(face2Normal);
+            if (dot.IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance))
+            {
+                _normal = (face1Normal + face2Normal).Normalize();
+                return true;
+            }
+            return false;
         }
 
         #region Constructors
