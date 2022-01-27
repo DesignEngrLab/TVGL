@@ -14,6 +14,18 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// Returns the single polygon that is encompasses the point or is closest to it. This will be a 
+        /// simple polygon as the method transverses each input as a polygon tree and simply find the loop
+        /// (positive or negative/hole) the polygon.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="point">The point.</param>
+        /// <returns>Polygon.</returns>
+        //public Polygon ClosestPolygon(this IEnumerable<Polygon> polygons, Vector2 point)
+        //{
+
+        //}
         #region IsPointInSidePolygon methods 
         /// <summary>
         /// Determines whether the inner polygon is inside the specified outer polygon. This is a simpler and faster check

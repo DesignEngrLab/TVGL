@@ -14,12 +14,9 @@ namespace TVGL.TwoDimensional
 
     public readonly struct MonotoneBox
     {
-        public readonly double Bottom;
+        public readonly AxisAlignedRectangle Rectangle;
         public readonly MonotonicityChange HiChange;
-        public readonly double Left;
         public readonly MonotonicityChange LowChange;
-        public readonly double Right;
-        public readonly double Top;
         public readonly Vertex2D Vertex1;
         public readonly Vertex2D Vertex2;
         public readonly bool XInPositiveMonotonicity;
@@ -34,15 +31,13 @@ namespace TVGL.TwoDimensional
             this.HiChange = hiMonoChange;
             XInPositiveMonotonicity = xInPositiveMonotonicity;
             YInPositiveMonotonicity = yInPositiveMonotonicity;
-            Left = Math.Min(vertex1.X, vertex2.X);
-            Right = Math.Max(vertex1.X, vertex2.X);
-            Bottom = Math.Min(vertex1.Y, vertex2.Y);
-            Top = Math.Max(vertex1.Y, vertex2.Y);
+            Rectangle = new AxisAlignedRectangle(vertex1, vertex2);
         }
-
-        public double Area()
+        public MonotoneBox(Vertex2D vertex1, Vertex2D vertex2, MonotonicityChange lowMonoChange,
+            MonotonicityChange hiMonoChange, bool xInPositiveMonotonicity, bool yInPositiveMonotonicity, AxisAlignedRectangle rect)
+            : this(vertex1, vertex2, lowMonoChange, hiMonoChange, xInPositiveMonotonicity, yInPositiveMonotonicity)
         {
-            return (Right - Left) * (Top - Bottom);
+            Rectangle = rect;
         }
     }
 
