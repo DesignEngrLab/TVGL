@@ -91,5 +91,17 @@ namespace TVGL.TwoDimensional
                 new Vector2(XMin, YMax)
             };
         }
+
+        /// <summary>
+        /// Makes a new rectange that is offset from the current one. The
+        /// value can be positive or negative. Positive offsets outward and
+        /// negative offsets inward.
+        /// </summary>
+        /// <param name="offset">The offset.</param>
+        /// <returns>AxisAlignedRectangle.</returns>
+        public AxisAlignedRectangle Offset(double offset)
+        {
+            return new AxisAlignedRectangle(XMin - offset, YMin - offset, XMax + offset, YMax + offset);
+        }
     }
 }

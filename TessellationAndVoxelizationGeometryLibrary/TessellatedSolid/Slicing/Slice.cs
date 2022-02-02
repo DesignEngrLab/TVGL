@@ -890,9 +890,8 @@ namespace TVGL.Boolean_Operations
         {
             var polygon = new Polygon(path);
             polygons.Add(polygon);
-            if (polygon.Vertices.Count != edgesInLoop.Count) throw new Exception();
-            for (int i = 0; i < edgesInLoop.Count; i++)
-                e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
+                for (int i = 0; i < polygon.Vertices.Count; i++)
+                    e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
         }
 
 
