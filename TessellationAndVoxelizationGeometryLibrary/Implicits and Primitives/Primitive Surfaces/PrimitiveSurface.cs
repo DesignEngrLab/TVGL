@@ -11,34 +11,11 @@ using TVGL.TwoDimensional;
 
 namespace TVGL
 {
-    public enum PrimitiveType
-    {
-        Plane,
-        Cylinder, 
-        Cone,
-        Sphere,
-        Torus,
-        UnknownRegion
-    }
-
     /// <summary>
     ///     Class PrimitiveSurface.
     /// </summary>
     public abstract class PrimitiveSurface
     {
-        public PrimitiveType Type
-        {
-            get
-            {
-                if (this is Plane) return PrimitiveType.Plane;
-                if (this is Cylinder) return PrimitiveType.Cylinder;
-                if (this is Cone) return PrimitiveType.Cone;
-                if (this is Sphere) return PrimitiveType.Sphere;
-                if (this is Torus) return PrimitiveType.Torus;
-                if (this is UnknownRegion) return PrimitiveType.UnknownRegion;
-                throw new NotImplementedException();
-            }
-        }
         #region Constructors
 
         /// <summary>

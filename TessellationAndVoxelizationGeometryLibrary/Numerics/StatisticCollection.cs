@@ -16,6 +16,7 @@ namespace TVGL
         /// <value>The median.</value>
         public static double Median(this IEnumerable<double> numbers)
         {
+            if (!numbers.Any()) throw new ArgumentNullException(nameof(numbers));
             var numberList =new List<double>(numbers); //we need a list and this list will be mutated, so a copy is made.
             var index = (numberList.Count - 1) / 2;
             var loValue = nthOrderStatistic(numberList, index, 0, numberList.Count - 1);

@@ -510,7 +510,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The string representation.</returns>
         public override string ToString()
         {
-            return ToString("G", CultureInfo.CurrentCulture);
+            return ToString("F3", CultureInfo.CurrentCulture);
         }
 
         /// <summary>
