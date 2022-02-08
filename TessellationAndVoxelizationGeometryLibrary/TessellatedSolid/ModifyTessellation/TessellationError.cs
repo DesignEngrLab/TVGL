@@ -154,23 +154,23 @@ namespace TVGL
         {
             if (NoErrors) return "No Errors";
             string report = "";
-            if (DegenerateFaces != null) report += "DegenerateFaces: " + DegenerateFaces.Count + "\n";
-            if (DuplicateFaces != null) report += "DuplicateFaces: " + DuplicateFaces.Count + "\n";
-            if (EdgesThatDoNotLinkBackToFace != null) report += "EdgesThatDoNotLinkBackToFace: " + EdgesThatDoNotLinkBackToFace.Count + "\n";
-            if (EdgesThatDoNotLinkBackToVertex != null) report += "EdgesThatDoNotLinkBackToVertex: " + EdgesThatDoNotLinkBackToVertex.Count + "\n";
-            if (EdgesWithBadAngle != null) report += "EdgesWithBadAngle: " + EdgesWithBadAngle.Count + "\n";
-            if (FacesThatDoNotLinkBackToEdge != null) report += "FacesThatDoNotLinkBackToEdge: " + FacesThatDoNotLinkBackToEdge.Count + "\n";
-            if (FacesThatDoNotLinkBackToVertex != null) report += "FacesThatDoNotLinkBackToVertex: " + FacesThatDoNotLinkBackToVertex.Count + "\n";
-            if (FacesWithNegligibleArea != null) report += "FacesWithNegligibleArea: " + FacesWithNegligibleArea.Count + "\n";
-            if (FacesWithOneEdge != null) report += "FacesWithOneEdge: " + FacesWithOneEdge.Count + "\n";
-            if (FacesWithOneVertex != null) report += "FacesWithOneVertex: " + FacesWithOneVertex.Count + "\n";
+            if (DegenerateFaces != null) report += "Degenerate faces: " + DegenerateFaces.Count + "\n";
+            if (DuplicateFaces != null) report += "Duplicate faces: " + DuplicateFaces.Count + "\n";
+            if (EdgesThatDoNotLinkBackToFace != null) report += "Edges that do not link back to face: " + EdgesThatDoNotLinkBackToFace.Count + "\n";
+            if (EdgesThatDoNotLinkBackToVertex != null) report += "Edges that do not link back to vertex: " + EdgesThatDoNotLinkBackToVertex.Count + "\n";
+            if (EdgesWithBadAngle != null) report += "Edges with bad angles: " + EdgesWithBadAngle.Count + "\n";
+            if (FacesThatDoNotLinkBackToEdge != null) report += "Faces that do not link back to edges: " + FacesThatDoNotLinkBackToEdge.Count + "\n";
+            if (FacesThatDoNotLinkBackToVertex != null) report += "Faces that do not link back to vertices: " + FacesThatDoNotLinkBackToVertex.Count + "\n";
+            if (FacesWithNegligibleArea != null) report += "Faces with negligible area: " + FacesWithNegligibleArea.Count + "\n";
+            if (FacesWithOneEdge != null) report += "Faces with one edge: " + FacesWithOneEdge.Count + "\n";
+            if (FacesWithOneVertex != null) report += "Faces with one vertex: " + FacesWithOneVertex.Count + "\n";
             if (FacesWithTwoEdges != null) report += "FacesWithTwoEdge: " + FacesWithTwoEdges.Count + "\n";
             if (FacesWithTwoVertices != null) report += "FacesWithTwoVertices: " + FacesWithTwoVertices.Count + "\n";
-            if (ModelIsInsideOut) report += "ModelIsInsideOut: " + ModelIsInsideOut + "\n";
-            if (OverusedEdges != null) report += "OverusedEdges: " + OverusedEdges.Count + "\n";
-            if (SingledSidedEdges != null) report += "SingledSidedEdges: " + SingledSidedEdges.Count + "\n";
-            if (VertsThatDoNotLinkBackToEdge != null) report += "VertsThatDoNotLinkBackToEdge: " + VertsThatDoNotLinkBackToEdge.Count + "\n";
-            if (VertsThatDoNotLinkBackToFace != null) report += "VertsThatDoNotLinkBackToFace: " + VertsThatDoNotLinkBackToFace.Count;
+            if (ModelIsInsideOut) report += "Model is inside-out: " + ModelIsInsideOut + "\n";
+            if (OverusedEdges != null) report += "Overused edges: " + OverusedEdges.Count + "\n";
+            if (SingledSidedEdges != null) report += "Singled sided edges: " + SingledSidedEdges.Count + "\n";
+            if (VertsThatDoNotLinkBackToEdge != null) report += "Vertices that do not link back to edges: " + VertsThatDoNotLinkBackToEdge.Count + "\n";
+            if (VertsThatDoNotLinkBackToFace != null) report += "Vertices that do not link back to faces: " + VertsThatDoNotLinkBackToFace.Count;
             return report;
         }
     }
