@@ -158,8 +158,7 @@ namespace TVGL
         {
             var i = 0;
 
-            var colorPalet = Presenter.ColorPalette();
-            var maxLength = colorPalet.Length;
+            var colorPalet = Color.GetRandomColors().GetEnumerator();
             foreach (var listOfListOfPoints in listofListOfListOfPoints)
             {
                 if (plot2DType == Plot2DType.Line)
@@ -168,9 +167,8 @@ namespace TVGL
                     //Close each list of points 
                     foreach (var points in listOfListOfPoints)
                     {
-                        var color = new Color(colorPalet[i]);
-                        i++;
-                        if (i == maxLength) i = 0;
+                        colorPalet.MoveNext();
+                        var color = colorPalet.Current;
                         var series = new LineSeries
                         {
                             MarkerType = marker,
