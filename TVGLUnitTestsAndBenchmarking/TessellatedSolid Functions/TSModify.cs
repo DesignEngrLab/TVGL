@@ -13,6 +13,7 @@ using TVGL.IOFunctions;
 using System.Linq;
 using TVGL.Boolean_Operations;
 using TVGL.Voxelization;
+using TVGLPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

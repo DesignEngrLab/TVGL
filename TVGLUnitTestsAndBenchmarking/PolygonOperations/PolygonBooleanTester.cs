@@ -9,6 +9,7 @@ using TVGL.IOFunctions;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 using TVGL.Voxelization;
+using TVGLPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

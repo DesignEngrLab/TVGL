@@ -14,6 +14,7 @@ using TVGL;
 using TVGL.Voxelization;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using TVGLPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

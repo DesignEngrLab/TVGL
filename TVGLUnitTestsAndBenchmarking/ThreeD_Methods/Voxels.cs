@@ -8,6 +8,7 @@ using System.Text;
 using TVGL;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
+using TVGLPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

@@ -8,6 +8,7 @@ using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
+using TVGLPresenter;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

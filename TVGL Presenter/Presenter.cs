@@ -15,7 +15,6 @@ using SharpDX;
 using System.Collections.Generic;
 using System.Linq;
 using HelixToolkit.Wpf.SharpDX;
-using TVGLPresenter;
 using HelixToolkit.SharpDX.Core;
 using TVGL;
 using TVGL.Numerics;
@@ -26,8 +25,9 @@ using Polygon = TVGL.TwoDimensional.Polygon;
 using Vector3 = TVGL.Numerics.Vector3;
 using System;
 using TVGL.Voxelization;
+using HelixToolkit.SharpDX.Core.Model.Scene;
 
-namespace TVGL
+namespace TVGLPresenter
 {
     /// <summary>
     /// The Class HelixPresenter is the only class within the TVGL Helix Presenter
@@ -179,16 +179,28 @@ namespace TVGL
 
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
         {
-            var window = new Window3DPlot();
-            var models = new List<Element3D>();
-
+            
+            var window = new MainWindow(new MainViewModel(tessellatedSolids));
+            //var models = new List<Element3D>();
             foreach (var tessellatedSolid in tessellatedSolids)
             {
-                var model = MakeModelVisual3D(tessellatedSolid);
-                models.Add(model);
-                window.group.Children.Add(model);
+                //var model = MakeModelVisual3D(tessellatedSolid);
+                //models.Add(model);
+                //window.view.Items.Add(model);
+                //window.view.Items.Add(MakeModelVisual3D(tessellatedSolid));
             }
-            // window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            //foreach (var tessellatedSolid in tessellatedSolids)
+            //{
+            //    var viewModel = (MainViewModel)window.DataContext;
+            //    var model = MakeModelVisual3D(tessellatedSolid);
+            //    models.Add(model);
+            //    viewModel.AttachModelList(models);
+            //    //((MainViewModel)window.DataContext) = .GroupModel..AddNode(
+            //    //    new MeshNode { Geometry = model });
+            //    //((MainViewModel)window.DataContext).GroupModel= new SceneNodeGroupModel3D { 
+            //    //    GroupNode = } = models;
+            //}
+            //window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
 
@@ -251,18 +263,18 @@ namespace TVGL
 
 
 
-        public void AddSolids(IList<Solid> solids)
+        public static void AddSolids(IList<Solid> solids, MainViewModel viewModel)
         {
-            viewModel.AttachModelList(solids.Select(ConvertToObject3D).ToList());
+        //    viewModel.AttachModelList(solids.Select(ConvertToObject3D).ToList());
         }
 
-        private MeshGeometryModel3D ConvertToObject3D(Solid solid)
+        private static MeshGeometryModel3D ConvertToObject3D(Solid solid)
         {
             if (solid is TessellatedSolid) return ConvertTessellatedSolidtoObject3D((TessellatedSolid)solid);
             if (solid is VoxelizedSolid) return ConvertVoxelizedSolidtoObject3D((VoxelizedSolid)solid);
             throw new ArgumentException("Solid must be TessellatedSolid or VoxelizedSolid");
         }
-        private MeshGeometryModel3D ConvertTessellatedSolidtoObject3D(TessellatedSolid ts)
+        private static MeshGeometryModel3D ConvertTessellatedSolidtoObject3D(TessellatedSolid ts)
         {
             var result = new MeshGeometryModel3D
             {
@@ -274,10 +286,10 @@ namespace TVGL
                 Geometry = new MeshGeometry3D
                 {
                     Positions = new Vector3Collection(ts.Faces.SelectMany(f => f.Vertices.Select(v =>
-                          new Vector3((float)v.X, (float)v.Y, (float)v.Z)))),
+                          new SharpDX.Vector3((float)v.X, (float)v.Y, (float)v.Z)))),
                     Indices = new IntCollection(Enumerable.Range(0, 3 * ts.NumberOfFaces)),
                     Normals = new Vector3Collection(ts.Faces.SelectMany(f => f.Vertices.Select(v =>
-                        new Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])))),
+                        new SharpDX.Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])))),
 
                 }
             };
@@ -285,12 +297,12 @@ namespace TVGL
         }
 
 
-        private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
+        private static MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
             if (false)
             {
                 var ts = vs.ConvertToTessellatedSolidMarchingCubes(20);
-                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
+                ts.SolidColor = new TVGL.Color(KnownColors.MediumSeaGreen)
                 {
                     Af = 0.80f
                 };
@@ -343,9 +355,9 @@ namespace TVGL
                             if (neighbors[m / 2] != null) continue;
                             for (var n = 0; n < 3; n++)
                             {
-                                positions.Add(new Vector3(x + (coordOffsets[m][n][0] * s), y + coordOffsets[m][n][1] * s,
+                                positions.Add(new SharpDX.Vector3(x + (coordOffsets[m][n][0] * s), y + coordOffsets[m][n][1] * s,
                                     z + coordOffsets[m][n][2] * s));
-                                normals.Add(new Vector3(normalsTemplate[m][0], normalsTemplate[m][1],
+                                normals.Add(new SharpDX.Vector3(normalsTemplate[m][0], normalsTemplate[m][1],
                                     normalsTemplate[m][2]));
                             }
                         }
