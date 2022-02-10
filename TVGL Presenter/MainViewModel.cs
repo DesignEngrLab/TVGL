@@ -193,7 +193,7 @@ namespace TVGLPresenter
         }
         #endregion
 
-        public ObservableElement3DCollection Solids { get; } = new ObservableElement3DCollection();
+
         public Geometry3D DefaultModel { get; private set; }
         public Geometry3D Grid { get; private set; }
         public Geometry3D FloorModel { private set; get; }

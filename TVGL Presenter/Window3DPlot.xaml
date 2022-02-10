@@ -55,7 +55,7 @@
                 Transform="{Binding DefaultTransform}"
                 FillMode="{Binding FillMode}" ReuseVertexArrayBuffer="True"/>-->
             <!--<hx:MeshGeometryModel3D Geometry="{Binding FloorModel}" Material="{Binding FloorMaterial}" />-->
-            <hx:LineGeometryModel3D Geometry="{Binding Grid}" />
+            <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" />
         </hx:Viewport3DX>
 
         <StackPanel Grid.Row="1">
