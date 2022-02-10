@@ -1,0 +1,168 @@
+﻿<Window
+    x:Class="TVGLPresenter.Window3DPlot"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:TVGLPresenter"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
+    Title="{Binding Heading}"
+    Width="800"
+    Height="500"
+    mc:Ignorable="d">
+
+    <Window.Resources>
+        <hx:RenderTechniqueConverter x:Key="RenderTechniqueConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <hx:Viewport3DX
+            x:Name="view"
+            Title="{Binding Title}"
+            Grid.Row="1"
+            Camera="{Binding Camera}"
+            CoordinateSystemLabelForeground="White"
+            EffectsManager="{Binding EffectsManager}"
+            IsShadowMappingEnabled="True"
+            ShowCoordinateSystem="False"
+            SubTitle="{Binding SubTitle}"
+            TextBrush="Black"
+            UseDefaultGestures="False">
+            <hx:Viewport3DX.InputBindings>
+                <MouseBinding Command="hx:ViewportCommands.Rotate" Gesture="RightClick" />
+                <MouseBinding Command="hx:ViewportCommands.Zoom" Gesture="MiddleClick" />
+                <MouseBinding Command="hx:ViewportCommands.Pan" Gesture="Shift+RightClick" />
+            </hx:Viewport3DX.InputBindings>
+            <hx:ShadowMap3D />
+            <hx:AmbientLight3D Color="{Binding AmbientLightColor}" />
+            <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection1}" Color="{Binding DirectionalLightColor}" />
+            <hx:MeshGeometryModel3D
+                x:Name="model1"
+                Material="{Binding DefaultMaterial}"
+                FillMode="{Binding FillMode}"
+                Geometry="{Binding DefaultModel}"
+                IsThrowingShadow="True" />
+            <!--<hx:MeshGeometryModel3D
+                x:Name="model1"
+                Transform="{Binding DefaultTransform}"
+                Instances="{Binding Instances}"
+                Geometry="{Binding DefaultModel}"
+                Material="{Binding DefaultMaterial}"
+                Transform="{Binding DefaultTransform}"
+                FillMode="{Binding FillMode}" ReuseVertexArrayBuffer="True"/>-->
+            <!--<hx:MeshGeometryModel3D Geometry="{Binding FloorModel}" Material="{Binding FloorMaterial}" />-->
+            <hx:LineGeometryModel3D Geometry="{Binding Grid}" />
+        </hx:Viewport3DX>
+
+        <StackPanel Grid.Row="1">
+            <Expander
+                x:Name="shadingPanel"
+                Width="150"
+                Margin="10"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                BorderBrush="LightGray"
+                Header="Settings"
+                IsExpanded="True">
+                <Expander.Background>
+                    <SolidColorBrush Opacity="0.25" Color="WhiteSmoke" />
+                </Expander.Background>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <!--<TextBlock
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Margin="3">
+                        Model Topology:
+                    </TextBlock>
+                    <ComboBox
+                        Grid.Row="1"
+                        Grid.ColumnSpan="2"
+                        Margin="3"
+                        ItemsSource="{Binding Source={StaticResource Topology}}"
+                        SelectedItem="{Binding MeshTopology}"
+                        Text="" />-->
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Margin="3">
+                        Render Techniqe:
+                    </TextBlock>
+                    <CheckBox
+                        Grid.Row="5"
+                        Grid.ColumnSpan="2"
+                        Margin="3"
+                        IsChecked="{Binding DefaultMaterial.RenderDiffuseMap}">
+                        Render Diffuse Map
+                    </CheckBox>
+                    <CheckBox
+                        Grid.Row="6"
+                        Grid.ColumnSpan="2"
+                        Margin="3"
+                        IsChecked="{Binding DefaultMaterial.RenderNormalMap}">
+                        Render Normal Map
+                    </CheckBox>
+                    <CheckBox
+                        Grid.Row="7"
+                        Grid.ColumnSpan="2"
+                        Margin="3"
+                        IsChecked="{Binding Wireframe}">
+                        Render Wireframe
+                    </CheckBox>
+
+
+                </Grid>
+            </Expander>
+        </StackPanel>
+
+        <StatusBar Grid.Row="1" VerticalAlignment="Bottom">
+            <StatusBar.Background>
+                <SolidColorBrush Opacity="0.5" Color="WhiteSmoke" />
+            </StatusBar.Background>
+            <StatusBarItem>
+                <TextBlock
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Text="{Binding FrameRate, ElementName=view1, StringFormat=D3D11 - \{0:0.00\} FPS}" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock Text="{Binding Camera.Position, StringFormat=Position: \{0:0.0\}}" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock Text="{Binding Camera.LookDirection, StringFormat=LookDirection: \{0:0.0\}}" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock Text="{Binding Camera.UpDirection, StringFormat=UpDirection: \{0:0.0\}}" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock Text="{Binding Items.Count, ElementName=view1, StringFormat=Children: \{0\}}" />
+            </StatusBarItem>
+        </StatusBar>
+
+    </Grid>
+</Window>

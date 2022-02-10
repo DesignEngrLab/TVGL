@@ -6,7 +6,7 @@
 // Last Modified By : Matt
 // Last Modified On : 05-24-2016
 // ***********************************************************************
-// <copyright file="MainWindow.xaml.cs" company="OxyPlot">
+// <copyright file="Window3DPlot.xaml.cs" company="OxyPlot">
 //     The MIT License (MIT)
 /*
   Copyright(c) 2014 OxyPlot contributors

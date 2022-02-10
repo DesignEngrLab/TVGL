@@ -180,66 +180,9 @@ namespace TVGLPresenter
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
         {
             
-            var window = new MainWindow(new MainViewModel(tessellatedSolids));
-            //var models = new List<Element3D>();
-            foreach (var tessellatedSolid in tessellatedSolids)
-            {
-                //var model = MakeModelVisual3D(tessellatedSolid);
-                //models.Add(model);
-                //window.view.Items.Add(model);
-                //window.view.Items.Add(MakeModelVisual3D(tessellatedSolid));
-            }
-            //foreach (var tessellatedSolid in tessellatedSolids)
-            //{
-            //    var viewModel = (MainViewModel)window.DataContext;
-            //    var model = MakeModelVisual3D(tessellatedSolid);
-            //    models.Add(model);
-            //    viewModel.AttachModelList(models);
-            //    //((MainViewModel)window.DataContext) = .GroupModel..AddNode(
-            //    //    new MeshNode { Geometry = model });
-            //    //((MainViewModel)window.DataContext).GroupModel= new SceneNodeGroupModel3D { 
-            //    //    GroupNode = } = models;
-            //}
-            //window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            var window = new Window3DPlot(new MainViewModel(tessellatedSolids));
             window.ShowDialog();
         }
-
-
-        /// <summary>
-        /// Makes the model visual3 d.
-        /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <returns>Visual3D.</returns>
-        private static MeshGeometryModel3D MakeModelVisual3D(TessellatedSolid ts)
-        {
-            var defaultMaterial = new PhongMaterial()
-            {
-                DiffuseColor = new SharpDX.Color4(
-                    ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, ts.SolidColor.Af)
-            };
-            //if (ts.HasUniformColor)
-            {
-                var positions =
-                    ts.Faces.SelectMany(
-                        f => f.Vertices.Select(v =>
-                            new SharpDX.Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2])));
-                var normals =
-                    ts.Faces.SelectMany(f =>
-                        f.Vertices.Select(v =>
-                            new SharpDX.Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])));
-                return new MeshGeometryModel3D
-                {
-                    Geometry = new MeshGeometry3D
-                    {
-                        Positions = new Vector3Collection(positions),
-                        // TriangleIndices = new Int32Collection(triIndices),
-                        Normals = new Vector3Collection(normals)
-                    },
-                    Material = defaultMaterial
-                };
-            }
-        }
-
 
         #endregion
 
