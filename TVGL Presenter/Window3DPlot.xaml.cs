@@ -6,27 +6,20 @@
 //   Interaction logic for Window3DPlot.xaml
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
+using HelixToolkit.Wpf.SharpDX;
+using System;
+using System.Windows;
 
-namespace TVGLPresenter
+namespace TVGL
 {
-    using System.Linq;
-    using System.Windows;
-    using System.Windows.Input;
-    using HelixToolkit.Wpf.SharpDX;
-    using SharpDX;
-    using TranslateTransform3D = System.Windows.Media.Media3D.TranslateTransform3D;
-    using Transform3D = System.Windows.Media.Media3D.Transform3D;
-    using Transform3DGroup = System.Windows.Media.Media3D.Transform3DGroup;
-    using Vector3D = System.Windows.Media.Media3D.Vector3D;
-    using Point3D = System.Windows.Media.Media3D.Point3D;
-    using System;
+
 
     /// <summary>
     /// Interaction logic for Window3DPlot.xaml
     /// </summary>
     public partial class Window3DPlot : Window
     {
-        public Window3DPlot(MainViewModel viewModel)
+        public Window3DPlot(Window3DPlotViewModel viewModel)
         {
             this.InitializeComponent();
             this.DataContext = viewModel;
@@ -40,7 +33,7 @@ namespace TVGLPresenter
 
         private void group1_Mouse3DDown(object sender, MouseDown3DEventArgs e)
         {
-            ((MainViewModel)DataContext).SelectedGeometry = e.HitTestResult.Geometry;
+            ((Window3DPlotViewModel)DataContext).SelectedGeometry = e.HitTestResult.Geometry;
 
         }
     }

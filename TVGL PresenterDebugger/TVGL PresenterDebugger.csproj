@@ -114,15 +114,16 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowDense.cs" Link="TVGL\VoxelizedSolid\VoxelRowDense.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowSparse.cs" Link="TVGL\VoxelizedSolid\VoxelRowSparse.cs" />
-		<Compile Include="..\TVGL Presenter\MainViewModel.cs" Link="Presenter\MainViewModel.cs" />
-		<Compile Include="..\TVGL Presenter\Presenter.cs" Link="Presenter\Presenter.cs" />
-		<Compile Include="..\TVGL Presenter\Window2DPlot.xaml.cs" Link="Presenter\Window2DPlot.xaml.cs" />
-		<Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs" Link="Presenter\Window3DPlot.xaml.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs" Link="TVGL\Colors.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators.cs" Link="TVGL\Comparators.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="TVGL\Constants.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid.cs" Link="TVGL\Solid.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs" Link="TVGL\Verbosity.cs" />
+		<Compile Include="..\TVGL Presenter\Window3DPlotViewModel.cs" Link="Presenter\Window3DPlotViewModel.cs" />
+		<Compile Include="..\TVGL Presenter\Presenter.cs" Link="Presenter\Presenter.cs" />
+		<Compile Include="..\TVGL Presenter\PresenterNVOptimusEnabler.cs" Link="Presenter\PresenterNVOptimusEnabler.cs" />
+		<Compile Include="..\TVGL Presenter\Window2DPlot.xaml.cs" Link="Presenter\Window2DPlot.xaml.cs" />
+		<Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs" Link="Presenter\Window3DPlot.xaml.cs" />
 	</ItemGroup>
 	<ItemGroup>
 		<Page Include="..\TVGL Presenter\Window2DPlot.xaml" Link="Presenter\Window2DPlot.xaml">

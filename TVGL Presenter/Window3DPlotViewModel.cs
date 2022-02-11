@@ -5,7 +5,6 @@ using Media3D = System.Windows.Media.Media3D;
 using Point3D = System.Windows.Media.Media3D.Point3D;
 using Vector3D = System.Windows.Media.Media3D.Vector3D;
 using Transform3D = System.Windows.Media.Media3D.Transform3D;
-using Color = System.Windows.Media.Color;
 using Vector3 = SharpDX.Vector3;
 using Colors = System.Windows.Media.Colors;
 using Color4 = SharpDX.Color4;
@@ -16,12 +15,11 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System;
 using TVGL;
+using TVGL.Voxelization;
 
-namespace TVGLPresenter
+namespace TVGL
 {
-
-
-    public class MainViewModel : INotifyPropertyChanged
+    public class Window3DPlotViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -177,7 +175,7 @@ namespace TVGLPresenter
         }
 
         // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        ~MainViewModel()
+        ~Window3DPlotViewModel()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(false);
@@ -199,8 +197,8 @@ namespace TVGLPresenter
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }
-        public Color DirectionalLightColor { get; private set; }
-        public Color AmbientLightColor { get; private set; }
+        public System.Windows.Media.Color DirectionalLightColor { get; private set; }
+        public System.Windows.Media.Color AmbientLightColor { get; private set; }
 
         private FillMode fillMode = FillMode.Solid;
         public FillMode FillMode
@@ -230,6 +228,7 @@ namespace TVGLPresenter
                     {
                         FillMode = FillMode.Solid;
                     }
+                    UpdateSolidsWithFill();
                 }
             }
             get
@@ -238,9 +237,12 @@ namespace TVGLPresenter
             }
         }
 
+        private void UpdateSolidsWithFill()
+        {
+            foreach (var solid in Solids)
+                ((GeometryModel3D)solid).FillMode = FillMode;
+        }
 
-
-        public IList<Matrix> Instances { private set; get; }
         private Geometry3D selectedGeometry;
         public Geometry3D SelectedGeometry
         {
@@ -265,7 +267,7 @@ namespace TVGLPresenter
         }
 
 
-        private MainViewModel(string heading, string title, string subtitle)
+        public Window3DPlotViewModel(string heading = "", string title = "", string subtitle = "")
         {
             Heading = heading;
             Title = title;
@@ -301,105 +303,17 @@ namespace TVGLPresenter
             };
 
             // setup lighting            
-            this.AmbientLightColor = Color.FromArgb(1, 12, 12, 12);
-            this.DirectionalLightColor = Colors.White;
+            this.AmbientLightColor = System.Windows.Media.Color.FromArgb(1, 12, 12, 12);
+            this.DirectionalLightColor = System.Windows.Media.Colors.White;
             this.DirectionalLightDirection1 = new Vector3D(-0, -20, -20);
             this.DirectionalLightDirection2 = new Vector3D(-0, -1, +50);
             this.DirectionalLightDirection3 = new Vector3D(0, +1, 0);
 
         }
-
-        public MainViewModel(IList<TVGL.TessellatedSolid> tessellatedSolids, string heading = "", string title = "",
-            string subtitle = "") : this(heading, title, subtitle)
+        public void Add(IEnumerable<GeometryModel3D> models)
         {
-            foreach (var ts in tessellatedSolids)
-            {
-                var models = MakeModelVisual3D(ts);
-                foreach (var model in models)
-                    Solids.Add(model);
-            }
-        }
-
-
-        /// <summary>
-        /// load the model from obj-file
-        /// </summary>
-        /// <param name="filename">filename</param>
-        /// <param name="faces">Determines if facades should be treated as triangles (Default) or as quads (Quads)</param>
-        //private void LoadModel(string filename, MeshFaces faces)
-        //{
-        //    // load model
-        //    var reader = new ObjReader();
-        //    var objModel = reader.Read(filename, new ModelInfo() { Faces = faces });
-        //    var model = objModel[0].Geometry as MeshGeometry3D;
-        //    model.Colors = new Color4Collection(model.Positions.Select(x => new Color4(1, 0, 0, 1)));
-        //    DefaultModel = model;
-        //}
-        /// <summary>
-        /// Makes the model visual3 d.
-        /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <returns>Visual3D.</returns>
-        private static IEnumerable<MeshGeometryModel3D> MakeModelVisual3D(TessellatedSolid ts)
-        {
-            var defaultColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, ts.SolidColor.Af);
-            var positions =
-                ts.Faces.SelectMany(
-                    f => f.Vertices.Select(v =>
-                        new SharpDX.Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2])));
-            var normals =
-                           ts.Faces.SelectMany(f =>
-                               f.Vertices.Select(v =>
-                                   new SharpDX.Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])));
-            var indices = Enumerable.Range(0, ts.NumberOfFaces * 3);
-            if (ts.HasUniformColor)
-            {
-                yield return new MeshGeometryModel3D
-                {
-                    Geometry = new MeshGeometry3D
-                    {
-                        Positions = new Vector3Collection(positions),
-                        TriangleIndices = new IntCollection(indices),
-                        Normals = new Vector3Collection(normals),
-                    },
-                    Material = new PhongMaterial() { DiffuseColor = defaultColor }
-                };
-            }
-            else
-            {
-                var vertexList = positions.ToList();  //to avoid re-enumeration
-                var normalList = normals.ToList();    //these lists are defined
-                var indicesList = indices.ToList();   // they are not needed in the above scenario
-                var colorToFaceDict = new Dictionary<SharpDX.Color4, List<int>>();
-                for (int i = 0; i < ts.NumberOfFaces; i++)
-                {
-                    var f = ts.Faces[i];
-                    var faceColor = (f.Color == null) ? defaultColor
-                        : new SharpDX.Color4(f.Color.Rf, f.Color.Gf, f.Color.Bf, f.Color.Af);
-                    if (colorToFaceDict.ContainsKey(faceColor))
-                        colorToFaceDict[faceColor].Add(i);
-                    else
-                        colorToFaceDict.Add(faceColor, new List<int> { i });
-                }
-                foreach (var entry in colorToFaceDict)
-                {
-                    var material = new PhongMaterial { DiffuseColor = entry.Key };
-                    var faceIndices = entry.Value;
-                    yield return new MeshGeometryModel3D
-                    {
-                        Geometry = new MeshGeometry3D
-                        {
-                            Positions = new Vector3Collection(faceIndices
-                        .SelectMany(f => new[] { vertexList[3 * f], vertexList[3 * f + 1], vertexList[3 * f + 2] })),
-                            TriangleIndices = new IntCollection(faceIndices
-                        .SelectMany(f => new[] { indicesList[3 * f], indicesList[3 * f + 1], indicesList[3 * f + 2] })),
-                            Normals = new Vector3Collection(faceIndices
-                        .SelectMany(f => new[] { normalList[3 * f], normalList[3 * f + 1], normalList[3 * f + 2] }))
-                        },
-                        Material = material
-                    };
-                }
-            }
+            foreach (var model in models)
+                Solids.Add(model);
         }
     }
 }

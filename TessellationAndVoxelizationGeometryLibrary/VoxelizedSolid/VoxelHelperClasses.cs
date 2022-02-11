@@ -58,7 +58,7 @@ namespace TVGL.Voxelization
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public bool MoveNext()

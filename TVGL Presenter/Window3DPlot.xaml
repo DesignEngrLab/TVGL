@@ -1,9 +1,9 @@
 ﻿<Window
-    x:Class="TVGLPresenter.Window3DPlot"
+    x:Class="TVGL.Window3DPlot"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:TVGLPresenter"
+    xmlns:local="clr-namespace:TVGL"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
     Title="{Binding Heading}"
@@ -41,8 +41,7 @@
             <hx:AmbientLight3D Color="{Binding AmbientLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection1}" Color="{Binding DirectionalLightColor}" />
 
-            <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}"
-                FillMode="{Binding FillMode}" Mouse3DDown="group1_Mouse3DDown" />
+            <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}" Mouse3DDown="group1_Mouse3DDown" />
             <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" />
         </hx:Viewport3DX>
 
@@ -132,7 +131,7 @@
                 <TextBlock
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Text="{Binding FrameRate, ElementName=view1, StringFormat=D3D11 - \{0:0.00\} FPS}" />
+                    Text="{Binding FrameRate, ElementName=view, StringFormat=D3D11 - \{0:0.00\} FPS}" />
             </StatusBarItem>
             <Separator />
             <StatusBarItem>
@@ -148,7 +147,7 @@
             </StatusBarItem>
             <Separator />
             <StatusBarItem>
-                <TextBlock Text="{Binding Items.Count, ElementName=view1, StringFormat=Children: \{0\}}" />
+                <TextBlock Text="{Binding Items.Count, ElementName=view, StringFormat=Children: \{0\}}" />
             </StatusBarItem>
         </StatusBar>
 
