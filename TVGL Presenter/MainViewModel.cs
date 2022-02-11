@@ -194,16 +194,8 @@ namespace TVGLPresenter
         #endregion
 
 
-        public Geometry3D DefaultModel { get; private set; }
-        public Geometry3D Grid { get; private set; }
-        public Geometry3D FloorModel { private set; get; }
-        public PhongMaterial DefaultMaterial { get; private set; }
-        public PhongMaterial FloorMaterial { get; } = PhongMaterials.Silver;
-        public Color GridColor { get; private set; }
-
-        public Transform3D DefaultTransform { get; private set; }
-        public Transform3D GridTransform { get; private set; }
-
+        public Material SelectedMaterial { get; } = new PhongMaterial() { EmissiveColor = SharpDX.Color.LightYellow };
+        public ObservableElement3DCollection Solids { private set; get; } = new ObservableElement3DCollection();
         public Vector3D DirectionalLightDirection1 { get; private set; }
         public Vector3D DirectionalLightDirection2 { get; private set; }
         public Vector3D DirectionalLightDirection3 { get; private set; }
@@ -249,6 +241,30 @@ namespace TVGLPresenter
 
 
         public IList<Matrix> Instances { private set; get; }
+        private Geometry3D selectedGeometry;
+        public Geometry3D SelectedGeometry
+        {
+            set
+            {
+                if (SetValue(ref selectedGeometry, value))
+                {
+                    SelectedTransform = Solids.Where(x => ((GeometryModel3D)x).Geometry == value)
+                        .Select(x => x.Transform).First();
+                }
+            }
+            get { return selectedGeometry; }
+        }
+        private Media3D.Transform3D selectedTransform;
+        public Media3D.Transform3D SelectedTransform
+        {
+            set
+            {
+                SetValue(ref selectedTransform, value);
+            }
+            get { return selectedTransform; }
+        }
+
+
         private MainViewModel(string heading, string title, string subtitle)
         {
             Heading = heading;
@@ -296,33 +312,12 @@ namespace TVGLPresenter
         public MainViewModel(IList<TVGL.TessellatedSolid> tessellatedSolids, string heading = "", string title = "",
             string subtitle = "") : this(heading, title, subtitle)
         {
-            // ---------------------------------------------
-            // model trafo
-            this.DefaultTransform = new Media3D.TranslateTransform3D(0, 0, 0);
-
-            this.DefaultMaterial = PhongMaterials.BlanchedAlmond;
-            //this.DefaultMaterial = new PhongMaterial
-            //{
-            //    AmbientColor = Colors.Gray.ToColor4(),
-            //    DiffuseColor = Colors.Red.ToColor4(), // Colors.LightGray,
-            //    SpecularColor = Colors.White.ToColor4(),
-            //    SpecularShininess = 100f,
-            //    //DiffuseMap = TextureModel.Create(new System.Uri(@"./TextureCheckerboard2.dds", System.UriKind.RelativeOrAbsolute).ToString()),
-            //    //NormalMap = TextureModel.Create(new System.Uri(@"./TextureCheckerboard2_dot3.dds", System.UriKind.RelativeOrAbsolute).ToString()),
-            //    EnableTessellation = true,
-            //    RenderShadowMap = true
-            //};
-
-            var model = MakeModelVisual3D(tessellatedSolids[0]);
-            Solids.Add(new MeshGeometryModel3D { Geometry=model});
-            DefaultModel = model;
-            // ---------------------------------------------
-            // floor plane grid
-            this.Grid = LineBuilder.GenerateGrid(140);
-            this.GridColor = Colors.Gray;
-            //this.GridTransform = new Media3D.TranslateTransform3D(-5, -4, -5);
-
-
+            foreach (var ts in tessellatedSolids)
+            {
+                var models = MakeModelVisual3D(ts);
+                foreach (var model in models)
+                    Solids.Add(model);
+            }
         }
 
 
@@ -345,91 +340,66 @@ namespace TVGLPresenter
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>Visual3D.</returns>
-        private static MeshGeometry3D MakeModelVisual3D(TessellatedSolid ts)
+        private static IEnumerable<MeshGeometryModel3D> MakeModelVisual3D(TessellatedSolid ts)
         {
-            //var defaultMaterial = new PhongMaterial()
-            //{
-            //    DiffuseColor = new SharpDX.Color4(
-            //        ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, ts.SolidColor.Af)
-            //};
-            //if (ts.HasUniformColor)
+            var defaultColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, ts.SolidColor.Af);
+            var positions =
+                ts.Faces.SelectMany(
+                    f => f.Vertices.Select(v =>
+                        new SharpDX.Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2])));
+            var normals =
+                           ts.Faces.SelectMany(f =>
+                               f.Vertices.Select(v =>
+                                   new SharpDX.Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])));
+            var indices = Enumerable.Range(0, ts.NumberOfFaces * 3);
+            if (ts.HasUniformColor)
             {
-                var positions =
-                    ts.Faces.SelectMany(
-                        f => f.Vertices.Select(v =>
-                            new SharpDX.Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2])));
-                //var positions = new Vector3Collection(ts.Vertices.Select(v =>
-                //        new SharpDX.Vector3((float)v.Coordinates[0], (float)v.Coordinates[1], (float)v.Coordinates[2]))),
-                var normals =
-                    ts.Faces.SelectMany(f =>
-                        f.Vertices.Select(v =>
-                            new SharpDX.Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])));
-                //var normals =
-                //    ts.Vertices.Select(v =>
-                //            new SharpDX.Vector3((float)v.Faces[0].Normal[0], (float)v.Faces[0].Normal[1], (float)v.Faces[0].Normal[2]));
-                var colors = ts.Faces.Select(f => f.Color != null
-                ? new SharpDX.Color4(f.Color.Rf, f.Color.Gf, f.Color.Bf, f.Color.Af)
-                : new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, ts.SolidColor.Af));
-                var indices = Enumerable.Range(0, ts.NumberOfFaces * 3);
-                //var indices = ts.Faces.SelectMany(f => new[] { f.A.IndexInList, f.B.IndexInList, f.C.IndexInList });
-                return new MeshGeometry3D
+                yield return new MeshGeometryModel3D
                 {
-                    Positions = new Vector3Collection(positions),
-                    TriangleIndices = new IntCollection(indices),
-                    Normals = new Vector3Collection(normals),
-                    Colors = new Color4Collection(colors)
+                    Geometry = new MeshGeometry3D
+                    {
+                        Positions = new Vector3Collection(positions),
+                        TriangleIndices = new IntCollection(indices),
+                        Normals = new Vector3Collection(normals),
+                    },
+                    Material = new PhongMaterial() { DiffuseColor = defaultColor }
                 };
             }
-        }
-        /// <summary>
-        /// Tangent Space computation for IndexedTriangle meshes
-        /// Based on:
-        /// http://www.terathon.com/code/tangent.html
-        /// </summary>
-        public static void ComputeTangents(Vector3Collection positions, Vector3Collection normals, Vector2Collection textureCoordinates, IntCollection triangleIndices,
-            out Vector3Collection tangents, out Vector3Collection bitangents)
-        {
-            var tan1 = new Vector3[positions.Count];
-            for (var t = 0; t < triangleIndices.Count; t += 3)
+            else
             {
-                var i1 = triangleIndices[t];
-                var i2 = triangleIndices[t + 1];
-                var i3 = triangleIndices[t + 2];
-                var v1 = positions[i1];
-                var v2 = positions[i2];
-                var v3 = positions[i3];
-                var w1 = textureCoordinates[i1];
-                var w2 = textureCoordinates[i2];
-                var w3 = textureCoordinates[i3];
-                var x1 = v2.X - v1.X;
-                var x2 = v3.X - v1.X;
-                var y1 = v2.Y - v1.Y;
-                var y2 = v3.Y - v1.Y;
-                var z1 = v2.Z - v1.Z;
-                var z2 = v3.Z - v1.Z;
-                var s1 = w2.X - w1.X;
-                var s2 = w3.X - w1.X;
-                var t1 = w2.Y - w1.Y;
-                var t2 = w3.Y - w1.Y;
-                var r = 1.0f / (s1 * t2 - s2 * t1);
-                var udir = new Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
-                tan1[i1] += udir;
-                tan1[i2] += udir;
-                tan1[i3] += udir;
-            }
-            tangents = new Vector3Collection(positions.Count);
-            bitangents = new Vector3Collection(positions.Count);
-            for (var i = 0; i < positions.Count; i++)
-            {
-                var n = normals[i];
-                var t = tan1[i];
-                t = (t - n * Vector3.Dot(n, t));
-                t.Normalize();
-                var b = Vector3.Cross(n, t);
-                tangents.Add(t);
-                bitangents.Add(b);
+                var vertexList = positions.ToList();  //to avoid re-enumeration
+                var normalList = normals.ToList();    //these lists are defined
+                var indicesList = indices.ToList();   // they are not needed in the above scenario
+                var colorToFaceDict = new Dictionary<SharpDX.Color4, List<int>>();
+                for (int i = 0; i < ts.NumberOfFaces; i++)
+                {
+                    var f = ts.Faces[i];
+                    var faceColor = (f.Color == null) ? defaultColor
+                        : new SharpDX.Color4(f.Color.Rf, f.Color.Gf, f.Color.Bf, f.Color.Af);
+                    if (colorToFaceDict.ContainsKey(faceColor))
+                        colorToFaceDict[faceColor].Add(i);
+                    else
+                        colorToFaceDict.Add(faceColor, new List<int> { i });
+                }
+                foreach (var entry in colorToFaceDict)
+                {
+                    var material = new PhongMaterial { DiffuseColor = entry.Key };
+                    var faceIndices = entry.Value;
+                    yield return new MeshGeometryModel3D
+                    {
+                        Geometry = new MeshGeometry3D
+                        {
+                            Positions = new Vector3Collection(faceIndices
+                        .SelectMany(f => new[] { vertexList[3 * f], vertexList[3 * f + 1], vertexList[3 * f + 2] })),
+                            TriangleIndices = new IntCollection(faceIndices
+                        .SelectMany(f => new[] { indicesList[3 * f], indicesList[3 * f + 1], indicesList[3 * f + 2] })),
+                            Normals = new Vector3Collection(faceIndices
+                        .SelectMany(f => new[] { normalList[3 * f], normalList[3 * f + 1], normalList[3 * f + 2] }))
+                        },
+                        Material = material
+                    };
+                }
             }
         }
-
     }
 }

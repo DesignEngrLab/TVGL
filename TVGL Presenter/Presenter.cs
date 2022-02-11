@@ -178,8 +178,7 @@ namespace TVGLPresenter
         }
 
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
-        {
-            
+        {            
             var window = new Window3DPlot(new MainViewModel(tessellatedSolids));
             window.ShowDialog();
         }

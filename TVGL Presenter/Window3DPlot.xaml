@@ -40,22 +40,10 @@
             <hx:ShadowMap3D />
             <hx:AmbientLight3D Color="{Binding AmbientLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection1}" Color="{Binding DirectionalLightColor}" />
-            <hx:MeshGeometryModel3D
-                x:Name="model1"
-                Material="{Binding DefaultMaterial}"
-                FillMode="{Binding FillMode}"
-                Geometry="{Binding DefaultModel}"
-                IsThrowingShadow="True" />
-            <!--<hx:MeshGeometryModel3D
-                x:Name="model1"
-                Transform="{Binding DefaultTransform}"
-                Instances="{Binding Instances}"
-                Geometry="{Binding DefaultModel}"
-                Material="{Binding DefaultMaterial}"
-                Transform="{Binding DefaultTransform}"
-                FillMode="{Binding FillMode}" ReuseVertexArrayBuffer="True"/>-->
-            <!--<hx:MeshGeometryModel3D Geometry="{Binding FloorModel}" Material="{Binding FloorMaterial}" />-->
-            <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" />
+
+            <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}"
+                FillMode="{Binding FillMode}" Mouse3DDown="group1_Mouse3DDown" />
+            <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" />
         </hx:Viewport3DX>
 
         <StackPanel Grid.Row="1">

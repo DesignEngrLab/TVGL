@@ -37,6 +37,12 @@ namespace TVGLPresenter
                 }
             };
         }
+
+        private void group1_Mouse3DDown(object sender, MouseDown3DEventArgs e)
+        {
+            ((MainViewModel)DataContext).SelectedGeometry = e.HitTestResult.Geometry;
+
+        }
     }
 
 }
