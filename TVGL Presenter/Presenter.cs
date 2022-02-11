@@ -252,7 +252,6 @@ namespace TVGL
             {
                 var vertexList = positions.ToList();  //to avoid re-enumeration
                 var normalList = normals.ToList();    //these lists are defined
-                var indicesList = indices.ToList();   // they are not needed in the above scenario
                 var colorToFaceDict = new Dictionary<SharpDX.Color4, List<int>>();
                 for (int i = 0; i < ts.NumberOfFaces; i++)
                 {
@@ -274,8 +273,7 @@ namespace TVGL
                         {
                             Positions = new Vector3Collection(faceIndices
                         .SelectMany(f => new[] { vertexList[3 * f], vertexList[3 * f + 1], vertexList[3 * f + 2] })),
-                            TriangleIndices = new IntCollection(faceIndices
-                        .SelectMany(f => new[] { indicesList[3 * f], indicesList[3 * f + 1], indicesList[3 * f + 2] })),
+                            TriangleIndices = new IntCollection(Enumerable.Range(0, 3 * faceIndices.Count)),
                             Normals = new Vector3Collection(faceIndices
                         .SelectMany(f => new[] { normalList[3 * f], normalList[3 * f + 1], normalList[3 * f + 2] }))
                         },
@@ -298,9 +296,9 @@ namespace TVGL
                 Geometry = new PointGeometry3D
                 {
                     Positions = new Vector3Collection(vs.Select(vox => new SharpDX.Vector3(vox[0] * s + xOffset,
-                    vox[1] * s + yOffset, vox[2] * s + zOffset))) 
+                    vox[1] * s + yOffset, vox[2] * s + zOffset)))
                 },
-                Size = new System.Windows.Size(10*s, 10*s),
+                Size = new System.Windows.Size(10 * s, 10 * s),
                 FixedSize = true,
                 Color = color
             };

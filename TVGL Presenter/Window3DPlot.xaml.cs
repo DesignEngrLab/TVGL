@@ -36,6 +36,10 @@ namespace TVGL
             ((Window3DPlotViewModel)DataContext).SelectedGeometry = e.HitTestResult.Geometry;
 
         }
+        private void ResetCamera_Click(object sender, RoutedEventArgs e)
+        {
+            view.ZoomExtents();
+        }
     }
 
 }

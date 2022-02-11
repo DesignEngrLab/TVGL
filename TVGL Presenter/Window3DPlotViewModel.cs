@@ -16,6 +16,7 @@ using System.Runtime.CompilerServices;
 using System;
 using TVGL;
 using TVGL.Voxelization;
+using System.Windows.Input;
 
 namespace TVGL
 {
@@ -124,6 +125,25 @@ namespace TVGL
                                        : value is OrthographicCamera ? Orthographic : null;
             }
         }
+
+        public ICommand ResetCameraCommand
+        {
+            set; get;
+        }
+
+        private bool groundPlaneVisible = true;
+        public bool GroundPlaneVisible
+        {
+            get
+            {
+                return groundPlaneVisible;
+            }
+            set
+            {
+                SetValue(ref groundPlaneVisible, value);
+            }
+        }
+
         private IEffectsManager effectsManager;
         public IEffectsManager EffectsManager
         {
@@ -308,7 +328,6 @@ namespace TVGL
             this.DirectionalLightDirection1 = new Vector3D(-0, -20, -20);
             this.DirectionalLightDirection2 = new Vector3D(-0, -1, +50);
             this.DirectionalLightDirection3 = new Vector3D(0, +1, 0);
-
         }
         public void Add(IEnumerable<GeometryModel3D> models)
         {
