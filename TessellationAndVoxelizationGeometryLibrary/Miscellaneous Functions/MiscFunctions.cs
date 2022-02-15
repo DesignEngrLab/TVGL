@@ -634,12 +634,15 @@ namespace TVGL
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
                         if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
+                        if (!unusedFaces.ContainsKey(adjacentFace.IndexInList)) continue; //Cannot assign the same face twice
                         stack.Push(adjacentFace);
                     }
                 }
+                //Check for invalid bodies. Remove from model by ignoring these.
+                if (separateSolids.Count == 1 && faces.Count < 4) continue; 
                 separateSolids.Add(faces.ToList());
             }
-            if (separateSolids.Count == 1)
+            if (separateSolids.Count == 1 && separateSolids[0].Count == ts.NumberOfFaces)
             {
                 solids.Add(ts);
                 return solids;
