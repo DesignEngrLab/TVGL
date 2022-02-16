@@ -52,6 +52,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubesCrossSectionSolid.cs" Link="TVGL\MarchingCubes\MarchingCubesCrossSectionSolid.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs" Link="TVGL\Miscellaneous Functions\MiscFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Proximity.cs" Link="TVGL\Miscellaneous Functions\Proximity.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\ComplexNumber.cs" Link="ComplexNumber.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\EqualityExtensions.cs" Link="TVGL\Numerics\EqualityExtensions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Extensions.cs" Link="TVGL\Numerics\Extensions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Matrix3x3.cs" Link="TVGL\Numerics\Matrix3x3.cs" />
@@ -65,6 +66,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs" Link="TVGL\Numerics\Vector2.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs" Link="TVGL\Numerics\Vector3.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\IntrinsicAttribute.cs" Link="TVGL\Numerics\IntrinsicAttribute.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4.cs" Link="Vector4.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />
