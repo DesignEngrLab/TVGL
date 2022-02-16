@@ -30,7 +30,7 @@ namespace TVGLUnitTestsAndBenchmarking
             //TS_Testing_Functions.TestClassify();
             //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
-#if PRESENT
+//#if PRESENT
 
             TVGL.Message.Verbosity = VerbosityLevels.Everything;
             // 1. bubble up from the bin directories to find the TestFiles directory
@@ -42,13 +42,18 @@ namespace TVGLUnitTestsAndBenchmarking
             foreach (var fileName in dir.GetFiles("*"))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids);
+                stopwatch.Stop();
+                Console.WriteLine(stopwatch.Elapsed.ToString());
+
                 Presenter.ShowAndHang(solids);
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
                 //Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");
             }
-#endif
+//#endif
         }
 
     }
