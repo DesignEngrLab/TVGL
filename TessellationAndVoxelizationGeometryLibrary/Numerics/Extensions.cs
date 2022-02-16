@@ -209,7 +209,7 @@ namespace TVGL.Numerics
         #endregion
 
         #region Vector3
-
+        
         /// <summary>
         /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
         /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
@@ -282,10 +282,10 @@ namespace TVGL.Numerics
         /// <summary>
         /// Transforms a vector by the given matrix.
         /// </summary>
-        /// <param name="position">The source vector.</param>
+        /// <param name="normal">The position vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
-        public static Vector3 Multiply(this Vector3 position, Matrix3x3 matrix)
+        public static Vector3 Transform(this Vector3 position, Matrix4x4 matrix)
         { return Vector3.Multiply(position, matrix); }
 
         /// <summary>
@@ -294,7 +294,7 @@ namespace TVGL.Numerics
         /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
-        public static Vector3 Multiply(this Vector3 position, Matrix4x4 matrix)
+        public static Vector3 Multiply(this Vector3 position, Matrix3x3 matrix)
         { return Vector3.Multiply(position, matrix); }
 
         /// <summary>
@@ -337,7 +337,7 @@ namespace TVGL.Numerics
         { return Vector3.Subtract(left, right); }
 
         /// <summary>
-        /// Multiplies two vectors together. It produces the components of a dot product 
+        /// Multiplies two vectors together.
         /// </summary>
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
@@ -411,43 +411,6 @@ namespace TVGL.Numerics
                    vector1.Y * vector2.Y +
                    vector1.Z * vector2.Z;
         }
-        #endregion
-
-        #region Vector4
-
-        /// <summary>Returns a vector whose elements are the absolute values of each of the specified vector's elements.</summary>
-        /// <param name="value">A vector.</param>
-        /// <returns>The absolute value vector.</returns>
-        public static Vector4 Abs(this Vector4 vector1)
-        {
-            return Vector4.Abs(vector1);
-        }
-
-        /// <summary>
-        /// Computes the cross product of two vectors. Note that this is really
-        /// the 3D cross product, but the W term that scales each vector is simply
-        /// the product of the two weights. This makes correct geometric sense in 3D
-        /// space.
-        /// </summary>
-        /// <param name="vector1">The first vector.</param>
-        /// <param name="vector2">The second vector.</param>
-        /// <returns>The cross product.</returns>
-        public static Vector4 Cross(this Vector4 vector1, Vector4 vector2)
-        {
-            return Vector4.Cross(vector1, vector2);
-        }
-
-
-
-        /// <summary>
-        /// Transforms a vector by the given matrix.
-        /// </summary>
-        /// <param name="position">The source vector.</param>
-        /// <param name="matrix">The transformation matrix.</param>
-        /// <returns>The transformed vector.</returns>
-        public static Vector4 Multiply(this Vector4 position, Matrix4x4 matrix)
-        { return Vector4.Multiply(position, matrix); }
-
         #endregion
 
         #region Matrix3x3, Matrix4x4, Quaternion, and Plane

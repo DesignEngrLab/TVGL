@@ -104,19 +104,29 @@ namespace TVGL
                 //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
                 //above
                 var edge = edgeList[i].Item1;
-                var ownedFace = edgeList[i].Item2;
                 var otherFace = edgeList[i].Item3;
                 edge.IndexInList = i;
                 SetAndGetEdgeChecksum(edge);
-                // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
-                // face has no area (collapsed to a line).
-                if (otherFace.Normal.IsNull()) otherFace.AdoptNeighborsNormal(ownedFace);
-                if (ownedFace.Normal.IsNull()) ownedFace.AdoptNeighborsNormal(otherFace);
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;
             }
             AddFaces(newFaces);
+
+            // The neighbor's normal (in the next 2 lines) if the original face has no area (collapsed to a line).
+            // This happens with T-Edges. We want to give the face the normal of the two smaller edges' other faces,
+            // to preserve a sharp line. Also, if multiple T-Edges are adjacent, recursion may be necessary. 
+            var success = false;
+            var j = 0;
+            while (!success && j < 10)
+            {
+                j++;
+                success = true;
+                foreach (var face in Faces)
+                    if (face.Normal.IsNull())
+                        if (!face.AdoptNeighborsNormal())
+                            success = false;
+            }       
             RemoveVertices(removedVertices);
         }
 

@@ -6,7 +6,6 @@ using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TVGL.Numerics;
 
@@ -920,7 +919,7 @@ namespace TVGL.TwoDimensional
             return simplePath;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        
         private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
         {
             var dX = p1X - p2X;
@@ -928,7 +927,7 @@ namespace TVGL.TwoDimensional
             return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        
         private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y,
             double tolerance = Constants.LineSlopeTolerance)
         {
