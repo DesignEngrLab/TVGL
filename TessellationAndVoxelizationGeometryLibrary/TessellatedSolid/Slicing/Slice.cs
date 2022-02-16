@@ -773,44 +773,6 @@ namespace TVGL.Boolean_Operations
 
         #region Get Cross Sections
         /// <summary>
-        /// Gets the cross section.
-        /// </summary>
-        /// <param name="tessellatedSolid">The tessellated solid.</param>
-        /// <param name="plane">The plane.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, out Dictionary<Vector2, Edge> v2EDictionary)
-        {
-            var direction = plane.Normal;
-            var closestCartesianDirection = direction.SnapDirectionToCartesian(out var withinTolerance, tessellatedSolid.SameTolerance);
-            if (withinTolerance)
-                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary);
-
-            var distances = tessellatedSolid.Vertices.Select(v => v.Dot(direction)).ToList();
-            var positiveShift = 0.0;
-            var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(plane.DistanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
-            var planeDistance = plane.DistanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
-
-            var transform = direction.TransformToXYPlane(out _);
-            tessellatedSolid.MakeEdgesIfNonExistent();
-            var e2VDict = new Dictionary<Edge, Vector2>();
-            v2EDictionary = new Dictionary<Vector2, Edge>();
-            foreach (var edge in tessellatedSolid.Edges)
-            {
-                var fromDistance = distances[edge.From.IndexInList];
-                var toDistance = distances[edge.To.IndexInList];
-                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
-                {
-                    var ip = MiscFunctions.PointOnPlaneFromIntersectingLine(plane, edge.From.Coordinates, edge.To.Coordinates, out _)
-                        .ConvertTo2DCoordinates(transform);
-                    e2VDict.Add(edge, ip);
-                    v2EDictionary.Add(ip, edge);
-                }
-            }
-            return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin);
-        }
-
-        /// <summary>
         /// Gets the uniformly spaced slices.
         /// </summary>
         /// <param name="ts">The ts.</param>
@@ -928,8 +890,8 @@ namespace TVGL.Boolean_Operations
         {
             var polygon = new Polygon(path);
             polygons.Add(polygon);
-                for (int i = 0; i < polygon.Vertices.Count; i++)
-                    e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
+            for (int i = 0; i < polygon.Vertices.Count; i++)
+                e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
         }
 
 
@@ -1004,44 +966,6 @@ namespace TVGL.Boolean_Operations
                 }
             }
             return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary);
-        }
-
-        /// <summary>
-        /// Gets the cross section.
-        /// </summary>
-        /// <param name="tessellatedSolid">The tessellated solid.</param>
-        /// <param name="plane">The plane.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction, double distanceToOrigin, out Dictionary<Vector2, Edge> v2EDictionary)
-        {
-            var intDir = Math.Abs((int)direction) - 1;
-            var signDir = Math.Sign((int)direction);
-            var distances = tessellatedSolid.Vertices.Select(v => signDir * v.Coordinates[intDir]).ToList();
-            var positiveShift = 0.0;
-            var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(distanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
-            var planeDistance = distanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
-
-            var transform = direction.TransformToXYPlane(out _);
-            tessellatedSolid.MakeEdgesIfNonExistent();
-            var e2VDict = new Dictionary<Edge, Vector2>();
-            v2EDictionary = new Dictionary<Vector2, Edge>();
-            foreach (var edge in tessellatedSolid.Edges)
-            {
-                var fromDistance = distances[edge.From.IndexInList];
-                var toDistance = distances[edge.To.IndexInList];
-                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
-                {
-                    var ip = (intDir == 0)
-                        ? MiscFunctions.PointOnXPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates) :
-                        (intDir == 1)
-                        ? MiscFunctions.PointOnYPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates) :
-                        MiscFunctions.PointOnZPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
-                    e2VDict.Add(edge, ip);
-                    v2EDictionary.Add(ip, edge);
-                }
-            }
-            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin);
         }
 
         /// <summary>
