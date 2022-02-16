@@ -59,14 +59,23 @@ namespace TVGL.TwoDimensional
                 Math.Max(XMax, other.XMax), Math.Max(YMax, other.YMax));
         }
 
+
         /// <summary>
-        /// Returns the area of the rectangle (always positive).
+        /// Gets the width of the rectangle (always positive).
         /// </summary>
-        /// <returns>System.Double.</returns>
-        public double Area()
-        {
-            return (XMax - XMin) * (YMax - YMin);
-        }
+        /// <value>The width.</value>
+        public double Width => XMax - XMin;
+
+        /// <summary>
+        /// Gets the height of the rectangle (always positive).
+        /// </summary>
+        /// <value>The height.</value>
+        public double Height => YMax - YMin;
+        /// <summary>
+        /// Gets the  area of the rectangle (always positive).
+        /// </summary>
+        /// <value>The area.</value>
+        public double Area => Width * Height;
 
         /// <summary>
         /// Returns the four corners of the rectangle starting from the lower left (Xmin, YMin)
@@ -81,6 +90,18 @@ namespace TVGL.TwoDimensional
                 new Vector2(XMax, YMax),
                 new Vector2(XMin, YMax)
             };
+        }
+
+        /// <summary>
+        /// Makes a new rectange that is offset from the current one. The
+        /// value can be positive or negative. Positive offsets outward and
+        /// negative offsets inward.
+        /// </summary>
+        /// <param name="offset">The offset.</param>
+        /// <returns>AxisAlignedRectangle.</returns>
+        public AxisAlignedRectangle Offset(double offset)
+        {
+            return new AxisAlignedRectangle(XMin - offset, YMin - offset, XMax + offset, YMax + offset);
         }
     }
 }

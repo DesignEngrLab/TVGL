@@ -30,6 +30,8 @@
 
 
   <ItemGroup>
+    <Compile Remove="Polygon Operations\PolygonOperationsBlueRaja.Simplify.cs" />
+    <Compile Remove="Polygon Operations\PolygonOperationsNet6.Simplify.cs" />
     <Compile Remove="TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
   </ItemGroup>
 
