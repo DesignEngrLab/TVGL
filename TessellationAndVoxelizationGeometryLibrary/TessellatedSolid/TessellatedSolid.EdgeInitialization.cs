@@ -71,17 +71,28 @@ namespace TVGL
             // #3 the remainingEdges may be close enough that they should have been matched together
             // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
             // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges,
-                Math.Pow(expansionFactor, numberOfAttemptsDefault) * this.SameTolerance, out var remainingEdges,
-                out var removedVertices));
-            //often the singleSided Edges make loops that we can triangulate. If they are not in loops
-            // then we spit back the remainingEdges.
-            var hubVertices = FindHubVertices(remainingEdges);
-            var loops = OrganizeIntoLoops(remainingEdges, hubVertices, out var borderEdges);
-            // well, even if they were in loops - sometimes we can't triangulate - yet moreRemainingEdges
-            edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out var newFaces, out var moreRemainingEdges));
-            borderEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
-
+            List<Edge> borderEdges;
+            List<PolygonalFace> newFaces;
+            List<Vertex> removedVertices;
+            if (singleSidedEdges.Any())
+            {
+                edgeList.AddRange(MatchUpRemainingSingleSidedEdge(singleSidedEdges,
+                    Math.Pow(expansionFactor, numberOfAttemptsDefault) * this.SameTolerance, out var remainingEdges,
+                    out removedVertices));
+                //often the singleSided Edges make loops that we can triangulate. If they are not in loops
+                // then we spit back the remainingEdges.
+                var hubVertices = FindHubVertices(remainingEdges);
+                var loops = OrganizeIntoLoops(remainingEdges, hubVertices, out borderEdges);
+                // well, even if they were in loops - sometimes we can't triangulate - yet moreRemainingEdges
+                edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out newFaces, out var moreRemainingEdges));
+                borderEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
+            }
+            else
+            {
+                borderEdges = new List<Edge>();
+                newFaces = new List<PolygonalFace>();
+                removedVertices = new List<Vertex>();
+            }
             // well, the edgelist is definitely going to work out so, we are going to need to make
             // sure that they are known to their vertices for the next few steps - so here we take
             // a moment to stitch these to the vertices
@@ -104,19 +115,29 @@ namespace TVGL
                 //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
                 //above
                 var edge = edgeList[i].Item1;
-                var ownedFace = edgeList[i].Item2;
                 var otherFace = edgeList[i].Item3;
                 edge.IndexInList = i;
                 SetAndGetEdgeChecksum(edge);
-                // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
-                // face has no area (collapsed to a line).
-                if (otherFace.Normal.IsNull()) otherFace.AdoptNeighborsNormal(ownedFace);
-                if (ownedFace.Normal.IsNull()) ownedFace.AdoptNeighborsNormal(otherFace);
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
                 Edges[i] = edge;
             }
             AddFaces(newFaces);
+
+            // The neighbor's normal (in the next 2 lines) if the original face has no area (collapsed to a line).
+            // This happens with T-Edges. We want to give the face the normal of the two smaller edges' other faces,
+            // to preserve a sharp line. Also, if multiple T-Edges are adjacent, recursion may be necessary. 
+            var success = false;
+            var j = 0;
+            while (!success && j < 10)
+            {
+                j++;
+                success = true;
+                foreach (var face in Faces)
+                    if (face.Normal.IsNull())
+                        if (!face.AdoptNeighborsNormal())
+                            success = false;
+            }
             RemoveVertices(removedVertices);
         }
 

@@ -209,7 +209,7 @@ namespace TVGL.Numerics
         #endregion
 
         #region Vector3
-
+        
         /// <summary>
         /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
         /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
@@ -444,7 +444,7 @@ namespace TVGL.Numerics
         /// <param name="value1">The first point.</param>
         /// <param name="value2">The second point.</param>
         /// <returns>The distance.</returns>
-        public static Vector4 Distance(this Vector4 vector1, Vector4 vector2)
+        public static double Distance(this Vector4 vector1, Vector4 vector2)
         {
             return Vector4.Distance(vector1,vector2);
         }
@@ -465,7 +465,7 @@ namespace TVGL.Numerics
         /// </summary>
         /// <param name="value">The vector to normalize.</param>
         /// <returns>The normalized vector.</returns>
-        public static Vector3 Normalize(this Vector4 value)
+        public static Vector4 Normalize(this Vector4 value)
         { return Vector4.Normalize(value); }
 
 

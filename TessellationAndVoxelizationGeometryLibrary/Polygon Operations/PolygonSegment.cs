@@ -84,7 +84,7 @@ namespace TVGL.TwoDimensional
         private double _xIntercept = double.NaN;
 
         /// <summary>
-        /// Gets the vertical slope.
+        /// Gets the vertical slope (delta-Y / delta-X). A vertical line would have infinite slope.
         /// </summary>
         /// <value>The vertical slope.</value>
         public double VerticalSlope
@@ -100,7 +100,7 @@ namespace TVGL.TwoDimensional
         private double _verticalSlope = double.NaN;
 
         /// <summary>
-        /// Gets the horizontal slope.
+        /// Gets the horizontal slope (delta X/delta Y). A horizontal line would have infinite slope.
         /// </summary>
         /// <value>The horizontal slope.</value>
         public double HorizontalSlope

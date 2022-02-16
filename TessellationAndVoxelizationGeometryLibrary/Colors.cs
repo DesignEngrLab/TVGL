@@ -1088,12 +1088,21 @@ namespace TVGL
 
         #region new known colors
 
+        public static IEnumerable<string> GetRandomColorNames()
+        {
+            var random = new Random();
+            var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
+                .Select(dict => dict.Keys.OrderBy(dummy2 => random.NextDouble()).ToList()).ToList();
+            var innerIndex = 0;
+            for (int i = 0; i < families.Count; i++)
+            {
+                yield return families[i][innerIndex % families[i].Count];
+                if (i == families.Count - 1) i = 0; //this will make it cycle forever
+            }
+        }
         public static IEnumerable<Color> GetRandomColors()
         {
-            //var random = new Random();
-            // Given repeated plotting - it's nice to see a pattern to the colors, so the seed
-            // for this is fixed. Is there ever a reason it should be truly random?
-            var random = new Random(0);
+            var random = new Random();
             var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
                 .Select(dict => dict.Values.OrderBy(dummy2 => random.NextDouble()).ToList()).ToList();
             var innerIndex = 0;
@@ -1102,6 +1111,13 @@ namespace TVGL
                 yield return families[i][innerIndex % families[i].Count];
                 if (i == families.Count - 1) i = 0; //this will make it cycle forever
             }
+        }
+        public static Color GetColorFromName(string name)
+        {
+            foreach (var dict in ColorDictionary.Values)
+                if (dict.ContainsKey(name))
+                    return dict[name];
+            return null;
         }
 
         /// <summary>

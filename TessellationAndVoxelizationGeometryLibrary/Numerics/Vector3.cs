@@ -1,7 +1,6 @@
-// TVGL Version building on System.Numerics at https://github.com/dotnet/runtime/tree/main/src/libraries/System.Private.CoreLib/src/System/Numerics
-// That version is licensed to the .NET Foundation under the MIT license.
-// See their LICENSE file for more information: https://github.com/dotnet/runtime/blob/main/LICENSE.TXT
-// TVGL Version changes to double precision and adds a few functions.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Globalization;
@@ -15,7 +14,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.
     /// </summary>
-    public readonly struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex3D, IVertex
+    public readonly partial struct Vector3 : IEquatable<Vector3>, IFormattable, IVertex3D, IVertex
     {
 
         /// <summary>
@@ -66,13 +65,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             Y = d[1];
             Z = d[2];
         }
-        public Vector3(Vector4 vector4) : this()
-        {
-            var multiplier = 1 / vector4.W;
-            X = vector4.X * multiplier;
-            Y = vector4.Y * multiplier;
-            Z = vector4.Z * multiplier;
-        }
+        //public Vector3(Vector4 vector4) : this()
+        //{
+        //    var multiplier = 1 / vector4.W;
+        //    X = vector4.X * multiplier;
+        //    Y = vector4.Y * multiplier;
+        //    Z = vector4.Z * multiplier;
+        //}
         #endregion Constructors
 
         #region Public Instance Methods
@@ -163,6 +162,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first source vector.</param>
         /// <param name="value2">The second source vector.</param>
         /// <returns>The maximized vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Max(Vector3 value1, Vector3 value2)
         {
@@ -177,6 +177,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The absolute value vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Abs(Vector3 value)
         {
@@ -188,6 +189,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The square root vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 SquareRoot(Vector3 value)
         {
@@ -202,6 +204,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator +(Vector3 left, Vector3 right)
         {
@@ -214,6 +217,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator -(Vector3 left, Vector3 right)
         {
@@ -227,6 +231,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The product vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(Vector3 left, Vector3 right)
         {
@@ -239,6 +244,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The source vector.</param>
         /// <param name="right">The scalar value.</param>
         /// <returns>The scaled vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(Vector3 left, double right)
         {
@@ -251,6 +257,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The scalar value.</param>
         /// <param name="right">The source vector.</param>
         /// <returns>The scaled vector.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(double left, Vector3 right)
         {
@@ -263,6 +270,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The vector resulting from the division.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator /(Vector3 left, Vector3 right)
         {
@@ -298,6 +306,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are equal; False otherwise.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector3 left, Vector3 right)
         {
@@ -312,6 +321,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are not equal; False if they are equal.</returns>
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector3 left, Vector3 right)
         {
@@ -326,18 +336,21 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (0,0,0).
         /// </summary>
+        
         public static Vector3 Zero =>
         default;
 
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
+        
         public static Vector3 One =>
         new Vector3(1.0, 1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
+        
         public static Vector3 Null =>
         new Vector3(double.NaN, double.NaN, double.NaN);
 
@@ -488,7 +501,7 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         /// <returns>The string representation.</returns>
         public override string ToString()
         {
-            return ToString("G", CultureInfo.CurrentCulture);
+            return ToString("F3", CultureInfo.CurrentCulture);
         }
 
         /// <summary>
@@ -674,90 +687,13 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
              oppositeAmount * value1.Z + value2.Z * amount);
         }
 
-        #region Obvious matrix-vector multiplications
         /// <summary>
-        /// Pre-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single row, so the result is also a single-row vector. Each cell 
-        /// is a dot-product between the vector and the column of the matrix.
-        /// This is the same as transforming by the matrix.
+        /// Transforms a vector by the given matrix.
         /// </summary>
-        /// <param name="position">The vector.</param>
-        /// <param name="matrix">The matrix.</param>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(Vector3 rowVector, Matrix3x3 matrix)
-        {
-            return Multiply(rowVector, matrix);
-        }
-        /// <summary>
-        /// Pre-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single row, so the result is also a single-row vector. Each cell 
-        /// is a dot-product between the vector and the column of the matrix.
-        /// This is the same as transforming by the matrix.
-        /// </summary>
-        /// <param name="rowVector">The vector.</param>
-        /// <param name="matrix">The matrix.</param>
-        /// <returns>The transformed vector.</returns>
-        public static Vector3 Multiply(Vector3 rowVector, Matrix3x3 matrix)
-        {
-            return new Vector3(
-                rowVector.X * matrix.M11 + rowVector.Y * matrix.M21 + rowVector.Z * matrix.M31,
-                rowVector.X * matrix.M12 + rowVector.Y * matrix.M22 + rowVector.Z * matrix.M32,
-                rowVector.X * matrix.M13 + rowVector.Y * matrix.M23 + rowVector.Z * matrix.M33);
-        }
-        /// <summary>
-        /// Post-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single column, so the result is also a single-column vector. Each cell 
-        /// is a dot-product between the vector and the row of the matrix.
-        /// </summary>
-        /// <param name="matrix">The Matrix value.</param>
-        /// <param name="colVector">The vector.</param>
-        /// <returns>The scaled vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(Matrix3x3 matrix, Vector3 colVector)
-        {
-            return Multiply(matrix, colVector);
-        }
-        /// <summary>
-        /// Post-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single column, so the result is also a single-column vector. Each cell 
-        /// is a dot-product between the vector and the row of the matrix.
-        /// </summary>
-        /// <param name="value1">The first source matrix.</param>
-        /// <param name="value2">The second source matrix.</param>
-        /// <returns>The product matrix.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Multiply(Matrix3x3 matrix, Vector3 colVector)
-        {
-            return new Vector3(
-                colVector.X * matrix.M11 + colVector.Y * matrix.M12 + colVector.Z * matrix.M13,
-                colVector.X * matrix.M21 + colVector.Y * matrix.M22 + colVector.Z * matrix.M23,
-                colVector.X * matrix.M31 + colVector.Y * matrix.M32 + colVector.Z * matrix.M33);
-        }
-
-        /// <summary>
-        /// Pre-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single row, so the result is also a single-row vector. Each cell 
-        /// is a dot-product between the vector and the column of the matrix.
-        /// This is the same as transforming by the matrix.
-        /// </summary>
-        /// <param name="position">The vector.</param>
-        /// <param name="matrix">The matrix.</param>
-        /// <returns>The transformed vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(Vector3 rowVector, Matrix4x4 matrix)
-        {
-            return Multiply(rowVector, matrix);
-        }
-        /// <summary>
-        /// Pre-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single row, so the result is also a single-row vector. Each cell 
-        /// is a dot-product between the vector and the column of the matrix.
-        /// This is the same as transforming by the matrix.
-        /// </summary>
-        /// <param name="position">The vector.</param>
-        /// <param name="matrix">The matrix.</param>
-        /// <returns>The transformed vector.</returns>
         public static Vector3 Multiply(Vector3 position, Matrix4x4 matrix)
         {
             if (matrix.IsProjectiveTransform)
@@ -772,40 +708,22 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 position.X * matrix.M11 + position.Y * matrix.M21 + position.Z * matrix.M31 + matrix.M41,
                 position.X * matrix.M12 + position.Y * matrix.M22 + position.Z * matrix.M32 + matrix.M42,
                 position.X * matrix.M13 + position.Y * matrix.M23 + position.Z * matrix.M33 + matrix.M43);
-
         }
-        /// <summary>
-        /// Post-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single column, so the result is also a single-column vector. Each cell 
-        /// is a dot-product between the vector and the row of the matrix.
-        /// </summary>
-        /// <param name="matrix">The Matrix value.</param>
-        /// <param name="colVector">The vector.</param>
-        /// <returns>The scaled vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(Matrix4x4 matrix, Vector3 colVector)
-        {
-            return Multiply(matrix, colVector);
-        }
-        /// <summary>
-        /// Post-multiplies the vector to the matrix. Here, the vector is treated
-        /// as a single column, so the result is also a single-column vector. Each cell 
-        /// is a dot-product between the vector and the row of the matrix.
-        /// </summary>
-        /// <param name="value1">The first source matrix.</param>
-        /// <param name="value2">The second source matrix.</param>
-        /// <returns>The product matrix.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Multiply(Matrix4x4 matrix, Vector3 colVector)
-        {
-            var w = 1 / (colVector.X * matrix.M41 + colVector.Y * matrix.M42 + colVector.Z * matrix.M43 + matrix.M44);
 
+        /// <summary>
+        /// Transforms a vector by the given matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Multiply(Vector3 position, Matrix3x3 matrix)
+        {
             return new Vector3(
-              w * (colVector.X * matrix.M11 + colVector.Y * matrix.M12 + colVector.Z * matrix.M13 + matrix.M14),
-              w * (colVector.X * matrix.M21 + colVector.Y * matrix.M22 + colVector.Z * matrix.M23 + matrix.M24),
-              w * (colVector.X * matrix.M31 + colVector.Y * matrix.M32 + colVector.Z * matrix.M33 + matrix.M34));
+                position.X * matrix.M11 + position.Y * matrix.M21 + position.Z * matrix.M31,
+                position.X * matrix.M12 + position.Y * matrix.M22 + position.Z * matrix.M32,
+                position.X * matrix.M13 + position.Y * matrix.M23 + position.Z * matrix.M33);
         }
-        #endregion
 
         /// <summary>
         /// Transforms a vector by the given matrix without the translation component.
@@ -822,20 +740,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
                 normal.X * matrix.M11 + normal.Y * matrix.M21 + normal.Z * matrix.M31,
                 normal.X * matrix.M12 + normal.Y * matrix.M22 + normal.Z * matrix.M32,
                 normal.X * matrix.M13 + normal.Y * matrix.M23 + normal.Z * matrix.M33);
-        }
-
-        /// <summary>Transforms a vector by a specified 4x4 matrix.</summary>
-        /// <param name="position">The vector to transform.</param>
-        /// <param name="matrix">The transformation matrix.</param>
-        /// <returns>The transformed vector.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Transform(Vector3 position, Matrix4x4 matrix)
-        {
-            return new Vector3(
-                (position.X * matrix.M11) + (position.Y * matrix.M21) + (position.Z * matrix.M31) + matrix.M41,
-                (position.X * matrix.M12) + (position.Y * matrix.M22) + (position.Z * matrix.M32) + matrix.M42,
-                (position.X * matrix.M13) + (position.Y * matrix.M23) + (position.Z * matrix.M33) + matrix.M43
-            );
         }
 
         /// <summary>
@@ -966,27 +870,6 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
         public static Vector3 Negate(Vector3 value)
         {
             return -value;
-        }
-        #endregion
-
-
-        #region Solve Ax=b
-        /// <summary>
-        /// Solves for the value x in Ax=b. This is also represented as the
-        /// backslash operation
-        /// </summary>
-        /// <param name="matrix">The matrix.</param>
-        /// <param name="b">The b.</param>
-        /// <returns>Vector3.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Solve(Matrix3x3 matrix, Vector3 b)
-        {
-            // This is simple, but it is not likely quicker to be
-            // more sophisticated for such a small problem (like
-            // using LU Decomposition).
-            if (!Matrix3x3.Invert(matrix, out var invert))
-                return Vector3.Null;
-            return invert * b;
         }
         #endregion
     }

@@ -27,7 +27,7 @@ namespace TVGL.TwoDimensional
         {
             get
             {
-                if (_path == null)
+                if (_path == null || _path.Count < _vertices.Count)
                 {
                     lock (_vertices)
                     {
@@ -111,12 +111,9 @@ namespace TVGL.TwoDimensional
 
         public void MakePolygonEdgesIfNonExistent()
         {
-            lock (_vertices)
-            {
-                if (_edges != null && _edges.Length == Vertices.Count) return;
-                foreach (var poly in AllPolygons)
-                    poly.MakeThisPolygonsEdges();
-            }
+            if (_edges != null && _edges.Length == Vertices.Count) return;
+            foreach (var poly in AllPolygons)
+                poly.MakeThisPolygonsEdges();
         }
 
         private void MakeThisPolygonsEdges()
@@ -467,10 +464,9 @@ namespace TVGL.TwoDimensional
         /// <param name="index">The index.</param>
 
 
-        public Polygon(IEnumerable<Vector2> coordinates, int index = -1)
+        public Polygon(IEnumerable<Vector2> coordinates, int index = -1, bool RemovePointsLessThanTolerance = true)
         {
             Index = index;
-            Vector2 prevCoordinate = Vector2.Null;
             _path = new List<Vector2>();
             foreach (var p in coordinates)
             {
@@ -478,13 +474,12 @@ namespace TVGL.TwoDimensional
                 if (p.X < minX) minX = p.X;
                 if (p.Y > maxY) maxY = p.Y;
                 if (p.Y < minY) minY = p.Y;
-                prevCoordinate = p;
                 _path.Add(p);
             }
-            MakeVerticesFromPath();
+            MakeVerticesFromPath(RemovePointsLessThanTolerance);
         }
 
-        private void MakeVerticesFromPath()
+        private void MakeVerticesFromPath(bool RemovePointsLessThanTolerance = true)
         {
             var tolerance = (MaxX - MinX + MaxY - MinY) * Constants.PolygonSameTolerance / 2;
             NumSigDigits = 0;
@@ -501,7 +496,7 @@ namespace TVGL.TwoDimensional
             {
                 var x = Math.Round(_path[i].X, NumSigDigits);
                 var y = Math.Round(_path[i].Y, NumSigDigits);
-                if (x != prevX || y != prevY)
+                if (!RemovePointsLessThanTolerance || x != prevX || y != prevY)
                 {
                     var coord = new Vector2(x, y);
                     _path[i] = coord;
@@ -509,9 +504,7 @@ namespace TVGL.TwoDimensional
                     prevX = x;
                     prevY = y;
                 }
-                else
-
-                    _path.RemoveAt(i);
+                else _path.RemoveAt(i);
             }
             _vertices.Reverse();
         }
@@ -703,7 +696,7 @@ namespace TVGL.TwoDimensional
             JArray jArray = (JArray)serializationData["Coordinates"];
             _path = PolygonOperations.ConvertToVector2s(jArray.ToObject<IEnumerable<double>>()).ToList();
             SetBounds();
-            MakeVerticesFromPath();
+            MakeVerticesFromPath(false);
         }
     }
 

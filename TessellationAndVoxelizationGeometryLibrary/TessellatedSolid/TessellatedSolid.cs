@@ -398,7 +398,6 @@ namespace TVGL
                             if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
                         }
                     }
-
                 }
             }
         }
@@ -416,7 +415,7 @@ namespace TVGL
             this.CheckModelIntegrity();
 
             //If the volume is zero, creating the convex hull may cause a null exception
-            if (this.Volume.IsNegligible()) return;     
+            if (this.Volume.IsNegligible()) return;
 
             //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
             ConvexHull = new TVGLConvexHull(this);
@@ -430,7 +429,6 @@ namespace TVGL
                     if (e != null) e.PartOfConvexHull = true;
             }
         }
-
 
         #endregion
 
@@ -1038,7 +1036,7 @@ namespace TVGL
             var zMax = double.NegativeInfinity;
             foreach (var v in Vertices)
             {
-                v.Coordinates = v.Coordinates.Multiply(transformMatrix);
+                v.Coordinates = v.Coordinates.Transform(transformMatrix);
                 if (xMin > v.Coordinates.X) xMin = v.Coordinates.X;
                 if (yMin > v.Coordinates.Y) yMin = v.Coordinates.Y;
                 if (zMin > v.Coordinates.Z) zMin = v.Coordinates.Z;
@@ -1048,18 +1046,17 @@ namespace TVGL
             }
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
 
-
             //Update the faces
             foreach (var face in Faces)
             {
-                face.Update();
+                face.Update();// Transform(transformMatrix);
             }
             //Update the edges
             foreach (var edge in Edges)
             {
                 edge.Update(true);
             }
-            _center = _center.Multiply(transformMatrix);
+            _center = _center.Transform(transformMatrix);
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             var rotMatrix = new Matrix3x3(transformMatrix.M11, transformMatrix.M12, transformMatrix.M13,
                     transformMatrix.M21, transformMatrix.M22, transformMatrix.M23,
@@ -1068,6 +1065,7 @@ namespace TVGL
             if (Primitives != null)
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
+            this.SetNegligibleAreaFaceNormals(true);
         }
         /// <summary>
         /// Gets a new solid by transforming its vertices.

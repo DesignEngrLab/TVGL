@@ -601,11 +601,26 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="Exception"></exception>
-        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts)
+        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
         {
             var solids = new List<TessellatedSolid>();
-            var seperateSolids = new List<List<PolygonalFace>>();
+            var separateSolids = new List<List<PolygonalFace>>();
             var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
+            // first the easy part - simply separate out known groups that have already been determined to be bodies
+            if (faceGroupsThatAreBodies != null)
+            {
+                foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
+                {
+                    var faceList = new List<PolygonalFace>();
+                    foreach (var index in bodyGroupIndices)
+                    {
+                        faceList.Add(ts.Faces[index]);
+                        unusedFaces.Remove(index);
+                    }
+                    separateSolids.Add(faceList);
+                }
+            }
+            // now, the hard part - need to progressively find subsets of faces.
             while (unusedFaces.Any())
             {
                 var faces = new HashSet<PolygonalFace>();
@@ -619,17 +634,20 @@ namespace TVGL
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
                         if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
+                        if (!unusedFaces.ContainsKey(adjacentFace.IndexInList)) continue; //Cannot assign the same face twice
                         stack.Push(adjacentFace);
                     }
                 }
-                seperateSolids.Add(faces.ToList());
+                //Check for invalid bodies. Remove from model by ignoring these.
+                if (separateSolids.Count == 1 && faces.Count < 4) continue; 
+                separateSolids.Add(faces.ToList());
             }
-            if (seperateSolids.Count == 1)
+            if (separateSolids.Count == 1 && separateSolids[0].Count == ts.NumberOfFaces)
             {
                 solids.Add(ts);
                 return solids;
             }
-            foreach (var seperateSolid in seperateSolids)
+            foreach (var seperateSolid in separateSolids)
             {
                 //Copy the non-smooth edges over to the seperate solid
                 HashSet<(Vector3, Vector3)> nonSmoothEdgesForSolid = null;
@@ -638,11 +656,11 @@ namespace TVGL
                     //Get all the edges in order, avoiding duplicates by using a hashset.
                     var edges = new HashSet<Edge>();
                     foreach (var face in seperateSolid)
-                        foreach (var edge in face.Edges) 
+                        foreach (var edge in face.Edges)
                             edges.Add(edge);
-    
+
                     nonSmoothEdgesForSolid = new HashSet<(Vector3, Vector3)>();
-                    foreach(var edge in edges)
+                    foreach (var edge in edges)
                     {
                         if (ts.NonsmoothEdges.Contains(edge))
                             nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates));
@@ -664,7 +682,7 @@ namespace TVGL
 
                 solids.Add(newSolid);
             }
-           
+
             return solids;
         }
 
@@ -999,11 +1017,18 @@ namespace TVGL
             return zDot > 0 ? CartesianDirections.ZPositive : CartesianDirections.ZNegative;
         }
 
-        public static Vector3 GetPerpendicularDirection(this Vector3 direction)
+        /// <summary>
+        /// Gets the perpendicular direction.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="additionalRotation">An additional counterclockwise rotation (in radians) about the direction.</param>
+        /// <returns>TVGL.Numerics.Vector3.</returns>
+        public static Vector3 GetPerpendicularDirection(this Vector3 direction, double additionalRotation = 0)
         {
+            Vector3 dir;
             //If the vector is only in the y-direction, then return the x direction
             if (direction.X.IsNegligible() && direction.Z.IsNegligible())
-                return Vector3.UnitX;
+                dir = Vector3.UnitX;
             // otherwise we will return something in the x-z plane, which is created by
             // taking the cross product of the Y-direction with this vector.
             // The thinking is that - since this is used in the function above (to translate
@@ -1011,7 +1036,9 @@ namespace TVGL
             // we find something in the x-z plane through this cross-product, so that the
             // third direction has strong component in positive y-direction - like
             // camera up position.
-            return Vector3.UnitY.Cross(direction).Normalize();
+            dir = Vector3.UnitY.Cross(direction).Normalize();
+            if (additionalRotation == 0) return dir;
+            return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
         }
 
         #region Angle between Edges/Lines
