@@ -183,6 +183,12 @@ namespace TVGL
             ShowAndHang(new[] { vs });
         }
 
+        public static void ShowAndHang(VoxelizedSolid correctVoxels, IEnumerable<Polygon> shallowTree)
+        {
+            throw new NotImplementedException();
+        }
+
+
         public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "",
             string subtitle = "")
         {
@@ -198,17 +204,77 @@ namespace TVGL
 
         #endregion
 
-        #region Method to Transition over
-        internal static void ShowVertexPathsWithSolid(IEnumerable<Vector3[]> paths, IEnumerable<TessellatedSolid> tessellatedSolids)
+
+        public static void ShowVertexPathsWithMultipleSolid(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertices, IEnumerable<Solid> solids, double lineThickness = 1, IEnumerable<TVGL.Color> colors = null, bool closePaths = true)
         {
-            throw new NotImplementedException();
+            ShowVertexPathsWithSolid(vertices.SelectMany(v => v), solids, lineThickness, colors, closePaths);
+        }
+        public static void ShowVertexPaths(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertices, Solid solid = null, double lineThickness = 1, IEnumerable<TVGL.Color> colors = null, bool closePaths = true)
+        {
+            ShowVertexPathsWithSolid(vertices.SelectMany(v => v), new List<Solid> { solid }, lineThickness, colors, closePaths);
+        }
+        public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertices, Solid solid = null, double lineThickness = 1, IEnumerable<TVGL.Color> colors = null, bool closePaths = true)
+        {
+            ShowVertexPathsWithSolid(vertices, new List<Solid> { solid }, lineThickness, colors, closePaths);
+        }
+        public static void ShowVertexPaths(IEnumerable<Vector3> vertices, Solid solid = null, double lineThickness = 1, TVGL.Color color = null, bool closePaths = true)
+        {
+            ShowVertexPathsWithSolid(new List<IEnumerable<Vector3>> { vertices }, new List<Solid> { solid }, lineThickness, color == null ? null : new List<TVGL.Color> { color }, closePaths); ;
+        }
+        public static void ShowVertexPathsWithSolid(IEnumerable<IEnumerable<Vector3>> lines, IEnumerable<Solid> solids, double thickness = 1, IEnumerable<Color> colors = null, bool closePaths = true)
+        {
+            var lineVisuals = GetVertexPaths(lines, thickness, colors, closePaths);
+            var vm = new Window3DPlotViewModel();
+            vm.Add(lineVisuals);
+            if (solids != null)
+            {
+                vm.Add(solids.Where(s => s != null).SelectMany(s => ConvertTessellatedSolidToMGM3D((TessellatedSolid)s)));
+            }
+            var window = new Window3DPlot(vm);
+
+            window.ShowDialog();
         }
 
-        public static void ShowAndHang(VoxelizedSolid correctVoxels, IEnumerable<Polygon> shallowTree)
+        public static IEnumerable<GeometryModel3D> GetVertexPaths(IEnumerable<IEnumerable<Vector3>> paths, double thickness = 1, IEnumerable<TVGL.Color> colors = null, bool closePaths = true)
         {
-            throw new NotImplementedException();
+            //set the default color to be the first color in the list. If none was provided, use black.
+            var tvglColors = colors == null ? new List<TVGL.Color> { new TVGL.Color(KnownColors.Black) } : colors.ToList();
+            var linesVisual = new List<LineGeometryModel3D>();
+            foreach (var (path, i) in paths.WithIndex())
+            {
+                if (path == null || !path.Any()) continue;
+                var contour = path.Select(point => new SharpDX.Vector3((float)point[0], (float)point[1], (float)point[2])).ToList();
+
+                //No create a line collection by doubling up the points
+                var lineCollection = new List<SharpDX.Vector3>();
+                foreach (var t in contour)
+                {
+                    lineCollection.Add(t);
+                    lineCollection.Add(t);
+                }
+                lineCollection.RemoveAt(0);
+                if (closePaths) lineCollection.Add(lineCollection.First());
+                var tvglColor = i < tvglColors.Count ? tvglColors[i] : tvglColors[0];
+                var color = new System.Windows.Media.Color { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
+                yield return new LineGeometryModel3D
+                {
+                    Geometry = new LineGeometry3D
+                    {
+                        Positions = new Vector3Collection(lineCollection)
+                    },
+                    Thickness = thickness,
+                    Color = color
+                };
+            }
         }
-        #endregion
+
+        //Foreach with index (foreach (var (item, index) in collection.WithIndex()) from
+        //https://stackoverflow.com/questions/43021/how-do-you-get-the-index-of-the-current-iteration-of-a-foreach-loop
+        private static IEnumerable<(T item, int index)> WithIndex<T>(this IEnumerable<T> self)
+            => self?.Select((item, index) => (item, index)) ?? new List<(T, int)>();
+
+
+
 
 
 
