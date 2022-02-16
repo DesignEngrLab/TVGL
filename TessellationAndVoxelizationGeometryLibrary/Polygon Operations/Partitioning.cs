@@ -33,6 +33,12 @@ namespace TVGL.TwoDimensional
             YInPositiveMonotonicity = yInPositiveMonotonicity;
             Rectangle = new AxisAlignedRectangle(vertex1, vertex2);
         }
+        public MonotoneBox(Vertex2D vertex1, Vertex2D vertex2, MonotonicityChange lowMonoChange,
+            MonotonicityChange hiMonoChange, bool xInPositiveMonotonicity, bool yInPositiveMonotonicity, AxisAlignedRectangle rect)
+            : this(vertex1, vertex2, lowMonoChange, hiMonoChange, xInPositiveMonotonicity, yInPositiveMonotonicity)
+        {
+            Rectangle = rect;
+        }
     }
 
     public static partial class PolygonOperations

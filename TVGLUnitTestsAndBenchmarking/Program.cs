@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
-        const string inputFolder = "TestFiles";
+        static string inputFolder = "TestFiles";
         //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -23,38 +23,39 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
-            //TestVoxelization();
+            TVGL.Message.Verbosity = VerbosityLevels.Everything;
+            DirectoryInfo dir = BackOutToFolder();
+            //Voxels.TestVoxelization(dir);
             //TS_Testing_Functions.TestModify();
             //TVGL3Dto2DTests.TestSilhouette();
             // Polygon_Testing_Functions.TestSimplify();
             //TS_Testing_Functions.TestClassify();
             //TVGL3Dto2DTests.TestXSectionAndMonotoneTriangulate();
 
-//#if PRESENT
+#if PRESENT
 
-            TVGL.Message.Verbosity = VerbosityLevels.Everything;
+            foreach (var fileName in dir.GetFiles("*"))
+            {
+                Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
+                IO.Open(fileName.FullName, out TessellatedSolid[] solids);
+                solids[0].Faces[0].Color =Color.ColorDictionary[ColorFamily.Red]["Red"];
+                Presenter.ShowAndHang(solids);
+                //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
+                //Presenter.ShowAndHang(css);
+                //IO.Save(css, "test.CSSolid");
+            }
+#endif
+        }
+
+        private static DirectoryInfo BackOutToFolder()
+        {
             // 1. bubble up from the bin directories to find the TestFiles directory
             var dir = new DirectoryInfo(".");
             while (!Directory.Exists(Path.Combine(dir.FullName, inputFolder)))
                 dir = dir.Parent;
             dir = new DirectoryInfo(Path.Combine(dir.FullName, inputFolder));
             var dirName = dir.FullName;
-            foreach (var fileName in dir.GetFiles("*"))
-            {
-                Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
-                var stopwatch = new Stopwatch();
-                stopwatch.Start();
-                IO.Open(fileName.FullName, out TessellatedSolid[] solids);
-                stopwatch.Stop();
-                Console.WriteLine(stopwatch.Elapsed.ToString());
-
-                Presenter.ShowAndHang(solids);
-                //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
-                //Presenter.ShowAndHang(css);
-                //IO.Save(css, "test.CSSolid");
-            }
-//#endif
+            return dir;
         }
-
     }
 }

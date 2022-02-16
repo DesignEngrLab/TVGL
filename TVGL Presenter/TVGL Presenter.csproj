@@ -1,17 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.17.0" />
-    <PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
-  </ItemGroup>
+	<PropertyGroup>
+		<!--<OutputType>WinExe</OutputType>-->
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
+	<ItemGroup>
+		<!--<PackageReference Include="HelixToolkit.SharpDX.Assimp" Version="2.20.2" />-->
+		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.20.2" />
+		<!--<PackageReference Include="MvvmLightLibsStd10" Version="5.4.1.1" />-->
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.csproj" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
+	</ItemGroup>
 
 </Project>

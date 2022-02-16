@@ -607,7 +607,7 @@ namespace TVGL
             var separateSolids = new List<List<PolygonalFace>>();
             var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
             // first the easy part - simply separate out known groups that have already been determined to be bodies
-            if (faceGroupsThatAreBodies!=null)
+            if (faceGroupsThatAreBodies != null)
             {
                 foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
                 {
