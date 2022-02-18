@@ -41,7 +41,8 @@
             <hx:ShadowMap3D />
             <hx:AmbientLight3D Color="{Binding AmbientLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection1}" Color="{Binding DirectionalLightColor}" />
-
+            <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection2}" Color="{Binding DirectionalLightColor}" />
+            <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection3}" Color="{Binding DirectionalLightColor}" />
             <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}" Mouse3DDown="group1_Mouse3DDown" />
             <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" 
                                      Visibility="{Binding GroundPlaneVisible,Converter={StaticResource BooleanToVisibilityConverter}}" />
