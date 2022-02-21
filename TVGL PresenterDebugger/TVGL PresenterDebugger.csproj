@@ -12,7 +12,6 @@
 		<PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.20.2" />
-		<PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
 		<PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
 	</ItemGroup>
 
@@ -52,7 +51,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubesCrossSectionSolid.cs" Link="TVGL\MarchingCubes\MarchingCubesCrossSectionSolid.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs" Link="TVGL\Miscellaneous Functions\MiscFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Proximity.cs" Link="TVGL\Miscellaneous Functions\Proximity.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\ComplexNumber.cs" Link="ComplexNumber.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\ComplexNumber.cs" Link="TVGL\Numerics\ComplexNumber.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\EqualityExtensions.cs" Link="TVGL\Numerics\EqualityExtensions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Extensions.cs" Link="TVGL\Numerics\Extensions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Matrix3x3.cs" Link="TVGL\Numerics\Matrix3x3.cs" />
@@ -66,7 +65,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs" Link="TVGL\Numerics\Vector2.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs" Link="TVGL\Numerics\Vector3.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\IntrinsicAttribute.cs" Link="TVGL\Numerics\IntrinsicAttribute.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4.cs" Link="Vector4.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4.cs" Link="TVGL\Numerics\Vector4.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />
@@ -116,6 +115,11 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowDense.cs" Link="TVGL\VoxelizedSolid\VoxelRowDense.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowSparse.cs" Link="TVGL\VoxelizedSolid\VoxelRowSparse.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\SimplePriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\SimplePriorityQueue.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\GenericPriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\GenericPriorityQueue.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\GenericPriorityQueueNode.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\GenericPriorityQueueNode.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\IFixedSizePriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\IFixedSizePriorityQueue.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\IPriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\IPriorityQueue.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs" Link="TVGL\Colors.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators.cs" Link="TVGL\Comparators.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="TVGL\Constants.cs" />
