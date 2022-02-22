@@ -1,22 +1,14 @@
-﻿using System.Linq;
+﻿using HelixToolkit.SharpDX.Core;
 using HelixToolkit.Wpf.SharpDX;
-using SharpDX;
+using SharpDX.Direct3D11;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using Media3D = System.Windows.Media.Media3D;
 using Point3D = System.Windows.Media.Media3D.Point3D;
 using Vector3D = System.Windows.Media.Media3D.Vector3D;
-using Transform3D = System.Windows.Media.Media3D.Transform3D;
-using Vector3 = SharpDX.Vector3;
-using Colors = System.Windows.Media.Colors;
-using Color4 = SharpDX.Color4;
-using SharpDX.Direct3D11;
-using System.Collections.Generic;
-using HelixToolkit.SharpDX.Core;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System;
-using TVGL;
-using TVGL.Voxelization;
-using System.Windows.Input;
 
 namespace TVGL
 {
@@ -26,9 +18,9 @@ namespace TVGL
 
         protected void OnPropertyChanged([CallerMemberName] string info = "")
         {
-            if (this.PropertyChanged != null)
+            if (PropertyChanged != null)
             {
-                this.PropertyChanged(this, new PropertyChangedEventArgs(info));
+                PropertyChanged(this, new PropertyChangedEventArgs(info));
             }
         }
 
@@ -95,6 +87,8 @@ namespace TVGL
 
         public List<string> CameraModelCollection { get; private set; }
 
+        private Viewport3DX view;
+
         public string CameraModel
         {
             get
@@ -119,16 +113,28 @@ namespace TVGL
 
             protected set
             {
+                var origCameraIsNull = camera == null;
+                Point3D camPosition;
+                Vector3D lookPosition;
+                Vector3D upDirection;
+                if (!origCameraIsNull)
+                {
+                    camPosition = camera.Position;
+                    lookPosition = camera.LookDirection;
+                    upDirection = camera.UpDirection;
+                }
                 SetValue(ref camera, value, "Camera");
                 CameraModel = value is PerspectiveCamera
                                        ? Perspective
                                        : value is OrthographicCamera ? Orthographic : null;
+                if (!origCameraIsNull)
+                {
+                    camera.Position = camPosition;
+                    camera.LookDirection = lookPosition;
+                    camera.UpDirection = upDirection;
+                }
+                ResetCameraCommand();
             }
-        }
-
-        public ICommand ResetCameraCommand
-        {
-            set; get;
         }
 
         private bool groundPlaneVisible = true;
@@ -154,10 +160,8 @@ namespace TVGL
             }
         }
 
-        protected OrthographicCamera defaultOrthographicCamera = new OrthographicCamera { Position = new System.Windows.Media.Media3D.Point3D(0, 0, 5), LookDirection = new System.Windows.Media.Media3D.Vector3D(-0, -0, -5), UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 1, 0), NearPlaneDistance = 1, FarPlaneDistance = 100 };
-
-        protected PerspectiveCamera defaultPerspectiveCamera = new PerspectiveCamera { Position = new System.Windows.Media.Media3D.Point3D(0, 0, 5), LookDirection = new System.Windows.Media.Media3D.Vector3D(-0, -0, -5), UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 1, 0), NearPlaneDistance = 0.5, FarPlaneDistance = 150 };
-
+        protected OrthographicCamera defaultOrthographicCamera;
+        protected PerspectiveCamera defaultPerspectiveCamera;
         public event EventHandler CameraModelChanged;
 
 
@@ -289,14 +293,41 @@ namespace TVGL
 
         public Window3DPlotViewModel(string heading = "", string title = "", string subtitle = "")
         {
-            Heading = heading;
-            Title = title;
-            SubTitle = subtitle;
+            if (string.IsNullOrWhiteSpace(heading))
+                Heading = DateTime.Now.ToShortDateString();
+            else Heading = heading;
+            if (!string.IsNullOrWhiteSpace(title))
+                Title = title;
+            if (!string.IsNullOrWhiteSpace(subtitle))
+                SubTitle = subtitle;
             EffectsManager = new DefaultEffectsManager();
 
+            // setup lighting            
+            this.AmbientLightColor = System.Windows.Media.Color.FromArgb(1, 12, 12, 12);
+            this.DirectionalLightColor = System.Windows.Media.Colors.White;
+            this.DirectionalLightDirection1 = new Vector3D(-0, -20, -20);
+            this.DirectionalLightDirection2 = new Vector3D(-0, -1, +50);
+            this.DirectionalLightDirection3 = new Vector3D(0, +1, 0);
+        }
 
-            // camera setup
-            this.Camera = new PerspectiveCamera { Position = new Point3D(7, 10, 12), LookDirection = new Vector3D(-7, -10, -12), UpDirection = new Vector3D(0, 1, 0) };
+        internal void SetUpCamera(Viewport3DX view)
+        {
+            defaultOrthographicCamera = new OrthographicCamera
+            {
+                Position = new Point3D(7, 10, 12),
+                LookDirection = new Vector3D(-7, -10, -12),
+                UpDirection = new Vector3D(0, 1, 0),
+                NearPlaneDistance = 0.1f,
+                FarPlaneDistance = 5000
+            };
+            defaultPerspectiveCamera = new PerspectiveCamera
+            {
+                Position = new Point3D(7, 10, 12),
+                LookDirection = new Vector3D(-7, -10, -12),
+                UpDirection = new Vector3D(0, 1, 0),
+                NearPlaneDistance = 0.1f,
+                FarPlaneDistance = 5000
+            };
             CameraModel = Perspective;
             // on camera changed callback
             CameraModelChanged += (s, e) =>
@@ -321,13 +352,18 @@ namespace TVGL
                 Orthographic,
                 Perspective,
             };
-
-            // setup lighting            
-            this.AmbientLightColor = System.Windows.Media.Color.FromArgb(1, 12, 12, 12);
-            this.DirectionalLightColor = System.Windows.Media.Colors.White;
-            this.DirectionalLightDirection1 = new Vector3D(-0, -20, -20);
-            this.DirectionalLightDirection2 = new Vector3D(-0, -1, +50);
-            this.DirectionalLightDirection3 = new Vector3D(0, +1, 0);
+            this.view = view;
+            ResetCameraCommand();
+        }
+        internal void ResetCameraCommand()
+        {
+            view.ZoomExtents();
+            //ResetCameraCommand = new DelegateCommand(() =>
+            //{
+            //    (Camera as OrthographicCamera).Reset();
+            //    (Camera as OrthographicCamera).FarPlaneDistance = 5000;
+            //    (Camera as OrthographicCamera).NearPlaneDistance = 0.1f;
+            //});
         }
         public void Add(IEnumerable<GeometryModel3D> models)
         {

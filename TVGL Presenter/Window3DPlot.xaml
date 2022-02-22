@@ -7,9 +7,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
     Title="{Binding Heading}"
-    Width="800"
-    Height="500" Name="ThisWindow3DPlot" 
-    mc:Ignorable="d">
+    Width="800" Height="500" Name="ThisWindow3DPlot" 
+    mc:Ignorable="d" >
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -43,7 +42,7 @@
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection1}" Color="{Binding DirectionalLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection2}" Color="{Binding DirectionalLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection3}" Color="{Binding DirectionalLightColor}" />
-            <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}" Mouse3DDown="group1_Mouse3DDown" />
+            <hx:GroupModel3D x:Name="group1" ItemsSource="{Binding Solids}" />
             <hx:AxisPlaneGridModel3D x:Name="CheckerFloor" GridColor="AliceBlue" PlaneColor="#66aacaff" 
                                      Visibility="{Binding GroundPlaneVisible,Converter={StaticResource BooleanToVisibilityConverter}}" />
         </hx:Viewport3DX>
@@ -79,40 +78,30 @@
                         <RowDefinition />
                         <RowDefinition />
                     </Grid.RowDefinitions>
-                    <!--<TextBlock
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        Margin="3">
-                        Model Topology:
-                    </TextBlock>
-                    <ComboBox
-                        Grid.Row="1"
-                        Grid.ColumnSpan="2"
-                        Margin="3"
-                        ItemsSource="{Binding Source={StaticResource Topology}}"
-                        SelectedItem="{Binding MeshTopology}"
-                        Text="" />-->
-
                     <Button
-                        Grid.Row="4"
                         Grid.ColumnSpan="2"
-                        Margin="3" Click="ResetCamera_Click" >
+                        Margin="3" Click="ResetCameraButtonClick" >
                         Reset Camera
                     </Button>
                     <CheckBox
-                        Grid.Row="5"
+                        Grid.Row="1"
                         Grid.ColumnSpan="2"
                         Margin="3"
                         IsChecked="{Binding GroundPlaneVisible}" >
                         GroundPlane
                     </CheckBox>
                     <CheckBox
-                        Grid.Row="6"
+                        Grid.Row="2"
                         Grid.ColumnSpan="2"
                         Margin="3"
                         IsChecked="{Binding Wireframe}">
                         Render Wireframe
                     </CheckBox>
+                    <ComboBox
+                        Grid.Row="3"
+                        Grid.ColumnSpan="2"
+                        Margin="3" ItemsSource="{Binding CameraModelCollection}" SelectedItem="{Binding CameraModel}" >
+                    </ComboBox>
 
 
                 </Grid>

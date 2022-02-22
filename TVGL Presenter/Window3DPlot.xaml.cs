@@ -23,22 +23,19 @@ namespace TVGL
         {
             this.InitializeComponent();
             this.DataContext = viewModel;
-            Closed += (s, e) => {
+            Closed += (s, e) =>
+            {
                 if (DataContext is IDisposable)
                 {
                     (DataContext as IDisposable).Dispose();
                 }
             };
+            ((Window3DPlotViewModel)DataContext).SetUpCamera(this.view);
         }
 
-        private void group1_Mouse3DDown(object sender, MouseDown3DEventArgs e)
+        private void ResetCameraButtonClick(object sender, RoutedEventArgs e)
         {
-            ((Window3DPlotViewModel)DataContext).SelectedGeometry = e.HitTestResult.Geometry;
-
-        }
-        private void ResetCamera_Click(object sender, RoutedEventArgs e)
-        {
-            view.ZoomExtents();
+            ((Window3DPlotViewModel)DataContext).ResetCameraCommand();
         }
     }
 
