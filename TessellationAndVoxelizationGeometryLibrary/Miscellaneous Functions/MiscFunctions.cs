@@ -650,39 +650,29 @@ namespace TVGL
             foreach (var seperateSolid in separateSolids)
             {
                 //Copy the non-smooth edges over to the seperate solid
-                HashSet<(Vector3, Vector3)> nonSmoothEdgesForSolid = null;
+                var edgePathIndices = new List<int>();
                 if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
                 {
                     //Get all the edges in order, avoiding duplicates by using a hashset.
-                    var edges = new HashSet<Edge>();
-                    foreach (var face in seperateSolid)
-                        foreach (var edge in face.Edges)
-                            edges.Add(edge);
-
-                    nonSmoothEdgesForSolid = new HashSet<(Vector3, Vector3)>();
-                    foreach (var edge in edges)
+                    var edges = seperateSolid.SelectMany(f => f.Edges).ToHashSet();
+                    for (int i = 0; i < ts.NonsmoothEdges.Count; i++)
                     {
-                        if (ts.NonsmoothEdges.Contains(edge))
-                            nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates));
+                        if (edges.Contains(ts.NonsmoothEdges[i].EdgeList[0])) 
+                            edgePathIndices.Add(i);
                     }
                 }
-
                 var newSolid = new TessellatedSolid(seperateSolid, true, false);
-
-                if (nonSmoothEdgesForSolid != null)
+                if (edgePathIndices.Count > 0)
                 {
-                    newSolid.NonsmoothEdges = new HashSet<Edge>();
-                    foreach (var edge in newSolid.Edges)
+                    newSolid.NonsmoothEdges = new List<EdgePath>();
+                    foreach (var item in edgePathIndices)
                     {
-                        if (nonSmoothEdgesForSolid.Contains((edge.From.Coordinates, edge.To.Coordinates))
-                            || nonSmoothEdgesForSolid.Contains((edge.To.Coordinates, edge.From.Coordinates)))
-                            newSolid.NonsmoothEdges.Add(edge);
+                        var origEdgePath = edgePathIndices[item];
+
                     }
                 }
-
                 solids.Add(newSolid);
             }
-
             return solids;
         }
 

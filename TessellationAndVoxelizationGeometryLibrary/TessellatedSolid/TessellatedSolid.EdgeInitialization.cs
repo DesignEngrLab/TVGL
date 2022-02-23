@@ -481,7 +481,7 @@ namespace TVGL
                     // the other vertices in singledSidedEdges
                 }
                 else startingEdge = remainingEdgesInner.First();
-                loop.Add(startingEdge, true);  //all the directions really should be false since the edges were defined
+                loop.AddBegin(startingEdge, true);  //all the directions really should be false since the edges were defined
                                                //with the ownedFace but this is confusing and we'll switch later
                 removedEdges.Add(startingEdge);
                 remainingEdgesInner.Remove(startingEdge);
@@ -508,8 +508,7 @@ namespace TVGL
                         e.From == lastVertex && remainingEdgesInner.Contains(e));
                     if (bestNext != null)
                     {
-                        var dir = bestNext.From == lastVertex;
-                        loop.Add(bestNext, dir);
+                        loop.AddBegin(bestNext);
                         removedEdges.Add(bestNext);
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;
