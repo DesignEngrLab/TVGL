@@ -86,7 +86,7 @@ namespace TVGL
         /// </summary>
         /// <value>The nonsmooth edges.</value>
         [JsonIgnore]
-        public List<EdgePath> NonsmoothEdges { get; set; }
+        public HashSet<EdgePath> NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
@@ -602,9 +602,9 @@ namespace TVGL
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
                     var coordinates = t[i] = new Vector3(scaleFactor * Math.Round(t[i].X, numDecimalPoints),
                         Math.Round(scaleFactor * t[i].Y, numDecimalPoints), Math.Round(scaleFactor * t[i].Z, numDecimalPoints));
-                    if (simpleCompareDict.ContainsKey(coordinates))
+                    if (simpleCompareDict.TryGetValue(coordinates, out int index))
                         /* if it's in the dictionary, simply put the location in the locationIndices */
-                        locationIndices.Add(simpleCompareDict[coordinates]);
+                        locationIndices.Add(index);
                     else
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
@@ -971,7 +971,7 @@ namespace TVGL
             }
             if (NonsmoothEdges != null && NonsmoothEdges.Any())
             {
-                copy.NonsmoothEdges = new List<EdgePath>();
+                copy.NonsmoothEdges = new HashSet<EdgePath>();
                 foreach (var nonSmoothEdgePath in NonsmoothEdges)
                 {
                     var copiedPath = new EdgePath();

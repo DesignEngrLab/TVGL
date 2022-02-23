@@ -103,9 +103,8 @@ namespace TVGL
                         ? fromVertexIndex + numVertices * toVertexIndex
                         : toVertexIndex + numVertices * fromVertexIndex;
 
-                    if (edgeDictionary.ContainsKey(checksum))
+                    if (edgeDictionary.TryGetValue(checksum, out var edge))
                     {
-                        var edge = edgeDictionary[checksum];
                         edge.OtherFace = face;
                         face.AddEdge(edge);
                     }

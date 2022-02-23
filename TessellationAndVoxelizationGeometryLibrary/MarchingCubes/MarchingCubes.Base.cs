@@ -113,9 +113,8 @@ namespace TVGL
 
         protected StoredValue<ValueT> GetValue(int x, int y, int z, long identifier)
         {
-            if (valueDictionary.ContainsKey(identifier))
+            if (valueDictionary.TryGetValue(identifier, out var prevValue))
             {
-                var prevValue = valueDictionary[identifier];
                 if (prevValue.NumTimesCalled < 7)
                     prevValue.NumTimesCalled++;
                 else valueDictionary.Remove(identifier);
@@ -177,8 +176,8 @@ namespace TVGL
                     var toCorner = cube[EdgeCornerIndexTable[i][1]];
                     // var id = fromCorner.ID ;
                     var id = sign > 0 ? fromCorner.ID : toCorner.ID;
-                    if (vertexDictionaries[direction].ContainsKey(id))
-                        EdgeVertex[i] = vertexDictionaries[direction][id];
+                    if (vertexDictionaries[direction].TryGetValue(id, out var value))
+                        EdgeVertex[i] = value;
                     else
                     {
                         var coord = new Vector3(

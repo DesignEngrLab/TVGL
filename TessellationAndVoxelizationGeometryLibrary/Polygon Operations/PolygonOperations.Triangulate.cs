@@ -362,8 +362,7 @@ namespace TVGL.TwoDimensional
         private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> connections,
             Dictionary<PolygonEdge, (Vertex2D, bool)> edgeDatums, PolygonEdge datum, Vertex2D vertex)
         {
-            if (!edgeDatums.ContainsKey(datum)) return;
-            var prevLineHelperData = edgeDatums[datum];
+            if (!edgeDatums.TryGetValue(datum, out var prevLineHelperData)) return;
             var helperVertex = prevLineHelperData.Item1;
             var isMergePoint = prevLineHelperData.Item2;
             if (isMergePoint) //if this was a merge point
@@ -375,8 +374,8 @@ namespace TVGL.TwoDimensional
 
         private static void AddNewConnection(Dictionary<Vertex2D, List<Vertex2D>> connections, Vertex2D fromVertex, Vertex2D toVertex)
         {
-            if (connections.ContainsKey(fromVertex))
-                connections[fromVertex].Add(toVertex);
+            if (connections.TryGetValue(fromVertex, out var verts))
+                verts.Add(toVertex);
             else
             {
                 var newToVertices = new List<Vertex2D> { toVertex };

@@ -291,7 +291,7 @@ namespace TVGL
             if (double.IsInfinity(fLimit))
             {
 #if PRESENT
-               Presenter.ShowVertexPaths(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }));
+                Presenter.ShowVertexPaths(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }));
 #endif
                 return false;
             }
@@ -399,9 +399,7 @@ namespace TVGL
                     //Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = rightDomain.VertexIDList;
-                    if (visitedDomains.ContainsKey(vertexIDs))
-                        rightDomain = visitedDomains[vertexIDs];
-                    else
+                    if (!visitedDomains.TryGetValue(vertexIDs, out rightDomain))
                     {
                         rightDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[1], rightDomain, visitedDomains,
                             bestDomainScore, branchingFactorLimit,
@@ -428,9 +426,7 @@ namespace TVGL
                     //Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = leftDomain.VertexIDList;
-                    if (visitedDomains.ContainsKey(vertexIDs))
-                        leftDomain = visitedDomains[vertexIDs];
-                    else
+                    if (!visitedDomains.TryGetValue(vertexIDs, out leftDomain))
                     {
                         leftDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[2], leftDomain, visitedDomains,
                             bestDomainScore, branchingFactorLimit,

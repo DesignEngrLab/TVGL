@@ -121,7 +121,7 @@ namespace TVGL.IOFunctions
         private static void CreateRegionsFromPolylineAndFaceGroups(OBJFileData objFileData, TessellatedSolid ts, out List<int[]> faceGroupsThatAreBodies)
         {
             faceGroupsThatAreBodies = new List<int[]>();
-            ts.NonsmoothEdges = new List<EdgePath>();
+            ts.NonsmoothEdges = new HashSet<EdgePath>();
             var remainingFaces = new HashSet<PolygonalFace>(ts.Faces);
 
             foreach (var borderIndices in objFileData.SurfaceEdges)

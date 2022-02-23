@@ -358,8 +358,8 @@ namespace TVGL
                     var f = ts.Faces[i];
                     var faceColor = (f.Color == null) ? defaultColor
                         : new SharpDX.Color4(f.Color.Rf, f.Color.Gf, f.Color.Bf, f.Color.Af);
-                    if (colorToFaceDict.ContainsKey(faceColor))
-                        colorToFaceDict[faceColor].Add(i);
+                    if (colorToFaceDict.TryGetValue(faceColor,out var ints))
+                        ints.Add(i);
                     else
                         colorToFaceDict.Add(faceColor, new List<int> { i });
                 }
