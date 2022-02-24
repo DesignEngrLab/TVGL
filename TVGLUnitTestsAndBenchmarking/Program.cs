@@ -34,7 +34,7 @@ namespace TVGLUnitTestsAndBenchmarking
 
 #if PRESENT
 
-            foreach (var fileName in dir.GetFiles("*"))
+            foreach (var fileName in dir.GetFiles("*").Skip(1))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids);

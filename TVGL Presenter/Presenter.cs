@@ -189,7 +189,7 @@ namespace TVGL
 
         public static void ShowAndHang(CrossSectionSolid css)
         {
-            ShowVertexPaths(css.GetCrossSectionsAs3DLoops(), null, 10, null, true);
+            ShowVertexPaths(css.GetCrossSectionsAs3DLoops(), null, 1, null, true);
         }
 
         public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "",
@@ -282,31 +282,46 @@ namespace TVGL
             foreach (var path in paths)
             {
                 if (path == null || !path.Any()) continue;
-                var contour = path.Select(point => new SharpDX.Vector3((float)point[0], (float)point[1], (float)point[2])).ToList();
+                var contour = path.Select(point => new SharpDX.Vector3((float)point[0], (float)point[1], (float)point[2]));
 
-                //No create a line collection by doubling up the points
-                var lineCollection = new List<SharpDX.Vector3>();
-                foreach (var t in contour)
-                {
-                    lineCollection.Add(t);
-                    lineCollection.Add(t);
-                }
-                lineCollection.RemoveAt(0);
-                if (closePaths) lineCollection.Add(lineCollection.First());
+                //////No create a line collection by doubling up the points
+                //var lineCollection = new List<SharpDX.Vector3>();
+                //foreach (var t in contour)
+                //{
+                //    lineCollection.Add(t);
+                //    lineCollection.Add(t);
+                //}
+                //lineCollection.RemoveAt(0);
+                //if (closePaths) lineCollection.Add(lineCollection.First());
                 colorEnumerator.MoveNext();
                 var tvglColor = colorEnumerator.Current;
                 var color = new System.Windows.Media.Color { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
+                var positions = new Vector3Collection(contour);
+                var lineIndices = new IntCollection();
+                for (var i = 1; i < positions.Count; i++)
+                {
+                    lineIndices.Add(i - 1);
+                    lineIndices.Add(i);
+                }
+
+                if (closePaths)
+                {
+                    lineIndices.Add(positions.Count - 1);
+                    lineIndices.Add(0);
+                }
+
+
                 yield return new LineGeometryModel3D
                 {
                     Geometry = new LineGeometry3D
                     {
-                        Positions = new Vector3Collection(lineCollection)
-                    }, 
-                    IsRendering=true,
-                    IsThrowingShadow=true,
+                        Positions = positions,
+                        Indices = lineIndices
+                    },
+                    IsRendering = true,
+                    FillMode = SharpDX.Direct3D11.FillMode.Solid,
                     Thickness = thickness,
-                    Color = System.Windows.Media.Colors.DarkBlue
-                    //Color = color
+                    Color = color
                 };
             }
         }
