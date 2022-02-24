@@ -649,40 +649,42 @@ namespace TVGL
             }
             foreach (var seperateSolid in separateSolids)
             {
-                //Copy the non-smooth edges over to the seperate solid
-                //Dictionary<(Vector3, Vector3), int> nonSmoothEdgesForSolid = null;
-                //if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
-                //{
-                //    //Get all the edges in order, avoiding duplicates by using a hashset.
-                //    var edges = new HashSet<Edge>();
-                //    foreach (var face in seperateSolid)
-                //        foreach (var edge in face.Edges)
-                //            edges.Add(edge);
+                //Copy the non - smooth edges over to the seperate solid
+                Dictionary<(Vector3, Vector3), int> nonSmoothEdgesForSolid = null;
+                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
+                {
+                    //Get all the edges in order, avoiding duplicates by using a hashset.
+                    var edges = new HashSet<Edge>();
+                    foreach (var face in seperateSolid)
+                        foreach (var edge in face.Edges)
+                            edges.Add(edge);
 
-                //    nonSmoothEdgesForSolid = new Dictionary<(Vector3, Vector3), int>();
-                //    foreach (var edge in edges)
-                //    {
-                //        for (int i = 0; i < length; i++)
-                //        {
-
-                //        }
-                //        if (ts.NonsmoothEdges.Contains(edge))
-                //            nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates));
-                //    }
-                //}
+                    nonSmoothEdgesForSolid = new Dictionary<(Vector3, Vector3), int>();
+                    foreach (var edge in edges)
+                    {
+                        for (int i = 0; i < ts.NonsmoothEdges.Count; i++)
+                        {
+                            if (ts.NonsmoothEdges[i].Contains(edge))
+                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates),i);
+                        }
+                    }
+                }
 
                 var newSolid = new TessellatedSolid(seperateSolid, true, false);
 
-                //if (nonSmoothEdgesForSolid != null)
-                //{
-                //    newSolid.NonsmoothEdges = new HashSet<EdgePath>();
-                //    foreach (var edge in newSolid.Edges)
-                //    {
-                //        if (nonSmoothEdgesForSolid.Contains((edge.From.Coordinates, edge.To.Coordinates))
-                //            || nonSmoothEdgesForSolid.Contains((edge.To.Coordinates, edge.From.Coordinates)))
-                //            newSolid.NonsmoothEdges.Add(edge);
-                //    }
-                //}
+                if (nonSmoothEdgesForSolid != null)
+                {
+                    newSolid.NonsmoothEdges = new List<EdgePath>();
+                    for (int i = 0; i < ts.NonsmoothEdges.Count; i++)
+                        newSolid.NonsmoothEdges.Add(new EdgePath());
+                    foreach (var edge in newSolid.Edges)
+                    {
+                        var pathIndex = -1;
+                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out  pathIndex)
+                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates),out pathIndex))
+                            newSolid.NonsmoothEdges[pathIndex].AddEnd(edge);
+                    }
+                }
 
                 solids.Add(newSolid);
             }

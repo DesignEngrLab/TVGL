@@ -86,7 +86,7 @@ namespace TVGL
         /// </summary>
         /// <value>The nonsmooth edges.</value>
         [JsonIgnore]
-        public HashSet<EdgePath> NonsmoothEdges { get; set; }
+        public List<EdgePath> NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
@@ -971,7 +971,7 @@ namespace TVGL
             }
             if (NonsmoothEdges != null && NonsmoothEdges.Any())
             {
-                copy.NonsmoothEdges = new HashSet<EdgePath>();
+                copy.NonsmoothEdges = new List<EdgePath>();
                 foreach (var nonSmoothEdgePath in NonsmoothEdges)
                 {
                     var copiedPath = new EdgePath();

@@ -187,6 +187,10 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        public static void ShowAndHang(CrossSectionSolid css)
+        {
+            ShowVertexPaths(css.GetCrossSectionsAs3DLoops(), null, 10, null, true);
+        }
 
         public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "",
             string subtitle = "")
@@ -203,7 +207,7 @@ namespace TVGL
 
         #endregion
 
-
+        #region ShowPaths with or without Solid(s)
         public static void ShowVertexPaths(IEnumerable<Vector3> vertices, Solid solid = null, double lineThickness = 1,
             Color color = null, bool closePaths = true)
         {
@@ -272,9 +276,10 @@ namespace TVGL
             IEnumerable<Color> colors = null, bool closePaths = true)
         {
             //set the default color to be the first color in the list. If none was provided, use black.
-            var tvglColors = colors == null ? new List<Color> { new Color(KnownColors.Black) } : colors.ToList();
+            colors = colors ?? Color.GetRandomColors();
+            var colorEnumerator = colors.GetEnumerator();
             var linesVisual = new List<LineGeometryModel3D>();
-            foreach (var (path, i) in paths.WithIndex())
+            foreach (var path in paths)
             {
                 if (path == null || !path.Any()) continue;
                 var contour = path.Select(point => new SharpDX.Vector3((float)point[0], (float)point[1], (float)point[2])).ToList();
@@ -288,28 +293,24 @@ namespace TVGL
                 }
                 lineCollection.RemoveAt(0);
                 if (closePaths) lineCollection.Add(lineCollection.First());
-                var tvglColor = i < tvglColors.Count ? tvglColors[i] : tvglColors[0];
+                colorEnumerator.MoveNext();
+                var tvglColor = colorEnumerator.Current;
                 var color = new System.Windows.Media.Color { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
                 yield return new LineGeometryModel3D
                 {
                     Geometry = new LineGeometry3D
                     {
                         Positions = new Vector3Collection(lineCollection)
-                    },
+                    }, 
+                    IsRendering=true,
+                    IsThrowingShadow=true,
                     Thickness = thickness,
-                    Color = color
+                    Color = System.Windows.Media.Colors.DarkBlue
+                    //Color = color
                 };
             }
         }
-
-        //Foreach with index (foreach (var (item, index) in collection.WithIndex()) from
-        //https://stackoverflow.com/questions/43021/how-do-you-get-the-index-of-the-current-iteration-of-a-foreach-loop
-        private static IEnumerable<(T item, int index)> WithIndex<T>(this IEnumerable<T> self)
-            => self?.Select((item, index) => (item, index)) ?? new List<(T, int)>();
-
-
-
-
+        #endregion
 
 
         public static IEnumerable<GeometryModel3D> ConvertSolidsToModel3D(IEnumerable<Solid> solids)
@@ -358,7 +359,7 @@ namespace TVGL
                     var f = ts.Faces[i];
                     var faceColor = (f.Color == null) ? defaultColor
                         : new SharpDX.Color4(f.Color.Rf, f.Color.Gf, f.Color.Bf, f.Color.Af);
-                    if (colorToFaceDict.TryGetValue(faceColor,out var ints))
+                    if (colorToFaceDict.TryGetValue(faceColor, out var ints))
                         ints.Add(i);
                     else
                         colorToFaceDict.Add(faceColor, new List<int> { i });
@@ -398,10 +399,11 @@ namespace TVGL
                     Positions = new Vector3Collection(vs.Select(vox => new SharpDX.Vector3(vox[0] * s + xOffset,
                     vox[1] * s + yOffset, vox[2] * s + zOffset)))
                 },
-                Size = new System.Windows.Size(10 * s, 10 * s),
+                Size = new System.Windows.Size(s, s),
                 FixedSize = true,
                 Color = color
             };
         }
+
     }
 }

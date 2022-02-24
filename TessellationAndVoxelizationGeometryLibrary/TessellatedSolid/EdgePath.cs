@@ -185,6 +185,11 @@ namespace TVGL
             return IndexOf(item) != -1;
         }
 
+        internal bool Contains(Edge edge)
+        {
+            return EdgeList.Contains(edge);
+        }
+
         public void CopyTo((Edge edge, bool dir)[] array, int arrayIndex)
         {
             for (int i = arrayIndex; i < array.Length; i++)

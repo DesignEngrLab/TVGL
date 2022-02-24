@@ -296,8 +296,9 @@ namespace TVGL
             if (string.IsNullOrWhiteSpace(heading))
                 Heading = DateTime.Now.ToShortDateString();
             else Heading = heading;
-            if (!string.IsNullOrWhiteSpace(title))
-                Title = title;
+            if (string.IsNullOrWhiteSpace(title))
+                Title = "title";
+            else Title = title;
             if (!string.IsNullOrWhiteSpace(subtitle))
                 SubTitle = subtitle;
             EffectsManager = new DefaultEffectsManager();
