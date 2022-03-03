@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml.Serialization;
 using TVGL.TwoDimensional;
 using TVGL.Voxelization;
@@ -156,8 +157,8 @@ namespace TVGL.IOFunctions
         /// Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.</exception>
         public static void Open(Stream s, string filename, out TessellatedSolid solid)
         {
-            //try
-            //{
+            try
+            {
                 var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
@@ -178,9 +179,12 @@ namespace TVGL.IOFunctions
                         solid = AMFFileData.OpenSolids(s, filename)[0];
                         break;
 
+                    case FileType.OBJ:
+                        solid = OBJFileData.OpenSolids(s, filename)[0];
+                        break;
+
                     case FileType.OFF:
                         solid = OFFFileData.OpenSolid(s, filename);
-                        // http://en.wikipedia.org/wiki/OFF_(file_format)
                         break;
 
                     case FileType.PLY_ASCII:
@@ -192,6 +196,10 @@ namespace TVGL.IOFunctions
                         solid = ShellFileData.OpenSolids(s, filename)[0];
                         break;
 
+                    case FileType.unspecified:
+                        solid = null;
+                        break;
+
                     default:
                         var serializer = new JsonSerializer();
                         var sr = new StreamReader(s);
@@ -199,11 +207,12 @@ namespace TVGL.IOFunctions
                             solid = serializer.Deserialize<TessellatedSolid>(reader);
                         break;
                 }
-            //}
-            //catch (Exception exc)
-            //{
-            //    throw new Exception("Cannot open file. Message: " + exc.Message);
-            //}
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine("Cannot open file. Message: " + exc.Message);
+                solid = null;
+            }
         }
 
         /// <summary>
@@ -216,8 +225,8 @@ namespace TVGL.IOFunctions
         /// <exception cref="Exception">Cannot open file. Message: " + exc.Message</exception>
         public static void Open(Stream s, string filename, out TessellatedSolid[] tessellatedSolids)
         {
-            try
-            {
+            //try
+            //{
                 var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
@@ -242,23 +251,31 @@ namespace TVGL.IOFunctions
                         tessellatedSolids = ShellFileData.OpenSolids(s, filename);
                         break;
 
+                    case FileType.OBJ:
+                        tessellatedSolids = OBJFileData.OpenSolids(s, filename);
+                        break;
+
                     case FileType.OFF:
                     case FileType.PLY_ASCII:
                     case FileType.PLY_Binary:
                         throw new Exception("Attempting to open multiple solids with a " + extension.ToString() + " file.");
-                    default:
+                    case FileType.TVGL:
                         var serializer = new JsonSerializer();
                         var sr = new StreamReader(s);
                         using (var reader = new JsonTextReader(sr))
                             // note this is a hack...<T> is overly specific
                             tessellatedSolids = serializer.Deserialize<TessellatedSolid[]>(reader);
                         break;
+                    default:
+                        Message.output(filename + " is not a recognized 3D format.");
+                        tessellatedSolids = new TessellatedSolid[0];
+                        break;
                 }
-            }
-            catch (Exception exc)
-            {
-                throw new Exception("Cannot open file. Message: " + exc.Message);
-            }
+            //}
+            //catch (Exception exc)
+            //{
+            //    throw new Exception("Cannot open file. Message: " + exc.Message);
+            //}
         }
 
         /// <summary>
@@ -320,6 +337,9 @@ namespace TVGL.IOFunctions
 
                     case FileType.AMF:
                         return AMFFileData.OpenSolids(s, filename)[0];
+
+                    case FileType.OBJ:
+                        return OBJFileData.OpenSolids(s, filename)[0];
 
                     case FileType.OFF:
                         return OFFFileData.OpenSolid(s, filename);
@@ -427,7 +447,7 @@ namespace TVGL.IOFunctions
             Open(stream, out solid);
         }
 
-        private static FileType GetFileTypeFromExtension(string extension)
+        public static FileType GetFileTypeFromExtension(string extension)
         {
             extension = extension.ToLower(CultureInfo.InvariantCulture).Trim(' ', '.');
             switch (extension)
@@ -436,6 +456,7 @@ namespace TVGL.IOFunctions
                 case "3mf": return FileType.ThreeMF;
                 case "model": return FileType.Model3MF;
                 case "amf": return FileType.AMF;
+                case "obj": return FileType.OBJ;
                 case "off": return FileType.OFF;
                 case "ply": return FileType.PLY_ASCII;
                 case "shell": return FileType.SHELL;
@@ -454,6 +475,7 @@ namespace TVGL.IOFunctions
                 case FileType.ThreeMF: return "3mf";
                 case FileType.Model3MF: return "model";
                 case FileType.AMF: return "amf";
+                case FileType.OBJ: return "obj";
                 case FileType.OFF: return "off";
                 case FileType.PLY_ASCII:
                 case FileType.PLY_Binary: return "ply";
@@ -975,9 +997,9 @@ namespace TVGL.IOFunctions
             return Double.NaN;
         }
 
-        #endregion Open/Load/Read
+#endregion Open/Load/Read
 
-        #region Save/Write
+#region Save/Write
 
         /// <summary>
         /// Saves the specified solids to a file.
@@ -1036,6 +1058,9 @@ namespace TVGL.IOFunctions
                 case FileType.AMF:
                     return AMFFileData.SaveSolids(stream, solids.Cast<TessellatedSolid>().ToArray());
 
+                case FileType.OBJ:
+                    return OBJFileData.SaveSolids(stream, solids.Cast<TessellatedSolid>().ToArray());
+
                 case FileType.ThreeMF:
                     return ThreeMFFileData.Save(stream, solids.Cast<TessellatedSolid>().ToArray());
 
@@ -1076,6 +1101,9 @@ namespace TVGL.IOFunctions
 
                 case FileType.AMF:
                     return AMFFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
+
+                case FileType.OBJ:
+                    return OBJFileData.SaveSolids(stream, new[] { (TessellatedSolid)solid });
 
                 case FileType.ThreeMF:
                     return ThreeMFFileData.Save(stream, new[] { (TessellatedSolid)solid });
@@ -1161,14 +1189,29 @@ namespace TVGL.IOFunctions
                 Formatting = Formatting.Indented,
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             };
-            using var fileStream = File.OpenWrite(filename);
-            using var sw = new StreamWriter(fileStream);
-            using var writer = new JsonTextWriter(sw);
-            var jObject = JObject.FromObject(polygon, serializer);
-            jObject.WriteTo(writer);
-            writer.Flush();
-        }
 
+            var NumberOfRetries = 3;
+            var DelayOnRetry = 1000;
+            for (int i = 1; i <= NumberOfRetries; ++i)
+            {
+                try
+                {
+                    using var fileStream = File.OpenWrite(filename);
+                    using var sw = new StreamWriter(fileStream);
+                    using var writer = new JsonTextWriter(sw);
+                    var jObject = JObject.FromObject(polygon, serializer);
+                    jObject.WriteTo(writer);
+                    writer.Flush();
+                    break; // When done we can break loop
+                }
+                catch (IOException e) when (i <= NumberOfRetries)
+                {
+                    // You may check error code to filter some exceptions, not every error
+                    // can be recovered.
+                    Thread.Sleep(DelayOnRetry);
+                }
+            }           
+        }
 
         /// <summary>
         /// Opens the specified filename.
@@ -1223,6 +1266,6 @@ namespace TVGL.IOFunctions
             }
         }
 
-        #endregion Save/Write
+#endregion Save/Write
     }
 }

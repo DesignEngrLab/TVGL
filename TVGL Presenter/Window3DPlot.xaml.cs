@@ -1,56 +1,42 @@
-// ***********************************************************************
-// Assembly         : TVGL Presenter
-// Author           : Matt
-// Created          : 05-20-2016
-//
-// Last Modified By : Matt
-// Last Modified On : 05-18-2016
-// ***********************************************************************
-// <copyright file="Window3DPlot.xaml.cs" company="">
-//     Copyright ©  2014
+ï»¿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Window3DPlot.xaml.cs" company="Helix Toolkit">
+//   Copyright (c) 2014 Helix Toolkit contributors
 // </copyright>
-// <summary></summary>
-// ***********************************************************************
-
+// <summary>
+//   Interaction logic for Window3DPlot.xaml
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+using HelixToolkit.Wpf.SharpDX;
 using System;
-using System.Collections.Generic;
 using System.Windows;
-
 
 namespace TVGL
 {
+
+
     /// <summary>
-    ///     Class Window3DPlot.
+    /// Interaction logic for Window3DPlot.xaml
     /// </summary>
     public partial class Window3DPlot : Window
     {
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Window3DPlot" /> class.
-        /// </summary>
-        public Window3DPlot()
+        public Window3DPlot(Window3DPlotViewModel viewModel)
         {
-            InitializeComponent();
+            this.InitializeComponent();
+            this.DataContext = viewModel;
+            Closed += (s, e) =>
+            {
+                if (DataContext is IDisposable)
+                {
+                    (DataContext as IDisposable).Dispose();
+                }
+            };
+            ((Window3DPlotViewModel)DataContext).SetUpCamera(this.view);
         }
 
-        /// <summary>
-        ///     Handles the OnChecked event of the GridLines control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="RoutedEventArgs" /> instance containing the event data.</param>
-        private void GridLines_OnChecked(object sender, RoutedEventArgs e)
+        private void ResetCameraButtonClick(object sender, RoutedEventArgs e)
         {
-            GridLines.Visible = true;
+            ((Window3DPlotViewModel)DataContext).ResetCameraCommand();
         }
-
-        /// <summary>
-        ///     Handles the OnUnChecked event of the GridLines control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="RoutedEventArgs" /> instance containing the event data.</param>
-        private void GridLines_OnUnChecked(object sender, RoutedEventArgs e)
-        {
-            GridLines.Visible = false;
-        }
-        
     }
+
 }

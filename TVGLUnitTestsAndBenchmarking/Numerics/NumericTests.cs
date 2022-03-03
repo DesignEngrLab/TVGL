@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
-    public static class TVGLNumericsTests
+    public static partial class TVGLNumericsTests
     {
         static Random r = new Random();
         static double r100 => 200.0 * r.NextDouble() - 100.0;
@@ -103,10 +103,10 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     m = new Matrix4x4(r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100);
                     v1 = new Vector3(r100, r100, r100);
-                    v2 = v1.Transform(m);
+                    v2 = v1.Multiply(m);
                 }
                 while (!Matrix4x4.Invert(m, out mInv));
-                Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
+                Assert.True(v1.IsPracticallySame(v2.Multiply(mInv), 1e-10));
             }
         }
         [Fact]
@@ -122,42 +122,11 @@ namespace TVGLUnitTestsAndBenchmarking
                 {
                     m = new Matrix4x4(r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100, r100);
                     v1 = new Vector3(r100, r100, r100);
-                    v2 = v1.Transform(m);
+                    v2 = v1.Multiply(m);
                 }
                 while (!Matrix4x4.Invert(m, out mInv));
-                Assert.True(v1.IsPracticallySame(v2.Transform(mInv), 1e-10));
+                Assert.True(v1.IsPracticallySame(v2.Multiply(mInv), 1e-10));
             }
         }
-
-
-        [Fact]
-        public static void QuarticSolve()
-        {
-            for (int i = 0; i < 5000; i++)
-            {
-                var r = new List<ComplexNumber>
-                {
-                    new ComplexNumber(r10,0),
-                    new ComplexNumber(r10,0),
-                    new ComplexNumber(r10,0),
-                    new ComplexNumber(r10,0)
-                };
-                var a = r10;
-                var b = -a * (r[0] + r[1] + r[2] + r[3]);
-                var c = +a * (r[0] * r[1] + r[0] * r[2] + r[1] * r[2] + r[0] * r[3] + r[1] * r[3] + r[2] * r[3]);
-                var d = -a * (r[0] * r[1] * r[2] + r[0] * r[1] * r[3] + r[0] * r[2] * r[3] + r[1] * r[2] * r[3]);
-                var e = +a * (r[0] * r[1] * r[2] * r[3]);
-
-
-                foreach (var root in PolynomialSolve.Quartic(a, b.Real, c.Real, d.Real, e.Real))
-                {
-                    Assert.True(r.Exists(origRoot => !root.IsPracticallySame(origRoot)));
-                }
-
-
-            }
-        }
-
-
     }
 }

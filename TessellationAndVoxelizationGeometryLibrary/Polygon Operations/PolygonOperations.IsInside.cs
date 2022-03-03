@@ -14,6 +14,18 @@ namespace TVGL.TwoDimensional
     /// </summary>
     public static partial class PolygonOperations
     {
+        /// <summary>
+        /// Returns the single polygon that is encompasses the point or is closest to it. This will be a 
+        /// simple polygon as the method transverses each input as a polygon tree and simply find the loop
+        /// (positive or negative/hole) the polygon.
+        /// </summary>
+        /// <param name="polygons">The polygons.</param>
+        /// <param name="point">The point.</param>
+        /// <returns>Polygon.</returns>
+        //public Polygon ClosestPolygon(this IEnumerable<Polygon> polygons, Vector2 point)
+        //{
+
+        //}
         #region IsPointInSidePolygon methods 
         /// <summary>
         /// Determines whether the inner polygon is inside the specified outer polygon. This is a simpler and faster check
@@ -585,6 +597,34 @@ namespace TVGL.TwoDimensional
             }
             return intersections;
         }
+        /// <summary>
+        /// Find all the polygon intersection points along a single horizontal line.
+        /// Returns a list of intersections from lowest to highest along with the vertex that the line starts from.
+        /// </summary>
+        /// <param name="polygon">The polygon.</param>
+        /// <param name="YValue">The y value.</param>
+        /// <returns>SortedList&lt;System.Double, Vertex2D&gt;.</returns>
+        public static SortedList<double, Vertex2D> AllPolygonIntersectionPointsAlongHorizontalLine(this Polygon polygon, double YValue)
+        {
+            SortedList<double, Vertex2D> result = new SortedList<double, Vertex2D>(new NoEqualSort());
+            foreach (var poly in polygon.AllPolygons)
+            {
+                var startVertex = poly.Vertices[0];
+                var current = startVertex;
+                var currentIsAbove = startVertex.Y >= YValue;
+                do
+                {
+                    var line = current.StartLine;
+                    var next = line.ToPoint;
+                    var nextIsAbove = next.Y >= YValue;
+                    if (nextIsAbove != currentIsAbove)
+                        result.Add(line.FindXGivenY(YValue, out _), current);
+                    current = next;
+                    currentIsAbove = nextIsAbove;
+                } while (current != startVertex);
+            }
+            return result;
+        }
         #endregion
 
         /// <summary>
@@ -760,7 +800,7 @@ namespace TVGL.TwoDimensional
             var isOpposite = true;
             foreach (var intersect in intersections)
             {
-                if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.Relationship != SegmentRelationship.Abutting || 
+                if (intersect.Relationship != SegmentRelationship.NoOverlap || intersect.Relationship != SegmentRelationship.Abutting ||
                     intersect.CollinearityType != CollinearityTypes.BothOppositeDirection)
                 {
                     isOpposite = false;
@@ -1241,7 +1281,7 @@ namespace TVGL.TwoDimensional
                 for (int j = i + 1; j < numLines; j++)
                 {
                     var other = orderedLines[j];
-                    if (current.XMax < orderedLines[j].XMin) break;
+                    if (current.XMax < other.XMin) break;
                     if (current.IsAdjacentTo(other)) continue;
                     AddIntersectionBetweenLines(current, other, intersections, possibleDuplicates, polygonA.NumSigDigits, false, false);
                 }

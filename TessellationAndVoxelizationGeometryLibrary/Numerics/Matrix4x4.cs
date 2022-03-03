@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 // COMMENTEDCHANGE using System.Runtime.Intrinsics;
 // COMMENTEDCHANGE using System.Runtime.Intrinsics.X86;
 
-namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL.Numerics  
 {
     /// <summary>
     /// A structure encapsulating a 4x4 matrix.

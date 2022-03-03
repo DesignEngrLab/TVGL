@@ -164,7 +164,8 @@ namespace TVGL
 
         public void CopyTo((Edge edge, bool dir)[] array, int arrayIndex)
         {
-            throw new NotImplementedException();
+            for (int i = arrayIndex; i < array.Length; i++)
+                array[i] = (EdgeList[i], DirectionList[i]);
         }
 
         /// <summary>

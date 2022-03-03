@@ -57,10 +57,19 @@ namespace TVGL.Numerics
             return IsNegligible(v1 - v2, optionalTolerance);
         }
 
-        public static bool IsPracticallySame(this ComplexNumber v1, ComplexNumber v2, double optionalTolerance = DefaultEqualityTolerance)
+
+        /// <summary>
+        /// Determines whether [is practically same] [the specified x].
+        /// the norm is within 1e-15
+        /// </summary>
+        /// <param name="a">The v1.</param>
+        /// <param name="b">The v2.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if [is practically same] [the specified x]; otherwise, <c>false</c>.</returns>
+        internal static bool IsPracticallySame(this ComplexNumber a, ComplexNumber b, double optionalTolerance = DefaultEqualityTolerance)
         {
-            return v1.Real.IsPracticallySame(v2.Real, optionalTolerance) &&
-                v1.Imaginary.IsPracticallySame(v2.Imaginary, optionalTolerance);
+            return IsNegligible(a - b, optionalTolerance);
+
         }
 
         /// <summary>
@@ -93,6 +102,18 @@ namespace TVGL.Numerics
         public static bool IsNegligible(this double x, double optionalTolerance = DefaultEqualityTolerance)
         {
             return Math.Abs(x) <= optionalTolerance;
+        }
+
+
+        /// <summary>
+        /// Determines whether the specified v1 is negligible (|x| lte 1e-15).
+        /// </summary>
+        /// <param name="v1">The vector.</param>
+        /// <param name="optionalTolerance">An optional tolerance.</param>
+        /// <returns><c>true</c> if the specified x is negligible; otherwise, <c>false</c>.</returns>
+        public static bool IsNegligible(this ComplexNumber a, double optionalTolerance = DefaultEqualityTolerance)
+        {
+            return Math.Abs(a.Real) <= optionalTolerance && Math.Abs(a.Imaginary) <= optionalTolerance;
         }
 
         /// <summary>

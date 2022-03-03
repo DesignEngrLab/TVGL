@@ -16,6 +16,7 @@ namespace TVGL
         /// <value>The median.</value>
         public static double Median(this IEnumerable<double> numbers)
         {
+            if (!numbers.Any()) throw new ArgumentNullException(nameof(numbers));
             var numberList =new List<double>(numbers); //we need a list and this list will be mutated, so a copy is made.
             var index = (numberList.Count - 1) / 2;
             var loValue = nthOrderStatistic(numberList, index, 0, numberList.Count - 1);
@@ -152,7 +153,32 @@ namespace TVGL
         /// <param name="targetValue">The target value from which to take the difference for the error.
         /// If not provided, then mean of the numbers is used for the targetValue.</param>
         /// <returns>System.Double.</returns>
-        public static double NormalizedRootMeanSquareError(this IEnumerable<double> numbers, double targetValue=double.NaN)
+        public static double NormalizedRootMeanSquareError(this IEnumerable<double> numbers, double targetValue = double.NaN)
+        {
+            var numberList = numbers as IList<double> ?? numbers.ToList();
+            if (double.IsNaN(targetValue)) targetValue = Mean(numberList);
+            var error = 0.0;
+            var xMin = double.PositiveInfinity;
+            var xMax = double.NegativeInfinity;
+            foreach (var x in numberList)
+            {
+                if (x < xMin) xMin = x;
+                if (x > xMax) xMax = x;
+                var delta = x - targetValue;
+                error += delta * delta;
+            }
+            error = Math.Sqrt(error);
+            return error / (xMax - xMax);
+        }
+
+        /// <summary>
+        /// Gets the  root mean square error.
+        /// </summary>
+        /// <param name="numbers">The numbers.</param>
+        /// <param name="targetValue">The target value from which to take the difference for the error.
+        /// If not provided, then mean of the numbers is used for the targetValue.</param>
+        /// <returns>System.Double.</returns>
+        public static double RootMeanSquareError(this IEnumerable<double> numbers, double targetValue = double.NaN)
         {
             var numberList = numbers as IList<double> ?? numbers.ToList();
             if (double.IsNaN(targetValue)) targetValue = Mean(numberList);
@@ -162,8 +188,7 @@ namespace TVGL
                 var delta = x - targetValue;
                 error += delta * delta;
             }
-            error = Math.Sqrt(error);
-            return error / numberList.Max();
+            return Math.Sqrt(error);
         }
     }
 }

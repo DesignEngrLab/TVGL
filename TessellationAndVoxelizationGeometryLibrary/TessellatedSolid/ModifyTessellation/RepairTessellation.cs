@@ -66,6 +66,9 @@ namespace TVGL
                 foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
                     StoreFaceDoesNotLinkBackToVertex(ts, vertex, face);
             }
+
+            //Always perform any "repair" functions for issues that are not considered errors
+            SetNegligibleAreaFaceNormals(ts);
             if (ts.Errors.NoErrors)
             {
                 Message.output("** Model contains no errors.", 3);
@@ -403,6 +406,33 @@ namespace TVGL
             }
             else Message.output("Repair did not successfully fix all the problems.", 1);
             return completelyRepaired;
+        }
+
+        /// <summary>
+        /// Sets the face normal for any negligible area faces that have not already been set.
+        /// The neighbor's normal (in the next 2 lines) if the original face has no area (collapsed to a line).
+        /// This happens with T-Edges. We want to give the face the normal of the two smaller edges' other faces,
+        /// to preserve a sharp line. Also, if multiple T-Edges are adjacent, recursion may be necessary. 
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static bool SetNegligibleAreaFaceNormals(this TessellatedSolid ts, bool checkAllFaces = false)
+        {
+            if (!checkAllFaces && (ts.Errors == null || ts.Errors.FacesWithNegligibleArea == null)) return true;
+            var success = false;
+            var j = 0;
+            var facesToCheck = checkAllFaces ? ts.Faces : ts.Errors.FacesWithNegligibleArea.ToArray();
+            while (!success && j < 10)
+            {
+                j++;
+                success = true;
+                foreach (var face in facesToCheck)
+                    if (face.Normal.IsNull())
+                        if (!face.AdoptNeighborsNormal())
+                            success = false;
+            }
+            var faceToCheck = ts.Faces.Where(p => p.IndexInList == 97530).FirstOrDefault();
+            return success;
         }
 
         /// <summary>

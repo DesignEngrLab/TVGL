@@ -1,12 +1,14 @@
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace TVGL.Numerics
 {
+    /// <summary>
+    /// Struct ComplexNumber
+    /// </summary>
     public readonly struct ComplexNumber
     {
-        private const double SlerpEpsilon = 1e-6;
-
         /// <summary>
         /// Specifies the real-value of the vector component of the ComplexNumber.
         /// </summary>
@@ -25,9 +27,22 @@ namespace TVGL.Numerics
         }
 
         /// <summary>
+        /// Constructs a ComplexNumber from the given components.
+        /// </summary>
+        public ComplexNumber(double real)
+        {
+            Real = real;
+            Imaginary = 0.0;
+        }
+
+
+        public static ComplexNumber NaN => new ComplexNumber(double.NaN, double.NaN);
+
+        /// <summary>
         /// Calculates the length of the ComplexNumber.
         /// </summary>
         /// <returns>The computed length of the ComplexNumber.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double Length()
         {
             return Math.Sqrt(LengthSquared());
@@ -37,6 +52,7 @@ namespace TVGL.Numerics
         /// Calculates the length squared of the ComplexNumber. This operation is cheaper than Length().
         /// </summary>
         /// <returns>The length squared of the ComplexNumber.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double LengthSquared()
         {
             return Real * Real + Imaginary * Imaginary;
@@ -47,6 +63,7 @@ namespace TVGL.Numerics
         /// </summary>
         /// <param name="value">The source ComplexNumber.</param>
         /// <returns>The normalized ComplexNumber.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber Normalize(ComplexNumber value)
         {
             double invNorm = 1.0 / value.Length();
@@ -197,6 +214,7 @@ namespace TVGL.Numerics
         /// <param name="value1">The source ComplexNumber.</param>
         /// <param name="value2">The divisor.</param>
         /// <returns>The result of the division.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber Divide(ComplexNumber value1, ComplexNumber value2)
         {
             var oneOverDenom = 1 / (value2.Real * value2.Real + value2.Imaginary * value2.Imaginary);
@@ -219,10 +237,11 @@ namespace TVGL.Numerics
         /// <param name="value1">The source ComplexNumber.</param>
         /// <param name="value2">The divisor.</param>
         /// <returns>The result of the division.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber Divide(double value1, ComplexNumber value2)
         {
             var oneOverDenom = 1 / (value2.Real * value2.Real + value2.Imaginary * value2.Imaginary);
-            return new ComplexNumber(oneOverDenom * value1 * value2.Real, -oneOverDenom * value2.Imaginary);
+            return new ComplexNumber(oneOverDenom * value1 * value2.Real, -oneOverDenom * value1 * value2.Imaginary);
         }
 
         /// <summary>
@@ -234,12 +253,27 @@ namespace TVGL.Numerics
         public static ComplexNumber operator /(double value1, ComplexNumber value2) => Divide(value1, value2);
 
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber Sqrt(ComplexNumber value1)
         {
-            if (value1.JustRealNumber) return new ComplexNumber(Math.Sqrt(value1.Real), 0);
+            if (value1.JustRealNumber)
+            {
+                if (value1.Real > 0)
+                    return new ComplexNumber(Math.Sqrt(value1.Real));
+                return new ComplexNumber(0, Math.Sqrt(-value1.Real));
+            }
             var angle = Math.Atan2(value1.Imaginary, value1.Real);
-            angle *= 0.5;
-            var radius = Math.Sqrt(Math.Sqrt(value1.Real * value1.Real + value1.Imaginary * value1.Imaginary));
+            angle /= 2;
+            var radius = Math.Sqrt(value1.Length());
+            return new ComplexNumber(radius * Math.Cos(angle), radius * Math.Sin(angle));
+        }
+
+        public static ComplexNumber Cbrt(ComplexNumber value1)
+        {
+            if (value1.JustRealNumber) return new ComplexNumber(Math.Cbrt(value1.Real));
+            var angle = Math.Atan2(value1.Imaginary, value1.Real);
+            angle /= 3;
+            var radius = Math.Cbrt(value1.Length());
             return new ComplexNumber(radius * Math.Cos(angle), radius * Math.Sin(angle));
         }
 
@@ -327,6 +361,9 @@ namespace TVGL.Numerics
         /// <returns>The string representation.</returns>
         public override string ToString()
         {
+            if (JustRealNumber) string.Format(CultureInfo.CurrentCulture, "{0}", Real);
+            if (Imaginary < 0)
+                return string.Format(CultureInfo.CurrentCulture, "{0} - {1}i", Real, -Imaginary);
             return string.Format(CultureInfo.CurrentCulture, "{0} + {1}i", Real, Imaginary);
         }
 

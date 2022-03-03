@@ -121,23 +121,130 @@ namespace TVGL
             foreach (var layerKeyValuePair in Layer2D)
             {
                 var index = layerKeyValuePair.Key;
-                var zValue = StepDistances[index];
-                var numLoops = layerKeyValuePair.Value.Sum(poly => 1 + poly.NumberOfInnerPolygons);
+                var zValue = StepDistances[index];               
+
+                //Check that the loop does not contain any duplicate points
+                var skipHoles = false;
+                var layer2DLoops = layerKeyValuePair.Value;
+                if (ContainsDuplicatePoints(layer2DLoops))
+                {
+                    //try offsetting in by a small amount
+                    layer2DLoops = PolygonOperations.OffsetSquare(layer2DLoops, -Constants.LineSlopeTolerance, Constants.LineSlopeTolerance);
+                    //Offsetting did not work, so try offsetting by a larger amount.
+                    if (ContainsDuplicatePoints(layer2DLoops))
+                    {
+                        layer2DLoops = PolygonOperations.OffsetSquare(layer2DLoops, -Constants.LineSlopeTolerance * 10, Constants.LineSlopeTolerance);
+                        //If still no luck, then skip the inner loops
+                        skipHoles = ContainsDuplicatePoints(layer2DLoops);
+                    }            
+                }
+
+                var numLoops = layer2DLoops.Sum(poly => 1 + poly.NumberOfInnerPolygons);
                 var layer = new Vector3[numLoops][];
                 result[k++] = layer;
                 int j = 0;
-                foreach (var poly in layerKeyValuePair.Value)
-                    foreach (var innerPoly in poly.AllPolygons)
+                foreach (var poly in layer2DLoops)
+                {
+                    if (skipHoles)
                     {
-                        var loop = new Vector3[innerPoly.Path.Count];
-                        layer[j] = loop;
+                        var loop = new Vector3[poly.Path.Count];           
                         for (int i = 0; i < loop.Length; i++)
-                            loop[i] = (new Vector3(innerPoly.Path[i], zValue)).Transform(BackTransform);
-                        j++;
+                            loop[i] = new Vector3(poly.Path[i], zValue).Multiply(BackTransform);
+                        layer[j++] = loop;
                     }
+                    else
+                    {
+                        foreach (var path in poly.AllPaths)
+                        {
+                            var loop = new Vector3[path.Count];
+                            for (int i = 0; i < path.Count; i++)
+                                loop[i] = new Vector3(path[i], zValue).Multiply(BackTransform);
+                            layer[j++] = loop;
+                        }
+                    }                    
+                }                  
             }
             return result;
         }
 
+        private static bool ContainsDuplicatePoints(IList<Polygon> layer)
+        {
+            var allPoints = new HashSet<Vector2>();
+            foreach (var poly in layer)
+            {
+                foreach (var innerPoly in poly.AllPolygons)
+                {
+                    foreach (var point in innerPoly.Path)
+                    {
+                        if (allPoints.Contains(point))
+                            return true;
+                        else
+                            allPoints.Add(point);
+                    }
+                }
+            }
+            return false;
+        }
+
+        public void SetLayer2DArea()
+        {
+            Layer2DArea = new Dictionary<int, double>();
+            foreach(var layer in Layer2D)
+            {
+                Layer2DArea.Add(layer.Key, layer.Value.Sum(p => p.Area));
+            }
+        }
+
+        public void Reverse(Dictionary<int, double> newStepDistances)
+        {
+            var direction = Direction * -1;
+            var transform = direction.TransformToXYPlane(out var backTransform);
+            //Get the solid offset, since Layer2D may not be the full size as the StepDistances.
+            var maxD = StepDistances.Keys.Max() - Layer2D.Keys.Max();
+            StepDistances = newStepDistances;
+            if (Layer2D != null && Layer2D.Any())
+            {
+                var min = Layer2D.Keys.Min();
+                var j = maxD; //Start at maxD offset, not necessarily zero.
+                var newLayer2D = new Dictionary<int, IList<Polygon>>();
+                for (var i = Layer2D.Keys.Max(); i >= min; i--)
+                {
+                    var polygons = new List<Polygon>();
+                    foreach (var polygon in Layer2D[i])
+                    {
+                        //There is probably a better way to this, but this should work.
+                        //First, convert the 2D polygons back into their 3D coordates using 
+                        //the original BackTransform. Then, transform to the new 2D coordinates.
+                        //The polygons are now aligned with the specified reversed direction.
+                        var positiveLoop = polygon.Path.ConvertTo3DLocations(BackTransform);
+                        var positivePath = positiveLoop.ProjectTo2DCoordinates(transform).ToList();
+                        if (positivePath.Area() < 0) positivePath.Reverse();
+                        var newPolygon = new Polygon(positivePath);
+                        foreach (var path in polygon.InnerPolygons)
+                        {
+                            var negativeLoop = path.Path.ConvertTo3DLocations(BackTransform);
+                            var negativePath = negativeLoop.ProjectTo2DCoordinates(transform).ToList();
+                            if (negativePath.Area() > 0) negativePath.Reverse();
+                            newPolygon.AddInnerPolygon(new Polygon(negativePath));
+                        }
+                        polygons.Add(newPolygon);
+                    }
+                    newLayer2D[j++] = polygons;
+                }                   
+                Layer2D = newLayer2D;
+            }           
+            if (Layer2DArea != null && Layer2DArea.Any())
+            {
+                var j = 0;
+                var min = Layer2DArea.Keys.Min();
+                var newLayer2DArea = new Dictionary<int, double>();
+                for (var i = Layer2DArea.Keys.Max(); i >= min; i--)
+                    newLayer2DArea[j++] = Layer2DArea[i];
+            }
+            TransformMatrix = transform;
+            BackTransform = backTransform;
+            FirstIndex = Layer2D.Keys.First();
+            LastIndex = Layer2D.Keys.Last();
+        }
     }
 }

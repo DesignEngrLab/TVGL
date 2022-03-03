@@ -666,7 +666,7 @@ namespace TVGL
             //Get the Direction vectors from rotating caliper and projection.
 
             var direction2 = new Vector3(boundingRectangle.Direction1, 0);
-            direction2 = direction2.Transform(backTransform).Normalize();
+            direction2 = direction2.Multiply(backTransform).Normalize();
             var direction3 = direction1.Cross(direction2); // you could also get this from the bounding rectangle
             // but this is quicker and more accurate to reproduce with cross-product 
             IEnumerable<T>[] verticesOnFaces = new IEnumerable<T>[6];
@@ -700,7 +700,7 @@ namespace TVGL
         /// <param name="edges">The edges.</param>
         /// <param name="FacesToContain">The faces to contain.</param>
         /// <returns>IEnumerable&lt;SurfaceBorder&gt;.</returns>
-        internal static IEnumerable<SurfaceBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
+        public static IEnumerable<SurfaceBorder> GetLoops(this HashSet<Edge> edges, HashSet<PolygonalFace> FacesToContain)
         {
             while (edges.Any())
             {
@@ -710,7 +710,7 @@ namespace TVGL
                 var startVertex = correctDirection ? currentEdge.From : currentEdge.To;
                 var currentVertex = correctDirection ? currentEdge.To : currentEdge.From;
                 var border = new SurfaceBorder();
-                border.Edges.AddEnd(currentEdge, correctDirection);
+                border.AddEnd(currentEdge, correctDirection);
                 foreach (var forwardDir in new[] { true, false })
                 {
                     do
@@ -744,16 +744,16 @@ namespace TVGL
                         }
                         correctDirection = (currentEdge.From == currentVertex) == forwardDir;
                         edges.Remove(currentEdge);
-                        if (forwardDir) border.Edges.AddEnd(currentEdge, correctDirection);
-                        else border.Edges.AddBegin(currentEdge, correctDirection);
+                        if (forwardDir) border.AddEnd(currentEdge, correctDirection);
+                        else border.AddBegin(currentEdge, correctDirection);
                         currentVertex = currentEdge.OtherVertex(currentVertex);
                     } while (currentEdge != null && currentVertex != startVertex);
-                    border.Edges.IsClosed = currentVertex == startVertex && border.Edges.NumPoints > 2;
+                    border.IsClosed = currentVertex == startVertex && border.NumPoints > 2;
 #if PRESENT
                     //TVGL.Presenter.ShowVertexPathsWithSolid(new [] {border.GetVertices().Select(v => v.Coordinates) }, new[] { debugSolid }, false);
 #endif
-                    if (border.Edges.IsClosed) break;
-                    var currentEdgeAndDir = border.Edges[0];
+                    if (border.IsClosed) break;
+                    var currentEdgeAndDir = border[0];
                     currentEdge = currentEdgeAndDir.edge;
                     currentVertex = currentEdgeAndDir.dir ? currentEdge.From : currentEdge.To;
                 }

@@ -374,14 +374,14 @@ namespace TVGLUnitTestsAndBenchmarking
                     while (poly1 == null)
                     {
                         offset1 = r1 * 0.5 * minDimension;
-                        var polys1 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1)).OffsetRound(offset1);
+                        var polys1 = solid.GetCrossSection(new Plane(bCenter + r1 * minDimension, n1), out _).OffsetRound(offset1);
                         if (polys1.Count > 0) poly1 = polys1.LargestPolygon();
                     }
                     Polygon poly2 = null;
                     while (poly2 == null)
                     {
                         var offset2 = r1 * 0.5 * minDimension;
-                        var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 *0.5* minDimension, n1)).OffsetRound(offset1);
+                        var polys2 = solid.GetCrossSection(new Plane(bCenter + r1 *0.5* minDimension, n1), out _).OffsetRound(offset1);
                         if (polys2.Count > 0) poly2 = polys2.LargestPolygon();
                     }
                     yield return new KeyValuePair<string, (Polygon, Polygon)>(name + k, (poly1, poly2));

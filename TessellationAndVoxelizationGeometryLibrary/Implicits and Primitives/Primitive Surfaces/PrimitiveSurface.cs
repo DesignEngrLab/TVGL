@@ -24,12 +24,9 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
-            Faces = new HashSet<PolygonalFace>(faces);
-            foreach (var face in Faces)
-                face.BelongsToPrimitive = this;
-            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+            if (faces == null) return;
+            SetFacesAndVertices(faces);
         }
-
 
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
         {
@@ -68,10 +65,17 @@ namespace TVGL
 
         #endregion Constructors
 
+        public void SetFacesAndVertices(IEnumerable<PolygonalFace> faces)
+        {
+            Faces = new HashSet<PolygonalFace>(faces);
+            foreach (var face in Faces)
+                face.BelongsToPrimitive = this;
+            Vertices = new HashSet<Vertex>(Faces.SelectMany(f => f.Vertices).Distinct());
+        }
 
-        public abstract double CalculateError(IEnumerable<IVertex3D> vertices = null);
+        public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
 
-
+        public int Index { get; set; }
 
         /// <summary>
         ///     Gets the area.
@@ -138,6 +142,22 @@ namespace TVGL
             protected set => _innerEdges = value;
         }
 
+        /// <summary>
+        ///     Gets IsPositive by using the inner edges
+        /// </summary>
+        /// <value>The inner edges.</value>
+        public bool PositiveByEdges()
+        {
+            var concave = 0;
+            var convex = 0;
+            foreach(var edge in InnerEdges)
+            {
+                if (edge.Curvature == CurvatureType.Concave) concave++;
+                else if (edge.Curvature == CurvatureType.Convex) convex++;
+            }
+            return convex > concave;
+        }
+
         public int[] InnerEdgeIndices
         {
             get
@@ -182,37 +202,14 @@ namespace TVGL
 
         private void DefineInnerOuterEdges()
         {
-            var outerEdgeHash = new HashSet<Edge>();
-            var innerEdgeHash = new HashSet<Edge>();
-            if (Faces != null)
-                foreach (var face in Faces)
-                {
-                    foreach (var edge in face.Edges)
-                    {
-                        if (innerEdgeHash.Contains(edge)) continue;
-                        if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
-                        else
-                        {
-                            innerEdgeHash.Add(edge);
-                            outerEdgeHash.Remove(edge);
-                        }
-                    }
-                }
-            _outerEdges = outerEdgeHash;
-            _innerEdges = innerEdgeHash;
+            MiscFunctions.DefineInnerOuterEdges(Faces, out _innerEdges, out _outerEdges);
         }
 
         /// <summary>
         /// Transforms the shape by the provided transformation matrix.
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
-        public virtual void Transform(Matrix4x4 transformMatrix)
-        {
-            foreach (var v in Vertices)
-            {
-                v.Coordinates = v.Coordinates.Transform(transformMatrix);
-            }
-        }
+        public abstract void Transform(Matrix4x4 transformMatrix);
 
         /// <summary>
         ///     Updates surface by adding face
@@ -316,6 +313,18 @@ namespace TVGL
                 return _borders;
             }
         }
+
+        public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
+        {
+            var transform = axis.TransformToXYPlane(out _);
+            foreach(var border in Borders)
+            {
+                var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
+                if (anchor != Vector3.Null && polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform)))
+                    yield return border;
+            }    
+        }
+
         /// <summary>
         /// Takes in a list of edges and returns their list of loops for edges and vertices
         /// The order of the output loops are not considered (i.e., they may be "reversed"),
@@ -326,13 +335,13 @@ namespace TVGL
         public void DefineBorders(double maxErrorInCurveFit = -1.0)
         {
             var currentSurfaceError = CalculateError();
-            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = currentSurfaceError;
+            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = Math.Max(currentSurfaceError, Constants.ErrorForFaceInSurface * 100);
             _borders = new List<SurfaceBorder>();
             var edges = new HashSet<Edge>(OuterEdges);
             foreach (var border in edges.GetLoops(Faces))
             {
                 _borders.Add(border);
-                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates), 
+                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates),
                     out var bestFitPlane, out var planeResidual, out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)
                 border.Plane = bestFitPlane;
@@ -340,8 +349,16 @@ namespace TVGL
                 border.CurveError = curveResidual;
                 SetBorderConvexity(border);
                 if (curveResidual < maxErrorInCurveFit)
-                    border.Curve = curve;
-                if (border.Edges.IsClosed)
+                {
+                    //Check curve residual with center points to avoid fitting curves to non-curved features.
+                    //Do not do this when defining the curve, because these center points will always have increased error.
+                    var vertices = border.EdgeList.Select(p => p.Center());
+                    foreach (var p in vertices)
+                        curveResidual += curve.SquaredErrorOfNewPoint(p.ConvertTo2DCoordinates(border.Plane.AsTransformToXYPlane));
+                    if (curveResidual < maxErrorInCurveFit)
+                        border.Curve = curve;
+                }                 
+                if (border.IsClosed)
                 {
                     var axis = Vector3.Null;
                     var anchor = Vector3.Null;
@@ -374,18 +391,30 @@ namespace TVGL
                 }
             }
         }
-
+        
         private static void SetBorderConvexity(SurfaceBorder border)
         {
             var concave = 0;
             var convex = 0;
-            foreach (var (edge, _) in border.Edges)
+            var flat = 0;
+            foreach (var (edge, _) in border)
             {
-                if (edge.Curvature == CurvatureType.Concave) concave++;
-                else if (edge.Curvature == CurvatureType.Convex) convex++;
+                var p1 = edge.OwnedFace.OtherVertex(edge);
+                var p2 = edge.OtherFace.OtherVertex(edge);
+                var v1 = p2.Coordinates - p1.Coordinates;
+                var dot1 = v1.Dot(edge.OwnedFace.Normal);
+                var v2 = p1.Coordinates - p2.Coordinates;
+                var dot2 = v2.Dot(edge.OtherFace.Normal);
+                if(Math.Sign(dot1) != Math.Sign(dot2)) { }
+                if (dot1 < 0 && edge.Curvature == CurvatureType.Concave ) { }
+                if (dot1 > 0 && edge.Curvature == CurvatureType.Convex && !edge.InternalAngle.IsNegligible(0.001)) { }
+                if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.SameFaceNormalDotTolerance)) flat++;
+                else if (edge.InternalAngle > Math.PI) concave++;
+                else convex++;
             }
-            border.FullyConcave = concave > 0 && convex == 0;
-            border.FullyConvex = convex > 0 && concave == 0;
+            border.FullyFlush = flat > 0 && convex == 0 && concave == 0;
+            border.FullyConcave = concave > 0 && flat == 0 && convex == 0;
+            border.FullyConvex = convex > 0 && flat == 0  && concave == 0;
         }
 
         public double MaxX { get; protected set; } = double.NaN;
@@ -420,7 +449,11 @@ namespace TVGL
             }
         }
 
-        public Vector3 Center
+        /// <summary>
+        /// Gets the center of the bounding box.
+        /// </summary>
+        /// <value>The center of the bounding box.</value>
+        public Vector3 CenterOfBoundingBox
         {
             get
             {

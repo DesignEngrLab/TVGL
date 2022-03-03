@@ -22,9 +22,24 @@ namespace TVGL
         /// <param name="axis">The axis.</param>
         /// <param name="aperture">The aperture.</param>
         /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
-        /// <param name="facesAll">The faces all.</param>
-        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive, IEnumerable<PolygonalFace> facesAll = null)
-            : base(facesAll)
+        /// <param name="faces">The faces all.</param>
+        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive)
+        {
+            Apex = apex;
+            Axis = axis;
+            Aperture = aperture;
+            IsPositive = isPositive;
+        }
+        /// <summary>
+        /// Cone
+        /// </summary>
+        /// <param name="apex">The apex.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="aperture">The aperture.</param>
+        /// <param name="isPositive">if set to <c>true</c> [is positive].</param>
+        /// <param name="faces">The faces all.</param>
+        public Cone(Vector3 apex, Vector3 axis, double aperture, bool isPositive, IEnumerable<PolygonalFace> faces)
+            : base(faces)
         {
             Apex = apex;
             Axis = axis;
@@ -36,7 +51,7 @@ namespace TVGL
         /// </summary>
         /// <param name="originalToBeCopied">The original to be copied.</param>
         public Cone(Cone originalToBeCopied, TessellatedSolid copiedTessellatedSolid = null)
-            : base(originalToBeCopied,  copiedTessellatedSolid )
+            : base(originalToBeCopied, copiedTessellatedSolid)
         {
             IsPositive = originalToBeCopied.IsPositive;
             Aperture = originalToBeCopied.Aperture;
@@ -51,7 +66,8 @@ namespace TVGL
         public bool IsPositive;
 
         /// <summary>
-        ///     Gets the aperture.
+        ///     Gets the aperture. This is a slope, like m, not an angle. It is dimensionless and NOT radians.
+        ///     like y = mx + b
         /// </summary>
         /// <value>The aperture.</value>
         public double Aperture { get; set; }
@@ -75,21 +91,27 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(Matrix4x4 transformMatrix)
         {
-            throw new NotImplementedException();
+            Axis = Axis.Multiply(transformMatrix);
+            Apex = Apex.Multiply(transformMatrix);
         }
 
-        public override double CalculateError(IEnumerable<IVertex3D> vertices = null)
+        public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
-            if (vertices == null) vertices = Vertices;
-            var numVerts = 0;
-            var aper = Aperture;
-            var sqDistanceSum = 0.0;
-            foreach (var v in vertices)
+            if (vertices == null)
             {
-                var coords = new Vector3(v.X, v.Y, v.Z);
-                var d = (coords - Apex).Cross(Axis).Length()
-                    - Math.Abs(aper * (coords - Apex).Dot(Axis));
-                sqDistanceSum += d * d;
+                vertices = new List<Vector3>();
+                vertices = Vertices.Select(v => v.Coordinates).ToList();
+                ((List<Vector3>)vertices).AddRange(InnerEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+                ((List<Vector3>)vertices).AddRange(OuterEdges.Select(edge => (edge.To.Coordinates + edge.From.Coordinates) / 2));
+            }
+            var sqDistanceSum = 0.0;
+            var numVerts = 0;
+            var cosApertureSquared = 1 / (1 + Aperture);
+            foreach (var c in vertices)
+            {
+                var d = (c - Apex).Cross(Axis).Length()
+                    - Math.Abs(Aperture * (c - Apex).Dot(Axis));
+                sqDistanceSum += d * d * cosApertureSquared;
                 numVerts++;
             }
             return sqDistanceSum / numVerts;

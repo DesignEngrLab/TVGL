@@ -59,7 +59,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public override BoundingBox Copy()
         {
-            var copiedBB = new BoundingBox<T>(this.Dimensions, this.Transform);
+            var copiedBB = new BoundingBox<T>(this.Dimensions.ToArray(), this.Transform);
             if (PointsOnFaces != null)
                 copiedBB.PointsOnFaces = new T[][]
                 {
@@ -71,26 +71,6 @@ namespace TVGL
                     this.PointsOnFaces[5].ToArray() 
                 };
             return copiedBB;
-        }
-
-        /// <summary>
-        /// Moves the face outward by the provided distance (or inward if distance is negative)
-        /// </summary>
-        /// <param name="face">The face as defined by the CartesianDirections enumerator. This is the local x,y,z - not the global.</param>
-        /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
-        public override void MoveFaceOutward(CartesianDirections face, double distance)
-        {
-            base.MoveFaceOutward(face, distance);
-            if (distance.IsNegligible()) return;
-            var negativeFace = face < 0;
-            var direction = Math.Abs((int)face) - 1;
-            if (PointsOnFaces != null)
-            {
-                //direction1-low,
-                ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
-                var vertexOnPlaneIndex = 2 * direction + (!negativeFace ? 1 : 0);
-                PointsOnFaces[vertexOnPlaneIndex] = Array.Empty<T>();
-            }
         }
     }
 
@@ -237,7 +217,7 @@ namespace TVGL
                     // since the transform would change 0,0,0 into the bottom corner
                     // it would also change Dimensions into the opposite corner.
                     // there the center can be found by transforming half the dimensions
-                    _center = (0.5 * new Vector3(Dimensions)).Transform(Transform);
+                    _center = (0.5 * new Vector3(Dimensions)).Multiply(Transform);
                 }
                 return _center;
             }
@@ -284,7 +264,7 @@ namespace TVGL
                 new PolygonalFace(new []{vertices[6],vertices[7],vertices[4] }),
                 new PolygonalFace(new []{vertices[6],vertices[4],vertices[5] })
             };
-                var random = new Random();
+                var random = new Random(0);
                 _tessellatedSolid = new TessellatedSolid(faces, true, false, vertices, new[] {
                     new Color(0.6f,(float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) });
             }
@@ -390,7 +370,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public virtual BoundingBox Copy()
         {
-            return new BoundingBox(this.Dimensions, this.Transform);
+            return new BoundingBox(this.Dimensions.ToArray(), this.Transform);
         }
 
         private const double smallAngle = 0.0038;  // current value is one minus cosine of 5 Degrees
@@ -416,10 +396,21 @@ namespace TVGL
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
         public void MoveFaceOutward(Vector3 direction, double distance)
         {
+            //First, we need to find which bounding box direction this is along
+            //If it is not along any of them, then return without any modification.
             var unitDir = direction.Normalize();
-            CartesianDirections cartesian = MiscFunctions.SnapDirectionToCartesian(unitDir, out var withinTolerance, smallAngle);
-            if (!withinTolerance) return;
-            MoveFaceOutward(cartesian, distance);
+            int directionIndex = -1;
+            bool reverse = false;
+            for(var i = 0; i < 3; i++)
+            {
+                if (Directions[i].IsAlignedOrReverse(direction, out reverse, smallAngle))
+                {
+                    directionIndex = i;
+                    break;
+                }
+            }
+            if (directionIndex == -1) return;
+            MoveFaceOutward(directionIndex, !reverse, distance);
         }
 
         /// <summary>
@@ -429,31 +420,32 @@ namespace TVGL
         /// <param name="face">The face as defined by the CartesianDirections enumerator. This is the local x,y,z - not the global.</param>
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
         /// <returns>BoundingBox.</returns>
-        public BoundingBox MoveFaceOutwardToNewSolid(CartesianDirections face, double distance)
+        public BoundingBox MoveFaceOutwardToNewSolid(int directionIndex, bool forward, double distance)
         {
             var copy = this.Copy();
-            copy.MoveFaceOutward(face, distance);
+            copy.MoveFaceOutward(directionIndex, forward, distance);
             return copy;
         }
 
         /// <summary>
-        /// Moves the face outward by the provided distance (or inward if distance is negative)
+        /// Moves the face outward by the provided distance (or inward if distance is negative).
         /// </summary>
-        /// <param name="face">The face as defined by the CartesianDirections enumerator. This is the local x,y,z - not the global.</param>
+        /// <param name="direction">The direction vector corresponding to the face normal (this must be within 5 degrees or it won't apply).</param>
         /// <param name="distance">The distance to move the face by (negative will move the face inward).</param>
-        public virtual void MoveFaceOutward(CartesianDirections face, double distance)
+        public void MoveFaceOutward(int directionIndex, bool forward, double distance)
         {
+            //The bounding box is oriented from its origin (TranslationFromOrigin) outward
+            //along the given directions. When offsetting along a direction, just make that dimension bigger.
+            //When offsetting in the reverse of a direction, make the dimension bigger and then shift the origin.
             if (distance.IsNegligible()) return;
-            var negativeFace = face < 0;
-            var direction = Math.Abs((int)face) - 1;
-            Dimensions[direction] += distance;
-            if (negativeFace)
+            var direction = Directions[directionIndex];
+            Dimensions[directionIndex] += distance;
+            if (!forward)
             {
-                var translate = TranslationFromOrigin - Directions[direction] * distance;
+                var translate = TranslationFromOrigin - direction * distance;
                 Transform = new Matrix4x4(Transform.XBasisVector, Transform.YBasisVector,
                     Transform.ZBasisVector, translate);
             }
-
             ResetLazyFields();
         }
     }

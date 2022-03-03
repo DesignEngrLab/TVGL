@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
     <RootNamespace>TVGL</RootNamespace>
     <Version>1.0.17.1019</Version>
     <Product>Tessellation and Voxelization Geometry Library</Product>
     <PackageId>TVGL</PackageId>
-    <Authors>Matt Campbell, Brandon Massoni, Nima Rafibakhsh</Authors>
+    <Authors>Matt Campbell, Brandon Massoni</Authors>
     <Company>Design Engineering Lab</Company>
     <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C# implementation. As a .NET Standard library (and a legacy portable class library), the functions can be accessed from other managed code.</Description>
     <Copyright>2014</Copyright>
@@ -18,31 +18,14 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>3d, solid modeling, computational geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
-    <Platforms>AnyCPU;x64</Platforms>
-    <Configurations>Debug;Release;DebugSingleThread</Configurations>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>Standard2_1;CLIPPER;COMPARE</DefineConstants>
-    <DocumentationFile>bin\Release\netstandard2.0\TessellationAndVoxelizationGeometryLibrary.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <DocumentationFile>bin\Release\netstandard2.0\TessellationAndVoxelizationGeometryLibrary.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <DefineConstants>DEBUG;TRACE;Standard2_1;CLIPPER;COMPARE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugSingleThread|AnyCPU'">
-    <DefineConstants>DEBUG;Standard2_1;CLIPPER;COMPARE</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;Standard2_1;CLIPPER;COMPARE</DefineConstants>
-    <Optimize>false</Optimize>
+    <DefineConstants>TRACE;CLIPPER</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;CLIPPER</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -57,11 +40,6 @@
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
   </ItemGroup>
 </Project>

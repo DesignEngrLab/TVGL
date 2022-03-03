@@ -153,7 +153,12 @@ namespace TVGL.TwoDimensional
             Vector2 point, out Vector2 pointOnCurve)
         {
             throw new NotImplementedException();
+        }
 
+
+        public static IEnumerable<ComplexNumber> IntersectingConics()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -80,6 +80,13 @@ namespace TVGL
         /// </summary>
         [JsonIgnore]
         public TessellationError Errors { get; internal set; }
+
+        /// <summary>
+        /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
+        /// </summary>
+        /// <value>The nonsmooth edges.</value>
+        [JsonIgnore] 
+        public HashSet<Edge> NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
@@ -391,7 +398,6 @@ namespace TVGL
                             if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
                         }
                     }
-
                 }
             }
         }
@@ -407,6 +413,11 @@ namespace TVGL
             MakeEdges(fromSTL);
             CalculateVolume();
             this.CheckModelIntegrity();
+
+            //If the volume is zero, creating the convex hull may cause a null exception
+            if (this.Volume.IsNegligible()) return;
+
+            //Otherwise, create the convex hull and connect the vertices and faces that belong to the hull.
             ConvexHull = new TVGLConvexHull(this);
             if (ConvexHull.Vertices != null)
                 foreach (var cvxHullPt in ConvexHull.Vertices)
@@ -418,7 +429,6 @@ namespace TVGL
                     if (e != null) e.PartOfConvexHull = true;
             }
         }
-
 
         #endregion
 
@@ -957,6 +967,22 @@ namespace TVGL
                     var surfConstructor = surfType.GetConstructor(new[] { surfType, typeof(TessellatedSolid) });
                     copy.AddPrimitive((PrimitiveSurface)surfConstructor.Invoke(new object[] { surface, copy }));
                 }
+                //Rebuild the nonsmooth edges from the primitives if possible
+                if (NonsmoothEdges != null && NonsmoothEdges.Any())
+                {
+                    copy.NonsmoothEdges = new HashSet<Edge>();
+                    foreach (var primitive in copy.Primitives)
+                        foreach (var outerEdge in primitive.OuterEdges)
+                            copy.NonsmoothEdges.Add(outerEdge);
+                }
+            } 
+            else if (NonsmoothEdges != null && NonsmoothEdges.Any())
+            {
+                copy.NonsmoothEdges = new HashSet<Edge>();
+                foreach (var edge in NonsmoothEdges)
+                {
+                    copy.NonsmoothEdges.Add(copy.Edges[edge.IndexInList]);
+                }
             }
             return copy;
         }
@@ -1020,11 +1046,10 @@ namespace TVGL
             }
             Bounds = new[] { new Vector3(xMin, yMin, zMin), new Vector3(xMax, yMax, zMax) };
 
-
             //Update the faces
             foreach (var face in Faces)
             {
-                face.Update();
+                face.Update();// Transform(transformMatrix);
             }
             //Update the edges
             foreach (var edge in Edges)
@@ -1040,6 +1065,7 @@ namespace TVGL
             if (Primitives != null)
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
+            this.SetNegligibleAreaFaceNormals(true);
         }
         /// <summary>
         /// Gets a new solid by transforming its vertices.

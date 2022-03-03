@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,7 +37,7 @@ namespace TVGL
             #region Algorithm 1
 
             ////Randomize the list of points
-            //var r = new Random();
+            //var r = new Random(0);
             //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
 
             //if (randomPoints.Count < 2) return new Circle(0.0, points[0]);
@@ -90,7 +91,7 @@ namespace TVGL
             #endregion
 
             #region Algorithm 2: Furthest Point
-            //var r = new Random();
+            //var r = new Random(0);
             //var randomPoints = new List<Vector2>(points.OrderBy(p => r.Next()));
 
             //Algorithm 2
@@ -238,7 +239,7 @@ namespace TVGL
             var positivePolygons = new List<Polygon>();
             foreach (var outerPoly in polygons)
             {
-                foreach(var polygon in outerPoly.AllPolygons)
+                foreach (var polygon in outerPoly.AllPolygons)
                 {
                     if (polygon.IsPositive) positivePolygons.Add(polygon);
                     else negativePolygons.Add(polygon);
@@ -384,6 +385,64 @@ namespace TVGL
                 }
             }
             return minCylinder;
+        }
+
+        const int MaxMinBoundCylIterations = 120;
+
+        /// <summary>
+        ///     Gets the minimum bounding cylinder using 13 guesses for the depth direction
+        /// </summary>
+        /// <param name="convexHullVertices">The convex hull vertices.</param>
+        /// <returns>BoundingBox.</returns>
+        public static Vector3 MinimumBoundingCylinderAxis<T>(this IEnumerable<T> vertices, Vector3 likelyAxis) where T : IVertex3D
+        {
+            BoundingBox<T> box = null;
+            int j = 0;
+            var movement = 1.0;
+            var maxIters = MaxMinBoundCylIterations;
+            while (movement > 0.001 && maxIters-- > 0)
+            {
+                var perp1 = likelyAxis.GetPerpendicularDirection();
+                box = FindOBBAlongDirection(vertices, perp1);
+                var d1 = Math.Abs(box.Directions[0].Dot(likelyAxis));
+                var d2 = Math.Abs(box.Directions[1].Dot(likelyAxis));
+                var d3 = Math.Abs(box.Directions[2].Dot(likelyAxis));
+                j = 2;
+                double d = d3;
+                if (d1 > d2 && d1 > d3)
+                {
+                    j = 0;
+                    d = d1;
+                }
+                else if (d2 > d3)
+                {
+                    j = 1;
+                    d = d2;
+                }
+
+                var newAxis = box.Directions[j];
+                //Repeat along second perpendicular
+                var perp2 = newAxis.Cross(perp1);
+                box = FindOBBAlongDirection(vertices, perp2);
+                d1 = Math.Abs(box.Directions[0].Dot(newAxis));
+                d2 = Math.Abs(box.Directions[1].Dot(newAxis));
+                d3 = Math.Abs(box.Directions[2].Dot(newAxis));
+                j = 2;
+                d = d3;
+                if (d1 > d2 && d1 > d3)
+                {
+                    j = 0;
+                    d = d1;
+                }
+                else if (d2 > d3)
+                {
+                    j = 1;
+                    d = d2;
+                }
+                likelyAxis = box.Directions[j];
+                movement = 1 - d;
+            }
+            return likelyAxis;
         }
 
 

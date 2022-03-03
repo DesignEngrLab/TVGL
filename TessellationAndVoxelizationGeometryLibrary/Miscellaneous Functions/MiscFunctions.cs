@@ -138,6 +138,24 @@ namespace TVGL
             return distances;
         }
 
+        internal static void DefineInnerOuterEdges(IEnumerable<PolygonalFace> faces, out HashSet<Edge> innerEdgeHash, out HashSet<Edge> outerEdgeHash)
+        {
+            innerEdgeHash = new HashSet<Edge>();
+            outerEdgeHash = new HashSet<Edge>();
+            foreach (var face in faces)
+            {
+                foreach (var edge in face.Edges)
+                {
+                    if (innerEdgeHash.Contains(edge)) continue;
+                    if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
+                    else
+                    {
+                        innerEdgeHash.Add(edge);
+                        outerEdgeHash.Remove(edge);
+                    }
+                }
+            }
+        }
         #endregion Sort Along Direction
 
         #region Perimeter
@@ -342,8 +360,8 @@ namespace TVGL
                 if (flatHashSet.Count >= minNumberOfFacesPerFlat)
                 {
                     flat = new Plane(flatHashSet);
-                    if (!ensureDistinctFlats || flat.OuterEdges.All(e => (e.InternalAngle < Constants.MinCircleAngle ||
-                    Constants.TwoPi - e.InternalAngle < Constants.MinCircleAngle) || limitEdges.Contains(e)) || flat.Area > minFlatArea)
+                    if (!ensureDistinctFlats || flat.OuterEdges.All(e => (e.InternalAngle < Constants.MinSmoothAngle ||
+                    Constants.TwoPi - e.InternalAngle < Constants.MinSmoothAngle) || limitEdges.Contains(e)) || flat.Area > minFlatArea)
                         listFlats.Add(flat);
                 }
                 foreach (var polygonalFace in flat.Faces)
@@ -356,7 +374,7 @@ namespace TVGL
         {
             if (flat.Faces.Contains(face)) return false;
             if (!face.Normal.Dot(flat.Normal).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) return false;
-            return flat.CalculateError(face.Vertices) < tolerance;
+            return flat.CalculateError(face.Vertices.Select(v => v.Coordinates)) < tolerance;
             //Return true if all the vertices are within the tolerance 
         }
 
@@ -583,11 +601,26 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         /// <exception cref="Exception"></exception>
-        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts)
+        public static List<TessellatedSolid> GetMultipleSolids(this TessellatedSolid ts, List<int[]> faceGroupsThatAreBodies = null)
         {
             var solids = new List<TessellatedSolid>();
-            var seperateSolids = new List<List<PolygonalFace>>();
+            var separateSolids = new List<List<PolygonalFace>>();
             var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
+            // first the easy part - simply separate out known groups that have already been determined to be bodies
+            if (faceGroupsThatAreBodies != null)
+            {
+                foreach (var bodyGroupIndices in faceGroupsThatAreBodies)
+                {
+                    var faceList = new List<PolygonalFace>();
+                    foreach (var index in bodyGroupIndices)
+                    {
+                        faceList.Add(ts.Faces[index]);
+                        unusedFaces.Remove(index);
+                    }
+                    separateSolids.Add(faceList);
+                }
+            }
+            // now, the hard part - need to progressively find subsets of faces.
             while (unusedFaces.Any())
             {
                 var faces = new HashSet<PolygonalFace>();
@@ -601,18 +634,55 @@ namespace TVGL
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
                         if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
+                        if (!unusedFaces.ContainsKey(adjacentFace.IndexInList)) continue; //Cannot assign the same face twice
                         stack.Push(adjacentFace);
                     }
                 }
-                seperateSolids.Add(faces.ToList());
+                //Check for invalid bodies. Remove from model by ignoring these.
+                if (separateSolids.Count == 1 && faces.Count < 4) continue; 
+                separateSolids.Add(faces.ToList());
             }
-            if (seperateSolids.Count == 1)
+            if (separateSolids.Count == 1 && separateSolids[0].Count == ts.NumberOfFaces)
             {
                 solids.Add(ts);
                 return solids;
             }
-            foreach (var seperateSolid in seperateSolids)
-                solids.Add(new TessellatedSolid(seperateSolid, true, false));
+            foreach (var seperateSolid in separateSolids)
+            {
+                //Copy the non-smooth edges over to the seperate solid
+                HashSet<(Vector3, Vector3)> nonSmoothEdgesForSolid = null;
+                if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
+                {
+                    //Get all the edges in order, avoiding duplicates by using a hashset.
+                    var edges = new HashSet<Edge>();
+                    foreach (var face in seperateSolid)
+                        foreach (var edge in face.Edges)
+                            edges.Add(edge);
+
+                    nonSmoothEdgesForSolid = new HashSet<(Vector3, Vector3)>();
+                    foreach (var edge in edges)
+                    {
+                        if (ts.NonsmoothEdges.Contains(edge))
+                            nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates));
+                    }
+                }
+
+                var newSolid = new TessellatedSolid(seperateSolid, true, false);
+
+                if (nonSmoothEdgesForSolid != null)
+                {
+                    newSolid.NonsmoothEdges = new HashSet<Edge>();
+                    foreach (var edge in newSolid.Edges)
+                    {
+                        if (nonSmoothEdgesForSolid.Contains((edge.From.Coordinates, edge.To.Coordinates))
+                            || nonSmoothEdgesForSolid.Contains((edge.To.Coordinates, edge.From.Coordinates)))
+                            newSolid.NonsmoothEdges.Add(edge);
+                    }
+                }
+
+                solids.Add(newSolid);
+            }
+
             return solids;
         }
 
@@ -947,11 +1017,18 @@ namespace TVGL
             return zDot > 0 ? CartesianDirections.ZPositive : CartesianDirections.ZNegative;
         }
 
-        public static Vector3 GetPerpendicularDirection(this Vector3 direction)
+        /// <summary>
+        /// Gets the perpendicular direction.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="additionalRotation">An additional counterclockwise rotation (in radians) about the direction.</param>
+        /// <returns>TVGL.Numerics.Vector3.</returns>
+        public static Vector3 GetPerpendicularDirection(this Vector3 direction, double additionalRotation = 0)
         {
+            Vector3 dir;
             //If the vector is only in the y-direction, then return the x direction
             if (direction.X.IsNegligible() && direction.Z.IsNegligible())
-                return Vector3.UnitX;
+                dir = Vector3.UnitX;
             // otherwise we will return something in the x-z plane, which is created by
             // taking the cross product of the Y-direction with this vector.
             // The thinking is that - since this is used in the function above (to translate
@@ -959,7 +1036,9 @@ namespace TVGL
             // we find something in the x-z plane through this cross-product, so that the
             // third direction has strong component in positive y-direction - like
             // camera up position.
-            return Vector3.UnitY.Cross(direction).Normalize();
+            dir = Vector3.UnitY.Cross(direction).Normalize();
+            if (additionalRotation == 0) return dir;
+            return dir.Transform(Quaternion.CreateFromAxisAngle(direction, additionalRotation));
         }
 
         #region Angle between Edges/Lines
@@ -1296,76 +1375,83 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Skeweds the line intersection.
+        ///     Finds the "intersection" of two skewed lines in 3D space. Generally such lines do not intersect, so the function
+        ///     finds the middling point equidistant and closest to both lines.
         /// </summary>
-        /// <param name="p1">The p1.</param>
-        /// <param name="n1">The n1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="n2">The n2.</param>
-        /// <param name="center">The center.</param>
-        /// <returns>System.Double.</returns>
-        internal static double SkewedLineIntersection(Vector3 p1, Vector3 n1, Vector3 p2, Vector3 n2,
+        /// <param name="anchor1">Any point on line 1.</param>
+        /// <param name="direction1">The direction of line 1.</param>
+        /// <param name="anchor2">Any point on line 2.</param>
+        /// <param name="direction2">The direction of line 2.</param>
+        /// <param name="center">The resulting "intersection" or middling point.</param>
+        /// <returns>The closest distance between the two lines.</returns>
+        public static double SkewedLineIntersection(Vector3 anchor1, Vector3 direction1, Vector3 anchor2, Vector3 direction2,
             out Vector3 center)
         {
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out _, out _, out _, out _);
+            return SkewedLineIntersection(anchor1, direction1, anchor2, direction2, out center, out _, out _, out _, out _);
         }
 
         /// <summary>
-        ///     Skeweds the line intersection.
+        ///     Finds the "intersection" of two skewed lines in 3D space. Generally such lines do not intersect, so the function
+        ///     finds the middling point equidistant and closest to both lines.
         /// </summary>
-        /// <param name="p1">The p1.</param>
-        /// <param name="n1">The n1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="n2">The n2.</param>
-        /// <param name="interSect1">The inter sect1.</param>
-        /// <param name="interSect2">The inter sect2.</param>
-        /// <returns>System.Double.</returns>
-        internal static double SkewedLineIntersection(Vector3 p1, Vector3 n1, Vector3 p2, Vector3 n2,
-            out Vector3 interSect1, out Vector3 interSect2)
+        /// <param name="anchor1">Any point on line 1.</param>
+        /// <param name="direction1">The direction of line 1.</param>
+        /// <param name="anchor2">Any point on line 2.</param>
+        /// <param name="direction2">The direction of line 2.</param>
+        /// <param name="intersect1">The point on line1 closest to line2.</param>
+        /// <param name="intersect2">The point on line2 closest to line1.</param>
+        /// <returns>The closest distance between the two lines.</returns>
+        public static double SkewedLineIntersection(Vector3 anchor1, Vector3 direction1, Vector3 anchor2, Vector3 direction2,
+            out Vector3 intersect1, out Vector3 intersect2)
         {
-            return SkewedLineIntersection(p1, n1, p2, n2, out _, out interSect1, out interSect2, out _, out _);
+            return SkewedLineIntersection(anchor1, direction1, anchor2, direction2, out _, out intersect1, out intersect2, out _, out _);
         }
 
 
         /// <summary>
-        ///     Skeweds the line intersection.
+        ///     Finds the "intersection" of two skewed lines in 3D space. Generally such lines do not intersect, so the function
+        ///     finds the middling point equidistant and closest to both lines.
         /// </summary>
-        /// <param name="p1">The p1.</param>
-        /// <param name="n1">The n1.</param>
-        /// <param name="p2">The p2.</param>
-        /// <param name="n2">The n2.</param>
-        /// <param name="center">The center.</param>
-        /// <param name="interSect1">The inter sect1.</param>
-        /// <param name="interSect2">The inter sect2.</param>
-        /// <param name="t1">The t1.</param>
+        /// <param name="anchor1">Any point on line 1.</param>
+        /// <param name="direction1">The direction of line 1.</param>
+        /// <param name="anchor2">Any point on line 2.</param>
+        /// <param name="direction2">The direction of line 2.</param>
+        /// <param name="center">The resulting "intersection" or middling point.</param>
+        /// <param name="intersect1">The point on line1 closest to line2.</param>
+        /// <param name="intersect2">The point on line2 closest to line1.</param>
+        /// <param name="t1">The scalar parameter for the location of interSect1 on line1.</param>
         /// <param name="t2">The t2.</param>
-        /// <returns>System.Double.</returns>
-        internal static double SkewedLineIntersection(Vector3 p1, Vector3 n1, Vector3 p2, Vector3 n2,
+        /// <returns>The closest distance between the two lines.</returns>
+        internal static double SkewedLineIntersection(Vector3 anchor1, Vector3 direction1, Vector3 anchor2, Vector3 direction2,
             out Vector3 center,
-            out Vector3 interSect1, out Vector3 interSect2, out double t1, out double t2)
+            out Vector3 intersect1, out Vector3 intersect2, out double t1, out double t2)
         {
+            // set up two equations to solve for the two t's. 
+            // intersect1-intersect2 is a vector that is perpendicular to both direction1 and direction2
+            // using this as a start (and the dot-product equal to zero for the aforementioned perpendicularity)
+            // create two equations and two unknowns
+
             //var a11 = n1.X * n1.X + n1.Y * n1.Y + n1.Z * n1.Z;
-            var a11 = n1.LengthSquared();
+            var a11 = direction1.LengthSquared();
             //var a12 = -n1.X * n2.X - n1.Y * n2.Y - n1.Z * n2.Z;
-            var a12 = -n1.Dot(n2);
+            var a12 = -direction1.Dot(direction2);
             //var a21 = n1.X * n2.X + n1.Y * n2.Y + n1.Z * n2.Z;
             var a21 = -a12;
             //var a22 = -n2.X * n2.X - n2.Y * n2.Y - n2.Z * n2.Z;
-            var a22 = -n2.LengthSquared();
+            var a22 = -direction2.LengthSquared();
             //var b1 = n1.X * (p2.X - p1.X) + n1.Y * (p2.Y - p1.Y) + n1.Z * (p2.Z - p1.Z);
-            var b1 = n1.Dot(p2 - p1);
+            var b1 = direction1.Dot(anchor2 - anchor1);
             //var b2 = n2.X * (p2.X - p1.X) + n2.Y * (p2.Y - p1.Y) + n2.Z * (p2.Z - p1.Z);
-            var b2 = n2.Dot(p2 - p1);
+            var b2 = direction2.Dot(anchor2 - anchor1);
             //var a = new[,] { { a11, a12 }, { a21, a22 } };
             var aDetInverse = 1 / (a11 * a22 - a21 * a12);
             //var aInv = new[,] { { a22, -a12 }, {-a21,a11 } };
             t1 = (a22 * b1 - a12 * b2) * aDetInverse;
             t2 = (-a21 * b1 + a11 * b2) * aDetInverse;
-            interSect1 = new Vector3(p1.X + n1.X * t1, p1.Y + n1.Y * t1, p1.Z + n1.Z * t1);
-            interSect2 = new Vector3(p2.X + n2.X * t2, p2.Y + n2.Y * t2, p2.Z + n2.Z * t2);
-            center = new Vector3((interSect1.X + interSect2.X) / 2, (interSect1.Y + interSect2.Y) / 2,
-                (interSect1.Z + interSect2.Z) / 2);
-            return interSect1.Distance(interSect2);
+            intersect1 = anchor1 + t1 * direction1;
+            intersect2 = anchor2 + t2 * direction2;
+            center = intersect1 + intersect2 / 2;
+            return intersect1.Distance(intersect2);
         }
 
         #endregion Intersection Method (between lines, planes, solids, etc.)
@@ -1762,7 +1848,7 @@ namespace TVGL
             var facesAbove = new List<PolygonalFace>();
             var facesBelow = new List<PolygonalFace>();
             var inconclusive = true;
-            var rnd = new Random();
+            var rnd = new Random(0);
             //Added while inconclusive and random direction because there are some special cases that look the
             //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis,
             //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box
@@ -2021,7 +2107,7 @@ namespace TVGL
                 }
                 curveResidual = minResidual;
                 plane = thisPlane;
-                planeResidual = thisPlane.CalculateError(pointList.Cast<IVertex3D>());
+                planeResidual = thisPlane.CalculateError(pointList);
                 return bestCurve;
             }
             else
@@ -2035,7 +2121,7 @@ namespace TVGL
                     out var straightLine, out var error))
                 {
                     plane = thisPlane;
-                    planeResidual = thisPlane.CalculateError(pointList.Cast<IVertex3D>());
+                    planeResidual = thisPlane.CalculateError(pointList);
                     curveResidual = error;
                     return straightLine;
                 }

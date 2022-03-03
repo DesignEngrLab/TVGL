@@ -772,40 +772,6 @@ namespace TVGL.Boolean_Operations
         }
 
         #region Get Cross Sections
-
-        /// <summary>
-        /// Gets the cross section.
-        /// </summary>
-        /// <param name="tessellatedSolid">The tessellated solid.</param>
-        /// <param name="plane">The plane.</param>
-        /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane)
-        {
-            var direction = plane.Normal;
-            var closestCartesianDirection = direction.SnapDirectionToCartesian(out var withinTolerance, tessellatedSolid.SameTolerance);
-            if (withinTolerance)
-                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin);
-
-            var distances = tessellatedSolid.Vertices.Select(v => v.Dot(direction)).ToList();
-            var positiveShift = 0.0;
-            var negativeShift = 0.0;
-            distances.SetPositiveAndNegativeShifts(plane.DistanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
-            var planeDistance = plane.DistanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
-
-            var transform = direction.TransformToXYPlane(out _);
-            tessellatedSolid.MakeEdgesIfNonExistent();
-            var currentEdges = new Dictionary<Edge, Vector2>();
-            foreach (var edge in tessellatedSolid.Edges)
-            {
-                var fromDistance = distances[edge.From.IndexInList];
-                var toDistance = distances[edge.To.IndexInList];
-                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
-                    currentEdges.Add(edge, MiscFunctions.PointOnPlaneFromIntersectingLine(plane, edge.From.Coordinates, edge.To.Coordinates, out _)
-                        .ConvertTo2DCoordinates(transform));
-            }
-            return GetLoops(currentEdges, plane.Normal, plane.DistanceToOrigin);
-        }
-
         /// <summary>
         /// Gets the uniformly spaced slices.
         /// </summary>
@@ -858,29 +824,33 @@ namespace TVGL.Boolean_Operations
                 if (needToOffset)
                     d += Math.Min(stepSize, sortedVertices[vIndex].Dot(direction) - d) / 10.0;
                 plane.DistanceToOrigin = d;
-                if (currentEdges.Any()) result[step] = GetLoops(currentEdges.ToDictionary(ce => ce, ce =>
+                if (currentEdges.Any())
+                    result[step] = GetLoops(currentEdges.ToDictionary(ce => ce, ce =>
                        MiscFunctions.PointOnPlaneFromIntersectingLine(plane, ce.From.Coordinates, ce.To.Coordinates, out _)
-                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin);
+                           .ConvertTo2DCoordinates(transform)), plane.Normal, plane.DistanceToOrigin, out _);
                 else result[step] = new List<Polygon>();
             }
             return result;
         }
 
-        private static List<Polygon> GetLoops(Dictionary<Edge, Vector2> unusedEdges, Vector3 normal, double distanceToOrigin)
+        private static List<Polygon> GetLoops(Dictionary<Edge, Vector2> edgeDictionary, Vector3 normal, double distanceToOrigin,
+            out Dictionary<Vertex2D, Edge> e2VDictionary)
         {
-            var loops = new List<Polygon>();
-
-            while (unusedEdges.Any())
+            var polygons = new List<Polygon>();
+            e2VDictionary = new Dictionary<Vertex2D, Edge>();
+            while (edgeDictionary.Any())
             {
                 var path = new List<Vector2>();
-                var firstEdgeInLoop = unusedEdges.First().Key;
+                var edgesInLoop = new List<Edge>();
+                var firstEdgeInLoop = edgeDictionary.First().Key;
                 var currentEdge = firstEdgeInLoop;
                 var finishedLoop = false;
                 PolygonalFace nextFace = null;
                 do
                 {
-                    var intersectVertex2D = unusedEdges[currentEdge];
-                    unusedEdges.Remove(currentEdge);
+                    var intersectVertex2D = edgeDictionary[currentEdge];
+                    edgeDictionary.Remove(currentEdge);
+                    edgesInLoop.Add(currentEdge);
                     path.Add(intersectVertex2D);
                     var prevFace = nextFace;
                     if (prevFace == null)
@@ -894,10 +864,10 @@ namespace TVGL.Boolean_Operations
                         {
                             finishedLoop = true;
                             if (path.Count > 2)
-                                loops.Add(new Polygon(path));
+                                AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
                             break;
                         }
-                        else if (unusedEdges.ContainsKey(whichEdge))
+                        else if (edgeDictionary.ContainsKey(whichEdge))
                         {
                             nextEdge = whichEdge;
                             break;
@@ -907,15 +877,22 @@ namespace TVGL.Boolean_Operations
                     {
                         Message.output("Incomplete loop.", 3);
                         if (path.Count > 2)
-                            loops.Add(new Polygon(path));
+                            AddToPolygons(path, edgesInLoop, polygons, e2VDictionary);
                         finishedLoop = true;
                     }
                     else currentEdge = nextEdge;
                 } while (!finishedLoop);
             }
-            return loops.CreateShallowPolygonTrees(false);
+            return polygons.CreateShallowPolygonTrees(false);
         }
 
+        private static void AddToPolygons(List<Vector2> path, List<Edge> edgesInLoop, List<Polygon> polygons, Dictionary<Vertex2D, Edge> e2VDictionary)
+        {
+            var polygon = new Polygon(path);
+            polygons.Add(polygon);
+            for (int i = 0; i < polygon.Vertices.Count; i++)
+                e2VDictionary.Add(polygon.Vertices[i], edgesInLoop[i]);
+        }
 
 
         /// <summary>
@@ -924,7 +901,8 @@ namespace TVGL.Boolean_Operations
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="plane">The plane.</param>
         /// <returns>List&lt;Polygon&gt;.</returns>
-        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction, double distanceToOrigin)
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, CartesianDirections direction,
+            double distanceToOrigin, out Dictionary<Vertex2D, Edge> v2EDictionary)
         {
             var intDir = Math.Abs((int)direction) - 1;
             var signDir = Math.Sign((int)direction);
@@ -936,24 +914,58 @@ namespace TVGL.Boolean_Operations
 
             var transform = direction.TransformToXYPlane(out _);
             tessellatedSolid.MakeEdgesIfNonExistent();
-            var currentEdges = new HashSet<Edge>();
+            var e2VDict = new Dictionary<Edge, Vector2>();
             foreach (var edge in tessellatedSolid.Edges)
             {
                 var fromDistance = distances[edge.From.IndexInList];
                 var toDistance = distances[edge.To.IndexInList];
                 if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
-                    currentEdges.Add(edge);
+                {
+                    var ip = (intDir == 0)
+                        ? MiscFunctions.PointOnXPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates) :
+                        (intDir == 1)
+                        ? MiscFunctions.PointOnYPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates) :
+                        MiscFunctions.PointOnZPlaneFromIntersectingLine(distanceToOrigin, edge.From.Coordinates, edge.To.Coordinates);
+                    e2VDict.Add(edge, ip);
+                }
             }
+            return GetLoops(e2VDict, Vector3.UnitVector(intDir), distanceToOrigin, out v2EDictionary);
+        }
 
-            var edgeIntersectionDictionary = (intDir == 0)
-                ? currentEdges.ToDictionary(ce => ce, ce => MiscFunctions.PointOnXPlaneFromIntersectingLine(
-                    distanceToOrigin, ce.From.Coordinates, ce.To.Coordinates)) :
-                (intDir == 1)
-                ? currentEdges.ToDictionary(ce => ce, ce => MiscFunctions.PointOnYPlaneFromIntersectingLine(
-                    distanceToOrigin, ce.From.Coordinates, ce.To.Coordinates)) :
-                currentEdges.ToDictionary(ce => ce, ce => MiscFunctions.PointOnZPlaneFromIntersectingLine(
-                    distanceToOrigin, ce.From.Coordinates, ce.To.Coordinates));
-            return GetLoops(edgeIntersectionDictionary, Vector3.UnitVector(intDir), distanceToOrigin);
+        /// <summary>
+        /// Gets the cross section.
+        /// </summary>
+        /// <param name="tessellatedSolid">The tessellated solid.</param>
+        /// <param name="plane">The plane.</param>
+        /// <returns>List&lt;Polygon&gt;.</returns>
+        public static List<Polygon> GetCrossSection(this TessellatedSolid tessellatedSolid, Plane plane, out Dictionary<Vertex2D, Edge> v2EDictionary)
+        {
+            var direction = plane.Normal;
+            var closestCartesianDirection = direction.SnapDirectionToCartesian(out var withinTolerance, tessellatedSolid.SameTolerance);
+            if (withinTolerance)
+                return tessellatedSolid.GetCrossSection(closestCartesianDirection, plane.DistanceToOrigin, out v2EDictionary);
+
+            var distances = tessellatedSolid.Vertices.Select(v => v.Dot(direction)).ToList();
+            var positiveShift = 0.0;
+            var negativeShift = 0.0;
+            distances.SetPositiveAndNegativeShifts(plane.DistanceToOrigin, tessellatedSolid.SameTolerance, ref positiveShift, ref negativeShift);
+            var planeDistance = plane.DistanceToOrigin + ((positiveShift < -negativeShift) ? positiveShift : negativeShift);
+
+            var transform = direction.TransformToXYPlane(out _);
+            tessellatedSolid.MakeEdgesIfNonExistent();
+            var e2VDict = new Dictionary<Edge, Vector2>();
+            foreach (var edge in tessellatedSolid.Edges)
+            {
+                var fromDistance = distances[edge.From.IndexInList];
+                var toDistance = distances[edge.To.IndexInList];
+                if ((fromDistance > planeDistance && toDistance < planeDistance) || (fromDistance < planeDistance && toDistance > planeDistance))
+                {
+                    var ip = MiscFunctions.PointOnPlaneFromIntersectingLine(plane, edge.From.Coordinates, edge.To.Coordinates, out _)
+                        .ConvertTo2DCoordinates(transform);
+                    e2VDict.Add(edge, ip);
+                }
+            }
+            return GetLoops(e2VDict, plane.Normal, plane.DistanceToOrigin, out v2EDictionary);
         }
 
         /// <summary>
@@ -1027,7 +1039,7 @@ namespace TVGL.Boolean_Operations
                     x += Math.Min(stepSize, sortedVertices[vIndex].X - x) / 10.0;
                 if (currentEdges.Any()) loopsAlongX[step] = GetLoops(currentEdges.ToDictionary(ce => ce,
                     ce => MiscFunctions.PointOnXPlaneFromIntersectingLine(x, ce.From.Coordinates,
-                    ce.To.Coordinates)), Vector3.UnitX, x);
+                    ce.To.Coordinates)), Vector3.UnitX, x, out _);
                 else loopsAlongX[step] = new List<Polygon>();
             }
             return loopsAlongX;
@@ -1062,7 +1074,7 @@ namespace TVGL.Boolean_Operations
                     y += Math.Min(stepSize, sortedVertices[vIndex].Y - y) / 10.0;
                 if (currentEdges.Any()) loopsAlongY[step] = GetLoops(currentEdges.ToDictionary(ce => ce,
                     ce => MiscFunctions.PointOnYPlaneFromIntersectingLine(y, ce.From.Coordinates,
-                        ce.To.Coordinates)), Vector3.UnitY, y);
+                        ce.To.Coordinates)), Vector3.UnitY, y, out _);
                 else loopsAlongY[step] = new List<Polygon>();
             }
             return loopsAlongY;
@@ -1097,7 +1109,7 @@ namespace TVGL.Boolean_Operations
                     z += Math.Min(stepSize, sortedVertices[vIndex].Z - z) / 10.0;
                 if (currentEdges.Any()) loopsAlongZ[step] = GetLoops(currentEdges.ToDictionary(ce => ce,
                     ce => MiscFunctions.PointOnZPlaneFromIntersectingLine(z, ce.From.Coordinates,
-                        ce.To.Coordinates)), Vector3.UnitZ, z);
+                        ce.To.Coordinates)), Vector3.UnitZ, z, out _);
 
                 else loopsAlongZ[step] = new List<Polygon>();
                 //Presenter.ShowAndHang(loopsAlongZ[step]);

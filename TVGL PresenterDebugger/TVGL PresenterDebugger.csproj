@@ -1,64 +1,144 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>TVGL_PresenterDebugger</RootNamespace>
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;PRESENT;COMPARE</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE;PRESENT</DefineConstants>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\**" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\bin\**" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\obj\**" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Numerics\README.txt" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\License.txt" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\README" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj" />
-    <Compile Remove="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibrary.Standard.csproj.user" />
+	<PropertyGroup>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
 
-    
-    <Compile Include="..\TVGL Presenter\Presenter.cs">
-      <Link>Presenter\Presenter.cs</Link>
-    </Compile>
-    <Compile Include="..\TVGL Presenter\Window2DPlot.xaml.cs">
-      <Link>Window2DPlot.xaml.cs</Link>
-    </Compile>
-    <Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs">
-      <Link>Window3DPlot.xaml.cs</Link>
-    </Compile>
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\Numerics\NumericTests.cs" Link="_Testing_And_Benchmarking_\NumericTests.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonOperationsTesting.cs" Link="_Testing_And_Benchmarking_\PolygonOperationsTesting.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\PolygonSimplify.cs" Link="_Testing_And_Benchmarking_\PolygonSimplify.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\PolygonOperations\TestCases.cs" Link="_Testing_And_Benchmarking_\TestCases.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\Program.cs" Link="_Testing_And_Benchmarking_\Program.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\TessellatedSolid Functions\TSModify.cs" Link="_Testing_And_Benchmarking_\TSModify.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.Silhouette.cs" Link="_Testing_And_Benchmarking_\ThreeDtoTwoD.Silhouette.cs" />
-    <Compile Include="..\TVGLUnitTestsAndBenchmarking\ThreeDtoTwoD\ThreeDtoTwoD.XSection.cs" Link="_Testing_And_Benchmarking_\ThreeDtoTwoD.XSection.cs" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>TRACE;CLIPPER, PRESENT</DefineConstants>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.20.2" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
-    <PackageReference Include="HelixToolkit.Core.Wpf" Version="2.15.0" />
-    <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
-    <PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
-    <PackageReference Include="Snapshooter" Version="0.6.2" />
-    <PackageReference Include="Snapshooter.Xunit" Version="0.6.2" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="..\TVGL Presenter\Window2DPlot.xaml" Link="Window2DPlot.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="..\TVGL Presenter\Window3DPlot.xaml" Link="Window3DPlot.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CrossSectionSolid\CrossSectionSolid.cs" Link="TVGL\CrossSectionSolid\CrossSectionSolid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CrossSectionSolid\CrossSectionSolid.PublicStaticMethods.cs" Link="TVGL\CrossSectionSolid\CrossSectionSolid.PublicStaticMethods.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CrossSectionSolid\Extrude.cs" Link="TVGL\CrossSectionSolid\Extrude.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\BoundingBox.cs" Link="TVGL\Implicits and Primitives\BoundingBox.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\BoundingRectangle.cs" Link="TVGL\Implicits and Primitives\BoundingRectangle.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\ImplicitSolid.cs" Link="TVGL\Implicits and Primitives\ImplicitSolid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cone.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cone.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Cylinder.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Plane.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Plane.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\PrimitiveSurface.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Sphere.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Sphere.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\SurfaceBorder.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\SurfaceBorder.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\Torus.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\Torus.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\Primitive Surfaces\UnknownRegion.cs" Link="TVGL\Implicits and Primitives\Primitive Surfaces\UnknownRegion.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\AxisAlignedRectangle.cs" Link="TVGL\TwoDimensional\AxisAlignedRectangle.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\Circle.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\Circle.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\GeneralConicSection.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\GeneralConicSection.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\I2DCurve.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\I2DCurve.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\StraightLine.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\StraightLine.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\3mf.classes.cs" Link="TVGL\InputOutput Operations\3mf.classes.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\3MFFileData.cs" Link="TVGL\InputOutput Operations\3MFFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\amf.classes.cs" Link="TVGL\InputOutput Operations\amf.classes.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\AMFFileData.cs" Link="TVGL\InputOutput Operations\AMFFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\IOFunctions.cs" Link="TVGL\InputOutput Operations\IOFunctions.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\OBJFileData.cs" Link="TVGL\InputOutput Operations\OBJFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\OFFFileData.cs" Link="TVGL\InputOutput Operations\OFFFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\PLYFileData.cs" Link="TVGL\InputOutput Operations\PLYFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\SHELLFileData.cs" Link="TVGL\InputOutput Operations\SHELLFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs" Link="TVGL\InputOutput Operations\STLFileData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Base.cs" Link="TVGL\MarchingCubes\MarchingCubes.Base.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.Implicit.cs" Link="TVGL\MarchingCubes\MarchingCubes.Implicit.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubes.VoxelizedSolid.cs" Link="TVGL\MarchingCubes\MarchingCubes.VoxelizedSolid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MarchingCubes\MarchingCubesCrossSectionSolid.cs" Link="TVGL\MarchingCubes\MarchingCubesCrossSectionSolid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs" Link="TVGL\Miscellaneous Functions\MiscFunctions.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Proximity.cs" Link="TVGL\Miscellaneous Functions\Proximity.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\ComplexNumber.cs" Link="TVGL\Numerics\ComplexNumber.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\EqualityExtensions.cs" Link="TVGL\Numerics\EqualityExtensions.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Extensions.cs" Link="TVGL\Numerics\Extensions.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Matrix3x3.cs" Link="TVGL\Numerics\Matrix3x3.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Matrix4x4.cs" Link="TVGL\Numerics\Matrix4x4.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Quaternion.cs" Link="TVGL\Numerics\Quaternion.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StarMathLib\eigen.cs" Link="TVGL\Numerics\StarMathLib\eigen.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StarMathLib\inversion transpose.cs" Link="TVGL\Numerics\StarMathLib\inversion transpose.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StarMathLib\solve.cs" Link="TVGL\Numerics\StarMathLib\solve.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StarMathLib\svd.cs" Link="TVGL\Numerics\StarMathLib\svd.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\StatisticCollection.cs" Link="TVGL\Numerics\StatisticCollection.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector2.cs" Link="TVGL\Numerics\Vector2.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector3.cs" Link="TVGL\Numerics\Vector3.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\IntrinsicAttribute.cs" Link="TVGL\Numerics\IntrinsicAttribute.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Numerics\Vector4.cs" Link="TVGL\Numerics\Vector4.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\clipper.cs" Link="TVGL\Polygon Operations\Clipper\clipper.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Clipper\ClipperPolygonOperations.cs" Link="TVGL\Polygon Operations\Clipper\ClipperPolygonOperations.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\IntersectionData.cs" Link="TVGL\Polygon Operations\IntersectionData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\MedialAxis2D.cs" Link="TVGL\Polygon Operations\MedialAxis2D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Partitioning.cs" Link="TVGL\Polygon Operations\Partitioning.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Polygon.cs" Link="TVGL\Polygon Operations\Polygon.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonBooleanOperations\PolygonBooleanBase.cs" Link="TVGL\Polygon Operations\PolygonBooleanOperations\PolygonBooleanBase.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonBooleanOperations\PolygonIntersection.cs" Link="TVGL\Polygon Operations\PolygonBooleanOperations\PolygonIntersection.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonBooleanOperations\PolygonRemoveIntersections.cs" Link="TVGL\Polygon Operations\PolygonBooleanOperations\PolygonRemoveIntersections.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonBooleanOperations\PolygonUnion.cs" Link="TVGL\Polygon Operations\PolygonBooleanOperations\PolygonUnion.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Basic.cs" Link="TVGL\Polygon Operations\PolygonOperations.Basic.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Boolean.cs" Link="TVGL\Polygon Operations\PolygonOperations.Boolean.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.CreateTrees.cs" Link="TVGL\Polygon Operations\PolygonOperations.CreateTrees.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.IsInside.cs" Link="TVGL\Polygon Operations\PolygonOperations.IsInside.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Offsetting.cs" Link="TVGL\Polygon Operations\PolygonOperations.Offsetting.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Simplify.cs" Link="TVGL\Polygon Operations\PolygonOperations.Simplify.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonOperations.Triangulate.cs" Link="TVGL\Polygon Operations\PolygonOperations.Triangulate.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\PolygonSegment.cs" Link="TVGL\Polygon Operations\PolygonSegment.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\SegmentIntersection.cs" Link="TVGL\Polygon Operations\SegmentIntersection.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Silhouette.cs" Link="TVGL\Polygon Operations\Silhouette.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Slice2D.cs" Link="TVGL\Polygon Operations\Slice2D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Polygon Operations\Vertex2D.cs" Link="TVGL\Polygon Operations\Vertex2D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Edge.cs" Link="TVGL\TessellatedSolid\Edge.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\EdgePath.cs" Link="TVGL\TessellatedSolid\EdgePath.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\ConvexHull2D.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\ConvexHull2D.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\GaussianSphere.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumCircleCylinder.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Enclosure Operations\MinimumEnclosure.cs" Link="TVGL\TessellatedSolid\Enclosure Operations\MinimumEnclosure.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\ComplexifyTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellationComplexifyTessellation.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\DetermineIntermediateVertex.cs" Link="TVGL\TessellatedSolid\ModifyTessellationDetermineIntermediateVertex.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\EdgeLoopReconstruction\Single3DPolygonTriangulation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\EdgeLoopReconstruction\Single3DPolygonTriangulation.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\RepairTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\RepairTessellation.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\SimplifyTessellation.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\ModifyTessellation\TessellationError.cs" Link="TVGL\TessellatedSolid\ModifyTessellation\TessellationError.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\PolygonalFace.cs" Link="TVGL\TessellatedSolid\PolygonalFace.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\ContactData.cs" Link="TVGL\TessellatedSolid\Slicing\ContactData.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Slicing\Slice.cs" Link="TVGL\TessellatedSolid\Slicing\Slice.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellatedSolid.cs" Link="TVGL\TessellatedSolid\TessellatedSolid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellatedSolid.EdgeInitialization.cs" Link="TVGL\TessellatedSolid\TessellatedSolid.EdgeInitialization.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellatedSolid.StaticFunctions.cs" Link="TVGL\TessellatedSolid\TessellatedSolid.StaticFunctions.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TessellationBaseClass.cs" Link="TVGL\TessellatedSolid\TessellationBaseClass.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\TVGLConvexHull.cs" Link="TVGL\TessellatedSolid\TVGLConvexHull.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\TessellatedSolid\Vertex.cs" Link="TVGL\TessellatedSolid\Vertex.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\IVoxelRow.cs" Link="TVGL\VoxelizedSolid\IVoxelRow.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelHelperClasses.cs" Link="TVGL\VoxelizedSolid\VoxelHelperClasses.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" Link="TVGL\VoxelizedSolid\VoxelizedSolid.PublicFunctions.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowDense.cs" Link="TVGL\VoxelizedSolid\VoxelRowDense.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\VoxelizedSolid\VoxelRowSparse.cs" Link="TVGL\VoxelizedSolid\VoxelRowSparse.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\SimplePriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\SimplePriorityQueue.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\GenericPriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\GenericPriorityQueue.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\GenericPriorityQueueNode.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\GenericPriorityQueueNode.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\IFixedSizePriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\IFixedSizePriorityQueue.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\PriorityQueue\IPriorityQueue.cs" Link="TVGL\Miscellaneous Functions\PriorityQueue\IPriorityQueue.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs" Link="TVGL\Colors.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators.cs" Link="TVGL\Comparators.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="TVGL\Constants.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid.cs" Link="TVGL\Solid.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs" Link="TVGL\Verbosity.cs" />
+		<Compile Include="..\TVGL Presenter\Window3DPlotViewModel.cs" Link="Presenter\Window3DPlotViewModel.cs" />
+		<Compile Include="..\TVGL Presenter\Presenter.cs" Link="Presenter\Presenter.cs" />
+		<Compile Include="..\TVGL Presenter\PresenterNVOptimusEnabler.cs" Link="Presenter\PresenterNVOptimusEnabler.cs" />
+		<Compile Include="..\TVGL Presenter\Window2DPlot.xaml.cs" Link="Presenter\Window2DPlot.xaml.cs" />
+		<Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs" Link="Presenter\Window3DPlot.xaml.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<Page Include="..\TVGL Presenter\Window2DPlot.xaml" Link="Presenter\Window2DPlot.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Include="..\TVGL Presenter\Window3DPlot.xaml" Link="Presenter\Window3DPlot.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+
 </Project>

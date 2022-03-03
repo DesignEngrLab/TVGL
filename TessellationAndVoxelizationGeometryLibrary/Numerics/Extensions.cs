@@ -282,19 +282,34 @@ namespace TVGL.Numerics
         /// <summary>
         /// Transforms a vector by the given matrix.
         /// </summary>
-        /// <param name="normal">The position vector.</param>
+        /// <param name="position">The position vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
         public static Vector3 Transform(this Vector3 position, Matrix4x4 matrix)
         { return Vector3.Multiply(position, matrix); }
 
         /// <summary>
-        /// Transforms a vector by the given matrix.
+        /// Pre-multiplies the vector to the matrix. Here, the vector is treated
+        /// as a single row, so the result is also a single-row vector. Each cell 
+        /// is a dot-product between the vector and the column of the matrix.
+        /// This is the same as transforming by the matrix.
         /// </summary>
-        /// <param name="position">The source vector.</param>
-        /// <param name="matrix">The transformation matrix.</param>
+        /// <param name="position">The vector.</param>
+        /// <param name="matrix">The matrix.</param>
         /// <returns>The transformed vector.</returns>
         public static Vector3 Multiply(this Vector3 position, Matrix3x3 matrix)
+        { return Vector3.Multiply(position, matrix); }
+
+        /// <summary>
+        /// Pre-multiplies the vector to the matrix. Here, the vector is treated
+        /// as a single row, so the result is also a single-row vector. Each cell 
+        /// is a dot-product between the vector and the column of the matrix.
+        /// This is the same as transforming by the matrix.
+        /// </summary>
+        /// <param name="position">The vector.</param>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        public static Vector3 Multiply(this Vector3 position, Matrix4x4 matrix)
         { return Vector3.Multiply(position, matrix); }
 
         /// <summary>
@@ -302,11 +317,11 @@ namespace TVGL.Numerics
         /// This is often used for transforming normals, however note that proper transformations
         /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
         /// </summary>
-        /// <param name="normal">The source vector.</param>
+        /// <param name="position">The source vector.</param>
         /// <param name="matrix">The transformation matrix.</param>
         /// <returns>The transformed vector.</returns>
-        public static Vector3 TransformNoTranslate(this Vector3 normal, Matrix4x4 matrix)
-        { return Vector3.TransformNoTranslate(normal, matrix); }
+        public static Vector3 TransformNoTranslate(this Vector3 position, Matrix4x4 matrix)
+        { return Vector3.TransformNoTranslate(position, matrix); }
 
 
         /// <summary>
@@ -337,7 +352,7 @@ namespace TVGL.Numerics
         { return Vector3.Subtract(left, right); }
 
         /// <summary>
-        /// Multiplies two vectors together.
+        /// Multiplies two vectors together. It produces the components of a dot product 
         /// </summary>
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
@@ -411,6 +426,139 @@ namespace TVGL.Numerics
                    vector1.Y * vector2.Y +
                    vector1.Z * vector2.Z;
         }
+        #endregion
+
+        #region Vector4
+
+        /// <summary>Returns a vector whose elements are the absolute values of each of the specified vector's elements.</summary>
+        /// <param name="value">A vector.</param>
+        /// <returns>The absolute value vector.</returns>
+        public static Vector4 Abs(this Vector4 vector1)
+        {
+            return Vector4.Abs(vector1);
+        }
+        /// <summary>
+        /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
+        /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
+        /// </summary>
+        /// <param name="value1">The first point.</param>
+        /// <param name="value2">The second point.</param>
+        /// <returns>The distance.</returns>
+        public static double Distance(this Vector4 vector1, Vector4 vector2)
+        {
+            return Vector4.Distance(vector1,vector2);
+        }
+
+        /// <summary>
+        /// Returns the Euclidean distance squared between the two given points. This is useful when the actual
+        /// value of distance is not so imporant as the relative value to other distances. Taking the square-root
+        /// is expensive when called many times.
+        /// </summary>
+        /// <param name="value1">The first point.</param>
+        /// <param name="value2">The second point.</param>
+        /// <returns>The distance squared.</returns>
+        public static double DistanceSquared(this Vector4 value1, Vector4 value2)
+        { return Vector4.DistanceSquared(value1, value2); }
+
+        /// <summary>
+        /// Returns a vector with the same direction as the given vector, but with a length of 1.
+        /// </summary>
+        /// <param name="value">The vector to normalize.</param>
+        /// <returns>The normalized vector.</returns>
+        public static Vector4 Normalize(this Vector4 value)
+        { return Vector4.Normalize(value); }
+
+
+        /// <summary>
+        /// Computes the cross product of two vectors. Note that this is really
+        /// the 3D cross product, but the W term that scales each vector is simply
+        /// the product of the two weights. This makes correct geometric sense in 3D
+        /// space.
+        /// </summary>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector.</param>
+        /// <returns>The cross product.</returns>
+        public static Vector4 Cross(this Vector4 vector1, Vector4 vector2)
+        { return Vector4.Cross(vector1, vector2); }
+
+        /// <summary>
+        /// Restricts a vector between a min and max value.
+        /// </summary>
+        /// <param name="value1">The source vector.</param>
+        /// <param name="min">The minimum value.</param>
+        /// <param name="max">The maximum value.</param>
+        /// <returns>The restricted vector.</returns>
+        public static Vector4 Clamp(this Vector4 value1, Vector4 min, Vector4 max)
+        { return Vector4.Clamp(value1, min,max) ; }
+
+        /// <summary>
+        /// Linearly interpolates between two vectors based on the given weighting.
+        /// </summary>
+        /// <param name="value1">The first source vector.</param>
+        /// <param name="value2">The second source vector.</param>
+        /// <param name="amount">Value between 0 and 1 indicating the weight of the second source vector.</param>
+        /// <returns>The interpolated vector.</returns>
+        public static Vector4 Lerp(this Vector4 value1, Vector4 value2, double amount)
+        { return Vector4.Lerp(value1, value2, amount); }
+
+
+        /// <summary>
+        /// Transforms a vector by the given matrix.
+        /// </summary>
+        /// <param name="position">The position vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        public static Vector4 Transform(this Vector4 position, Matrix4x4 matrix)
+        { return Vector4.Multiply(position, matrix); }
+
+        /// <summary>
+        /// Pre-multiplies the vector to the matrix. Here, the vector is treated
+        /// as a single row, so the result is also a single-row vector. Each cell 
+        /// is a dot-product between the vector and the column of the matrix.
+        /// This is the same as transforming by the matrix.
+        /// </summary>
+        /// <param name="position">The vector.</param>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        public static Vector4 Multiply(this Vector4 position, Matrix4x4 matrix)
+        { return Vector4.Multiply(position, matrix); }
+
+        /// <summary>
+        /// Transforms a vector by the given matrix without the translation component.
+        /// This is often used for transforming normals, however note that proper transformations
+        /// of normal vectors requires that the input matrix be the transpose of the inverse of that matrix.
+        /// </summary>
+        /// <param name="position">The source vector.</param>
+        /// <param name="matrix">The transformation matrix.</param>
+        /// <returns>The transformed vector.</returns>
+        public static Vector4 TransformNoTranslate(this Vector4 position, Matrix4x4 matrix)
+        { return Vector4.TransformNoTranslate(position, matrix); }
+
+
+        /// <summary>
+        /// Returns the dot product of two vectors.
+        /// </summary>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector.</param>
+        /// <returns>The dot product.</returns>
+        public static double Dot(this Vector4 vector1, Vector4 vector2)
+        { return Vector4.Dot(vector1, vector2); }
+
+        /// <summary>
+        /// Returns the dot product of two vertex and the vector.
+        /// </summary>
+        /// <param name="vector1">The vertex or position in 3D space</param>
+        /// <param name="vector2">The vector.</param>
+        /// <returns>The dot product.</returns>
+        public static double Dot(this IVertex3D vector1, Vector4 vector2)
+        {
+            if (vector1 == null) return double.NaN;
+            return vector1.X * vector2.X +
+                   vector1.Y * vector2.Y +
+                   vector1.Z * vector2.Z +
+                   vector2.W;
+        }
+
         #endregion
 
         #region Matrix3x3, Matrix4x4, Quaternion, and Plane
