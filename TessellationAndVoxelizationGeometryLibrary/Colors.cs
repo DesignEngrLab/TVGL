@@ -1115,8 +1115,8 @@ namespace TVGL
         public static Color GetColorFromName(string name)
         {
             foreach (var dict in ColorDictionary.Values)
-                if (dict.ContainsKey(name))
-                    return dict[name];
+                if (dict.TryGetValue(name, out var color))
+                    return color;
             return null;
         }
 

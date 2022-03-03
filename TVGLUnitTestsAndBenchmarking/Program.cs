@@ -34,14 +34,14 @@ namespace TVGLUnitTestsAndBenchmarking
 
 #if PRESENT
 
-            foreach (var fileName in dir.GetFiles("*"))
+            foreach (var fileName in dir.GetFiles("*").Skip(1))
             {
                 Debug.WriteLine("\n\n\nAttempting to open: " + fileName.Name);
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids);
                 solids[0].Faces[0].Color =Color.ColorDictionary[ColorFamily.Red]["Red"];
                 Presenter.ShowAndHang(solids);
-                //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
-                //Presenter.ShowAndHang(css);
+                var css = CrossSectionSolid.CreateFromTessellatedSolid(solids[0], CartesianDirections.XPositive, 20);
+                Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");
             }
 #endif

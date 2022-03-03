@@ -649,8 +649,8 @@ namespace TVGL
             }
             foreach (var seperateSolid in separateSolids)
             {
-                //Copy the non-smooth edges over to the seperate solid
-                HashSet<(Vector3, Vector3)> nonSmoothEdgesForSolid = null;
+                //Copy the non - smooth edges over to the seperate solid
+                Dictionary<(Vector3, Vector3), int> nonSmoothEdgesForSolid = null;
                 if (ts.NonsmoothEdges != null && ts.NonsmoothEdges.Any())
                 {
                     //Get all the edges in order, avoiding duplicates by using a hashset.
@@ -659,11 +659,14 @@ namespace TVGL
                         foreach (var edge in face.Edges)
                             edges.Add(edge);
 
-                    nonSmoothEdgesForSolid = new HashSet<(Vector3, Vector3)>();
+                    nonSmoothEdgesForSolid = new Dictionary<(Vector3, Vector3), int>();
                     foreach (var edge in edges)
                     {
-                        if (ts.NonsmoothEdges.Contains(edge))
-                            nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates));
+                        for (int i = 0; i < ts.NonsmoothEdges.Count; i++)
+                        {
+                            if (ts.NonsmoothEdges[i].Contains(edge))
+                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates),i);
+                        }
                     }
                 }
 
@@ -671,12 +674,15 @@ namespace TVGL
 
                 if (nonSmoothEdgesForSolid != null)
                 {
-                    newSolid.NonsmoothEdges = new HashSet<Edge>();
+                    newSolid.NonsmoothEdges = new List<EdgePath>();
+                    for (int i = 0; i < ts.NonsmoothEdges.Count; i++)
+                        newSolid.NonsmoothEdges.Add(new EdgePath());
                     foreach (var edge in newSolid.Edges)
                     {
-                        if (nonSmoothEdgesForSolid.Contains((edge.From.Coordinates, edge.To.Coordinates))
-                            || nonSmoothEdgesForSolid.Contains((edge.To.Coordinates, edge.From.Coordinates)))
-                            newSolid.NonsmoothEdges.Add(edge);
+                        var pathIndex = -1;
+                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out  pathIndex)
+                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates),out pathIndex))
+                            newSolid.NonsmoothEdges[pathIndex].AddEnd(edge);
                     }
                 }
 
@@ -737,8 +743,8 @@ namespace TVGL
             {
                 var coordinates = ConvertTo2DCoordinates(vertex, transform);
                 coordinates = new Vector2(Math.Round(coordinates.X, numDecimalPoints), Math.Round(coordinates.Y, numDecimalPoints));
-                if (resultsDict.ContainsKey(coordinates))
-                    resultsDict[coordinates].Add(vertex);
+                if (resultsDict.TryGetValue(coordinates, out var list))
+                    list.Add(vertex);
                 else
                     /* else, add a new vertex to the list, and a new entry to simpleCompareDict.  */
                     resultsDict.Add(coordinates, new List<T> { vertex });

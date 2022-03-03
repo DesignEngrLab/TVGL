@@ -85,8 +85,8 @@ namespace TVGL
         /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
         /// </summary>
         /// <value>The nonsmooth edges.</value>
-        [JsonIgnore] 
-        public HashSet<Edge> NonsmoothEdges { get; set; }
+        [JsonIgnore]
+        public List<EdgePath> NonsmoothEdges { get; set; }
         #endregion
 
         #region Constructors
@@ -602,9 +602,9 @@ namespace TVGL
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
                     var coordinates = t[i] = new Vector3(scaleFactor * Math.Round(t[i].X, numDecimalPoints),
                         Math.Round(scaleFactor * t[i].Y, numDecimalPoints), Math.Round(scaleFactor * t[i].Z, numDecimalPoints));
-                    if (simpleCompareDict.ContainsKey(coordinates))
+                    if (simpleCompareDict.TryGetValue(coordinates, out int index))
                         /* if it's in the dictionary, simply put the location in the locationIndices */
-                        locationIndices.Add(simpleCompareDict[coordinates]);
+                        locationIndices.Add(index);
                     else
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
@@ -967,21 +967,17 @@ namespace TVGL
                     var surfConstructor = surfType.GetConstructor(new[] { surfType, typeof(TessellatedSolid) });
                     copy.AddPrimitive((PrimitiveSurface)surfConstructor.Invoke(new object[] { surface, copy }));
                 }
-                //Rebuild the nonsmooth edges from the primitives if possible
-                if (NonsmoothEdges != null && NonsmoothEdges.Any())
-                {
-                    copy.NonsmoothEdges = new HashSet<Edge>();
-                    foreach (var primitive in copy.Primitives)
-                        foreach (var outerEdge in primitive.OuterEdges)
-                            copy.NonsmoothEdges.Add(outerEdge);
-                }
-            } 
-            else if (NonsmoothEdges != null && NonsmoothEdges.Any())
+
+            }
+            if (NonsmoothEdges != null && NonsmoothEdges.Any())
             {
-                copy.NonsmoothEdges = new HashSet<Edge>();
-                foreach (var edge in NonsmoothEdges)
+                copy.NonsmoothEdges = new List<EdgePath>();
+                foreach (var nonSmoothEdgePath in NonsmoothEdges)
                 {
-                    copy.NonsmoothEdges.Add(copy.Edges[edge.IndexInList]);
+                    var copiedPath = new EdgePath();
+                    foreach (var item in nonSmoothEdgePath)
+                        copiedPath.AddEnd(copy.Edges[item.edge.IndexInList], item.dir);
+                    copy.NonsmoothEdges.Add(copiedPath);
                 }
             }
             return copy;

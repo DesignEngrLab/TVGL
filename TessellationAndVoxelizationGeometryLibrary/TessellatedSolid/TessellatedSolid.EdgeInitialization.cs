@@ -193,10 +193,10 @@ namespace TVGL
                     var position = new Vector3(Math.Round(vertex.X, numDecimalPoints),
                           Math.Round(vertex.Y, numDecimalPoints), Math.Round(vertex.Z, numDecimalPoints));
 
-                    if (simpleCompareDict.ContainsKey(position))
+                    if (simpleCompareDict.TryGetValue(position, out var index))
                     {
                         // if it's in the dictionary, update the faceToVertexIndex
-                        faceToVertexIndex[i] = simpleCompareDict[position];
+                        faceToVertexIndex[i] = index;
                     }
                     else
                     {
@@ -244,31 +244,29 @@ namespace TVGL
                     // the following four-part condition is best read from the bottom up.
                     // the checksum is used to quickly identify if the edge exists (and to access it)
                     // in one of the 3 dictionaries specified above.
-                    if (overDefinedEdgesDictionary.ContainsKey(checksum))
+                    if (overDefinedEdgesDictionary.TryGetValue(checksum, out var overDefFaces))
                         // yet another (4th, 5th, etc) face defines this edge. Better store for now and sort out
                         // later in "TeaseApartOverDefinedEdges" (see next method).
-                        overDefinedEdgesDictionary[checksum].Item2.Add(face);
-                    else if (alreadyDefinedEdges.ContainsKey(checksum))
+                        overDefFaces.Item2.Add(face);
+                    else if (alreadyDefinedEdges.TryGetValue(checksum, out var edgeEntry))
                     {
                         // if an alreadyDefinedEdge has another face defining it, then it should be
                         // moved to overDefinedEdges
-                        var edgeEntry = alreadyDefinedEdges[checksum];
                         overDefinedEdgesDictionary.Add(checksum, (edgeEntry.Item1,
                             new List<PolygonalFace> { edgeEntry.Item2, edgeEntry.Item3, face }));
                         alreadyDefinedEdges.Remove(checksum);
                     }
-                    else if (partlyDefinedEdgeDictionary.ContainsKey(checksum))
+                    else if (partlyDefinedEdgeDictionary.TryGetValue(checksum, out var edge))
                     {
                         // found a match to a partlyDefinedEdge. Great! I hope it doesn't turn out
                         // to be overDefined
-                        var edge = partlyDefinedEdgeDictionary[checksum];
                         alreadyDefinedEdges.Add(checksum, (edge, edge.OwnedFace, face));
                         partlyDefinedEdgeDictionary.Remove(checksum);
                     }
                     else // this edge doesn't already exist, so create and add to partlyDefinedEdge dictionary
                     {
-                        var edge = new Edge(fromVertex, toVertex, face, null, false, checksum);
-                        partlyDefinedEdgeDictionary.Add(checksum, edge);
+                        var edgeNew = new Edge(fromVertex, toVertex, face, null, false, checksum);
+                        partlyDefinedEdgeDictionary.Add(checksum, edgeNew);
                     }
                 }
             }
@@ -425,10 +423,10 @@ namespace TVGL
         private static void MergeEdgeVertices(Dictionary<Vertex, Vertex> removedToKept, Dictionary<Vertex, List<Vertex>> keptToRemoved,
             Vertex keepVertex, Vertex removeVertex)
         {
-            while (removedToKept.ContainsKey(keepVertex))
-                keepVertex = removedToKept[keepVertex];
-            while (removedToKept.ContainsKey(removeVertex))
-                removeVertex = removedToKept[removeVertex];
+            while (removedToKept.TryGetValue(keepVertex, out var newKeepVertex))
+                keepVertex = newKeepVertex;
+            while (removedToKept.TryGetValue(removeVertex, out var newRemoveVertex))
+                removeVertex = newRemoveVertex;
             if (removeVertex == keepVertex) return;
             foreach (var face in removeVertex.Faces)
             {
@@ -446,8 +444,9 @@ namespace TVGL
             foreach (var f in keepVertex.Faces)
                 f.Update();
             removedToKept.Add(removeVertex, keepVertex);
-            if (!keptToRemoved.ContainsKey(keepVertex)) keptToRemoved.Add(keepVertex, new List<Vertex> { removeVertex });
-            else keptToRemoved[keepVertex].Add(removeVertex);
+            if (keptToRemoved.TryGetValue(keepVertex, out var keeps))
+                keeps.Add(removeVertex);
+            else keptToRemoved.Add(keepVertex, new List<Vertex> { removeVertex });
         }
 
 
@@ -481,7 +480,7 @@ namespace TVGL
                     // the other vertices in singledSidedEdges
                 }
                 else startingEdge = remainingEdgesInner.First();
-                loop.Add(startingEdge, true);  //all the directions really should be false since the edges were defined
+                loop.AddBegin(startingEdge, true);  //all the directions really should be false since the edges were defined
                                                //with the ownedFace but this is confusing and we'll switch later
                 removedEdges.Add(startingEdge);
                 remainingEdgesInner.Remove(startingEdge);
@@ -508,8 +507,7 @@ namespace TVGL
                         e.From == lastVertex && remainingEdgesInner.Contains(e));
                     if (bestNext != null)
                     {
-                        var dir = bestNext.From == lastVertex;
-                        loop.Add(bestNext, dir);
+                        loop.AddBegin(bestNext);
                         removedEdges.Add(bestNext);
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;
@@ -575,10 +573,10 @@ namespace TVGL
             {
                 i++;
                 //var vertex = loop[i].edge.To;
-                if (vertexLocations.ContainsKey(vertex))
+                if (vertexLocations.TryGetValue(vertex, out var locationInts))
                 {
                     lastDuplicateAt = i; // this is just to 
-                    vertexLocations[vertex].Add(i);
+                    locationInts.Add(i);
                 }
                 else if (visitedToVertices.Contains(vertex))
                 {
@@ -591,10 +589,11 @@ namespace TVGL
             foreach (var vertex in loop.GetVertices().Take(lastDuplicateAt))
             {
                 i++;
-                if (!vertexLocations.ContainsKey(vertex)) continue;
-                var otherIndices = vertexLocations[vertex];
-                if (!otherIndices.Contains(i))  // it's already been discovered
-                    otherIndices.Insert(0, i);
+                if (vertexLocations.TryGetValue(vertex, out var otherIndices))
+                {
+                    if (!otherIndices.Contains(i))  // it's already been discovered
+                        otherIndices.Insert(0, i);
+                }
             }
             var loopStartEnd = new List<int>();
             foreach (var indices in vertexLocations.Values)
@@ -706,10 +705,9 @@ namespace TVGL
                                 var fromVertex = newFace.Vertices[j];
                                 var toVertex = newFace.NextVertexCCW(fromVertex);
                                 var checksum = GetEdgeChecksum(fromVertex, toVertex);
-                                if (edgeDic.ContainsKey(checksum))
+                                if (edgeDic.TryGetValue(checksum, out var edge))
                                 {
                                     //Finish creating edge.
-                                    var edge = edgeDic[checksum];
                                     completedEdges.Add((edge, edge.OwnedFace, newFace));
                                     edgeDic.Remove(checksum);
                                 }
@@ -735,9 +733,8 @@ namespace TVGL
                                     edgeAnddir.edge.OwnedFace = newFace;
                                 else edgeAnddir.edge.OtherFace = newFace;
                                 var checksum = GetEdgeChecksum(edgeAnddir.edge.From, edgeAnddir.edge.To);
-                                if (edgeDic.ContainsKey(checksum))
+                                if (edgeDic.TryGetValue(checksum, out var formerEdge))
                                 {
-                                    var formerEdge = edgeDic[checksum];
                                     edgeDic.Remove(checksum);
                                     completedEdges.Add((formerEdge, formerEdge.OwnedFace, edgeAnddir.edge.OwnedFace));
                                 }

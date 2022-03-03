@@ -291,7 +291,7 @@ namespace TVGL
             if (double.IsInfinity(fLimit))
             {
 #if PRESENT
-               Presenter.ShowVertexPathsWithSolid(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }), new TessellatedSolid[] { });
+                Presenter.ShowVertexPaths(startDomain.EdgeList.Select(eg => new[] { eg.From.Coordinates, eg.To.Coordinates }));
 #endif
                 return false;
             }
@@ -355,7 +355,7 @@ namespace TVGL
                     var neighborFace = edgeAt3rdVertex.dir ? edgeAt3rdVertex.edge.OtherFace : edgeAt3rdVertex.edge.OwnedFace;
                     if (neighborFace != null) neighborNormal1 = neighborFace.Normal;
                 }
-                else thisTriangle.Add(new Edge(secondVertex, thirdVertex, false), true);
+                else thisTriangle.AddBegin(new Edge(secondVertex, thirdVertex, false), true);
                 if (secondVertex == thirdVertex) secondVertex = thirdVertex;
                 var neighborNormal2 = Vector3.Null;
                 if (i == domain.Count - 2)
@@ -365,7 +365,7 @@ namespace TVGL
                     var neighborFace = lastEdgeAndDir.dir ? lastEdgeAndDir.edge.OtherFace : lastEdgeAndDir.edge.OwnedFace;
                     if (neighborFace != null) neighborNormal2 = neighborFace.Normal;
                 }
-                else thisTriangle.Add(new Edge(thirdVertex, firstVertex, false), true);
+                else thisTriangle.AddBegin(new Edge(thirdVertex, firstVertex, false), true);
                 if (firstVertex == thirdVertex) firstVertex = thirdVertex;
 
                 thisTriangle.Score = CalcObjFunction(dotWeight, thisTriangle, accessFaceNormal, neighborNormal1, neighborNormal2);
@@ -399,9 +399,7 @@ namespace TVGL
                     //Debug.WriteLine("right: " + string.Join(',', rightDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = rightDomain.VertexIDList;
-                    if (visitedDomains.ContainsKey(vertexIDs))
-                        rightDomain = visitedDomains[vertexIDs];
-                    else
+                    if (!visitedDomains.TryGetValue(vertexIDs, out rightDomain))
                     {
                         rightDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[1], rightDomain, visitedDomains,
                             bestDomainScore, branchingFactorLimit,
@@ -428,9 +426,7 @@ namespace TVGL
                     //Debug.WriteLine("left:  " + string.Join(',', leftDomain.GetVertices().Select(v => v.IndexInList)));
 
                     var vertexIDs = leftDomain.VertexIDList;
-                    if (visitedDomains.ContainsKey(vertexIDs))
-                        leftDomain = visitedDomains[vertexIDs];
-                    else
+                    if (!visitedDomains.TryGetValue(vertexIDs, out leftDomain))
                     {
                         leftDomain.Score = TriangulateRecurse(thisTriangle.Normal, thisTriangle.EdgeList[2], leftDomain, visitedDomains,
                             bestDomainScore, branchingFactorLimit,

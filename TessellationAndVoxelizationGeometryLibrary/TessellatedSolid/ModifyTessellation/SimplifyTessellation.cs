@@ -55,19 +55,17 @@ namespace TVGL
                         var fromVertex = newFace.Vertices[j];
                         var toVertex = newFace.NextVertexCCW(fromVertex);
                         var checksum = TessellatedSolid.GetEdgeChecksum(fromVertex, toVertex);
-                        if (oldEdgeDictionary.ContainsKey(checksum))
+                        if (oldEdgeDictionary.TryGetValue(checksum, out var edge))
                         {
                             //fix up old outer edge.
-                            var edge = oldEdgeDictionary[checksum];
                             if (fromVertex == edge.From) edge.OwnedFace = newFace;
                             else edge.OtherFace = newFace;
                             newFace.AddEdge(edge);
                             oldEdgeDictionary.Remove(checksum);
                         }
-                        else if (newEdgeDictionary.ContainsKey(checksum))
+                        else if (newEdgeDictionary.TryGetValue(checksum, out var newEdge))
                         {
                             //Finish creating edge.
-                            var newEdge = newEdgeDictionary[checksum];
                             newEdge.OtherFace = newFace;
                             newFace.AddEdge(newEdge);
                             newEdgeDictionary.Remove(checksum);
