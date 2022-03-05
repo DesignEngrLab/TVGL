@@ -4,7 +4,7 @@ using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
-    public readonly struct StraightLine : I2DCurve
+    public readonly struct StraightLine : ICurve
     {
 
         public readonly Vector2 Anchor;

@@ -205,11 +205,18 @@ namespace TVGL.Numerics
         public static double Cross(this Vector2 value1, Vector2 value2)
         { return Vector2.Cross(value1, value2); }
 
+        /// <summary>
+        /// Converts to an array.
+        /// </summary>
+        /// <param name="value1">The value1.</param>
+        /// <returns>System.Double[].</returns>
+        public static double[] ToArray(this Vector2 value1)
+        { return new double[] { value1.X, value1.Y }; }
 
         #endregion
 
         #region Vector3
-        
+
         /// <summary>
         /// Returns the Euclidean distance between the two given points. Note that for fast applications where the
         /// actual distance (but rather the relative distance) is not needed, consider using DistanceSquared.
@@ -426,6 +433,16 @@ namespace TVGL.Numerics
                    vector1.Y * vector2.Y +
                    vector1.Z * vector2.Z;
         }
+
+
+        /// <summary>
+        /// Converts to an array.
+        /// </summary>
+        /// <param name="value1">The value1.</param>
+        /// <returns>System.Double[].</returns>
+        public static double[] ToArray(this Vector3 value1)
+        { return new double[] { value1.X, value1.Y, value1.Z }; }
+
         #endregion
 
         #region Vector4
@@ -446,7 +463,7 @@ namespace TVGL.Numerics
         /// <returns>The distance.</returns>
         public static double Distance(this Vector4 vector1, Vector4 vector2)
         {
-            return Vector4.Distance(vector1,vector2);
+            return Vector4.Distance(vector1, vector2);
         }
 
         /// <summary>
@@ -489,7 +506,7 @@ namespace TVGL.Numerics
         /// <param name="max">The maximum value.</param>
         /// <returns>The restricted vector.</returns>
         public static Vector4 Clamp(this Vector4 value1, Vector4 min, Vector4 max)
-        { return Vector4.Clamp(value1, min,max) ; }
+        { return Vector4.Clamp(value1, min, max); }
 
         /// <summary>
         /// Linearly interpolates between two vectors based on the given weighting.
@@ -558,6 +575,15 @@ namespace TVGL.Numerics
                    vector1.Z * vector2.Z +
                    vector2.W;
         }
+
+        /// <summary>
+        /// Converts to an array.
+        /// </summary>
+        /// <param name="value1">The value1.</param>
+        /// <returns>System.Double[].</returns>
+        public static double[] ToArray(this Vector4 value1)
+        { return new double[] { value1.X, value1.Y, value1.Z, value1.W }; }
+
 
         #endregion
 

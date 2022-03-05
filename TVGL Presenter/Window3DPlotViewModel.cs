@@ -308,7 +308,7 @@ namespace TVGL
             this.DirectionalLightColor = System.Windows.Media.Colors.White;
             this.DirectionalLightDirection1 = new Vector3D(-0, -20, -20);
             this.DirectionalLightDirection2 = new Vector3D(-0, -1, +50);
-            this.DirectionalLightDirection3 = new Vector3D(0, +1, 0);
+            this.DirectionalLightDirection3 = new Vector3D(10, +1, 0);
         }
 
         internal void SetUpCamera(Viewport3DX view)
@@ -354,6 +354,7 @@ namespace TVGL
                 Perspective,
             };
             this.view = view;
+            Camera = defaultPerspectiveCamera;
             ResetCameraCommand();
         }
         internal void ResetCameraCommand()

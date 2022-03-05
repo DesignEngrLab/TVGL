@@ -344,7 +344,7 @@ namespace TVGL
                 var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates),
                     out var bestFitPlane, out var planeResidual, out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)
-                border.Plane = bestFitPlane;
+                border.Surface = bestFitPlane;
                 border.PlaneError = planeResidual;
                 border.CurveError = curveResidual;
                 SetBorderConvexity(border);
@@ -354,7 +354,7 @@ namespace TVGL
                     //Do not do this when defining the curve, because these center points will always have increased error.
                     var vertices = border.EdgeList.Select(p => p.Center());
                     foreach (var p in vertices)
-                        curveResidual += curve.SquaredErrorOfNewPoint(p.ConvertTo2DCoordinates(border.Plane.AsTransformToXYPlane));
+                        curveResidual += curve.SquaredErrorOfNewPoint(p.ConvertTo2DCoordinates(border.Surface.AsTransformToXYPlane));
                     if (curveResidual < maxErrorInCurveFit)
                         border.Curve = curve;
                 }                 

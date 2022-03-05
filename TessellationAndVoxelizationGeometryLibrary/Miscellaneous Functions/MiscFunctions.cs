@@ -303,22 +303,25 @@ namespace TVGL
         public static List<Plane> FindFlats(this IEnumerable<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
                int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0, bool ensureDistinctFlats = true)
         {
+            // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly.
+            var facesList = faces as IList<PolygonalFace> ?? faces.ToList();
             var limitEdges = new HashSet<Edge>();
-            foreach (var face in faces)
+            foreach (var face in facesList)
                 foreach (var edge in face.Edges)
+                    // if it's already in the hash, then its mate added it. Therefore it is not a limit (i.e. border).
                     if (limitEdges.Contains(edge))
                         limitEdges.Remove(edge);
-                    else
+                    else // first time encountering the edge, so add it to the hash
                         limitEdges.Add(edge);
 
             //Used hashset for "Contains" function calls
             var usedFaces = new HashSet<PolygonalFace>();
-            var listFlats = new List<Plane>();
+            var planes = new List<Plane>();
 
             //Use an IEnumerable class (List) for iterating through each part, and then the
             //"Contains" function to see if it was already used. This is actually much faster
             //than using a while locations with a ".Any" and ".First" call on the Hashset.
-            foreach (var startFace in faces)
+            foreach (var startFace in facesList)
             {
                 //If this faces has already been used, continue to the next face
                 if (usedFaces.Contains(startFace)) continue;
@@ -360,14 +363,16 @@ namespace TVGL
                 if (flatHashSet.Count >= minNumberOfFacesPerFlat)
                 {
                     flat = new Plane(flatHashSet);
-                    if (!ensureDistinctFlats || flat.OuterEdges.All(e => (e.InternalAngle < Constants.MinSmoothAngle ||
-                    Constants.TwoPi - e.InternalAngle < Constants.MinSmoothAngle) || limitEdges.Contains(e)) || flat.Area > minFlatArea)
-                        listFlats.Add(flat);
+                    if (!ensureDistinctFlats ||
+                        flat.OuterEdges.All(e => e.InternalAngle < Math.PI - Constants.MinSmoothAngle ||
+                        e.InternalAngle > Math.PI + Constants.MinSmoothAngle ||
+                        limitEdges.Contains(e)) || flat.Area > minFlatArea)
+                        planes.Add(flat);
                 }
                 foreach (var polygonalFace in flat.Faces)
                     usedFaces.Add(polygonalFace);
             }
-            return listFlats;
+            return planes;
         }
 
         private static bool IsFaceNewMemberOfFlat(Plane flat, PolygonalFace face, double tolerance)
@@ -639,7 +644,7 @@ namespace TVGL
                     }
                 }
                 //Check for invalid bodies. Remove from model by ignoring these.
-                if (separateSolids.Count == 1 && faces.Count < 4) continue; 
+                if (separateSolids.Count == 1 && faces.Count < 4) continue;
                 separateSolids.Add(faces.ToList());
             }
             if (separateSolids.Count == 1 && separateSolids[0].Count == ts.NumberOfFaces)
@@ -665,7 +670,7 @@ namespace TVGL
                         for (int i = 0; i < ts.NonsmoothEdges.Count; i++)
                         {
                             if (ts.NonsmoothEdges[i].Contains(edge))
-                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates),i);
+                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates), i);
                         }
                     }
                 }
@@ -680,8 +685,8 @@ namespace TVGL
                     foreach (var edge in newSolid.Edges)
                     {
                         var pathIndex = -1;
-                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out  pathIndex)
-                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates),out pathIndex))
+                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out pathIndex)
+                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates), out pathIndex))
                             newSolid.NonsmoothEdges[pathIndex].AddEnd(edge);
                     }
                 }
@@ -2071,12 +2076,12 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public static IEnumerable<Type> TypesImplementingI2DCurve()
+        public static IEnumerable<Type> TypesImplementingICurve()
         {
-            var asm = System.Reflection.Assembly.GetAssembly(typeof(I2DCurve));
+            var asm = System.Reflection.Assembly.GetAssembly(typeof(ICurve));
 
             foreach (System.Reflection.TypeInfo ti in asm.DefinedTypes)
-                if (ti.ImplementedInterfaces.Contains(typeof(I2DCurve)))
+                if (ti.ImplementedInterfaces.Contains(typeof(ICurve)))
                     yield return ti;
         }
         public static IEnumerable<Type> TypesInheritedFromPrimitiveSurface()
@@ -2088,7 +2093,7 @@ namespace TVGL
                 yield return type;
         }
 
-        public static I2DCurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
+        public static ICurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
             out double curveResidual)
         {
             var pointList = points as IList<Vector3> ?? points.ToList();
@@ -2096,9 +2101,9 @@ namespace TVGL
             {
                 var thisPlane = new Plane(distanceToPlane, normal);
                 var minResidual = double.PositiveInfinity;
-                I2DCurve bestCurve = null;
+                ICurve bestCurve = null;
                 var point2D = pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane));
-                foreach (var curveType in MiscFunctions.TypesImplementingI2DCurve())
+                foreach (var curveType in MiscFunctions.TypesImplementingICurve())
                 {
                     var arguments = new object[] { point2D, null, null };
                     if ((bool)curveType.GetMethod("CreateFromPoints").Invoke(null, arguments))
@@ -2107,7 +2112,7 @@ namespace TVGL
                         if (minResidual > curveResidual)
                         {
                             minResidual = curveResidual;
-                            bestCurve = (I2DCurve)arguments[1];
+                            bestCurve = (ICurve)arguments[1];
                         }
                     }
                 }

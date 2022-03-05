@@ -33,7 +33,7 @@
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\AxisAlignedRectangle.cs" Link="TVGL\TwoDimensional\AxisAlignedRectangle.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\Circle.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\Circle.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\GeneralConicSection.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\GeneralConicSection.cs" />
-		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\I2DCurve.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\I2DCurve.cs" />
+		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\ICurve.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\ICurve.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Implicits and Primitives\TwoDimensional\StraightLine.cs" Link="TVGL\Implicits and Primitives\TwoDimensional\StraightLine.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\3mf.classes.cs" Link="TVGL\InputOutput Operations\3mf.classes.cs" />
 		<Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\3MFFileData.cs" Link="TVGL\InputOutput Operations\3MFFileData.cs" />

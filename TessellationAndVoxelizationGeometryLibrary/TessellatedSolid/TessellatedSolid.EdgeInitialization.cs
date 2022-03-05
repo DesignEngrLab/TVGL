@@ -536,7 +536,7 @@ namespace TVGL
                         if (bestNext == null) break;
 
                         var dir = bestNext.To == lastVertex;
-                        loop.Insert(0, (bestNext, dir));
+                        loop.AddBegin(bestNext, dir);
                         removedEdges.Add(bestNext);
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;

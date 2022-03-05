@@ -7,7 +7,7 @@ namespace TVGL.TwoDimensional
     /// <summary>
     ///     Public circle structure, given a center point and radius
     /// </summary>
-    public readonly struct Circle : I2DCurve
+    public readonly struct Circle : ICurve
     {
         /// <summary>
         ///     Center Point of circle

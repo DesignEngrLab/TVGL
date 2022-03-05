@@ -5,9 +5,9 @@ using TVGL.Numerics;
 namespace TVGL.TwoDimensional
 {
     /// <summary>
-    /// Interface I2DCurve
+    /// Interface ICurve
     /// </summary>
-    public interface I2DCurve
+    public interface ICurve
     {
         /// <summary>
         /// Returns the squared error of new point. This should be the square of the
@@ -24,9 +24,9 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out I2DCurve curve, out double error)
+        public static bool CreateFromPoints(IEnumerable<Vector2> points, out ICurve curve, out double error)
         {
-            throw new NotImplementedException("please implement static method in curve: static I2DCurve " +
+            throw new NotImplementedException("please implement static method in curve: static ICurve " +
                 "CreateFromPoints(IEnumerable<Vector2> points)");
         }
     }

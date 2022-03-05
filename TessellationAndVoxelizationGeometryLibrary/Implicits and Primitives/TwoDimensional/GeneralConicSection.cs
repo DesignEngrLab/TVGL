@@ -5,17 +5,27 @@ using TVGL.Numerics;
 
 namespace TVGL.TwoDimensional
 {
+    public enum PrimitiveCurveType
+    {
+        StraightLine,
+        Circle,
+        Parabola,
+        Ellipse,
+        Hyperbola
+    }
     /// <summary>
     ///     Public circle structure, given a center point and radius
     /// </summary>
-    public readonly struct GeneralConicSection : I2DCurve
+    public struct GeneralConicSection : ICurve
     {
-        public readonly double A;
-        public readonly double B;
-        public readonly double C;
-        public readonly double D;
-        public readonly double E;
-        public readonly bool ConstantIsZero;
+        public double A;
+        public  double B;
+        public  double C;
+        public  double D;
+        public  double E;
+        public  bool ConstantIsZero;
+
+        public PrimitiveCurveType CurveType { get; private set; }
 
         public GeneralConicSection(double a, double b, double c, double d, double e, bool constantIsZero)
         {
@@ -25,11 +35,14 @@ namespace TVGL.TwoDimensional
             D = d;
             E = e;
             ConstantIsZero = constantIsZero;
+            CurveType=PrimitiveCurveType.StraightLine;
+            SetConicType();
         }
         public double SquaredErrorOfNewPoint(Vector2 point)
         {
             var x = point.X;
             var y = point.Y;
+            // this can be very inaccurate - need to get the actual distance
             var error = A * x * x + B * x * y + C * y * y + D * x + E * y;
             if (!ConstantIsZero) error -= 1;
             return error * error / ((A * A + B * B + C * C) / 3);
@@ -100,33 +113,33 @@ namespace TVGL.TwoDimensional
 
         private void SetConicType()
         {
-            //if (A.IsNegligible() && B.IsNegligible() && C.IsNegligible())
-            //{
-            //    A = B = C = 0;
-            //    CurveType = PrimitiveCurveType.StraightLine;
-            //}
-            //else if (B.IsNegligible() && A.IsPracticallySame(C))
-            //{
-            //    B = 0;
-            //    A = C = 0.5 * (A + C);
-            //    CurveType = PrimitiveCurveType.Circle;
-            //}
-            //else if ((B * B).IsPracticallySame(A * C))
-            //{
-            //    B = Math.Sqrt(A * C);
-            //    CurveType = PrimitiveCurveType.Parabola;
-            //}
-            //else
-            //{
-            //    var det = A * C - B * B;
-            //    if (det > 0) CurveType = PrimitiveCurveType.Ellipse;
-            //    else CurveType = PrimitiveCurveType.Hyperbola;
-            //    //var det = ConstantIsZero ? 0.0 : -A * C;
-            //    //det += B * E * D + D * B * E;
-            //    //det -= D * C * D + A * E * E;
-            //    //if (!ConstantIsZero) det -= B * B;
-            //    //if (det.IsNegligible())
-            //}
+            if (A.IsNegligible() && B.IsNegligible() && C.IsNegligible())
+            {
+                A = B = C = 0;
+                CurveType = PrimitiveCurveType.StraightLine;
+            }
+            else if (B.IsNegligible() && A.IsPracticallySame(C))
+            {
+                B = 0;
+                A = C = 0.5 * (A + C);
+                CurveType = PrimitiveCurveType.Circle;
+            }
+            else if ((B * B).IsPracticallySame(A * C))
+            {
+                B = Math.Sqrt(A * C);
+                CurveType = PrimitiveCurveType.Parabola;
+            }
+            else
+            {
+                var det = A * C - B * B;
+                if (det > 0) CurveType = PrimitiveCurveType.Ellipse;
+                else CurveType = PrimitiveCurveType.Hyperbola;
+                //var det = ConstantIsZero ? 0.0 : -A * C;
+                //det += B * E * D + D * B * E;
+                //det -= D * C * D + A * E * E;
+                //if (!ConstantIsZero) det -= B * B;
+                //if (det.IsNegligible())
+            }
         }
         internal bool DefineCircleFromTerms(out Circle circle1)
         {

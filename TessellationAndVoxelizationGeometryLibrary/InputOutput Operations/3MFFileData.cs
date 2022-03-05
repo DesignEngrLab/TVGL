@@ -356,7 +356,7 @@ namespace TVGL.IOFunctions
 
             using var writer = XmlWriter.Create(stream);
             var serializer = new XmlSerializer(typeof(Relationship), defXMLNameSpaceRelationships);
-            serializer.Serialize(writer, rels);
+            serializer.Serialize(writer, rels[0]);
         }
 
         private static void SaveContentTypes(Stream stream)

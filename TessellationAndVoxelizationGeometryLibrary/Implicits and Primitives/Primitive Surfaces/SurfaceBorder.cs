@@ -28,12 +28,12 @@ namespace TVGL
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
-        public I2DCurve Curve { get; set; }
+        public ICurve Curve { get; set; }
         /// <summary>
         /// Gets or sets the plane.
         /// </summary>
         /// <value>The plane.</value>
-        public Plane Plane { get; set; }
+        public Plane Surface { get; set; }
 
         /// <summary>
         /// Gets or sets the plane error.
@@ -90,7 +90,7 @@ namespace TVGL
             get
             {
                 if (!IsCircular) return Vector3.Null;
-                return ((Circle)Curve).Center.ConvertTo3DLocation(Plane.AsTransformFromXYPlane);
+                return ((Circle)Curve).Center.ConvertTo3DLocation(Surface.AsTransformFromXYPlane);
             }
         }
 
@@ -105,23 +105,23 @@ namespace TVGL
             var pointList = GetVertices().Select(v => v.Coordinates).ToList();
             if (points != null) pointList.AddRange(points);
             if (Plane.DefineNormalAndDistanceFromVertices(pointList, out var distanceToPlane, out var normal))
-                Plane = new Plane(distanceToPlane, normal);
+                Surface = new Plane(distanceToPlane, normal);
             else
             {
                 var lineDir = Vector3.Zero;
                 for (int i = 1; i < pointList.Count; i++)
                     lineDir += (pointList[i] - pointList[0]);
                 normal = lineDir.Normalize().GetPerpendicularDirection();
-                Plane = new Plane(pointList[0], normal);
+                Surface = new Plane(pointList[0], normal);
             }
             UpdateTerms(pointList, curveType);
         }
 
 
-        public SurfaceBorder(I2DCurve curve2D, Plane curvePlane, double curveError, double planeError) : this()
+        public SurfaceBorder(ICurve curve2D, Plane curvePlane, double curveError, double planeError) : this()
         {
             this.Curve = curve2D;
-            this.Plane = curvePlane;
+            this.Surface = curvePlane;
             this.CurveError = curveError;
             this.PlaneError = planeError;
         }
@@ -134,8 +134,8 @@ namespace TVGL
 
         private double CalcPlaneError(Vector3 point)
         {
-            var d = Plane.Normal.Dot(point);
-            return (d - Plane.DistanceToOrigin) * (d - Plane.DistanceToOrigin);
+            var d = Surface.Normal.Dot(point);
+            return (d - Surface.DistanceToOrigin) * (d - Surface.DistanceToOrigin);
         }
 
         public double CurveResidualRatio(Vector3 coordinates, double tolerance)
@@ -146,7 +146,7 @@ namespace TVGL
 
         private double CalcError(Vector3 point)
         {
-            return Curve.SquaredErrorOfNewPoint(point.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane));
+            return Curve.SquaredErrorOfNewPoint(point.ConvertTo2DCoordinates(Surface.AsTransformToXYPlane));
         }
 
 
@@ -167,7 +167,7 @@ namespace TVGL
 
         internal bool UpdateTerms(IList<Vector3> pointList, Type curveType)
         {
-            var sucess = UpdateTerms(pointList.Select(p => p.ConvertTo2DCoordinates(Plane.AsTransformToXYPlane)).ToList(), curveType);
+            var sucess = UpdateTerms(pointList.Select(p => p.ConvertTo2DCoordinates(Surface.AsTransformToXYPlane)).ToList(), curveType);
             if (sucess)
             {
                 PlaneError = pointList.Sum(p => CalcPlaneError(p)) / pointList.Count;
@@ -180,7 +180,7 @@ namespace TVGL
             var arguments = new object[] { point2D, null, null };
             if ((bool)curveType.GetMethod("CreateFromPoints").Invoke(null, arguments))
             {
-                Curve = (I2DCurve)arguments[1];
+                Curve = (ICurve)arguments[1];
                 CurveError = (double)arguments[2];
                 return true;
             }
@@ -197,7 +197,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(GetVertices().ProjectTo2DCoordinates(Plane.Normal, out _));
+                    _polygon = new Polygon(GetVertices().ProjectTo2DCoordinates(Surface.Normal, out _));
                 return _polygon;
             }
         }
@@ -215,8 +215,8 @@ namespace TVGL
         public SurfaceBorder Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null)
         {
             var copy = new SurfaceBorder();
-            if (Plane != null)
-                copy.Plane = new Plane(Plane.DistanceToOrigin, Plane.Normal);
+            if (Surface != null)
+                copy.Surface = new Plane(Surface.DistanceToOrigin, Surface.Normal);
             copy.Curve = Curve;
             copy.EncirclesAxis = EncirclesAxis;
             copy.FullyFlush = FullyFlush;
@@ -227,17 +227,17 @@ namespace TVGL
             {
                 foreach (var eAndA in this)
                     if (reverse)
-                        copy.Insert(0, (eAndA.edge, !eAndA.dir));
+                        copy.AddBegin(eAndA.edge, !eAndA.dir);
                     else
-                        copy.Add((eAndA.edge, eAndA.dir));
+                        copy.AddEnd(eAndA.edge, eAndA.dir);
             }
             else
             {
                 foreach (var eAndA in this)
                     if (reverse)
-                        copy.Insert(0, (copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], !eAndA.dir));
+                        copy.AddBegin(copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], !eAndA.dir);
                     else
-                        copy.Add((copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], eAndA.dir));
+                        copy.AddEnd(copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], eAndA.dir);
             }
             return copy;
         }

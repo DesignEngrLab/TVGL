@@ -36,11 +36,11 @@ namespace TVGL
 
         /// <summary>
         /// The minimum angle used to approximate a circle. An octagon is the largest sided polygon that any sane person would want to define
-        /// without approximating a circle, and the internal angle of an octagon is 135 degrees or 3pi/4. So,anything slightly larger can 
-        /// legitimately be modelling as a circle (or more generically as a conic curve). Through our testing, 15 degrees has been a good
-        /// tessellation tolerance for angular deviation (or .83*pi), so set this just above 15 degrees.
+        /// without approximating a circle. For an regular octogon, this is an outer angle of 45 degrees (360/8). So that is the most
+        /// conservative value for smooth. However, it is not uncommon to have slants in a model well below this. A 2-to-1 slope makes an
+        /// angle of 26.6-degrees. So, we consider a little lower as the cutoff.
         /// </summary>
-        public const double MinSmoothAngle = 16 * Math.PI / 180;  
+        public const double MinSmoothAngle = 25 * Math.PI / 180;  
 
         /// <summary>
         ///     The tolerance used for simplifying polygons by joining to similary sloped lines.

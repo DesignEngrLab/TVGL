@@ -31,7 +31,8 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns Nth smallest element from the list. Here n starts from 0 so that n=0 returns minimum, n=1 returns 2nd smallest element etc.
+        /// Returns Nth smallest element from the list. Here n starts from 0 so that n=0 returns minimum, 
+        /// n=1 returns 2nd smallest element etc.
         /// Note: specified list would be mutated in the process.
         /// Reference: Introduction to Algorithms 3rd Edition, Corman et al, pp 216
         /// </summary>
