@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
+using TVGL.Primitives;
 
 namespace TVGL.Boolean_Operations
 {

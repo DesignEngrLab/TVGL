@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 using TVGL.Numerics;
+using TVGL.Primitives;
+using MIConvexHull;
 using TVGL.TwoDimensional;
 
 namespace TVGL
@@ -2078,10 +2080,10 @@ namespace TVGL
 
         public static IEnumerable<Type> TypesImplementingICurve()
         {
-            var asm = System.Reflection.Assembly.GetAssembly(typeof(ICurve));
+            var asm = System.Reflection.Assembly.GetAssembly(typeof(I2DCurve));
 
             foreach (System.Reflection.TypeInfo ti in asm.DefinedTypes)
-                if (ti.ImplementedInterfaces.Contains(typeof(ICurve)))
+                if (ti.ImplementedInterfaces.Contains(typeof(I2DCurve)))
                     yield return ti;
         }
         public static IEnumerable<Type> TypesInheritedFromPrimitiveSurface()
@@ -2093,7 +2095,7 @@ namespace TVGL
                 yield return type;
         }
 
-        public static ICurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
+        public static I2DCurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
             out double curveResidual)
         {
             var pointList = points as IList<Vector3> ?? points.ToList();
@@ -2101,7 +2103,7 @@ namespace TVGL
             {
                 var thisPlane = new Plane(distanceToPlane, normal);
                 var minResidual = double.PositiveInfinity;
-                ICurve bestCurve = null;
+                I2DCurve bestCurve = null;
                 var point2D = pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane));
                 foreach (var curveType in MiscFunctions.TypesImplementingICurve())
                 {
@@ -2112,7 +2114,7 @@ namespace TVGL
                         if (minResidual > curveResidual)
                         {
                             minResidual = curveResidual;
-                            bestCurve = (ICurve)arguments[1];
+                            bestCurve = (I2DCurve)arguments[1];
                         }
                     }
                 }
@@ -2128,7 +2130,7 @@ namespace TVGL
                     lineDir += (pointList[i] - pointList[0]);
                 normal = lineDir.Normalize().GetPerpendicularDirection();
                 var thisPlane = new Plane(pointList[0], normal);
-                if (StraightLine.CreateFromPoints(pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
+                if (StraightLine2D.CreateFromPoints(pointList.Select(p => (IVertex2D)p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
                     out var straightLine, out var error))
                 {
                     plane = thisPlane;
@@ -2139,7 +2141,7 @@ namespace TVGL
                 plane = default;
                 planeResidual = double.PositiveInfinity;
                 curveResidual = double.PositiveInfinity;
-                return new StraightLine();
+                return new StraightLine2D();
             }
         }
 

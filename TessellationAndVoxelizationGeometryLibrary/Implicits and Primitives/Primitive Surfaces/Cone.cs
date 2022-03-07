@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
 
-namespace TVGL
+namespace TVGL.Primitives
 {
     /// <summary>
     ///     The class for Cone primitives.

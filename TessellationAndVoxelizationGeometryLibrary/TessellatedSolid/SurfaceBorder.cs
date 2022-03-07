@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
+using TVGL.Primitives;
 
 namespace TVGL
 {
@@ -28,7 +29,7 @@ namespace TVGL
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
-        public ICurve Curve { get; set; }
+        public I2DCurve Curve { get; set; }
         /// <summary>
         /// Gets or sets the plane.
         /// </summary>
@@ -39,7 +40,7 @@ namespace TVGL
         /// Gets or sets the plane error.
         /// </summary>
         /// <value>The plane error.</value>
-        public double PlaneError { get; set; }
+        public double SurfaceError { get; set; }
 
         /// <summary>
         /// Gets or sets the curve error.
@@ -118,17 +119,17 @@ namespace TVGL
         }
 
 
-        public SurfaceBorder(ICurve curve2D, Plane curvePlane, double curveError, double planeError) : this()
+        public SurfaceBorder(I2DCurve curve2D, Plane curvePlane, double curveError, double planeError) : this()
         {
             this.Curve = curve2D;
             this.Surface = curvePlane;
             this.CurveError = curveError;
-            this.PlaneError = planeError;
+            this.SurfaceError = planeError;
         }
 
         public double PlaneResidualRatio(Vector3 coordinates, double tolerance)
         {
-            var denominator = Math.Max(PlaneError, tolerance);
+            var denominator = Math.Max(SurfaceError, tolerance);
             return CalcPlaneError(coordinates) / denominator;
         }
 
@@ -170,7 +171,7 @@ namespace TVGL
             var sucess = UpdateTerms(pointList.Select(p => p.ConvertTo2DCoordinates(Surface.AsTransformToXYPlane)).ToList(), curveType);
             if (sucess)
             {
-                PlaneError = pointList.Sum(p => CalcPlaneError(p)) / pointList.Count;
+                SurfaceError = pointList.Sum(p => CalcPlaneError(p)) / pointList.Count;
                 return true;
             }
             return false;
@@ -180,7 +181,7 @@ namespace TVGL
             var arguments = new object[] { point2D, null, null };
             if ((bool)curveType.GetMethod("CreateFromPoints").Invoke(null, arguments))
             {
-                Curve = (ICurve)arguments[1];
+                Curve = (I2DCurve)arguments[1];
                 CurveError = (double)arguments[2];
                 return true;
             }

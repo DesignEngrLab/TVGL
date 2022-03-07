@@ -128,7 +128,7 @@ namespace TVGL.Numerics
             var Q3 = Q * Q * Q;
             var R2 = R * R;
             a /= 3.0;
-            if (R.JustRealNumber && Q.JustRealNumber && (R2.IsPracticallySame(Q3) || R2.Real < Q3.Real)) // R^2 - Q^3 is the discriminant of the polynomial
+            if (R.IsRealNumber && Q.IsRealNumber && (R2.IsPracticallySame(Q3) || R2.Real < Q3.Real)) // R^2 - Q^3 is the discriminant of the polynomial
             {  //for q-cubed to be greater than R-squared, then Q is guaranteed to be a positive real
                 var theta = Math.Acos(R.Real / Math.Sqrt(Q3.Real)) / 3;
                 var sqrtQ = Math.Sqrt(Q.Real);

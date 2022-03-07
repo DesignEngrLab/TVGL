@@ -1,9 +1,9 @@
 ﻿using MIConvexHull;
 using System;
-using System.Collections.Generic;
 using TVGL.Numerics;
+using TVGL.TwoDimensional;
 
-namespace TVGL.TwoDimensional
+namespace TVGL.Primitives
 {
     /// <summary>
     ///     Axis-aligned rectangle

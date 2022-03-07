@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using TVGL.Numerics;
+using TVGL.Primitives;
 
 namespace TVGL
 {

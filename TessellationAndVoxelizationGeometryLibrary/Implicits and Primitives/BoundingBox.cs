@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TVGL.Numerics;
 
-namespace TVGL
+namespace TVGL.Primitives
 {
     /// <summary>
     /// Class BoundingBox with Generic (T) is for times when you have points you want to save

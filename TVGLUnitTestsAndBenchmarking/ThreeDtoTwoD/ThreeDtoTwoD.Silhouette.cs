@@ -7,6 +7,7 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Numerics;
+using TVGL.Primitives;
 using TVGL.TwoDimensional;
 
 namespace TVGLUnitTestsAndBenchmarking

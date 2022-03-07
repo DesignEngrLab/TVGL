@@ -8,7 +8,7 @@ using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
-namespace TVGL
+namespace TVGL.Primitives
 {
     /// <summary>
     ///     The class for Cylinder primitives.

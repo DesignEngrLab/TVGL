@@ -1,13 +1,14 @@
-﻿using System;
+﻿using MIConvexHull;
+using System;
 using System.Collections.Generic;
 using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+namespace TVGL.Primitives
 {
     /// <summary>
     ///     Public circle structure, given a center point and radius
     /// </summary>
-    public readonly struct Circle : ICurve
+    public readonly struct Circle : I2DCurve
     {
         /// <summary>
         ///     Center Point of circle
@@ -46,9 +47,9 @@ namespace TVGL.TwoDimensional
             Circumference = Constants.TwoPi * Radius;
         }
 
-        public double SquaredErrorOfNewPoint(Vector2 point)
+        public double SquaredErrorOfNewPoint(IVertex2D point)
         {
-            var diff = point - Center;
+            var diff =new Vector2(point.X - Center.X, point.Y - Center.Y);
             var error = Math.Sqrt(diff.Dot(diff)) - Radius;
             return error * error;
         }
@@ -58,7 +59,7 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out Circle circle, out double error)
+        public static bool CreateFromPoints(IEnumerable<IVertex2D> points, out Circle circle, out double error)
         {
             // Updates the circle using Landau's method ( https://doi.org/10.1016/0734-189X(89)90088-1 ), which
             // seems like it would be same as the Minimum Least Squares approach, but this is a million times

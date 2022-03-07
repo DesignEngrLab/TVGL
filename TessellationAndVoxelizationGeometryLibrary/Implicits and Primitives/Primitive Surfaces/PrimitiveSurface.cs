@@ -9,7 +9,7 @@ using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
-namespace TVGL
+namespace TVGL.Primitives
 {
     /// <summary>
     ///     Class PrimitiveSurface.
@@ -345,7 +345,7 @@ namespace TVGL
                     out var bestFitPlane, out var planeResidual, out var curveResidual);
                 //if (planeResidual < maxErrorInCurveFit)
                 border.Surface = bestFitPlane;
-                border.PlaneError = planeResidual;
+                border.SurfaceError = planeResidual;
                 border.CurveError = curveResidual;
                 SetBorderConvexity(border);
                 if (curveResidual < maxErrorInCurveFit)

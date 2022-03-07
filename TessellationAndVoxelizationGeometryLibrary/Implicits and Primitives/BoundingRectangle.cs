@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
-namespace TVGL
+namespace TVGL.Primitives
 {
     /// <summary>
     ///     Bounding rectangle information based on area and point pairs.

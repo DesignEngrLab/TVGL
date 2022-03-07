@@ -31,10 +31,9 @@ namespace StarMathLib
         /// </summary>
         /// <param name="A">the matrix in question, A.</param>
         /// <returns>
-        ///     The eigenvalues as two arrays of same length/order as A
-        ///     (the first is the real component, the second is the imaginary component).
+        ///     The eigenvalues as complex numbers.
         /// </returns>
-        public static double[][] GetEigenValues(this double[,] A)
+        public static ComplexNumber[] GetEigenValues(this double[,] A)
         {
             return GetEigenValuesAndVectors(A, out _);
         }
@@ -45,7 +44,7 @@ namespace StarMathLib
         /// <param name="A">the matrix in question, A.</param>
         /// <param name="eigenVectors">The eigenvectors as an array of arrays/vectors.</param>
         /// <returns></returns>
-        public static double[][] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
+        public static ComplexNumber[] GetEigenValuesAndVectors(this double[,] A, out double[][] eigenVectors)
         {
             var length = A.GetLength(0);
             if (length != A.GetLength(1))
@@ -589,8 +588,10 @@ namespace StarMathLib
             }
 
             #endregion
-
-            return new[] { eigenvaluesReal, eigenvaluesImag };
+            var result = new ComplexNumber[length];
+            for (int i = 0; i < length; i++)
+                result[i] = new ComplexNumber(eigenvaluesReal[i], eigenvaluesImag[i]);
+            return result;
         }
 
         private static double[] ComplexNumberDivide(double xreal, double ximag, double yreal, double yimag)

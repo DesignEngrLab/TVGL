@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using TVGL.Numerics;
 
-namespace TVGL
+namespace TVGL.Primitives
 {
     /// <summary>
     ///     Class DenseRegion.

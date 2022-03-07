@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using TVGL.Numerics;
+using TVGL.Primitives;
 using TVGL.TwoDimensional;
 
 namespace TVGL

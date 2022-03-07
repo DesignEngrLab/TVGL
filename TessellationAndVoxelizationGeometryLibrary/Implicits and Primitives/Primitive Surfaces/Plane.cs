@@ -15,7 +15,7 @@ using System.Runtime.CompilerServices;
 using StarMathLib;
 using TVGL.Numerics;
 
-namespace TVGL 
+namespace TVGL.Primitives
 {
     /// <summary>
     /// A structure encapsulating a 3D Plane

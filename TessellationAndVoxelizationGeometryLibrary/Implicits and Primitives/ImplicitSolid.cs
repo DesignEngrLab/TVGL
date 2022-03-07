@@ -5,7 +5,7 @@
 using System;
 using TVGL.Numerics;
 
-namespace TVGL
+namespace TVGL.Primitives
 {
     public class ImplicitSolid : Solid
     {
