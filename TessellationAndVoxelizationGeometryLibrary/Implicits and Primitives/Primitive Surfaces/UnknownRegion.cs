@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using TVGL.Numerics;
@@ -39,6 +40,21 @@ namespace TVGL.Primitives
         public override double CalculateError(IEnumerable<Vector3> vertices = null)
         {
             return 0.0;
+        }
+
+        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        {
+            return Vector2.Null;
+        }
+
+        public override Vector3 TransformFrom2DTo3D(IVertex2D point)
+        {
+            return Vector3.Null;
+        }
+
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> point)
+        {
+            return null;
         }
     }
 }

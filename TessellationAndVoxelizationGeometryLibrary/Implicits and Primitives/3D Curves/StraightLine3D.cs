@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using MIConvexHull;
 using StarMathLib;
 using TVGL.Numerics;
 
 namespace TVGL.Primitives
 {
-    public readonly struct StraightLine3D 
+    public readonly struct StraightLine3D : I2DCurve
     // this is 3D so, it doesn't inherit from ICurve, and since it's not a surface - it doesn't inherit
     // from primitive surface. But interestingly, it is basically a cylinder with zero radius
     {
@@ -19,10 +20,15 @@ namespace TVGL.Primitives
             Anchor = anchor;
             Direction = direction;
         }
-        public double SquaredErrorOfNewPoint(Vector3 point)
+
+        public double SquaredErrorOfNewPoint(IVertex2D point)
         {
-            var cross = (point - Anchor).Cross(Direction);
-            return cross.Dot(cross);
+            if (point is IVertex3D vector3D)
+            {
+                var cross = (new Vector3(vector3D.X - Anchor.X, vector3D.Y - Anchor.Y, vector3D.Z - Anchor.Z)).Cross(Direction);
+                return cross.Dot(cross);
+            }
+            else return double.PositiveInfinity;
         }
 
         /// <summary>
@@ -31,7 +37,7 @@ namespace TVGL.Primitives
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         // this is based on this: https://stackoverflow.com/questions/24747643/3d-linear-regression/67303867#67303867
-        public static StraightLine3D CreateFromPoints(IEnumerable<Vector3> points, out double error)
+        public static bool CreateFromPoints(IEnumerable<IVertex2D> points, out I2DCurve curve, out double error)
         {
             double x, y, z;
             double xSqd, ySqd, zSqd;
@@ -40,9 +46,15 @@ namespace TVGL.Primitives
             var n = 0;
             foreach (var point in points)
             {
+                if (!(point is IVertex3D point3D))
+                {
+                    curve = null;
+                    error = 0;
+                    return false;
+                }
                 var px = point.X;
                 var py = point.Y;
-                var pz = point.Z;
+                var pz = ((IVertex3D)point).Z;
                 x += px;
                 y += py;
                 z += pz;
@@ -79,12 +91,13 @@ namespace TVGL.Primitives
                 Math.Abs(eigens[1].Real) >= Math.Abs(eigens[2].Real))
                 ? 1 : 2;
             var direction = new Vector3(eigenVectors[indexOfLargestEigenvalue]);
-            var result = new StraightLine3D(new Vector3(x, y, z), direction.Normalize());
+            curve = new StraightLine3D(new Vector3(x, y, z), direction.Normalize());
+            //var result = new StraightLine3D(new Vector3(x, y, z), direction.Normalize());
             error = 0.0;
             foreach (var point in points)
-                error += result.SquaredErrorOfNewPoint(point);
+                error += curve.SquaredErrorOfNewPoint(point);
             error /= n;
-            return result;
+            return true;
         }
     }
 }

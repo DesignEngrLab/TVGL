@@ -49,6 +49,54 @@ namespace TVGL.Primitives
             return sqDistanceSum / numVerts;
         }
 
+        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.Null;
+        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        {
+            var v = new Vector3(point.X, point.Y, point.Z) - Anchor;
+            if (faceXDir.IsNull())
+            {
+                faceXDir = Axis.GetPerpendicularDirection();
+                faceYDir = faceXDir.Cross(Axis);
+            }
+            var x = faceXDir.Dot(v);
+            var y = faceYDir.Dot(v);
+            var angle = Math.Atan2(y, x);
+
+            return new Vector2(angle * Radius, v.Dot(Axis));
+        }
+
+        public override Vector3 TransformFrom2DTo3D(MIConvexHull.IVertex2D point)
+        {
+            var angle = (point.X / Radius) % Constants.TwoPi;
+            var result = Anchor + Radius * Math.Cos(angle) * faceXDir;
+            result += Radius * Math.Sin(angle) * faceYDir;
+            result += point.Y * Axis;
+            return result;
+        }
+
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        {
+            var lastPoint = Vector3.Zero;
+            var last2DVertex = Vector2.Zero;
+            var horizRepeat = Radius * Constants.TwoPi;
+            foreach (var point in points)
+            {
+                var coord3D = new Vector3(point.X, point.Y, point.Z);
+                var vector = coord3D - lastPoint;
+                var rightIsOutward = vector.Cross(Axis);
+                var step = rightIsOutward.Dot(coord3D - Anchor) > 0 ? 1 : -1;
+                var coord2D = TransformFrom3DTo2D(point);
+                var coord2Dx = coord2D.X;
+                while (coord2Dx * step < last2DVertex.X * step)
+                    coord2Dx += step * horizRepeat;
+                coord2D = new Vector2(coord2Dx, coord2D.Y);
+                yield return coord2D;
+                lastPoint = coord3D;
+                last2DVertex = coord2D;
+            }
+        }
+
         #region Properties
 
         /// <summary>

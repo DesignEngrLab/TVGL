@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using MIConvexHull;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -51,7 +52,7 @@ namespace TVGL.Primitives
             {
                 _borders = new List<SurfaceBorder>();
                 foreach (var origBorder in originalToBeCopied.Borders)
-                    _borders.Add(origBorder.Copy(false, copiedTessellatedSolid));
+                    _borders.Add(origBorder.Copy(this, false, copiedTessellatedSolid));
             }
             if (copiedTessellatedSolid != null)
                 CompletePostSerialization(copiedTessellatedSolid);
@@ -74,7 +75,9 @@ namespace TVGL.Primitives
         }
 
         public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
-
+        public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points);
+        public abstract Vector2 TransformFrom3DTo2D(IVertex3D point);
+        public abstract Vector3 TransformFrom2DTo3D(IVertex2D point);
         public int Index { get; set; }
 
         /// <summary>
@@ -150,7 +153,7 @@ namespace TVGL.Primitives
         {
             var concave = 0;
             var convex = 0;
-            foreach(var edge in InnerEdges)
+            foreach (var edge in InnerEdges)
             {
                 if (edge.Curvature == CurvatureType.Concave) concave++;
                 else if (edge.Curvature == CurvatureType.Convex) convex++;
@@ -317,12 +320,12 @@ namespace TVGL.Primitives
         public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
         {
             var transform = axis.TransformToXYPlane(out _);
-            foreach(var border in Borders)
+            foreach (var border in Borders)
             {
                 var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
                 if (anchor != Vector3.Null && polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform)))
                     yield return border;
-            }    
+            }
         }
 
         /// <summary>
@@ -354,10 +357,10 @@ namespace TVGL.Primitives
                     //Do not do this when defining the curve, because these center points will always have increased error.
                     var vertices = border.EdgeList.Select(p => p.Center());
                     foreach (var p in vertices)
-                        curveResidual += curve.SquaredErrorOfNewPoint(p.ConvertTo2DCoordinates(border.Surface.AsTransformToXYPlane));
+                        curveResidual += curve.SquaredErrorOfNewPoint(border.Surface.TransformFrom3DTo2D(p));
                     if (curveResidual < maxErrorInCurveFit)
                         border.Curve = curve;
-                }                 
+                }
                 if (border.IsClosed)
                 {
                     var axis = Vector3.Null;
@@ -391,7 +394,7 @@ namespace TVGL.Primitives
                 }
             }
         }
-        
+
         private static void SetBorderConvexity(SurfaceBorder border)
         {
             var concave = 0;
@@ -405,8 +408,8 @@ namespace TVGL.Primitives
                 var dot1 = v1.Dot(edge.OwnedFace.Normal);
                 var v2 = p1.Coordinates - p2.Coordinates;
                 var dot2 = v2.Dot(edge.OtherFace.Normal);
-                if(Math.Sign(dot1) != Math.Sign(dot2)) { }
-                if (dot1 < 0 && edge.Curvature == CurvatureType.Concave ) { }
+                if (Math.Sign(dot1) != Math.Sign(dot2)) { }
+                if (dot1 < 0 && edge.Curvature == CurvatureType.Concave) { }
                 if (dot1 > 0 && edge.Curvature == CurvatureType.Convex && !edge.InternalAngle.IsNegligible(0.001)) { }
                 if (edge.InternalAngle.IsPracticallySame(Math.PI, Constants.SameFaceNormalDotTolerance)) flat++;
                 else if (edge.InternalAngle > Math.PI) concave++;
@@ -414,7 +417,7 @@ namespace TVGL.Primitives
             }
             border.FullyFlush = flat > 0 && convex == 0 && concave == 0;
             border.FullyConcave = concave > 0 && flat == 0 && convex == 0;
-            border.FullyConvex = convex > 0 && flat == 0  && concave == 0;
+            border.FullyConvex = convex > 0 && flat == 0 && concave == 0;
         }
 
         public double MaxX { get; protected set; } = double.NaN;

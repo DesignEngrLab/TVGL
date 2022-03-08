@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,6 +46,38 @@ namespace TVGL.Primitives
             return sqDistanceSum / numVerts;
         }
 
+        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 faceZDir = Vector3.Null;
+        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        {
+            var v = new Vector3(point.X, point.Y, point.Z) - Center;
+            if (faceXDir.IsNull())
+            {
+                faceXDir = Vector3.UnitX;
+                faceYDir = Vector3.UnitY;
+                faceZDir = Vector3.UnitZ;
+            }
+            var x = faceXDir.Dot(v)/Radius;
+            var y = faceYDir.Dot(v)/Radius;
+            var z = faceZDir.Dot(v)/Radius;
+            var polarAngle = Math.Acos(z);
+            var azimuthalX = Math.Acos(x);
+            var azimuthalY = Math.Acos(y);
+            var azimuthAngle = Math.Atan2(azimuthalY, azimuthalX);
+
+            return new Vector2(azimuthAngle * Radius, polarAngle * Radius);
+        }
+
+        public override Vector3 TransformFrom2DTo3D(IVertex2D point)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        {
+            throw new NotImplementedException();
+        }
 
         #region Constructor
 

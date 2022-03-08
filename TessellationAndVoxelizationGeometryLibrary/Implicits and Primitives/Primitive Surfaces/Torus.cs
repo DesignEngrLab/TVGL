@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -137,5 +138,19 @@ namespace TVGL.Primitives
             return center + majorRadius * dirToCircle;
         }
 
+        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Vector3 TransformFrom2DTo3D(IVertex2D point)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

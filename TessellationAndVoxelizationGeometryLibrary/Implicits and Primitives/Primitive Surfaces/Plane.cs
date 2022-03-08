@@ -102,7 +102,8 @@ namespace TVGL.Primitives
         {
             return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
         }
-        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane, out Vector3 normal)
+        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane,
+            out Vector3 normal)
         {
             var pointList = vertices as IList<Vector3> ?? vertices.ToList();
             var numVertices = pointList.Count;
@@ -471,6 +472,26 @@ namespace TVGL.Primitives
                 numVerts++;
             }
             return sqDistanceSum / numVerts;
+        }
+
+        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        {
+            var v = new Vector3(point.X, point.Y, point.Z);
+            var result = v.Transform(AsTransformToXYPlane);
+            return new Vector2(result.X, result.Y);
+        }
+
+        public override Vector3 TransformFrom2DTo3D(MIConvexHull.IVertex2D point)
+        {
+            var v = new Vector3(point.X, point.Y, 0);
+            return v.Transform(AsTransformFromXYPlane);
+        }
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        {
+            foreach (var point in points)
+            {
+                yield return TransformFrom3DTo2D(point);
+            }
         }
     }
 }
