@@ -491,6 +491,9 @@ namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
             var crossMagnitudeSquared = this.Cross(other).LengthSquared();
             crossMagnitudeSquared /= this.LengthSquared();
             crossMagnitudeSquared /= other.LengthSquared();
+            // now the quantity, crossMagnitudeSquared, is actually the sin^2(angle)
+            // since sin(angle) is nearly the same as angle when angle is small, we are effectively
+            // checking if the angle is less than dotTolerance.
             return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
         }
 

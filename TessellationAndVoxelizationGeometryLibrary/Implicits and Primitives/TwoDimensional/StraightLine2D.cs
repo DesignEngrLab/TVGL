@@ -5,7 +5,7 @@ using TVGL.Numerics;
 
 namespace TVGL.Primitives
 {
-    public readonly struct StraightLine2D : I2DCurve
+    public readonly struct StraightLine2D : ICurve
     {
 
         public readonly Vector2 Anchor;
@@ -18,14 +18,14 @@ namespace TVGL.Primitives
             Direction = direction;
         }
 
-        public double SquaredErrorOfNewPoint(IVertex2D point)
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
             var fromAnchor =new Vector2(point.X - Anchor.X, point.Y - Anchor.Y);
             var cross = fromAnchor.Cross(Direction);
             return cross * cross;
         }
 
-        public static bool CreateFromPoints(IEnumerable<IVertex2D> points, out StraightLine2D straightLine, out double error)
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
         {
             double xCoeff;
             double yCoeff;
@@ -44,7 +44,7 @@ namespace TVGL.Primitives
             }
             if (numPoints < 2)
             {
-                straightLine = new StraightLine2D();
+                curve = new StraightLine2D();
                 error = double.PositiveInfinity;
                 return false;
             }
@@ -70,15 +70,15 @@ namespace TVGL.Primitives
                 xCoeff = (m - yCoeff * h) / g;
             }
             if (yCoeff == 0) //line is vertical
-                straightLine = new StraightLine2D(new Vector2(1 / xCoeff, 0), Vector2.UnitY);
+                curve = new StraightLine2D(new Vector2(1 / xCoeff, 0), Vector2.UnitY);
             else
             {
                 var anchor = ConstantIsZero ? Vector2.Zero : new Vector2(0, 1 / yCoeff);
-                straightLine = new StraightLine2D(anchor, new Vector2(yCoeff, -xCoeff).Normalize());
+                curve = new StraightLine2D(anchor, new Vector2(yCoeff, -xCoeff).Normalize());
             }
             error = 0.0;
             foreach (var p in points)
-                error += straightLine.SquaredErrorOfNewPoint(p);
+                error += curve.SquaredErrorOfNewPoint(p);
             error /= numPoints;
             return true;
         }

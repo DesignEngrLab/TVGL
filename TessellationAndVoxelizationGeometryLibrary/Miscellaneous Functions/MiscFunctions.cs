@@ -2080,10 +2080,10 @@ namespace TVGL
 
         public static IEnumerable<Type> TypesImplementingICurve()
         {
-            var asm = System.Reflection.Assembly.GetAssembly(typeof(I2DCurve));
+            var asm = System.Reflection.Assembly.GetAssembly(typeof(ICurve));
 
             foreach (System.Reflection.TypeInfo ti in asm.DefinedTypes)
-                if (ti.ImplementedInterfaces.Contains(typeof(I2DCurve)))
+                if (ti.ImplementedInterfaces.Contains(typeof(ICurve)))
                     yield return ti;
         }
         public static IEnumerable<Type> TypesInheritedFromPrimitiveSurface()
@@ -2095,7 +2095,7 @@ namespace TVGL
                 yield return type;
         }
 
-        public static I2DCurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
+        public static ICurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
             out double curveResidual)
         {
             var pointList = points as IList<Vector3> ?? points.ToList();
@@ -2103,7 +2103,7 @@ namespace TVGL
             {
                 var thisPlane = new Plane(distanceToPlane, normal);
                 var minResidual = double.PositiveInfinity;
-                I2DCurve bestCurve = null;
+                ICurve bestCurve = null;
                 var point2D = pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane));
                 foreach (var curveType in MiscFunctions.TypesImplementingICurve())
                 {
@@ -2114,7 +2114,7 @@ namespace TVGL
                         if (minResidual > curveResidual)
                         {
                             minResidual = curveResidual;
-                            bestCurve = (I2DCurve)arguments[1];
+                            bestCurve = (ICurve)arguments[1];
                         }
                     }
                 }

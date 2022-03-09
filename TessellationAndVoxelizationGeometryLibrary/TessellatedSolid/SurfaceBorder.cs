@@ -29,7 +29,7 @@ namespace TVGL
         /// Gets or sets the curve.
         /// </summary>
         /// <value>The curve.</value>
-        public I2DCurve Curve { get; set; }
+        public ICurve Curve { get; set; }
         /// <summary>
         /// Gets or sets the plane.
         /// </summary>
@@ -103,7 +103,7 @@ namespace TVGL
         /// <value><c>true</c> if [both sides same primitive]; otherwise, <c>false</c>.</value>
         public bool BothSidesSamePrimitive { get; set; }
 
-        public SurfaceBorder(I2DCurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
+        public SurfaceBorder(ICurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
             double planeError) : base()
         {
             EdgeList.AddRange(path.EdgeList);

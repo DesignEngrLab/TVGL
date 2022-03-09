@@ -17,7 +17,7 @@ namespace TVGL.Primitives
     /// <summary>
     ///     Public circle structure, given a center point and radius
     /// </summary>
-    public struct GeneralConicSection : I2DCurve
+    public struct GeneralConicSection : ICurve
     {
         public double A;
         public double B;
@@ -47,7 +47,9 @@ namespace TVGL.Primitives
             double y = point.Y;
             return A * x * x + B * x * y + C * y * y + D * x + E * y + 1;
         }
-        public double SquaredErrorOfNewPoint(IVertex2D point)
+
+
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
             var x = point.X;
             var y = point.Y;
@@ -57,7 +59,7 @@ namespace TVGL.Primitives
             return error * error / ((A * A + B * B + C * C) / 3);
         }
 
-        public static bool CreateFromPoints(IEnumerable<IVertex2D> points, out GeneralConicSection conic, out double error)
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
         {
             // this is maybe not sufficient. It assumes the error is the amount the function is off as opposed to the
             // distance. To properly do distance, see two methods at the bottom of this file.
@@ -94,7 +96,7 @@ namespace TVGL.Primitives
             }
             if (numPoints < 5)
             {
-                conic = new GeneralConicSection();
+                curve = new GeneralConicSection();
                 error = double.PositiveInfinity;
                 return false;
             }
@@ -109,14 +111,14 @@ namespace TVGL.Primitives
             var b = new[] { xSqSum, xySum, ySqSum, xSum, ySum };
             if (matrix.solve(b, out var result, true))
             {
-                conic = new GeneralConicSection(result[0], result[1], result[2], result[3], result[4], true);
+                curve = new GeneralConicSection(result[0], result[1], result[2], result[3], result[4], true);
                 error = 0.0;
                 foreach (var p in points)
-                    error += conic.SquaredErrorOfNewPoint(p);
+                    error += curve.SquaredErrorOfNewPoint(p);
                 error /= numPoints;
                 return true;
             }
-            conic = new GeneralConicSection();
+            curve = new GeneralConicSection();
             error = double.PositiveInfinity;
             return false;
         }

@@ -6,9 +6,7 @@ using TVGL.Numerics;
 
 namespace TVGL.Primitives
 {
-    public readonly struct StraightLine3D : I2DCurve
-    // this is 3D so, it doesn't inherit from ICurve, and since it's not a surface - it doesn't inherit
-    // from primitive surface. But interestingly, it is basically a cylinder with zero radius
+    public readonly struct StraightLine3D : ICurve
     {
 
         public readonly Vector3 Anchor;
@@ -21,7 +19,7 @@ namespace TVGL.Primitives
             Direction = direction;
         }
 
-        public double SquaredErrorOfNewPoint(IVertex2D point)
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
             if (point is IVertex3D vector3D)
             {
@@ -37,7 +35,8 @@ namespace TVGL.Primitives
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         // this is based on this: https://stackoverflow.com/questions/24747643/3d-linear-regression/67303867#67303867
-        public static bool CreateFromPoints(IEnumerable<IVertex2D> points, out I2DCurve curve, out double error)
+
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
         {
             double x, y, z;
             double xSqd, ySqd, zSqd;

@@ -86,7 +86,7 @@ namespace TVGL.Primitives
         }
 
         public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
-        {            
+        {
             DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
             if (normal.Dot(normalGuess) < 0)
             {
@@ -102,6 +102,7 @@ namespace TVGL.Primitives
         {
             return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane,
             out Vector3 normal)
         {
