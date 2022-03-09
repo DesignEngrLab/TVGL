@@ -42,17 +42,17 @@ namespace TVGL.Primitives
             return 0.0;
         }
 
-        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             return Vector2.Null;
         }
 
-        public override Vector3 TransformFrom2DTo3D(IVertex2D point)
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             return Vector3.Null;
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> point)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> point)
         {
             return null;
         }

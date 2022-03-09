@@ -138,19 +138,22 @@ namespace TVGL.Primitives
             return center + majorRadius * dirToCircle;
         }
 
-        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             throw new NotImplementedException();
         }
 
-        public override Vector3 TransformFrom2DTo3D(IVertex2D point)
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             throw new NotImplementedException();
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
-            throw new NotImplementedException();
+            foreach (var p in points)
+            {
+                yield return TransformFrom3DTo2D(p);
+            }
         }
     }
 }

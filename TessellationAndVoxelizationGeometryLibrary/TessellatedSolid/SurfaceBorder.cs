@@ -145,7 +145,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(GetVertices()));
+                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(GetVertices().Select(v=>v.Coordinates)));
                 return _polygon;
             }
         }

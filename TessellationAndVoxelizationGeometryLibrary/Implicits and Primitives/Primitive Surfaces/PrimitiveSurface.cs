@@ -75,9 +75,9 @@ namespace TVGL.Primitives
         }
 
         public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
-        public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points);
-        public abstract Vector2 TransformFrom3DTo2D(IVertex3D point);
-        public abstract Vector3 TransformFrom2DTo3D(IVertex2D point);
+        public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points);
+        public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
+        public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
         public int Index { get; set; }
 
         /// <summary>

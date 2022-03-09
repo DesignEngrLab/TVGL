@@ -121,7 +121,7 @@ namespace TVGL.Primitives
 
         private Vector3 faceXDir = Vector3.Null;
         private Vector3 faceYDir = Vector3.Null;
-        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = new Vector3(point.X, point.Y, point.Z) - Apex;
             if (faceXDir.IsNull())
@@ -137,7 +137,7 @@ namespace TVGL.Primitives
             return new Vector2(angle * radius, v.Dot(Axis));
         }
 
-        public override Vector3 TransformFrom2DTo3D(MIConvexHull.IVertex2D point)
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             var radius = point.Y * Aperture;
             var angle = (point.X / radius) % Constants.TwoPi;
@@ -147,7 +147,7 @@ namespace TVGL.Primitives
             return result;
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
             var lastPoint = Vector3.Zero;
             var last2DVertex = Vector2.Zero;

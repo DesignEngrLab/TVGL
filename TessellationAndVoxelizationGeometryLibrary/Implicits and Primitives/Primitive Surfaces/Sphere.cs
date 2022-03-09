@@ -122,11 +122,7 @@ namespace TVGL.Primitives
         private Vector3 faceXDir = Vector3.Null;
         private Vector3 faceYDir = Vector3.Null;
         private Vector3 faceZDir = Vector3.Null;
-        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
-        {
-            return TransformFrom3DTo2D((Vector3)point);
-        }
-        public Vector2 TransformFrom3DTo2D(Vector3 point)
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = point - Center;
             if (faceXDir.IsNull())
@@ -146,14 +142,14 @@ namespace TVGL.Primitives
             return new Vector2(azimuthAngle * Radius, polarAngle * Radius);
         }
 
-        public override Vector3 TransformFrom2DTo3D(IVertex2D point)
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             throw new NotImplementedException();
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
-            var pointsList = points.Select(v=> new Vector3(v.X, v.Y, v.Z)).ToList();
+            var pointsList = points.Select(v => new Vector3(v.X, v.Y, v.Z)).ToList();
             var pointcenter = pointsList.Aggregate((sum, v) => sum + v) / pointsList.Count;
             faceZDir = (pointcenter - Center).Normalize();
             faceYDir = faceZDir.GetPerpendicularDirection();

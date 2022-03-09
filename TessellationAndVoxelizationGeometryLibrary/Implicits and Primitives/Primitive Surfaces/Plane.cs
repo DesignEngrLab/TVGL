@@ -475,19 +475,19 @@ namespace TVGL.Primitives
             return sqDistanceSum / numVerts;
         }
 
-        public override Vector2 TransformFrom3DTo2D(IVertex3D point)
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
             var v = new Vector3(point.X, point.Y, point.Z);
             var result = v.Transform(AsTransformToXYPlane);
             return new Vector2(result.X, result.Y);
         }
 
-        public override Vector3 TransformFrom2DTo3D(MIConvexHull.IVertex2D point)
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
         {
             var v = new Vector3(point.X, point.Y, 0);
             return v.Transform(AsTransformFromXYPlane);
         }
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<IVertex3D> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
             foreach (var point in points)
             {
