@@ -149,22 +149,22 @@ namespace TVGL.Primitives
 
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
-            var lastPoint = Vector3.Zero;
-            var last2DVertex = Vector2.Zero;
-            foreach (var point in points)
+            var lastPoint = points.First();
+            var last2DVertex = TransformFrom3DTo2D(lastPoint);
+            yield return last2DVertex;
+            foreach (var point in points.Skip(1))
             {
-                var coord3D = new Vector3(point.X, point.Y, point.Z);
-                var vector = coord3D - lastPoint;
+                var vector = point - lastPoint;
                 var rightIsOutward = vector.Cross(Axis);
-                var step = rightIsOutward.Dot(coord3D - Apex) > 0 ? 1 : -1;
+                var step = rightIsOutward.Dot(point - Apex) > 0 ? 1 : -1;
                 var coord2D = TransformFrom3DTo2D(point);
                 var coord2Dx = coord2D.X;
-                var horizRepeat = coord2D.Y * Aperture * Constants.TwoPi;
-                while (coord2Dx * step < last2DVertex.X * step)
+                var horizRepeat =Math.Abs(coord2D.Y * Aperture * Constants.TwoPi);
+                 while (coord2Dx * step < last2DVertex.X * step)
                     coord2Dx += step * horizRepeat;
                 coord2D = new Vector2(coord2Dx, coord2D.Y);
                 yield return coord2D;
-                lastPoint = coord3D;
+                lastPoint = point;
                 last2DVertex = coord2D;
             }
         }

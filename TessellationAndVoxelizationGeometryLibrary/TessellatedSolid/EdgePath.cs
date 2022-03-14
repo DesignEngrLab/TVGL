@@ -8,17 +8,23 @@ namespace TVGL
 {
     public class EdgePath : IList<(Edge edge, bool dir)>
     {
-        /// <summary>
-        /// Gets the edges and direction.
-        /// </summary>
-        /// <value>The edges and direction.</value>
-        public List<Edge> EdgeList { get; } = new List<Edge>();
+        public EdgePath()
+        {
+            EdgeList = new List<Edge>();
+            DirectionList = new List<bool>();
+        }
 
         /// <summary>
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
-        public List<bool> DirectionList { get; } = new List<bool>();
+        public List<Edge> EdgeList { get; protected set; }
+
+        /// <summary>
+        /// Gets the edges and direction.
+        /// </summary>
+        /// <value>The edges and direction.</value>
+        public List<bool> DirectionList { get; protected set; }
 
 
         /// <summary>

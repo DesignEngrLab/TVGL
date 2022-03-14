@@ -138,9 +138,26 @@ namespace TVGL.Primitives
             return center + majorRadius * dirToCircle;
         }
 
+        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.Null;
+        private Vector3 faceZDir = Vector3.Null;
         public override Vector2 TransformFrom3DTo2D(Vector3 point)
         {
-            throw new NotImplementedException();
+            if (faceXDir.IsNull())
+            {
+                faceZDir = Axis;
+                faceYDir = Axis.GetPerpendicularDirection();
+                faceXDir = faceYDir.Cross(faceZDir);
+            }
+            var planeDist = Center.Dot(Axis);
+            var d = planeDist - point.Dot(Axis);
+            var ptInPlane = point + d * Axis;
+            var vectorToPiP = ptInPlane - Center;
+            var deltaRing = vectorToPiP.Length() - MajorRadius;
+            var hoopAngle = Math.Atan2(-d,deltaRing);
+            var polarAngle = Math.Atan2(vectorToPiP.Dot(faceYDir), vectorToPiP.Dot(faceXDir));
+
+            return new Vector2(polarAngle * MajorRadius, hoopAngle * MinorRadius);
         }
 
         public override Vector3 TransformFrom2DTo3D(Vector2 point)

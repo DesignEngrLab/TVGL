@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using MIConvexHull;
 using StarMathLib;
 using TVGL.Numerics;
@@ -25,20 +26,45 @@ namespace TVGL.Primitives
         public double D;
         public double E;
         public bool ConstantIsZero;
-        private const double OnPathTolerance = 1e-6;
+        private const double conicTolerance = 1e-4;
 
         public PrimitiveCurveType CurveType { get; private set; }
 
         public GeneralConicSection(double a, double b, double c, double d, double e, bool constantIsZero)
         {
-            A = a;
-            B = b;
-            C = c;
-            D = d;
-            E = e;
+            var max = (new[] { Math.Abs(a), Math.Abs(b), Math.Abs(c), Math.Abs(d), Math.Abs(e) }).Max();
+            A = Math.Abs(a / max) < conicTolerance ? 0 : a;
+            B = Math.Abs(b / max) < conicTolerance ? 0 : b;
+            C = Math.Abs(c / max) < conicTolerance ? 0 : c;
+            D = Math.Abs(d / max) < conicTolerance ? 0 : d;
+            E = Math.Abs(e / max) < conicTolerance ? 0 : e;
             ConstantIsZero = constantIsZero;
             CurveType = PrimitiveCurveType.StraightLine;
-            SetConicType();
+
+            #region SetConicType
+            if (A.IsNegligible() && B.IsNegligible() && C.IsNegligible())
+            {
+                A = B = C = 0;
+                CurveType = PrimitiveCurveType.StraightLine;
+            }
+            else if (B.IsNegligible() && A.IsPracticallySame(C))
+            {
+                B = 0;
+                A = C = 0.5 * (A + C);
+                CurveType = PrimitiveCurveType.Circle;
+            }
+            else if ((B * B).IsPracticallySame(A * C))
+            {
+                B = Math.Sqrt(A * C);
+                CurveType = PrimitiveCurveType.Parabola;
+            }
+            else
+            {
+                var det = A * C - B * B;
+                if (det > 0) CurveType = PrimitiveCurveType.Ellipse;
+                else CurveType = PrimitiveCurveType.Hyperbola;
+            }
+            #endregion
         }
 
         public double CalculateAtPoint(Vector2 point)
@@ -51,12 +77,7 @@ namespace TVGL.Primitives
 
         public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D
         {
-            var x = point.X;
-            var y = point.Y;
-            // this can be very inaccurate - need to get the actual distance
-            var error = A * x * x + B * x * y + C * y * y + D * x + E * y;
-            if (!ConstantIsZero) error -= 1;
-            return error * error / ((A * A + B * B + C * C) / 3);
+            return DistancePointToConic(this, point, out _);
         }
 
         public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
@@ -111,7 +132,7 @@ namespace TVGL.Primitives
             var b = new[] { xSqSum, xySum, ySqSum, xSum, ySum };
             if (matrix.solve(b, out var result, true))
             {
-                curve = new GeneralConicSection(result[0], result[1], result[2], result[3], result[4], true);
+                curve = new GeneralConicSection(result[0], result[1], result[2], result[3], result[4], false);
                 error = 0.0;
                 foreach (var p in points)
                     error += curve.SquaredErrorOfNewPoint(p);
@@ -123,36 +144,6 @@ namespace TVGL.Primitives
             return false;
         }
 
-        private void SetConicType()
-        {
-            if (A.IsNegligible() && B.IsNegligible() && C.IsNegligible())
-            {
-                A = B = C = 0;
-                CurveType = PrimitiveCurveType.StraightLine;
-            }
-            else if (B.IsNegligible() && A.IsPracticallySame(C))
-            {
-                B = 0;
-                A = C = 0.5 * (A + C);
-                CurveType = PrimitiveCurveType.Circle;
-            }
-            else if ((B * B).IsPracticallySame(A * C))
-            {
-                B = Math.Sqrt(A * C);
-                CurveType = PrimitiveCurveType.Parabola;
-            }
-            else
-            {
-                var det = A * C - B * B;
-                if (det > 0) CurveType = PrimitiveCurveType.Ellipse;
-                else CurveType = PrimitiveCurveType.Hyperbola;
-                //var det = ConstantIsZero ? 0.0 : -A * C;
-                //det += B * E * D + D * B * E;
-                //det -= D * C * D + A * E * E;
-                //if (!ConstantIsZero) det -= B * B;
-                //if (det.IsNegligible())
-            }
-        }
         internal bool DefineCircleFromTerms(out Circle circle1)
         {
             if (A.IsNegligible())
@@ -181,7 +172,8 @@ namespace TVGL.Primitives
         /// <param name="point">The point.</param>
         /// <param name="pointOnCurve">The point on curve closed to the given point.</param>
         /// <returns>System.Double.</returns>
-        public static double DistancePointToConic(GeneralConicSection conic, Vector2 point, out Vector2 pointOnCurve)
+        public static double DistancePointToConic<T>(GeneralConicSection conic, T point, out Vector2 pointOnCurve)
+            where T : IVertex2D
         {
             // this is hard to understand. Please refer to the document call SolvingConics.docx
             var aj = conic.B;
@@ -198,14 +190,14 @@ namespace TVGL.Primitives
             pointOnCurve = Vector2.Null;
             foreach (var p in IntersectingConics(conic, conicJ))
             {
-                var distance = (p - point).LengthSquared();
+                var distance = (new Vector2(p.X - point.X, p.Y - point.Y)).LengthSquared();
                 if (distance < minDistance)
                 {
                     minDistance = distance;
                     pointOnCurve = p;
                 }
             }
-            return Math.Sqrt(minDistance);
+            return minDistance;
         }
 
 
@@ -247,13 +239,13 @@ namespace TVGL.Primitives
                 if (y1.IsRealNumber)
                 {
                     var point = new Vector2(x.Real, y1.Real);
-                    if (conicJ.CalculateAtPoint(point).IsNegligible(OnPathTolerance))
+                    if (conicJ.CalculateAtPoint(point).IsNegligible(conicTolerance))
                         yield return point;
                 }
                 if (y2.IsRealNumber)
                 {
                     var point = new Vector2(x.Real, y2.Real);
-                    if (conicJ.CalculateAtPoint(point).IsNegligible(OnPathTolerance))
+                    if (conicJ.CalculateAtPoint(point).IsNegligible(conicTolerance))
                         yield return point;
                 }
             }

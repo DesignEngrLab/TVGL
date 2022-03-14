@@ -104,14 +104,24 @@ namespace TVGL
         public bool BothSidesSamePrimitive { get; set; }
 
         public SurfaceBorder(ICurve curve, PrimitiveSurface surface, EdgePath path, double curveError,
-            double planeError) : base()
+            double surfError) : this(curve, surface, path.EdgeList, path.DirectionList, curveError, surfError)
         {
-            EdgeList.AddRange(path.EdgeList);
-            DirectionList.AddRange(path.DirectionList);
+            EdgeList = path.EdgeList;
+            DirectionList = path.DirectionList;
             Curve = curve;
             Surface = surface;
             CurveError = curveError;
-            SurfaceError = planeError;
+            SurfaceError = surfError;
+        }
+        public SurfaceBorder(ICurve curve, PrimitiveSurface surface, List<Edge> edges, List<bool> directions,
+            double curveError, double surfError)
+        {
+            EdgeList = edges;
+            DirectionList = directions;
+            Curve = curve;
+            Surface = surface;
+            CurveError = curveError;
+            SurfaceError = surfError;
         }
 
         public double PlaneResidualRatio(Vector3 coordinates, double tolerance)
@@ -145,7 +155,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(GetVertices().Select(v=>v.Coordinates)));
+                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(GetVertices().Select(v => v.Coordinates)));
                 return _polygon;
             }
         }
