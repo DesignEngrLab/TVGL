@@ -139,6 +139,7 @@ namespace TVGL.Primitives
             double xz = 0.0, yz = 0.0, zSq = 0.0;
             foreach (var vertex in pointList)
             {
+                if (vertex.IsNull()) continue;
                 var x = vertex.X;
                 var y = vertex.Y;
                 var z = vertex.Z;

@@ -1,6 +1,7 @@
 ﻿using MIConvexHull;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TVGL.Numerics;
 using TVGL.TwoDimensional;
 
@@ -33,9 +34,12 @@ namespace TVGL.Primitives
             return Constants.TwoPi * cyl.Radius * line.Direction.Y / line.Direction.X;
         }
 
-        public static double DetermineNumThreads(Polygon polyLine, Cylinder cyl)
+        public static double DetermineNumThreads(IEnumerable<Vector2> path, Cylinder cyl)
         {
-            return (polyLine.MaxX - polyLine.MinX) / (Constants.TwoPi * cyl.Radius);
+            var start = path.First();
+            var end = path.Last();
+            /// because we already know it to be a straightline, we can just look at the ends
+            return Math.Abs(start.X - end.X) / (Constants.TwoPi * cyl.Radius);
         }
 
         public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error) where T : IVertex2D
@@ -47,5 +51,6 @@ namespace TVGL.Primitives
         {
             throw new NotImplementedException();
         }
+
     }
 }

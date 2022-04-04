@@ -149,7 +149,11 @@ namespace TVGL.Primitives
 
         public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
         {
-            var pointsList = points.Select(v => new Vector3(v.X, v.Y, v.Z)).ToList();
+            var pointsList = points as IList<Vector3> ?? points.ToList();
+            var bb = MinimumEnclosure.FindAxisAlignedBoundingBox(pointsList);
+            faceZDir = bb.SortedDirectionsByLength[0];
+            faceXDir = bb.SortedDirectionsByLength[1];
+            faceYDir = faceZDir.Cross(faceXDir);
             var pointcenter = pointsList.Aggregate((sum, v) => sum + v) / pointsList.Count;
             faceZDir = (pointcenter - Center).Normalize();
             faceYDir = faceZDir.GetPerpendicularDirection();

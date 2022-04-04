@@ -39,6 +39,7 @@
             </hx:Viewport3DX.InputBindings>
             <hx:ShadowMap3D />
             <hx:AmbientLight3D Color="{Binding AmbientLightColor}" />
+            <hx:SpotLight3D />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection1}" Color="{Binding DirectionalLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection2}" Color="{Binding DirectionalLightColor}" />
             <hx:DirectionalLight3D Direction="{Binding DirectionalLightDirection3}" Color="{Binding DirectionalLightColor}" />

@@ -16,7 +16,7 @@ namespace TVGL
         /// <value>The median.</value>
         public static double Median(this IEnumerable<double> numbers)
         {
-            if (!numbers.Any()) throw new ArgumentNullException(nameof(numbers));
+            if (!numbers.Any()) return double.NaN; // throw new ArgumentNullException(nameof(numbers));
             var numberList =new List<double>(numbers); //we need a list and this list will be mutated, so a copy is made.
             var index = (numberList.Count - 1) / 2;
             var loValue = nthOrderStatistic(numberList, index, 0, numberList.Count - 1);
@@ -168,8 +168,8 @@ namespace TVGL
                 var delta = x - targetValue;
                 error += delta * delta;
             }
-            error = Math.Sqrt(error);
-            return error / (xMax - xMax);
+            error = Math.Sqrt(error / numberList.Count);
+            return error / (xMax - xMin);
         }
 
         /// <summary>
@@ -189,7 +189,7 @@ namespace TVGL
                 var delta = x - targetValue;
                 error += delta * delta;
             }
-            return Math.Sqrt(error);
+            return Math.Sqrt(error / numberList.Count);
         }
     }
 }

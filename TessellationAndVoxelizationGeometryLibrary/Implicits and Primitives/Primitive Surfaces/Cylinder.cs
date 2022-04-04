@@ -242,6 +242,15 @@ namespace TVGL.Primitives
             IsPositive = originalToBeCopied.IsPositive;
         }
 
+        public bool PointIsInside(Vector3 x)
+        {
+            var dxAlong = x.Dot(Axis);
+            if (dxAlong < MinDistanceAlongAxis) return false;
+            if (dxAlong > MaxDistanceAlongAxis) return false;
+            var rSqd = (x - Anchor).Cross(Axis).LengthSquared();
+            return rSqd < Radius * Radius;
+        }
+
 
 
         //public TessellatedSolid AsTessellatedSolid()

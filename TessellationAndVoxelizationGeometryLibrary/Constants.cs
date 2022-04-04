@@ -591,11 +591,11 @@ namespace TVGL
     ///     A comparer for optimization that can be used for either
     ///     minimization or maximization.
     /// </summary>
-    internal class NoEqualSort : IComparer<double>
+    public class NoEqualSort : IComparer<double>
     {
         private readonly int direction;
 
-        internal NoEqualSort(bool minimize = true)
+        public NoEqualSort(bool minimize = true)
         {
             direction = minimize ? -1 : 1;
         }

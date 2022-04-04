@@ -327,7 +327,8 @@ namespace TVGL
                 //}
                 //lineCollection.RemoveAt(0);
                 //if (closePaths) lineCollection.Add(lineCollection.First());
-                colorEnumerator.MoveNext();
+                while (!colorEnumerator.MoveNext())
+                    colorEnumerator = colors.GetEnumerator();
                 var tvglColor = colorEnumerator.Current;
                 var color = new System.Windows.Media.Color { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
                 var positions = new Vector3Collection(contour);
