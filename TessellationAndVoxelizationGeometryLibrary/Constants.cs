@@ -589,15 +589,19 @@ namespace TVGL
 
     /// <summary>
     ///     A comparer for optimization that can be used for either
-    ///     minimization or maximization.
+    ///     ascending or descending.
     /// </summary>
     public class NoEqualSort : IComparer<double>
     {
         private readonly int direction;
 
-        public NoEqualSort(bool minimize = true)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NoEqualSort"/> class.
+        /// </summary>
+        /// <param name="ascendingOrder">if set to <c>true</c> [ascending order].</param>
+        public NoEqualSort(bool ascendingOrder = true)
         {
-            direction = minimize ? -1 : 1;
+            direction = ascendingOrder ? -1 : 1;
         }
 
         /// <summary>
