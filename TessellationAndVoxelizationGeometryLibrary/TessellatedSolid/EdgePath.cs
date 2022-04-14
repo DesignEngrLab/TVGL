@@ -149,6 +149,8 @@ namespace TVGL
             return EdgeList.IndexOf(edge);
         }
 
+        public double Length => EdgeList.Sum(edge => edge.Length);
+
         /// <summary>
         /// Inserts an item to the <see cref="T:System.Collections.Generic.IList`1" /> at the specified index.
         /// </summary>

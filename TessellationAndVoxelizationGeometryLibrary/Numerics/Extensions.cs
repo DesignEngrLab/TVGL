@@ -435,7 +435,11 @@ namespace TVGL.Numerics
                    vector1.Z * vector2.Z;
         }
 
-
+        public static Vector3 MergeBiDirectionalAxes(this Vector3 vector1, Vector3 vector2)
+        {
+            var result = (vector1.Dot(vector2) < 0) ? vector1 - vector2 : vector1 + vector2;
+            return result.Normalize();
+        }
         /// <summary>
         /// Converts to an array.
         /// </summary>

@@ -362,7 +362,7 @@ namespace TVGL
                     }
                 }
                 //Criteria of whether it should be a flat should be inserted here.
-                if (flatHashSet.Count >= minNumberOfFacesPerFlat)
+                if (flatHashSet.Count >= minNumberOfFacesPerFlat && flatHashSet.Sum(f => f.Area) >= minFlatArea)
                 {
                     flat = new Plane(flatHashSet);
                     if (!ensureDistinctFlats ||
