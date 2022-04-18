@@ -34,6 +34,7 @@ namespace TVGL
                 if (_center.IsNull()) CalculateCenter();
                 return _center;
             }
+            set => _center = value;
         }
 
         protected abstract void CalculateCenter();

@@ -85,7 +85,7 @@ namespace TVGL
         /// Gets or sets the nonsmooth edges, which are the edges that do not exhibit C1 or C2 continuity.
         /// </summary>
         /// <value>The nonsmooth edges.</value>
-        [JsonIgnore] 
+        [JsonIgnore]
         public HashSet<Edge> NonsmoothEdges { get; set; }
         #endregion
 
@@ -975,7 +975,7 @@ namespace TVGL
                         foreach (var outerEdge in primitive.OuterEdges)
                             copy.NonsmoothEdges.Add(outerEdge);
                 }
-            } 
+            }
             else if (NonsmoothEdges != null && NonsmoothEdges.Any())
             {
                 copy.NonsmoothEdges = new HashSet<Edge>();
@@ -1108,6 +1108,7 @@ namespace TVGL
             double oldVolume;
             var iterations = 0;
             Vector3 oldCenter1 = center;
+            if (faces == null) return;
             var facesList = faces as IList<PolygonalFace> ?? faces.ToList();
             do
             {

@@ -13,7 +13,7 @@ namespace TVGLUnitTestsAndBenchmarking
 {
     internal static class Program
     {
-        const string inputFolder = @"C:\Users\matth\medemalabs.com\Executive Team - Documents\PartAnalyzer\OBJ Testing";
+        const string inputFolder = @"C:\Users\matth\OneDrive - medemalabs.com\Documents - Executive Team\PartAnalyzer\OBJ Testing";
         //const string inputFolder = "TestFiles\\bad";
         static Random r = new Random();
         static double r1 => 2.0 * r.NextDouble() - 1.0;
@@ -45,10 +45,16 @@ namespace TVGLUnitTestsAndBenchmarking
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
                 IO.Open(fileName.FullName, out TessellatedSolid[] solids);
+                var ts = solids[0];
+                
+                Presenter.ShowAndHang(ts);
+                IO.Save(ts,Path.Combine(dirName, "test.tvgl"));
+                IO.Open(Path.Combine(dirName, "test.tvgl"),out TessellatedSolid tsNew);
+                Presenter.ShowAndHang(tsNew);
                 stopwatch.Stop();
                 Console.WriteLine(stopwatch.Elapsed.ToString());
 
-                Presenter.ShowAndHang(solids);
+                //Presenter.ShowAndHang(solids);
                 //var css = CrossSectionSolid.CreateFromTessellatedSolid(ts, CartesianDirections.XPositive, 20);
                 //Presenter.ShowAndHang(css);
                 //IO.Save(css, "test.CSSolid");
