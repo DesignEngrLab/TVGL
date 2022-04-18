@@ -302,87 +302,52 @@ namespace TVGL
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        public static List<Plane> FindFlats(this IEnumerable<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-               int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0, bool ensureDistinctFlats = true)
+        public static IEnumerable<Plane> FindFlats(this IEnumerable<PolygonalFace> faces,
+               int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0)
         {
             // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly.
-            var facesList = faces as IList<PolygonalFace> ?? faces.ToList();
-            var limitEdges = new HashSet<Edge>();
-            foreach (var face in facesList)
-                foreach (var edge in face.Edges)
-                    // if it's already in the hash, then its mate added it. Therefore it is not a limit (i.e. border).
-                    if (limitEdges.Contains(edge))
-                        limitEdges.Remove(edge);
-                    else // first time encountering the edge, so add it to the hash
-                        limitEdges.Add(edge);
+            var availableFaces = new HashSet<PolygonalFace>(faces);
 
-            //Used hashset for "Contains" function calls
-            var usedFaces = new HashSet<PolygonalFace>();
-            var planes = new List<Plane>();
-
-            //Use an IEnumerable class (List) for iterating through each part, and then the
-            //"Contains" function to see if it was already used. This is actually much faster
-            //than using a while locations with a ".Any" and ".First" call on the Hashset.
-            foreach (var startFace in facesList)
+            while (availableFaces.Count > 0)
             {
-                //If this faces has already been used, continue to the next face
-                if (usedFaces.Contains(startFace)) continue;
-                //Get all the faces that should be used on this flat
-                //Use a hashset so we can use the ".Contains" function
+                var startFace = availableFaces.First();
+                availableFaces.Remove(startFace);
                 var flatHashSet = new HashSet<PolygonalFace> { startFace };
-                var flat = new Plane(flatHashSet);
-                //Stacks are fast for "Push" and "Pop".
-                //Add all the adjecent faces from the first face to the stack for
-                //consideration in the while locations below.
-                var stack = new Stack<PolygonalFace>(flatHashSet);
-                var reDefineFlat = 3;
+                var stack = new Stack<PolygonalFace>(new[] { startFace });
+                var flatVertices = new List<Vertex>(startFace.Vertices);
+                var area = 0.0;
+                var numFaces = 0;
                 while (stack.Any())
                 {
                     var newFace = stack.Pop();
                     //Add new adjacent faces to the stack for consideration
                     //if the faces are already listed in the flat faces, the first
                     //"if" statement in the while locations will ignore them.
-                    foreach (var adjacentFace in newFace.AdjacentFaces)
+                    foreach (var edge in newFace.Edges)
                     {
-                        if (adjacentFace == null) continue;
-                        if (!flatHashSet.Contains(adjacentFace) && !usedFaces.Contains(adjacentFace) &&
-                            //!stack.Contains(adjacentFace) && //hmm, I think this check is a waste of time since that face
-                            //would come up from the stack and just be ruled out here by the usedFaces.Contains. Can this be commented?
-                            IsFaceNewMemberOfFlat(flat, adjacentFace, tolerance))
+                        var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
+                        if (adjacentFace == null || !availableFaces.Contains(adjacentFace)) continue;
+                        if (Math.Abs(1 - newFace.Normal.Dot(adjacentFace.Normal)) > Constants.SameFaceNormalDotTolerance) continue;
+                        var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
+                            adjacentFace.B != edge.From && adjacentFace.B != edge.To ? adjacentFace.B :
+                            adjacentFace.C;
+                        flatVertices.Add(otherVertex);
+                        if (!Plane.DefineNormalAndDistanceFromVertices(flatVertices, out double distanceToPlane, out Vector3 normal)
+                           || !distanceToPlane.IsPracticallySame(otherVertex.Dot(normal), Constants.PolygonSameTolerance))
+                            flatVertices.RemoveAt(flatVertices.Count - 1);
+                        else
                         {
-                            // flat.UpdateWith(adjacentFace);
-                            flatHashSet.Add(adjacentFace);
-                            if (flatHashSet.Count >= reDefineFlat)
-                            {
-                                flat = new Plane(flatHashSet);
-                                reDefineFlat *= 3;
-                            }
                             stack.Push(adjacentFace);
+                            availableFaces.Remove(adjacentFace);
+                            flatHashSet.Add(adjacentFace);
+                            area += adjacentFace.Area;
+                            numFaces++;
                         }
                     }
                 }
-                //Criteria of whether it should be a flat should be inserted here.
-                if (flatHashSet.Count >= minNumberOfFacesPerFlat && flatHashSet.Sum(f => f.Area) >= minFlatArea)
-                {
-                    flat = new Plane(flatHashSet);
-                    if (!ensureDistinctFlats ||
-                        flat.OuterEdges.All(e => e.InternalAngle < Math.PI - Constants.MinSmoothAngle ||
-                        e.InternalAngle > Math.PI + Constants.MinSmoothAngle ||
-                        limitEdges.Contains(e)) || flat.Area > minFlatArea)
-                        planes.Add(flat);
-                }
-                foreach (var polygonalFace in flat.Faces)
-                    usedFaces.Add(polygonalFace);
+                if (numFaces >= minNumberOfFacesPerFlat && area >= minFlatArea)
+                    yield return new Plane(flatHashSet);
             }
-            return planes;
-        }
-
-        private static bool IsFaceNewMemberOfFlat(Plane flat, PolygonalFace face, double tolerance)
-        {
-            if (flat.Faces.Contains(face)) return false;
-            if (!face.Normal.Dot(flat.Normal).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) return false;
-            return flat.CalculateError(face.Vertices.Select(v => v.Coordinates)) < tolerance;
-            //Return true if all the vertices are within the tolerance 
         }
 
         #endregion Dealing with Flat Patches
