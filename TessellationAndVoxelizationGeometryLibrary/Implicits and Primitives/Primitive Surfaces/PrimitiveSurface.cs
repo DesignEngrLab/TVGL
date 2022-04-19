@@ -36,23 +36,23 @@ namespace TVGL.Primitives
             _faceIndices = new int[length];
             for (int i = 0; i < length; i++)
                 _faceIndices[i] = originalToBeCopied.FaceIndices[i];
-            length = originalToBeCopied.VertexIndices.Length;
+            length = originalToBeCopied._vertexIndices.Length;
             _vertexIndices = new int[length];
             for (int i = 0; i < length; i++)
-                _vertexIndices[i] = originalToBeCopied.VertexIndices[i];
-            length = originalToBeCopied.InnerEdgeIndices.Length;
+                _vertexIndices[i] = originalToBeCopied._vertexIndices[i];
+            length = originalToBeCopied._innerEdgeIndices.Length;
             _innerEdgeIndices = new int[length];
             for (int i = 0; i < length; i++)
-                _innerEdgeIndices[i] = originalToBeCopied.InnerEdgeIndices[i];
-            length = originalToBeCopied.OuterEdgeIndices.Length;
+                _innerEdgeIndices[i] = originalToBeCopied._innerEdgeIndices[i];
+            length = originalToBeCopied._outerEdgeIndices.Length;
             _outerEdgeIndices = new int[length];
             for (int i = 0; i < length; i++)
-                _outerEdgeIndices[i] = originalToBeCopied.OuterEdgeIndices[i];
+                _outerEdgeIndices[i] = originalToBeCopied._outerEdgeIndices[i];
             if (originalToBeCopied.Borders != null && originalToBeCopied.Borders.Any())
             {
-                _borders = new List<SurfaceBorder>();
+                Borders = new List<SurfaceBorder>();
                 foreach (var origBorder in originalToBeCopied.Borders)
-                    _borders.Add(origBorder.Copy(this, false, copiedTessellatedSolid));
+                    Borders.Add(origBorder.Copy(this, false, copiedTessellatedSolid));
             }
             if (copiedTessellatedSolid != null)
                 CompletePostSerialization(copiedTessellatedSolid);
@@ -78,12 +78,15 @@ namespace TVGL.Primitives
         public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points);
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
+
+        [JsonIgnore]
         public int Index { get; set; }
 
         /// <summary>
         ///     Gets the area.
         /// </summary>
         /// <value>The area.</value>
+        [JsonIgnore]
         public double Area
         {
             get
@@ -119,17 +122,6 @@ namespace TVGL.Primitives
         [JsonIgnore]
         public HashSet<Vertex> Vertices { get; protected set; }
 
-        public int[] VertexIndices
-        {
-            get
-            {
-                if (Vertices != null)
-                    return Vertices.Select(v => v.IndexInList).ToArray();
-                return Array.Empty<int>();
-            }
-            set => _vertexIndices = value;
-        }
-
         /// <summary>
         ///     Gets the inner edges.
         /// </summary>
@@ -161,16 +153,6 @@ namespace TVGL.Primitives
             return convex > concave;
         }
 
-        public int[] InnerEdgeIndices
-        {
-            get
-            {
-                if (Faces != null)
-                    return InnerEdges.Select(e => e.IndexInList).ToArray();
-                return Array.Empty<int>();
-            }
-        }
-
         /// <summary>
         ///     Gets the outer edges.
         /// </summary>
@@ -184,16 +166,6 @@ namespace TVGL.Primitives
                 return _outerEdges;
             }
             protected set => _outerEdges = value;
-        }
-
-        public int[] OuterEdgeIndices
-        {
-            get
-            {
-                if (Faces != null)
-                    return OuterEdges.Select(e => e.IndexInList).ToArray();
-                return Array.Empty<int>();
-            }
         }
 
         private HashSet<Edge> _innerEdges;
@@ -282,16 +254,22 @@ namespace TVGL.Primitives
                 face.BelongsToPrimitive = this;
             }
             Vertices = new HashSet<Vertex>();
-            foreach (var i in _vertexIndices)
-                Vertices.Add(ts.Vertices[i]);
-
-            _innerEdges = new HashSet<Edge>();
-            foreach (var i in _innerEdgeIndices)
-                InnerEdges.Add(ts.Edges[i]);
-
-            _outerEdges = new HashSet<Edge>();
-            foreach (var i in _outerEdgeIndices)
-                OuterEdges.Add(ts.Edges[i]);
+            OuterEdges = new HashSet<Edge>();
+            InnerEdges = new HashSet<Edge>();
+            foreach (var face in Faces)
+            {
+                foreach (var v in face.Vertices)
+                    if (!Vertices.Contains(v)) Vertices.Add(v);
+                foreach (var e in face.Edges)
+                {
+                    if (OuterEdges.Contains(e))
+                    {
+                        OuterEdges.Remove(e);
+                        InnerEdges.Add(e);
+                    }
+                    else OuterEdges.Add(e);
+                }
+            }
         }
 
         public HashSet<PolygonalFace> GetAdjacentFaces()
@@ -305,17 +283,8 @@ namespace TVGL.Primitives
             return adjacentFaces;
         }
 
-
-        private List<SurfaceBorder> _borders;
-        public List<SurfaceBorder> Borders
-        {
-            get
-            {
-                if (_borders == null || _borders.Count == 0)
-                    DefineBorders();
-                return _borders;
-            }
-        }
+        [JsonIgnore]
+        public List<SurfaceBorder> Borders { get; set; }
 
         public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
         {
@@ -325,73 +294,6 @@ namespace TVGL.Primitives
                 var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
                 if (anchor != Vector3.Null && polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform)))
                     yield return border;
-            }
-        }
-
-        /// <summary>
-        /// Takes in a list of edges and returns their list of loops for edges and vertices
-        /// The order of the output loops are not considered (i.e., they may be "reversed"),
-        /// since no face normal information is used.
-        /// </summary>
-        /// <param name="edges"></param>
-        /// <returns></returns>
-        public void DefineBorders(double maxErrorInCurveFit = -1.0)
-        {
-            var currentSurfaceError = CalculateError();
-            if (currentSurfaceError > maxErrorInCurveFit) maxErrorInCurveFit = Math.Max(currentSurfaceError, Constants.ErrorForFaceInSurface * 100);
-            _borders = new List<SurfaceBorder>();
-            var edges = new HashSet<Edge>(OuterEdges);
-            foreach (var border in edges.GetLoops(Faces))
-            {
-                _borders.Add(border);
-                var curve = MiscFunctions.FindBestPlanarCurve(border.GetVertices().Select(v => v.Coordinates),
-                    out var bestFitPlane, out var planeResidual, out var curveResidual);
-                //if (planeResidual < maxErrorInCurveFit)
-                border.Surface = bestFitPlane;
-                border.SurfaceError = planeResidual;
-                border.CurveError = curveResidual;
-                SetBorderConvexity(border);
-                if (curveResidual < maxErrorInCurveFit)
-                {
-                    //Check curve residual with center points to avoid fitting curves to non-curved features.
-                    //Do not do this when defining the curve, because these center points will always have increased error.
-                    var vertices = border.EdgeList.Select(p => p.Center());
-                    foreach (var p in vertices)
-                        curveResidual += curve.SquaredErrorOfNewPoint(border.Surface.TransformFrom3DTo2D(p));
-                    if (curveResidual < maxErrorInCurveFit)
-                        border.Curve = curve;
-                }
-                if (border.IsClosed)
-                {
-                    var axis = Vector3.Null;
-                    var anchor = Vector3.Null;
-                    if (this is Cylinder cylinder)
-                    {
-                        axis = cylinder.Axis;
-                        anchor = cylinder.Anchor;
-                    }
-                    else if (this is Cone cone)
-                    {
-                        axis = cone.Axis;
-                        anchor = cone.Apex;
-                    }
-                    else if (this is Torus torus)
-                    {
-                        axis = torus.Axis;
-                        anchor = torus.Center;
-                    }
-                    else if (this is Plane plane)
-                    {
-                        axis = plane.Normal;
-                    }
-                    else continue;
-                    var transform = axis.TransformToXYPlane(out _);
-                    var polygon = new Polygon(border.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform)));
-                    if (anchor != Vector3.Null)
-                    {
-                        border.EncirclesAxis = polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform));
-                    }
-                }
             }
         }
 
@@ -420,11 +322,17 @@ namespace TVGL.Primitives
             border.FullyConvex = convex > 0 && flat == 0 && concave == 0;
         }
 
+        [JsonIgnore]
         public double MaxX { get; protected set; } = double.NaN;
+        [JsonIgnore]
         public double MinX { get; protected set; } = double.NaN;
+        [JsonIgnore]
         public double MaxY { get; protected set; } = double.NaN;
+        [JsonIgnore]
         public double MinY { get; protected set; } = double.NaN;
+        [JsonIgnore]
         public double MaxZ { get; protected set; } = double.NaN;
+        [JsonIgnore]
         public double MinZ { get; protected set; } = double.NaN;
 
         public void SetBounds(bool ignoreIfAlreadySet = true)
@@ -456,10 +364,12 @@ namespace TVGL.Primitives
         /// Gets the center of the bounding box.
         /// </summary>
         /// <value>The center of the bounding box.</value>
+        [JsonIgnore]
         public Vector3 CenterOfBoundingBox
         {
             get
             {
+                if (Vertices == null || Vertices.Count == 0) return Vector3.Null; 
                 SetBounds(true);
                 return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
             }

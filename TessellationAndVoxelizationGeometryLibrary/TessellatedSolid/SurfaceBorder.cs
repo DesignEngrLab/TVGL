@@ -167,7 +167,8 @@ namespace TVGL
         public SurfaceBorder() { }
 
 
-        public SurfaceBorder Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null)
+        public SurfaceBorder Copy(PrimitiveSurface copiedSurface, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+            int startIndex = 0, int endIndex = -1)
         {
             var copy = new SurfaceBorder();
             copy.Surface = copiedSurface;
@@ -176,24 +177,9 @@ namespace TVGL
             copy.FullyFlush = FullyFlush;
             copy.FullyConcave = FullyConcave;
             copy.FullyConvex = FullyConvex;
-            //copy.Edges = new EdgePath { IsClosed = Edges.IsClosed };
-            if (copiedTessellatedSolid == null)
-            {
-                foreach (var eAndA in this)
-                    if (reverse)
-                        copy.AddBegin(eAndA.edge, !eAndA.dir);
-                    else
-                        copy.AddEnd(eAndA.edge, eAndA.dir);
-            }
-            else
-            {
-                foreach (var eAndA in this)
-                    if (reverse)
-                        copy.AddBegin(copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], !eAndA.dir);
-                    else
-                        copy.AddEnd(copiedTessellatedSolid.Edges[eAndA.edge.IndexInList], eAndA.dir);
-            }
+            CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
             return copy;
         }
+
     }
 }

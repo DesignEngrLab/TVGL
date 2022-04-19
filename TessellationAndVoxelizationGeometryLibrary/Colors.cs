@@ -3,6 +3,7 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 using Newtonsoft.Json;
+using System.Runtime.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -973,21 +974,24 @@ namespace TVGL
         /// <summary>
         ///     A
         /// </summary>
+        [JsonIgnore]
         public byte A;
 
         /// <summary>
         ///     B
         /// </summary>
+        [JsonIgnore]
         public byte B;
 
         /// <summary>
         ///     R
         /// </summary>
+        [JsonIgnore]
         public byte R;
-
         /// <summary>
         ///     G
         /// </summary>
+        [JsonIgnore]
         public byte G;
 
         /// <summary>
@@ -1418,7 +1422,6 @@ namespace TVGL
             };
 
         #endregion new known colors
-
     }
 
     /// <summary>

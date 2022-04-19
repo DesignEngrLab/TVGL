@@ -217,6 +217,43 @@ namespace TVGL
             return true;
         }
 
+
+        /// <summary>
+        /// Copies the data (properties) from this EdgePath over to another.
+        /// </summary>
+        /// <param name="copy">The copy.</param>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        public void CopyEdgesPathData(EdgePath copy, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+            int startIndex = 0, int endIndex = -1)
+        {
+            copy.IsClosed = this.IsClosed && startIndex == 0 && (endIndex == -1 || endIndex >= EdgeList.Count);
+            if (endIndex == -1) endIndex = EdgeList.Count;
+            if (copiedTessellatedSolid == null)
+            {
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    if (reverse)
+                        copy.AddBegin(EdgeList[i], !DirectionList[i]);
+                    else
+                        copy.AddEnd(EdgeList[i], DirectionList[i]);
+                }
+            }
+            else
+            {
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    if (reverse)
+                        copy.AddBegin(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], !DirectionList[i]);
+                    else
+                        copy.AddEnd(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], DirectionList[i]);
+                }
+            }
+        }
+
+
         /// <summary>Gets the range.</summary>
         /// <param name="lb">The lb.</param>
         /// <param name="ub">The ub.</param>

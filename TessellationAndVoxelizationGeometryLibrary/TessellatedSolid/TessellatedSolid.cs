@@ -175,7 +175,7 @@ namespace TVGL
             serializationData.Add("Colors",
             (HasUniformColor || Faces.All(f => f.Color.Equals(Faces[0].Color)))
             ? SolidColor.ToString()
-            : JToken.FromObject(Faces.Select(f => f.Color)));
+            : JToken.FromObject(Faces.Select(f => f.Color.ToString())));
         }
 
 
@@ -1105,6 +1105,7 @@ namespace TVGL
             double oldVolume;
             var iterations = 0;
             Vector3 oldCenter1 = center;
+            if (faces == null) return;
             var facesList = faces as IList<PolygonalFace> ?? faces.ToList();
             do
             {

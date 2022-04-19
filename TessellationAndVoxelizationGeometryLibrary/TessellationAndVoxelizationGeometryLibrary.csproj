@@ -20,9 +20,9 @@
     <NeutralLanguage />
   </PropertyGroup>
 	
-	<PropertyGroup>
+	<!--<PropertyGroup>
 		<EnablePreviewFeatures>True</EnablePreviewFeatures>
-	</PropertyGroup>
+	</PropertyGroup>-->
 	
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;CLIPPER</DefineConstants>
