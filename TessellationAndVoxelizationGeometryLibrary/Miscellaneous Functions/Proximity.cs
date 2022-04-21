@@ -2,8 +2,8 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
+
+
 
 namespace TVGL
 {    public static class Proximity

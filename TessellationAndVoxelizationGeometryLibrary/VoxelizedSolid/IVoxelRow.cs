@@ -2,7 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-namespace TVGL.Voxelization
+namespace TVGL
 {
     /// <summary>
     /// Rows can be either dense or sparse in a voxelized solid. By having a common interface to these

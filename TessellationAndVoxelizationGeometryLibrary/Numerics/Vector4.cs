@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using MIConvexHull;
 
-namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating three single precision doubleing point values and provides hardware accelerated methods.

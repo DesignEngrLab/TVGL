@@ -19,7 +19,11 @@
     <PackageTags>3d, solid modeling, computational geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
   </PropertyGroup>
-
+	
+	<!--<PropertyGroup>
+		<EnablePreviewFeatures>True</EnablePreviewFeatures>
+	</PropertyGroup>-->
+	
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;CLIPPER</DefineConstants>
   </PropertyGroup>

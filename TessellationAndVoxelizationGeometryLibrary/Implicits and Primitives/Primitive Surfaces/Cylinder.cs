@@ -5,8 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
+
+
 
 namespace TVGL
 {
@@ -47,6 +47,54 @@ namespace TVGL
                 numVerts++;
             }
             return sqDistanceSum / numVerts;
+        }
+
+        private Vector3 faceXDir = Vector3.Null;
+        private Vector3 faceYDir = Vector3.Null;
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
+        {
+            var v = point - Anchor;
+            if (faceXDir.IsNull())
+            {
+                faceXDir = Axis.GetPerpendicularDirection();
+                faceYDir = Axis.Cross(faceXDir);
+            }
+            var x = faceXDir.Dot(v);
+            var y = faceYDir.Dot(v);
+            var angle = Math.Atan2(y, x);
+
+            return new Vector2(angle * Radius, v.Dot(Axis));
+        }
+
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
+        {
+            var angle = (point.X / Radius) % Constants.TwoPi;
+            var result = Anchor + Radius * Math.Cos(angle) * faceXDir;
+            result += Radius * Math.Sin(angle) * faceYDir;
+            result += point.Y * Axis;
+            return result;
+        }
+
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        {
+            var horizRepeat = Radius * Constants.TwoPi;
+            var lastPoint = points.First();
+            var last2DVertex = TransformFrom3DTo2D(lastPoint);
+            yield return last2DVertex;
+            foreach (var point in points.Skip(1))
+            {
+                var vector = point - lastPoint;
+                var rightIsOutward = vector.Cross(Axis);
+                var step = rightIsOutward.Dot(point - Anchor) > 0 ? 1 : -1;
+                var coord2D = TransformFrom3DTo2D(point);
+                var coord2Dx = coord2D.X;
+                while (coord2Dx * step < last2DVertex.X * step)
+                    coord2Dx += step * horizRepeat;
+                coord2D = new Vector2(coord2Dx, coord2D.Y);
+                yield return coord2D;
+                lastPoint = point;
+                last2DVertex = coord2D;
+            }
         }
 
         #region Properties
@@ -192,6 +240,15 @@ namespace TVGL
             Anchor = originalToBeCopied.Anchor;
             Radius = originalToBeCopied.Radius;
             IsPositive = originalToBeCopied.IsPositive;
+        }
+
+        public bool PointIsInside(Vector3 x)
+        {
+            var dxAlong = x.Dot(Axis);
+            if (dxAlong < MinDistanceAlongAxis) return false;
+            if (dxAlong > MaxDistanceAlongAxis) return false;
+            var rSqd = (x - Anchor).Cross(Axis).LengthSquared();
+            return rSqd < Radius * Radius;
         }
 
 

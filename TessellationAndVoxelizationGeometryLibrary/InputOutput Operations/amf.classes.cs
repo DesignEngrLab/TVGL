@@ -12,9 +12,9 @@
 
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions.amfclasses
+
+namespace TVGL.amfclasses
 {
     /// <summary>
     ///     Class AMF_Object.

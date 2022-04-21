@@ -1,13 +1,8 @@
-﻿using Snapshooter;
-using Snapshooter.Xunit;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using TVGL;
-using TVGL.IOFunctions;
-using TVGL.Voxelization;
+
 
 namespace TVGLUnitTestsAndBenchmarking
 {

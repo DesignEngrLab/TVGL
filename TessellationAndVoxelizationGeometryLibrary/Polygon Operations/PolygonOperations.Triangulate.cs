@@ -5,10 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Priority_Queue;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
     /// <summary>
     /// Triangulates a Polygon into faces in O(n log n) time.
@@ -188,7 +187,7 @@ namespace TVGL.TwoDimensional
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
-                        IOFunctions.IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
+                        IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
                         throw new Exception("Self-Intersecting Polygon cannot be triangulated.");
                     }
                 }
@@ -219,7 +218,7 @@ namespace TVGL.TwoDimensional
                 }
                 catch 
                 {
-                    IOFunctions.IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
+                    IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
                     throw new Exception("Unable to triangulate polygon.");
                 }
                 successful = 2 * Math.Abs(polygon.Area - triangleArea) / (polygon.Area + triangleArea) < 0.01;
@@ -244,7 +243,7 @@ namespace TVGL.TwoDimensional
                     selfIntersections = polygon.GetSelfIntersections().Where(intersect => intersect.Relationship != SegmentRelationship.NoOverlap).ToList();
                     if (selfIntersections.Count > 0)
                     {
-                        IOFunctions.IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
+                        IO.Save(polygon, "errorPolygon" + DateTime.Now.ToOADate() + ".json");
                         throw new Exception("Unable to triangulate polygon.");
                     }
                 }
@@ -362,8 +361,7 @@ namespace TVGL.TwoDimensional
         private static void MakeNewDiagonalEdgeIfMerge(Dictionary<Vertex2D, List<Vertex2D>> connections,
             Dictionary<PolygonEdge, (Vertex2D, bool)> edgeDatums, PolygonEdge datum, Vertex2D vertex)
         {
-            if (!edgeDatums.ContainsKey(datum)) return;
-            var prevLineHelperData = edgeDatums[datum];
+            if (!edgeDatums.TryGetValue(datum, out var prevLineHelperData)) return;
             var helperVertex = prevLineHelperData.Item1;
             var isMergePoint = prevLineHelperData.Item2;
             if (isMergePoint) //if this was a merge point
@@ -375,8 +373,8 @@ namespace TVGL.TwoDimensional
 
         private static void AddNewConnection(Dictionary<Vertex2D, List<Vertex2D>> connections, Vertex2D fromVertex, Vertex2D toVertex)
         {
-            if (connections.ContainsKey(fromVertex))
-                connections[fromVertex].Add(toVertex);
+            if (connections.TryGetValue(fromVertex, out var verts))
+                verts.Add(toVertex);
             else
             {
                 var newToVertices = new List<Vertex2D> { toVertex };

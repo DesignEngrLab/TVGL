@@ -2,10 +2,9 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using System;
 using System.Collections.Generic;
 
-namespace TVGL.Voxelization
+namespace TVGL
 {
     internal class SameCoordinates : EqualityComparer<int[]>
     {

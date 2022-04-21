@@ -4,7 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     /// <summary>
     /// A set of general operation for points and paths

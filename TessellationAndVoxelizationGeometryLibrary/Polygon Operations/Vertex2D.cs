@@ -3,10 +3,9 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 using MIConvexHull;
-using System;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
     /// <summary>
     ///     Vertex2D class used in Triangulate Polygon

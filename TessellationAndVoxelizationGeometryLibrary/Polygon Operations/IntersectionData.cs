@@ -4,10 +4,9 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     /// <summary>
     /// Class IntersectionData.

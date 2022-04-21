@@ -2,13 +2,11 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace TVGL.Voxelization
+namespace TVGL
 {
     /// <summary>
     /// VoxelRowSparse represents a sparse array of bits for this line of voxels

@@ -13,9 +13,9 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using StarMathLib;
-using TVGL.Numerics;
 
-namespace TVGL 
+
+namespace TVGL
 {
     /// <summary>
     /// A structure encapsulating a 3D Plane
@@ -86,7 +86,7 @@ namespace TVGL
         }
 
         public Plane(IEnumerable<Vector3> vertices, Vector3 normalGuess)
-        {            
+        {
             DefineNormalAndDistanceFromVertices(vertices, out var dto, out var normal);
             if (normal.Dot(normalGuess) < 0)
             {
@@ -102,7 +102,9 @@ namespace TVGL
         {
             return DefineNormalAndDistanceFromVertices(vertices.Select(v => v.Coordinates), out distanceToPlane, out normal);
         }
-        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane, out Vector3 normal)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool DefineNormalAndDistanceFromVertices(IEnumerable<Vector3> vertices, out double distanceToPlane,
+            out Vector3 normal)
         {
             var pointList = vertices as IList<Vector3> ?? vertices.ToList();
             var numVertices = pointList.Count;
@@ -137,6 +139,7 @@ namespace TVGL
             double xz = 0.0, yz = 0.0, zSq = 0.0;
             foreach (var vertex in pointList)
             {
+                if (vertex.IsNull()) continue;
                 var x = vertex.X;
                 var y = vertex.Y;
                 var z = vertex.Z;
@@ -471,6 +474,26 @@ namespace TVGL
                 numVerts++;
             }
             return sqDistanceSum / numVerts;
+        }
+
+        public override Vector2 TransformFrom3DTo2D(Vector3 point)
+        {
+            var v = new Vector3(point.X, point.Y, point.Z);
+            var result = v.Transform(AsTransformToXYPlane);
+            return new Vector2(result.X, result.Y);
+        }
+
+        public override Vector3 TransformFrom2DTo3D(Vector2 point)
+        {
+            var v = new Vector3(point.X, point.Y, 0);
+            return v.Transform(AsTransformFromXYPlane);
+        }
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        {
+            foreach (var point in points)
+            {
+                yield return TransformFrom3DTo2D(point);
+            }
         }
     }
 }

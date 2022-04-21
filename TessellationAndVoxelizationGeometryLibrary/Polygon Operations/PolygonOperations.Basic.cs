@@ -5,9 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     /// <summary>
     /// A set of general operation for points and paths

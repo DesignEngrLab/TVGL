@@ -10,8 +10,8 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
+
+
 
 namespace TVGL
 {
@@ -78,7 +78,7 @@ namespace TVGL
         [JsonConstructor]
         public CrossSectionSolid(Dictionary<int, double> stepDistances)
         {
-            Layer2D = new Dictionary<int, IList<Polygon>>();         
+            Layer2D = new Dictionary<int, IList<Polygon>>();
             StepDistances = stepDistances;
         }
 
@@ -135,9 +135,9 @@ namespace TVGL
         /// <param name="layer">The layer.</param>
         public void Add(Polygon feature2D, int layer)
         {
-            if (!Layer2D.ContainsKey(layer))
-                Layer2D[layer] = new List<Polygon>();
-            Layer2D[layer].Add(feature2D);
+            if (!Layer2D.TryGetValue(layer, out var polygons))
+                Layer2D.Add(layer, new List<Polygon>());
+            polygons.Add(feature2D);
             _volume = double.NaN;
             _center = Vector3.Null;
             _inertiaTensor = Matrix3x3.Null;
@@ -352,8 +352,7 @@ namespace TVGL
             {
                 var index = stepDistanceKVP.Key;
                 var distance = stepDistanceKVP.Value;
-                if (!Layer2D.ContainsKey(index)) continue;
-                var layer2D = Layer2D[index];
+                if (!Layer2D.TryGetValue(index, out var layer2D)) continue;
                 if (layer2D == null || layer2D.Count == 0) continue;
                 foreach (var polygon in layer2D)
                 {
@@ -373,13 +372,13 @@ namespace TVGL
             _volume = 0.0;
             var index = StepDistances.Keys.First();
             var prevDistance = StepDistances.Values.First();
-            var layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+            Layer2D.TryGetValue(index, out var layer2D);
             var prevArea = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area);
             foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
             {
                 index = stepDistanceKVP.Key;
                 var distance = stepDistanceKVP.Value;
-                layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+                Layer2D.TryGetValue(index, out layer2D);
                 var area = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Area);
                 _volume += (prevArea + area) * (distance - prevDistance);
                 prevArea = area;
@@ -398,13 +397,13 @@ namespace TVGL
             var area = 0.0;
             var index = StepDistances.Keys.First();
             var prevDistance = StepDistances.Values.First();
-            var layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+            Layer2D.TryGetValue(index, out var layer2D);
             var prevPerimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
             foreach (var stepDistanceKVP in StepDistances.Skip(1))  // skip the first, this is shown above.
             {
                 index = stepDistanceKVP.Key;
                 var distance = stepDistanceKVP.Value;
-                layer2D = Layer2D.ContainsKey(index) ? Layer2D[index] : null;
+                Layer2D.TryGetValue(index, out layer2D);
                 var perimeter = layer2D == null || layer2D.Count == 0 ? 0.0 : layer2D.Sum(p => p.Perimeter);
                 area += (prevPerimeter + perimeter) * (distance - prevDistance);
                 prevPerimeter = perimeter;

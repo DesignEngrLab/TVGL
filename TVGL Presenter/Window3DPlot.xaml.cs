@@ -6,7 +6,6 @@
 //   Interaction logic for Window3DPlot.xaml
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
-using HelixToolkit.Wpf.SharpDX;
 using System;
 using System.Windows;
 

@@ -8,11 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
+using TVGL.amfclasses;
 
-using TVGL.IOFunctions.amfclasses;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions
+namespace TVGL
 {
     /// <summary>
     ///     Class AMFFileData.
@@ -118,8 +117,8 @@ namespace TVGL.IOFunctions
             {
                 foreach (var amfInstance in amfConstellation.Instances)
                 {
-                    if (!objectDict.ContainsKey(amfInstance.objectid)) continue;
-                    results.Add(amfData.CreateSolid(objectDict[amfInstance.objectid], amfInstance));
+                    if (!objectDict.TryGetValue(amfInstance.objectid, out var aMF_Object)) continue;
+                    results.Add(amfData.CreateSolid(aMF_Object, amfInstance));
                     objectsUsed.Add(amfInstance.objectid);
                 }
             }
