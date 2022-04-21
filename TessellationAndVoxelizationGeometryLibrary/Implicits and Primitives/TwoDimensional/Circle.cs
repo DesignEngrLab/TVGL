@@ -1,9 +1,9 @@
 ﻿using MIConvexHull;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using TVGL.Numerics;
 
-namespace TVGL.Primitives
+namespace TVGL
 {
     /// <summary>
     ///     Public circle structure, given a center point and radius
@@ -18,6 +18,7 @@ namespace TVGL.Primitives
         /// <summary>
         ///     Radius of circle
         /// </summary>
+        [JsonIgnore]
         public readonly double Radius;
 
         /// <summary>
@@ -28,16 +29,19 @@ namespace TVGL.Primitives
         /// <summary>
         ///     Area of circle
         /// </summary>
+        [JsonIgnore]
         public readonly double Area;
 
         /// <summary>
         ///     Circumference of circle
         /// </summary>
+        [JsonIgnore]
         public readonly double Circumference;
 
         /// <summary>Creates a circle, given the center point and the radius Squared</summary>
         /// <param name="center">The center.</param>
         /// <param name="radiusSquared">The radius squared.</param>
+        [JsonConstructor]
         public Circle(Vector2 center, double radiusSquared)
         {
             Center = center;

@@ -3,7 +3,6 @@
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
 using Newtonsoft.Json;
-using System.Runtime.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -792,7 +791,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Color" /> class.
         /// </summary>
         /// <param name="amfColor">Color of the amf.</param>
-        internal Color(IOFunctions.amfclasses.AMF_Color amfColor)
+        internal Color(amfclasses.AMF_Color amfColor)
             : this(amfColor.a, amfColor.r, amfColor.g, amfColor.b)
         {
         }

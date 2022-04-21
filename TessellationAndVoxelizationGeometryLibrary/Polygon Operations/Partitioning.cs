@@ -4,9 +4,8 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using TVGL.Primitives;
 
-namespace TVGL.TwoDimensional
+namespace TVGL
 {
     public enum MonotonicityChange { X, Y, Both, Neither, SameAsPrevious }
 

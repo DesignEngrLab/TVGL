@@ -1,12 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Windows.Media;
 using TVGL;
-using TVGL.Boolean_Operations;
-using TVGL.Numerics;
-using TVGL.Primitives;
-using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

@@ -2,14 +2,13 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using MIConvexHull;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using TVGL.Numerics;
 
-namespace TVGL.Primitives
+
+namespace TVGL
 {
     /// <summary>
     ///     Class Sphere.

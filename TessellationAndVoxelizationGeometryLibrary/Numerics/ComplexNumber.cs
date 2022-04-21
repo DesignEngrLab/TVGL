@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-namespace TVGL.Numerics
+namespace TVGL
 {
     /// <summary>
     /// Struct ComplexNumber

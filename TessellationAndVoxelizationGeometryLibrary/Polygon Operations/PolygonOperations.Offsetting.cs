@@ -5,9 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
     /// <summary>
     /// A set of general operation for points and paths
@@ -143,7 +143,7 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
                 int i = 0;
                 foreach (var poly in polygons)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
+                    TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
 #endif
             }
             return pClipper;
@@ -245,7 +245,7 @@ namespace TVGL.TwoDimensional
             Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "offsetFail" + DateTime.Now.ToOADate().ToString() + "." + offset;
-                TVGL.IOFunctions.IO.Save(polygon, fileNameStart + ".0.json");
+                TVGL.IO.Save(polygon, fileNameStart + ".0.json");
 #endif
             }
             return pClipper;

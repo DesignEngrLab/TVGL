@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using MIConvexHull;
 using StarMathLib;
-using TVGL.Numerics;
 
-namespace TVGL.Primitives
+
+namespace TVGL
 {
     public readonly struct StraightLine3D : ICurve
     {

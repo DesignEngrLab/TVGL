@@ -1,11 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Runtime.Serialization;
 
 namespace TVGL
 {
+    [JsonObject]
     public class EdgePath : IList<(Edge edge, bool dir)>
     {
         public EdgePath()
@@ -18,12 +21,14 @@ namespace TVGL
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
+        [JsonIgnore]
         public List<Edge> EdgeList { get; protected set; }
 
         /// <summary>
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
+        [JsonIgnore]
         public List<bool> DirectionList { get; protected set; }
 
 
@@ -31,12 +36,14 @@ namespace TVGL
         /// Gets or sets a value indicating whether [border is closed].
         /// </summary>
         /// <value><c>true</c> if [border is closed]; otherwise, <c>false</c>.</value>
+
         public bool IsClosed { get; set; }
 
         /// <summary>
         /// Gets the number points.
         /// </summary>
         /// <value>The number points.</value>
+        [JsonIgnore]
         public int NumPoints
         {
             get
@@ -49,6 +56,7 @@ namespace TVGL
         /// Gets the first vertex.
         /// </summary>
         /// <value>The first vertex.</value>
+        [JsonIgnore]
         public Vertex FirstVertex
         {
             get
@@ -62,6 +70,7 @@ namespace TVGL
         /// Gets the last vertex.
         /// </summary>
         /// <value>The last vertex.</value>
+        [JsonIgnore]
         public Vertex LastVertex
         {
             get
@@ -78,11 +87,14 @@ namespace TVGL
 
         }
 
+        [JsonIgnore]
         public int Count => EdgeList.Count;
 
+        [JsonIgnore]
         public bool IsReadOnly => true;
 
 
+        [JsonIgnore]
         public (Edge edge, bool dir) this[int index]
         {
             get => (EdgeList[index], DirectionList[index]);
@@ -148,7 +160,7 @@ namespace TVGL
         {
             return EdgeList.IndexOf(edge);
         }
-
+        [JsonIgnore]
         public double Length => EdgeList.Sum(edge => edge.Length);
 
         /// <summary>
@@ -253,6 +265,24 @@ namespace TVGL
             }
         }
 
+        [JsonExtensionData]
+        protected IDictionary<string, JToken> serializationData;
+
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
+        {
+            serializationData = new Dictionary<string, JToken>();
+            serializationData.Add("EdgeIndices", JToken.FromObject(EdgeList.Select(e => e.IndexInList)));
+            serializationData.Add("Dirs", string.Join(null, DirectionList.Select(dir => dir ? "1" : "0")));
+        }
+
+        internal void CompletePostSerialization(TessellatedSolid ts)
+        {
+            foreach (var edgeIndex in serializationData["EdgeIndices"].ToObject<IEnumerable<int>>())
+                EdgeList.Add(ts.Edges[edgeIndex]);
+            foreach (var s in serializationData["Dirs"].ToObject<string>())
+                DirectionList.Add(s == '1');
+        }
 
         /// <summary>Gets the range.</summary>
         /// <param name="lb">The lb.</param>

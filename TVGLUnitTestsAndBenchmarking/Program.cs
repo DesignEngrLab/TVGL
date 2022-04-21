@@ -1,14 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.IOFunctions;
-using TVGL.Numerics;
-using TVGL.Primitives;
-using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

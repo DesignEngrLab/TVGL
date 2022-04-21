@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace TVGL
 {
-    public static class Extensions
+    public static class StatisticsExtensions
     {
         #region Calc Median
         /// <summary>

@@ -11,18 +11,17 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
-using TVGL.Primitives;
 
 namespace TVGL
 {
     /// <summary>
     /// Class PrimitiveSurfaceBorder.
     /// </summary>
+    [JsonObject]
     public class SurfaceBorder : EdgePath
     {
         /// <summary>
@@ -34,6 +33,7 @@ namespace TVGL
         /// Gets or sets the plane.
         /// </summary>
         /// <value>The plane.</value>
+        [JsonIgnore]
         public PrimitiveSurface Surface { get; set; }
 
         /// <summary>
@@ -73,6 +73,7 @@ namespace TVGL
         /// Gets whether the [border is circular].
         /// </summary>
         /// <value><c>true</c> if [encircles axis]; otherwise, <c>false</c>.</value>
+        [JsonIgnore]
         public bool IsCircular
         {
             get
@@ -86,6 +87,7 @@ namespace TVGL
         /// Gets the center of the circle if the border is a circle.
         /// </summary>
         /// <value>The plane.</value>
+        [JsonIgnore]
         public Vector3 CircleCenter
         {
             get
@@ -149,7 +151,7 @@ namespace TVGL
         }
 
 
-
+        [JsonIgnore]
         public Polygon AsPolygon
         {
             get
@@ -179,7 +181,17 @@ namespace TVGL
             copy.FullyConvex = FullyConvex;
             CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
             return copy;
-        }
 
+
+
+
+
+
+
+
+
+
+
+        }
     }
 }

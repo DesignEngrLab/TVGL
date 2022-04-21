@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using TVGL;
-using TVGL.Numerics;
-using TVGL.Primitives;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

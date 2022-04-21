@@ -9,7 +9,7 @@ using System.Text;
 using MIConvexHull;
 using Newtonsoft.Json;
 
-namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating three single precision floating point values and provides hardware accelerated methods.

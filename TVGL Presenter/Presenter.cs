@@ -11,21 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using SharpDX;
 using System.Collections.Generic;
 using System.Linq;
 using HelixToolkit.Wpf.SharpDX;
 using HelixToolkit.SharpDX.Core;
-using TVGL;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 using OxyPlot;
-using Vector2 = TVGL.Numerics.Vector2;
-using Polygon = TVGL.TwoDimensional.Polygon;
-using Vector3 = TVGL.Numerics.Vector3;
 using System;
-using TVGL.Voxelization;
-using HelixToolkit.SharpDX.Core.Model.Scene;
 
 namespace TVGL
 {

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
-using TVGL.Numerics;
 
-namespace TVGL.Primitives
+
+namespace TVGL
 {
     public enum PrimitiveCurveType
     {

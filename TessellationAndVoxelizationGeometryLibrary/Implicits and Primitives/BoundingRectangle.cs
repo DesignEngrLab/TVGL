@@ -4,10 +4,10 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 
-namespace TVGL.Primitives
+
+
+namespace TVGL
 {
     /// <summary>
     ///     Bounding rectangle information based on area and point pairs.

@@ -2,15 +2,14 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using MIConvexHull;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 
-namespace TVGL.Primitives
+
+
+namespace TVGL
 {
     /// <summary>
     ///     Class PrimitiveSurface.
@@ -270,6 +269,9 @@ namespace TVGL.Primitives
                     else OuterEdges.Add(e);
                 }
             }
+            if (Borders != null)
+                foreach (var border in Borders)
+                    border.CompletePostSerialization(ts);
         }
 
         public HashSet<PolygonalFace> GetAdjacentFaces()
@@ -283,7 +285,6 @@ namespace TVGL.Primitives
             return adjacentFaces;
         }
 
-        [JsonIgnore]
         public List<SurfaceBorder> Borders { get; set; }
 
         public IEnumerable<SurfaceBorder> BordersEncirclingAxis(Vector3 axis, Vector3 anchor)
@@ -369,7 +370,7 @@ namespace TVGL.Primitives
         {
             get
             {
-                if (Vertices == null || Vertices.Count == 0) return Vector3.Null; 
+                if (Vertices == null || Vertices.Count == 0) return Vector3.Null;
                 SetBounds(true);
                 return new Vector3(MaxX + MinX, MaxY + MinY, MaxZ + MinZ) / 2;
             }

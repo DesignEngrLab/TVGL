@@ -3,17 +3,11 @@ using System;
 using Xunit;
 using BenchmarkDotNet.Attributes;
 #endif
-using TVGL.Numerics;
-using System.Collections;
+
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using TVGL.TwoDimensional;
+
 using System.Linq;
 using TVGL;
-using TVGL.Voxelization;
-using System.Runtime.CompilerServices;
-using System.Windows;
 
 namespace TVGLUnitTestsAndBenchmarking
 {

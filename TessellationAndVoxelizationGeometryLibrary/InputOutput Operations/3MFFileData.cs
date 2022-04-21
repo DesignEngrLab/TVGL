@@ -9,11 +9,11 @@ using System.IO.Compression;
 using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
-using TVGL.IOFunctions.threemfclasses;
-using TVGL.Numerics;
-using Object = TVGL.IOFunctions.threemfclasses.Object;
+using TVGL.threemfclasses;
 
-namespace TVGL.IOFunctions
+using Object = TVGL.threemfclasses.Object;
+
+namespace TVGL
 {
     /// <summary>
     ///     Class ThreeMFFileData.

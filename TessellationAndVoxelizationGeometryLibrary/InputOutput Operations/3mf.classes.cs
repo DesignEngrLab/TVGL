@@ -18,10 +18,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Xml.Serialization;
 
-using TVGL.IOFunctions.amfclasses;
-using TVGL.Numerics;
-
-namespace TVGL.IOFunctions.threemfclasses
+namespace TVGL.threemfclasses
 {
 
     #region Build and Item

@@ -5,8 +5,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using TVGL.Numerics;
-using TVGL.Primitives;
 
 namespace TVGL
 {
@@ -35,6 +33,7 @@ namespace TVGL
                 if (_center.IsNull()) CalculateCenter();
                 return _center;
             }
+            set => _center = value;
         }
 
         protected abstract void CalculateCenter();

@@ -4,11 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using TVGL.Numerics;
-using TVGL.Primitives;
-using TVGL.TwoDimensional;
 
 namespace TVGL
 {

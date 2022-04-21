@@ -6,10 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.Numerics;
-using TVGL.Primitives;
 using MIConvexHull;
-using TVGL.TwoDimensional;
+
 
 namespace TVGL
 {
@@ -303,11 +301,11 @@ namespace TVGL
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
         public static IEnumerable<Plane> FindFlats(this IEnumerable<PolygonalFace> faces,
-               int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0)
+               int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0, HashSet<Edge> nonCrossingEdges = null)
         {
             // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly.
             var availableFaces = new HashSet<PolygonalFace>(faces);
-
+            if (nonCrossingEdges == null) nonCrossingEdges = new HashSet<Edge>();
             while (availableFaces.Count > 0)
             {
                 var startFace = availableFaces.First();
@@ -325,6 +323,7 @@ namespace TVGL
                     //"if" statement in the while locations will ignore them.
                     foreach (var edge in newFace.Edges)
                     {
+                        if (nonCrossingEdges.Contains(edge)) continue;
                         var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
                         if (adjacentFace == null || !availableFaces.Contains(adjacentFace)) continue;
                         if (Math.Abs(1 - newFace.Normal.Dot(adjacentFace.Normal)) > Constants.SameFaceNormalDotTolerance) continue;
@@ -680,7 +679,7 @@ namespace TVGL
         /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
         {
@@ -703,7 +702,7 @@ namespace TVGL
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Matrix4x4 transform,
             double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
         {
@@ -740,7 +739,7 @@ namespace TVGL
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
             where T : IVertex3D
@@ -764,7 +763,7 @@ namespace TVGL
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Matrix4x4 transform,
             double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D
         {
@@ -816,7 +815,7 @@ namespace TVGL
         /// </summary>
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>TVGL.Numerics.Vector2.</returns>
+        /// <returns>TVGL.Vector2.</returns>
         public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Matrix4x4 matrix)
         {
             var x3D = location3D.X;
@@ -844,7 +843,7 @@ namespace TVGL
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Vector3 normalDirection,
                     double distanceAlongDirection)
         {
@@ -860,7 +859,7 @@ namespace TVGL
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
         {
             foreach (var point2D in coordinates)
@@ -873,7 +872,7 @@ namespace TVGL
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this Polygon coordinates, Vector3 normalDirection,
             double distanceAlongDirection)
         {
@@ -889,7 +888,7 @@ namespace TVGL
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this Polygon polygon, Matrix4x4 transform)
         {
             foreach (var point2D in polygon.Path)
@@ -901,7 +900,7 @@ namespace TVGL
         /// </summary>
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>TVGL.Numerics.Vector2.</returns>
+        /// <returns>TVGL.Vector2.</returns>
         public static Vector3 ConvertTo3DLocation(this in Vector2 coordinates2D, in Matrix4x4 transform)
         {
             return Vector3.Multiply(new Vector3(coordinates2D, 0), transform);
@@ -1000,7 +999,7 @@ namespace TVGL
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <param name="additionalRotation">An additional counterclockwise rotation (in radians) about the direction.</param>
-        /// <returns>TVGL.Numerics.Vector3.</returns>
+        /// <returns>TVGL.Vector3.</returns>
         public static Vector3 GetPerpendicularDirection(this Vector3 direction, double additionalRotation = 0)
         {
             Vector3 dir;
@@ -1247,7 +1246,7 @@ namespace TVGL
         /// <param name="aDirection">The direction of the a-line.</param>
         /// <param name="bAnchor">Some known point on b-line.</param>
         /// <param name="bDirection">The direction of the b-line.</param>
-        /// <returns>TVGL.Numerics.Vector2.</returns>
+        /// <returns>TVGL.Vector2.</returns>
         public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
         {
             if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;

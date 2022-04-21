@@ -2,10 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 
-namespace TVGL.Primitives
+
+
+namespace TVGL
 {
     public readonly struct Helix : ICurve
     {

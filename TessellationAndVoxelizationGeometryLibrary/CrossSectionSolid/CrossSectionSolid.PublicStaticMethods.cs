@@ -5,9 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Boolean_Operations;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 
 namespace TVGL
 {

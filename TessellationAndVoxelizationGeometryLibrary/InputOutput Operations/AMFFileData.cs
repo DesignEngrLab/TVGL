@@ -8,11 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
+using TVGL.amfclasses;
 
-using TVGL.IOFunctions.amfclasses;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions
+namespace TVGL
 {
     /// <summary>
     ///     Class AMFFileData.

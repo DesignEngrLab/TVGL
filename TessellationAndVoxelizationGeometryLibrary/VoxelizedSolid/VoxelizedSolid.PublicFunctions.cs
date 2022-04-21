@@ -7,10 +7,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TVGL.Primitives;
-using TVGL.Numerics;
 
-namespace TVGL.Voxelization
+namespace TVGL
 {
     /// <summary>
     /// Class VoxelizedSolid.

@@ -1,6 +1,5 @@
 ﻿using System;
-using Xunit;
-using TVGL.Numerics;
+
 using TVGL;
 using System.Collections.Generic;
 

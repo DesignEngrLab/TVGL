@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System;
-using TVGL.Numerics;
+
 using MIConvexHull;
 
-namespace TVGL.Primitives
+namespace TVGL
 {
     public interface ICurve
     {

@@ -8,9 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using TVGL.Numerics;
-using TVGL.Primitives;
-using TVGL.TwoDimensional;
 
 namespace TVGL
 {

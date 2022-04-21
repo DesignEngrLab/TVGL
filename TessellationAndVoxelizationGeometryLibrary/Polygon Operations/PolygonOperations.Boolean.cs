@@ -5,13 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
     /// <summary>
     /// A set of general operation for points and paths
@@ -158,8 +157,8 @@ namespace TVGL.TwoDimensional
                 Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + ".A.json");
-                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + ".B.json");
+                TVGL.IO.Save(polygonA, fileNameStart + ".A.json");
+                TVGL.IO.Save(polygonB, fileNameStart + ".B.json");
 #endif
             }
             return pClipper;
@@ -299,7 +298,7 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygons)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
+                    TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
 #endif
             }
             return pClipper;
@@ -420,10 +419,10 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "unionFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygonsA)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "A.json");
+                    TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "A.json");
                 i = 0;
                 foreach (var poly in polygonsB)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
+                    TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
 #endif
             }
             return pClipper;
@@ -481,8 +480,8 @@ namespace TVGL.TwoDimensional
                 Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
-                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "." + "B.json");
+                TVGL.IO.Save(polygonA, fileNameStart + "." + "A.json");
+                TVGL.IO.Save(polygonB, fileNameStart + "." + "B.json");
 #endif
             }
             return pClipper;
@@ -581,10 +580,10 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygonsA)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "A.json");
+                    TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "A.json");
                 i = 0;
                 foreach (var poly in polygonsA)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
+                    TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "B.json");
 #endif
             }
             return pClipper;
@@ -645,7 +644,7 @@ namespace TVGL.TwoDimensional
                 var fileNameStart = "intersectFail" + DateTime.Now.ToOADate().ToString();
                 int i = 0;
                 foreach (var poly in polygons)
-                    TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
+                    TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + ".json");
 #endif
             }
             return pClipper;
@@ -717,8 +716,8 @@ namespace TVGL.TwoDimensional
                         Presenter.ShowAndHang(pTVGL);
         #else
                         var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
-                        TVGL.IOFunctions.IO.Save(minuend, fileNameStart + "." + "min.json");
-                        TVGL.IOFunctions.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
+                        TVGL.IO.Save(minuend, fileNameStart + "." + "min.json");
+                        TVGL.IO.Save(subtrahend, fileNameStart + "." + "sub.json");
         #endif
                     }
                     return pClipper;
@@ -813,10 +812,10 @@ namespace TVGL.TwoDimensional
                         var fileNameStart = "subtractFail" + DateTime.Now.ToOADate().ToString();
                         int i = 0;
                         foreach (var poly in minuends)
-                            TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "min.json");
+                            TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "min.json");
                         i = 0;
                         foreach (var poly in subtrahends)
-                            TVGL.IOFunctions.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
+                            TVGL.IO.Save(poly, fileNameStart + "." + (i++).ToString() + "sub.json");
         #endif
                     }
                     return pClipper;
@@ -873,8 +872,8 @@ namespace TVGL.TwoDimensional
                 Presenter.ShowAndHang(pTVGL);
 #else
                 var fileNameStart = "xorFail" + DateTime.Now.ToOADate().ToString();
-                TVGL.IOFunctions.IO.Save(polygonA, fileNameStart + "." + "A.json");
-                TVGL.IOFunctions.IO.Save(polygonB, fileNameStart + "." + "B.json");
+                TVGL.IO.Save(polygonA, fileNameStart + "." + "A.json");
+                TVGL.IO.Save(polygonB, fileNameStart + "." + "B.json");
 #endif
             }
             return pClipper;

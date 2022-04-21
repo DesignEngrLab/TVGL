@@ -2,10 +2,9 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
-using TVGL.Primitives;
-namespace TVGL.Numerics
+namespace TVGL
 {
-    public static class Extensions
+    public static class VectorExtensions
     {
         #region for Vector2
         /// <summary>
