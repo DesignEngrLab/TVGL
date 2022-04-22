@@ -6,14 +6,14 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
-
+using System.Runtime.Serialization;
 
 namespace TVGL
 {
     /// <summary>
     ///     Class PrimitiveSurface.
     /// </summary>
+    [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface
     {
         #region Constructors
@@ -31,30 +31,8 @@ namespace TVGL
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
         {
             _area = originalToBeCopied._area;
-            var length = originalToBeCopied.FaceIndices.Length;
-            _faceIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _faceIndices[i] = originalToBeCopied.FaceIndices[i];
-            length = originalToBeCopied._vertexIndices.Length;
-            _vertexIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _vertexIndices[i] = originalToBeCopied._vertexIndices[i];
-            length = originalToBeCopied._innerEdgeIndices.Length;
-            _innerEdgeIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _innerEdgeIndices[i] = originalToBeCopied._innerEdgeIndices[i];
-            length = originalToBeCopied._outerEdgeIndices.Length;
-            _outerEdgeIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _outerEdgeIndices[i] = originalToBeCopied._outerEdgeIndices[i];
-            if (originalToBeCopied.Borders != null && originalToBeCopied.Borders.Any())
-            {
-                Borders = new List<SurfaceBorder>();
-                foreach (var origBorder in originalToBeCopied.Borders)
-                    Borders.Add(origBorder.Copy(this, false, copiedTessellatedSolid));
-            }
-            if (copiedTessellatedSolid != null)
-                CompletePostSerialization(copiedTessellatedSolid);
+            FaceIndices = originalToBeCopied.Faces.Select(f => f.IndexInList).ToArray();
+            CompletePostSerialization(copiedTessellatedSolid);
         }
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
@@ -77,6 +55,21 @@ namespace TVGL
         public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points);
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
+
+        public int[] FaceIndices
+        {
+            get
+            {
+                if (Faces == null && _faceIndices == null)
+                    return Array.Empty<int>();
+                if (Faces != null && (_faceIndices == null || _faceIndices.Length < Faces.Count))
+                    _faceIndices = Faces.Select(f => f.IndexInList).ToArray();
+                return _faceIndices;
+            }
+            set => _faceIndices = value;
+        }
+        int[] _faceIndices;
+
 
         [JsonIgnore]
         public int Index { get; set; }
@@ -103,16 +96,7 @@ namespace TVGL
         [JsonIgnore]
         public HashSet<PolygonalFace> Faces { get; protected set; }
 
-        public int[] FaceIndices
-        {
-            get
-            {
-                if (Faces != null)
-                    return Faces.Select(f => f.IndexInList).ToArray();
-                return Array.Empty<int>();
-            }
-            set => _faceIndices = value;
-        }
+
 
         /// <summary>
         ///     Gets the vertices.
@@ -169,10 +153,6 @@ namespace TVGL
 
         private HashSet<Edge> _innerEdges;
         private HashSet<Edge> _outerEdges;
-        private int[] _faceIndices;
-        private int[] _innerEdgeIndices;
-        private int[] _outerEdgeIndices;
-        private int[] _vertexIndices;
 
         private void DefineInnerOuterEdges()
         {
@@ -246,7 +226,7 @@ namespace TVGL
         public void CompletePostSerialization(TessellatedSolid ts)
         {
             Faces = new HashSet<PolygonalFace>();
-            foreach (var i in _faceIndices)
+            foreach (var i in FaceIndices)
             {
                 var face = ts.Faces[i];
                 Faces.Add(face);

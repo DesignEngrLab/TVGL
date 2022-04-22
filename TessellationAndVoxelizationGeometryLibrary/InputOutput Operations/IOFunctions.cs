@@ -157,8 +157,8 @@ namespace TVGL
         /// Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.</exception>
         public static void Open(Stream s, string filename, out TessellatedSolid solid)
         {
-            //try
-            //{
+            try
+            {
                 var extension = GetFileTypeFromExtension(Path.GetExtension(filename));
                 switch (extension)
                 {
@@ -207,13 +207,13 @@ namespace TVGL
                             solid = serializer.Deserialize<TessellatedSolid>(reader);
                         break;
                 }
-            //}
-            //catch (Exception exc)
-            //{
-            //    Console.WriteLine("Cannot open file. Message: " + exc.Message);
-            //    solid = null;
-            //}
         }
+            catch (Exception exc)
+            {
+                Console.WriteLine("Cannot open file. Message: " + exc.Message);
+                solid = null;
+            }
+}
 
         /// <summary>
         /// Opens the specified s.

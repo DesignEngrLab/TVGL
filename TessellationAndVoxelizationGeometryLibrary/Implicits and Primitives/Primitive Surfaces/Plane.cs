@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Newtonsoft.Json;
 using StarMathLib;
 
 
@@ -20,8 +21,7 @@ namespace TVGL
     /// <summary>
     /// A structure encapsulating a 3D Plane
     /// </summary>
-    public class Plane : PrimitiveSurface // IEquatable<Plane> commenting this since sometimes two planes at same "location"
-                                          // but represent different patches
+    public class Plane : PrimitiveSurface 
     {
         /// <summary>
         /// The normal vector of the Plane.
@@ -32,7 +32,7 @@ namespace TVGL
         /// </summary>
         public double DistanceToOrigin;
 
-
+        [JsonIgnore]
         public Matrix4x4 AsTransformFromXYPlane
         {
             get
@@ -46,6 +46,7 @@ namespace TVGL
             }
         }
         Matrix4x4 _asTransformFromXYPlane = Matrix4x4.Null;
+        [JsonIgnore]
         public Matrix4x4 AsTransformToXYPlane
         {
             get
@@ -63,6 +64,7 @@ namespace TVGL
         /// Gets the closest point on the plane to the origin.
         /// </summary>
         /// <value>The closest point to origin.</value>
+        [JsonIgnore]
         public Vector3 ClosestPointToOrigin => Normal * DistanceToOrigin;
 
 

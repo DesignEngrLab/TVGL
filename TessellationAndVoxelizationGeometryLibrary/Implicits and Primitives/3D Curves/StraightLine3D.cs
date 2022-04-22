@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using MIConvexHull;
 using StarMathLib;
 
@@ -74,7 +75,16 @@ namespace TVGL
             xy /= n;
             xz /= n;
             yz /= n;
-
+            if (n == 2)
+            {
+                var p1 = points.First();
+                var p2 = points.Last();
+                var anchor = new Vector3(p1.X, p1.Y, ((IVertex3D)p1).Z);
+                var dir = new Vector3(p2.X, p2.Y, ((IVertex3D)p2).Z) - anchor;
+                curve = new StraightLine3D(anchor, dir - anchor);
+                error = 0;
+                return !dir.IsNegligible();
+            }
 
             var matrix = new double[,] {
                 { xSqd - x * x, xy - x * y,   xz - x * z},

@@ -145,40 +145,6 @@ namespace TVGL
 
         #region Constructors
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="faces">The faces all.</param>
-        /// <param name="axis">The axis.</param>
-        public Cylinder(IEnumerable<PolygonalFace> faces, bool buildOnlyIfHole, bool isPositive,
-            HashSet<Plane> featureFlats = null) : base(faces)
-        {
-            if (!buildOnlyIfHole) throw new Exception("This Cylinder constructor only works when you want to find holes.");
-            //SmallFlats = featureFlats;
-            //IsValid = BuildIfCylinderIsHole(isPositive);
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="facesAll">The faces all.</param>
-        /// <param name="axis">The axis.</param>
-        public Cylinder(IEnumerable<PolygonalFace> facesAll, Vector3 axis)
-        {
-            throw new NotSupportedException("The method is no longer valid.");
-
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="edge">The edge.</param>
-        /// <exception cref="System.Exception">Edge used to define cylinder is flat.</exception>
-        internal Cylinder(Edge edge)
-        {
-            throw new NotSupportedException("The method is no longer valid.");
-        }
-
         internal Cylinder() { }
 
         /// <summary>
@@ -190,11 +156,13 @@ namespace TVGL
         /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
         /// <param name="dxOfTopPlane">The dx of top plane.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis)
+            double maxDistanceAlongAxis, bool isPositive = true, IEnumerable<PolygonalFace> faces = null)
+            : base(faces)
         {
             Axis = axis;
             Anchor = anchor;
             Radius = radius;
+            IsPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
@@ -240,6 +208,9 @@ namespace TVGL
             Anchor = originalToBeCopied.Anchor;
             Radius = originalToBeCopied.Radius;
             IsPositive = originalToBeCopied.IsPositive;
+            MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
+            MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
+            Height = originalToBeCopied.Height;
         }
 
         public bool PointIsInside(Vector3 x)
