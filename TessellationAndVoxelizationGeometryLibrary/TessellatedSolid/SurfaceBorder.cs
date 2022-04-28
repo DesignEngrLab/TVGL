@@ -157,7 +157,7 @@ namespace TVGL
             get
             {
                 if (_polygon == null)
-                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(GetVertices().Select(v => v.Coordinates)));
+                    _polygon = new Polygon(Surface.TransformFrom3DTo2D(GetVertices().Select(v => v.Coordinates), IsClosed));
                 return _polygon;
             }
         }
@@ -181,17 +181,6 @@ namespace TVGL
             copy.FullyConvex = FullyConvex;
             CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
             return copy;
-
-
-
-
-
-
-
-
-
-
-
         }
     }
 }

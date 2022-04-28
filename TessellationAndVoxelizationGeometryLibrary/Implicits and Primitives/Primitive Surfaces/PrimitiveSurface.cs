@@ -52,7 +52,7 @@ namespace TVGL
         }
 
         public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
-        public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points);
+        public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed);
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
 
@@ -171,6 +171,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public void AddFace(PolygonalFace face)
         {
+            if (Faces.Contains(face)) return;
             _area = Area + face.Area;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
@@ -276,6 +277,25 @@ namespace TVGL
                 if (anchor != Vector3.Null && polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform)))
                     yield return border;
             }
+        }
+
+        public static bool BorderEncirclesAxis(EdgePath edgepath, Vector3 axis, Vector3 anchor)
+        {
+            if (axis.IsNull() || anchor.IsNull() || edgepath.NumPoints <= 2) return false;
+            var transform = axis.TransformToXYPlane(out _);
+            var coords = edgepath.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform));
+            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
+            var center3d = anchor.ConvertTo2DCoordinates(transform);
+            return borderPolygon.IsPointInsidePolygon(true, center3d);
+        }
+        public static bool BorderEncirclesAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
+        {
+            if (axis.IsNull() || anchor.IsNull()) return false;
+            var transform = axis.TransformToXYPlane(out _);
+            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
+            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
+            var center3d = anchor.ConvertTo2DCoordinates(transform);
+            return borderPolygon.IsPointInsidePolygon(true, center3d);
         }
 
         private static void SetBorderConvexity(SurfaceBorder border)

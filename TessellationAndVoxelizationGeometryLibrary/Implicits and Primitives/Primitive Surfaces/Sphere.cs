@@ -146,7 +146,7 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
             var pointsList = points as IList<Vector3> ?? points.ToList();
             var bb = MinimumEnclosure.FindAxisAlignedBoundingBox(pointsList);

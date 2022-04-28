@@ -490,7 +490,7 @@ namespace TVGL
             var v = new Vector3(point.X, point.Y, 0);
             return v.Transform(AsTransformFromXYPlane);
         }
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
             foreach (var point in points)
             {

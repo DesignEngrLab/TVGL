@@ -143,7 +143,7 @@ namespace TVGL
                     if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
                     loop.AddEnd(discontinuousEdge);
                 }
-                loop.IsClosed = loop.FirstVertex == loop.LastVertex;
+                loop.UpdateIsClosed();
                 ts.NonsmoothEdges.Add(loop);
             }
             if (objFileData.FaceGroups.Count > 1) // && !objFileData.SurfaceEdges.Any())

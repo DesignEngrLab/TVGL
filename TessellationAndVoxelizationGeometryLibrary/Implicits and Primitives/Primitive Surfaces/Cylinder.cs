@@ -75,8 +75,15 @@ namespace TVGL
             return result;
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
+            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Anchor))
+            {
+                var transform = Axis.TransformToXYPlane(out _);
+                foreach (var point in points)
+                    yield return point.ConvertTo2DCoordinates(transform);
+                yield break;
+            }
             var horizRepeat = Radius * Constants.TwoPi;
             var lastPoint = points.First();
             var last2DVertex = TransformFrom3DTo2D(lastPoint);
@@ -102,7 +109,7 @@ namespace TVGL
         /// <summary>
         ///     Is the cylinder positive? (false is negative)
         /// </summary>
-        public bool IsPositive { get; }
+        public bool IsPositive { get; set; }
 
 
         /// <summary>
@@ -127,19 +134,19 @@ namespace TVGL
         /// Gets or sets the maximum distance along axis.
         /// </summary>
         /// <value>The maximum distance along axis.</value>
-        public double MaxDistanceAlongAxis { get; set; }
+        public double MaxDistanceAlongAxis { get; set; } = double.PositiveInfinity;
 
         /// <summary>
         /// Gets or sets the minimum distance along axis.
         /// </summary>
         /// <value>The minimum distance along axis.</value>
-        public double MinDistanceAlongAxis { get; set; }
+        public double MinDistanceAlongAxis { get; set; } = double.NegativeInfinity;
 
         /// <summary>
         /// Gets the height.
         /// </summary>
         /// <value>The height.</value>
-        public double Height { get; set; }
+        public double Height { get; set; } = double.PositiveInfinity;
 
         #endregion
 

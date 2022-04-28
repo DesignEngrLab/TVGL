@@ -50,9 +50,15 @@ namespace TVGL
             return Vector3.Null;
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> point)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
-            return null;
+            if (!Plane.DefineNormalAndDistanceFromVertices(points, out _, out var normal))
+                yield break;
+            var transform = normal.TransformToXYPlane(out _);
+            foreach (var point in points)
+            {
+                yield return point.ConvertTo2DCoordinates(transform);
+            }
         }
     }
 }
