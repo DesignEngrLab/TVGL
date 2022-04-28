@@ -162,7 +162,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="value1">The first source vector.</param>
         /// <param name="value2">The second source vector.</param>
         /// <returns>The maximized vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Max(Vector3 value1, Vector3 value2)
         {
@@ -177,7 +177,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The absolute value vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Abs(Vector3 value)
         {
@@ -189,7 +189,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The square root vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 SquareRoot(Vector3 value)
         {
@@ -204,7 +204,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator +(Vector3 left, Vector3 right)
         {
@@ -217,7 +217,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator -(Vector3 left, Vector3 right)
         {
@@ -231,7 +231,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The product vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(Vector3 left, Vector3 right)
         {
@@ -244,7 +244,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The source vector.</param>
         /// <param name="right">The scalar value.</param>
         /// <returns>The scaled vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(Vector3 left, double right)
         {
@@ -257,7 +257,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The scalar value.</param>
         /// <param name="right">The source vector.</param>
         /// <returns>The scaled vector.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(double left, Vector3 right)
         {
@@ -270,7 +270,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The vector resulting from the division.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator /(Vector3 left, Vector3 right)
         {
@@ -306,7 +306,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are equal; False otherwise.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector3 left, Vector3 right)
         {
@@ -321,7 +321,7 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are not equal; False if they are equal.</returns>
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector3 left, Vector3 right)
         {
@@ -336,21 +336,21 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
         /// <summary>
         /// Returns the vector (0,0,0).
         /// </summary>
-        
+
         public static Vector3 Zero =>
         default;
 
         /// <summary>
         /// Returns the vector (1,1,1).
         /// </summary>
-        
+
         public static Vector3 One =>
         new Vector3(1.0, 1.0, 1.0);
 
         /// <summary>
         /// Returns the vector (NaN, NaN, NaN).
         /// </summary>
-        
+
         public static Vector3 Null =>
         new Vector3(double.NaN, double.NaN, double.NaN);
 
@@ -450,10 +450,12 @@ namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
             if (X == other.X && Y == other.Y && Z == other.Z) return true;
             if (X == -other.X && Y == -other.Y && Z == -other.Z) return true;
             // if the magnitude of the cross product is nearly zero than the two vectors are aligned
-            var crossMagnitudeSquared = this.Cross(other).LengthSquared();
-            crossMagnitudeSquared /= this.LengthSquared();
-            crossMagnitudeSquared /= other.LengthSquared();
-            return crossMagnitudeSquared.IsNegligible(dotTolerance * dotTolerance);
+            var dot = Math.Abs(this.Dot(other));
+            dot = 1 - dot; //so now it's 1-d^2, which is the same as cross product squared (1 = sin^2 + cos^2)
+            dot *= dot;
+            dot /= this.LengthSquared();
+            dot /= other.LengthSquared();
+            return dot.IsNegligible(dotTolerance * dotTolerance);
         }
 
         /// <summary>

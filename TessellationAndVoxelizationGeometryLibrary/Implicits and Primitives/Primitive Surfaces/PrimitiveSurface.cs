@@ -6,14 +6,14 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
-
+using System.Runtime.Serialization;
 
 namespace TVGL
 {
     /// <summary>
     ///     Class PrimitiveSurface.
     /// </summary>
+    [JsonObject(MemberSerialization.OptOut)]
     public abstract class PrimitiveSurface
     {
         #region Constructors
@@ -31,30 +31,8 @@ namespace TVGL
         protected PrimitiveSurface(PrimitiveSurface originalToBeCopied, TessellatedSolid copiedTessellatedSolid)
         {
             _area = originalToBeCopied._area;
-            var length = originalToBeCopied.FaceIndices.Length;
-            _faceIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _faceIndices[i] = originalToBeCopied.FaceIndices[i];
-            length = originalToBeCopied._vertexIndices.Length;
-            _vertexIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _vertexIndices[i] = originalToBeCopied._vertexIndices[i];
-            length = originalToBeCopied._innerEdgeIndices.Length;
-            _innerEdgeIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _innerEdgeIndices[i] = originalToBeCopied._innerEdgeIndices[i];
-            length = originalToBeCopied._outerEdgeIndices.Length;
-            _outerEdgeIndices = new int[length];
-            for (int i = 0; i < length; i++)
-                _outerEdgeIndices[i] = originalToBeCopied._outerEdgeIndices[i];
-            if (originalToBeCopied.Borders != null && originalToBeCopied.Borders.Any())
-            {
-                Borders = new List<SurfaceBorder>();
-                foreach (var origBorder in originalToBeCopied.Borders)
-                    Borders.Add(origBorder.Copy(this, false, copiedTessellatedSolid));
-            }
-            if (copiedTessellatedSolid != null)
-                CompletePostSerialization(copiedTessellatedSolid);
+            FaceIndices = originalToBeCopied.Faces.Select(f => f.IndexInList).ToArray();
+            CompletePostSerialization(copiedTessellatedSolid);
         }
         /// <summary>
         ///     Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
@@ -74,9 +52,24 @@ namespace TVGL
         }
 
         public abstract double CalculateError(IEnumerable<Vector3> vertices = null);
-        public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points);
+        public abstract IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed);
         public abstract Vector2 TransformFrom3DTo2D(Vector3 point);
         public abstract Vector3 TransformFrom2DTo3D(Vector2 point);
+
+        public int[] FaceIndices
+        {
+            get
+            {
+                if (Faces == null && _faceIndices == null)
+                    return Array.Empty<int>();
+                if (Faces != null && (_faceIndices == null || _faceIndices.Length < Faces.Count))
+                    _faceIndices = Faces.Select(f => f.IndexInList).ToArray();
+                return _faceIndices;
+            }
+            set => _faceIndices = value;
+        }
+        int[] _faceIndices;
+
 
         [JsonIgnore]
         public int Index { get; set; }
@@ -103,16 +96,7 @@ namespace TVGL
         [JsonIgnore]
         public HashSet<PolygonalFace> Faces { get; protected set; }
 
-        public int[] FaceIndices
-        {
-            get
-            {
-                if (Faces != null)
-                    return Faces.Select(f => f.IndexInList).ToArray();
-                return Array.Empty<int>();
-            }
-            set => _faceIndices = value;
-        }
+
 
         /// <summary>
         ///     Gets the vertices.
@@ -169,10 +153,6 @@ namespace TVGL
 
         private HashSet<Edge> _innerEdges;
         private HashSet<Edge> _outerEdges;
-        private int[] _faceIndices;
-        private int[] _innerEdgeIndices;
-        private int[] _outerEdgeIndices;
-        private int[] _vertexIndices;
 
         private void DefineInnerOuterEdges()
         {
@@ -191,6 +171,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public void AddFace(PolygonalFace face)
         {
+            if (Faces.Contains(face)) return;
             _area = Area + face.Area;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
@@ -246,7 +227,7 @@ namespace TVGL
         public void CompletePostSerialization(TessellatedSolid ts)
         {
             Faces = new HashSet<PolygonalFace>();
-            foreach (var i in _faceIndices)
+            foreach (var i in FaceIndices)
             {
                 var face = ts.Faces[i];
                 Faces.Add(face);
@@ -296,6 +277,25 @@ namespace TVGL
                 if (anchor != Vector3.Null && polygon.IsPointInsidePolygon(true, anchor.ConvertTo2DCoordinates(transform)))
                     yield return border;
             }
+        }
+
+        public static bool BorderEncirclesAxis(EdgePath edgepath, Vector3 axis, Vector3 anchor)
+        {
+            if (axis.IsNull() || anchor.IsNull() || edgepath.NumPoints <= 2) return false;
+            var transform = axis.TransformToXYPlane(out _);
+            var coords = edgepath.GetVertices().Select(v => v.ConvertTo2DCoordinates(transform));
+            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
+            var center3d = anchor.ConvertTo2DCoordinates(transform);
+            return borderPolygon.IsPointInsidePolygon(true, center3d);
+        }
+        public static bool BorderEncirclesAxis(IEnumerable<Vector3> path, Vector3 axis, Vector3 anchor)
+        {
+            if (axis.IsNull() || anchor.IsNull()) return false;
+            var transform = axis.TransformToXYPlane(out _);
+            var coords = path.Select(v => v.ConvertTo2DCoordinates(transform));
+            var borderPolygon = new Polygon(coords.Select(c => new Vector2(c.X, c.Y)));
+            var center3d = anchor.ConvertTo2DCoordinates(transform);
+            return borderPolygon.IsPointInsidePolygon(true, center3d);
         }
 
         private static void SetBorderConvexity(SurfaceBorder border)

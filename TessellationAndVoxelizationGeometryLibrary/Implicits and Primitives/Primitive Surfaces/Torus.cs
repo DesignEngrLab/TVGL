@@ -164,8 +164,15 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
+            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Center))
+            {
+                var transform = Axis.TransformToXYPlane(out _);
+                foreach (var point in points)
+                    yield return point.ConvertTo2DCoordinates(transform);
+                yield break;
+            }
             foreach (var p in points)
             {
                 yield return TransformFrom3DTo2D(p);

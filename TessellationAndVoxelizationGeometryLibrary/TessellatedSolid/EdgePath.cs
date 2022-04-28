@@ -37,7 +37,19 @@ namespace TVGL
         /// </summary>
         /// <value><c>true</c> if [border is closed]; otherwise, <c>false</c>.</value>
 
-        public bool IsClosed { get; set; }
+        public bool IsClosed { get; private set; }
+
+        public bool UpdateIsClosed()
+        {
+            if (EdgeList == null || EdgeList.Count < 3)
+                IsClosed = false;
+            else
+            {
+                var lastVertex = DirectionList[^1] ? EdgeList[^1].To : EdgeList[^1].From;
+                IsClosed = (FirstVertex == lastVertex);
+            }
+            return IsClosed;
+        }
 
         /// <summary>
         /// Gets the number points.
@@ -62,8 +74,7 @@ namespace TVGL
             get
             {
                 if (DirectionList == null || DirectionList.Count == 0) return null;
-                if (DirectionList[0]) return EdgeList[0].From;
-                else return EdgeList[0].To;
+                return DirectionList[0] ? EdgeList[0].From : EdgeList[0].To;
             }
         }
         /// <summary>
@@ -229,7 +240,13 @@ namespace TVGL
             return true;
         }
 
-
+        public EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+            int startIndex = 0, int endIndex = -1)
+        {
+            var copy = new EdgePath();
+            this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
+            return copy;
+        }
         /// <summary>
         /// Copies the data (properties) from this EdgePath over to another.
         /// </summary>
@@ -238,7 +255,7 @@ namespace TVGL
         /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
         /// <param name="startIndex">The start index.</param>
         /// <param name="endIndex">The end index.</param>
-        public void CopyEdgesPathData(EdgePath copy, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+        protected void CopyEdgesPathData(EdgePath copy, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
             int startIndex = 0, int endIndex = -1)
         {
             copy.IsClosed = this.IsClosed && startIndex == 0 && (endIndex == -1 || endIndex >= EdgeList.Count);

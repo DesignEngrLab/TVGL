@@ -75,8 +75,15 @@ namespace TVGL
             return result;
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
+            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Anchor))
+            {
+                var transform = Axis.TransformToXYPlane(out _);
+                foreach (var point in points)
+                    yield return point.ConvertTo2DCoordinates(transform);
+                yield break;
+            }
             var horizRepeat = Radius * Constants.TwoPi;
             var lastPoint = points.First();
             var last2DVertex = TransformFrom3DTo2D(lastPoint);
@@ -102,7 +109,7 @@ namespace TVGL
         /// <summary>
         ///     Is the cylinder positive? (false is negative)
         /// </summary>
-        public bool IsPositive { get; }
+        public bool IsPositive { get; set; }
 
 
         /// <summary>
@@ -127,57 +134,23 @@ namespace TVGL
         /// Gets or sets the maximum distance along axis.
         /// </summary>
         /// <value>The maximum distance along axis.</value>
-        public double MaxDistanceAlongAxis { get; set; }
+        public double MaxDistanceAlongAxis { get; set; } = double.PositiveInfinity;
 
         /// <summary>
         /// Gets or sets the minimum distance along axis.
         /// </summary>
         /// <value>The minimum distance along axis.</value>
-        public double MinDistanceAlongAxis { get; set; }
+        public double MinDistanceAlongAxis { get; set; } = double.NegativeInfinity;
 
         /// <summary>
         /// Gets the height.
         /// </summary>
         /// <value>The height.</value>
-        public double Height { get; set; }
+        public double Height { get; set; } = double.PositiveInfinity;
 
         #endregion
 
         #region Constructors
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="faces">The faces all.</param>
-        /// <param name="axis">The axis.</param>
-        public Cylinder(IEnumerable<PolygonalFace> faces, bool buildOnlyIfHole, bool isPositive,
-            HashSet<Plane> featureFlats = null) : base(faces)
-        {
-            if (!buildOnlyIfHole) throw new Exception("This Cylinder constructor only works when you want to find holes.");
-            //SmallFlats = featureFlats;
-            //IsValid = BuildIfCylinderIsHole(isPositive);
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="facesAll">The faces all.</param>
-        /// <param name="axis">The axis.</param>
-        public Cylinder(IEnumerable<PolygonalFace> facesAll, Vector3 axis)
-        {
-            throw new NotSupportedException("The method is no longer valid.");
-
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Cylinder" /> class.
-        /// </summary>
-        /// <param name="edge">The edge.</param>
-        /// <exception cref="System.Exception">Edge used to define cylinder is flat.</exception>
-        internal Cylinder(Edge edge)
-        {
-            throw new NotSupportedException("The method is no longer valid.");
-        }
 
         internal Cylinder() { }
 
@@ -190,11 +163,13 @@ namespace TVGL
         /// <param name="dxOfBottomPlane">The dx of bottom plane.</param>
         /// <param name="dxOfTopPlane">The dx of top plane.</param>
         public Cylinder(Vector3 axis, Vector3 anchor, double radius, double minDistanceAlongAxis,
-            double maxDistanceAlongAxis)
+            double maxDistanceAlongAxis, bool isPositive = true, IEnumerable<PolygonalFace> faces = null)
+            : base(faces)
         {
             Axis = axis;
             Anchor = anchor;
             Radius = radius;
+            IsPositive = isPositive;
             MinDistanceAlongAxis = minDistanceAlongAxis;
             MaxDistanceAlongAxis = maxDistanceAlongAxis;
             Height = MaxDistanceAlongAxis - MinDistanceAlongAxis;
@@ -240,6 +215,9 @@ namespace TVGL
             Anchor = originalToBeCopied.Anchor;
             Radius = originalToBeCopied.Radius;
             IsPositive = originalToBeCopied.IsPositive;
+            MinDistanceAlongAxis = originalToBeCopied.MinDistanceAlongAxis;
+            MaxDistanceAlongAxis = originalToBeCopied.MaxDistanceAlongAxis;
+            Height = originalToBeCopied.Height;
         }
 
         public bool PointIsInside(Vector3 x)

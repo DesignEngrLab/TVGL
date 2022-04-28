@@ -146,8 +146,15 @@ namespace TVGL
             return result;
         }
 
-        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points)
+        public override IEnumerable<Vector2> TransformFrom3DTo2D(IEnumerable<Vector3> points, bool pathIsClosed)
         {
+            if (pathIsClosed && BorderEncirclesAxis(points, Axis, Apex))
+            {
+                var transform = Axis.TransformToXYPlane(out _);
+                foreach (var point in points)
+                    yield return point.ConvertTo2DCoordinates(transform);
+                yield break;
+            }
             var lastPoint = points.First();
             var last2DVertex = TransformFrom3DTo2D(lastPoint);
             yield return last2DVertex;
