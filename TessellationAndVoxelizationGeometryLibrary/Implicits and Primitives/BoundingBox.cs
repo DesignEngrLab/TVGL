@@ -2,6 +2,7 @@
 // This file is a part of TVGL, Tessellation and Voxelization Geometry Library
 // https://github.com/DesignEngrLab/TVGL
 // It is licensed under MIT License (see LICENSE.txt for details)
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,6 +51,7 @@ namespace TVGL
         ///     that are on the faces of the bounding box. They are in the order of direction1-low,
         ///     direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
         /// </summary>
+        [JsonIgnore]
         public T[][] PointsOnFaces { get; private set; }
 
 
@@ -134,6 +136,7 @@ namespace TVGL
         ///     the perspective terms of course).
         ///     correspond with that direction.
         /// </summary>
+        [JsonIgnore]
         public Vector3[] Directions
         {
             get
@@ -150,6 +153,7 @@ namespace TVGL
         /// These three values along with the direction vectors indicate the three planes of the lower
         /// corner of the box. If you add dimensions to this, you would get the maximum plane distances
         /// </summary>
+        [JsonIgnore]
         public Vector3 TranslationFromOrigin
         {
             get
@@ -166,6 +170,7 @@ namespace TVGL
         ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
         ///     [0] = ---, [1] = +-- , [2] = ++- , [3] = -+-, [4] = --+ , [5] = +-+, [6] = +++, [7] = -++
         /// </summary>
+        [JsonIgnore]
         public Vector3[] Corners
         {
             get
@@ -208,6 +213,7 @@ namespace TVGL
         /// <summary>
         ///     The center point
         /// </summary>
+        [JsonIgnore]
         public Vector3 Center
         {
             get
@@ -229,6 +235,7 @@ namespace TVGL
         /// <summary>
         ///     The volume of the bounding box.
         /// </summary>
+        [JsonIgnore]
         public double Volume => Dimensions[0] * Dimensions[1] * Dimensions[2];
 
         /// <summary>
@@ -276,6 +283,7 @@ namespace TVGL
         /// <summary>
         ///     The direction indices sorted by the dimensions from smallest to greatest.
         /// </summary>
+        [JsonIgnore]
         public IList<int> SortedDirectionIndicesByLength
         {
             get
@@ -291,6 +299,7 @@ namespace TVGL
         /// <summary>
         ///     The direction indices sorted by the dimensions from smallest to greatest.
         /// </summary>
+        [JsonIgnore]
         public IList<Vector3> SortedDirectionsByLength
         {
             get
@@ -306,6 +315,7 @@ namespace TVGL
         /// <summary>
         ///     The sorted dimensions from smallest to greatest.
         /// </summary>
+        [JsonIgnore]
         public double[] SortedDimensions
         {
             get

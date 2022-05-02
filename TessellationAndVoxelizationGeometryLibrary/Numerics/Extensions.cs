@@ -436,6 +436,8 @@ namespace TVGL
 
         public static Vector3 MergeBiDirectionalAxes(this Vector3 vector1, Vector3 vector2)
         {
+            if (vector1.IsNull() || vector1.IsNegligible()) return vector2;
+            if (vector2.IsNull() || vector2.IsNegligible()) return vector1;
             var result = (vector1.Dot(vector2) < 0) ? vector1 - vector2 : vector1 + vector2;
             return result.Normalize();
         }
