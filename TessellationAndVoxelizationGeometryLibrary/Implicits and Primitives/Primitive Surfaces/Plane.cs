@@ -26,11 +26,11 @@ namespace TVGL
         /// <summary>
         /// The normal vector of the Plane.
         /// </summary>
-        public Vector3 Normal;
+        public Vector3 Normal { get; set; }
         /// <summary>
         /// The distance of the Plane along its normal from the origin.
         /// </summary>
-        public double DistanceToOrigin;
+        public double DistanceToOrigin { get; set; }
 
         [JsonIgnore]
         public Matrix4x4 AsTransformFromXYPlane

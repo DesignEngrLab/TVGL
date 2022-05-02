@@ -169,10 +169,19 @@ namespace TVGL
                 JToken.FromObject(Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList)).ToArray()));
             serializationData.Add("VertexCoords",
                JToken.FromObject(Vertices.ConvertTo1DDoublesCollection()));
-            serializationData.Add("Colors",
-            (HasUniformColor || Faces.All(f => f.Color.Equals(Faces[0].Color)))
-            ? SolidColor.ToString()
-            : JToken.FromObject(Faces.Select(f => f.Color.ToString())));
+            if (HasUniformColor || Faces.All(f => f.Color == null || f.Color.Equals(Faces[0].Color)))
+                serializationData.Add("Colors", SolidColor.ToString());
+            else
+            {
+                var colorList = new List<string>();
+                var lastColor = new Color(KnownColors.LightGray).ToString();
+                foreach (var f in Faces)
+                {
+                    if (f.Color != null) lastColor = f.Color.ToString();
+                    colorList.Add(lastColor);
+                }
+                serializationData.Add("Colors", JToken.FromObject(colorList));
+            }
         }
 
 
