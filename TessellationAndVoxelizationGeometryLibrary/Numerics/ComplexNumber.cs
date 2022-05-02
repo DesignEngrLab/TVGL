@@ -2,13 +2,14 @@ using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-namespace TVGL.Numerics
+namespace TVGL
 {
     /// <summary>
     /// Struct ComplexNumber
     /// </summary>
     public readonly struct ComplexNumber
     {
+        private const double RealImagTolerance = 1e-6;
         /// <summary>
         /// Specifies the real-value of the vector component of the ComplexNumber.
         /// </summary>
@@ -256,7 +257,7 @@ namespace TVGL.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ComplexNumber Sqrt(ComplexNumber value1)
         {
-            if (value1.JustRealNumber)
+            if (value1.IsRealNumber)
             {
                 if (value1.Real > 0)
                     return new ComplexNumber(Math.Sqrt(value1.Real));
@@ -270,7 +271,7 @@ namespace TVGL.Numerics
 
         public static ComplexNumber Cbrt(ComplexNumber value1)
         {
-            if (value1.JustRealNumber) return new ComplexNumber(Math.Cbrt(value1.Real));
+            if (value1.IsRealNumber) return new ComplexNumber(Math.Cbrt(value1.Real));
             var angle = Math.Atan2(value1.Imaginary, value1.Real);
             angle /= 3;
             var radius = Math.Cbrt(value1.Length());
@@ -317,7 +318,7 @@ namespace TVGL.Numerics
         /// Gets a value indicating whether [just a real number] i.e. the imaginary part is zero.
         /// </summary>
         /// <value><c>true</c> if [just real]; otherwise, <c>false</c>.</value>
-        public bool JustRealNumber => Imaginary.IsNegligible();
+        public bool IsRealNumber => (Imaginary / Real).IsNegligible();
 
 
         /// <summary>
@@ -361,7 +362,7 @@ namespace TVGL.Numerics
         /// <returns>The string representation.</returns>
         public override string ToString()
         {
-            if (JustRealNumber) string.Format(CultureInfo.CurrentCulture, "{0}", Real);
+            if (IsRealNumber) string.Format(CultureInfo.CurrentCulture, "{0}", Real);
             if (Imaginary < 0)
                 return string.Format(CultureInfo.CurrentCulture, "{0} - {1}i", Real, -Imaginary);
             return string.Format(CultureInfo.CurrentCulture, "{0} + {1}i", Real, Imaginary);

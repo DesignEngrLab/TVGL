@@ -11,21 +11,12 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using SharpDX;
 using System.Collections.Generic;
 using System.Linq;
 using HelixToolkit.Wpf.SharpDX;
 using HelixToolkit.SharpDX.Core;
-using TVGL;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 using OxyPlot;
-using Vector2 = TVGL.Numerics.Vector2;
-using Polygon = TVGL.TwoDimensional.Polygon;
-using Vector3 = TVGL.Numerics.Vector3;
 using System;
-using TVGL.Voxelization;
-using HelixToolkit.SharpDX.Core.Model.Scene;
 
 namespace TVGL
 {
@@ -165,12 +156,8 @@ namespace TVGL
 
         #endregion
 
-        #region 3D Plots via Helix.Toolkit
 
-        /// <summary>
-        /// Shows the and hang.
-        /// </summary>
-        /// <param name="tessellatedSolids">The tessellated solids.</param>
+        #region Show and Hang Solids
         public static void ShowAndHang(TessellatedSolid ts, string heading = "", string title = "",
             string subtitle = "")
         {
@@ -189,7 +176,7 @@ namespace TVGL
 
         public static void ShowAndHang(CrossSectionSolid css)
         {
-            ShowVertexPaths(css.GetCrossSectionsAs3DLoops(), null, 1, null, true);
+            ShowVertexPaths(css.GetCrossSectionsAs3DLoops());
         }
 
         public static void ShowAndHang(IEnumerable<Solid> solids, string heading = "", string title = "",
@@ -203,55 +190,84 @@ namespace TVGL
 
         #endregion
 
-        #region 3D Voxelization Plots
 
-        #endregion
 
         #region ShowPaths with or without Solid(s)
-        public static void ShowVertexPaths(IEnumerable<Vector3> vertices, Solid solid = null, double lineThickness = 1,
-            Color color = null, bool closePaths = true)
+        public static void ShowVertexPaths(IEnumerable<Vector3> vertices, Solid solid = null, double lineThickness = 0,
+            Color color = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness,
                 color == null ? null : new List<Color> { color }, closePaths); ;
         }
-        public static void ShowVertexPaths(IEnumerable<Vertex> vertices, Solid solid = null, double lineThickness = 1,
-            Color color = null, bool closePaths = true)
+        public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertices, IEnumerable<bool> closePaths, Solid solid = null, double lineThickness = 0,
+   Color color = null)
+        {
+            ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, closePaths, lineThickness,
+                color == null ? null : new List<Color> { color }); ;
+        }
+        public static void ShowVertexPaths(IEnumerable<Vertex> vertices, Solid solid = null, double lineThickness = 0,
+            Color color = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness,
                 color == null ? null : new List<Color> { color }, closePaths); ;
         }
-        public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertices, Solid solid = null, double lineThickness = 1,
-            IEnumerable<Color> colors = null, bool closePaths = true)
+        public static void ShowVertexPaths(IEnumerable<IEnumerable<Vector3>> vertices, Solid solid = null, double lineThickness = 0,
+            IEnumerable<Color> colors = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness, colors, closePaths);
         }
-        public static void ShowVertexPaths(IEnumerable<IEnumerable<Vertex>> vertices, Solid solid = null, double lineThickness = 1,
-            IEnumerable<Color> colors = null, bool closePaths = true)
+        public static void ShowVertexPaths(IEnumerable<IEnumerable<Vertex>> vertices, Solid solid = null, double lineThickness = 0,
+            IEnumerable<Color> colors = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness, colors, closePaths);
         }
+
         public static void ShowVertexPaths(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertices, Solid solid = null,
-            double lineThickness = 1, IEnumerable<Color> colors = null, bool closePaths = true)
+    double lineThickness = 0, IEnumerable<Color> colors = null, bool closePaths = false)
         {
-            ShowVertexPathsWithSolids(vertices.SelectMany(v => v), new List<Solid> { solid }, lineThickness, colors, closePaths);
+            ShowVertexPathsWithSolids(vertices, new List<Solid> { solid }, lineThickness, colors, closePaths);
+        }
+        public static void ShowVertexPathsWithMultipleSolid(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertices,
+            IEnumerable<Solid> solids, double lineThickness = 1, IEnumerable<Color> colors = null, bool closePaths = false)
+        {
+            ShowVertexPathsWithSolids(vertices.SelectMany(v => v), solids, lineThickness, colors, closePaths);
         }
         public static void ShowVertexPathsWithSolids(IEnumerable<Vertex> vertices, IEnumerable<Solid> solids,
-            double thickness = 1, IEnumerable<Color> colors = null, bool closePaths = true)
+            double thickness = 0, IEnumerable<Color> colors = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices.Select(v => v.Coordinates), solids, thickness, colors, closePaths);
         }
         public static void ShowVertexPathsWithSolids(IEnumerable<IEnumerable<Vertex>> vertices, IEnumerable<Solid> solids,
-            double thickness = 1, IEnumerable<Color> colors = null, bool closePaths = true)
+            double thickness = 0, IEnumerable<Color> colors = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices.Select(v => v.Select(vv => vv.Coordinates)), solids, thickness, colors, closePaths);
         }
         public static void ShowVertexPathsWithSolids(IEnumerable<Vector3> vertices, IEnumerable<Solid> solids,
-            double thickness = 1, IEnumerable<Color> colors = null, bool closePaths = true)
+            double thickness = 0, IEnumerable<Color> colors = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(new[] { vertices }, solids, thickness, colors, closePaths);
         }
+        public static void ShowVertexPathsWithSolids(IEnumerable<Vector3> vertices, IEnumerable<Solid> solids, 
+            IEnumerable<bool> closePaths, double thickness = 0, IEnumerable<Color> colors = null)
+        {
+            ShowVertexPathsWithSolids(new[] { vertices }, solids, closePaths, thickness, colors);
+        }
         private static void ShowVertexPathsWithSolids(IEnumerable<IEnumerable<Vector3>> lines, IEnumerable<Solid> solids,
-            double thickness = 1, IEnumerable<Color> colors = null, bool closePaths = true)
+            IEnumerable<bool> closePaths, double thickness = 0, IEnumerable<Color> colors = null)
+        {
+            var lineVisuals = GetVertexPaths(lines, thickness, colors, closePaths);
+            var vm = new Window3DPlotViewModel();
+            vm.Add(lineVisuals);
+            if (solids != null)
+            {
+                vm.Add(solids.Where(s => s != null).SelectMany(s => ConvertTessellatedSolidToMGM3D((TessellatedSolid)s)));
+            }
+            var window = new Window3DPlot(vm);
+
+            window.ShowDialog();
+        }
+        private static void ShowVertexPathsWithSolids(IEnumerable<IEnumerable<Vector3>> lines, IEnumerable<Solid> solids,
+            double thickness = 0, IEnumerable<Color> colors = null, bool closePaths = false)
         {
             var lineVisuals = GetVertexPaths(lines, thickness, colors, closePaths);
             var vm = new Window3DPlotViewModel();
@@ -266,18 +282,27 @@ namespace TVGL
         }
 
         public static void ShowVertexPathsWithSolids(IEnumerable<IEnumerable<IEnumerable<Vector3>>> vertices,
-            IEnumerable<Solid> solids, double lineThickness = 1, IEnumerable<Color> colors = null, bool closePaths = true)
+            IEnumerable<Solid> solids, double lineThickness = 0, IEnumerable<Color> colors = null, bool closePaths = false)
         {
             ShowVertexPathsWithSolids(vertices.SelectMany(v => v), solids, lineThickness, colors, closePaths);
         }
 
 
-        public static IEnumerable<GeometryModel3D> GetVertexPaths(IEnumerable<IEnumerable<Vector3>> paths, double thickness = 1,
-            IEnumerable<Color> colors = null, bool closePaths = true)
+        public static IEnumerable<GeometryModel3D> GetVertexPaths(IEnumerable<IEnumerable<Vector3>> paths, double thickness = 0,
+            IEnumerable<Color> colors = null, bool closePaths = false)
+        {
+            return GetVertexPaths(paths, thickness, colors, paths.Select(x => closePaths));
+        }
+        public static IEnumerable<GeometryModel3D> GetVertexPaths(IEnumerable<IEnumerable<Vector3>> paths, double thickness = 0,
+            IEnumerable<Color> colors = null, IEnumerable<bool> closePaths = null)
         {
             //set the default color to be the first color in the list. If none was provided, use black.
             colors = colors ?? Color.GetRandomColors();
             var colorEnumerator = colors.GetEnumerator();
+
+            var isClosed = closePaths ?? paths.Select(x => true);
+            var closedEnumerator = isClosed.GetEnumerator();
+
             var linesVisual = new List<LineGeometryModel3D>();
             foreach (var path in paths)
             {
@@ -293,7 +318,8 @@ namespace TVGL
                 //}
                 //lineCollection.RemoveAt(0);
                 //if (closePaths) lineCollection.Add(lineCollection.First());
-                colorEnumerator.MoveNext();
+                while (!colorEnumerator.MoveNext())
+                    colorEnumerator = colors.GetEnumerator();
                 var tvglColor = colorEnumerator.Current;
                 var color = new System.Windows.Media.Color { R = tvglColor.R, G = tvglColor.G, B = tvglColor.B, A = tvglColor.A };
                 var positions = new Vector3Collection(contour);
@@ -303,13 +329,12 @@ namespace TVGL
                     lineIndices.Add(i - 1);
                     lineIndices.Add(i);
                 }
-
-                if (closePaths)
+                closedEnumerator.MoveNext();
+                if (closedEnumerator.Current)
                 {
                     lineIndices.Add(positions.Count - 1);
                     lineIndices.Add(0);
                 }
-
 
                 yield return new LineGeometryModel3D
                 {
@@ -319,7 +344,8 @@ namespace TVGL
                         Indices = lineIndices
                     },
                     IsRendering = true,
-                    FillMode = SharpDX.Direct3D11.FillMode.Solid,
+                    Smoothness = 2,
+                    FillMode = thickness == 0 ? SharpDX.Direct3D11.FillMode.Wireframe : SharpDX.Direct3D11.FillMode.Solid,
                     Thickness = thickness,
                     Color = color
                 };
@@ -336,6 +362,9 @@ namespace TVGL
 
             foreach (var vs in solids.Where(vs => vs is VoxelizedSolid))
                 foreach (var m3d in ConvertVoxelsToPointModel3D((VoxelizedSolid)vs))
+                    yield return m3d;
+            foreach (var css in solids.Where(cs => cs is CrossSectionSolid))
+                foreach (var m3d in GetVertexPaths(((CrossSectionSolid)css).GetCrossSectionsAs3DLoops().SelectMany(v => v),1,null,true))
                     yield return m3d;
         }
 

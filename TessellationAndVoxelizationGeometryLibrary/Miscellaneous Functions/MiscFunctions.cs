@@ -6,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
+using MIConvexHull;
+
 
 namespace TVGL
 {
@@ -300,82 +300,53 @@ namespace TVGL
         /// <param name="tolerance">The toleranceForCombiningPoints.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        public static List<Plane> FindFlats(this IEnumerable<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-               int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0, bool ensureDistinctFlats = true)
+        public static IEnumerable<Plane> FindFlats(this IEnumerable<PolygonalFace> faces,
+               int minNumberOfFacesPerFlat = 2, double minFlatArea = 0.0, HashSet<Edge> nonCrossingEdges = null)
         {
-            var limitEdges = new HashSet<Edge>();
-            foreach (var face in faces)
-                foreach (var edge in face.Edges)
-                    if (limitEdges.Contains(edge))
-                        limitEdges.Remove(edge);
-                    else
-                        limitEdges.Add(edge);
-
-            //Used hashset for "Contains" function calls
-            var usedFaces = new HashSet<PolygonalFace>();
-            var listFlats = new List<Plane>();
-
-            //Use an IEnumerable class (List) for iterating through each part, and then the
-            //"Contains" function to see if it was already used. This is actually much faster
-            //than using a while locations with a ".Any" and ".First" call on the Hashset.
-            foreach (var startFace in faces)
+            // to avoid re-enumerating the faces - make a list. If it's already a list, then you're fine to use directly.
+            var availableFaces = new HashSet<PolygonalFace>(faces);
+            if (nonCrossingEdges == null) nonCrossingEdges = new HashSet<Edge>();
+            while (availableFaces.Count > 0)
             {
-                //If this faces has already been used, continue to the next face
-                if (usedFaces.Contains(startFace)) continue;
-                //Get all the faces that should be used on this flat
-                //Use a hashset so we can use the ".Contains" function
+                var startFace = availableFaces.First();
+                availableFaces.Remove(startFace);
                 var flatHashSet = new HashSet<PolygonalFace> { startFace };
-                var flat = new Plane(flatHashSet);
-                //Stacks are fast for "Push" and "Pop".
-                //Add all the adjecent faces from the first face to the stack for
-                //consideration in the while locations below.
-                var stack = new Stack<PolygonalFace>(flatHashSet);
-                var reDefineFlat = 3;
+                var stack = new Stack<PolygonalFace>(new[] { startFace });
+                var flatVertices = new List<Vertex>(startFace.Vertices);
+                var area = 0.0;
+                var numFaces = 0;
                 while (stack.Any())
                 {
                     var newFace = stack.Pop();
                     //Add new adjacent faces to the stack for consideration
                     //if the faces are already listed in the flat faces, the first
                     //"if" statement in the while locations will ignore them.
-                    foreach (var adjacentFace in newFace.AdjacentFaces)
+                    foreach (var edge in newFace.Edges)
                     {
-                        if (adjacentFace == null) continue;
-                        if (!flatHashSet.Contains(adjacentFace) && !usedFaces.Contains(adjacentFace) &&
-                            //!stack.Contains(adjacentFace) && //hmm, I think this check is a waste of time since that face
-                            //would come up from the stack and just be ruled out here by the usedFaces.Contains. Can this be commented?
-                            IsFaceNewMemberOfFlat(flat, adjacentFace, tolerance))
+                        if (nonCrossingEdges.Contains(edge)) continue;
+                        var adjacentFace = edge.OwnedFace == newFace ? edge.OtherFace : edge.OwnedFace;
+                        if (adjacentFace == null || !availableFaces.Contains(adjacentFace)) continue;
+                        if (Math.Abs(1 - newFace.Normal.Dot(adjacentFace.Normal)) > Constants.SameFaceNormalDotTolerance) continue;
+                        var otherVertex = adjacentFace.A != edge.From && adjacentFace.A != edge.To ? adjacentFace.A :
+                            adjacentFace.B != edge.From && adjacentFace.B != edge.To ? adjacentFace.B :
+                            adjacentFace.C;
+                        flatVertices.Add(otherVertex);
+                        if (!Plane.DefineNormalAndDistanceFromVertices(flatVertices, out double distanceToPlane, out Vector3 normal)
+                           || !distanceToPlane.IsPracticallySame(otherVertex.Dot(normal), Constants.PolygonSameTolerance))
+                            flatVertices.RemoveAt(flatVertices.Count - 1);
+                        else
                         {
-                            // flat.UpdateWith(adjacentFace);
-                            flatHashSet.Add(adjacentFace);
-                            if (flatHashSet.Count >= reDefineFlat)
-                            {
-                                flat = new Plane(flatHashSet);
-                                reDefineFlat *= 3;
-                            }
                             stack.Push(adjacentFace);
+                            availableFaces.Remove(adjacentFace);
+                            flatHashSet.Add(adjacentFace);
+                            area += adjacentFace.Area;
+                            numFaces++;
                         }
                     }
                 }
-                //Criteria of whether it should be a flat should be inserted here.
-                if (flatHashSet.Count >= minNumberOfFacesPerFlat)
-                {
-                    flat = new Plane(flatHashSet);
-                    if (!ensureDistinctFlats || flat.OuterEdges.All(e => (e.InternalAngle < Constants.MinSmoothAngle ||
-                    Constants.TwoPi - e.InternalAngle < Constants.MinSmoothAngle) || limitEdges.Contains(e)) || flat.Area > minFlatArea)
-                        listFlats.Add(flat);
-                }
-                foreach (var polygonalFace in flat.Faces)
-                    usedFaces.Add(polygonalFace);
+                if (numFaces >= minNumberOfFacesPerFlat && area >= minFlatArea)
+                    yield return new Plane(flatHashSet);
             }
-            return listFlats;
-        }
-
-        private static bool IsFaceNewMemberOfFlat(Plane flat, PolygonalFace face, double tolerance)
-        {
-            if (flat.Faces.Contains(face)) return false;
-            if (!face.Normal.Dot(flat.Normal).IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) return false;
-            return flat.CalculateError(face.Vertices.Select(v => v.Coordinates)) < tolerance;
-            //Return true if all the vertices are within the tolerance 
         }
 
         #endregion Dealing with Flat Patches
@@ -639,7 +610,7 @@ namespace TVGL
                     }
                 }
                 //Check for invalid bodies. Remove from model by ignoring these.
-                if (separateSolids.Count == 1 && faces.Count < 4) continue; 
+                if (separateSolids.Count == 1 && faces.Count < 4) continue;
                 separateSolids.Add(faces.ToList());
             }
             if (separateSolids.Count == 1 && separateSolids[0].Count == ts.NumberOfFaces)
@@ -665,7 +636,7 @@ namespace TVGL
                         for (int i = 0; i < ts.NonsmoothEdges.Count; i++)
                         {
                             if (ts.NonsmoothEdges[i].Contains(edge))
-                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates),i);
+                                nonSmoothEdgesForSolid.Add((edge.From.Coordinates, edge.To.Coordinates), i);
                         }
                     }
                 }
@@ -680,8 +651,8 @@ namespace TVGL
                     foreach (var edge in newSolid.Edges)
                     {
                         var pathIndex = -1;
-                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out  pathIndex)
-                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates),out pathIndex))
+                        if (nonSmoothEdgesForSolid.TryGetValue((edge.From.Coordinates, edge.To.Coordinates), out pathIndex)
+                            || nonSmoothEdgesForSolid.TryGetValue((edge.To.Coordinates, edge.From.Coordinates), out pathIndex))
                             newSolid.NonsmoothEdges[pathIndex].AddEnd(edge);
                     }
                 }
@@ -708,7 +679,7 @@ namespace TVGL
         /// If not, provided, then one point will be made for each vertex. If zero, then the coordinates will match at
         /// the 15 decimal place. Use a small positive number like 1e-9 to set a wider toleranceForCombiningPoints.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
         {
@@ -731,7 +702,7 @@ namespace TVGL
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static Dictionary<Vector2, List<T>> ProjectTo2DCoordinatesReturnDictionary<T>(this IEnumerable<T> vertices, Matrix4x4 transform,
             double toleranceForCombiningPoints = Constants.BaseTolerance) where T : IVertex3D
         {
@@ -768,7 +739,7 @@ namespace TVGL
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Vector3 direction,
                     out Matrix4x4 backTransform, double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false)
             where T : IVertex3D
@@ -792,7 +763,7 @@ namespace TVGL
         /// multiple times in the output collection to maintain the same order. This is useful if the original data is
         /// to define some polygon with order dictating the definition of edges.</param>
         ///
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector2&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector2&gt;.</returns>
         public static IEnumerable<Vector2> ProjectTo2DCoordinates<T>(this IEnumerable<T> locations, Matrix4x4 transform,
             double toleranceForCombiningPoints = double.NaN, bool duplicateEntriesToMaintainPolygonalOrdering = false) where T : IVertex3D
         {
@@ -844,7 +815,7 @@ namespace TVGL
         /// </summary>
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>TVGL.Numerics.Vector2.</returns>
+        /// <returns>TVGL.Vector2.</returns>
         public static Vector2 ConvertTo2DCoordinates(this IVertex3D location3D, in Matrix4x4 matrix)
         {
             var x3D = location3D.X;
@@ -872,7 +843,7 @@ namespace TVGL
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Vector3 normalDirection,
                     double distanceAlongDirection)
         {
@@ -888,7 +859,7 @@ namespace TVGL
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this IEnumerable<Vector2> coordinates, Matrix4x4 transform)
         {
             foreach (var point2D in coordinates)
@@ -901,7 +872,7 @@ namespace TVGL
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this Polygon coordinates, Vector3 normalDirection,
             double distanceAlongDirection)
         {
@@ -917,7 +888,7 @@ namespace TVGL
         /// <param name="normalDirection">The normal direction of the new plane.</param>
         /// <param name="distanceAlongDirection">The distance of the plane from the origin.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Numerics.Vector3&gt;.</returns>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;TVGL.Vector3&gt;.</returns>
         public static IEnumerable<Vector3> ConvertTo3DLocations(this Polygon polygon, Matrix4x4 transform)
         {
             foreach (var point2D in polygon.Path)
@@ -929,7 +900,7 @@ namespace TVGL
         /// </summary>
         /// <param name="location3D">The location as a Vector3.</param>
         /// <param name="transform">The transform matrix.</param>
-        /// <returns>TVGL.Numerics.Vector2.</returns>
+        /// <returns>TVGL.Vector2.</returns>
         public static Vector3 ConvertTo3DLocation(this in Vector2 coordinates2D, in Matrix4x4 transform)
         {
             return Vector3.Multiply(new Vector3(coordinates2D, 0), transform);
@@ -1028,7 +999,7 @@ namespace TVGL
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <param name="additionalRotation">An additional counterclockwise rotation (in radians) about the direction.</param>
-        /// <returns>TVGL.Numerics.Vector3.</returns>
+        /// <returns>TVGL.Vector3.</returns>
         public static Vector3 GetPerpendicularDirection(this Vector3 direction, double additionalRotation = 0)
         {
             Vector3 dir;
@@ -1275,7 +1246,7 @@ namespace TVGL
         /// <param name="aDirection">The direction of the a-line.</param>
         /// <param name="bAnchor">Some known point on b-line.</param>
         /// <param name="bDirection">The direction of the b-line.</param>
-        /// <returns>TVGL.Numerics.Vector2.</returns>
+        /// <returns>TVGL.Vector2.</returns>
         public static Vector2 LineLine2DIntersection(Vector2 aAnchor, Vector2 aDirection, Vector2 bAnchor, Vector2 bDirection)
         {
             if (aAnchor.IsPracticallySame(bAnchor, Constants.BaseTolerance)) return aAnchor;
@@ -2071,12 +2042,12 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-        public static IEnumerable<Type> TypesImplementingI2DCurve()
+        public static IEnumerable<Type> TypesImplementingICurve()
         {
-            var asm = System.Reflection.Assembly.GetAssembly(typeof(I2DCurve));
+            var asm = System.Reflection.Assembly.GetAssembly(typeof(ICurve));
 
             foreach (System.Reflection.TypeInfo ti in asm.DefinedTypes)
-                if (ti.ImplementedInterfaces.Contains(typeof(I2DCurve)))
+                if (ti.ImplementedInterfaces.Contains(typeof(ICurve)))
                     yield return ti;
         }
         public static IEnumerable<Type> TypesInheritedFromPrimitiveSurface()
@@ -2088,7 +2059,7 @@ namespace TVGL
                 yield return type;
         }
 
-        public static I2DCurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
+        public static ICurve FindBestPlanarCurve(this IEnumerable<Vector3> points, out Plane plane, out double planeResidual,
             out double curveResidual)
         {
             var pointList = points as IList<Vector3> ?? points.ToList();
@@ -2096,9 +2067,9 @@ namespace TVGL
             {
                 var thisPlane = new Plane(distanceToPlane, normal);
                 var minResidual = double.PositiveInfinity;
-                I2DCurve bestCurve = null;
+                ICurve bestCurve = null;
                 var point2D = pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane));
-                foreach (var curveType in MiscFunctions.TypesImplementingI2DCurve())
+                foreach (var curveType in MiscFunctions.TypesImplementingICurve())
                 {
                     var arguments = new object[] { point2D, null, null };
                     if ((bool)curveType.GetMethod("CreateFromPoints").Invoke(null, arguments))
@@ -2107,7 +2078,7 @@ namespace TVGL
                         if (minResidual > curveResidual)
                         {
                             minResidual = curveResidual;
-                            bestCurve = (I2DCurve)arguments[1];
+                            bestCurve = (ICurve)arguments[1];
                         }
                     }
                 }
@@ -2123,7 +2094,7 @@ namespace TVGL
                     lineDir += (pointList[i] - pointList[0]);
                 normal = lineDir.Normalize().GetPerpendicularDirection();
                 var thisPlane = new Plane(pointList[0], normal);
-                if (StraightLine.CreateFromPoints(pointList.Select(p => p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
+                if (StraightLine2D.CreateFromPoints(pointList.Select(p => (IVertex2D)p.ConvertTo2DCoordinates(thisPlane.AsTransformToXYPlane)),
                     out var straightLine, out var error))
                 {
                     plane = thisPlane;
@@ -2134,7 +2105,7 @@ namespace TVGL
                 plane = default;
                 planeResidual = double.PositiveInfinity;
                 curveResidual = double.PositiveInfinity;
-                return new StraightLine();
+                return new StraightLine2D();
             }
         }
 

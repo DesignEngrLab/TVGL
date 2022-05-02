@@ -10,8 +10,8 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
+
+
 
 namespace TVGL
 {

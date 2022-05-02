@@ -1,10 +1,8 @@
 ﻿using Priority_Queue;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using TVGL.Numerics;
+
 
 namespace TVGL
 {
@@ -33,10 +31,8 @@ namespace TVGL
             }
         }
 
-        internal TriangulationLoop() : base()
-        {
-            IsClosed = true;
-        }
+        internal TriangulationLoop() : base() { }
+
         internal double Score { get; set; }
         internal Vector3 Normal { get; set; }
         internal int[] VertexIDList => GetVertices().Select(v => v.IndexInList).ToArray();

@@ -8,9 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions
+
+namespace TVGL
 {
     /// <summary>
     ///     Provides an importer for StereoLithography .StL files.

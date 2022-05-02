@@ -6,10 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.Boolean_Operations;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
-using TVGL.Voxelization;
+
+
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -355,7 +353,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 TVGL.TessellatedSolid solid = null;
                 try
                 {
-                    TVGL.IOFunctions.IO.Open(filename, out solid);
+                    TVGL.IO.Open(filename, out solid);
                 }
                 catch
                 {

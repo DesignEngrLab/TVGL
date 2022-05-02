@@ -4,10 +4,7 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
 
 namespace TVGL
 {
@@ -536,7 +533,7 @@ namespace TVGL
                         if (bestNext == null) break;
 
                         var dir = bestNext.To == lastVertex;
-                        loop.Insert(0, (bestNext, dir));
+                        loop.AddBegin(bestNext, dir);
                         removedEdges.Add(bestNext);
                         remainingEdgesInner.Remove(bestNext);
                         successful = true;

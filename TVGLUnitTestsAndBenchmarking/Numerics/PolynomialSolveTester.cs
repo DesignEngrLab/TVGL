@@ -1,6 +1,5 @@
 ﻿using System;
-using Xunit;
-using TVGL.Numerics;
+
 using TVGL;
 using System.Collections.Generic;
 
@@ -39,7 +38,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var c = +a * (origRoots[0] * origRoots[1] + origRoots[0] * origRoots[2] + origRoots[1] * origRoots[2]);
                 var d = -a * (origRoots[0] * origRoots[1] * origRoots[2]);
 
-                if (!b.JustRealNumber || !c.JustRealNumber || !d.JustRealNumber)
+                if (!b.IsRealNumber || !c.IsRealNumber || !d.IsRealNumber)
                     continue;
                 foreach (var root in PolynomialSolve.Cubic(a, b.Real, c.Real, d.Real))
                 {
@@ -94,7 +93,7 @@ namespace TVGLUnitTestsAndBenchmarking
                 var d = -a * (origRoots[0] * origRoots[1] * origRoots[2] + origRoots[0] * origRoots[1] * origRoots[3] + origRoots[0] * origRoots[2] * origRoots[3] + origRoots[1] * origRoots[2] * origRoots[3]);
                 var e = +a * (origRoots[0] * origRoots[1] * origRoots[2] * origRoots[3]);
 
-                if (!b.JustRealNumber || !c.JustRealNumber || !d.JustRealNumber || !e.JustRealNumber)
+                if (!b.IsRealNumber || !c.IsRealNumber || !d.IsRealNumber || !e.IsRealNumber)
                     continue;
                 //var roots = PolynomialSolve.Quartic(a, b.Real, c.Real, d.Real, e.Real);
                 //var rootsArray = new[] { roots.Item1, roots.Item2, roots.Item3, roots.Item4 };

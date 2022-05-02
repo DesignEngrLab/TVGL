@@ -1,36 +1,61 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Runtime.Serialization;
 
 namespace TVGL
 {
+    [JsonObject]
     public class EdgePath : IList<(Edge edge, bool dir)>
     {
-        /// <summary>
-        /// Gets the edges and direction.
-        /// </summary>
-        /// <value>The edges and direction.</value>
-        public List<Edge> EdgeList { get; } = new List<Edge>();
+        public EdgePath()
+        {
+            EdgeList = new List<Edge>();
+            DirectionList = new List<bool>();
+        }
 
         /// <summary>
         /// Gets the edges and direction.
         /// </summary>
         /// <value>The edges and direction.</value>
-        public List<bool> DirectionList { get; } = new List<bool>();
+        [JsonIgnore]
+        public List<Edge> EdgeList { get; protected set; }
+
+        /// <summary>
+        /// Gets the edges and direction.
+        /// </summary>
+        /// <value>The edges and direction.</value>
+        [JsonIgnore]
+        public List<bool> DirectionList { get; protected set; }
 
 
         /// <summary>
         /// Gets or sets a value indicating whether [border is closed].
         /// </summary>
         /// <value><c>true</c> if [border is closed]; otherwise, <c>false</c>.</value>
-        public bool IsClosed { get; set; }
+
+        public bool IsClosed { get; private set; }
+
+        public bool UpdateIsClosed()
+        {
+            if (EdgeList == null || EdgeList.Count < 3)
+                IsClosed = false;
+            else
+            {
+                var lastVertex = DirectionList[^1] ? EdgeList[^1].To : EdgeList[^1].From;
+                IsClosed = (FirstVertex == lastVertex);
+            }
+            return IsClosed;
+        }
 
         /// <summary>
         /// Gets the number points.
         /// </summary>
         /// <value>The number points.</value>
+        [JsonIgnore]
         public int NumPoints
         {
             get
@@ -43,19 +68,20 @@ namespace TVGL
         /// Gets the first vertex.
         /// </summary>
         /// <value>The first vertex.</value>
+        [JsonIgnore]
         public Vertex FirstVertex
         {
             get
             {
                 if (DirectionList == null || DirectionList.Count == 0) return null;
-                if (DirectionList[0]) return EdgeList[0].From;
-                else return EdgeList[0].To;
+                return DirectionList[0] ? EdgeList[0].From : EdgeList[0].To;
             }
         }
         /// <summary>
         /// Gets the last vertex.
         /// </summary>
         /// <value>The last vertex.</value>
+        [JsonIgnore]
         public Vertex LastVertex
         {
             get
@@ -72,11 +98,14 @@ namespace TVGL
 
         }
 
+        [JsonIgnore]
         public int Count => EdgeList.Count;
 
+        [JsonIgnore]
         public bool IsReadOnly => true;
 
 
+        [JsonIgnore]
         public (Edge edge, bool dir) this[int index]
         {
             get => (EdgeList[index], DirectionList[index]);
@@ -142,6 +171,8 @@ namespace TVGL
         {
             return EdgeList.IndexOf(edge);
         }
+        [JsonIgnore]
+        public double Length => EdgeList.Sum(edge => edge.Length);
 
         /// <summary>
         /// Inserts an item to the <see cref="T:System.Collections.Generic.IList`1" /> at the specified index.
@@ -207,6 +238,67 @@ namespace TVGL
             if (i == -1) return false;
             RemoveAt(i);
             return true;
+        }
+
+        public EdgePath Copy(bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+            int startIndex = 0, int endIndex = -1)
+        {
+            var copy = new EdgePath();
+            this.CopyEdgesPathData(copy, reverse, copiedTessellatedSolid, startIndex, endIndex);
+            return copy;
+        }
+        /// <summary>
+        /// Copies the data (properties) from this EdgePath over to another.
+        /// </summary>
+        /// <param name="copy">The copy.</param>
+        /// <param name="reverse">if set to <c>true</c> [reverse].</param>
+        /// <param name="copiedTessellatedSolid">The copied tessellated solid.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        protected void CopyEdgesPathData(EdgePath copy, bool reverse = false, TessellatedSolid copiedTessellatedSolid = null,
+            int startIndex = 0, int endIndex = -1)
+        {
+            copy.IsClosed = this.IsClosed && startIndex == 0 && (endIndex == -1 || endIndex >= EdgeList.Count);
+            if (endIndex == -1) endIndex = EdgeList.Count;
+            if (copiedTessellatedSolid == null)
+            {
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    if (reverse)
+                        copy.AddBegin(EdgeList[i], !DirectionList[i]);
+                    else
+                        copy.AddEnd(EdgeList[i], DirectionList[i]);
+                }
+            }
+            else
+            {
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    if (reverse)
+                        copy.AddBegin(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], !DirectionList[i]);
+                    else
+                        copy.AddEnd(copiedTessellatedSolid.Edges[EdgeList[i].IndexInList], DirectionList[i]);
+                }
+            }
+        }
+
+        [JsonExtensionData]
+        protected IDictionary<string, JToken> serializationData;
+
+        [OnSerializing]
+        protected void OnSerializingMethod(StreamingContext context)
+        {
+            serializationData = new Dictionary<string, JToken>();
+            serializationData.Add("EdgeIndices", JToken.FromObject(EdgeList.Select(e => e.IndexInList)));
+            serializationData.Add("Dirs", string.Join(null, DirectionList.Select(dir => dir ? "1" : "0")));
+        }
+
+        internal void CompletePostSerialization(TessellatedSolid ts)
+        {
+            foreach (var edgeIndex in serializationData["EdgeIndices"].ToObject<IEnumerable<int>>())
+                EdgeList.Add(ts.Edges[edgeIndex]);
+            foreach (var s in serializationData["Dirs"].ToObject<string>())
+                DirectionList.Add(s == '1');
         }
 
         /// <summary>Gets the range.</summary>

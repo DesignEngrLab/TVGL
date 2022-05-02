@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using System;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+using MIConvexHull;
+
+namespace TVGL
 {
-    /// <summary>
-    /// Interface I2DCurve
-    /// </summary>
-    public interface I2DCurve
+    public interface ICurve
     {
         /// <summary>
         /// Returns the squared error of new point. This should be the square of the
@@ -17,17 +15,21 @@ namespace TVGL.TwoDimensional
         /// </summary>
         /// <param name="point">The point.</param>
         /// <returns>System.Double.</returns>
-        public double SquaredErrorOfNewPoint(Vector2 point);
+        public double SquaredErrorOfNewPoint<T>(T point) where T : IVertex2D;
 
         /// <summary>
         /// Defines the best fit of the curve for the given points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool CreateFromPoints(IEnumerable<Vector2> points, out I2DCurve curve, out double error)
+        public static bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
         {
-            throw new NotImplementedException("please implement static method in curve: static I2DCurve " +
+            throw new NotImplementedException("please implement static method in curve: static ICurve " +
                 "CreateFromPoints(IEnumerable<Vector2> points)");
         }
+
+        // Switch to this when C#10 comes out
+        //public static abstract bool CreateFromPoints<T>(IEnumerable<T> points, out ICurve curve, out double error)
+        //    where T : IVertex2D;
     }
 }

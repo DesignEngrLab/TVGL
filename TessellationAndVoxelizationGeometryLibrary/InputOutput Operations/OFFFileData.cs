@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions
+
+namespace TVGL
 {
     // http://en.wikipedia.org/wiki/OFF_(file_format)
     /// <summary>

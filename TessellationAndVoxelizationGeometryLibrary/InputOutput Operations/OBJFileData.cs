@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.IOFunctions
+
+namespace TVGL
 {
     internal class OBJFileData : IO
     {
@@ -143,7 +143,7 @@ namespace TVGL.IOFunctions
                     if (discontinuousEdge == null) continue; //The edge may have been part of a duplicate face or otherwise removed
                     loop.AddEnd(discontinuousEdge);
                 }
-                loop.IsClosed = loop.FirstVertex == loop.LastVertex;
+                loop.UpdateIsClosed();
                 ts.NonsmoothEdges.Add(loop);
             }
             if (objFileData.FaceGroups.Count > 1) // && !objFileData.SurfaceEdges.Any())

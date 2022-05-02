@@ -12,7 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
-using TVGL.Numerics;
+using TVGL;
 
 namespace StarMathLib
 {

@@ -791,7 +791,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Color" /> class.
         /// </summary>
         /// <param name="amfColor">Color of the amf.</param>
-        internal Color(IOFunctions.amfclasses.AMF_Color amfColor)
+        internal Color(amfclasses.AMF_Color amfColor)
             : this(amfColor.a, amfColor.r, amfColor.g, amfColor.b)
         {
         }
@@ -973,21 +973,24 @@ namespace TVGL
         /// <summary>
         ///     A
         /// </summary>
+        [JsonIgnore]
         public byte A;
 
         /// <summary>
         ///     B
         /// </summary>
+        [JsonIgnore]
         public byte B;
 
         /// <summary>
         ///     R
         /// </summary>
+        [JsonIgnore]
         public byte R;
-
         /// <summary>
         ///     G
         /// </summary>
+        [JsonIgnore]
         public byte G;
 
         /// <summary>
@@ -1097,19 +1100,27 @@ namespace TVGL
             for (int i = 0; i < families.Count; i++)
             {
                 yield return families[i][innerIndex % families[i].Count];
-                if (i == families.Count - 1) i = 0; //this will make it cycle forever
+                if (i == families.Count - 1)
+                {
+                    innerIndex++;
+                    i = 0; //this will make it cycle forever
+                }
             }
         }
-        public static IEnumerable<Color> GetRandomColors()
+        public static IEnumerable<Color> GetRandomColors(int seed = int.MinValue)
         {
-            var random = new Random();
+            var random = seed == int.MinValue ? new Random() : new Random(seed);
             var families = ColorDictionary.Values.OrderBy(dummy => random.NextDouble())
                 .Select(dict => dict.Values.OrderBy(dummy2 => random.NextDouble()).ToList()).ToList();
             var innerIndex = 0;
             for (int i = 0; i < families.Count; i++)
             {
                 yield return families[i][innerIndex % families[i].Count];
-                if (i == families.Count - 1) i = 0; //this will make it cycle forever
+                if (i == families.Count - 1)
+                {
+                    innerIndex++;
+                    i = 0; //this will make it cycle forever
+                }
             }
         }
         public static Color GetColorFromName(string name)
@@ -1410,7 +1421,6 @@ namespace TVGL
             };
 
         #endregion new known colors
-
     }
 
     /// <summary>

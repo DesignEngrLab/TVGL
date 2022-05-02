@@ -1,13 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.IOFunctions;
-using TVGL.Numerics;
-using TVGL.TwoDimensional;
-using TVGL.Voxelization;
 
 namespace TVGLUnitTestsAndBenchmarking
 {
@@ -23,6 +18,7 @@ namespace TVGLUnitTestsAndBenchmarking
         private static void Main(string[] args)
 
         {
+            TestConicIntersection();
             TVGL.Message.Verbosity = VerbosityLevels.Everything;
             DirectoryInfo dir = BackOutToFolder();
             //Voxels.TestVoxelization(dir);
@@ -45,6 +41,28 @@ namespace TVGLUnitTestsAndBenchmarking
                 //IO.Save(css, "test.CSSolid");
             }
 #endif
+        }
+
+        private static void TestConicIntersection()
+        {
+            var a = 1.3;
+            var b = -3.0;
+            var c = -4.0;
+            var d = -10.0;
+            var e = 16.0;
+            var f = 1.0;
+            var conicH = new GeneralConicSection(a/f,b/f,c/f,d/f,e/f,false);
+            a = 1;
+            b = -3.4;
+            c = -4.2;
+            d = -4.1;
+            e = 8.2;
+            f = 1;
+            var conicJ = new GeneralConicSection(a/f,b/f,c/f,d/f,e/f,false);
+            foreach (var p in GeneralConicSection.IntersectingConics(conicH,conicJ))
+            {
+                Console.WriteLine(p);
+            }
         }
 
         private static DirectoryInfo BackOutToFolder()

@@ -5,10 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
 
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
     /// <summary>
     /// The outline of a solid from a particular direction.

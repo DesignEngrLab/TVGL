@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace TVGL.Numerics  // COMMENTEDCHANGE namespace System.Numerics
+namespace TVGL  // COMMENTEDCHANGE namespace System.Numerics
 {
     /// <summary>
     /// A structure encapsulating two single precision floating point values and provides hardware accelerated methods.

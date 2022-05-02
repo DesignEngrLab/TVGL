@@ -4,9 +4,9 @@
 // It is licensed under MIT License (see LICENSE.txt for details)
 using System.Collections.Generic;
 using System.Linq;
-using TVGL.Numerics;
 
-namespace TVGL.TwoDimensional
+
+namespace TVGL
 {
     public static partial class PolygonOperations
     {
